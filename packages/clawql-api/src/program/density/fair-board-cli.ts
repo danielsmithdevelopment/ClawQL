@@ -11,6 +11,7 @@
  *   CLAWQL_DENSITY_WAKE_ORDER_REPS (default 3),
  *   CLAWQL_DENSITY_COLD_P99_CEILING_MS (optional latency limit),
  *   CLAWQL_DENSITY_DEADLINE_HORIZON_MS, CLAWQL_DENSITY_DEADLINE_MAX_FIRES,
+ *   CLAWQL_DENSITY_DEADLINE_SLA_MS (default 1000),
  *   CLAWQL_DENSITY_SKIP_DEADLINE=1,
  *   CLAWQL_DENSITY_SKIP_COLD=1, CLAWQL_DENSITY_SKIP_RESTART=1,
  *   CLAWQL_DENSITY_HOST_LABEL,
@@ -69,6 +70,9 @@ async function main(): Promise<void> {
       deadlineMaxFires: process.env.CLAWQL_DENSITY_DEADLINE_MAX_FIRES
         ? Number(process.env.CLAWQL_DENSITY_DEADLINE_MAX_FIRES)
         : undefined,
+      deadlineSlaMs: process.env.CLAWQL_DENSITY_DEADLINE_SLA_MS
+        ? Number(process.env.CLAWQL_DENSITY_DEADLINE_SLA_MS)
+        : undefined,
       skipCold: process.env.CLAWQL_DENSITY_SKIP_COLD === "1",
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
       skipDeadlinePump: process.env.CLAWQL_DENSITY_SKIP_DEADLINE === "1",
@@ -96,8 +100,25 @@ async function main(): Promise<void> {
         ceilingHit: run?.ceilingHit,
         deadlineScheduleRetainedAtLimit: run?.deadlineScheduleRetainedAtLimit,
         deadlineScheduleEntries: run?.residentAccounting.deadlineScheduleEntries,
-        deadlineLatenessMs: cols?.deadlineLatenessMs,
-        deadlineLateness: run?.deadlineLateness,
+        deadlineAccuracy: cols?.deadlineAccuracy,
+        deadlineAccuracyDetail: run?.deadlineAccuracy
+          ? {
+              slaMs: run.deadlineAccuracy.slaMs,
+              scheduler: run.deadlineAccuracy.scheduler,
+              steady: {
+                pctWithinSla: run.deadlineAccuracy.steady.pctWithinSla,
+                latenessP99Ms: run.deadlineAccuracy.steady.latenessP99Ms,
+                excessP99Ms: run.deadlineAccuracy.steady.excessOverTickP99Ms,
+                fired: run.deadlineAccuracy.steady.fired,
+              },
+              burst: {
+                pctWithinSla: run.deadlineAccuracy.burst.pctWithinSla,
+                latenessP99Ms: run.deadlineAccuracy.burst.latenessP99Ms,
+                excessP99Ms: run.deadlineAccuracy.burst.excessOverTickP99Ms,
+                fired: run.deadlineAccuracy.burst.fired,
+              },
+            }
+          : null,
         rssCeilingDefinition: run?.rssCeilingDefinition,
         residentKiBPerAgent: cols?.residentKiBPerAgent,
         heapUsedKiBPerAgentAfterGc: run?.residentAccounting.heapUsedKiBPerAgentAfterGc,

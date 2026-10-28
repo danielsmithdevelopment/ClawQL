@@ -60,12 +60,23 @@ export type BoardColumns = {
   readonly wakeWarmMs: LatencyPair;
   readonly wakeColdMs: LatencyPair;
   /**
-   * Deadline fire lateness (ms). Null until the system measures the v2 deadline
-   * contract. Do not cross-compare cold wakes until shared-host; deadline
-   * accuracy is the approval-relevant latency column.
+   * Shared deadline SLA (default 1000 ms): % met + p99 excess-over-tick under
+   * steady and burst. Null until measured. Scheduler tick/mechanism live in
+   * clawqlRun.deadlineAccuracy — not a poll-interval artifact.
    */
-  readonly deadlineLatenessMs: LatencyPair | null;
+  readonly deadlineAccuracy: DeadlineBoardAccuracy | null;
   readonly restartSurvival: boolean;
+};
+
+/** Board-facing deadline accuracy (same SLA for every system). */
+export type DeadlineBoardAccuracy = {
+  readonly slaMs: number;
+  readonly steadyPctMet: number;
+  /** p99 of max(0, lateness − tickMs) under spread deadlines. */
+  readonly steadyP99ExcessMs: number;
+  readonly burstPctMet: number;
+  /** p99 excess-over-tick when thousands share one deadline instant. */
+  readonly burstP99ExcessMs: number;
 };
 
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
@@ -188,6 +199,7 @@ export type EvidenceFair = {
     readonly wakeOrderRepetitions: number;
     readonly deadlineHorizonMs: number;
     readonly deadlineMaxFires: number;
+    readonly deadlineSlaMs: number;
     readonly coldEviction: string;
     readonly limitReason: string;
     readonly limitHit: boolean;
@@ -198,12 +210,41 @@ export type EvidenceFair = {
     readonly residentAccounting: ResidentAccounting;
     /** True when the limit run retained a deadline schedule for every counted agent. */
     readonly deadlineScheduleRetainedAtLimit: boolean;
-    readonly deadlineLateness: {
-      readonly p50: number;
-      readonly p99: number;
-      readonly n: number;
-      readonly fired: number;
-      readonly maxLatenessMs: number;
+    /**
+     * Full deadline accuracy report: scheduler tick/mechanism, steady + burst
+     * arms, raw lateness and excess-over-tick, SLA %.
+     */
+    readonly deadlineAccuracy: {
+      readonly slaMs: number;
+      readonly scheduler: {
+        readonly mechanism: string;
+        readonly tickMs: number;
+        readonly note: string;
+      };
+      readonly steady: {
+        readonly mode: "steady";
+        readonly n: number;
+        readonly fired: number;
+        readonly pctWithinSla: number;
+        readonly latenessP50Ms: number;
+        readonly latenessP99Ms: number;
+        readonly excessOverTickP50Ms: number;
+        readonly excessOverTickP99Ms: number;
+        readonly maxLatenessMs: number;
+        readonly maxExcessOverTickMs: number;
+      };
+      readonly burst: {
+        readonly mode: "burst";
+        readonly n: number;
+        readonly fired: number;
+        readonly pctWithinSla: number;
+        readonly latenessP50Ms: number;
+        readonly latenessP99Ms: number;
+        readonly excessOverTickP50Ms: number;
+        readonly excessOverTickP99Ms: number;
+        readonly maxLatenessMs: number;
+        readonly maxExcessOverTickMs: number;
+      };
     } | null;
     readonly wakeByOrder: readonly WakeOrderResult[];
     readonly wakeSpread: readonly WakeSpread[];

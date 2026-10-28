@@ -6,8 +6,9 @@
  * - Limit runs **must** retain an in-memory **wake-deadline schedule** for every
  *   counted agent (approval expiry / reminder). Bag path is derived from agentId
  *   (filesystem is the id index) — path Maps are not the capacity story.
- * - Board adds **deadlineLatenessMs** (p50/p99). Cold wake: report median + range
- *   across order reps; do not cross-compare cold until shared-host.
+ * - Board adds **deadlineAccuracy**: shared SLA (fire within 1s), % met + p99
+ *   excess-over-tick under steady and same-instant burst. Scheduler tick/mechanism
+ *   recorded in evidence. Cold wake: median + range; no cross-system cold until shared-host.
  * - Trim of id/path records alone likely makes both systems disk-bound; bag size
  *   then decides capacity (~30 vs ~32.8 KiB). Deadline state is the real resident.
  *
@@ -28,9 +29,11 @@ import {
 } from "./bag-store.js";
 import { FAIR_DEADLINE_HORIZON_MS, buildFairParkedAgentEffect } from "./fair-agent.js";
 import {
+  DEFAULT_DEADLINE_SLA_MS,
   makeDeadlineScheduleEffect,
   randomDeadlineMsEffect,
-  runDeadlinePumpEffect,
+  runDeadlineAccuracyEffect,
+  type DeadlineAccuracyReport,
   type DeadlineSchedule,
 } from "./deadline-schedule.js";
 import {
@@ -85,8 +88,10 @@ export type FairBoardOptions = {
   readonly wakeColdP99CeilingMs?: number;
   /** Random wake deadlines spread over this horizon (ms). */
   readonly deadlineHorizonMs?: number;
-  /** Max deadline fires (bag wakes) measured for lateness p99. */
+  /** Max deadline fires (bag wakes) measured per arm (steady / burst). */
   readonly deadlineMaxFires?: number;
+  /** Shared SLA: fire within this many ms of the deadline (default 1000). */
+  readonly deadlineSlaMs?: number;
   readonly hostLabel?: string;
   readonly skipCold?: boolean;
   readonly skipRestart?: boolean;
@@ -109,7 +114,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index — same as TS Map overhead. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineLatenessMs not yet measured** — invite Ontologiql to remeasure under fair-v2 (wake deadline + on-time fire). Do not read cold-wake gaps until shared-host.",
+    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s, steady + burst, report scheduler tick/mechanism. Design (timer wheel vs heap) is free; the board only scores whether deadlines are met. Do not read cold-wake gaps until shared-host.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -118,7 +123,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
     diskBytesPerAgent: 30 * 1024,
     wakeWarmMs: { p50: 0.000035, p99: 0.000035 },
     wakeColdMs: { p50: 0.6, p99: 0.6 },
-    deadlineLatenessMs: null,
+    deadlineAccuracy: null,
     restartSurvival: true,
   },
   activeDensityLab: null,
@@ -544,6 +549,7 @@ export function runFairDensityBoardEffect(
         : null;
     const deadlineHorizonMs = options.deadlineHorizonMs ?? FAIR_DEADLINE_HORIZON_MS;
     const deadlineMaxFires = options.deadlineMaxFires ?? 2_000;
+    const deadlineSlaMs = options.deadlineSlaMs ?? DEFAULT_DEADLINE_SLA_MS;
     const hostLabel = options.hostLabel ?? "clawql-cloud-agent-host";
     const rssCeilingKiB = rssCeilingMiB * 1024;
     const exposeGc = yield* exposeGcAvailableEffect();
@@ -721,18 +727,9 @@ export function runFairDensityBoardEffect(
       ramp[lastIdx] = { ...ramp[lastIdx]!, pageCacheKiBPerAgent };
     }
 
-    // --- Deadline pump on a sample schedule; full schedule stays retained for RSS ---
-    let deadlineLateness: {
-      readonly p50: number;
-      readonly p99: number;
-      readonly n: number;
-      readonly fired: number;
-      readonly maxLatenessMs: number;
-    } | null = null;
+    // --- Deadline accuracy: steady + burst; full schedule retained for RSS ---
+    let deadlineAccuracy: DeadlineAccuracyReport | null = null;
     if (!options.skipDeadlinePump && schedule.size() > 0) {
-      // Re-stamp sample deadlines from *now* — load can take minutes, so
-      // deadlines assigned at scheduleEpochMs would all be massively overdue.
-      const pumpSchedule = yield* makeDeadlineScheduleEffect();
       const sampleIds = [
         ...new Set([
           ...indexSampleIds,
@@ -742,28 +739,15 @@ export function runFairDensityBoardEffect(
             .map((e) => e.agentId),
         ]),
       ].slice(0, Math.min(deadlineMaxFires, schedule.size()));
-      const pumpNow = Date.now();
-      for (const id of sampleIds) {
-        const dl = Effect.runSync(randomDeadlineMsEffect(pumpNow, deadlineHorizonMs));
-        pumpSchedule.schedule(id, dl);
-      }
-      const pump = yield* runDeadlinePumpEffect({
-        schedule: pumpSchedule,
+      deadlineAccuracy = yield* runDeadlineAccuracyEffect({
+        agentIds: sampleIds,
         wake: async (agentId) => {
-          // Strip any accidental suffix; ids are plain bag_* keys.
           await Effect.runPromise(bags.wake(agentId));
         },
-        maxFires: sampleIds.length,
-        wallDeadlineMs: pumpNow + deadlineHorizonMs + 5_000,
+        horizonMs: deadlineHorizonMs,
+        slaMs: deadlineSlaMs,
         percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
       });
-      deadlineLateness = {
-        p50: pump.p50,
-        p99: pump.p99,
-        n: pump.n,
-        fired: pump.fired,
-        maxLatenessMs: pump.maxLatenessMs,
-      };
     }
 
     // --- Wake protocol ---
@@ -957,8 +941,14 @@ export function runFairDensityBoardEffect(
       diskBytesPerAgent: Number((last?.diskBytesPerAgent ?? 0).toFixed(1)),
       wakeWarmMs: warmBoard,
       wakeColdMs: coldBoard,
-      deadlineLatenessMs: deadlineLateness
-        ? { p50: deadlineLateness.p50, p99: deadlineLateness.p99 }
+      deadlineAccuracy: deadlineAccuracy
+        ? {
+            slaMs: deadlineAccuracy.slaMs,
+            steadyPctMet: deadlineAccuracy.steady.pctWithinSla,
+            steadyP99ExcessMs: deadlineAccuracy.steady.excessOverTickP99Ms,
+            burstPctMet: deadlineAccuracy.burst.pctWithinSla,
+            burstP99ExcessMs: deadlineAccuracy.burst.excessOverTickP99Ms,
+          }
         : null,
       restartSurvival,
     };
@@ -966,6 +956,9 @@ export function runFairDensityBoardEffect(
     const coldSpreadNote = headlineSpread
       ? `cold p99 median ${headlineSpread.coldP99Median.toFixed(3)} ms (range ${headlineSpread.coldP99Min.toFixed(3)}–${headlineSpread.coldP99Max.toFixed(3)}; do not cross-compare cold until shared-host)`
       : "cold spread unmeasured";
+    const deadlineNote = deadlineAccuracy
+      ? `Deadline SLA ${deadlineAccuracy.slaMs} ms (scheduler ${deadlineAccuracy.scheduler.mechanism}, tickMs=${deadlineAccuracy.scheduler.tickMs}): steady ${deadlineAccuracy.steady.pctWithinSla}% met / excess p99 ${deadlineAccuracy.steady.excessOverTickP99Ms} ms; burst ${deadlineAccuracy.burst.pctWithinSla}% met / excess p99 ${deadlineAccuracy.burst.excessOverTickP99Ms} ms`
+      : "deadlineAccuracy unmeasured";
 
     const clawqlStatus =
       limitHit && deadlineScheduleRetainedAtLimit ? "measured" : "methodology_pending";
@@ -975,7 +968,7 @@ export function runFairDensityBoardEffect(
       hostLabel,
       honesty:
         limitHit && deadlineScheduleRetainedAtLimit
-          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Deadline lateness p99=${deadlineLateness?.p99 ?? "n/a"} ms (${deadlineLateness?.fired ?? 0} fires). ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.`
+          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). ${deadlineNote}. ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.`
           : !deadlineScheduleRetainedAtLimit
             ? `ClawQL TypeScript — **methodology_pending**: deadline schedule not retained for every counted agent (schedule=${schedule.size()}, agentsAtLimit=${agentsAtLimit}).`
             : "ClawQL TypeScript — agents-at-limit unknown (no resource exhausted; deadline schedule retained). No win copy.",
@@ -1013,7 +1006,8 @@ export function runFairDensityBoardEffect(
           pendingToolBytesTarget: "~0.5 KiB JSON",
           park: "Waiting on that tool (idle durable)",
           offload: "Allowed; report residence (RSS / page cache / disk / object store)",
-          wakeDeadline: "Randomly spread wakeDeadlineAt; system must fire on time (lateness p99)",
+          wakeDeadline:
+            "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); steady + same-instant burst; report scheduler tick/mechanism and excess-over-tick",
         },
         columns: [
           "agentsAtLimit",
@@ -1023,11 +1017,11 @@ export function runFairDensityBoardEffect(
           "diskBytesPerAgent",
           "wakeWarmMs.p50/p99",
           "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-          "deadlineLatenessMs.p50/p99",
+          "deadlineAccuracy (slaMs, steady/burst pctMet + p99 excess-over-tick)",
           "restartSurvival",
         ],
         memoryFraming:
-          "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline lateness is the approval-relevant accuracy column. Cold wake: report median+range across order reps; do not read cross-system cold gaps until shared-host.",
+          "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; record scheduler tick/mechanism; quote excess-over-tick (not raw poll artifacts) under steady + burst. Cold wake: median+range only until shared-host.",
         publicClaimScope:
           "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
         definitions: {
@@ -1055,6 +1049,7 @@ export function runFairDensityBoardEffect(
         wakeOrderRepetitions,
         deadlineHorizonMs,
         deadlineMaxFires,
+        deadlineSlaMs,
         coldEviction,
         limitReason,
         limitHit,
@@ -1064,7 +1059,7 @@ export function runFairDensityBoardEffect(
         atLimit,
         residentAccounting,
         deadlineScheduleRetainedAtLimit,
-        deadlineLateness,
+        deadlineAccuracy,
         wakeByOrder,
         wakeSpread,
         wakeHeadlineOrder,
