@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   openApiDeclaresIdempotencyCapable,
+  openApiDeclaresLookupByReferenceCapable,
   operationsFromOpenAPI,
   type OpenAPIDocLike,
 } from "./openapi-operations.js";
@@ -29,6 +30,18 @@ describe("openApiDeclaresIdempotencyCapable", () => {
   });
 });
 
+describe("openApiDeclaresLookupByReferenceCapable", () => {
+  it("detects x-clawql-lookupByReferenceCapable extension", () => {
+    expect(
+      openApiDeclaresLookupByReferenceCapable({ "x-clawql-lookupByReferenceCapable": true })
+    ).toBe(true);
+  });
+
+  it("is false without the extension", () => {
+    expect(openApiDeclaresLookupByReferenceCapable({})).toBe(false);
+  });
+});
+
 describe("operationsFromOpenAPI riskHints.idempotencyCapable", () => {
   it("sets riskHints when the operation declares Idempotency-Key", () => {
     const doc: OpenAPIDocLike = {
@@ -54,5 +67,23 @@ describe("operationsFromOpenAPI riskHints.idempotencyCapable", () => {
     const ops = operationsFromOpenAPI(doc);
     expect(ops).toHaveLength(1);
     expect(ops[0]?.riskHints?.idempotencyCapable).toBe(true);
+  });
+
+  it("sets lookupByReferenceCapable from OpenAPI extension", () => {
+    const doc: OpenAPIDocLike = {
+      openapi: "3.0.3",
+      info: { title: "t", version: "1" },
+      paths: {
+        "/v1/charges": {
+          post: {
+            operationId: "createCharge",
+            "x-clawql-lookupByReferenceCapable": true,
+            responses: { "200": { description: "ok" } },
+          },
+        },
+      },
+    };
+    const ops = operationsFromOpenAPI(doc);
+    expect(ops[0]?.riskHints?.lookupByReferenceCapable).toBe(true);
   });
 });

@@ -19,6 +19,7 @@ export type AgentPolicy = "structural" | "never-retry" | "always-retry" | "real-
 export type ArmId =
   | "clawql-file-journal"
   | "clawql-always-retry"
+  | "clawql-check-then-decide"
   | "clawql-program-celld"
   | "naive-retry"
   | "pi-durable-never-retry"

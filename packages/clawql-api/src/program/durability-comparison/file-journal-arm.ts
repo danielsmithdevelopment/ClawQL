@@ -2,6 +2,7 @@
  * ClawQL file-journal kill-mid-write arms:
  * - clawql-file-journal: structural at-most-once (never re-send after unknown)
  * - clawql-always-retry: agent always retries after resume; gate refuses (mandate consumed)
+ * - clawql-check-then-decide: non_idempotent + lookup-by-reference → reconcile found charges
  * - naive-retry: reference arm that re-sends blindly
  */
 
@@ -28,15 +29,22 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const KILL_WORKER = join(HERE, "..", "durable-runner-kill-worker.ts");
 const WRITE_OPS = ["pets.get", "pets.list", "owners.create"] as const;
 const WRITE_OP = "owners.create";
+const CLIENT_REFERENCE = "kill-mid-write-ref";
 
-function planSource(): string {
+function planSource(opts: { readonly withClientReference: boolean }): string {
   return JSON.stringify({
     v: 1,
     mode: "sequential",
     calls: WRITE_OPS.map((operationId, i) => ({
       tool: "execute",
       operationId,
-      args: { page: i + 1, idempotencyKey: "kill-mid-write-key" },
+      args: {
+        page: i + 1,
+        idempotencyKey: "kill-mid-write-key",
+        ...(opts.withClientReference && operationId === WRITE_OP
+          ? { clientReference: CLIENT_REFERENCE }
+          : {}),
+      },
     })),
   });
 }
@@ -45,6 +53,7 @@ type HostLogLine = {
   readonly operationId: string;
   readonly effectId: string;
   readonly applied: boolean;
+  readonly reference?: string;
 };
 
 function parseHostLog(raw: string): HostLogLine[] {
@@ -66,8 +75,12 @@ function parseHostLog(raw: string): HostLogLine[] {
 function recordingHost(opts: {
   readonly upstreamMode: UpstreamMode;
   readonly priorEffects: Set<string>;
+  /** References that already landed (from kill-worker host log). */
+  readonly priorByReference?: ReadonlyMap<string, string>;
   /** When true, further WRITE_OP executes are refused without applying (mandate consumed). */
   readonly refuseWrites?: boolean;
+  /** Advertise + implement check-then-decide lookup. */
+  readonly lookupByReference?: boolean;
 }): {
   host: ProgramHost;
   executedWrites: string[];
@@ -76,6 +89,7 @@ function recordingHost(opts: {
 } {
   const executedWrites: string[] = [];
   const uniqueEffects = new Set(opts.priorEffects);
+  const priorByReference = new Map(opts.priorByReference ?? []);
   let onceCounter = priorEffectsSize(opts.priorEffects);
   let refusedWrites = 0;
   const host: ProgramHost = {
@@ -97,7 +111,9 @@ function recordingHost(opts: {
           const key =
             typeof input.args?.idempotencyKey === "string"
               ? input.args.idempotencyKey
-              : `anon-${executedWrites.length}`;
+              : typeof input.args?.clientReference === "string"
+                ? input.args.clientReference
+                : `anon-${executedWrites.length}`;
           if (opts.upstreamMode === "idempotent") {
             const effectId = `idem:${key}`;
             if (uniqueEffects.has(effectId)) {
@@ -108,9 +124,12 @@ function recordingHost(opts: {
               };
             }
             uniqueEffects.add(effectId);
+            priorByReference.set(key, effectId);
           } else {
             onceCounter += 1;
-            uniqueEffects.add(`once:${onceCounter}`);
+            const effectId = `once:${onceCounter}`;
+            uniqueEffects.add(effectId);
+            priorByReference.set(key, effectId);
           }
         }
         return {
@@ -138,7 +157,26 @@ function recordingHost(opts: {
           specLabel: "pets",
         },
         idempotencyCapable: opts.upstreamMode === "idempotent" && operationId === WRITE_OP,
+        lookupByReferenceCapable:
+          opts.lookupByReference === true &&
+          opts.upstreamMode === "non_idempotent" &&
+          operationId === WRITE_OP,
       }),
+    verifyByReference:
+      opts.lookupByReference === true
+        ? (input) =>
+            Effect.sync(() => {
+              const effectId = priorByReference.get(input.reference);
+              if (effectId) {
+                return {
+                  status: "found" as const,
+                  preview: JSON.stringify({ ok: true, effectId, reference: input.reference }),
+                };
+              }
+              // Board mock: after hold+kill the original can no longer land.
+              return { status: "not_found" as const, definitive: true };
+            })
+        : undefined,
   };
   return { host, executedWrites, uniqueEffects, getRefusedWrites: () => refusedWrites };
 }
@@ -171,13 +209,14 @@ function runKillWorker(env: Readonly<Record<string, string>>): Promise<{
   });
 }
 
-type ResumePolicy = "clawql" | "clawql-always-retry" | "naive-retry";
+type ResumePolicy = "clawql" | "clawql-always-retry" | "clawql-check-then-decide" | "naive-retry";
 
 async function oneTrial(input: {
   readonly i: number;
   readonly upstreamMode: UpstreamMode;
   readonly resumePolicy: ResumePolicy;
 }): Promise<ComparisonTrial> {
+  const lookup = input.resumePolicy === "clawql-check-then-decide";
   const dir = await mkdtemp(join(tmpdir(), `clawql-cmp-${input.i}-`));
   const hostLog = join(dir, "host.log");
   const programId = `prog_cmp_${input.resumePolicy}_${String(input.i).padStart(4, "0")}`;
@@ -188,21 +227,30 @@ async function oneTrial(input: {
       HOST_LOG: hostLog,
       PROGRAM_ID: programId,
       SESSION_ID: sessionId,
-      SOURCE: planSource(),
+      SOURCE: planSource({ withClientReference: lookup }),
       KILL_AT_OPERATION: WRITE_OP,
       WRITE_OPERATIONS: WRITE_OP,
       UPSTREAM_MODE: input.upstreamMode,
+      ...(lookup ? { LOOKUP_BY_REFERENCE: "1" } : {}),
     });
     const before = parseHostLog(await readFile(hostLog, "utf8"));
     const priorEffects = new Set(
       before.filter((l) => l.operationId === WRITE_OP && l.applied).map((l) => l.effectId)
     );
-    // After kill, the write mandate is consumed. Keyed resume may still re-drive
-    // through the durable runner; a fresh agent-initiated execute is refused.
+    const priorByReference = new Map<string, string>();
+    for (const line of before) {
+      if (line.operationId === WRITE_OP && line.applied && line.reference) {
+        priorByReference.set(line.reference, line.effectId);
+      }
+    }
+    // After kill, the write mandate is consumed. Keyed / lookup resume may still
+    // reconcile through the durable runner; a fresh agent-initiated execute is refused.
     const parent = recordingHost({
       upstreamMode: input.upstreamMode,
       priorEffects,
+      priorByReference,
       refuseWrites: false,
+      lookupByReference: lookup,
     });
 
     const resumed = await Effect.runPromise(
@@ -233,7 +281,6 @@ async function oneTrial(input: {
         })
       );
       refusedWrites = gated.getRefusedWrites();
-      // Merge any accidental effects (should be none when refuseWrites).
       for (const e of gated.uniqueEffects) parent.uniqueEffects.add(e);
     }
 
@@ -243,16 +290,18 @@ async function oneTrial(input: {
     const writeAppliedBefore = before.some((l) => l.operationId === WRITE_OP && l.applied);
     const duplicates = Math.max(0, uniqueWriteEffects - (writeAppliedBefore ? 1 : 0));
     const outcomeUnknownCalls = resumed.calls.filter((c) => c.status === "outcome_unknown").length;
+    const reconciledCalls = resumed.calls.filter((c) => c.status === "reconciled").length;
     const lost = !writeAppliedBefore && duplicates === 0 ? 1 : 0;
 
-    const keyedResolved =
-      input.upstreamMode === "idempotent" &&
+    const resolvedKnown =
       outcomeUnknownCalls === 0 &&
       uniqueWriteEffects === 1 &&
-      duplicates === 0;
+      duplicates === 0 &&
+      (input.upstreamMode === "idempotent" ||
+        (lookup && reconciledCalls >= 1 && resumed.ok === true));
 
     const interruptedOrUnknown = outcomeUnknownCalls > 0;
-    const completedKnownSuccess = keyedResolved;
+    const completedKnownSuccess = resolvedKnown;
 
     const classified = classifyOutcome({
       uniqueWriteEffects,
@@ -272,17 +321,24 @@ async function oneTrial(input: {
             (input.upstreamMode === "idempotent"
               ? classified.interruptedOrUnknown === 0 && classified.completedExactlyOnce === 1
               : classified.interruptedOrUnknown >= 1)
-          : input.upstreamMode === "idempotent"
+          : input.resumePolicy === "clawql-check-then-decide"
             ? child.signal === "SIGKILL" &&
               writeAppliedBefore &&
               duplicates === 0 &&
               classified.interruptedOrUnknown === 0 &&
-              uniqueWriteEffects === 1
-            : child.signal === "SIGKILL" &&
-              writeAppliedBefore &&
-              duplicates === 0 &&
-              classified.interruptedOrUnknown >= 1 &&
-              resumed.ok === false;
+              classified.completedExactlyOnce === 1 &&
+              reconciledCalls >= 1
+            : input.upstreamMode === "idempotent"
+              ? child.signal === "SIGKILL" &&
+                writeAppliedBefore &&
+                duplicates === 0 &&
+                classified.interruptedOrUnknown === 0 &&
+                uniqueWriteEffects === 1
+              : child.signal === "SIGKILL" &&
+                writeAppliedBefore &&
+                duplicates === 0 &&
+                classified.interruptedOrUnknown >= 1 &&
+                resumed.ok === false;
 
     return {
       i: input.i,
@@ -292,8 +348,8 @@ async function oneTrial(input: {
       uniqueWriteEffects,
       childSignal: child.signal,
       detail: ok
-        ? `${input.resumePolicy}/${input.upstreamMode}: dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} once=${classified.completedExactlyOnce} effects=${uniqueWriteEffects} refused=${refusedWrites}`
-        : `fail signal=${child.signal} dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} stderr=${child.stderr.slice(0, 80)}`,
+        ? `${input.resumePolicy}/${input.upstreamMode}: dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} once=${classified.completedExactlyOnce} effects=${uniqueWriteEffects} reconciled=${reconciledCalls} refused=${refusedWrites}`
+        : `fail signal=${child.signal} dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} reconciled=${reconciledCalls} stderr=${child.stderr.slice(0, 80)}`,
     };
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
@@ -306,20 +362,24 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
       ? ("clawql-file-journal" as const)
       : resumePolicy === "clawql-always-retry"
         ? ("clawql-always-retry" as const)
-        : ("naive-retry" as const);
+        : resumePolicy === "clawql-check-then-decide"
+          ? ("clawql-check-then-decide" as const)
+          : ("naive-retry" as const);
   const agentPolicy: AgentPolicy =
-    resumePolicy === "clawql"
+    resumePolicy === "clawql" || resumePolicy === "clawql-check-then-decide"
       ? "structural"
-      : resumePolicy === "clawql-always-retry"
-        ? "always-retry"
-        : "always-retry";
+      : "always-retry";
   return {
     id,
     run: ({ n }) =>
       Effect.tryPromise({
         try: async (): Promise<ArmResult> => {
           const modes: ArmModeResult[] = [];
-          for (const upstreamMode of ["idempotent", "non_idempotent"] as const) {
+          const upstreamModes: UpstreamMode[] =
+            resumePolicy === "clawql-check-then-decide"
+              ? ["non_idempotent"]
+              : ["idempotent", "non_idempotent"];
+          for (const upstreamMode of upstreamModes) {
             const trials: ComparisonTrial[] = [];
             for (let i = 0; i < n; i++) {
               trials.push(await oneTrial({ i, upstreamMode, resumePolicy }));
@@ -328,7 +388,9 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               summarizeMode(
                 upstreamMode,
                 trials,
-                resumePolicy === "clawql" || resumePolicy === "clawql-always-retry"
+                resumePolicy === "clawql" ||
+                  resumePolicy === "clawql-always-retry" ||
+                  resumePolicy === "clawql-check-then-decide"
               )
             );
           }
@@ -348,7 +410,17 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               status: "measured",
               agentPolicy,
               honesty:
-                "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates even when the model always retries — the contrast with Pi Durable always-retry.",
+                "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates / interrupted-or-unknown = N / completed-exactly-once = 0 on non_idempotent — safe but unfinished until check-then-decide or keys.",
+              modes,
+            };
+          }
+          if (resumePolicy === "clawql-check-then-decide") {
+            return {
+              armId: id,
+              status: "measured",
+              agentPolicy,
+              honesty:
+                "ClawQL check-then-decide on a non-idempotent mock that supports lookup-by-reference: after crash, exact match on clientReference finds the charge → reconciled (0 dups, 0 unknowns, completed exactly once). Turns “safe” into “done.” Pi has no equivalent; Golem’s only mechanism is the key this server ignores.",
               modes,
             };
           }
@@ -368,4 +440,5 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
 
 export const clawqlFileJournalArm = makeFileJournalArm("clawql");
 export const clawqlAlwaysRetryArm = makeFileJournalArm("clawql-always-retry");
+export const clawqlCheckThenDecideArm = makeFileJournalArm("clawql-check-then-decide");
 export const naiveRetryArm = makeFileJournalArm("naive-retry");

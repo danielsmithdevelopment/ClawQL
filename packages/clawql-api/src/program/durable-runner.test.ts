@@ -63,6 +63,10 @@ type HostOptions = {
   readonly failReplayed?: boolean;
   /** Runs inside the host call, before it returns. */
   readonly onExecute?: (operationId: string) => Effect.Effect<void>;
+  /** Advertise + implement check-then-decide lookup for writes. */
+  readonly lookupByReference?: boolean;
+  /** References already known to have landed (exact match). */
+  readonly knownReferences?: ReadonlyMap<string, string>;
 };
 
 type RecordingHost = {
@@ -99,7 +103,22 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
           reason: "test",
         },
         operation: { method: writes.has(operationId) ? "POST" : "GET", specLabel: "pets" },
+        lookupByReferenceCapable: options.lookupByReference === true && writes.has(operationId),
       }),
+    verifyByReference:
+      options.lookupByReference === true
+        ? (input) =>
+            Effect.sync(() => {
+              const known = options.knownReferences?.get(input.reference);
+              if (known) {
+                return {
+                  status: "found" as const,
+                  preview: JSON.stringify({ ok: true, effectId: known }),
+                };
+              }
+              return { status: "not_found" as const, definitive: true };
+            })
+        : undefined,
     replayed: (call) =>
       options.failReplayed
         ? Effect.fail(new Error("labels unavailable"))
@@ -653,4 +672,46 @@ describe("durable programs: real process kill", () => {
       outcomeUnknownCalls: 1,
     });
   }, 60_000);
+
+  it("check-then-decide: lookup finds the charge by clientReference and reconciles", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: WRITE_PLAN_OPS.map((operationId, i) => ({
+        tool: "execute",
+        operationId,
+        args: {
+          page: i + 1,
+          ...(operationId === "owners.create" ? { clientReference: "ref-charge-1" } : {}),
+        },
+      })),
+    });
+    const slow = recordingHost({
+      writes: ["owners.create"],
+      delayMs: { "owners.create": 10_000 },
+    });
+    const parked = await run(dir, { source, programId: ID, timeoutMs: 100 }, slow.host);
+    expect(parked.diagnostics.durable?.status).toBe("parked");
+    expect((await loadJournal(dir))?.intents.map((i) => i.operationId)).toEqual(["owners.create"]);
+
+    const again = recordingHost({
+      writes: ["owners.create"],
+      lookupByReference: true,
+      knownReferences: new Map([["ref-charge-1", "once:1"]]),
+    });
+    const resumed = await resume(dir, again.host);
+    expect(again.executed).toEqual([]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[2]).toMatchObject({
+      operationId: "owners.create",
+      ok: true,
+      status: "reconciled",
+      replayed: true,
+    });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      status: "completed",
+      outcomeUnknownCalls: 0,
+    });
+  });
 });

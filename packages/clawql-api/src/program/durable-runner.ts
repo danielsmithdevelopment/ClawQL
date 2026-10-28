@@ -59,7 +59,7 @@ import {
 } from "./program-runner.js";
 
 export const DURABLE_PROGRAM_HONESTY =
-  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run. A non-read call in flight resumes as outcome_unknown unless resolveRisk.idempotencyCapable — then it is re-driven once with the plan's stable idempotency key. source must be a JSON plan, not free-form JS.";
+  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run. A non-read call in flight: idempotencyCapable → keyed re-drive; else lookupByReferenceCapable → check-then-decide (found → reconciled; definitive not-found → one safe resend; else outcome_unknown); else outcome_unknown (at most once, no re-send). source must be a JSON plan, not free-form JS.";
 
 /** Nondeterministic value journaled on the first attempt and replayed on every resume. */
 export const NONDET_STARTED_AT = "clock.startedAt";
@@ -105,7 +105,8 @@ export type DurableProgramRefusalCode =
   | "journal_corrupt"
   | "journal_divergence"
   | "replay_label_failed"
-  | "keyed_resume_failed";
+  | "keyed_resume_failed"
+  | "lookup_resume_failed";
 
 /** The defect {@link DurableProgramRunOptions.simulateCrashAfterCalls} dies with. */
 export class ProgramCrashSimulated extends Data.TaggedError("ProgramCrashSimulated")<{
@@ -239,6 +240,54 @@ function outcomeUnknown(
       startedAt: intent.startedAt,
       reason: OUTCOME_UNKNOWN_REASON,
       fixHint: OUTCOME_UNKNOWN_HINT,
+    },
+  };
+}
+
+/** Stable reference attached to a write (exact-match lookup / keyed resend). */
+export function writeClientReference(
+  call: ProgramPlanExecuteCall,
+  programId: string,
+  index: number
+): string {
+  const args = call.args ?? {};
+  for (const key of ["clientReference", "chargeReference", "idempotencyKey"] as const) {
+    const v = args[key];
+    if (typeof v === "string" && v.length > 0) return v;
+  }
+  return `clawql-program:${programId}:${index}`;
+}
+
+function reconciledOutcome(
+  programId: string,
+  call: ProgramPlanExecuteCall,
+  index: number,
+  intent: ProgramJournalIntent,
+  opts: {
+    readonly reference: string;
+    readonly preview: string;
+    readonly via: "idempotency_key" | "lookup_by_reference" | "safe_resend";
+  }
+): ProgramCallOutcome {
+  return {
+    record: {
+      index,
+      id: call.id,
+      tool: "execute",
+      operationId: call.operationId,
+      ok: true,
+      programId,
+      status: "reconciled",
+      resultPreview: opts.preview,
+      replayed: true,
+    },
+    value: {
+      ok: true,
+      status: "reconciled",
+      operationId: call.operationId,
+      clientReference: opts.reference,
+      via: opts.via,
+      startedAt: intent.startedAt,
     },
   };
 }
@@ -498,10 +547,7 @@ function runAttemptEffect(
               .pipe(Effect.catch(() => Effect.succeed({ found: false as const })));
             if (risk.found && risk.idempotencyCapable === true) {
               // Keyed resume: re-drive once with the same args (plan carries the key).
-              const key =
-                typeof call.args?.idempotencyKey === "string" && call.args.idempotencyKey.length > 0
-                  ? call.args.idempotencyKey
-                  : `clawql-program:${programId}:${index}`;
+              const key = writeClientReference(call, programId, index);
               const args = { ...call.args, idempotencyKey: key };
               const hostResult = yield* durableHost
                 .execute({ operationId: call.operationId, args }, { programId })
@@ -521,26 +567,11 @@ function runAttemptEffect(
                   ?.map((c) => ("text" in c ? String(c.text) : ""))
                   .join("")
                   .slice(0, 200) ?? "";
-              const outcome: ProgramCallOutcome = {
-                record: {
-                  index,
-                  id: call.id,
-                  tool: "execute",
-                  operationId: call.operationId,
-                  ok: true,
-                  programId,
-                  status: "reconciled",
-                  resultPreview: preview,
-                  replayed: true,
-                },
-                value: {
-                  ok: true,
-                  status: "reconciled",
-                  operationId: call.operationId,
-                  idempotencyKey: key,
-                  startedAt: intent.startedAt,
-                },
-              };
+              const outcome = reconciledOutcome(programId, call, index, intent, {
+                reference: key,
+                preview,
+                via: "idempotency_key",
+              });
               yield* land(index, call, outcome, "executed");
               yield* auditResult({
                 toolName: "execute",
@@ -551,6 +582,83 @@ function runAttemptEffect(
                 keyedResume: true,
               });
               return Option.some(outcome);
+            }
+            // Check-then-decide: exact lookup by client reference (no blind retry).
+            if (
+              risk.found &&
+              risk.lookupByReferenceCapable === true &&
+              durableHost.verifyByReference !== undefined
+            ) {
+              const reference = writeClientReference(call, programId, index);
+              const verified = yield* durableHost
+                .verifyByReference({ operationId: call.operationId, reference })
+                .pipe(
+                  Effect.mapError(
+                    (e) =>
+                      new DurableProgramRefusal({
+                        programId,
+                        code: "lookup_resume_failed",
+                        message: `lookup-by-reference for call ${index}: ${e.message}`,
+                        fixHint: "Lookup failed; resume again or resolve the side effect manually.",
+                      })
+                  )
+                );
+              if (verified.status === "found") {
+                const outcome = reconciledOutcome(programId, call, index, intent, {
+                  reference,
+                  preview: verified.preview ?? `found:${reference}`,
+                  via: "lookup_by_reference",
+                });
+                yield* land(index, call, outcome, "executed");
+                yield* auditResult({
+                  toolName: "execute",
+                  operationId: call.operationId,
+                  ok: true,
+                  status: "reconciled",
+                  index,
+                  lookupByReference: true,
+                });
+                return Option.some(outcome);
+              }
+              if (verified.status === "not_found" && verified.definitive === true) {
+                // Original can no longer land — one safe resend with the same reference.
+                const args = { ...call.args, clientReference: reference };
+                const hostResult = yield* durableHost
+                  .execute({ operationId: call.operationId, args }, { programId })
+                  .pipe(
+                    Effect.mapError(
+                      (e) =>
+                        new DurableProgramRefusal({
+                          programId,
+                          code: "lookup_resume_failed",
+                          message: `safe resend of call ${index}: ${e.message}`,
+                          fixHint:
+                            "Lookup said not found (definitive); resend with the same reference failed.",
+                        })
+                    )
+                  );
+                const preview =
+                  hostResult.content
+                    ?.map((c) => ("text" in c ? String(c.text) : ""))
+                    .join("")
+                    .slice(0, 200) ?? "";
+                const outcome = reconciledOutcome(programId, call, index, intent, {
+                  reference,
+                  preview,
+                  via: "safe_resend",
+                });
+                yield* land(index, call, outcome, "executed");
+                yield* auditResult({
+                  toolName: "execute",
+                  operationId: call.operationId,
+                  ok: true,
+                  status: "reconciled",
+                  index,
+                  lookupSafeResend: true,
+                });
+                return Option.some(outcome);
+              }
+              // Ambiguous (unsupported / not_found but not definitive) → person.
             }
             const outcome = outcomeUnknown(programId, call, index, intent);
             yield* land(index, call, outcome, "outcome_unknown");

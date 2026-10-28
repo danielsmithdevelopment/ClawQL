@@ -80,10 +80,30 @@ export type ProgramHost = {
       /**
        * When true, an in-flight write interrupted mid-call may be re-driven on
        * resume with the same stable idempotency key (Stripe-class). Otherwise
-       * durable resume stays `outcome_unknown` (at most once, no re-send).
+       * durable resume stays `outcome_unknown` (at most once, no re-send) unless
+       * {@link lookupByReferenceCapable} + {@link ProgramHost.verifyByReference}.
        */
       readonly idempotencyCapable?: boolean;
+      /**
+       * When true (and not idempotencyCapable), resume may ask the host whether an
+       * effect with the plan's stable client reference already landed — check-then-decide.
+       */
+      readonly lookupByReferenceCapable?: boolean;
     },
+    Error
+  >;
+  /**
+   * Exact-match lookup by a reference attached to the original write
+   * (`clientReference` / `chargeReference` / stable program id). Used only when
+   * `resolveRisk.lookupByReferenceCapable` is true.
+   */
+  readonly verifyByReference?: (input: {
+    readonly operationId: string;
+    readonly reference: string;
+  }) => Effect.Effect<
+    | { readonly status: "found"; readonly preview?: string }
+    | { readonly status: "not_found"; readonly definitive: boolean }
+    | { readonly status: "unsupported" },
     Error
   >;
   /**

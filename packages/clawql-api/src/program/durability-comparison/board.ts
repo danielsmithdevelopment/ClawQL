@@ -6,7 +6,12 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
-import { clawqlAlwaysRetryArm, clawqlFileJournalArm, naiveRetryArm } from "./file-journal-arm.js";
+import {
+  clawqlAlwaysRetryArm,
+  clawqlCheckThenDecideArm,
+  clawqlFileJournalArm,
+  naiveRetryArm,
+} from "./file-journal-arm.js";
 import {
   golemArm,
   golemClawqlArm,
@@ -21,6 +26,7 @@ import type { ArmResult, ComparisonEvidence, DurabilityArm } from "./types.js";
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
   clawqlAlwaysRetryArm,
+  clawqlCheckThenDecideArm,
   naiveRetryArm,
   programCelldArm,
   piDurableNeverRetryArm,

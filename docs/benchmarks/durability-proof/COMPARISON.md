@@ -40,16 +40,19 @@ Older evidence may still show `outcomeUnknown`; readers should treat it as the i
 
 A never-retry faux model makes Pi Durable look like “0 duplicates, nothing to resolve,” while ClawQL looks like “0 duplicates, N problems.” Both left the charge outcome unknown; only ClawQL labeled it. And Pi’s zero depends on the model choosing not to retry — John’s demos suggest real models often do.
 
-Honest non-idempotent contrast (agent policy × stack) — **measured N=50**:
+Honest non-idempotent contrast (agent policy × stack) — cells are **dup / unk / once** (N=50):
 
-| Arm, non-idempotent API | Model never retries      | Model always retries         |
-| ----------------------- | ------------------------ | ---------------------------- |
-| **Pi Durable**          | 0 dups · unk=50 · once=0 | **50 dups** · unk=0 · once=0 |
-| **ClawQL**              | 0 dups · unk=50 · once=0 | **0 dups** · unk=50 · once=0 |
+| Arm, non-idempotent API (no keys) | Model never retries | Model always retries |
+| --------------------------------- | ------------------- | -------------------- |
+| **Pi Durable**                    | 0 / 50 / 0          | **50 / 0 / 0**       |
+| **Golem** (runtime re-send)       | **50 / 0 / 0**      | **50 / 0 / 0**       |
+| **ClawQL** (structural gate)      | 0 / 50 / 0          | **0 / 50 / 0**       |
 
-ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decision to the model. That is the question for Earendil — alongside whether the faux-model setup is what they’d want, and whether a live-model arm (`pi-durable-real-model`) matches their preferred demo.
+Read all three numbers: ClawQL always-retry is **0 duplicates** and also **50 unknown / 0 completed** — safe but unfinished. Golem retries at the runtime regardless of agent policy, so both columns show duplicates on a server that ignores keys.
 
-**Shrinking ClawQL unknowns next:** idempotency keys already clear the idempotent row (`completedExactlyOnce = N`). For APIs without keys, planned **check-then-decide** (lookup by a reference attached to the request) should resolve most remaining unknowns automatically; only APIs offering neither need a person. See [check-then-decide](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
+ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decision to the model; Golem re-sends at the runtime. That is the question for Earendil / John — alongside whether the faux-model setup is what they’d want, and whether a live-model arm (`pi-durable-real-model`) matches their preferred demo.
+
+**Check-then-decide turns “safe” into “done”** (`clawql-check-then-decide`, measured): on a non-idempotent mock that supports **exact lookup by `clientReference`**, resume finds the charge and reconciles → **0 / 0 / 50**. Pi has no equivalent mechanism; Golem’s only mechanism is the key this server ignores. Only APIs offering neither keys nor lookup still need a person. See [check-then-decide](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
 
 ---
 
@@ -65,30 +68,32 @@ ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decisio
 
 ## Live peer configuration (ask maintainers: “Is this how you’d set it up?”)
 
-| Arm                       | Pinned versions                                                                                  | Configuration under test                                                                                                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pi-durable-never-retry`  | `@earendil-works/pi-durable@1.4.0`, `@earendil-works/pi-ai@1.4.0`, `@earendil-works/chord@1.4.0` | Tool `peer.charge` **`replay: "unsafe"`**. Faux model **never** re-issues after interrupt. SIGKILL mid-execute. Expect 0 dups, interrupted/unknown = N.                                |
-| `pi-durable-always-retry` | same                                                                                             | Same crash; faux model **always** re-issues `peer.charge` after interrupt. Expect non_idempotent → N dups; idempotent → 0 dups via key.                                                |
-| `pi-durable-real-model`   | same + provider key                                                                              | Live LLM after interrupt (`DURABILITY_COMPARISON_PI_REAL_MODEL=1` + `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`). Measures actual retry behavior.                                           |
-| `golem`                   | `golem` CLI **1.6.2**, `@golemcloud/golem-ts-sdk@2.0.2`                                          | Local `golem server`; `WriteAgent` fetch mid-flight + `golem agent simulate-crash`. Recovery re-sends outbound HTTP with the same idempotency key.                                     |
-| `clawql-file-journal`     | in-repo durable runner                                                                           | SIGKILL mid-write. **non_idempotent:** interrupted/unknown, never re-send. **idempotent:** keyed resume → 0 dups, completed exactly once.                                              |
-| `clawql-always-retry`     | in-repo durable runner                                                                           | After resume the agent always re-issues `execute`; structural gate refuses (`mandate_consumed`). Expect **0 duplicates** in both modes — the structural contrast with Pi always-retry. |
+| Arm                        | Pinned versions                                                                                  | Configuration under test                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pi-durable-never-retry`   | `@earendil-works/pi-durable@1.4.0`, `@earendil-works/pi-ai@1.4.0`, `@earendil-works/chord@1.4.0` | Tool `peer.charge` **`replay: "unsafe"`**. Faux model **never** re-issues after interrupt. SIGKILL mid-execute. Expect 0 / N / 0.                                     |
+| `pi-durable-always-retry`  | same                                                                                             | Same crash; faux model **always** re-issues `peer.charge` after interrupt. Expect non_idempotent → N / 0 / 0; idempotent → 0 / 0 / N via key.                         |
+| `pi-durable-real-model`    | same + provider key                                                                              | Live LLM after interrupt (`DURABILITY_COMPARISON_PI_REAL_MODEL=1` + `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`). Measures actual retry rate.                              |
+| `golem`                    | `golem` CLI **1.6.2**, `@golemcloud/golem-ts-sdk@2.0.2`                                          | Local `golem server`; `WriteAgent` fetch mid-flight + `golem agent simulate-crash`. Runtime re-sends; on a key-ignoring server both agent-policy columns show N dups. |
+| `clawql-file-journal`      | in-repo durable runner                                                                           | SIGKILL mid-write. **non_idempotent:** 0 / N / 0. **idempotent:** keyed resume → 0 / 0 / N.                                                                           |
+| `clawql-always-retry`      | in-repo durable runner                                                                           | Agent always re-issues `execute`; gate refuses (`mandate_consumed`). Non_idempotent → **0 / N / 0** (safe, unfinished).                                               |
+| `clawql-check-then-decide` | in-repo durable runner                                                                           | Non-idempotent mock + `clientReference` lookup: find charge after crash → **0 / 0 / N**.                                                                              |
 
 ---
 
 ## Arms
 
-| Arm id                    | Stack / policy                                               |
-| ------------------------- | ------------------------------------------------------------ |
-| `clawql-file-journal`     | Structural at-most-once                                      |
-| `clawql-always-retry`     | Structural gate under always-retry agent                     |
-| `clawql-program-celld`    | ProgramCellDO on celld (Tier B/C; skipped inside Node board) |
-| `pi-durable-never-retry`  | Live Pi + faux never-retry                                   |
-| `pi-durable-always-retry` | Live Pi + faux always-retry                                  |
-| `pi-durable-real-model`   | Live Pi + real LLM (env-gated)                               |
-| `golem`                   | Live local Golem (env-gated)                                 |
-| `pi-durable+clawql`       | Combination — ClawQL gate under always-retry                 |
-| `golem+clawql`            | Combination — ClawQL gate under always-retry                 |
+| Arm id                     | Stack / policy                                               |
+| -------------------------- | ------------------------------------------------------------ |
+| `clawql-file-journal`      | Structural at-most-once                                      |
+| `clawql-always-retry`      | Structural gate under always-retry agent                     |
+| `clawql-check-then-decide` | Lookup-by-reference reconcile (non_idempotent mock)          |
+| `clawql-program-celld`     | ProgramCellDO on celld (Tier B/C; skipped inside Node board) |
+| `pi-durable-never-retry`   | Live Pi + faux never-retry                                   |
+| `pi-durable-always-retry`  | Live Pi + faux always-retry                                  |
+| `pi-durable-real-model`    | Live Pi + real LLM (env-gated)                               |
+| `golem`                    | Live local Golem (env-gated)                                 |
+| `pi-durable+clawql`        | Combination — ClawQL gate under always-retry                 |
+| `golem+clawql`             | Combination — ClawQL gate under always-retry                 |
 
 ---
 
@@ -100,9 +105,9 @@ ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decisio
 | Crash-point label: outside write in flight        | **Shipped**                                              |
 | `clawql-file-journal` keyed resume (idempotent)   | **Shipped**                                              |
 | `clawql-always-retry` structural refusal          | **Shipped**                                              |
+| `clawql-check-then-decide` lookup-by-reference    | **Shipped**                                              |
 | Pi never / always / real-model agent policies     | **Shipped** (real-model env-gated)                       |
 | Pi Durable / Golem live arms                      | **Shipped** behind `DURABILITY_COMPARISON_LIVE_PEERS=1`  |
-| Check-then-decide lookup (shrink unknowns)        | **Planned** — not measured                               |
 | Other four crash-point rows                       | **Not measured**                                         |
 | Evidence                                          | [`comparison/evidence.json`](./comparison/evidence.json) |
 

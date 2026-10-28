@@ -31,6 +31,12 @@ export type OperationRiskHints = {
    * auto-retry after outcome_unknown using `clawql-mandate:<executionId>`.
    */
   readonly idempotencyCapable?: boolean;
+  /**
+   * Downstream can answer “is there an effect with _this_ client reference?”
+   * (exact match). Program durable resume may reconcile in-flight writes via
+   * check-then-decide instead of leaving `outcome_unknown`.
+   */
+  readonly lookupByReferenceCapable?: boolean;
 };
 
 export type OperationRiskOverride = {
