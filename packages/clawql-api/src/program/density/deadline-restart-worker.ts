@@ -14,7 +14,10 @@ if (!dir) {
 
 const capacity = Math.max(1, Number(process.env.CLAWQL_DEADLINE_RESTART_CAPACITY || 10_000));
 const liveCount = Math.max(2, Number(process.env.CLAWQL_DEADLINE_RESTART_LIVE || 100));
-const downtimeHint = Math.max(50, Number(process.env.CLAWQL_DEADLINE_RESTART_DOWNTIME_HINT_MS || 400));
+const downtimeHint = Math.max(
+  50,
+  Number(process.env.CLAWQL_DEADLINE_RESTART_DOWNTIME_HINT_MS || 400)
+);
 
 const now = Date.now();
 // Half become due during parent downtime; half stay future.

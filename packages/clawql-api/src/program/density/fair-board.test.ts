@@ -55,9 +55,14 @@ describe("fair density board (smoke)", () => {
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyPctMet).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.burstPctMet).toBeGreaterThanOrEqual(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.sustainablePerSec).toBeGreaterThanOrEqual(0);
-    expect(clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === null || typeof clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === "number").toBe(true);
+    expect(
+      clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === null ||
+        typeof clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === "number"
+    ).toBe(true);
     expect(clawql?.boardColumns?.deadlineAccuracy?.deadlineRestartOk).toBe(true);
-    expect(clawql?.boardColumns?.deadlineAccuracy?.deadlineRestartRebuildMs).toBeGreaterThanOrEqual(0);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.deadlineRestartRebuildMs).toBeGreaterThanOrEqual(
+      0
+    );
     expect(clawql?.boardColumns?.restartSurvival).toBe(true);
 
     const run = evidence.clawqlRun!;

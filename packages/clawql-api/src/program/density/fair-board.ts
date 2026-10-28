@@ -43,7 +43,10 @@ import {
   type DeadlineSchedule,
   type TriggerFlushPolicy,
 } from "./deadline-schedule.js";
-import { runDeadlineRestartTestEffect, type DeadlineRestartTestResult } from "./deadline-restart.js";
+import {
+  runDeadlineRestartTestEffect,
+  type DeadlineRestartTestResult,
+} from "./deadline-restart.js";
 import { runTriggerJournalCrashTestEffect } from "./trigger-journal-crash.js";
 import {
   createGcRecorderEffect,
@@ -852,10 +855,7 @@ export function runFairDensityBoardEffect(
         deadlineFiredDefinition === "durable_trigger_record" &&
         options.skipDeadlineRestartTest !== true
       ) {
-        const restartCapacity = Math.max(
-          1,
-          options.deadlineRestartCapacity ?? schedule.size()
-        );
+        const restartCapacity = Math.max(1, options.deadlineRestartCapacity ?? schedule.size());
         const restartLive = Math.min(
           restartCapacity,
           Math.max(2, options.deadlineRestartLiveCount ?? Math.min(10_000, restartCapacity))
@@ -1221,9 +1221,7 @@ export function runFairDensityBoardEffect(
         atLimit,
         residentAccounting,
         deadlineScheduleRetainedAtLimit,
-        deadlineAccuracy: deadlineAccuracy
-          ? { ...deadlineAccuracy, deadlineRestart }
-          : null,
+        deadlineAccuracy: deadlineAccuracy ? { ...deadlineAccuracy, deadlineRestart } : null,
         wakeByOrder,
         wakeSpread,
         wakeHeadlineOrder,

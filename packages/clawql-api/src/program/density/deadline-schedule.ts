@@ -793,9 +793,10 @@ export function runDeadlineAccuracyEffect(args: {
     const ids = [...args.agentIds];
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
     // Opt-in: full Ontologiql-sized ladder is multi-minute under group_commit.
-    const skipScaledBursts = args.skipScaledBursts !== false && args.scaledBurstSizes === undefined
-      ? true
-      : args.skipScaledBursts === true;
+    const skipScaledBursts =
+      args.skipScaledBursts !== false && args.scaledBurstSizes === undefined
+        ? true
+        : args.skipScaledBursts === true;
     const scheduler = makeDeadlineSchedulerInfo({
       tickMs,
       concurrency,

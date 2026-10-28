@@ -138,7 +138,9 @@ export function runDeadlineRestartTestEffect(args: {
     // Deadlines fall due during downtime.
     await new Promise<void>((r) => setTimeout(r, downtimeMs));
 
-    const rebuilt = await Effect.runPromise(rebuildDeadlineScheduleFromSnapshotEffect(snapshotPath));
+    const rebuilt = await Effect.runPromise(
+      rebuildDeadlineScheduleFromSnapshotEffect(snapshotPath)
+    );
     const rebuildCompleteAt = Date.now();
     const expectedKeys = new Set(rebuilt.live.map((e) => `${e.agentId}|${e.deadlineMs}`));
 
@@ -227,8 +229,7 @@ export function runDeadlineRestartTestEffect(args: {
     // Sanity: every original live agent accounted as fired or pending.
     for (const k of expectedKeys) {
       const agentId = k.slice(0, k.indexOf("|"));
-      const accounted =
-        (firedKeys.get(agentId) ?? 0) > 0 || pendingAgents.has(agentId);
+      const accounted = (firedKeys.get(agentId) ?? 0) > 0 || pendingAgents.has(agentId);
       if (!accounted) missingLive += 1;
     }
 
