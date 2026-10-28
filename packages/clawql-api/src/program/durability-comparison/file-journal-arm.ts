@@ -1,6 +1,8 @@
 /**
- * ClawQL file-journal kill-mid-write arm + optional naive-retry reference arm.
- * Counts duplicates and outcome_unknown under both upstream modes.
+ * ClawQL file-journal kill-mid-write arms:
+ * - clawql-file-journal: structural at-most-once (never re-send after unknown)
+ * - clawql-always-retry: agent always retries after resume; gate refuses (mandate consumed)
+ * - naive-retry: reference arm that re-sends blindly
  */
 
 import { fork } from "node:child_process";
@@ -12,7 +14,9 @@ import { Effect } from "effect";
 import { resumeProgramEffect } from "../durable-runner.js";
 import { programJournalFileLayer } from "../program-journal.js";
 import type { ProgramHost } from "../program-runner.js";
+import { classifyOutcome, summarizeMode } from "./metrics.js";
 import type {
+  AgentPolicy,
   ArmModeResult,
   ArmResult,
   ComparisonTrial,
@@ -62,14 +66,33 @@ function parseHostLog(raw: string): HostLogLine[] {
 function recordingHost(opts: {
   readonly upstreamMode: UpstreamMode;
   readonly priorEffects: Set<string>;
-}): { host: ProgramHost; executedWrites: string[]; uniqueEffects: Set<string> } {
+  /** When true, further WRITE_OP executes are refused without applying (mandate consumed). */
+  readonly refuseWrites?: boolean;
+}): {
+  host: ProgramHost;
+  executedWrites: string[];
+  uniqueEffects: Set<string>;
+  getRefusedWrites: () => number;
+} {
   const executedWrites: string[] = [];
   const uniqueEffects = new Set(opts.priorEffects);
   let onceCounter = priorEffectsSize(opts.priorEffects);
+  let refusedWrites = 0;
   const host: ProgramHost = {
     execute: (input) =>
       Effect.sync(() => {
         if (input.operationId === WRITE_OP) {
+          if (opts.refuseWrites) {
+            refusedWrites += 1;
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify({ ok: false, status: "mandate_consumed" }),
+                },
+              ],
+            };
+          }
           executedWrites.push(input.operationId);
           const key =
             typeof input.args?.idempotencyKey === "string"
@@ -117,7 +140,7 @@ function recordingHost(opts: {
         idempotencyCapable: opts.upstreamMode === "idempotent" && operationId === WRITE_OP,
       }),
   };
-  return { host, executedWrites, uniqueEffects };
+  return { host, executedWrites, uniqueEffects, getRefusedWrites: () => refusedWrites };
 }
 
 function priorEffectsSize(prior: Set<string>): number {
@@ -148,10 +171,12 @@ function runKillWorker(env: Readonly<Record<string, string>>): Promise<{
   });
 }
 
+type ResumePolicy = "clawql" | "clawql-always-retry" | "naive-retry";
+
 async function oneTrial(input: {
   readonly i: number;
   readonly upstreamMode: UpstreamMode;
-  readonly resumePolicy: "clawql" | "naive-retry";
+  readonly resumePolicy: ResumePolicy;
 }): Promise<ComparisonTrial> {
   const dir = await mkdtemp(join(tmpdir(), `clawql-cmp-${input.i}-`));
   const hostLog = join(dir, "host.log");
@@ -172,9 +197,12 @@ async function oneTrial(input: {
     const priorEffects = new Set(
       before.filter((l) => l.operationId === WRITE_OP && l.applied).map((l) => l.effectId)
     );
+    // After kill, the write mandate is consumed. Keyed resume may still re-drive
+    // through the durable runner; a fresh agent-initiated execute is refused.
     const parent = recordingHost({
       upstreamMode: input.upstreamMode,
       priorEffects,
+      refuseWrites: false,
     });
 
     const resumed = await Effect.runPromise(
@@ -183,6 +211,7 @@ async function oneTrial(input: {
       )
     );
 
+    let refusedWrites = 0;
     if (input.resumePolicy === "naive-retry") {
       await Effect.runPromise(
         parent.host.execute({
@@ -190,78 +219,100 @@ async function oneTrial(input: {
           args: { page: 3, idempotencyKey: "kill-mid-write-key" },
         })
       );
+    } else if (input.resumePolicy === "clawql-always-retry") {
+      // Model always retries: attempt a fresh execute; structural gate refuses.
+      const gated = recordingHost({
+        upstreamMode: input.upstreamMode,
+        priorEffects: parent.uniqueEffects,
+        refuseWrites: true,
+      });
+      await Effect.runPromise(
+        gated.host.execute({
+          operationId: WRITE_OP,
+          args: { page: 3, idempotencyKey: "kill-mid-write-key" },
+        })
+      );
+      refusedWrites = gated.getRefusedWrites();
+      // Merge any accidental effects (should be none when refuseWrites).
+      for (const e of gated.uniqueEffects) parent.uniqueEffects.add(e);
     }
 
     const uniqueWriteEffects = [...parent.uniqueEffects].filter(
       (e) => e.startsWith("idem:") || e.startsWith("once:")
     ).length;
     const writeAppliedBefore = before.some((l) => l.operationId === WRITE_OP && l.applied);
-    // Extra unique effects beyond the first applied write (keyed resume must not add one).
     const duplicates = Math.max(0, uniqueWriteEffects - (writeAppliedBefore ? 1 : 0));
-    const outcomeUnknown = resumed.calls.filter((c) => c.status === "outcome_unknown").length;
+    const outcomeUnknownCalls = resumed.calls.filter((c) => c.status === "outcome_unknown").length;
     const lost = !writeAppliedBefore && duplicates === 0 ? 1 : 0;
 
+    const keyedResolved =
+      input.upstreamMode === "idempotent" &&
+      outcomeUnknownCalls === 0 &&
+      uniqueWriteEffects === 1 &&
+      duplicates === 0;
+
+    const interruptedOrUnknown = outcomeUnknownCalls > 0;
+    const completedKnownSuccess = keyedResolved;
+
+    const classified = classifyOutcome({
+      uniqueWriteEffects,
+      duplicates,
+      interruptedOrUnknown,
+      completedKnownSuccess,
+    });
+
     const ok =
-      input.resumePolicy === "clawql"
-        ? input.upstreamMode === "idempotent"
+      input.resumePolicy === "naive-retry"
+        ? child.signal === "SIGKILL" && writeAppliedBefore && parent.executedWrites.length >= 1
+        : input.resumePolicy === "clawql-always-retry"
           ? child.signal === "SIGKILL" &&
             writeAppliedBefore &&
             duplicates === 0 &&
-            outcomeUnknown === 0 &&
-            uniqueWriteEffects === 1
-          : child.signal === "SIGKILL" &&
-            writeAppliedBefore &&
-            duplicates === 0 &&
-            outcomeUnknown >= 1 &&
-            resumed.ok === false
-        : child.signal === "SIGKILL" && writeAppliedBefore && parent.executedWrites.length >= 1;
+            refusedWrites >= 1 &&
+            (input.upstreamMode === "idempotent"
+              ? classified.interruptedOrUnknown === 0 && classified.completedExactlyOnce === 1
+              : classified.interruptedOrUnknown >= 1)
+          : input.upstreamMode === "idempotent"
+            ? child.signal === "SIGKILL" &&
+              writeAppliedBefore &&
+              duplicates === 0 &&
+              classified.interruptedOrUnknown === 0 &&
+              uniqueWriteEffects === 1
+            : child.signal === "SIGKILL" &&
+              writeAppliedBefore &&
+              duplicates === 0 &&
+              classified.interruptedOrUnknown >= 1 &&
+              resumed.ok === false;
 
     return {
       i: input.i,
       ok,
-      duplicates,
-      outcomeUnknown,
+      ...classified,
       lost,
       uniqueWriteEffects,
       childSignal: child.signal,
       detail: ok
-        ? `${input.resumePolicy}/${input.upstreamMode}: duplicates=${duplicates} unknown=${outcomeUnknown} effects=${uniqueWriteEffects}`
-        : `fail signal=${child.signal} duplicates=${duplicates} unknown=${outcomeUnknown} stderr=${child.stderr.slice(0, 80)}`,
+        ? `${input.resumePolicy}/${input.upstreamMode}: dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} once=${classified.completedExactlyOnce} effects=${uniqueWriteEffects} refused=${refusedWrites}`
+        : `fail signal=${child.signal} dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} stderr=${child.stderr.slice(0, 80)}`,
     };
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
 
-function summarizeMode(
-  upstreamMode: UpstreamMode,
-  trials: readonly ComparisonTrial[],
-  requireZeroDuplicates: boolean
-): ArmModeResult {
-  const n = trials.length;
-  const duplicates = trials.reduce((s, t) => s + t.duplicates, 0);
-  const outcomeUnknown = trials.reduce((s, t) => s + t.outcomeUnknown, 0);
-  const lost = trials.reduce((s, t) => s + t.lost, 0);
-  const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
-  const trialsOk = trials.filter((t) => t.ok).length;
-  const trialsFailed = n - trialsOk;
-  const harnessValid = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
-  return {
-    upstreamMode,
-    n,
-    duplicates,
-    outcomeUnknown,
-    lost,
-    uniqueWriteEffects,
-    trialsOk,
-    trialsFailed,
-    harnessValid,
-    trials: n <= 100 ? trials : trials.filter((t) => !t.ok).slice(0, 20),
-  };
-}
-
-function makeFileJournalArm(resumePolicy: "clawql" | "naive-retry"): DurabilityArm {
-  const id = resumePolicy === "clawql" ? "clawql-file-journal" : "naive-retry";
+function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
+  const id =
+    resumePolicy === "clawql"
+      ? ("clawql-file-journal" as const)
+      : resumePolicy === "clawql-always-retry"
+        ? ("clawql-always-retry" as const)
+        : ("naive-retry" as const);
+  const agentPolicy: AgentPolicy =
+    resumePolicy === "clawql"
+      ? "structural"
+      : resumePolicy === "clawql-always-retry"
+        ? "always-retry"
+        : "always-retry";
   return {
     id,
     run: ({ n }) =>
@@ -273,22 +324,40 @@ function makeFileJournalArm(resumePolicy: "clawql" | "naive-retry"): DurabilityA
             for (let i = 0; i < n; i++) {
               trials.push(await oneTrial({ i, upstreamMode, resumePolicy }));
             }
-            modes.push(summarizeMode(upstreamMode, trials, resumePolicy === "clawql"));
+            modes.push(
+              summarizeMode(
+                upstreamMode,
+                trials,
+                resumePolicy === "clawql" || resumePolicy === "clawql-always-retry"
+              )
+            );
           }
           if (resumePolicy === "clawql") {
             return {
               armId: id,
               status: "measured",
+              agentPolicy,
               honesty:
-                "ClawQL file-journal (crash during outside write): non_idempotent → outcome_unknown, never re-send. idempotent → keyed resume with plan idempotencyKey (0 dups, 0 unknowns).",
+                "ClawQL structural (crash during outside write): non_idempotent → interrupted/unknown, never re-send. idempotent → keyed resume (0 dups, completed exactly once). Agent policy does not matter for re-send — the gate already consumed the approval.",
+              modes,
+            };
+          }
+          if (resumePolicy === "clawql-always-retry") {
+            return {
+              armId: id,
+              status: "measured",
+              agentPolicy,
+              honesty:
+                "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates even when the model always retries — the contrast with Pi Durable always-retry.",
               modes,
             };
           }
           return {
             armId: id,
             status: "measured",
+            agentPolicy,
             honesty:
-              "Reference arm: forces write re-send after kill. Idempotent upstream can mask duplicates; non_idempotent multiplies effects. Not ClawQL product behavior.",
+              "Reference arm: forces write re-send after kill (no gate). Idempotent upstream can mask duplicates; non_idempotent multiplies effects. Not ClawQL product behavior.",
             modes,
           };
         },
@@ -298,4 +367,5 @@ function makeFileJournalArm(resumePolicy: "clawql" | "naive-retry"): DurabilityA
 }
 
 export const clawqlFileJournalArm = makeFileJournalArm("clawql");
+export const clawqlAlwaysRetryArm = makeFileJournalArm("clawql-always-retry");
 export const naiveRetryArm = makeFileJournalArm("naive-retry");

@@ -3,6 +3,11 @@
  *
  * Enable with DURABILITY_COMPARISON_LIVE_PEERS=1 (requires golem server + Node ≥24
  * for the Golem fixture build/deploy). Without that env, arms stay pending_invite.
+ *
+ * Pi Durable is measured under three agent policies:
+ * - never-retry (faux): scripted model finishes without re-issuing peer.charge
+ * - always-retry (faux): scripted model always re-issues peer.charge after interrupt
+ * - real-model: live LLM (env-gated by API key); otherwise pending_invite
  */
 
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
@@ -12,12 +17,20 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import { Type, fauxAssistantMessage, fauxProvider, fauxText } from "@earendil-works/pi-ai";
+import {
+  Type,
+  fauxAssistantMessage,
+  fauxProvider,
+  fauxText,
+  fauxToolCall,
+} from "@earendil-works/pi-ai";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { createRegistry, defineExtension, defineTool, Harness } from "@earendil-works/pi-durable";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { Effect } from "effect";
+import { classifyOutcome, summarizeMode } from "./metrics.js";
 import type {
+  AgentPolicy,
   ArmId,
   ArmModeResult,
   ArmResult,
@@ -42,31 +55,46 @@ function golemBin(env: NodeJS.ProcessEnv = process.env): string {
   return env.GOLEM_BIN?.trim() || "golem";
 }
 
-function summarizeMode(
-  upstreamMode: UpstreamMode,
-  trials: readonly ComparisonTrial[]
-): ArmModeResult {
-  const n = trials.length;
-  const duplicates = trials.reduce((s, t) => s + t.duplicates, 0);
-  const outcomeUnknown = trials.reduce((s, t) => s + t.outcomeUnknown, 0);
-  const lost = trials.reduce((s, t) => s + t.lost, 0);
-  const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
-  const trialsOk = trials.filter((t) => t.ok).length;
+function realModelReady(env: NodeJS.ProcessEnv = process.env): {
+  ready: boolean;
+  provider: string;
+  modelId: string;
+  reason: string;
+} {
+  if (env.DURABILITY_COMPARISON_PI_REAL_MODEL !== "1") {
+    return {
+      ready: false,
+      provider: "",
+      modelId: "",
+      reason:
+        "Set DURABILITY_COMPARISON_PI_REAL_MODEL=1 plus a provider API key (OPENAI_API_KEY / ANTHROPIC_API_KEY) to measure a live LLM retry decision.",
+    };
+  }
+  if (env.OPENAI_API_KEY?.trim()) {
+    return {
+      ready: true,
+      provider: env.DURABILITY_COMPARISON_PI_PROVIDER?.trim() || "openai",
+      modelId: env.DURABILITY_COMPARISON_PI_MODEL?.trim() || "gpt-4o-mini",
+      reason: "openai",
+    };
+  }
+  if (env.ANTHROPIC_API_KEY?.trim()) {
+    return {
+      ready: true,
+      provider: env.DURABILITY_COMPARISON_PI_PROVIDER?.trim() || "anthropic",
+      modelId: env.DURABILITY_COMPARISON_PI_MODEL?.trim() || "claude-haiku-4-5-20251001",
+      reason: "anthropic",
+    };
+  }
   return {
-    upstreamMode,
-    n,
-    duplicates,
-    outcomeUnknown,
-    lost,
-    uniqueWriteEffects,
-    trialsOk,
-    trialsFailed: n - trialsOk,
-    harnessValid: n - trialsOk === 0,
-    trials: n <= 100 ? trials : trials.filter((t) => !t.ok).slice(0, 20),
+    ready: false,
+    provider: "",
+    modelId: "",
+    reason: "DURABILITY_COMPARISON_PI_REAL_MODEL=1 but no OPENAI_API_KEY / ANTHROPIC_API_KEY.",
   };
 }
 
-function pendingArm(id: ArmId, honesty: string): DurabilityArm {
+function pendingArm(id: ArmId, honesty: string, agentPolicy?: AgentPolicy): DurabilityArm {
   return {
     id,
     run: () =>
@@ -74,6 +102,7 @@ function pendingArm(id: ArmId, honesty: string): DurabilityArm {
         armId: id,
         status: "pending_invite",
         honesty,
+        agentPolicy,
         modes: [],
       } satisfies ArmResult),
   };
@@ -198,7 +227,6 @@ async function oneGolemTrial(input: {
   const holdMs = 5000;
   let invokeChild: ChildProcess | null = null;
   try {
-    // Invoke must stay in-flight during simulate-crash. spawnSync would wait out the hold.
     const bin = golemBin(input.env);
     let invokeOut = "";
     let spawnErr: Error | null = null;
@@ -212,7 +240,6 @@ async function oneGolemTrial(input: {
         "-t",
         `WriteAgent("${trialId}")`,
         "charge",
-        // Golem CLI expects Rib string/enum literals, including quote characters.
         `"${ledger.url}"`,
         `"${key}"`,
         `"${input.upstreamMode}"`,
@@ -252,6 +279,8 @@ async function oneGolemTrial(input: {
         i: input.i,
         ok: false,
         duplicates: 0,
+        interruptedOrUnknown: 0,
+        completedExactlyOnce: 0,
         outcomeUnknown: 0,
         lost: 0,
         uniqueWriteEffects: 0,
@@ -271,6 +300,8 @@ async function oneGolemTrial(input: {
         i: input.i,
         ok: false,
         duplicates: 0,
+        interruptedOrUnknown: 0,
+        completedExactlyOnce: 0,
         outcomeUnknown: 0,
         lost: 0,
         uniqueWriteEffects: ledger.state.effects.length,
@@ -279,12 +310,11 @@ async function oneGolemTrial(input: {
       };
     }
 
-    // Recovery re-send: non_idempotent expects a second unique effect.
     const want = input.upstreamMode === "idempotent" ? 1 : 2;
     try {
       await waitForEffects(ledger.url, want, 20_000);
     } catch {
-      /* fall through to ok check with whatever landed */
+      /* fall through */
     }
     await new Promise<void>((resolve) => {
       if (!invokeChild || invokeChild.exitCode !== null || invokeChild.signalCode) resolve();
@@ -294,8 +324,14 @@ async function oneGolemTrial(input: {
 
     const uniqueWriteEffects = new Set(ledger.state.effects.map((e) => e.effectId)).size;
     const requestCount = ledger.state.effects.length;
-    // Board "duplicates" = extra effects beyond the first (same as Pi / ClawQL arms).
     const duplicates = Math.max(0, uniqueWriteEffects - 1);
+    // Golem recovery finishes the work with a known outcome (retry or dedupe).
+    const classified = classifyOutcome({
+      uniqueWriteEffects,
+      duplicates,
+      interruptedOrUnknown: false,
+      completedKnownSuccess: uniqueWriteEffects === 1 && duplicates === 0,
+    });
     const ok =
       input.upstreamMode === "idempotent"
         ? uniqueWriteEffects === 1 && requestCount >= 1
@@ -303,13 +339,12 @@ async function oneGolemTrial(input: {
     return {
       i: input.i,
       ok,
-      duplicates,
-      outcomeUnknown: 0,
+      ...classified,
       lost: 0,
       uniqueWriteEffects,
       childSignal: "SIMULATE_CRASH",
       detail: ok
-        ? `golem/${input.upstreamMode}: requests=${requestCount} unique=${uniqueWriteEffects}`
+        ? `golem/${input.upstreamMode}: requests=${requestCount} unique=${uniqueWriteEffects} once=${classified.completedExactlyOnce}`
         : `fail golem/${input.upstreamMode}: requests=${requestCount} unique=${uniqueWriteEffects} out=${invokeOut.slice(0, 80)}`,
     };
   } finally {
@@ -359,17 +394,61 @@ function makeGolemLiveArm(): DurabilityArm {
   };
 }
 
-// --- Pi Durable live arm -----------------------------------------------------
+// --- Pi Durable effects file (idempotent-aware) ------------------------------
+
+type PiEffect = { readonly effectId: string; readonly key: string };
+
+async function readPiEffects(path: string): Promise<PiEffect[]> {
+  const raw = await readFile(path, "utf8").catch(() => "[]");
+  const parsed = JSON.parse(raw) as unknown;
+  if (!Array.isArray(parsed)) return [];
+  return parsed.map((item, idx) => {
+    if (typeof item === "string") return { effectId: item, key: item };
+    if (item && typeof item === "object" && "effectId" in item) {
+      const o = item as { effectId: string; key?: string };
+      return { effectId: o.effectId, key: o.key ?? o.effectId };
+    }
+    return { effectId: `legacy-${idx}`, key: `legacy-${idx}` };
+  });
+}
+
+async function appendPiEffect(
+  path: string,
+  upstreamMode: UpstreamMode,
+  key: string
+): Promise<{ effectId: string; applied: boolean }> {
+  const list = await readPiEffects(path);
+  if (upstreamMode === "idempotent") {
+    const effectId = `idem:${key}`;
+    if (list.some((e) => e.effectId === effectId)) {
+      return { effectId, applied: false };
+    }
+    list.push({ effectId, key });
+    await writeFile(path, JSON.stringify(list), "utf8");
+    return { effectId, applied: true };
+  }
+  const effectId = `once:${list.length + 1}`;
+  list.push({ effectId, key });
+  await writeFile(path, JSON.stringify(list), "utf8");
+  return { effectId, applied: true };
+}
+
+// --- Pi Durable live arms ----------------------------------------------------
+
+type PiAgentPolicy = "never-retry" | "always-retry" | "real-model";
 
 async function onePiTrial(input: {
   readonly i: number;
   readonly upstreamMode: UpstreamMode;
+  readonly agentPolicy: PiAgentPolicy;
+  readonly realModel?: { provider: string; modelId: string };
 }): Promise<ComparisonTrial> {
   const dir = await mkdtemp(join(tmpdir(), "pi-durable-peer-"));
   const dbPath = join(dir, "session.sqlite");
   const signalPath = join(dir, "effect.ready");
   const effectsPath = join(dir, "effects.json");
   const taskIdPath = join(dir, "task.id");
+  const chargeKey = `pi-key-${input.i}`;
 
   const child: ChildProcess = spawn(
     process.execPath,
@@ -382,6 +461,8 @@ async function onePiTrial(input: {
         PI_EFFECTS_PATH: effectsPath,
         PI_TASK_ID_PATH: taskIdPath,
         PI_HOLD_MS: "3000",
+        PI_UPSTREAM_MODE: input.upstreamMode,
+        PI_CHARGE_KEY: chargeKey,
       },
       stdio: ["ignore", "ignore", "pipe"],
     }
@@ -414,54 +495,104 @@ async function onePiTrial(input: {
   });
 
   const context = BACKGROUND_CONTEXT;
-  const effectsBefore = JSON.parse(
-    await readFile(effectsPath, "utf8").catch(() => "[]")
-  ) as string[];
+  const effectsBefore = await readPiEffects(effectsPath);
 
-  // Reopen with the same tool definition. Faux model only finishes the turn;
-  // it must not re-issue peer.charge (that would be our stand-in, not Pi).
+  let resumeChargeCalls = 0;
   const Charge = defineTool({
     name: "peer.charge",
-    description: "Apply one outside write (resume path — must not re-run after unsafe interrupt)",
+    description:
+      "Apply one outside payment/charge. If a prior charge was interrupted, calling again may double-charge.",
     parameters: Type.Object({
       effectsPath: Type.String(),
       signalPath: Type.String(),
       holdMs: Type.Number(),
+      key: Type.Optional(Type.String()),
     }),
     replay: "unsafe",
     execute: async (args) => {
-      const list = JSON.parse(
-        await readFile(args.effectsPath, "utf8").catch(() => "[]")
-      ) as string[];
-      list.push(`effect-${list.length + 1}`);
-      await writeFile(effectsPath, JSON.stringify(list), "utf8");
-      return { output: [{ type: "text" as const, text: "charged-resume" }] };
+      resumeChargeCalls += 1;
+      const key = typeof args.key === "string" && args.key ? args.key : chargeKey;
+      const result = await appendPiEffect(effectsPath, input.upstreamMode, key);
+      return {
+        output: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ charged: true, ...result }),
+          },
+        ],
+      };
     },
   });
   const ext = defineExtension({ name: "peer", tools: [Charge] });
   const registry = createRegistry();
   registry.install(ext);
-  const faux = fauxProvider({ models: [{ id: "peer-test", name: "peer-test" }] });
-  faux.setResponses([
-    fauxAssistantMessage([fauxText("done after interrupt")], { stopReason: "stop" }),
-  ]);
+
   const models = createModels();
-  models.setProvider(faux.provider);
+  let modelRef: { provider: string; modelId: string };
+
+  if (input.agentPolicy === "real-model" && input.realModel) {
+    modelRef = { provider: input.realModel.provider, modelId: input.realModel.modelId };
+  } else {
+    const faux = fauxProvider({ models: [{ id: "peer-test", name: "peer-test" }] });
+    if (input.agentPolicy === "always-retry") {
+      // Worst case: after interrupt, model always re-issues the charge, then stops.
+      faux.setResponses([
+        fauxAssistantMessage(
+          [
+            fauxToolCall("peer.charge", {
+              effectsPath,
+              signalPath,
+              holdMs: 10,
+              key: chargeKey,
+            }),
+          ],
+          { stopReason: "toolUse" }
+        ),
+        fauxAssistantMessage([fauxText("retried charge after interrupt")], {
+          stopReason: "stop",
+        }),
+      ]);
+    } else {
+      // Never retries: finish without re-issuing peer.charge.
+      faux.setResponses([
+        fauxAssistantMessage([fauxText("done after interrupt — not retrying charge")], {
+          stopReason: "stop",
+        }),
+      ]);
+    }
+    models.setProvider(faux.provider);
+    modelRef = { provider: "faux", modelId: "peer-test" };
+  }
+
   const harness = await Harness.open(
     await openNodeSqliteStorage(dbPath),
     { models, registry, settings: { extensions: [ext] } },
     context
   );
-  await harness.root(context, {
+  const root = await harness.root(context, {
     agent: {
-      model: { provider: "faux", modelId: "peer-test" },
+      model: modelRef,
       extensions: [ext],
       tools: [Charge],
     },
   });
+
+  if (input.agentPolicy === "real-model") {
+    // Nudge the live model with an explicit follow-up after resume so we observe
+    // whether it re-issues peer.charge when told the prior tool was interrupted.
+    await root.submit(
+      {
+        type: "input",
+        content:
+          "The previous peer.charge tool call was interrupted mid-flight. You do not know whether the payment landed. Decide whether to call peer.charge again or stop. Prefer not double-charging if unsure.",
+        requestId: `peer-real-${input.i}`,
+      },
+      context
+    );
+  }
+
   harness.resume();
-  // Let ToolTask recovery settle (interrupted, no re-execute) and any follow-up generation finish.
-  const settleDeadline = Date.now() + 10_000;
+  const settleDeadline = Date.now() + (input.agentPolicy === "real-model" ? 60_000 : 10_000);
   while (Date.now() < settleDeadline) {
     const snap = await harness.inspect(context);
     const live = snap.tasks.some((t) => t.state.kind === "ready" || t.state.kind === "running");
@@ -469,38 +600,118 @@ async function onePiTrial(input: {
     await new Promise((r) => setTimeout(r, 50));
   }
   await new Promise((r) => setTimeout(r, 200));
-  const effectsAfter = JSON.parse(
-    await readFile(effectsPath, "utf8").catch(() => "[]")
-  ) as string[];
+  const effectsAfter = await readPiEffects(effectsPath);
   await harness.close(context);
   await rm(dir, { recursive: true, force: true }).catch(() => undefined);
 
-  const uniqueWriteEffects = effectsAfter.length;
+  const uniqueWriteEffects = new Set(effectsAfter.map((e) => e.effectId)).size;
   const duplicates = Math.max(0, uniqueWriteEffects - 1);
-  // Both upstream modes: unsafe tool → interrupted, no automatic re-execute → 1 effect.
-  const ok = effectsBefore.length >= 1 && uniqueWriteEffects === 1 && duplicates === 0;
+  // Idempotent upstream may dedupe; count resume tool calls, not effect-file growth.
+  const retried = resumeChargeCalls >= 1;
+  // Never-retry (and real-model that chooses not to retry): outcome still unknown
+  // to the agent even though one effect may have landed.
+  const leftUnknown =
+    input.agentPolicy === "never-retry" || (input.agentPolicy === "real-model" && !retried);
+  const classified = classifyOutcome({
+    uniqueWriteEffects,
+    duplicates,
+    interruptedOrUnknown: leftUnknown && effectsBefore.length >= 1,
+    completedKnownSuccess:
+      !leftUnknown && uniqueWriteEffects === 1 && duplicates === 0 && effectsBefore.length >= 1,
+  });
+
+  const ok =
+    effectsBefore.length >= 1 &&
+    (input.agentPolicy === "never-retry"
+      ? uniqueWriteEffects === 1 &&
+        duplicates === 0 &&
+        classified.interruptedOrUnknown === 1 &&
+        resumeChargeCalls === 0
+      : input.agentPolicy === "always-retry"
+        ? input.upstreamMode === "non_idempotent"
+          ? uniqueWriteEffects === 2 &&
+            duplicates === 1 &&
+            classified.interruptedOrUnknown === 0 &&
+            retried
+          : uniqueWriteEffects === 1 &&
+            duplicates === 0 &&
+            classified.completedExactlyOnce === 1 &&
+            retried
+        : // real-model: harness valid if we observed a settled trial with ≥1 prior effect
+          uniqueWriteEffects >= 1);
 
   return {
     i: input.i,
     ok,
-    duplicates,
-    outcomeUnknown: 0,
+    ...classified,
     lost: 0,
     uniqueWriteEffects,
     childSignal: "SIGKILL",
     detail: ok
-      ? `pi-durable/${input.upstreamMode}: replay=unsafe interrupted; before=${effectsBefore.length} after=${uniqueWriteEffects}`
-      : `fail pi-durable/${input.upstreamMode}: before=${effectsBefore.length} after=${uniqueWriteEffects} stderr=${stderr.slice(0, 120)}`,
+      ? `pi/${input.agentPolicy}/${input.upstreamMode}: before=${effectsBefore.length} after=${effectsAfter.length} unique=${uniqueWriteEffects} unk=${classified.interruptedOrUnknown} once=${classified.completedExactlyOnce} resumeCalls=${resumeChargeCalls}`
+      : `fail pi/${input.agentPolicy}/${input.upstreamMode}: before=${effectsBefore.length} after=${effectsAfter.length} unique=${uniqueWriteEffects} resumeCalls=${resumeChargeCalls} stderr=${stderr.slice(0, 120)}`,
   };
 }
 
-function makePiLiveArm(): DurabilityArm {
+function makePiLiveArm(
+  agentPolicy: PiAgentPolicy,
+  armId: ArmId
+): DurabilityArm {
+  if (agentPolicy === "real-model") {
+    return {
+      id: armId,
+      run: ({ n }) => {
+        if (!livePeersEnabled()) {
+          return pendingArm(
+            armId,
+            "Set DURABILITY_COMPARISON_LIVE_PEERS=1 and DURABILITY_COMPARISON_PI_REAL_MODEL=1 with a provider API key.",
+            "real-model"
+          ).run({ n });
+        }
+        const model = realModelReady();
+        if (!model.ready) {
+          return pendingArm(armId, model.reason, "real-model").run({ n });
+        }
+        return Effect.tryPromise({
+          try: async (): Promise<ArmResult> => {
+            const modes: ArmModeResult[] = [];
+            for (const upstreamMode of ["idempotent", "non_idempotent"] as const) {
+              const trials: ComparisonTrial[] = [];
+              for (let i = 0; i < n; i++) {
+                trials.push(
+                  await onePiTrial({
+                    i,
+                    upstreamMode,
+                    agentPolicy: "real-model",
+                    realModel: { provider: model.provider, modelId: model.modelId },
+                  })
+                );
+              }
+              modes.push(summarizeMode(upstreamMode, trials));
+            }
+            return {
+              armId,
+              status: "measured",
+              agentPolicy: "real-model",
+              config: `@earendil-works/pi-durable@1.4.0; replay=unsafe; live ${model.provider}/${model.modelId}`,
+              honesty:
+                "Live Pi Durable + real model after interrupt. Measures whether the model re-issues peer.charge when told the prior tool was interrupted. Ask Earendil whether this is the setup they want for outreach.",
+              modes,
+            };
+          },
+          catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+        }).pipe(Effect.orDie);
+      },
+    };
+  }
+
   const pending = pendingArm(
-    "pi-durable",
-    "Set DURABILITY_COMPARISON_LIVE_PEERS=1 to measure real @earendil-works/pi-durable crash→resume."
+    armId,
+    "Set DURABILITY_COMPARISON_LIVE_PEERS=1 to measure real @earendil-works/pi-durable crash→resume.",
+    agentPolicy
   );
   return {
-    id: "pi-durable",
+    id: armId,
     run: ({ n }) => {
       if (!livePeersEnabled()) return pending.run({ n });
       return Effect.tryPromise({
@@ -509,17 +720,20 @@ function makePiLiveArm(): DurabilityArm {
           for (const upstreamMode of ["idempotent", "non_idempotent"] as const) {
             const trials: ComparisonTrial[] = [];
             for (let i = 0; i < n; i++) {
-              trials.push(await onePiTrial({ i, upstreamMode }));
+              trials.push(await onePiTrial({ i, upstreamMode, agentPolicy }));
             }
             modes.push(summarizeMode(upstreamMode, trials));
           }
+          const honesty =
+            agentPolicy === "never-retry"
+              ? "Pi Durable + faux model that never retries after interrupt. Tool peer.charge replay=unsafe; SIGKILL mid-execute; resume reports interrupted and does not re-run. Zero duplicates — but interrupted/unknown = N and completed-exactly-once = 0. Safety here is entirely the model's choice not to retry."
+              : "Pi Durable + faux model that always retries after interrupt (worst case). Expect non_idempotent → N duplicates; idempotent → 0 duplicates via upstream key. Shows that Pi's zero-dup never-retry arm depends on the model, not a structural gate.";
           return {
-            armId: "pi-durable",
+            armId,
             status: "measured",
-            config:
-              "@earendil-works/pi-durable@1.4.0; tool peer.charge replay=unsafe; faux model (not a live LLM); SIGKILL mid-execute",
-            honesty:
-              "Live @earendil-works/pi-durable@1.4.0 (crash during outside write): tool peer.charge replay=unsafe; faux model issues one call; SIGKILL mid-execute; resume reports interrupted and does not re-run. No live LLM retry in the loop. Upstream mode does not change this arm (Pi's safety is the no-rerun rule).",
+            agentPolicy,
+            config: `@earendil-works/pi-durable@1.4.0; tool peer.charge replay=unsafe; faux model agentPolicy=${agentPolicy}; SIGKILL mid-execute`,
+            honesty,
             modes,
           };
         },
@@ -529,20 +743,20 @@ function makePiLiveArm(): DurabilityArm {
   };
 }
 
-/** Combination arms: ClawQL gate closes non-idempotent Golem retries (ClawQL side measured). */
+/** Combination arms: ClawQL gate closes non-idempotent retries (ClawQL side measured). */
 function makeComboArm(id: "golem+clawql" | "pi-durable+clawql"): DurabilityArm {
-  // Reuse ClawQL file-journal path via dynamic import to avoid circular deps at module load.
   return {
     id,
     run: ({ n }) =>
       Effect.tryPromise({
         try: async (): Promise<ArmResult> => {
-          const { clawqlFileJournalArm } = await import("./file-journal-arm.js");
-          const base = await Effect.runPromise(clawqlFileJournalArm.run({ n }));
+          const { clawqlAlwaysRetryArm } = await import("./file-journal-arm.js");
+          const base = await Effect.runPromise(clawqlAlwaysRetryArm.run({ n }));
           return {
             armId: id,
             status: "measured",
-            honesty: `${id}: ClawQL tool-gate side of the combination (approval consumed → outcome_unknown, never re-send). Peer→MCP live bridge still open; this measures the ClawQL refusal that closes non-idempotent retries.`,
+            agentPolicy: "always-retry",
+            honesty: `${id}: ClawQL tool-gate side of the combination under always-retry (approval consumed → refuse). Peer→MCP live bridge still open; this measures the structural refusal that closes non-idempotent retries.`,
             modes: base.modes,
           };
         },
@@ -552,6 +766,10 @@ function makeComboArm(id: "golem+clawql" | "pi-durable+clawql"): DurabilityArm {
 }
 
 export const golemArm = makeGolemLiveArm();
-export const piDurableArm = makePiLiveArm();
+export const piDurableNeverRetryArm = makePiLiveArm("never-retry", "pi-durable-never-retry");
+export const piDurableAlwaysRetryArm = makePiLiveArm("always-retry", "pi-durable-always-retry");
+export const piDurableRealModelArm = makePiLiveArm("real-model", "pi-durable-real-model");
+/** @deprecated Prefer piDurableNeverRetryArm — kept for tests / older imports. */
+export const piDurableArm = piDurableNeverRetryArm;
 export const golemClawqlArm = makeComboArm("golem+clawql");
 export const piDurableClawqlArm = makeComboArm("pi-durable+clawql");

@@ -3,10 +3,26 @@
  */
 
 import { Effect } from "effect";
-import { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm } from "./peer-live-arms.js";
+import {
+  golemArm,
+  golemClawqlArm,
+  piDurableAlwaysRetryArm,
+  piDurableArm,
+  piDurableClawqlArm,
+  piDurableNeverRetryArm,
+  piDurableRealModelArm,
+} from "./peer-live-arms.js";
 import type { ArmResult, DurabilityArm } from "./types.js";
 
-export { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm };
+export {
+  golemArm,
+  golemClawqlArm,
+  piDurableAlwaysRetryArm,
+  piDurableArm,
+  piDurableClawqlArm,
+  piDurableNeverRetryArm,
+  piDurableRealModelArm,
+};
 
 export const programCelldArm: DurabilityArm = {
   id: "clawql-program-celld",

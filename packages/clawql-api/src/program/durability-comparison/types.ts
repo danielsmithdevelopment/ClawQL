@@ -8,10 +8,22 @@ import { Effect } from "effect";
 
 export type UpstreamMode = "idempotent" | "non_idempotent";
 
+/**
+ * How the agent behaves after an interrupted / unknown outside write.
+ * - structural: ClawQL gate — retry refused regardless of model intent
+ * - never-retry / always-retry: scripted faux agent
+ * - real-model: live LLM (env-gated)
+ */
+export type AgentPolicy = "structural" | "never-retry" | "always-retry" | "real-model";
+
 export type ArmId =
   | "clawql-file-journal"
+  | "clawql-always-retry"
   | "clawql-program-celld"
   | "naive-retry"
+  | "pi-durable-never-retry"
+  | "pi-durable-always-retry"
+  | "pi-durable-real-model"
   | "pi-durable"
   | "golem"
   | "pi-durable+clawql"
@@ -31,6 +43,14 @@ export type ComparisonTrial = {
   readonly i: number;
   readonly ok: boolean;
   readonly duplicates: number;
+  /** Trials where recovery left the outcome unknown / tool interrupted (same class of problem). */
+  readonly interruptedOrUnknown: number;
+  /**
+   * Trials where the outside write landed exactly once **and** the task finished
+   * with a known success (not interrupted / unknown).
+   */
+  readonly completedExactlyOnce: number;
+  /** @deprecated Prefer interruptedOrUnknown — kept for older evidence readers. */
   readonly outcomeUnknown: number;
   readonly lost: number;
   readonly uniqueWriteEffects: number;
@@ -42,6 +62,9 @@ export type ArmModeResult = {
   readonly upstreamMode: UpstreamMode;
   readonly n: number;
   readonly duplicates: number;
+  readonly interruptedOrUnknown: number;
+  readonly completedExactlyOnce: number;
+  /** @deprecated Prefer interruptedOrUnknown. */
   readonly outcomeUnknown: number;
   readonly lost: number;
   readonly uniqueWriteEffects: number;
@@ -61,6 +84,7 @@ export type ArmResult = {
   readonly honesty: string;
   /** Pinned versions / config string for maintainer review. */
   readonly config?: string;
+  readonly agentPolicy?: AgentPolicy;
   readonly modes: readonly ArmModeResult[];
 };
 
@@ -70,10 +94,10 @@ export type ComparisonEvidence = {
   readonly crashPointNote: string;
   readonly otherCrashPointsNotMeasured: readonly CrashPointId[];
   readonly measuredAt: string;
-  readonly metric: "duplicates + outcome_unknown (+ lost); both upstream modes";
+  readonly metric: "duplicates + interrupted_or_unknown + completed_exactly_once; both upstream modes; agent policies";
   readonly honesty: string;
   readonly arms: readonly ArmResult[];
-  /** ClawQL file-journal: harnessValid and zero duplicates in both modes. */
+  /** ClawQL structural arms: harnessValid and zero duplicates in both modes. */
   readonly clawqlAtMostOnce: boolean;
 };
 

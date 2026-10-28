@@ -12,15 +12,24 @@ import {
 const out = process.argv[2] ?? defaultComparisonEvidencePath();
 const evidence = await Effect.runPromise(runDurabilityComparisonBoardEffect());
 const path = writeComparisonEvidence(evidence, out);
-const clawql = evidence.arms.find((a) => a.armId === "clawql-file-journal");
-const modes = clawql?.modes
-  .map(
-    (m) =>
-      `${m.upstreamMode}:dup=${m.duplicates}/unk=${m.outcomeUnknown}/harnessValid=${m.harnessValid}`
-  )
+function modeLine(
+  armId: string,
+  m: {
+    upstreamMode: string;
+    duplicates: number;
+    interruptedOrUnknown: number;
+    completedExactlyOnce: number;
+    harnessValid: boolean;
+  }
+): string {
+  return `${armId}/${m.upstreamMode}:dup=${m.duplicates}/unk=${m.interruptedOrUnknown}/once=${m.completedExactlyOnce}/harnessValid=${m.harnessValid}`;
+}
+const summary = evidence.arms
+  .filter((a) => a.status === "measured")
+  .flatMap((a) => a.modes.map((m) => modeLine(a.armId, m)))
   .join(" ");
 console.log(
-  `durability-comparison: crashPoint=${evidence.crashPoint} clawqlAtMostOnce=${evidence.clawqlAtMostOnce} ${modes ?? ""}`
+  `durability-comparison: crashPoint=${evidence.crashPoint} clawqlAtMostOnce=${evidence.clawqlAtMostOnce} ${summary}`
 );
 console.log(`wrote ${path}`);
 if (!evidence.clawqlAtMostOnce) process.exit(1);
