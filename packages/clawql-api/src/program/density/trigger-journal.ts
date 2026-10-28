@@ -198,7 +198,8 @@ export function openTriggerJournalEffect(
       const windowMs = Math.max(1, Number(process.hrtime.bigint() - statsWindowStartNs) / 1e6);
       const windowSec = windowMs / 1000;
       const avgBatchSize = fsyncCount > 0 ? batchSizeSum / fsyncCount : 0;
-      const batchMax = policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
+      const batchMax =
+        policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
       const avgBatchFillRatio =
         batchMax && batchMax > 0 ? Number((avgBatchSize / batchMax).toFixed(4)) : null;
       const fsyncsPerSec = Number((fsyncCount / windowSec).toFixed(2));
@@ -210,22 +211,18 @@ export function openTriggerJournalEffect(
       if (fsyncCount === 0) {
         reading = "No fsyncs in window.";
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio < 0.75) {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
       } else if (
         avgBatchFillRatio !== null &&
         avgBatchFillRatio >= 0.9 &&
         doubleBufferHits === 0 &&
         doubleBuffered
       ) {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full) but doubleBufferHits=0 — next batch was not ready when fsync returned (producer starvation or sync still blocking).`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full) but doubleBufferHits=0 — next batch was not ready when fsync returned (producer starvation or sync still blocking).`;
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio >= 0.9) {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full); doubleBufferHits=${doubleBufferHits}/${fsyncCount}; fsyncsPerSec=${fsyncsPerSec}. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full); doubleBufferHits=${doubleBufferHits}/${fsyncCount}; fsyncsPerSec=${fsyncsPerSec}. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer.`;
       } else {
-        reading =
-          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}; doubleBufferHits=${doubleBufferHits}. Compare both to serial ceiling × batchMax.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}; doubleBufferHits=${doubleBufferHits}. Compare both to serial ceiling × batchMax.`;
       }
 
       return {

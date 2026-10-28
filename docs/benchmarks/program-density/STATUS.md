@@ -12,12 +12,12 @@ Deadline accuracy remains **lab-only** until shared-host.
 
 ## Where each side stands
 
-| Contract | ClawQL | Ontologiql |
-| --- | --- | --- |
-| Serial fsync probe | Done (~7.9k/s, ~126 µs) | Done (~52k/s, ~19 µs) — **sanity-check: likely early-ack cache** |
-| Binary-search ramp | **±1%** (aligned) | **±1%** |
-| Batch size + fsyncs/sec during run | Done (`flushStats`) | **Missing** |
-| Writer kept busy between syncs | **Done:** async-fsync double-buffer (`doubleBufferHits`) | Unknown until flushStats |
+| Contract                           | ClawQL                                                   | Ontologiql                                                       |
+| ---------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| Serial fsync probe                 | Done (~7.9k/s, ~126 µs)                                  | Done (~52k/s, ~19 µs) — **sanity-check: likely early-ack cache** |
+| Binary-search ramp                 | **±1%** (aligned)                                        | **±1%**                                                          |
+| Batch size + fsyncs/sec during run | Done (`flushStats`)                                      | **Missing**                                                      |
+| Writer kept busy between syncs     | **Done:** async-fsync double-buffer (`doubleBufferHits`) | Unknown until flushStats                                         |
 
 ## Serial-ceiling honesty
 
@@ -25,53 +25,53 @@ Deadline accuracy remains **lab-only** until shared-host.
 
 ## ClawQL flushStats
 
-| Point | Finding |
-| --- | --- |
-| Pre–double-buffer | avgBatchSize 64, fsyncs ~3.2k (~40% of serial) → idle writer |
-| Fix | `group_commit` uses **async fsync**; next batch accumulates during sync |
-| Remeasure | avgBatchSize **64**, **doubleBufferHits ≈ 100%**, fsyncsPerSec **~3.3k** (~42% of serial; fsync mean ~0.20 ms vs probe ~0.13 ms — journal path). Idle-writer fixed; residual ≠ missing double-buffer. → [`flush-batch-stats.json`](./flush-batch-stats.json) |
+| Point             | Finding                                                                                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pre–double-buffer | avgBatchSize 64, fsyncs ~3.2k (~40% of serial) → idle writer                                                                                                                                                                                                 |
+| Fix               | `group_commit` uses **async fsync**; next batch accumulates during sync                                                                                                                                                                                      |
+| Remeasure         | avgBatchSize **64**, **doubleBufferHits ≈ 100%**, fsyncsPerSec **~3.3k** (~42% of serial; fsync mean ~0.20 ms vs probe ~0.13 ms — journal path). Idle-writer fixed; residual ≠ missing double-buffer. → [`flush-batch-stats.json`](./flush-batch-stats.json) |
 
 Ontologiql must emit the same two run numbers against the same serial probe.
 
 ## Shared-host campaign protocol
 
-| Rule | Detail |
-| --- | --- |
-| Serial fsync first | Board-matched; sanity-check latency; record disk cache mode |
-| flushStats both sides | fsyncs/sec + avgBatchSize during focus/ramp |
-| Ramp refine | **±1%** both sides |
-| 3-rep floor + alternate | ClawQL₁ → Ontologiql₁ → … on dedicated idle host |
-| Then merge | `CLAWQL_DENSITY_PEER_JSON` when gates pass |
+| Rule                    | Detail                                                      |
+| ----------------------- | ----------------------------------------------------------- |
+| Serial fsync first      | Board-matched; sanity-check latency; record disk cache mode |
+| flushStats both sides   | fsyncs/sec + avgBatchSize during focus/ramp                 |
+| Ramp refine             | **±1%** both sides                                          |
+| 3-rep floor + alternate | ClawQL₁ → Ontologiql₁ → … on dedicated idle host            |
+| Then merge              | `CLAWQL_DENSITY_PEER_JSON` when gates pass                  |
 
 ## ClawQL TypeScript — measured (this host; pre-campaign)
 
-| Column / check | Value |
-| --- | --- |
-| Agents at limit | **2,500,000** |
-| Flush / crash test | group_commit + async fsync double-buffer; crash **pass** |
-| Scaled bursts first miss | **250,000** |
-| Ramp | 3-rep floor + **±1%** refine |
-| Deadline restart | **pass** — rebuild **~40–55 ms** @ 2.5e6 |
-| Serial ceiling | ~7,925/s → theo ~507k @ 64 |
+| Column / check           | Value                                                    |
+| ------------------------ | -------------------------------------------------------- |
+| Agents at limit          | **2,500,000**                                            |
+| Flush / crash test       | group_commit + async fsync double-buffer; crash **pass** |
+| Scaled bursts first miss | **250,000**                                              |
+| Ramp                     | 3-rep floor + **±1%** refine                             |
+| Deadline restart         | **pass** — rebuild **~40–55 ms** @ 2.5e6                 |
+| Serial ceiling           | ~7,925/s → theo ~507k @ 64                               |
 
 ## Ontologiql — lab (different host)
 
-| Field | Value |
-| --- | --- |
-| Flush / crash test | group_commit; **pass** |
-| Ramp | refined **±1%** (lab) |
-| rebuildFromDiskMs | **~2–3** (compact-array) |
-| Serial probe | ~52k/s — **verify not early-ack** on campaign host |
-| flushStats | **required** |
+| Field              | Value                                              |
+| ------------------ | -------------------------------------------------- |
+| Flush / crash test | group_commit; **pass**                             |
+| Ramp               | refined **±1%** (lab)                              |
+| rebuildFromDiskMs  | **~2–3** (compact-array)                           |
+| Serial probe       | ~52k/s — **verify not early-ack** on campaign host |
+| flushStats         | **required**                                       |
 
 ## Shared-host five arms
 
-| Step | Status |
-| --- | --- |
+| Step                                                        | Status          |
+| ----------------------------------------------------------- | --------------- |
 | ClawQL serial probe + flushStats + double-buffer + ±1% ramp | done / shipping |
-| Ontologiql flushStats + serial honesty on campaign host | **pending** |
-| Interleaved 3-rep campaign on dedicated host | **pending** |
-| Win copy | **blocked** |
+| Ontologiql flushStats + serial honesty on campaign host     | **pending**     |
+| Interleaved 3-rep campaign on dedicated host                | **pending**     |
+| Win copy                                                    | **blocked**     |
 
 ```bash
 npm run benchmark:program-density-fsync-ceiling
@@ -83,8 +83,8 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql (Rust) | Publishable capacity/wake; deadline lab; rebuild ~2–3 ms | flushStats + serial honesty next |
-| ClawQL (TypeScript) | Double-buffer + ±1% refine + flushStats | Remeasure after double-buffer |
-| Golem / Infinity | Pending invite | fair-v2 / SHARED_HOST |
+| System              | Status                                                   | Notes                            |
+| ------------------- | -------------------------------------------------------- | -------------------------------- |
+| Ontologiql (Rust)   | Publishable capacity/wake; deadline lab; rebuild ~2–3 ms | flushStats + serial honesty next |
+| ClawQL (TypeScript) | Double-buffer + ±1% refine + flushStats                  | Remeasure after double-buffer    |
+| Golem / Infinity    | Pending invite                                           | fair-v2 / SHARED_HOST            |
