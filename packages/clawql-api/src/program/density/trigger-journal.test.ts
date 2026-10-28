@@ -43,8 +43,8 @@ describe("trigger journal flush policy", () => {
     try {
       journal.resetFlushStats();
       const n = 64 * 40;
-      const concurrency = 64;
-      // Await in waves so producers don't pile the whole N into one fsync start.
+      // Overlap > batchMax so the next batch fills during async fsync.
+      const concurrency = 128;
       for (let i = 0; i < n; i += concurrency) {
         const end = Math.min(n, i + concurrency);
         await Promise.all(
@@ -62,6 +62,8 @@ describe("trigger journal flush policy", () => {
       expect(stats.flushReasonBatchFull + stats.flushReasonInterval + stats.flushReasonForced).toBe(
         stats.fsyncCount
       );
+      expect(stats.doubleBuffered).toBe(true);
+      expect(stats.doubleBufferHits).toBeGreaterThan(0);
     } finally {
       await journal.close();
     }

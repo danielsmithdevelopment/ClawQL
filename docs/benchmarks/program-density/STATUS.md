@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** Protocol corrected before campaign: **serial single-writer fsync ceiling** (not parallel), **binary-refined ramp** with reported resolution, 3-rep floors, alternating systems. Ontologiql compact-array rebuild **~2–3 ms** closes the rebuild format gap. Peer merge still blocked until the interleaved run. Evidence: [`evidence-fair.json`](./evidence-fair.json). Contract: [`SHARED_HOST.md`](./SHARED_HOST.md).
+**Status:** ClawQL added **async-fsync double-buffering** and aligned ramp refine to **±1%**. Ontologiql still owes **flushStats** (fsyncs/sec + avg batch size) and a **serial-ceiling honesty check** (~52k fsync/s is suspiciously fast). Campaign on the dedicated host with write-cache settings recorded. Evidence: [`evidence-fair.json`](./evidence-fair.json). Contract: [`SHARED_HOST.md`](./SHARED_HOST.md).
 
 **Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
 
@@ -10,66 +10,72 @@
 
 Deadline accuracy remains **lab-only** until shared-host.
 
-## Correction — fsync ceiling probe
+## Where each side stands
 
-An earlier ~41k fsync/s figure (and “256k ≈ 10% of ceiling”) used a probe that did **not** match the board’s single serial writer. Retracted as the group_commit ceiling.
+| Contract | ClawQL | Ontologiql |
+| --- | --- | --- |
+| Serial fsync probe | Done (~7.9k/s, ~126 µs) | Done (~52k/s, ~19 µs) — **sanity-check: likely early-ack cache** |
+| Binary-search ramp | **±1%** (aligned) | **±1%** |
+| Batch size + fsyncs/sec during run | Done (`flushStats`) | **Missing** |
+| Writer kept busy between syncs | **Done:** async-fsync double-buffer (`doubleBufferHits`) | Unknown until flushStats |
 
-| Mode                                                             | This host                                      | Role                |
-| ---------------------------------------------------------------- | ---------------------------------------------- | ------------------- |
-| **Serial board-matched** (append batchMax NDJSON → fsync → wait) | **~7,925** fsync/s → theo max **~507k**/s @ 64 | **PRIMARY** ceiling |
-| Parallel (8 writers)                                             | ~194k fsync/s                                  | Headroom only       |
+## Serial-ceiling honesty
 
-Board floor **256k ≈ 50%** of this host’s **serial** theo max — **not** disk-bound here.
+~52k serial fsyncs/s usually means hypervisor / volatile write cache, not media durability. SIGKILL cannot catch that (caches survive process death). Record campaign-host cache settings in evidence. An inflated ceiling makes “5.8% of ceiling” understate closeness to the true limit.
 
-**flushStats (focus window):** avgBatchSize **64** (full), fsyncsPerSec **~3.2k** ≈ **40%** of serial ceiling → **writer idle between syncs** (double-buffer candidate), not early 10ms flushes (`flush-batch-stats.json`). Ontologiql must record the same two numbers against the same serial probe.
+## ClawQL flushStats
+
+| Point | Finding |
+| --- | --- |
+| Pre–double-buffer | avgBatchSize 64, fsyncs ~3.2k (~40% of serial) → idle writer |
+| Fix | `group_commit` uses **async fsync**; next batch accumulates during sync |
+| Remeasure | avgBatchSize **64**, **doubleBufferHits ≈ 100%**, fsyncsPerSec **~3.3k** (~42% of serial; fsync mean ~0.20 ms vs probe ~0.13 ms — journal path). Idle-writer fixed; residual ≠ missing double-buffer. → [`flush-batch-stats.json`](./flush-batch-stats.json) |
+
+Ontologiql must emit the same two run numbers against the same serial probe.
 
 ## Shared-host campaign protocol
 
-| Rule                   | Detail                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| **Serial fsync first** | Same probe both systems; fraction of `serial.fsyncsPerSec × 64`                       |
-| **Refine ramp**        | Binary search between last pass and first fail to ±few %; report `rampResolutionNote` |
-| **3-rep floor**        | Headlines = min of 3 for both; never single vs floor                                  |
-| **Alternate**          | ClawQL₁ → Ontologiql₁ → … on one idle host/disk                                       |
-| **Then merge**         | `CLAWQL_DENSITY_PEER_JSON` when gates pass                                            |
+| Rule | Detail |
+| --- | --- |
+| Serial fsync first | Board-matched; sanity-check latency; record disk cache mode |
+| flushStats both sides | fsyncs/sec + avgBatchSize during focus/ramp |
+| Ramp refine | **±1%** both sides |
+| 3-rep floor + alternate | ClawQL₁ → Ontologiql₁ → … on dedicated idle host |
+| Then merge | `CLAWQL_DENSITY_PEER_JSON` when gates pass |
 
 ## ClawQL TypeScript — measured (this host; pre-campaign)
 
-| Column / check                | Value                                                                                        |
-| ----------------------------- | -------------------------------------------------------------------------------------------- |
-| Agents at limit               | **2,500,000**                                                                                |
-| Schedule / format             | typed_arrays; format disclosed                                                               |
-| Flush / crash test            | group_commit; **pass**                                                                       |
-| Scaled bursts first miss      | **250,000**                                                                                  |
-| Ramp (**coarse** 3-rep floor) | sustainable **256,000**; first miss **384,000** — **refine before campaign** (band too wide) |
-| Deadline restart              | **pass** — rebuild **~40–55 ms** @ 2.5e6                                                     |
-| vs serial ceiling             | 256k / ~507k ≈ **50%** — software headroom on this host                                      |
+| Column / check | Value |
+| --- | --- |
+| Agents at limit | **2,500,000** |
+| Flush / crash test | group_commit + async fsync double-buffer; crash **pass** |
+| Scaled bursts first miss | **250,000** |
+| Ramp | 3-rep floor + **±1%** refine |
+| Deadline restart | **pass** — rebuild **~40–55 ms** @ 2.5e6 |
+| Serial ceiling | ~7,925/s → theo ~507k @ 64 |
 
 ## Ontologiql — lab (different host)
 
-| Field                                         | Value                                            |
-| --------------------------------------------- | ------------------------------------------------ |
-| Flush / crash test                            | group_commit; **pass**                           |
-| sustainablePerSec (coarse / 3 identical reps) | **192,000** — refine; true limit in (192k, 256k) |
-| firstRateMissingSlaPerSec                     | **256,000**                                      |
-| firstBurstSizeMissingOneSecondSla             | **200,000**                                      |
-| rebuildFromDiskMs                             | **~2–3** (compact-array; was ~80)                |
-| Serial fsync probe                            | **required** on shared host (same as ClawQL)     |
-
-Coarse Ontologiql 192–256k and ClawQL 256–384k **overlap** — without refine, systems cannot be told apart.
+| Field | Value |
+| --- | --- |
+| Flush / crash test | group_commit; **pass** |
+| Ramp | refined **±1%** (lab) |
+| rebuildFromDiskMs | **~2–3** (compact-array) |
+| Serial probe | ~52k/s — **verify not early-ack** on campaign host |
+| flushStats | **required** |
 
 ## Shared-host five arms
 
-| Step                                      | Status                                                                 |
-| ----------------------------------------- | ---------------------------------------------------------------------- |
-| Serial + parallel fsync probe (this host) | done — [`fsync-ceiling.json`](./fsync-ceiling.json)                    |
-| Ontologiql serial probe                   | **pending** (same pattern)                                             |
-| Binary-refine ramp both sides             | ClawQL code ready (`refineRelative` default 4%); Ontologiql must match |
-| Interleaved 3-rep campaign                | **pending**                                                            |
-| Peer merge / win copy                     | **blocked**                                                            |
+| Step | Status |
+| --- | --- |
+| ClawQL serial probe + flushStats + double-buffer + ±1% ramp | done / shipping |
+| Ontologiql flushStats + serial honesty on campaign host | **pending** |
+| Interleaved 3-rep campaign on dedicated host | **pending** |
+| Win copy | **blocked** |
 
 ```bash
 npm run benchmark:program-density-fsync-ceiling
+npm run benchmark:program-density-flush-stats
 CLAWQL_DENSITY_REPS=3 \
 CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.json \
   npm run benchmark:program-density-shared-host
@@ -77,8 +83,8 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Board snapshot
 
-| System              | Status                                                       | Notes                           |
-| ------------------- | ------------------------------------------------------------ | ------------------------------- |
-| Ontologiql (Rust)   | Publishable capacity/wake; deadline lab; rebuild **~2–3 ms** | Serial probe + ramp refine next |
-| ClawQL (TypeScript) | Measured; coarse ramp 256k floor; serial ceiling ~507k theo  | Refine + campaign               |
-| Golem / Infinity    | Pending invite                                               | fair-v2 / SHARED_HOST           |
+| System | Status | Notes |
+| --- | --- | --- |
+| Ontologiql (Rust) | Publishable capacity/wake; deadline lab; rebuild ~2–3 ms | flushStats + serial honesty next |
+| ClawQL (TypeScript) | Double-buffer + ±1% refine + flushStats | Remeasure after double-buffer |
+| Golem / Infinity | Pending invite | fair-v2 / SHARED_HOST |

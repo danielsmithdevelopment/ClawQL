@@ -61,9 +61,9 @@ const ramp = await Effect.runPromise(
     windowMs: 1_000,
     slaMs: 1_000,
     slaTargetPct: 99,
-    concurrency: 64,
+    concurrency: Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY || 128),
     ratesPerSec: rates,
-    refineRelative: 0.04,
+    refineRelative: 0.01,
     residentHeapSize: 50_000,
     scheduleShape: "typed_arrays",
     percentile: pct,
@@ -81,7 +81,7 @@ const focus = await Effect.runPromise(
     windowMs: 2_000,
     slaMs: 1_000,
     slaTargetPct: 99,
-    concurrency: 64,
+    concurrency: Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY || 128),
     ratesPerSec: [focusRate],
     refineRelative: false,
     residentHeapSize: 50_000,
@@ -110,6 +110,13 @@ if (fractionOfSerialFsyncs != null && fractionOfSerialFsyncs >= 0.85) {
     flushStats.avgBatchFillRatio != null && flushStats.avgBatchFillRatio < 0.75
       ? "disk_busy_batches_early_flush"
       : "disk_busy_near_full_batches";
+} else if (
+  flushStats.doubleBuffered &&
+  (flushStats.doubleBufferHits ?? 0) > 0 &&
+  fractionOfSerialFsyncs != null &&
+  fractionOfSerialFsyncs < 0.85
+) {
+  diagnosis = "double_buffer_active_but_below_serial_ceiling";
 } else if (flushStats.avgBatchFillRatio != null && flushStats.avgBatchFillRatio >= 0.85) {
   diagnosis = "writer_idle_between_fsyncs_consider_double_buffer";
 } else {
@@ -171,6 +178,8 @@ console.log(
         interval: flushStats.flushReasonInterval,
         forced: flushStats.flushReasonForced,
       },
+      doubleBufferHits: flushStats.doubleBufferHits,
+      doubleBuffered: flushStats.doubleBuffered,
     },
     null,
     2

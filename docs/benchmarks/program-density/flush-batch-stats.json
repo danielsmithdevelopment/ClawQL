@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-flush-batch-stats",
-  "measuredAt": "2026-10-28T22:50:17.709Z",
+  "measuredAt": "2026-10-28T23:07:08.467Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "flushPolicy": {
     "mode": "group_commit",
@@ -20,47 +20,51 @@
     "coarseSustainablePerSec": 384000,
     "coarseFirstRateMissingSlaPerSec": null,
     "flushStatsAcrossRamp": {
-      "windowMs": 5294.64,
+      "windowMs": 4853.84,
       "fsyncCount": 15000,
       "recordsFlushed": 960000,
       "avgBatchSize": 64,
-      "fsyncsPerSec": 2833.05,
-      "recordsPerSec": 181315.46,
+      "fsyncsPerSec": 3090.34,
+      "recordsPerSec": 197781.47,
       "batchMax": 64,
       "avgBatchFillRatio": 1,
       "flushReasonBatchFull": 15000,
       "flushReasonInterval": 0,
       "flushReasonForced": 0,
-      "fsyncWaitMsTotal": 2766.327,
-      "fsyncWaitMsMean": 0.1844,
-      "reading": "avgBatchSize 64.0/64 (near full). If fsyncsPerSec=2833.05 is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix."
+      "fsyncWaitMsTotal": 3385.406,
+      "fsyncWaitMsMean": 0.2257,
+      "doubleBufferHits": 13756,
+      "doubleBuffered": true,
+      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=13756/15000; fsyncsPerSec=3090.34. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
     }
   },
   "focus": {
     "offeredRatePerSec": 384000,
     "metSla": false,
     "flushStats": {
-      "windowMs": 3756.88,
+      "windowMs": 3638.27,
       "fsyncCount": 12000,
       "recordsFlushed": 768000,
       "avgBatchSize": 64,
-      "fsyncsPerSec": 3194.14,
-      "recordsPerSec": 204424.87,
+      "fsyncsPerSec": 3298.27,
+      "recordsPerSec": 211089.44,
       "batchMax": 64,
       "avgBatchFillRatio": 1,
       "flushReasonBatchFull": 12000,
       "flushReasonInterval": 0,
       "flushReasonForced": 0,
-      "fsyncWaitMsTotal": 2278.153,
-      "fsyncWaitMsMean": 0.1898,
-      "reading": "avgBatchSize 64.0/64 (near full). If fsyncsPerSec=3194.14 is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix."
+      "fsyncWaitMsTotal": 2416.776,
+      "fsyncWaitMsMean": 0.2014,
+      "doubleBufferHits": 11993,
+      "doubleBuffered": true,
+      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=11993/12000; fsyncsPerSec=3298.27. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
     }
   },
   "compare": {
-    "fractionOfSerialFsyncs": 0.403,
+    "fractionOfSerialFsyncs": 0.4162,
     "fractionOfTheoMax": 0.7571,
-    "impliedDurablePerSec": 204424.96,
-    "diagnosis": "writer_idle_between_fsyncs_consider_double_buffer",
+    "impliedDurablePerSec": 211089.28,
+    "diagnosis": "double_buffer_active_but_below_serial_ceiling",
     "note": "Focus window is a sustained drain at the last passing rate. Near-ceiling fsyncs + half-full batches ⇒ early flush. Below-ceiling fsyncs + full batches ⇒ idle writer (double-buffer). Ontologiql should record the same two numbers against the same serial probe."
   }
 }

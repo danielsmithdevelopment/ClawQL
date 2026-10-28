@@ -53,6 +53,8 @@
     "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
     "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
     "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
-    "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
+    "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling.",
+    "honesty": "Serial rates ≫ ~10k/s (~<100µs/fsync) often mean hypervisor/volatile write cache, not media durability. SIGKILL does not catch early-ack. Record campaign-host cache settings. Ontologiql ~52k/s needs this sanity check.",
+    "clawqlHostNote": "This host serial ~7925/s (~0.1262 ms mean) — still verify on the dedicated campaign disk."
   }
 }

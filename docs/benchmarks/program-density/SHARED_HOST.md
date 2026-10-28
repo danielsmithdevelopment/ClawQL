@@ -33,7 +33,17 @@ The artifact keeps **two** modes:
 
 **Ontologiql must run the same serial probe** on the shared host. An earlier ~40k fsync/s figure came from overwrite/parallel-capable probing and **overstated** single-writer capacity — retracted as the group_commit ceiling.
 
-Read each system’s `sustainablePerSec` as a **fraction of the serial ceiling**. Near ceiling ⇒ equal / disk-bound. Well below ⇒ software headroom — do **not** call a cross-host gap “disk-shaped” without this serial check.
+#### Serial-ceiling honesty (power-loss vs process crash)
+
+A serial rate near **tens of thousands** of fsyncs/sec (~20 µs each) is often **not** true media durability: hypervisor write cache, volatile drive cache, or similar. ClawQL’s cloud-agent host measured ~126 µs/fsync (~7.9k/s) — still check the campaign disk. Record in evidence:
+
+- How the probe ran (serial board-matched)
+- Observed `meanFsyncLatencyMs` / `fsyncsPerSec`
+- Disk / VM write-cache settings (e.g. cache mode, `barrier`, vendor notes)
+
+SIGKILL crash tests prove durability against a **process** crash; OS and disk caches survive. They cannot catch early-ack fsync. The interleaved campaign must run on the **dedicated** host with cache behavior checked and recorded. An inflated serial ceiling makes “% of ceiling” understate how close a system is to the true limit.
+
+Read each system’s `sustainablePerSec` as a **fraction of the serial ceiling** only after that honesty check.
 
 ### 2b. Record fsyncs/sec + avg batch size during the run
 
@@ -44,15 +54,15 @@ During each system’s ramp (same window as the rate arms), record:
 | **fsyncsPerSec** near serial ceiling       | and **avgBatchSize** ≪ `batchMax`    | Disk busy; batches flushing early (10 ms timer / empty queue)                                              |
 | **fsyncsPerSec** well below serial ceiling | and **avgBatchSize** near `batchMax` | Writer idle between syncs (builds next batch only after fsync returns) — double-buffering is the usual fix |
 
-ClawQL surfaces these as `flushStats` on the ramp arm (`npm run benchmark:program-density-flush-stats`). **Ontologiql must emit the same two numbers** against the same serial probe.
+ClawQL surfaces these as `flushStats` on the ramp arm (`npm run benchmark:program-density-flush-stats`), with **async-fsync double-buffering** and **concurrency > batchMax** (default 128 > 64) so the next batch accumulates during sync (`doubleBufferHits`). **Ontologiql must emit the same two run numbers** (and ideally a keep-busy / double-buffer signal) against the same serial probe — at ~5.8% of its reported ceiling it likely has the same idle-writer pattern until proven otherwise.
 
 ### 3. Refine the ramp (binary search + resolution)
 
 Coarse ladders (e.g. 192k→256k or 256k→384k) only place the limit in a **33–50%** band; those bands overlap across systems.
 
-- After the last pass and first fail, **binary-search** until `(firstFail − lastPass) / lastPass` is a few percent (ClawQL default **±4%**).
-- Report **`rampResolutionRel` / `rampResolutionNote`** in the evidence (e.g. `±4%`).
-- Both systems must refine the same way before the interleaved campaign.
+- After the last pass and first fail, **binary-search** until `(firstFail − lastPass) / lastPass` ≤ **1%** (both systems — same resolution).
+- Report **`rampResolutionRel` / `rampResolutionNote`** in the evidence (e.g. `±1%`).
+- Neither side’s number may be fuzzier than the other’s.
 
 ### 4. Same conditions + alternating systems
 

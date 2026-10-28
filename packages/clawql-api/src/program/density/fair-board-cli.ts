@@ -12,7 +12,7 @@
  *   CLAWQL_DENSITY_COLD_P99_CEILING_MS (optional latency limit),
  *   CLAWQL_DENSITY_DEADLINE_HORIZON_MS, CLAWQL_DENSITY_DEADLINE_MAX_FIRES,
  *   CLAWQL_DENSITY_DEADLINE_SLA_MS (default 1000),
- *   CLAWQL_DENSITY_DEADLINE_CONCURRENCY (default 64),
+ *   CLAWQL_DENSITY_DEADLINE_CONCURRENCY (default 128; keep > batchMax for double-buffer),
  *   CLAWQL_DENSITY_FIRED_DEFINITION=durable_trigger_record|bag_wake,
  *   CLAWQL_DENSITY_FLUSH_MODE=group_commit|fsync_each|os_buffer,
  *   CLAWQL_DENSITY_FLUSH_BATCH_MAX (group_commit, default 64),

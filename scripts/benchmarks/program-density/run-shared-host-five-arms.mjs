@@ -44,7 +44,8 @@ const fsyncPath =
   join(repoRoot, "docs/benchmarks/program-density/fsync-ceiling.json");
 
 const agentsAtLimit = Number(process.env.CLAWQL_DENSITY_RESIDENT_HEAP || 2_500_000);
-const concurrency = Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY || 64);
+// Keep > batchMax so the next batch fills during async fsync (double-buffer).
+const concurrency = Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY || 128);
 const journalDir = process.env.CLAWQL_DENSITY_BAG_DIR || "/tmp/clawql-density-shared-host";
 const steadyN = Number(process.env.CLAWQL_DENSITY_STEADY_N || 2_000);
 const horizonMs = Number(process.env.CLAWQL_DENSITY_DEADLINE_HORIZON_MS || 3_000);

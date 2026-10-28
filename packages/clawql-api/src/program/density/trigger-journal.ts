@@ -8,11 +8,19 @@
  * - os_buffer: writeSync only (diagnostic; not crash-durable)
  * - fsync_each: fsync after every record (durability window = 0)
  * - group_commit: batch by size and/or interval, then one fsync (group commit)
+ *
+ * group_commit uses **async fsync** so the event loop can accumulate the next
+ * batch while the current batch is syncing (double-buffer). A sync fsync would
+ * block the loop and leave the disk idle between syncs.
  */
 
-import { closeSync, fsyncSync, openSync, readFileSync, writeSync } from "node:fs";
+import { closeSync, fsync as fsyncCb, fsyncSync, openSync, readFileSync, writeSync } from "node:fs";
+import { promisify } from "node:util";
 import { join } from "node:path";
 import { Effect } from "effect";
+
+/** Async fsync so group_commit can accumulate the next batch during sync. */
+const fsyncAsync = promisify(fsyncCb);
 
 export type TriggerFlushMode = "os_buffer" | "fsync_each" | "group_commit";
 
@@ -87,7 +95,7 @@ export function describeFlushPolicy(policy: TriggerFlushPolicy): TriggerFlushPol
     crashSafe: true,
     storage: "append_ndjson_file",
     syncPrimitive: "fsync_group_commit",
-    note: `Group commit: flush when batch reaches ${policy.batchMax} or every ${policy.flushIntervalMs} ms, then fsync. Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills).`,
+    note: `Group commit: flush when batch reaches ${policy.batchMax} or every ${policy.flushIntervalMs} ms, then async fsync (double-buffer: next batch accumulates while current syncs). Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills).`,
   };
 }
 
@@ -114,6 +122,12 @@ export type TriggerJournalFlushStats = {
   readonly flushReasonForced: number;
   readonly fsyncWaitMsTotal: number;
   readonly fsyncWaitMsMean: number | null;
+  /**
+   * Times a non-empty next batch was already pending when an fsync completed —
+   * proof the writer stayed busy during sync (double-buffer working).
+   */
+  readonly doubleBufferHits: number;
+  readonly doubleBuffered: boolean;
   readonly reading: string;
 };
 
@@ -165,6 +179,8 @@ export function openTriggerJournalEffect(
     let flushReasonInterval = 0;
     let flushReasonForced = 0;
     let fsyncWaitMsTotal = 0;
+    let doubleBufferHits = 0;
+    const doubleBuffered = policy.mode === "group_commit";
 
     const resetFlushStats = () => {
       statsWindowStartNs = process.hrtime.bigint();
@@ -175,14 +191,14 @@ export function openTriggerJournalEffect(
       flushReasonInterval = 0;
       flushReasonForced = 0;
       fsyncWaitMsTotal = 0;
+      doubleBufferHits = 0;
     };
 
     const snapshotFlushStats = (): TriggerJournalFlushStats => {
       const windowMs = Math.max(1, Number(process.hrtime.bigint() - statsWindowStartNs) / 1e6);
       const windowSec = windowMs / 1000;
       const avgBatchSize = fsyncCount > 0 ? batchSizeSum / fsyncCount : 0;
-      const batchMax =
-        policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
+      const batchMax = policy.mode === "group_commit" ? policy.batchMax : policy.mode === "fsync_each" ? 1 : null;
       const avgBatchFillRatio =
         batchMax && batchMax > 0 ? Number((avgBatchSize / batchMax).toFixed(4)) : null;
       const fsyncsPerSec = Number((fsyncCount / windowSec).toFixed(2));
@@ -194,11 +210,22 @@ export function openTriggerJournalEffect(
       if (fsyncCount === 0) {
         reading = "No fsyncs in window.";
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio < 0.75) {
-        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (fill ${(avgBatchFillRatio * 100).toFixed(0)}%) — batches flushing early (10ms timer or queue empty). Compare fsyncsPerSec=${fsyncsPerSec} to the serial fsync ceiling; near ceiling ⇒ disk busy, batches half-full.`;
+      } else if (
+        avgBatchFillRatio !== null &&
+        avgBatchFillRatio >= 0.9 &&
+        doubleBufferHits === 0 &&
+        doubleBuffered
+      ) {
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full) but doubleBufferHits=0 — next batch was not ready when fsync returned (producer starvation or sync still blocking).`;
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio >= 0.9) {
-        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full). If fsyncsPerSec=${fsyncsPerSec} is well below the serial ceiling, the writer is idle between syncs (likely builds the next batch only after fsync returns) — double-buffering is the usual fix.`;
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full); doubleBufferHits=${doubleBufferHits}/${fsyncCount}; fsyncsPerSec=${fsyncsPerSec}. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer.`;
       } else {
-        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}. Compare both to serial ceiling × batchMax to split early-flush vs idle-writer.`;
+        reading =
+          `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}; doubleBufferHits=${doubleBufferHits}. Compare both to serial ceiling × batchMax.`;
       }
 
       return {
@@ -215,6 +242,8 @@ export function openTriggerJournalEffect(
         flushReasonForced,
         fsyncWaitMsTotal: Number(fsyncWaitMsTotal.toFixed(3)),
         fsyncWaitMsMean,
+        doubleBufferHits,
+        doubleBuffered,
         reading,
       };
     };
@@ -252,9 +281,11 @@ export function openTriggerJournalEffect(
             writeSync(fd, lines.join(""));
             if (policy.mode !== "os_buffer") {
               const t0 = process.hrtime.bigint();
-              fsyncSync(fd);
+              // Async fsync: event loop can accept the next batch while this syncs.
+              await fsyncAsync(fd);
               fsyncWaitMsTotal += Number(process.hrtime.bigint() - t0) / 1e6;
               fsyncCount += 1;
+              if (pendingLines.length > 0) doubleBufferHits += 1;
             }
             batchSizeSum += lines.length;
             recordsFlushed += lines.length;
@@ -267,7 +298,7 @@ export function openTriggerJournalEffect(
             for (const w of batchWaiters) w.reject(err);
             throw err;
           }
-          // Loop if more arrived during fsync.
+          // Loop if more arrived during async fsync (double-buffer hit).
           if (pendingLines.length === 0) return;
           if (policy.mode === "group_commit" && pendingLines.length < policy.batchMax) {
             armInterval();

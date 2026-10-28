@@ -66,7 +66,11 @@ export type DeadlineSchedulerInfo = {
 
 export const DEFAULT_DEADLINE_SLA_MS = 1_000;
 export const DEFAULT_SCHEDULER_TICK_MS = 1;
-export const DEFAULT_DEADLINE_CONCURRENCY = 64;
+/**
+ * In-flight fires awaiting durable flush. Must exceed group_commit `batchMax`
+ * (default 64) so the next batch can fill during async fsync (double-buffer).
+ */
+export const DEFAULT_DEADLINE_CONCURRENCY = 128;
 export const DEFAULT_SLA_TARGET_PCT = 99;
 
 export function makeDeadlineSchedulerInfo(args: {
@@ -595,7 +599,7 @@ export function rampSustainableRateEffect(args: {
   readonly ratesPerSec?: readonly number[];
   /**
    * After the coarse ladder finds last-pass / first-fail, binary-search until
-   * (hi−lo)/lo ≤ this relative width (default 0.04 = ±4%). Set false / 0 to skip.
+   * (hi−lo)/lo ≤ this relative width (default 0.01 = ±1%). Set false / 0 to skip.
    */
   readonly refineRelative?: number | false;
   /** Far-future pad so ramp arms stress the same heap size as agents-at-limit. */
@@ -614,7 +618,7 @@ export function rampSustainableRateEffect(args: {
   readonly coarseFirstRateMissingSlaPerSec: number | null;
   /**
    * Relative width of the refined bracket: (firstFail − lastPass) / lastPass.
-   * e.g. 0.04 → report "±4%" in evidence.
+   * e.g. 0.01 → report "±1%" in evidence.
    */
   readonly rampResolutionRel: number | null;
   readonly rampResolutionNote: string | null;
@@ -629,7 +633,7 @@ export function rampSustainableRateEffect(args: {
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
     const scheduleShape = args.scheduleShape ?? "typed_arrays";
     const refineRelative =
-      args.refineRelative === false ? 0 : Math.max(0, args.refineRelative ?? 0.04);
+      args.refineRelative === false ? 0 : Math.max(0, args.refineRelative ?? 0.01);
     // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
@@ -854,7 +858,7 @@ export function runDeadlineAccuracyEffect(args: {
   readonly scheduleShape?: DeadlineScheduleShape;
   readonly rampWindowMs?: number;
   readonly rampRatesPerSec?: readonly number[];
-  /** Binary-search refine target width; default 0.04. Pass false to skip. */
+  /** Binary-search refine target width; default 0.01 (±1%). Pass false to skip. */
   readonly rampRefineRelative?: number | false;
   readonly skipRamp?: boolean;
   /**

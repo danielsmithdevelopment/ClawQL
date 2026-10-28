@@ -114,7 +114,7 @@ export type DeadlineBoardAccuracy = {
   /** Coarse ladder bounds before binary refine. */
   readonly coarseSustainablePerSec?: number | null;
   readonly coarseFirstRateMissingSlaPerSec?: number | null;
-  /** Refined bracket width (firstFail−lastPass)/lastPass — e.g. 0.04 → ±4%. */
+  /** Refined bracket width (firstFail−lastPass)/lastPass — e.g. 0.01 → ±1%. */
   readonly rampResolutionRel?: number | null;
   readonly rampResolutionNote?: string | null;
   /** SHARED_HOST: first co-timed burst size that misses the 1s SLA (null = all met / unmeasured). */
