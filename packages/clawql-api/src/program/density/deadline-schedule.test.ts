@@ -103,24 +103,29 @@ describe("deadline schedule", () => {
   it("ramp stops after first rate below the SLA target", async () => {
     const ids = Array.from({ length: 200 }, (_, i) => `id_${i}`);
     let calls = 0;
-    const { sustainablePerSec, ramp } = await Effect.runPromise(
-      rampSustainableRateEffect({
-        agentIds: ids,
-        fire: async () => {
-          calls += 1;
-          await new Promise<void>((r) => setTimeout(r, 5));
-        },
-        windowMs: 500,
-        slaMs: 50,
-        slaTargetPct: 99,
-        concurrency: 4,
-        ratesPerSec: [20, 40, 200],
-        percentile: pct,
-      })
-    );
+    const { sustainablePerSec, firstRateMissingSlaPerSec, rampWentPastFailure, ramp } =
+      await Effect.runPromise(
+        rampSustainableRateEffect({
+          agentIds: ids,
+          fire: async () => {
+            calls += 1;
+            await new Promise<void>((r) => setTimeout(r, 5));
+          },
+          windowMs: 500,
+          slaMs: 50,
+          slaTargetPct: 99,
+          concurrency: 4,
+          ratesPerSec: [20, 40, 200],
+          percentile: pct,
+        })
+      );
     expect(ramp.length).toBeGreaterThanOrEqual(1);
     expect(ramp.length).toBeLessThanOrEqual(3);
     expect(sustainablePerSec).toBeGreaterThanOrEqual(0);
+    expect(typeof rampWentPastFailure).toBe("boolean");
+    if (rampWentPastFailure) {
+      expect(firstRateMissingSlaPerSec).toBeGreaterThan(sustainablePerSec);
+    }
     expect(calls).toBeGreaterThan(0);
   }, 30_000);
 });

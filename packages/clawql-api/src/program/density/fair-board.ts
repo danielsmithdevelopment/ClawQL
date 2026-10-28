@@ -1091,6 +1091,8 @@ export function runFairDensityBoardEffect(
             burstP99ExcessMs: deadlineAccuracy.burst.excessOverTickP99Ms,
             burstDrainPerSec: deadlineAccuracy.burst.arrivalRatePerSec,
             sustainablePerSec: deadlineAccuracy.sustainablePerSec,
+            firstRateMissingSlaPerSec: deadlineAccuracy.firstRateMissingSlaPerSec,
+            rampWentPastFailure: deadlineAccuracy.rampWentPastFailure,
             scaledBurstFirstMissSize: deadlineAccuracy.scaledBursts?.firstMissSize ?? null,
             deadlineRestartOk: deadlineRestart?.ok ?? null,
             deadlineRestartRebuildMs: deadlineRestart?.rebuildMs ?? null,

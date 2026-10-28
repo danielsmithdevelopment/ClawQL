@@ -107,6 +107,10 @@ export type DeadlineBoardAccuracy = {
   readonly burstDrainPerSec: number;
   /** Max steady arrival rate that still met slaTargetPct within slaMs. */
   readonly sustainablePerSec: number;
+  /** First offered rate that missed the SLA (null if ramp never failed / unmeasured). */
+  readonly firstRateMissingSlaPerSec?: number | null;
+  /** True when the ramp includes a failing sample after the last pass. */
+  readonly rampWentPastFailure?: boolean | null;
   /** SHARED_HOST: first co-timed burst size that misses the 1s SLA (null = all met / unmeasured). */
   readonly scaledBurstFirstMissSize?: number | null;
   /** SHARED_HOST deadline restart: rebuild + overdue catch-up after SIGKILL. */
@@ -310,6 +314,8 @@ export type EvidenceFair = {
         readonly wallMs: number;
       };
       readonly sustainablePerSec: number;
+      readonly firstRateMissingSlaPerSec?: number | null;
+      readonly rampWentPastFailure?: boolean;
       readonly ramp: readonly {
         readonly mode: "steady" | "burst" | "ramp";
         readonly n: number;

@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T20:53:30.271Z",
+  "measuredAt": "2026-10-28T21:46:41.828Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. See SHARED_HOST.md. RebuildMs requires schedule-format disclosure (design column). Scaled bursts: N ≤ agentsAtLimit unless multi-deadline-per-agent is explained. Ramp: disclose stop-at-first-miss vs past-failure. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST.md: methodology aligned (ClawQL + Ontologiql #144). group_commit sustained rate is disk-fsync bound. RebuildMs requires schedule-format disclosure. Shared-host five arms before win copy.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy opens (SHARED_HOST.md):** (1) flush policy disclose + SIGKILL crash test; (2) explain 400k-deadline burst at 200k agents, or rerun scaled-burst ladder with N ≤ agentsAtLimit; (3) confirm sustained-rate ramp continued past first failure (published result matched burst cliff exactly — ambiguous without post-failure sample); (4) disclose schedule on-disk layout + rebuild algorithm next to rebuildMs (ClawQL ~40ms@2.5e6 is compact typed arrays + bottom-up heapify — not a language verdict). Then both run the same five arms on one host. Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust: capacity/wake publishable. Deadline methodology closed in lab (#144) under group_commit(64/10ms) + crashTest pass — different host; not a shared-host public deadline claim. Lab @ 200k: sustainablePerSec=128000; firstRateMissingSlaPerSec=192000; rampWentPastFailure=true; firstBurstSizeMissingOneSecondSla=200000 (one deadline/agent; N≤agentsAtLimit; old 400k-at-200k synthetic ids superseded). Prior ~400k/s was undeclared os_buffer — superseded, not comparable to ClawQL 256k fsync floor. Deadline restart lab: rebuildFromDiskMs=80; noLoss/noDuplicate; overdue prompt 1.0. Rebuild format (compact array + single-pass heapify) still worth one look vs ClawQL ~50ms@2.5e6 before shared-host. Sustained 128k vs ClawQL 256k ≈ ~2k vs ~4k fsync/s under batchMax=64 — expect possible convergence on one disk. Then five arms shared-host. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -59,7 +59,36 @@
           "p50": 0.6,
           "p99": 0.6
         },
-        "deadlineAccuracy": null,
+        "deadlineAccuracy": {
+          "slaMs": 1000,
+          "slaTargetPct": 99,
+          "firedDefinition": "durable_trigger_record",
+          "concurrency": null,
+          "flushPolicy": {
+            "mode": "group_commit",
+            "batchMax": 64,
+            "flushIntervalMs": 10,
+            "durabilityWindowTriggers": 0,
+            "durabilityWindowMs": 0,
+            "crashSafe": true,
+            "syncPrimitive": "fsync_group_commit"
+          },
+          "crashTestOk": true,
+          "steadyArrivalRatePerSec": null,
+          "steadyPctMet": null,
+          "steadyP99ExcessMs": null,
+          "burstPctMet": null,
+          "burstP99ExcessMs": null,
+          "burstDrainPerSec": null,
+          "sustainablePerSec": 128000,
+          "firstRateMissingSlaPerSec": 192000,
+          "rampWentPastFailure": true,
+          "scaledBurstFirstMissSize": 200000,
+          "deadlineRestartOk": true,
+          "deadlineRestartRebuildMs": 80,
+          "deadlineScheduleFormat": null,
+          "labNote": "Ontologiql #144 lab on their host @ 200k agents — provisional until shared-host five arms. scheduleFormat still TBD (compact-array invite)."
+        },
         "restartSurvival": true
       },
       "activeDensityLab": null
@@ -68,7 +97,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v10 / SHARED_HOST arms). Schedule retained at 2.5e6 as typed_arrays. Schedule format (rebuild column): on-disk=json_header+live_ndjson+padCount; in-memory=Float64+Int32; rebuild=bulk_pad+bottom_up_heapify — design difference, not TS-vs-Rust. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% met / excess p99 22 ms (typed). Scaled bursts: first miss at N=250000 (512/10k/100k met 100%; N ≤ agentsAtLimit). Deadline restart: ok; rebuildMs=40 at capacity 2500000; overdue catch-up ok; no loss/duplicates. sustainablePerSec=256000 (ramp stops at first miss; 3-rep floor). Object-heap GC A/B retained. Provisional until Ontologiql closes SHARED_HOST opens + shared-host five arms. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v10). Schedule 2.5e6 typed_arrays; format disclosed (header+live NDJSON+padCount; bulk pad + bottom-up heapify). Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% / excess p99 22 ms. Scaled bursts first miss N=250000 (N ≤ agentsAtLimit). Ramp: sustainablePerSec=256000; firstRateMissingSlaPerSec=384000; rampWentPastFailure=true. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Object-heap GC A/B retained. Under group_commit, sustained rate ≈ disk fsync bound (≤64×fsyncs/s) — cross-host gaps are not a language verdict. Methodology aligned with Ontologiql #144. Shared-host five arms pending. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -116,7 +145,9 @@
             "inMemory": "float64_deadlines_int32_heap_typed_arrays",
             "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
             "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
-          }
+          },
+          "firstRateMissingSlaPerSec": 384000,
+          "rampWentPastFailure": true
         },
         "restartSurvival": true
       },
@@ -731,7 +762,10 @@
         "crashTestOk": true,
         "fsyncEachSustainablePerSec": 24000,
         "osBufferWasNotCrashDurable": "~1.2e6 prior v7 figure was writeSync/page-cache only — superseded",
-        "objectHeapSteadyP99WasGc": "v8 object_entries steady excess p99 ~293–314 ms lined up with major GC (~121 ms); typed_arrays is the published best-effort TS column"
+        "objectHeapSteadyP99WasGc": "v8 object_entries steady excess p99 ~293–314 ms lined up with major GC (~121 ms); typed_arrays is the published best-effort TS column",
+        "firstRateMissingSlaPerSec": 384000,
+        "rampWentPastFailure": true,
+        "fsyncBoundNote": "group_commit batchMax=64 → durable rate ≲ 64 × disk_fsyncs_per_sec. Cross-host ClawQL 256k vs Ontologiql lab 128k ≈ 4k vs 2k fsync/s — not a language verdict; remeasure on shared disk."
       },
       "flushPolicyCompare": {
         "group_commit": {
@@ -850,7 +884,9 @@
         "missingLive": 0,
         "duplicateFired": 0,
         "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 55 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
-      }
+      },
+      "firstRateMissingSlaPerSec": 384000,
+      "rampWentPastFailure": true
     },
     "wakeByOrder": [
       {
@@ -1036,5 +1072,33 @@
     },
     "exposeGc": true,
     "ceilingHit": true
+  },
+  "peerLab": {
+    "systemId": "ontologiql-rust",
+    "source": "Ontologiql PR #144 (lab; different host)",
+    "agentsAtLimitContext": 200000,
+    "flushPolicy": {
+      "mode": "group_commit",
+      "batchMax": 64,
+      "flushIntervalMs": 10
+    },
+    "crashTestOk": true,
+    "crashTestNote": "400 ACK’d fires; 0 missing; 0 duplicates",
+    "sustainablePerSec": 128000,
+    "firstRateMissingSlaPerSec": 192000,
+    "rampWentPastFailure": true,
+    "firstBurstSizeMissingOneSecondSla": 200000,
+    "rebuildFromDiskMs": 80,
+    "noLoss": true,
+    "noDuplicate": true,
+    "overduePrompt": 1,
+    "superseded": {
+      "osBufferRate": "~400k/s undeclared page-cache — not comparable to fsync floor",
+      "syntheticBurst400kAt200k": "used synthetic ids — superseded by N≤agentsAtLimit ladder"
+    },
+    "reading": {
+      "fsyncBound": "128k ≈ 2k fsync/s × 64; ClawQL 256k ≈ 4k fsync/s × 64 on a different disk",
+      "rebuildFormatInvite": "80ms@200k vs ClawQL ~50ms@2.5e6 — compact binary + single-pass heapify likely closes"
+    }
   }
 }

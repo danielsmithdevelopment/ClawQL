@@ -249,6 +249,10 @@ export type DeadlineAccuracyReport = {
    * policy matches across systems.
    */
   readonly sustainablePerSec: number;
+  /** First offered rate that missed the SLA target (null if ramp never failed). */
+  readonly firstRateMissingSlaPerSec: number | null;
+  /** True when ramp includes a failing sample after the last pass. */
+  readonly rampWentPastFailure: boolean;
   readonly ramp: readonly DeadlineArmResult[];
   /** Crash-recovery proof for the flush policy, when run. */
   readonly crashTest: DeadlineCrashTestResult | null;
@@ -584,6 +588,10 @@ export function rampSustainableRateEffect(args: {
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<{
   readonly sustainablePerSec: number;
+  /** First offered rate that missed slaTargetPct (null if every rate met). */
+  readonly firstRateMissingSlaPerSec: number | null;
+  /** True when the ladder includes at least one failing sample after the last pass. */
+  readonly rampWentPastFailure: boolean;
   readonly ramp: DeadlineArmResult[];
 }> {
   return Effect.gen(function* () {
@@ -615,6 +623,7 @@ export function rampSustainableRateEffect(args: {
 
     const ramp: DeadlineArmResult[] = [];
     let sustainable = 0;
+    let firstRateMissingSlaPerSec: number | null = null;
 
     for (const rate of rates) {
       const count = Math.max(1, Math.min(rampIds.length, Math.floor(rate * windowSec)));
@@ -642,11 +651,17 @@ export function rampSustainableRateEffect(args: {
       if (arm.pctWithinSla >= targetPct) {
         sustainable = offered;
       } else {
+        firstRateMissingSlaPerSec = Number(offered.toFixed(2));
         break;
       }
     }
 
-    return { sustainablePerSec: Number(sustainable.toFixed(2)), ramp };
+    return {
+      sustainablePerSec: Number(sustainable.toFixed(2)),
+      firstRateMissingSlaPerSec,
+      rampWentPastFailure: firstRateMissingSlaPerSec !== null,
+      ramp,
+    };
   });
 }
 
@@ -813,6 +828,8 @@ export function runDeadlineAccuracyEffect(args: {
         steady: empty,
         burst: { ...empty, mode: "burst" as const },
         sustainablePerSec: 0,
+        firstRateMissingSlaPerSec: null,
+        rampWentPastFailure: false,
         ramp: [],
         crashTest: args.crashTest ?? null,
         scaledBursts: null,
@@ -868,6 +885,8 @@ export function runDeadlineAccuracyEffect(args: {
     };
 
     let sustainablePerSec = 0;
+    let firstRateMissingSlaPerSec: number | null = null;
+    let rampWentPastFailure = false;
     let ramp: DeadlineArmResult[] = [];
     if (!args.skipRamp) {
       const r = yield* rampSustainableRateEffect({
@@ -884,6 +903,8 @@ export function runDeadlineAccuracyEffect(args: {
         scheduleShape,
       });
       sustainablePerSec = r.sustainablePerSec;
+      firstRateMissingSlaPerSec = r.firstRateMissingSlaPerSec;
+      rampWentPastFailure = r.rampWentPastFailure;
       ramp = r.ramp;
     }
 
@@ -910,6 +931,8 @@ export function runDeadlineAccuracyEffect(args: {
       steady,
       burst: burstWithRate,
       sustainablePerSec,
+      firstRateMissingSlaPerSec,
+      rampWentPastFailure,
       ramp,
       crashTest: args.crashTest ?? null,
       scaledBursts,
