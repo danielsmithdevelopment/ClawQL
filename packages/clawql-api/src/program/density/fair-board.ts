@@ -158,7 +158,10 @@ function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
  * Sample bag ids via `find`/`awk` — do **not** `readdirSync` multi-million
  * directories (dentry fault-in alone can push RSS over the fair ceiling).
  */
-function sampleIdsFromBagDir(bagDir: string, sampleSize: number): {
+function sampleIdsFromBagDir(
+  bagDir: string,
+  sampleSize: number
+): {
   readonly sampleIds: string[];
   readonly seen: number;
 } {
@@ -372,11 +375,12 @@ function classifyLimit(args: {
 
   const bytesPer = Math.max(1, args.diskBytesPerAgent);
   const roomOnDisk =
-    args.diskAvailBytes !== null ? Math.floor(args.diskAvailBytes / bytesPer) : Number.POSITIVE_INFINITY;
+    args.diskAvailBytes !== null
+      ? Math.floor(args.diskAvailBytes / bytesPer)
+      : Number.POSITIVE_INFINITY;
   const growth = rssGrowthPerAgentKiB(args.ramp);
   const rssHeadroomKiB = Math.max(0, args.rssCeilingKiB - args.rssKiB);
-  const roomInRss =
-    growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
+  const roomInRss = growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
 
   const nextBatch = args.nextParkBatch;
   const nextBatchBlocked =
@@ -554,10 +558,7 @@ export function runFairDensityBoardEffect(
     }
 
     // --- Wake protocol: warmup, then alternate orders for N repetitions ---
-    const fromDisk = sampleIdsFromBagDir(
-      bagDir,
-      Math.max(wakeSampleSize, wakeWarmupCount, 1)
-    );
+    const fromDisk = sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
     const timedIds =
       fromDisk.sampleIds.length >= Math.min(wakeSampleSize, 1)
         ? pickSampleIds(fromDisk.sampleIds, wakeSampleSize)
@@ -675,7 +676,9 @@ export function runFairDensityBoardEffect(
         : yield* readDiskAvailBytesEffect(bagDir);
     const nextParkBatch =
       rampSchedule.find((t) => t > agentsAtLimit) ??
-      (continueUntilCeiling && agentsAtLimit > 0 ? Math.min(agentsAtLimit + 500_000, agentsAtLimit * 2) : null);
+      (continueUntilCeiling && agentsAtLimit > 0
+        ? Math.min(agentsAtLimit + 500_000, agentsAtLimit * 2)
+        : null);
 
     let classified = classifyLimit({
       rssHit,
@@ -686,7 +689,7 @@ export function runFairDensityBoardEffect(
       diskBytesPerAgent: last?.diskBytesPerAgent ?? 33 * 1024,
       diskAvailBytes: diskAvailNow,
       ramp,
-      nextParkBatch: diskBlockedDuringPark ? nextParkBatch ?? 1 : nextParkBatch,
+      nextParkBatch: diskBlockedDuringPark ? (nextParkBatch ?? 1) : nextParkBatch,
       coldP99Ms: headline.cold.n > 0 ? headline.cold.p99 : null,
       wakeColdP99CeilingMs,
     });

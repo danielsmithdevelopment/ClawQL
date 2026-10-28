@@ -54,12 +54,7 @@ export type BoardColumns = {
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
 
 export type DensityRowStatus =
-  | "measured"
-  | "publishable"
-  | "pending_invite"
-  | "not_run"
-  | "lab_only"
-  | "methodology_pending";
+  "measured" | "publishable" | "pending_invite" | "not_run" | "lab_only" | "methodology_pending";
 
 export type DensitySystemRow = {
   readonly systemId: DensitySystemId;
