@@ -21,8 +21,10 @@ describe("fair density board (smoke)", () => {
         deadlineSlaMs: 1_000,
         deadlineConcurrency: 32,
         deadlineFiredDefinition: "durable_trigger_record",
+        deadlineFlushPolicy: { mode: "group_commit", batchMax: 16, flushIntervalMs: 5 },
         skipDeadlineRamp: false,
         deadlineRampRatesPerSec: [50, 100, 250],
+        skipDeadlineCrashTest: false,
         rssCeilingMiB: 512,
         continueUntilCeiling: false,
         skipCold: false,
@@ -40,6 +42,9 @@ describe("fair density board (smoke)", () => {
     expect(clawql?.boardColumns?.deadlineAccuracy?.slaMs).toBe(1_000);
     expect(clawql?.boardColumns?.deadlineAccuracy?.firedDefinition).toBe("durable_trigger_record");
     expect(clawql?.boardColumns?.deadlineAccuracy?.concurrency).toBe(32);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.flushPolicy?.mode).toBe("group_commit");
+    expect(clawql?.boardColumns?.deadlineAccuracy?.flushPolicy?.crashSafe).toBe(true);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.crashTestOk).toBe(true);
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyArrivalRatePerSec).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyPctMet).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.burstPctMet).toBeGreaterThanOrEqual(0);
@@ -53,6 +58,8 @@ describe("fair density board (smoke)", () => {
     expect(run.deadlineAccuracy?.scheduler.mechanism).toMatch(/setTimeout/i);
     expect(run.deadlineAccuracy?.scheduler.nextDeadlineComplexity).toMatch(/O\(log n\)/);
     expect(run.deadlineAccuracy?.scheduler.firedDefinition).toBe("durable_trigger_record");
+    expect(run.deadlineAccuracy?.scheduler.flushPolicy?.mode).toBe("group_commit");
+    expect(run.deadlineAccuracy?.crashTest?.ok).toBe(true);
     expect(run.deadlineAccuracy?.steady.mode).toBe("steady");
     expect(run.deadlineAccuracy?.burst.mode).toBe("burst");
     expect(run.deadlineAccuracy?.steady.fired).toBeGreaterThan(0);

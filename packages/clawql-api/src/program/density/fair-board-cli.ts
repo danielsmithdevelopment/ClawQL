@@ -14,8 +14,12 @@
  *   CLAWQL_DENSITY_DEADLINE_SLA_MS (default 1000),
  *   CLAWQL_DENSITY_DEADLINE_CONCURRENCY (default 64),
  *   CLAWQL_DENSITY_FIRED_DEFINITION=durable_trigger_record|bag_wake,
+ *   CLAWQL_DENSITY_FLUSH_MODE=group_commit|fsync_each|os_buffer,
+ *   CLAWQL_DENSITY_FLUSH_BATCH_MAX (group_commit, default 64),
+ *   CLAWQL_DENSITY_FLUSH_INTERVAL_MS (group_commit, default 10),
  *   CLAWQL_DENSITY_STEADY_ARRIVAL_RATE (deadlines/sec),
  *   CLAWQL_DENSITY_SKIP_DEADLINE=1, CLAWQL_DENSITY_SKIP_DEADLINE_RAMP=1,
+ *   CLAWQL_DENSITY_SKIP_DEADLINE_CRASH=1,
  *   CLAWQL_DENSITY_SKIP_COLD=1, CLAWQL_DENSITY_SKIP_RESTART=1,
  *   CLAWQL_DENSITY_HOST_LABEL,
  *   CLAWQL_DENSITY_REUSE_BAGS=1, CLAWQL_DENSITY_RESUME_FROM
@@ -85,6 +89,26 @@ async function main(): Promise<void> {
           : process.env.CLAWQL_DENSITY_FIRED_DEFINITION === "durable_trigger_record"
             ? "durable_trigger_record"
             : undefined,
+      deadlineFlushPolicy: (() => {
+        const mode = process.env.CLAWQL_DENSITY_FLUSH_MODE;
+        if (mode === "os_buffer") return { mode: "os_buffer" as const };
+        if (mode === "fsync_each") return { mode: "fsync_each" as const };
+        if (mode === "group_commit" || !mode) {
+          if (!mode && !process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX && !process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS) {
+            return undefined;
+          }
+          return {
+            mode: "group_commit" as const,
+            batchMax: process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX
+              ? Number(process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX)
+              : 64,
+            flushIntervalMs: process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS
+              ? Number(process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS)
+              : 10,
+          };
+        }
+        return undefined;
+      })(),
       steadyArrivalRatePerSec: process.env.CLAWQL_DENSITY_STEADY_ARRIVAL_RATE
         ? Number(process.env.CLAWQL_DENSITY_STEADY_ARRIVAL_RATE)
         : undefined,
@@ -92,6 +116,7 @@ async function main(): Promise<void> {
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
       skipDeadlinePump: process.env.CLAWQL_DENSITY_SKIP_DEADLINE === "1",
       skipDeadlineRamp: process.env.CLAWQL_DENSITY_SKIP_DEADLINE_RAMP === "1",
+      skipDeadlineCrashTest: process.env.CLAWQL_DENSITY_SKIP_DEADLINE_CRASH === "1",
       hostLabel: process.env.CLAWQL_DENSITY_HOST_LABEL || "clawql-cloud-agent-host",
       bagDir: process.env.CLAWQL_DENSITY_BAG_DIR,
       reuseBags: process.env.CLAWQL_DENSITY_REUSE_BAGS === "1",
@@ -122,6 +147,7 @@ async function main(): Promise<void> {
               slaMs: run.deadlineAccuracy.slaMs,
               slaTargetPct: run.deadlineAccuracy.slaTargetPct,
               scheduler: run.deadlineAccuracy.scheduler,
+              crashTest: run.deadlineAccuracy.crashTest,
               sustainablePerSec: run.deadlineAccuracy.sustainablePerSec,
               steady: {
                 arrivalRatePerSec: run.deadlineAccuracy.steady.arrivalRatePerSec,

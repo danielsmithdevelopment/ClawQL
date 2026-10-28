@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T20:05:23.693Z",
+  "measuredAt": "2026-10-28T20:19:42.119Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -8,7 +8,7 @@
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
       "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
-      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (default durable_trigger_record); declare arrival rate; concurrent fires; O(log n) next-deadline; steady + burst + sustainablePerSec ramp (≥99% within 1s)"
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit batchMax=64 intervalMs=10); lateness stamped after fsync; arrival-rate ramp; SIGKILL crash test"
     },
     "columns": [
       "agentsAtLimit",
@@ -18,10 +18,10 @@
       "diskBytesPerAgent",
       "wakeWarmMs.p50/p99",
       "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-      "deadlineAccuracy (slaMs, firedDefinition, arrivalRate, steady/burst pctMet + p99 excess, sustainablePerSec)",
+      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, crashTest, arrivalRate, steady/burst, sustainablePerSec)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; identical fired definition (durable trigger record); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. Deadline accuracy requires identical fired definition + flush policy (or disclose each). Fired stamps after flush. os_buffer page-cache writes are not durable and must not be published as such. Cold wake: median+range only until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s; identical fired definition (durable trigger record vs bag wake); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Design (timer wheel vs heap) is free. Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -68,7 +68,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (2500000 = agentsAtLimit). Limit = first resource exhausted (**rss** at 2500000). Deadline SLA 1000 ms (≥99%; fired=durable_trigger_record; concurrency=64; next=O(log n) binary_min_heap): steady arrival 666.67/s → 100% met / excess p99 273 ms; burst drain 400000/s → 100% met / excess p99 149 ms; sustainablePerSec=1200000 (3-rep median; cliff ~1.0–1.3e6/s). Prior 29.5% steady was serial bag-wake backlog under an undeclared arrival rate — not a durable-trigger measure. cold p99 median 1.003 ms (range 0.456–1.212; do not cross-compare cold until shared-host). Warm p99=0.207662 ms. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure under the same fired definition + arrival-rate ramp. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v8). Schedule retained at 2.5e6 (rss limit). Fired=durable_trigger_record; flush=group_commit(batchMax=64, intervalMs=10, fsync); crashTest=pass; lateness stamped after fsync. Steady ~667/s → 100% met / excess p99 293 ms (excess ≫ 10ms flush interval — timer/heap under resident pad, not a flush knob). Burst drain ~64516.13/s → 100% met. sustainablePerSec=256000 (conservative 3-rep floor under group_commit; median 512000; fsync_each ≈ 24000). Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded. Provisional vs Ontologiql until shared flush policy + crash test. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -88,13 +88,23 @@
           "slaTargetPct": 99,
           "firedDefinition": "durable_trigger_record",
           "concurrency": 64,
+          "flushPolicy": {
+            "mode": "group_commit",
+            "batchMax": 64,
+            "flushIntervalMs": 10,
+            "durabilityWindowTriggers": 0,
+            "durabilityWindowMs": 0,
+            "crashSafe": true,
+            "syncPrimitive": "fsync_group_commit"
+          },
+          "crashTestOk": true,
           "steadyArrivalRatePerSec": 666.67,
           "steadyPctMet": 100,
-          "steadyP99ExcessMs": 273,
+          "steadyP99ExcessMs": 293,
           "burstPctMet": 100,
-          "burstP99ExcessMs": 149,
-          "burstDrainPerSec": 400000,
-          "sustainablePerSec": 1200000
+          "burstP99ExcessMs": 217,
+          "burstDrainPerSec": 64516.13,
+          "sustainablePerSec": 256000
         },
         "restartSurvival": true
       },
@@ -308,7 +318,18 @@
         "tickMs": 1,
         "concurrency": 64,
         "firedDefinition": "durable_trigger_record",
-        "note": "Fired = durable trigger record (agentId, deadlineMs, firedAt) appended to a journal — approval-expiry semantics, not bag load. Peek O(1), schedule/popDue O(log n). Concurrent trigger writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs)."
+        "flushPolicy": {
+          "mode": "group_commit",
+          "batchMax": 64,
+          "flushIntervalMs": 10,
+          "durabilityWindowTriggers": 0,
+          "durabilityWindowMs": 0,
+          "crashSafe": true,
+          "storage": "append_ndjson_file",
+          "syncPrimitive": "fsync_group_commit",
+          "note": "Group commit: flush when batch reaches 64 or every 10 ms, then fsync. Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills)."
+        },
+        "note": "Fired = trigger record flushed per policy (group_commit; crashSafe=true). Approval-expiry semantics, not bag load. Lateness stamped after flush. Peek O(1), schedule/popDue O(log n). Concurrent writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs)."
       },
       "steady": {
         "mode": "steady",
@@ -317,41 +338,76 @@
         "slaMs": 1000,
         "arrivalRatePerSec": 666.67,
         "pctWithinSla": 100,
-        "latenessP50Ms": 0,
-        "latenessP99Ms": 274,
-        "excessOverTickP50Ms": 0,
-        "excessOverTickP99Ms": 273,
-        "maxLatenessMs": 304,
-        "maxExcessOverTickMs": 303,
-        "wallMs": 2696
+        "latenessP50Ms": 17,
+        "latenessP99Ms": 294,
+        "excessOverTickP50Ms": 16,
+        "excessOverTickP99Ms": 293,
+        "maxLatenessMs": 324,
+        "maxExcessOverTickMs": 323,
+        "wallMs": 2690
       },
       "burst": {
         "mode": "burst",
         "n": 2000,
         "fired": 2000,
         "slaMs": 1000,
-        "arrivalRatePerSec": 400000,
+        "arrivalRatePerSec": 64516.13,
         "pctWithinSla": 100,
-        "latenessP50Ms": 148,
-        "latenessP99Ms": 150,
-        "excessOverTickP50Ms": 147,
-        "excessOverTickP99Ms": 149,
-        "maxLatenessMs": 150,
-        "maxExcessOverTickMs": 149,
-        "wallMs": 5
+        "latenessP50Ms": 209,
+        "latenessP99Ms": 218,
+        "excessOverTickP50Ms": 208,
+        "excessOverTickP99Ms": 217,
+        "maxLatenessMs": 230,
+        "maxExcessOverTickMs": 229,
+        "wallMs": 31
       },
-      "sustainablePerSec": 1200000,
-      "sustainablePerSecNote": {
-        "singleShotFullReport": 1000000,
-        "threeRepMedian": 1200000,
-        "threeRepMin": 1200000,
-        "threeRepMax": 1200000,
-        "cliffBandPerSec": [
-          1000000,
-          1300000
-        ]
-      },
+      "sustainablePerSec": 256000,
       "ramp": [
+        {
+          "mode": "ramp",
+          "n": 50,
+          "fired": 50,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 50,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 11,
+          "latenessP99Ms": 269,
+          "excessOverTickP50Ms": 10,
+          "excessOverTickP99Ms": 268,
+          "maxLatenessMs": 269,
+          "maxExcessOverTickMs": 268,
+          "wallMs": 734
+        },
+        {
+          "mode": "ramp",
+          "n": 100,
+          "fired": 100,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 100,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 18,
+          "latenessP99Ms": 275,
+          "excessOverTickP50Ms": 17,
+          "excessOverTickP99Ms": 274,
+          "maxLatenessMs": 285,
+          "maxExcessOverTickMs": 284,
+          "wallMs": 734
+        },
+        {
+          "mode": "ramp",
+          "n": 250,
+          "fired": 250,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 250,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 19,
+          "latenessP99Ms": 274,
+          "excessOverTickP50Ms": 18,
+          "excessOverTickP99Ms": 273,
+          "maxLatenessMs": 282,
+          "maxExcessOverTickMs": 281,
+          "wallMs": 735
+        },
         {
           "mode": "ramp",
           "n": 500,
@@ -359,13 +415,28 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 500,
           "pctWithinSla": 100,
-          "latenessP50Ms": 1,
-          "latenessP99Ms": 489,
-          "excessOverTickP50Ms": 0,
-          "excessOverTickP99Ms": 488,
-          "maxLatenessMs": 499,
-          "maxExcessOverTickMs": 498,
-          "wallMs": 500
+          "latenessP50Ms": 23,
+          "latenessP99Ms": 486,
+          "excessOverTickP50Ms": 22,
+          "excessOverTickP99Ms": 485,
+          "maxLatenessMs": 496,
+          "maxExcessOverTickMs": 495,
+          "wallMs": 523
+        },
+        {
+          "mode": "ramp",
+          "n": 1000,
+          "fired": 1000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 1000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 18,
+          "latenessP99Ms": 165,
+          "excessOverTickP50Ms": 17,
+          "excessOverTickP99Ms": 164,
+          "maxLatenessMs": 175,
+          "maxExcessOverTickMs": 174,
+          "wallMs": 847
         },
         {
           "mode": "ramp",
@@ -374,13 +445,28 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 2000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 0,
-          "latenessP99Ms": 235,
-          "excessOverTickP50Ms": 0,
-          "excessOverTickP99Ms": 234,
-          "maxLatenessMs": 245,
-          "maxExcessOverTickMs": 244,
-          "wallMs": 755
+          "latenessP50Ms": 40,
+          "latenessP99Ms": 501,
+          "excessOverTickP50Ms": 39,
+          "excessOverTickP99Ms": 500,
+          "maxLatenessMs": 511,
+          "maxExcessOverTickMs": 510,
+          "wallMs": 504
+        },
+        {
+          "mode": "ramp",
+          "n": 4000,
+          "fired": 4000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 4000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 18,
+          "latenessP99Ms": 165,
+          "excessOverTickP50Ms": 17,
+          "excessOverTickP99Ms": 164,
+          "maxLatenessMs": 175,
+          "maxExcessOverTickMs": 174,
+          "wallMs": 846
         },
         {
           "mode": "ramp",
@@ -389,13 +475,28 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 8000,
           "pctWithinSla": 100,
-          "latenessP50Ms": 248,
-          "latenessP99Ms": 335,
-          "excessOverTickP50Ms": 247,
-          "excessOverTickP99Ms": 334,
-          "maxLatenessMs": 345,
-          "maxExcessOverTickMs": 344,
-          "wallMs": 656
+          "latenessP50Ms": 13,
+          "latenessP99Ms": 189,
+          "excessOverTickP50Ms": 12,
+          "excessOverTickP99Ms": 188,
+          "maxLatenessMs": 198,
+          "maxExcessOverTickMs": 197,
+          "wallMs": 810
+        },
+        {
+          "mode": "ramp",
+          "n": 16000,
+          "fired": 16000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 16000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 10,
+          "latenessP99Ms": 171,
+          "excessOverTickP50Ms": 9,
+          "excessOverTickP99Ms": 170,
+          "maxLatenessMs": 178,
+          "maxExcessOverTickMs": 177,
+          "wallMs": 836
         },
         {
           "mode": "ramp",
@@ -404,76 +505,103 @@
           "slaMs": 1000,
           "arrivalRatePerSec": 32000,
           "pctWithinSla": 100,
+          "latenessP50Ms": 24,
+          "latenessP99Ms": 217,
+          "excessOverTickP50Ms": 23,
+          "excessOverTickP99Ms": 216,
+          "maxLatenessMs": 224,
+          "maxExcessOverTickMs": 223,
+          "wallMs": 804
+        },
+        {
+          "mode": "ramp",
+          "n": 64000,
+          "fired": 64000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 64000,
+          "pctWithinSla": 100,
           "latenessP50Ms": 0,
-          "latenessP99Ms": 198,
+          "latenessP99Ms": 168,
           "excessOverTickP50Ms": 0,
-          "excessOverTickP99Ms": 197,
-          "maxLatenessMs": 208,
-          "maxExcessOverTickMs": 207,
-          "wallMs": 794
-        },
-        {
-          "mode": "ramp",
-          "n": 128000,
-          "fired": 128000,
-          "slaMs": 1000,
-          "arrivalRatePerSec": 128000,
-          "pctWithinSla": 100,
-          "latenessP50Ms": 477,
-          "latenessP99Ms": 839,
-          "excessOverTickP50Ms": 476,
-          "excessOverTickP99Ms": 838,
-          "maxLatenessMs": 847,
-          "maxExcessOverTickMs": 846,
-          "wallMs": 251
-        },
-        {
-          "mode": "ramp",
-          "n": 512000,
-          "fired": 512000,
-          "slaMs": 1000,
-          "arrivalRatePerSec": 512000,
-          "pctWithinSla": 100,
-          "latenessP50Ms": 256,
-          "latenessP99Ms": 322,
-          "excessOverTickP50Ms": 255,
-          "excessOverTickP99Ms": 321,
-          "maxLatenessMs": 325,
-          "maxExcessOverTickMs": 324,
-          "wallMs": 858
-        },
-        {
-          "mode": "ramp",
-          "n": 1000000,
-          "fired": 1000000,
-          "slaMs": 1000,
-          "arrivalRatePerSec": 1000000,
-          "pctWithinSla": 100,
-          "latenessP50Ms": 788,
-          "latenessP99Ms": 961,
-          "excessOverTickP50Ms": 787,
-          "excessOverTickP99Ms": 960,
-          "maxLatenessMs": 964,
-          "maxExcessOverTickMs": 963,
-          "wallMs": 1405
-        },
-        {
-          "mode": "ramp",
-          "n": 1200000,
-          "fired": 1200000,
-          "slaMs": 1000,
-          "arrivalRatePerSec": 1200000,
-          "pctWithinSla": 82.7,
-          "latenessP50Ms": 793,
-          "latenessP99Ms": 1142,
-          "excessOverTickP50Ms": 792,
-          "excessOverTickP99Ms": 1141,
-          "maxLatenessMs": 1149,
-          "maxExcessOverTickMs": 1148,
-          "wallMs": 1858
+          "excessOverTickP99Ms": 167,
+          "maxLatenessMs": 175,
+          "maxExcessOverTickMs": 174,
+          "wallMs": 829
         }
       ],
-      "residentHeapSizeDuringMeasure": 2500000
+      "crashTest": {
+        "ok": true,
+        "policy": {
+          "mode": "group_commit",
+          "batchMax": 64,
+          "flushIntervalMs": 10,
+          "durabilityWindowTriggers": 0,
+          "durabilityWindowMs": 0,
+          "crashSafe": true,
+          "storage": "append_ndjson_file",
+          "syncPrimitive": "fsync_group_commit",
+          "note": "Group commit: flush when batch reaches 64 or every 10 ms, then fsync. Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills)."
+        },
+        "countedFired": 416,
+        "recoveredOnDisk": 416,
+        "missingFromDisk": 0,
+        "duplicateOnDisk": 0,
+        "note": "SIGKILL after 416 durable acks; all counted fires present on disk exactly once (journal=/tmp/clawql-density-bags-fair/.deadline-crash/deadline-triggers-14692-1793218627536.ndjson)."
+      },
+      "sustainablePerSecNote": {
+        "policy": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10,
+        "conservativeFloor": 256000,
+        "threeRepMedian": 512000,
+        "threeRepMax": 512000,
+        "fsyncEachSustainablePerSec": 24000,
+        "osBufferWasNotCrashDurable": "~1.2e6 prior v7 figure was writeSync/page-cache only — superseded",
+        "steadyP99Note": "Steady excess p99 ~293ms at ~667/s is NOT the 10ms flush interval — flush stamps after fsync; residual is timer/event-loop under the 2.5e6 resident heap pad."
+      },
+      "flushPolicyCompare": {
+        "group_commit": {
+          "batchMax": 64,
+          "flushIntervalMs": 10,
+          "sustainablePerSecMedian": 512000,
+          "sustainablePerSecMin": 256000,
+          "sustainablePerSecMax": 512000,
+          "reps": [
+            512000,
+            512000,
+            256000
+          ]
+        },
+        "fsync_each": {
+          "sustainablePerSec": 24000,
+          "ramp": [
+            {
+              "arrivalRatePerSec": 8000,
+              "pctWithinSla": 100,
+              "excessP99": 29,
+              "wallMs": 973
+            },
+            {
+              "arrivalRatePerSec": 16000,
+              "pctWithinSla": 100,
+              "excessP99": 212,
+              "wallMs": 1191
+            },
+            {
+              "arrivalRatePerSec": 24000,
+              "pctWithinSla": 100,
+              "excessP99": 633,
+              "wallMs": 1619
+            },
+            {
+              "arrivalRatePerSec": 32000,
+              "pctWithinSla": 83,
+              "excessP99": 1212,
+              "wallMs": 2205
+            }
+          ]
+        }
+      }
     },
     "wakeByOrder": [
       {

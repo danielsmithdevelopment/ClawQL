@@ -2,18 +2,29 @@
  * In-memory wake-deadline schedule for fair parked agents.
  *
  * Next-deadline selection is an O(log n) binary min-heap (not a linear scan).
- * "Fired" for the board SLA means a **durable trigger record** was written
- * (approval-expiry semantics) — not bag load + handler. Bag-wake cost is a
- * separate optional arm.
+ * "Fired" for the board SLA means a **durable trigger record** was flushed
+ * per an explicit flush policy (approval-expiry semantics) — not bag load.
  *
  * Steady arms declare an **arrival rate** (deadlines/sec). The comparable
  * headline is the max rate that still meets ≥99% within the shared 1s SLA,
- * after concurrent trigger recording.
+ * under the same fired definition + flush policy.
  */
 
-import { appendFileSync, closeSync, openSync, writeSync } from "node:fs";
-import { join } from "node:path";
 import { Effect } from "effect";
+import {
+  DEFAULT_TRIGGER_FLUSH_POLICY,
+  describeFlushPolicy,
+  type TriggerFlushPolicy,
+  type TriggerFlushPolicyInfo,
+} from "./trigger-journal.js";
+
+export type { TriggerFlushPolicy, TriggerFlushPolicyInfo } from "./trigger-journal.js";
+export {
+  DEFAULT_TRIGGER_FLUSH_POLICY,
+  describeFlushPolicy,
+  openTriggerJournalEffect,
+  readTriggerJournalEffect,
+} from "./trigger-journal.js";
 
 export type DeadlineEntry = {
   readonly agentId: string;
@@ -40,6 +51,7 @@ export type DeadlineSchedulerInfo = {
   readonly tickMs: number;
   readonly concurrency: number;
   readonly firedDefinition: DeadlineFireDefinition;
+  readonly flushPolicy: TriggerFlushPolicyInfo | null;
   readonly note: string;
 };
 
@@ -52,19 +64,25 @@ export function makeDeadlineSchedulerInfo(args: {
   readonly tickMs?: number;
   readonly concurrency?: number;
   readonly firedDefinition?: DeadlineFireDefinition;
+  readonly flushPolicy?: TriggerFlushPolicy | null;
 }): DeadlineSchedulerInfo {
   const tickMs = args.tickMs ?? DEFAULT_SCHEDULER_TICK_MS;
   const concurrency = args.concurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
   const firedDefinition = args.firedDefinition ?? "durable_trigger_record";
+  const flushPolicy =
+    firedDefinition === "durable_trigger_record"
+      ? describeFlushPolicy(args.flushPolicy ?? DEFAULT_TRIGGER_FLUSH_POLICY)
+      : null;
   return {
     mechanism: "min_heap_setTimeout_to_next_deadline",
     nextDeadlineComplexity: "O(log n) binary_min_heap",
     tickMs,
     concurrency,
     firedDefinition,
+    flushPolicy,
     note:
       firedDefinition === "durable_trigger_record"
-        ? "Fired = durable trigger record (agentId, deadlineMs, firedAt) appended to a journal — approval-expiry semantics, not bag load. Peek O(1), schedule/popDue O(log n). Concurrent trigger writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs)."
+        ? `Fired = trigger record flushed per policy (${flushPolicy?.mode}; crashSafe=${flushPolicy?.crashSafe}). Approval-expiry semantics, not bag load. Lateness stamped after flush. Peek O(1), schedule/popDue O(log n). Concurrent writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs).`
         : "Fired = bag wake (load parked JSON). Peek O(1), schedule/popDue O(log n). Concurrent bag wakes bounded by concurrency.",
   };
 }
@@ -186,10 +204,23 @@ export type DeadlineAccuracyReport = {
   readonly burst: DeadlineArmResult;
   /**
    * Max offered steady arrival rate (deadlines/sec) that still met slaTargetPct
-   * within slaMs — the comparable throughput headline.
+   * within slaMs — under the declared flush policy. Comparable only when flush
+   * policy matches across systems.
    */
   readonly sustainablePerSec: number;
   readonly ramp: readonly DeadlineArmResult[];
+  /** Crash-recovery proof for the flush policy, when run. */
+  readonly crashTest: DeadlineCrashTestResult | null;
+};
+
+export type DeadlineCrashTestResult = {
+  readonly ok: boolean;
+  readonly policy: TriggerFlushPolicyInfo;
+  readonly countedFired: number;
+  readonly recoveredOnDisk: number;
+  readonly missingFromDisk: number;
+  readonly duplicateOnDisk: number;
+  readonly note: string;
 };
 
 function maxOf(samples: readonly number[]): number {
@@ -258,55 +289,26 @@ async function mapPool<T, R>(
 ): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
-  const workers = Array.from(
-    { length: Math.max(1, Math.min(concurrency, items.length || 1)) },
-    async () => {
-      for (;;) {
-        const i = next++;
-        if (i >= items.length) return;
-        out[i] = await fn(items[i]!, i);
-      }
+  const workers = Array.from({ length: Math.max(1, Math.min(concurrency, items.length || 1)) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      out[i] = await fn(items[i]!, i);
     }
-  );
+  });
   await Promise.all(workers);
   return out;
 }
 
-export type TriggerJournal = {
-  readonly path: string;
-  readonly record: (agentId: string, deadlineMs: number, firedAt: number) => void;
-  readonly close: () => void;
-};
-
-/** Append-only durable trigger journal (one line per fire). */
-export function openTriggerJournalEffect(dir: string): Effect.Effect<TriggerJournal> {
-  return Effect.sync(() => {
-    const path = join(dir, `deadline-triggers-${process.pid}-${Date.now()}.ndjson`);
-    const fd = openSync(path, "a");
-    return {
-      path,
-      record: (agentId, deadlineMs, firedAt) => {
-        const line = `${JSON.stringify({ agentId, deadlineMs, firedAt })}\n`;
-        writeSync(fd, line);
-      },
-      close: () => {
-        try {
-          closeSync(fd);
-        } catch {
-          /* ignore */
-        }
-      },
-    };
-  });
-}
-
 /**
- * Pump with concurrent fire handlers. Lateness is stamped when the trigger
- * record is taken (before/at durable write), not after bag I/O.
+ * Pump with concurrent fire handlers. Lateness is stamped **after** `fire`
+ * resolves — for durable_trigger_record that means after the flush policy
+ * has made the record durable.
  */
 export function runDeadlinePumpEffect(args: {
   readonly schedule: DeadlineSchedule;
-  readonly fire: (entry: DeadlineEntry, firedAt: number) => Promise<void>;
+  /** Resolves only when the fire is complete (durable flush or bag wake). */
+  readonly fire: (entry: DeadlineEntry) => Promise<void>;
   readonly maxFires: number;
   readonly wallDeadlineMs: number;
   readonly tickMs?: number;
@@ -348,8 +350,8 @@ export function runDeadlinePumpEffect(args: {
       }
       const batch = due.slice(0, maxFires - fired);
       const batchLateness = await mapPool(batch, concurrency, async (entry) => {
+        await fire(entry);
         const firedAt = Date.now();
-        await fire(entry, firedAt);
         return Math.max(0, firedAt - entry.deadlineMs);
       });
       for (const lateness of batchLateness) {
@@ -392,7 +394,7 @@ function placeSteadyDeadlines(
  */
 export function rampSustainableRateEffect(args: {
   readonly agentIds: readonly string[];
-  readonly fire: (entry: DeadlineEntry, firedAt: number) => Promise<void>;
+  readonly fire: (entry: DeadlineEntry) => Promise<void>;
   readonly windowMs: number;
   readonly slaMs?: number;
   readonly slaTargetPct?: number;
@@ -414,12 +416,10 @@ export function rampSustainableRateEffect(args: {
     const windowMs = Math.max(200, args.windowMs);
     const windowSec = windowMs / 1000;
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
+    // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
-      ([
-        500, 2_000, 8_000, 32_000, 128_000, 400_000, 512_000, 800_000, 1_000_000, 1_200_000,
-        1_300_000, 1_600_000,
-      ] as const);
+      ([50, 100, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 64_000, 128_000] as const);
     const maxCount = Math.max(
       1,
       ...rates.map((r) => Math.floor(r * windowSec)),
@@ -487,7 +487,7 @@ function padResidentHeap(
 /** Full deadline accuracy: steady + burst at a declared rate, plus sustainable ramp. */
 export function runDeadlineAccuracyEffect(args: {
   readonly agentIds: readonly string[];
-  readonly fire: (entry: DeadlineEntry, firedAt: number) => Promise<void>;
+  readonly fire: (entry: DeadlineEntry) => Promise<void>;
   readonly horizonMs: number;
   readonly slaMs?: number;
   readonly slaTargetPct?: number;
@@ -495,6 +495,7 @@ export function runDeadlineAccuracyEffect(args: {
   readonly concurrency?: number;
   readonly burstOffsetMs?: number;
   readonly firedDefinition?: DeadlineFireDefinition;
+  readonly flushPolicy?: TriggerFlushPolicy;
   /** Offered rate for the steady showcase arm (deadlines/sec). */
   readonly steadyArrivalRatePerSec?: number;
   /**
@@ -505,6 +506,7 @@ export function runDeadlineAccuracyEffect(args: {
   readonly rampWindowMs?: number;
   readonly rampRatesPerSec?: readonly number[];
   readonly skipRamp?: boolean;
+  readonly crashTest?: DeadlineCrashTestResult | null;
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<DeadlineAccuracyReport> {
   return Effect.gen(function* () {
@@ -514,9 +516,15 @@ export function runDeadlineAccuracyEffect(args: {
     const concurrency = args.concurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
     const burstOffsetMs = args.burstOffsetMs ?? 50;
     const firedDefinition = args.firedDefinition ?? "durable_trigger_record";
+    const flushPolicy = args.flushPolicy ?? DEFAULT_TRIGGER_FLUSH_POLICY;
     const ids = [...args.agentIds];
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
-    const scheduler = makeDeadlineSchedulerInfo({ tickMs, concurrency, firedDefinition });
+    const scheduler = makeDeadlineSchedulerInfo({
+      tickMs,
+      concurrency,
+      firedDefinition,
+      flushPolicy: firedDefinition === "durable_trigger_record" ? flushPolicy : null,
+    });
 
     if (ids.length === 0) {
       const empty = summarizeArm("steady", [], tickMs, slaMs, 0, 0, args.percentile);
@@ -528,11 +536,13 @@ export function runDeadlineAccuracyEffect(args: {
         burst: { ...empty, mode: "burst" as const },
         sustainablePerSec: 0,
         ramp: [],
+        crashTest: args.crashTest ?? null,
       };
     }
 
     const steadyRate =
-      args.steadyArrivalRatePerSec ?? ids.length / Math.max(0.001, args.horizonMs / 1000);
+      args.steadyArrivalRatePerSec ??
+      ids.length / Math.max(0.001, args.horizonMs / 1000);
     const steadyCount = Math.min(
       ids.length,
       Math.max(1, Math.floor(steadyRate * (args.horizonMs / 1000)))
@@ -606,16 +616,7 @@ export function runDeadlineAccuracyEffect(args: {
       burst: burstWithRate,
       sustainablePerSec,
       ramp,
+      crashTest: args.crashTest ?? null,
     };
   });
-}
-
-/** @deprecated helper kept for tests that append without openTriggerJournal */
-export function appendTriggerLine(
-  path: string,
-  agentId: string,
-  deadlineMs: number,
-  firedAt: number
-): void {
-  appendFileSync(path, `${JSON.stringify({ agentId, deadlineMs, firedAt })}\n`);
 }

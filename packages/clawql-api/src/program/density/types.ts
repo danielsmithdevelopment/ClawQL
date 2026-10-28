@@ -80,6 +80,21 @@ export type DeadlineBoardAccuracy = {
   /** Must match across systems: durable trigger record vs bag wake. */
   readonly firedDefinition: "durable_trigger_record" | "bag_wake";
   readonly concurrency: number;
+  /**
+   * Flush policy for durable_trigger_record (must match across systems, or
+   * each row discloses its own). Null for bag_wake.
+   */
+  readonly flushPolicy: {
+    readonly mode: "os_buffer" | "fsync_each" | "group_commit";
+    readonly batchMax: number | null;
+    readonly flushIntervalMs: number | null;
+    readonly durabilityWindowTriggers: number | null;
+    readonly durabilityWindowMs: number | null;
+    readonly crashSafe: boolean;
+    readonly syncPrimitive: string;
+  } | null;
+  /** Crash-recovery proof: every counted fire present on disk after SIGKILL. */
+  readonly crashTestOk: boolean | null;
   /** Offered deadlines/sec in the steady showcase arm. */
   readonly steadyArrivalRatePerSec: number;
   readonly steadyPctMet: number;
@@ -238,6 +253,17 @@ export type EvidenceFair = {
         readonly tickMs: number;
         readonly concurrency: number;
         readonly firedDefinition: "durable_trigger_record" | "bag_wake";
+        readonly flushPolicy: {
+          readonly mode: string;
+          readonly batchMax: number | null;
+          readonly flushIntervalMs: number | null;
+          readonly durabilityWindowTriggers: number | null;
+          readonly durabilityWindowMs: number | null;
+          readonly crashSafe: boolean;
+          readonly storage: string;
+          readonly syncPrimitive: string;
+          readonly note: string;
+        } | null;
         readonly note: string;
       };
       readonly steady: {
@@ -279,6 +305,14 @@ export type EvidenceFair = {
         readonly excessOverTickP99Ms: number;
         readonly wallMs: number;
       }[];
+      readonly crashTest: {
+        readonly ok: boolean;
+        readonly countedFired: number;
+        readonly recoveredOnDisk: number;
+        readonly missingFromDisk: number;
+        readonly duplicateOnDisk: number;
+        readonly note: string;
+      } | null;
     } | null;
     readonly wakeByOrder: readonly WakeOrderResult[];
     readonly wakeSpread: readonly WakeSpread[];
