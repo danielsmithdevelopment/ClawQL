@@ -112,6 +112,7 @@
     "demo:kill-node-standin": "node scripts/program/kill-node-standin-demo.mjs",
     "benchmark:kill-mid-write": "node scripts/benchmarks/kill-mid-write/run-board.mjs",
     "benchmark:durability-comparison": "node scripts/benchmarks/durability-comparison/run-board.mjs",
+    "benchmark:program-density-fair": "node scripts/benchmarks/program-density/run-board.mjs",
     "smoke:program-cell-fleet-kill": "bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh",
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
     "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",

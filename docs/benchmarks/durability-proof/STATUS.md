@@ -76,7 +76,7 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 | -------------------------------- | ------------------------------ | -------------------------------------------------- |
 | Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                   |
 | Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements) |
-| Density                          | 10,000+ Active agents per node | Not yet measured                                   |
+| Density                          | 10,000+ Active agents per node | **Parked fair board measured** — [program-density](../program-density/STATUS.md) (not active-at-50ms; Golem invite still open for same-host row) |
 | Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
 | Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
 
@@ -86,7 +86,7 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 
 **Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
 
-**Where unmeasured / planned:** celld cold start and agents per node; mandate-derived keys **and** reconciliation-by-lookup so Stripe-class (and lookup-capable) APIs auto-resolve in-flight unknowns without dropping at-most-once elsewhere.
+**Where unmeasured / planned:** celld cold start; **active** agents-per-node (fair parked density is separate — [program-density](../program-density/STATUS.md)); mandate-derived keys **and** reconciliation-by-lookup so Stripe-class (and lookup-capable) APIs auto-resolve in-flight unknowns without dropping at-most-once elsewhere.
 
 **Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
@@ -108,6 +108,7 @@ Peer comparison design (celld = own substrate; Pi Durable + Golem = peers; dual 
 ## Related
 
 - Comparison board plan — [`COMPARISON.md`](./COMPARISON.md)
+- Durable parked-agent density (fair contract) — [`../program-density/STATUS.md`](../program-density/STATUS.md)
 - ADR 0015 — [`docs/adr/0015-program-mode-alongside-search-execute.md`](../../adr/0015-program-mode-alongside-search-execute.md)
 - Streams evidence — [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
 - Security suite roadmap — [`docs/benchmarks/security-suite/ROADMAP.md`](../security-suite/ROADMAP.md)
