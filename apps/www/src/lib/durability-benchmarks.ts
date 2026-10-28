@@ -211,8 +211,8 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'clawql-file-journal',
     status: 'measured',
-    idempotent: '0 dups / 20 unknown (n=20)',
-    nonIdempotent: '0 dups / 20 unknown (n=20)',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
   },
   {
     arm: 'naive-retry (reference)',
@@ -223,20 +223,20 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'golem (pilot stand-in)',
     status: 'pilot stand-in · not live',
-    idempotent: 'Re-send + key → 1 effect',
-    nonIdempotent: 'Re-send → duplicate effects',
+    idempotent: '50 re-sends → 50 effects (keyed)',
+    nonIdempotent: '50 re-sends → 100 effects',
   },
   {
     arm: 'pi-durable (pilot stand-in)',
     status: 'pilot stand-in · not live',
-    idempotent: 'Interrupted → unknown, 0 dups',
-    nonIdempotent: 'Interrupted → unknown, 0 dups',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
   },
   {
     arm: 'golem/pi + clawql (pilot)',
     status: 'pilot stand-in · not live',
-    idempotent: 'ClawQL gate → 0 dups + unknown',
-    nonIdempotent: 'ClawQL gate → 0 dups + unknown',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
   },
 ] as const
 

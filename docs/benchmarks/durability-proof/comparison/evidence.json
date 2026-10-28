@@ -1,8 +1,8 @@
 {
   "kind": "durability-comparison-kill-mid-write",
-  "measuredAt": "2026-10-21T02:15:52.189Z",
+  "measuredAt": "2026-10-28T04:03:32.850Z",
   "metric": "duplicates + outcome_unknown (+ lost); both upstream modes",
-  "honesty": "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+  "honesty": "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem are private pilot stand-ins (published recovery semantics × mock upstreams) — not live peer runtimes; named public boards still need maintainer invite.",
   "arms": [
     {
       "armId": "clawql-file-journal",
@@ -11,12 +11,12 @@
       "modes": [
         {
           "upstreamMode": "idempotent",
-          "n": 20,
+          "n": 50,
           "duplicates": 0,
-          "outcomeUnknown": 20,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -212,6 +212,306 @@
             },
             {
               "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
               "ok": true,
               "duplicates": 0,
               "outcomeUnknown": 1,
@@ -224,12 +524,12 @@
         },
         {
           "upstreamMode": "non_idempotent",
-          "n": 20,
+          "n": 50,
           "duplicates": 0,
-          "outcomeUnknown": 20,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -425,6 +725,306 @@
             },
             {
               "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
               "ok": true,
               "duplicates": 0,
               "outcomeUnknown": 1,
@@ -444,12 +1044,12 @@
       "modes": [
         {
           "upstreamMode": "idempotent",
-          "n": 20,
-          "duplicates": 20,
-          "outcomeUnknown": 20,
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -645,6 +1245,306 @@
             },
             {
               "i": 19,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
               "ok": true,
               "duplicates": 1,
               "outcomeUnknown": 1,
@@ -657,12 +1557,12 @@
         },
         {
           "upstreamMode": "non_idempotent",
-          "n": 20,
-          "duplicates": 20,
-          "outcomeUnknown": 20,
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 40,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 100,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -858,6 +1758,306 @@
             },
             {
               "i": 19,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+            },
+            {
+              "i": 49,
               "ok": true,
               "duplicates": 1,
               "outcomeUnknown": 1,
@@ -878,27 +2078,4135 @@
     },
     {
       "armId": "pi-durable",
-      "status": "pending_invite",
-      "honesty": "Pi Durable peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md).",
-      "modes": []
+      "status": "pilot_standin",
+      "honesty": "Private pilot stand-in (published recovery semantics × mock upstreams). Not a live peer runtime; named public board still needs maintainer invite. Pi Durable: effectful tool not replay-safe → interrupted/unknown, no automatic re-execute.",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable/non_idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        }
+      ]
     },
     {
       "armId": "golem",
-      "status": "pending_invite",
-      "honesty": "Golem peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md).",
-      "modes": []
+      "status": "pilot_standin",
+      "honesty": "Private pilot stand-in (published recovery semantics × mock upstreams). Not a live peer runtime; named public board still needs maintainer invite. Golem: in-flight outbound HTTP re-sent with the same idempotency key. Keys → one effect; no keys → duplicate possible.",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 0,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem/idempotent: duplicates=1 unknown=0 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 0,
+          "lost": 0,
+          "uniqueWriteEffects": 100,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "childSignal": "SIGKILL",
+              "detail": "golem/non_idempotent: duplicates=1 unknown=0 effects=2"
+            }
+          ]
+        }
+      ]
     },
     {
       "armId": "pi-durable+clawql",
-      "status": "pending_invite",
-      "honesty": "Combination arm (Pi Durable agent → ClawQL MCP) — pending invite + wiring.",
-      "modes": []
+      "status": "pilot_standin",
+      "honesty": "Private pilot stand-in (published recovery semantics × mock upstreams). Not a live peer runtime; named public board still needs maintainer invite. Pi Durable agent → ClawQL tools: single-use approval → outcome_unknown, never re-send.",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "pi-durable+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        }
+      ]
     },
     {
       "armId": "golem+clawql",
-      "status": "pending_invite",
-      "honesty": "Combination arm (Golem agent → ClawQL MCP) — pending invite + wiring.",
-      "modes": []
+      "status": "pilot_standin",
+      "honesty": "Private pilot stand-in (published recovery semantics × mock upstreams). Not a live peer runtime; named public board still needs maintainer invite. Golem agent → ClawQL tools: Golem retry becomes ClawQL refusal / outcome_unknown on non-idempotent APIs.",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "golem+clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+            }
+          ]
+        }
+      ]
     }
   ],
   "clawqlBoardPass": true
