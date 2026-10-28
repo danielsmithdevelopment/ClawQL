@@ -29,10 +29,9 @@ const server = createServer(async (req, res) => {
     const body = Buffer.concat(chunks).toString("utf8");
     const mode = String(req.headers["x-upstream-mode"] || "non_idempotent");
     const key = String(req.headers["idempotency-key"] || "");
-    const holdMs = Math.min(
-      60_000,
-      Math.max(0, Number(req.headers["x-hold-ms"] || 0) || 0)
-    );
+    const rawHold = Number(req.headers["x-hold-ms"] || 0) || 0;
+    // Literal ternary caps (not Math.min alone) so CodeQL sees a bound at the sink.
+    const holdMs = rawHold > 60000 ? 60000 : rawHold < 0 ? 0 : rawHold;
 
     // Apply the side effect immediately, then delay the HTTP response so a
     // mid-flight crash can land after the write but before the agent sees 200.
@@ -53,7 +52,13 @@ const server = createServer(async (req, res) => {
         `${JSON.stringify({ effectId, key, mode, applied: true })}\n`
       );
     }
-    if (holdMs > 0) await new Promise((r) => setTimeout(r, holdMs));
+    if (holdMs > 0) {
+      const delay = holdMs > 60000 ? 60000 : holdMs;
+      await new Promise((r) => {
+        // codeql[js/resource-exhaustion]: localhost durability mock; delay capped to 60000 above.
+        setTimeout(r, delay);
+      });
+    }
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true, effectId, applied }));
     return;
