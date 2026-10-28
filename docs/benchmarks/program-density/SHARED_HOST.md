@@ -7,13 +7,13 @@ Evidence today is provisional (different hosts). This file is the checklist for 
 
 Once both rows are complete, publish these five under identical definitions:
 
-| # | Number | Definition |
-| --- | --- | --- |
-| 1 | **agentsAtLimit** | First resource exhausted under the shared RSS ceiling (total process RSS). Retained at limit = wake-deadline schedule. |
-| 2 | **wakeWarmMs p99** | Cached / warm wake. |
-| 3 | **wakeColdMs** | Cold wake — quote **median + range** until orders are locked; no cross-system cold win from a single p99. |
-| 4 | **deadlineAccuracy** | Shared 1s SLA, identical **fired definition**, identical **flush policy** (or each discloses), **schedule shape + format** disclosed, arrival-rate ramp, **sustainablePerSec**, **scaled bursts** (first size that misses 1s), flush **crash test**, **deadline restart test**. |
-| 5 | **restartSurvival** | Parked bags survive process restart (bag wake). |
+| #   | Number               | Definition                                                                                                                                                                                                                                                                      |
+| --- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **agentsAtLimit**    | First resource exhausted under the shared RSS ceiling (total process RSS). Retained at limit = wake-deadline schedule.                                                                                                                                                          |
+| 2   | **wakeWarmMs p99**   | Cached / warm wake.                                                                                                                                                                                                                                                             |
+| 3   | **wakeColdMs**       | Cold wake — quote **median + range** until orders are locked; no cross-system cold win from a single p99.                                                                                                                                                                       |
+| 4   | **deadlineAccuracy** | Shared 1s SLA, identical **fired definition**, identical **flush policy** (or each discloses), **schedule shape + format** disclosed, arrival-rate ramp, **sustainablePerSec**, **scaled bursts** (first size that misses 1s), flush **crash test**, **deadline restart test**. |
+| 5   | **restartSurvival**  | Parked bags survive process restart (bag wake).                                                                                                                                                                                                                                 |
 
 ## Deadline accuracy — required arms
 
@@ -62,12 +62,12 @@ On one host, both systems run:
 
 ## ClawQL vs Ontologiql gates
 
-| Gate | ClawQL | Ontologiql |
-| --- | --- | --- |
-| Flush policy named + crash-tested | measured (group_commit) | **open — disclose + crash test** |
-| Scaled bursts + first-miss | measured (first miss **250k** @ 2.5e6 agents) | **open — explain 400k burst @ 200k agents, or rerun with N ≤ agentsAtLimit** |
-| Sustained-rate ramp past failure | measured (3-rep floor 256k; ramp stops at first miss) | **open — confirm ramp went past failure (result matched burst cliff)** |
-| Deadline restart + **schedule format** disclosed | measured (~40 ms @ 2.5e6; format in evidence) | **open — publish rebuildMs + on-disk/rebuild path** |
-| Shared host | pending | pending |
+| Gate                                             | ClawQL                                                | Ontologiql                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Flush policy named + crash-tested                | measured (group_commit)                               | **open — disclose + crash test**                                             |
+| Scaled bursts + first-miss                       | measured (first miss **250k** @ 2.5e6 agents)         | **open — explain 400k burst @ 200k agents, or rerun with N ≤ agentsAtLimit** |
+| Sustained-rate ramp past failure                 | measured (3-rep floor 256k; ramp stops at first miss) | **open — confirm ramp went past failure (result matched burst cliff)**       |
+| Deadline restart + **schedule format** disclosed | measured (~40 ms @ 2.5e6; format in evidence)         | **open — publish rebuildMs + on-disk/rebuild path**                          |
+| Shared host                                      | pending                                               | pending                                                                      |
 
 Until the Ontologiql opens above are closed and both complete the five arms on one host, do **not** write win copy.
