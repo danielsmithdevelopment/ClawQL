@@ -1,8 +1,5 @@
 import { Effect } from "effect";
-import {
-  piDurableAlwaysRetryArm,
-  piDurableNeverRetryArm,
-} from "./peer-live-arms.ts";
+import { piDurableAlwaysRetryArm, piDurableNeverRetryArm } from "./peer-live-arms.ts";
 
 for (const [label, arm] of [
   ["never-retry", piDurableNeverRetryArm],
