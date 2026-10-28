@@ -55,7 +55,7 @@ function pausedShop(): PausedShop {
   const events: TrialTraceEvent[] = [];
   const inflight = new Set<string>();
   let releaseResolve: (() => void) | null = null;
-  let releasePromise = new Promise<void>((resolve) => {
+  const releasePromise = new Promise<void>((resolve) => {
     releaseResolve = resolve;
   });
 
