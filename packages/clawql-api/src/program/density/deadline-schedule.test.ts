@@ -18,7 +18,10 @@ describe("deadline schedule", () => {
   });
 
   it("records scheduler tick and scores steady + burst under a shared SLA", async () => {
-    const ids = Array.from({ length: 40 }, (_, i) => `bag_${i.toString(16).padStart(8, "0")}_deadbeef`);
+    const ids = Array.from(
+      { length: 40 },
+      (_, i) => `bag_${i.toString(16).padStart(8, "0")}_deadbeef`
+    );
     const fired: string[] = [];
     const report = await Effect.runPromise(
       runDeadlineAccuracyEffect({

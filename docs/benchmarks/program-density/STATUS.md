@@ -12,31 +12,31 @@
 
 ## Methodology (v6 — deadline column fixed)
 
-| Issue | Fix |
-| --- | --- |
+| Issue                                | Fix                                                                                                                                           |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Raw lateness mirrored a poll setting | Scheduler is **setTimeout-to-next-deadline** (no fixed half-second poll). Evidence records `mechanism` + `tickMs` (1 ms attributed OS grain). |
-| Column must measure load | Report **excess-over-tick** = max(0, lateness − tickMs). |
-| Need a stress shape | **Burst:** thousands of deadlines due at the same instant (batch approval expiry). |
-| Fair comparison | Shared requirement: **fire within 1 second**. Board: `% met` + p99 excess under steady and burst. |
+| Column must measure load             | Report **excess-over-tick** = max(0, lateness − tickMs).                                                                                      |
+| Need a stress shape                  | **Burst:** thousands of deadlines due at the same instant (batch approval expiry).                                                            |
+| Fair comparison                      | Shared requirement: **fire within 1 second**. Board: `% met` + p99 excess under steady and burst.                                             |
 
 ## ClawQL TypeScript — current evidence (v6)
 
 Host: `clawql-cloud-agent-host`. Deadline schedule retained at limit.
 
-| Column / check | Value |
-| --- | --- |
-| Status | `measured` |
-| Agents at limit | **2,500,000** (`limitResource=rss`) |
-| Deadline schedule entries | **2,500,000** |
-| Resident KiB/agent | ~0.21 |
-| Disk bytes/agent | ~32.8 KiB |
-| Scheduler | `min_heap_setTimeout_to_next_deadline`, tickMs=1 |
-| Deadline SLA | **1000 ms** |
-| Steady % met / p99 excess | **29.5%** / **4375 ms** (2000 fires, spread horizon) |
-| Burst % met / p99 excess | **100%** / **707 ms** (2000 same-instant) |
-| Wake warm p99 (median) | ~0.21 ms |
-| Wake cold p99 (median; range on headline order) | see `wakeSpread` — quote median+range only |
-| Restart survival | **yes** |
+| Column / check                                  | Value                                                |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| Status                                          | `measured`                                           |
+| Agents at limit                                 | **2,500,000** (`limitResource=rss`)                  |
+| Deadline schedule entries                       | **2,500,000**                                        |
+| Resident KiB/agent                              | ~0.21                                                |
+| Disk bytes/agent                                | ~32.8 KiB                                            |
+| Scheduler                                       | `min_heap_setTimeout_to_next_deadline`, tickMs=1     |
+| Deadline SLA                                    | **1000 ms**                                          |
+| Steady % met / p99 excess                       | **29.5%** / **4375 ms** (2000 fires, spread horizon) |
+| Burst % met / p99 excess                        | **100%** / **707 ms** (2000 same-instant)            |
+| Wake warm p99 (median)                          | ~0.21 ms                                             |
+| Wake cold p99 (median; range on headline order) | see `wakeSpread` — quote median+range only           |
+| Restart survival                                | **yes**                                              |
 
 **Superseded:** prior ~278/526 ms “lateness” row (looked like a ~500 ms poll; not comparable).
 
@@ -44,11 +44,11 @@ Host: `clawql-cloud-agent-host`. Deadline schedule retained at limit.
 
 ## Provisional positioning (different hosts — shared-host before any win)
 
-| Column | Reading |
-| --- | --- |
-| **Capacity** | After mutual locator trim → disk/bag-size (~30 vs ~32.8 KiB). Deadline schedule is the surviving resident. |
-| **Warm wakes** | Ontologiql’s clearest published edge. |
-| **Cold wakes** | Do not compare until shared-host (median+range only). |
+| Column                | Reading                                                                                                         |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Capacity**          | After mutual locator trim → disk/bag-size (~30 vs ~32.8 KiB). Deadline schedule is the surviving resident.      |
+| **Warm wakes**        | Ontologiql’s clearest published edge.                                                                           |
+| **Cold wakes**        | Do not compare until shared-host (median+range only).                                                           |
 | **Deadline accuracy** | Shared 1s SLA; TS measured steady+burst with tick recorded. Ontologiql `deadlineAccuracy=null` until remeasure. |
 
 ```bash
@@ -56,15 +56,15 @@ npm run benchmark:program-density-fair
 # CLAWQL_DENSITY_DEADLINE_SLA_MS=1000 CLAWQL_DENSITY_DEADLINE_MAX_FIRES=2000 ...
 ```
 
-| Item | Location |
-| --- | --- |
+| Item     | Location                                     |
+| -------- | -------------------------------------------- |
 | Evidence | [`evidence-fair.json`](./evidence-fair.json) |
-| Harness | `packages/clawql-api/src/program/density/` |
+| Harness  | `packages/clawql-api/src/program/density/`   |
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql (Rust) | **Publishable** (pre-deadline) | `deadlineAccuracy=null` until fair-v2 remeasure |
-| ClawQL (TypeScript) | **measured** (fair-v2) | rss@2.5e6; steady+burst SLA scored; tick recorded |
-| Golem / Infinity | Pending invite | fair-v2 deadlines |
+| System              | Status                         | Notes                                             |
+| ------------------- | ------------------------------ | ------------------------------------------------- |
+| Ontologiql (Rust)   | **Publishable** (pre-deadline) | `deadlineAccuracy=null` until fair-v2 remeasure   |
+| ClawQL (TypeScript) | **measured** (fair-v2)         | rss@2.5e6; steady+burst SLA scored; tick recorded |
+| Golem / Infinity    | Pending invite                 | fair-v2 deadlines                                 |

@@ -182,9 +182,7 @@ function summarizeArm(
     n: samples.length,
     fired: samples.length,
     slaMs,
-    pctWithinSla: samples.length
-      ? Number(((100 * within) / samples.length).toFixed(2))
-      : 0,
+    pctWithinSla: samples.length ? Number(((100 * within) / samples.length).toFixed(2)) : 0,
     latenessP50Ms: p(samples, 50),
     latenessP99Ms: p(samples, 99),
     excessOverTickP50Ms: p(excess, 50),
