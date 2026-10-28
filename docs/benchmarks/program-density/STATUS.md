@@ -12,24 +12,24 @@ Evidence (Ontologiql): publish with Ontologiql’s `evidence-fair.json`. Mirrore
 
 ## Same agent (every system)
 
-| Field | Value |
-| --- | --- |
+| Field        | Value                                                              |
+| ------------ | ------------------------------------------------------------------ |
 | Conversation | **20 turn-pairs** of realistic size (~1–2 KiB text each turn pair) |
-| Pending tool | One pending approval / tool call (~0.5 KiB JSON) |
-| Park | Waiting on that tool (idle durable) |
-| Offload | Allowed; report residence (RSS / page cache / disk / R2 / …) |
+| Pending tool | One pending approval / tool call (~0.5 KiB JSON)                   |
+| Park         | Waiting on that tool (idle durable)                                |
+| Offload      | Allowed; report residence (RSS / page cache / disk / R2 / …)       |
 
 ## Same columns (every system)
 
-| Column | Notes |
-| --- | --- |
-| Agents at the limit | Real ceiling on the **same host** (RSS or latency), not a soft max setting alone |
-| Resident KiB / parked agent | Process RSS — hard cost |
-| Page cache KiB / agent | Reclaimable OS hold of offloaded pages (or equivalent) |
-| Disk (or object-store) bytes / agent | Where parked state lives |
-| Wake warm p50 / p99 | State still in page cache / hot path |
-| Wake cold p50 / p99 | After cache drop / eviction — overnight case |
-| Restart survival | Parked bags (or equivalent) survive process restart |
+| Column                               | Notes                                                                            |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| Agents at the limit                  | Real ceiling on the **same host** (RSS or latency), not a soft max setting alone |
+| Resident KiB / parked agent          | Process RSS — hard cost                                                          |
+| Page cache KiB / agent               | Reclaimable OS hold of offloaded pages (or equivalent)                           |
+| Disk (or object-store) bytes / agent | Where parked state lives                                                         |
+| Wake warm p50 / p99                  | State still in page cache / hot path                                             |
+| Wake cold p50 / p99                  | After cache drop / eviction — overnight case                                     |
+| Restart survival                     | Parked bags (or equivalent) survive process restart                              |
 
 **Memory framing:** resident is the floor; page cache is reclaimable. Quote the trade-off (cold wake vs warm working set), not RSS alone.
 
@@ -56,11 +56,11 @@ npm run benchmark:program-density-fair
 CLAWQL_DENSITY_RAMP=100,500,1000 CLAWQL_DENSITY_WAKE_SAMPLE=50 npm run benchmark:program-density-fair
 ```
 
-| Item | Location |
-| --- | --- |
-| Evidence | [`evidence-fair.json`](./evidence-fair.json) |
-| Harness | `packages/clawql-api/src/program/density/` |
-| Runner | `scripts/benchmarks/program-density/run-board.mjs` |
+| Item     | Location                                           |
+| -------- | -------------------------------------------------- |
+| Evidence | [`evidence-fair.json`](./evidence-fair.json)       |
+| Harness  | `packages/clawql-api/src/program/density/`         |
+| Runner   | `scripts/benchmarks/program-density/run-board.mjs` |
 
 **Honesty:** this board is **durable parked agents**, not coding-agent or gateway Ready RSS. Do **not** claim a cross-system win until Golem/Infinity rows exist or maintainers have been invited.
 
@@ -70,9 +70,9 @@ Same agent + same columns + same host. Invite maintainers before publishing comp
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql (Rust) | **Publishable** | Public claim above; mirror row in evidence |
-| ClawQL (TypeScript) | **Measured** | [`evidence-fair.json`](./evidence-fair.json) `clawql-typescript` |
-| Golem | Pending invite | — |
-| Infinity | Pending invite | — |
+| System              | Status          | Notes                                                            |
+| ------------------- | --------------- | ---------------------------------------------------------------- |
+| Ontologiql (Rust)   | **Publishable** | Public claim above; mirror row in evidence                       |
+| ClawQL (TypeScript) | **Measured**    | [`evidence-fair.json`](./evidence-fair.json) `clawql-typescript` |
+| Golem               | Pending invite  | —                                                                |
+| Infinity            | Pending invite  | —                                                                |

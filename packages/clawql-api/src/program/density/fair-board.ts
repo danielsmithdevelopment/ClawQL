@@ -25,12 +25,7 @@ import {
   readMemTotalKiBEffect,
   readProcessRssEffect,
 } from "./host-metrics.js";
-import type {
-  BoardColumns,
-  EvidenceFair,
-  FairRampStep,
-  DensitySystemRow,
-} from "./types.js";
+import type { BoardColumns, EvidenceFair, FairRampStep, DensitySystemRow } from "./types.js";
 import { FAIR_CONTRACT_ID } from "./types.js";
 
 /** Fast disk total for large bag dirs (`du -sb`). Falls back to API walk. */
@@ -92,11 +87,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
  * Fast ramp park: sync write into bagDir (same on-disk shape as ParkedBagApi.park).
  * Keeps Effect park/wake for wake + restart paths; avoids per-agent Promise churn.
  */
-function parkUpTo(
-  bags: ParkedBagApi,
-  fromExclusive: number,
-  toInclusive: number
-): string[] {
+function parkUpTo(bags: ParkedBagApi, fromExclusive: number, toInclusive: number): string[] {
   mkdirSync(bags.bagDir, { recursive: true, mode: 0o700 });
   const ids: string[] = [];
   for (let i = fromExclusive; i < toInclusive; i++) {
@@ -226,9 +217,7 @@ export function runFairDensityBoardEffect(
     }
 
     // Warm wake: bags should still be in page cache after ramp writes + diskBytes scan.
-    const warmSamples = yield* Effect.promise(() =>
-      sampleWakeMs(bags, allIds, wakeSampleSize)
-    );
+    const warmSamples = yield* Effect.promise(() => sampleWakeMs(bags, allIds, wakeSampleSize));
     const warmP50 = yield* percentileMsEffect(warmSamples, 50);
     const warmP99 = yield* percentileMsEffect(warmSamples, 99);
 
@@ -239,9 +228,7 @@ export function runFairDensityBoardEffect(
       const evict = yield* evictBagPageCacheEffect(bagDir);
       coldEviction = `${evict.method}: ${evict.detail}`;
       if (evict.ok) {
-        const coldSamples = yield* Effect.promise(() =>
-          sampleWakeMs(bags, allIds, wakeSampleSize)
-        );
+        const coldSamples = yield* Effect.promise(() => sampleWakeMs(bags, allIds, wakeSampleSize));
         coldP50 = yield* percentileMsEffect(coldSamples, 50);
         coldP99 = yield* percentileMsEffect(coldSamples, 99);
       } else {

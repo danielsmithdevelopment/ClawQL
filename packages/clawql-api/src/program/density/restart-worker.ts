@@ -8,8 +8,7 @@ import { makeParkedBagApi, resolveBagDirEffect } from "./bag-store.js";
 
 async function main(): Promise<void> {
   const bagDir =
-    process.env.CLAWQL_DENSITY_BAG_DIR?.trim() ||
-    (await Effect.runPromise(resolveBagDirEffect()));
+    process.env.CLAWQL_DENSITY_BAG_DIR?.trim() || (await Effect.runPromise(resolveBagDirEffect()));
   const agentId = process.env.CLAWQL_DENSITY_RESTART_AGENT_ID?.trim();
   if (!agentId) {
     process.stdout.write(`${JSON.stringify({ ok: false, detail: "missing agent id" })}\n`);

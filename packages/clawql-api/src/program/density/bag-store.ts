@@ -74,9 +74,7 @@ function ioErr(agentId: string, cause: unknown): ParkedBagError {
   });
 }
 
-export function resolveBagDirEffect(
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string> {
+export function resolveBagDirEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<string> {
   return Effect.sync(() => {
     const explicit = env.CLAWQL_DENSITY_BAG_DIR?.trim();
     if (explicit) return resolve(explicit);

@@ -127,10 +127,7 @@ print(n)
   });
 }
 
-export function percentileMsEffect(
-  samplesMs: readonly number[],
-  p: number
-): Effect.Effect<number> {
+export function percentileMsEffect(samplesMs: readonly number[], p: number): Effect.Effect<number> {
   return Effect.sync(() => {
     if (samplesMs.length === 0) return 0;
     const sorted = [...samplesMs].sort((a, b) => a - b);
