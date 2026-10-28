@@ -153,9 +153,7 @@ async function sampleWakeMs(
   return { samplesMs: samples, gc: gcSummary };
 }
 
-async function latencyFromSamples(
-  samplesMs: readonly number[]
-): Promise<WakeLatency> {
+async function latencyFromSamples(samplesMs: readonly number[]): Promise<WakeLatency> {
   const p50 = await Effect.runPromise(percentileMsEffect(samplesMs, 50));
   const p99 = await Effect.runPromise(percentileMsEffect(samplesMs, 99));
   return {
@@ -214,10 +212,7 @@ function runRestartWorker(env: Readonly<Record<string, string>>): Promise<{
   });
 }
 
-function buildRampTargets(
-  schedule: readonly number[],
-  continueUntilCeiling: boolean
-): number[] {
+function buildRampTargets(schedule: readonly number[], continueUntilCeiling: boolean): number[] {
   const targets = [...schedule].filter((n) => n > 0).sort((a, b) => a - b);
   if (!continueUntilCeiling || targets.length === 0) return targets;
   // Seed geometric growth after the last scheduled point; board stops when RSS hits.
@@ -243,7 +238,8 @@ export function runFairDensityBoardEffect(
       options.rampSchedule ? false : continueUntilCeiling
     );
     const wakeSampleSize = options.wakeSampleSize ?? 200;
-    const wakeWarmupCount = options.wakeWarmupCount ?? Math.min(3_000, Math.max(wakeSampleSize, 500));
+    const wakeWarmupCount =
+      options.wakeWarmupCount ?? Math.min(3_000, Math.max(wakeSampleSize, 500));
     const hostLabel = options.hostLabel ?? "clawql-cloud-agent-host";
     const rssCeilingKiB = rssCeilingMiB * 1024;
     const exposeGc = yield* exposeGcAvailableEffect();
@@ -367,9 +363,7 @@ export function runFairDensityBoardEffect(
       coldFasterThanWarmP99: false,
     };
     wakePooled.coldFasterThanWarmP99 =
-      wakePooled.cold.n > 0 &&
-      wakePooled.warm.n > 0 &&
-      wakePooled.cold.p99 < wakePooled.warm.p99;
+      wakePooled.cold.n > 0 && wakePooled.warm.n > 0 && wakePooled.cold.p99 < wakePooled.warm.p99;
 
     // Id-index byte estimate: UTF-8 id length + rough V8 string/array slot overhead.
     const sampleId = allIds[0] ?? "";

@@ -39,10 +39,7 @@ describe("fair density board (smoke)", () => {
     expect(run.rssCeilingDefinition).toBe("total_process_rss");
     expect(run.ceilingHit).toBe(false);
     expect(run.wakeWarmupCount).toBeGreaterThan(0);
-    expect(run.wakeByOrder.map((o) => o.order)).toEqual([
-      "warm_then_cold",
-      "cold_then_warm",
-    ]);
+    expect(run.wakeByOrder.map((o) => o.order)).toEqual(["warm_then_cold", "cold_then_warm"]);
     expect(run.residentAccounting.retainedInProcess).toMatch(/id index/i);
     expect(run.residentAccounting.totalRssKiBPerAgent).toBeGreaterThan(0);
     expect(run.residentAccounting.heapUsedKiBPerAgentAfterGc).toBeGreaterThan(0);
