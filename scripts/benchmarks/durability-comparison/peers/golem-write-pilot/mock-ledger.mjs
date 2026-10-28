@@ -29,7 +29,10 @@ const server = createServer(async (req, res) => {
     const body = Buffer.concat(chunks).toString("utf8");
     const mode = String(req.headers["x-upstream-mode"] || "non_idempotent");
     const key = String(req.headers["idempotency-key"] || "");
-    const holdMs = Math.max(0, Number(req.headers["x-hold-ms"] || 0));
+    const holdMs = Math.min(
+      60_000,
+      Math.max(0, Number(req.headers["x-hold-ms"] || 0) || 0)
+    );
 
     // Apply the side effect immediately, then delay the HTTP response so a
     // mid-flight crash can land after the write but before the agent sees 200.

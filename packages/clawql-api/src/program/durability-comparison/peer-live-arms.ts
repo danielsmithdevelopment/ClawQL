@@ -104,7 +104,10 @@ function startLedger(port = 0): Promise<{
       void Buffer.concat(chunks);
       const mode = String(req.headers["x-upstream-mode"] || "non_idempotent");
       const key = String(req.headers["idempotency-key"] || "");
-      const holdMs = Math.max(0, Number(req.headers["x-hold-ms"] || 0));
+      const holdMs = Math.min(
+        60_000,
+        Math.max(0, Number(req.headers["x-hold-ms"] || 0) || 0)
+      );
       let effectId: string;
       let applied = true;
       if (mode === "idempotent") {
