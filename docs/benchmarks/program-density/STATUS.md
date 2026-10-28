@@ -12,13 +12,13 @@
 
 ## Methodology (v7 — backlog / throughput fix)
 
-| Issue | Fix |
-| --- | --- |
-| Steady ≪ burst looked like a mystery | Record **arrivalRatePerSec**. Backlog means offered rate > drain rate. |
-| Next-deadline cost | **O(log n) binary min-heap** (peek O(1)); accuracy arms pad far-future entries to the claimed resident size so we do not measure a 2k heap while claiming 2.5e6. |
-| Serial bag wakes | Default **fired** = **durable_trigger_record** (approval-expiry semantics). Concurrent writers (default **64**). `bag_wake` remains an optional arm via env — do not compare across definitions. |
-| Missing comparable headline | Ramp offered steady rate until % within 1s drops below **99%** → **sustainablePerSec**. |
-| Ontologiql ~0.5 ms steady p99 | Both systems must declare the same fired definition before that number sits beside ClawQL. |
+| Issue                                | Fix                                                                                                                                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Steady ≪ burst looked like a mystery | Record **arrivalRatePerSec**. Backlog means offered rate > drain rate.                                                                                                                           |
+| Next-deadline cost                   | **O(log n) binary min-heap** (peek O(1)); accuracy arms pad far-future entries to the claimed resident size so we do not measure a 2k heap while claiming 2.5e6.                                 |
+| Serial bag wakes                     | Default **fired** = **durable_trigger_record** (approval-expiry semantics). Concurrent writers (default **64**). `bag_wake` remains an optional arm via env — do not compare across definitions. |
+| Missing comparable headline          | Ramp offered steady rate until % within 1s drops below **99%** → **sustainablePerSec**.                                                                                                          |
+| Ontologiql ~0.5 ms steady p99        | Both systems must declare the same fired definition before that number sits beside ClawQL.                                                                                                       |
 
 **Superseded:** v6 “29.5% steady / 4375 ms excess” under serial **bag wakes** with an undeclared arrival rate — that was an implementation backlog, not a durable-trigger limit.
 
@@ -26,32 +26,32 @@
 
 Host: `clawql-cloud-agent-host`. Deadline schedule retained at limit. Deadline remeasure stressed a **2.5e6** resident heap (far-future pads) with durable trigger journal + concurrency 64.
 
-| Column / check | Value |
-| --- | --- |
-| Status | `measured` |
-| Agents at limit | **2,500,000** (`limitResource=rss`) |
-| Deadline schedule entries | **2,500,000** |
-| Resident KiB/agent | ~0.21 |
-| Disk bytes/agent | ~32.8 KiB |
-| Fired definition | `durable_trigger_record` |
-| Scheduler | `min_heap_setTimeout_to_next_deadline`, tickMs=1, concurrency=64, next=O(log n) |
-| Deadline SLA | **1000 ms** (≥99% target) |
-| Steady arrival / % met / p99 excess | **~667/s** / **100%** / **~273 ms** |
-| Burst drain / % met / p99 excess | **~400k/s** / **100%** / **~149 ms** |
-| **sustainablePerSec** | **1,200,000** (3-rep median; cliff band ~1.0–1.3e6/s) |
-| Wake warm p99 (median) | ~0.21 ms |
-| Wake cold p99 (median; range on headline order) | see `wakeSpread` — quote median+range only |
-| Restart survival | **yes** |
+| Column / check                                  | Value                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| Status                                          | `measured`                                                                      |
+| Agents at limit                                 | **2,500,000** (`limitResource=rss`)                                             |
+| Deadline schedule entries                       | **2,500,000**                                                                   |
+| Resident KiB/agent                              | ~0.21                                                                           |
+| Disk bytes/agent                                | ~32.8 KiB                                                                       |
+| Fired definition                                | `durable_trigger_record`                                                        |
+| Scheduler                                       | `min_heap_setTimeout_to_next_deadline`, tickMs=1, concurrency=64, next=O(log n) |
+| Deadline SLA                                    | **1000 ms** (≥99% target)                                                       |
+| Steady arrival / % met / p99 excess             | **~667/s** / **100%** / **~273 ms**                                             |
+| Burst drain / % met / p99 excess                | **~400k/s** / **100%** / **~149 ms**                                            |
+| **sustainablePerSec**                           | **1,200,000** (3-rep median; cliff band ~1.0–1.3e6/s)                           |
+| Wake warm p99 (median)                          | ~0.21 ms                                                                        |
+| Wake cold p99 (median; range on headline order) | see `wakeSpread` — quote median+range only                                      |
+| Restart survival                                | **yes**                                                                         |
 
 **Reading the deadline numbers:** With durable trigger recording (not bag load) and a heap-sized resident schedule, steady at ~667/s meets the 1s SLA at 100%. The comparable throughput headline is **sustainablePerSec ≈ 1.2e6** deadlines/sec per node before % met falls below 99%. Single-shot ramps can report 1.0e6 at the noisy edge; 3-rep fine ladder median is 1.2e6. Invite Ontologiql to the same fired definition + arrival-rate ramp before any cross-system claim.
 
 ## Provisional positioning (different hosts — shared-host before any win)
 
-| Column | Reading |
-| --- | --- |
-| **Capacity** | After mutual locator trim → disk/bag-size (~30 vs ~32.8 KiB). Deadline schedule is the surviving resident. |
-| **Warm wakes** | Ontologiql’s clearest published edge. |
-| **Cold wakes** | Do not compare until shared-host (median+range only). |
+| Column                | Reading                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Capacity**          | After mutual locator trim → disk/bag-size (~30 vs ~32.8 KiB). Deadline schedule is the surviving resident.                         |
+| **Warm wakes**        | Ontologiql’s clearest published edge.                                                                                              |
+| **Cold wakes**        | Do not compare until shared-host (median+range only).                                                                              |
 | **Deadline accuracy** | ClawQL measured under durable_trigger_record + sustainablePerSec ramp. Ontologiql `deadlineAccuracy=null` until the same contract. |
 
 ```bash
@@ -62,15 +62,15 @@ npm run benchmark:program-density-fair
 # Focused throughput: node --expose-gc --import tsx scripts/benchmarks/program-density/measure-deadline-throughput.mjs
 ```
 
-| Item | Location |
-| --- | --- |
+| Item     | Location                                     |
+| -------- | -------------------------------------------- |
 | Evidence | [`evidence-fair.json`](./evidence-fair.json) |
-| Harness | `packages/clawql-api/src/program/density/` |
+| Harness  | `packages/clawql-api/src/program/density/`   |
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql (Rust) | **Publishable** (pre-deadline) | `deadlineAccuracy=null` until fair-v2 remeasure under same fired def + rate ramp |
-| ClawQL (TypeScript) | **measured** (fair-v2 / v7) | rss@2.5e6; durable fire; sustainablePerSec≈1.2e6 |
-| Golem / Infinity | Pending invite | fair-v2 deadlines |
+| System              | Status                         | Notes                                                                            |
+| ------------------- | ------------------------------ | -------------------------------------------------------------------------------- |
+| Ontologiql (Rust)   | **Publishable** (pre-deadline) | `deadlineAccuracy=null` until fair-v2 remeasure under same fired def + rate ramp |
+| ClawQL (TypeScript) | **measured** (fair-v2 / v7)    | rss@2.5e6; durable fire; sustainablePerSec≈1.2e6                                 |
+| Golem / Infinity    | Pending invite                 | fair-v2 deadlines                                                                |

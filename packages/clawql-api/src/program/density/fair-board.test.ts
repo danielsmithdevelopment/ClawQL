@@ -38,9 +38,7 @@ describe("fair density board (smoke)", () => {
     expect(clawql?.status).toBe("methodology_pending");
     expect(clawql?.boardColumns?.agentsAtLimit).toBe(80);
     expect(clawql?.boardColumns?.deadlineAccuracy?.slaMs).toBe(1_000);
-    expect(clawql?.boardColumns?.deadlineAccuracy?.firedDefinition).toBe(
-      "durable_trigger_record"
-    );
+    expect(clawql?.boardColumns?.deadlineAccuracy?.firedDefinition).toBe("durable_trigger_record");
     expect(clawql?.boardColumns?.deadlineAccuracy?.concurrency).toBe(32);
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyArrivalRatePerSec).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyPctMet).toBeGreaterThan(0);

@@ -258,13 +258,16 @@ async function mapPool<T, R>(
 ): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
-  const workers = Array.from({ length: Math.max(1, Math.min(concurrency, items.length || 1)) }, async () => {
-    for (;;) {
-      const i = next++;
-      if (i >= items.length) return;
-      out[i] = await fn(items[i]!, i);
+  const workers = Array.from(
+    { length: Math.max(1, Math.min(concurrency, items.length || 1)) },
+    async () => {
+      for (;;) {
+        const i = next++;
+        if (i >= items.length) return;
+        out[i] = await fn(items[i]!, i);
+      }
     }
-  });
+  );
   await Promise.all(workers);
   return out;
 }
@@ -529,8 +532,7 @@ export function runDeadlineAccuracyEffect(args: {
     }
 
     const steadyRate =
-      args.steadyArrivalRatePerSec ??
-      ids.length / Math.max(0.001, args.horizonMs / 1000);
+      args.steadyArrivalRatePerSec ?? ids.length / Math.max(0.001, args.horizonMs / 1000);
     const steadyCount = Math.min(
       ids.length,
       Math.max(1, Math.floor(steadyRate * (args.horizonMs / 1000)))
@@ -609,6 +611,11 @@ export function runDeadlineAccuracyEffect(args: {
 }
 
 /** @deprecated helper kept for tests that append without openTriggerJournal */
-export function appendTriggerLine(path: string, agentId: string, deadlineMs: number, firedAt: number): void {
+export function appendTriggerLine(
+  path: string,
+  agentId: string,
+  deadlineMs: number,
+  firedAt: number
+): void {
   appendFileSync(path, `${JSON.stringify({ agentId, deadlineMs, firedAt })}\n`);
 }
