@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST.md campaign protocol: (1) 3-rep floor headlines for both systems; (2) measure fsync ceiling once before either run; (3) alternate ClawQL/Ontologiql across reps on one idle host/disk; then CLAWQL_DENSITY_PEER_JSON merge. group_commit sustained rate is disk-fsync bound — read as fraction of ceiling. RebuildMs requires schedule-format disclosure. No win copy until sharedHostComplete.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. SHARED_HOST: serial single-writer fsync ceiling (not parallel); binary-refined ramp with resolution; 3-rep floors; alternate systems; then peer merge. Prior parallel/overwrite fsync reading retracted. Ontologiql rebuild ~2–3ms after compact-array. No win copy until sharedHostComplete.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust: capacity/wake publishable. Deadline methodology closed in lab (#144) under group_commit(64/10ms) + crashTest pass — different host; not a shared-host public deadline claim. Lab @ 200k: sustainablePerSec=128000; firstRateMissingSlaPerSec=192000; rampWentPastFailure=true; firstBurstSizeMissingOneSecondSla=200000 (one deadline/agent; N≤agentsAtLimit; old 400k-at-200k synthetic ids superseded). Prior ~400k/s was undeclared os_buffer — superseded, not comparable to ClawQL 256k fsync floor. Deadline restart lab: rebuildFromDiskMs=80; noLoss/noDuplicate; overdue prompt 1.0. Rebuild format (compact array + single-pass heapify) still worth one look vs ClawQL ~50ms@2.5e6 before shared-host. Sustained 128k vs ClawQL 256k ≈ ~2k vs ~4k fsync/s under batchMax=64 — expect possible convergence on one disk. Then five arms shared-host. No win copy.",
+      "honesty": "Ontologiql Rust: capacity/wake publishable. Deadline lab (#144). Coarse ramp 192k pass / 256k fail (3 identical reps) — refine before campaign; band overlaps ClawQL. Rebuild ~2–3ms after compact-array (was ~80ms). Must run same serial single-writer fsync probe as ClawQL before disk-bound claims. Different host. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -80,14 +80,14 @@
           "burstPctMet": null,
           "burstP99ExcessMs": null,
           "burstDrainPerSec": null,
-          "sustainablePerSec": 128000,
-          "firstRateMissingSlaPerSec": 192000,
+          "sustainablePerSec": 192000,
+          "firstRateMissingSlaPerSec": 256000,
           "rampWentPastFailure": true,
           "scaledBurstFirstMissSize": 200000,
           "deadlineRestartOk": true,
-          "deadlineRestartRebuildMs": 80,
+          "deadlineRestartRebuildMs": 3,
           "deadlineScheduleFormat": null,
-          "labNote": "Ontologiql #144 lab on their host @ 200k agents — provisional until shared-host five arms. scheduleFormat still TBD (compact-array invite)."
+          "labNote": "Ontologiql lab: coarse 192k/256k needs binary refine; serial fsync probe required on shared host; rebuild ~2–3ms compact-array."
         },
         "restartSurvival": true
       },
@@ -97,7 +97,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v10). Schedule 2.5e6 typed_arrays; format disclosed (header+live NDJSON+padCount; bulk pad + bottom-up heapify). Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% / excess p99 22 ms. Scaled bursts first miss N=250000 (N ≤ agentsAtLimit). Ramp board headline: sustainablePerSec=256000; firstRateMissingSlaPerSec=384000 (3-rep floor). Single-run harness may print higher — do not cross-compare floors vs singles. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Object-heap GC A/B retained. Under group_commit, sustained rate ≈ disk fsync bound — measure fsync ceiling on shared host; fraction-of-ceiling reading. Methodology aligned with Ontologiql #144. SHARED_HOST protocol settled: 3-rep floor + fsync ceiling first + alternating systems. Harness scaffold ready; sharedHostComplete=false until interleaved campaign + peer merge. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. Schedule 2.5e6 typed_arrays; format disclosed. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass. Scaled bursts first miss N=250000. Coarse ramp 3-rep floor sustainablePerSec=256000 / firstMiss=384000 — binary-refine before campaign; report ±resolution. Deadline restart pass; rebuildMs~40–55 at 2.5e6. Serial fsync ceiling this host ~7925/s → theo ~507k; board 256k ≈ 50% — software headroom, not disk-bound. Prior ~41k/10% reading retracted. SHARED_HOST: serial probe both sides; ramp refine; 3-rep floor; alternate; then peer merge. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1084,11 +1084,11 @@
     },
     "crashTestOk": true,
     "crashTestNote": "400 ACK’d fires; 0 missing; 0 duplicates",
-    "sustainablePerSec": 128000,
-    "firstRateMissingSlaPerSec": 192000,
+    "sustainablePerSec": 192000,
+    "firstRateMissingSlaPerSec": 256000,
     "rampWentPastFailure": true,
     "firstBurstSizeMissingOneSecondSla": 200000,
-    "rebuildFromDiskMs": 80,
+    "rebuildFromDiskMs": 3,
     "noLoss": true,
     "noDuplicate": true,
     "overduePrompt": 1,
@@ -1097,9 +1097,10 @@
       "syntheticBurst400kAt200k": "used synthetic ids — superseded by N≤agentsAtLimit ladder"
     },
     "reading": {
-      "fsyncBound": "128k ≈ 2k fsync/s × 64; ClawQL 256k ≈ 4k fsync/s × 64 on a different disk",
-      "rebuildFormatInvite": "80ms@200k vs ClawQL ~50ms@2.5e6 — compact binary + single-pass heapify likely closes"
-    }
+      "fsyncBound": "Do not call disk-bound until serial single-writer probe on shared host. Parallel/overwrite probes overstate capacity.",
+      "rebuildFormatInvite": "Compact-array landed (~2–3ms) — rebuild gap vs ClawQL closed."
+    },
+    "rampNote": "Three identical reps on coarse steps — refine between 192k and 256k before campaign."
   },
   "sharedHostFiveArms": {
     "artifact": "docs/benchmarks/program-density/shared-host-five-arms.json",
@@ -1116,13 +1117,43 @@
     },
     "fsyncCeiling": {
       "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
-      "measuredAt": "2026-10-28T22:03:37.678Z",
-      "fsyncsPerSec": 41126,
-      "theoreticalMaxGroupCommitPerSec": 2632064,
+      "measuredAt": "2026-10-28T22:42:18.696Z",
+      "serial": {
+        "mode": "serial_board_matched",
+        "method": "node_append_batch_fsync",
+        "pattern": "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
+        "batchMax": 64,
+        "batchBytes": 3904,
+        "ops": 63399,
+        "runtimeSec": 8.000163856,
+        "fsyncsPerSec": 7925,
+        "meanFsyncLatencyMs": 0.1262,
+        "writeBandwidthBytesPerSec": 30938078.32627972
+      },
+      "parallel": {
+        "mode": "parallel_headroom",
+        "method": "fio",
+        "fioVersion": "fio-3.36",
+        "pattern": "8 fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling",
+        "numJobs": 8,
+        "iodepth": 1,
+        "fsyncsPerSec": 194172,
+        "writeIops": 194171.957011,
+        "meanLatencyUs": 2.97,
+        "runtimeSec": 8
+      },
+      "fsyncsPerSec": 7925,
+      "theoreticalMaxGroupCommitPerSec": 507200,
       "batchMax": 64,
-      "method": "fio",
+      "method": "node_append_batch_fsync",
       "hostLabel": "clawql-cloud-agent-host:cursor",
-      "note": "Probe on this ClawQL cloud-agent host (script verification). Re-measure on the shared campaign host before interleaved reps."
+      "reading": {
+        "primaryCeiling": "serial_board_matched",
+        "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
+        "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
+        "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
+        "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
+      }
     },
     "sharedHostComplete": false,
     "winCopy": false,
@@ -1161,7 +1192,7 @@
       "note": "Scaffold / single-run snapshot only. Board deadlineAccuracy quotes the conservative 256k 3-rep floor until the shared-host campaign (SHARED_HOST.md protocol)."
     },
     "reading": {
-      "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Report sustainablePerSec as a fraction of fsyncCeiling.theoreticalMaxGroupCommitPerSec. Near ceiling on both ⇒ equal / disk-bound.",
+      "sustainedRateNote": "Use serial.fsyncsPerSec × batchMax as the group_commit ceiling. Parallel is headroom only. This host: board 256k ≈ 50% of serial theo — software headroom, not proven disk-bound.",
       "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
       "winCopy": false,
       "sharedHostComplete": false,
@@ -1173,7 +1204,9 @@
         "clawqlThreeRepFloor": false,
         "peerThreeRepFloor": false
       },
-      "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign."
+      "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign.",
+      "fsyncProbeCorrection": "Prior ~41k fsync/s / 10%-of-ceiling reading retracted (overwrite/parallel-capable probe).",
+      "rampRefineNote": "Coarse ladders are too wide; binary-refine to ±few % and report rampResolutionNote before campaign compare."
     }
   }
 }

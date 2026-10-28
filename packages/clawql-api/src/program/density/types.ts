@@ -111,6 +111,12 @@ export type DeadlineBoardAccuracy = {
   readonly firstRateMissingSlaPerSec?: number | null;
   /** True when the ramp includes a failing sample after the last pass. */
   readonly rampWentPastFailure?: boolean | null;
+  /** Coarse ladder bounds before binary refine. */
+  readonly coarseSustainablePerSec?: number | null;
+  readonly coarseFirstRateMissingSlaPerSec?: number | null;
+  /** Refined bracket width (firstFail−lastPass)/lastPass — e.g. 0.04 → ±4%. */
+  readonly rampResolutionRel?: number | null;
+  readonly rampResolutionNote?: string | null;
   /** SHARED_HOST: first co-timed burst size that misses the 1s SLA (null = all met / unmeasured). */
   readonly scaledBurstFirstMissSize?: number | null;
   /** SHARED_HOST deadline restart: rebuild + overdue catch-up after SIGKILL. */

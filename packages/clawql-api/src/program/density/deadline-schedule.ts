@@ -254,6 +254,12 @@ export type DeadlineAccuracyReport = {
   /** True when ramp includes a failing sample after the last pass. */
   readonly rampWentPastFailure: boolean;
   readonly ramp: readonly DeadlineArmResult[];
+  /** Coarse ladder last-pass before binary refine (null if unmeasured / never passed). */
+  readonly coarseSustainablePerSec?: number | null;
+  readonly coarseFirstRateMissingSlaPerSec?: number | null;
+  /** (firstFail − lastPass) / lastPass after refine — e.g. 0.04 → "±4%". */
+  readonly rampResolutionRel?: number | null;
+  readonly rampResolutionNote?: string | null;
   /** Crash-recovery proof for the flush policy, when run. */
   readonly crashTest: DeadlineCrashTestResult | null;
   /** SHARED_HOST scaled bursts — first size that misses the 1s SLA. */
@@ -582,6 +588,11 @@ export function rampSustainableRateEffect(args: {
   readonly tickMs?: number;
   readonly concurrency?: number;
   readonly ratesPerSec?: readonly number[];
+  /**
+   * After the coarse ladder finds last-pass / first-fail, binary-search until
+   * (hi−lo)/lo ≤ this relative width (default 0.04 = ±4%). Set false / 0 to skip.
+   */
+  readonly refineRelative?: number | false;
   /** Far-future pad so ramp arms stress the same heap size as agents-at-limit. */
   readonly residentHeapSize?: number;
   readonly scheduleShape?: DeadlineScheduleShape;
@@ -593,6 +604,15 @@ export function rampSustainableRateEffect(args: {
   /** True when the ladder includes at least one failing sample after the last pass. */
   readonly rampWentPastFailure: boolean;
   readonly ramp: DeadlineArmResult[];
+  /** Coarse last-pass before binary refine (null if never passed). */
+  readonly coarseSustainablePerSec: number | null;
+  readonly coarseFirstRateMissingSlaPerSec: number | null;
+  /**
+   * Relative width of the refined bracket: (firstFail − lastPass) / lastPass.
+   * e.g. 0.04 → report "±4%" in evidence.
+   */
+  readonly rampResolutionRel: number | null;
+  readonly rampResolutionNote: string | null;
 }> {
   return Effect.gen(function* () {
     const slaMs = args.slaMs ?? DEFAULT_DEADLINE_SLA_MS;
@@ -603,64 +623,107 @@ export function rampSustainableRateEffect(args: {
     const windowSec = windowMs / 1000;
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
     const scheduleShape = args.scheduleShape ?? "typed_arrays";
+    const refineRelative =
+      args.refineRelative === false ? 0 : Math.max(0, args.refineRelative ?? 0.04);
     // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
       ([50, 100, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 64_000, 128_000] as const);
-    const maxCount = Math.max(
-      1,
-      ...rates.map((r) => Math.floor(r * windowSec)),
-      args.agentIds.length
-    );
-    // Synthetic ids so high rates are not capped by the wake-sample pool.
-    const rampIds =
-      args.agentIds.length >= maxCount
-        ? args.agentIds
-        : Array.from({ length: maxCount }, (_, i) => {
-            const base = args.agentIds[i % Math.max(1, args.agentIds.length)] ?? `agent_${i}`;
-            return i < args.agentIds.length ? base : `${base}__ramp_${i}`;
-          });
+
+    const runRate = (rate: number): Effect.Effect<DeadlineArmResult> =>
+      Effect.gen(function* () {
+        const count = Math.max(1, Math.floor(rate * windowSec));
+        const offered = count / windowSec;
+        const need = Math.max(count, args.agentIds.length);
+        const rampIds =
+          args.agentIds.length >= need
+            ? args.agentIds
+            : Array.from({ length: need }, (_, i) => {
+                const base = args.agentIds[i % Math.max(1, args.agentIds.length)] ?? `agent_${i}`;
+                return i < args.agentIds.length ? base : `${base}__ramp_${i}`;
+              });
+        const schedule = yield* makeAccuracyScheduleEffect({
+          residentHeapSize: Math.max(count, residentHeapSize),
+          scheduleShape,
+        });
+        const now = Date.now();
+        placeSteadyDeadlines(schedule, rampIds, now, windowMs, count);
+        padResidentHeap(schedule, Math.max(count, residentHeapSize), now + windowMs + 3_600_000);
+        return yield* runDeadlinePumpEffect({
+          schedule,
+          fire: args.fire,
+          maxFires: count,
+          wallDeadlineMs: now + windowMs + 5_000,
+          tickMs,
+          slaMs,
+          concurrency,
+          mode: "ramp",
+          arrivalRatePerSec: offered,
+          percentile: args.percentile,
+        });
+      });
 
     const ramp: DeadlineArmResult[] = [];
     let sustainable = 0;
     let firstRateMissingSlaPerSec: number | null = null;
 
     for (const rate of rates) {
-      const count = Math.max(1, Math.min(rampIds.length, Math.floor(rate * windowSec)));
-      const offered = count / windowSec;
-      const schedule = yield* makeAccuracyScheduleEffect({
-        residentHeapSize: Math.max(count, residentHeapSize),
-        scheduleShape,
-      });
-      const now = Date.now();
-      placeSteadyDeadlines(schedule, rampIds, now, windowMs, count);
-      padResidentHeap(schedule, Math.max(count, residentHeapSize), now + windowMs + 3_600_000);
-      const arm = yield* runDeadlinePumpEffect({
-        schedule,
-        fire: args.fire,
-        maxFires: count,
-        wallDeadlineMs: now + windowMs + 5_000,
-        tickMs,
-        slaMs,
-        concurrency,
-        mode: "ramp",
-        arrivalRatePerSec: offered,
-        percentile: args.percentile,
-      });
+      const arm = yield* runRate(rate);
       ramp.push(arm);
       if (arm.pctWithinSla >= targetPct) {
-        sustainable = offered;
+        sustainable = arm.arrivalRatePerSec;
       } else {
-        firstRateMissingSlaPerSec = Number(offered.toFixed(2));
+        firstRateMissingSlaPerSec = Number(arm.arrivalRatePerSec.toFixed(2));
         break;
       }
     }
+
+    const coarseSustainablePerSec = sustainable > 0 ? Number(sustainable.toFixed(2)) : null;
+    const coarseFirstRateMissingSlaPerSec = firstRateMissingSlaPerSec;
+
+    // Binary-search between last pass and first fail until relative width ≤ refineRelative.
+    if (
+      refineRelative > 0 &&
+      firstRateMissingSlaPerSec !== null &&
+      sustainable > 0 &&
+      firstRateMissingSlaPerSec > sustainable
+    ) {
+      let lo = sustainable;
+      let hi = firstRateMissingSlaPerSec;
+      let guard = 0;
+      while ((hi - lo) / lo > refineRelative && guard < 24) {
+        guard += 1;
+        const mid = (lo + hi) / 2;
+        const arm = yield* runRate(mid);
+        ramp.push(arm);
+        if (arm.pctWithinSla >= targetPct) {
+          lo = arm.arrivalRatePerSec;
+          sustainable = lo;
+        } else {
+          hi = arm.arrivalRatePerSec;
+          firstRateMissingSlaPerSec = Number(hi.toFixed(2));
+        }
+      }
+    }
+
+    const rampResolutionRel =
+      firstRateMissingSlaPerSec !== null && sustainable > 0
+        ? Number(((firstRateMissingSlaPerSec - sustainable) / sustainable).toFixed(4))
+        : null;
+    const rampResolutionNote =
+      rampResolutionRel !== null
+        ? `±${(rampResolutionRel * 100).toFixed(1)}% (refined bracket; coarse ladder alone is too wide for cross-system compare)`
+        : null;
 
     return {
       sustainablePerSec: Number(sustainable.toFixed(2)),
       firstRateMissingSlaPerSec,
       rampWentPastFailure: firstRateMissingSlaPerSec !== null,
       ramp,
+      coarseSustainablePerSec,
+      coarseFirstRateMissingSlaPerSec,
+      rampResolutionRel,
+      rampResolutionNote,
     };
   });
 }
@@ -786,6 +849,8 @@ export function runDeadlineAccuracyEffect(args: {
   readonly scheduleShape?: DeadlineScheduleShape;
   readonly rampWindowMs?: number;
   readonly rampRatesPerSec?: readonly number[];
+  /** Binary-search refine target width; default 0.04. Pass false to skip. */
+  readonly rampRefineRelative?: number | false;
   readonly skipRamp?: boolean;
   /**
    * Scaled bursts are SHARED_HOST-required but expensive; default skip unless
@@ -831,6 +896,10 @@ export function runDeadlineAccuracyEffect(args: {
         firstRateMissingSlaPerSec: null,
         rampWentPastFailure: false,
         ramp: [],
+        coarseSustainablePerSec: null,
+        coarseFirstRateMissingSlaPerSec: null,
+        rampResolutionRel: null,
+        rampResolutionNote: null,
         crashTest: args.crashTest ?? null,
         scaledBursts: null,
       };
@@ -888,6 +957,10 @@ export function runDeadlineAccuracyEffect(args: {
     let firstRateMissingSlaPerSec: number | null = null;
     let rampWentPastFailure = false;
     let ramp: DeadlineArmResult[] = [];
+    let coarseSustainablePerSec: number | null = null;
+    let coarseFirstRateMissingSlaPerSec: number | null = null;
+    let rampResolutionRel: number | null = null;
+    let rampResolutionNote: string | null = null;
     if (!args.skipRamp) {
       const r = yield* rampSustainableRateEffect({
         agentIds: ids,
@@ -898,6 +971,7 @@ export function runDeadlineAccuracyEffect(args: {
         tickMs,
         concurrency,
         ratesPerSec: args.rampRatesPerSec,
+        refineRelative: args.rampRefineRelative,
         percentile: args.percentile,
         residentHeapSize,
         scheduleShape,
@@ -906,6 +980,10 @@ export function runDeadlineAccuracyEffect(args: {
       firstRateMissingSlaPerSec = r.firstRateMissingSlaPerSec;
       rampWentPastFailure = r.rampWentPastFailure;
       ramp = r.ramp;
+      coarseSustainablePerSec = r.coarseSustainablePerSec;
+      coarseFirstRateMissingSlaPerSec = r.coarseFirstRateMissingSlaPerSec;
+      rampResolutionRel = r.rampResolutionRel;
+      rampResolutionNote = r.rampResolutionNote;
     }
 
     let scaledBursts: ScaledBurstLadderResult | null = null;
@@ -934,6 +1012,10 @@ export function runDeadlineAccuracyEffect(args: {
       firstRateMissingSlaPerSec,
       rampWentPastFailure,
       ramp,
+      coarseSustainablePerSec,
+      coarseFirstRateMissingSlaPerSec,
+      rampResolutionRel,
+      rampResolutionNote,
       crashTest: args.crashTest ?? null,
       scaledBursts,
     };

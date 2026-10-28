@@ -3,7 +3,7 @@
   "measuredAt": "2026-10-28T21:51:08.196Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "reading": {
-    "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Report sustainablePerSec as a fraction of fsyncCeiling.theoreticalMaxGroupCommitPerSec. Near ceiling on both ⇒ equal / disk-bound.",
+    "sustainedRateNote": "Use serial.fsyncsPerSec × batchMax as the group_commit ceiling. Parallel is headroom only. This host: board 256k ≈ 50% of serial theo — software headroom, not proven disk-bound.",
     "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
     "winCopy": false,
     "sharedHostComplete": false,
@@ -15,7 +15,9 @@
       "clawqlThreeRepFloor": false,
       "peerThreeRepFloor": false
     },
-    "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign."
+    "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign.",
+    "fsyncProbeCorrection": "Prior ~41k fsync/s / 10%-of-ceiling reading retracted (overwrite/parallel-capable probe).",
+    "rampRefineNote": "Coarse ladders are too wide; binary-refine to ±few % and report rampResolutionNote before campaign compare."
   },
   "clawql": {
     "systemId": "clawql-typescript",
@@ -157,12 +159,42 @@
   },
   "fsyncCeiling": {
     "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
-    "measuredAt": "2026-10-28T22:03:37.678Z",
-    "fsyncsPerSec": 41126,
-    "theoreticalMaxGroupCommitPerSec": 2632064,
+    "measuredAt": "2026-10-28T22:42:18.696Z",
+    "serial": {
+      "mode": "serial_board_matched",
+      "method": "node_append_batch_fsync",
+      "pattern": "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
+      "batchMax": 64,
+      "batchBytes": 3904,
+      "ops": 63399,
+      "runtimeSec": 8.000163856,
+      "fsyncsPerSec": 7925,
+      "meanFsyncLatencyMs": 0.1262,
+      "writeBandwidthBytesPerSec": 30938078.32627972
+    },
+    "parallel": {
+      "mode": "parallel_headroom",
+      "method": "fio",
+      "fioVersion": "fio-3.36",
+      "pattern": "8 fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling",
+      "numJobs": 8,
+      "iodepth": 1,
+      "fsyncsPerSec": 194172,
+      "writeIops": 194171.957011,
+      "meanLatencyUs": 2.97,
+      "runtimeSec": 8
+    },
+    "fsyncsPerSec": 7925,
+    "theoreticalMaxGroupCommitPerSec": 507200,
     "batchMax": 64,
-    "method": "fio",
+    "method": "node_append_batch_fsync",
     "hostLabel": "clawql-cloud-agent-host:cursor",
-    "note": "Probe on this ClawQL cloud-agent host (script verification). Re-measure on the shared campaign host before interleaved reps."
+    "reading": {
+      "primaryCeiling": "serial_board_matched",
+      "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
+      "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
+      "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
+      "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
+    }
   }
 }

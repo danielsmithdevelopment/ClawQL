@@ -83,16 +83,25 @@ function floorOf(nums) {
 function loadFsyncCeiling() {
   if (!existsSync(fsyncPath)) return null;
   const raw = JSON.parse(readFileSync(fsyncPath, "utf8"));
+  const serial = raw.serial ?? null;
+  const parallel = raw.parallel ?? null;
+  const serialFsyncs =
+    serial?.fsyncsPerSec ?? raw.fsyncsPerSec ?? raw.probe?.fsyncsPerSec ?? null;
   return {
     artifact: fsyncPath.replace(`${repoRoot}/`, ""),
     measuredAt: raw.measuredAt ?? null,
-    fsyncsPerSec: raw.fsyncsPerSec ?? raw.probe?.fsyncsPerSec ?? null,
+    /** PRIMARY — single writer, one sync in flight (board-matched). */
+    serial,
+    /** Headroom only — multi-writer; do not use as group_commit ceiling. */
+    parallel,
+    fsyncsPerSec: serialFsyncs,
     theoreticalMaxGroupCommitPerSec:
       raw.theoreticalMaxGroupCommitPerSec ??
-      (raw.fsyncsPerSec != null ? raw.fsyncsPerSec * flushPolicy.batchMax : null),
+      (serialFsyncs != null ? serialFsyncs * flushPolicy.batchMax : null),
     batchMax: raw.flushPolicy?.batchMax ?? flushPolicy.batchMax,
-    method: raw.probe?.method ?? null,
+    method: serial?.method ?? raw.probe?.method ?? null,
     hostLabel: raw.host?.label ?? null,
+    reading: raw.reading ?? null,
   };
 }
 
@@ -186,6 +195,10 @@ const clawql = await Effect.runPromise(
           sustainablePerSec: ramp.sustainablePerSec,
           firstRateMissingSlaPerSec: ramp.firstRateMissingSlaPerSec,
           rampWentPastFailure: ramp.rampWentPastFailure,
+          coarseSustainablePerSec: ramp.coarseSustainablePerSec,
+          coarseFirstRateMissingSlaPerSec: ramp.coarseFirstRateMissingSlaPerSec,
+          rampResolutionRel: ramp.rampResolutionRel,
+          rampResolutionNote: ramp.rampResolutionNote,
           steps: ramp.ramp.map((a) => ({
             arrivalRatePerSec: a.arrivalRatePerSec,
             pctWithinSla: a.pctWithinSla,
@@ -261,6 +274,13 @@ const clawql = await Effect.runPromise(
           sustainablePerSec: headline.sustainablePerSec,
           firstRateMissingSlaPerSec: headline.firstRateMissingSlaPerSec,
           rampWentPastFailure: rampReps.every((r) => r.rampWentPastFailure),
+          coarseSustainablePerSec: lastRamp?.coarseSustainablePerSec ?? null,
+          coarseFirstRateMissingSlaPerSec: lastRamp?.coarseFirstRateMissingSlaPerSec ?? null,
+          rampResolutionRel:
+            rampReps.length > 0
+              ? Math.max(...rampReps.map((r) => r.rampResolutionRel ?? 0))
+              : null,
+          rampResolutionNote: lastRamp?.rampResolutionNote ?? null,
           steps: lastRamp?.steps ?? [],
           reps: rampReps,
         },

@@ -1,14 +1,17 @@
 /**
- * Measure the disk's fsync ceiling once before a SHARED_HOST campaign.
+ * Disk fsync ceiling for SHARED_HOST — two modes kept in one artifact.
  *
- * Under group_commit(batchMax=B), theoretical durable-rate max ≈ B × fsyncs/sec.
- * Both systems should report sustainablePerSec as a fraction of that ceiling.
+ * **serial (board-matched, PRIMARY):** one writer, one sync in flight —
+ * write a group_commit-sized batch, fsync, wait, repeat. Matches
+ * `trigger-journal.ts` (append NDJSON + fsyncSync). Use this for
+ * theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec × batchMax.
  *
- *   node scripts/benchmarks/program-density/measure-fsync-ceiling.mjs
- *   CLAWQL_DENSITY_FSYNC_DIR=/path npm run benchmark:program-density-fsync-ceiling
+ * **parallel (headroom only):** several writers with fsync each — shows
+ * what a multi-writer design could use. Do NOT read board rates against this.
  *
- * Prefers `fio` (sync engine, 4 KiB write + fsync each). Falls back to a Node
- * open/write/fsync loop when fio is missing.
+ * Both ClawQL and Ontologiql must run the same serial probe on the campaign host.
+ *
+ *   npm run benchmark:program-density-fsync-ceiling
  */
 import {
   mkdirSync,
@@ -32,64 +35,60 @@ const outPath =
   outArg || join(repoRoot, "docs/benchmarks/program-density/fsync-ceiling.json");
 const workDir =
   process.env.CLAWQL_DENSITY_FSYNC_DIR || "/tmp/clawql-density-fsync-ceiling";
-const runtimeSec = Number(process.env.CLAWQL_DENSITY_FSYNC_RUNTIME_SEC || 15);
+const runtimeSec = Number(process.env.CLAWQL_DENSITY_FSYNC_RUNTIME_SEC || 10);
 const batchMax = Number(process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX || 64);
+const parallelJobs = Number(process.env.CLAWQL_DENSITY_FSYNC_PARALLEL_JOBS || 8);
 const bs = Number(process.env.CLAWQL_DENSITY_FSYNC_BS || 4096);
 
 mkdirSync(workDir, { recursive: true });
+
+/** One NDJSON line shaped like a durable trigger record. */
+const sampleLine = Buffer.from(
+  '{"agentId":"bag_00000001_shared","deadlineMs":1730000000000}\n'
+);
+const batchBuf = Buffer.concat(Array.from({ length: batchMax }, () => sampleLine));
 
 function whichFio() {
   const r = spawnSync("fio", ["--version"], { encoding: "utf8" });
   return r.status === 0 ? (r.stdout || r.stderr || "fio").trim() : null;
 }
 
-function measureWithFio() {
-  const jobDir = join(workDir, "fio");
-  mkdirSync(jobDir, { recursive: true });
-  const jsonOut = join(workDir, "fio-result.json");
-  const args = [
-    "--name=fsync_ceiling",
-    `--directory=${jobDir}`,
-    "--ioengine=sync",
-    "--rw=write",
-    `--bs=${bs}`,
-    "--size=4m",
-    "--numjobs=1",
-    "--iodepth=1",
-    "--fsync=1",
-    `--runtime=${runtimeSec}`,
-    "--time_based=1",
-    "--group_reporting=1",
-    "--output-format=json",
-    `--output=${jsonOut}`,
-  ];
-  const r = spawnSync("fio", args, { encoding: "utf8" });
-  if (r.status !== 0) {
-    throw new Error(`fio failed: ${r.stderr || r.stdout || r.status}`);
+/**
+ * Board-matched serial probe: append one batch, fsync, wait — repeat.
+ * Single fd, no overlapping syncs.
+ */
+function measureSerialBoardMatched() {
+  const file = join(workDir, "serial-append.ndjson");
+  const fd = openSync(file, "w");
+  const t0 = process.hrtime.bigint();
+  let n = 0;
+  const deadline = t0 + BigInt(runtimeSec) * 1_000_000_000n;
+  while (process.hrtime.bigint() < deadline) {
+    writeSync(fd, batchBuf);
+    fsyncSync(fd);
+    n += 1;
   }
-  let rawText = r.stdout;
-  if (existsSync(jsonOut)) rawText = readFileSync(jsonOut, "utf8");
-  const raw = JSON.parse(rawText);
-  const job = raw.jobs?.[0];
-  const write = job?.write || {};
-  const iops = Number(write.iops || 0);
-  const bwBytes = Number(write.bw_bytes || (write.bw ? write.bw * 1024 : 0) || 0);
+  const elapsedSec = Number(process.hrtime.bigint() - t0) / 1e9;
+  closeSync(fd);
+  const fsyncsPerSec = n / elapsedSec;
   return {
-    method: "fio",
-    fioVersion: whichFio(),
-    fsyncsPerSec: Math.round(iops),
-    writeIops: iops,
-    writeBandwidthBytesPerSec: bwBytes,
-    runtimeSec: Number(job?.job_runtime ? job.job_runtime / 1000 : runtimeSec),
-    rawSummary: {
-      io_bytes: write.io_bytes ?? null,
-      lat_ns_mean: write.lat_ns?.mean ?? null,
-    },
+    mode: "serial_board_matched",
+    method: "node_append_batch_fsync",
+    pattern:
+      "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
+    batchMax,
+    batchBytes: batchBuf.length,
+    ops: n,
+    runtimeSec: elapsedSec,
+    fsyncsPerSec: Math.round(fsyncsPerSec),
+    meanFsyncLatencyMs: Number(((elapsedSec / n) * 1000).toFixed(4)),
+    writeBandwidthBytesPerSec: (n * batchBuf.length) / elapsedSec,
   };
 }
 
-function measureWithNode() {
-  const file = join(workDir, "node-fsync.bin");
+/** Diagnostic: overwrite same 4 KiB offset + fsync (can look much faster than append). */
+function measureSerialOverwrite() {
+  const file = join(workDir, "serial-overwrite.bin");
   const buf = Buffer.alloc(bs, 0x5a);
   const fd = openSync(file, "w");
   const t0 = process.hrtime.bigint();
@@ -100,30 +99,122 @@ function measureWithNode() {
     fsyncSync(fd);
     n += 1;
   }
-  const elapsedNs = Number(process.hrtime.bigint() - t0);
+  const elapsedSec = Number(process.hrtime.bigint() - t0) / 1e9;
   closeSync(fd);
-  const elapsedSec = elapsedNs / 1e9;
   return {
-    method: "node_open_write_fsync",
-    fioVersion: null,
-    fsyncsPerSec: Math.round(n / elapsedSec),
-    writeIops: n / elapsedSec,
-    writeBandwidthBytesPerSec: (n * bs) / elapsedSec,
+    mode: "serial_overwrite_diagnostic",
+    method: "node_overwrite_4k_fsync",
+    note: "Not the board pattern — kept only to explain prior inflated probes that rewrote one offset.",
+    ops: n,
     runtimeSec: elapsedSec,
-    rawSummary: { ops: n },
+    fsyncsPerSec: Math.round(n / elapsedSec),
+    meanFsyncLatencyMs: Number(((elapsedSec / n) * 1000).toFixed(4)),
   };
 }
 
-const fioVer = whichFio();
-let measured;
-try {
-  measured = fioVer ? measureWithFio() : measureWithNode();
-} catch (err) {
-  console.error(String(err));
-  measured = measureWithNode();
+function measureParallelFio(jobs) {
+  const fioVer = whichFio();
+  if (!fioVer) {
+    return measureParallelNode(jobs);
+  }
+  const jobDir = join(workDir, `fio-parallel-${jobs}`);
+  mkdirSync(jobDir, { recursive: true });
+  const jsonOut = join(workDir, `fio-parallel-${jobs}.json`);
+  const args = [
+    "--name=fsync_parallel",
+    `--directory=${jobDir}`,
+    "--ioengine=sync",
+    "--rw=write",
+    `--bs=${bs}`,
+    "--size=1m",
+    `--numjobs=${jobs}`,
+    "--iodepth=1",
+    "--fsync=1",
+    `--runtime=${runtimeSec}`,
+    "--time_based=1",
+    "--group_reporting=1",
+    "--output-format=json",
+    `--output=${jsonOut}`,
+  ];
+  const r = spawnSync("fio", args, { encoding: "utf8" });
+  if (r.status !== 0) {
+    return measureParallelNode(jobs);
+  }
+  const raw = JSON.parse(existsSync(jsonOut) ? readFileSync(jsonOut, "utf8") : r.stdout);
+  const write = raw.jobs?.[0]?.write || {};
+  const iops = Number(write.iops || 0);
+  return {
+    mode: "parallel_headroom",
+    method: "fio",
+    fioVersion: fioVer,
+    pattern: `${jobs} fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling`,
+    numJobs: jobs,
+    iodepth: 1,
+    fsyncsPerSec: Math.round(iops),
+    writeIops: iops,
+    meanLatencyUs: write.lat_ns?.mean != null ? Number((write.lat_ns.mean / 1000).toFixed(2)) : null,
+    runtimeSec,
+  };
 }
 
-const theoreticalMaxGroupCommitPerSec = measured.fsyncsPerSec * batchMax;
+function measureParallelNode(jobs) {
+  const workers = [];
+  const t0 = process.hrtime.bigint();
+  const deadline = t0 + BigInt(runtimeSec) * 1_000_000_000n;
+  for (let j = 0; j < jobs; j++) {
+    const fd = openSync(join(workDir, `parallel-${j}.bin`), "w");
+    const buf = Buffer.alloc(bs, j & 0xff);
+    workers.push({ fd, buf, n: 0 });
+  }
+  // Round-robin serial in one process still has one sync in flight globally —
+  // true parallel needs threads. Prefer fio; this is a degraded fallback.
+  while (process.hrtime.bigint() < deadline) {
+    for (const w of workers) {
+      writeSync(w.fd, w.buf, 0, bs, 0);
+      fsyncSync(w.fd);
+      w.n += 1;
+      if (process.hrtime.bigint() >= deadline) break;
+    }
+  }
+  const elapsedSec = Number(process.hrtime.bigint() - t0) / 1e9;
+  let total = 0;
+  for (const w of workers) {
+    total += w.n;
+    closeSync(w.fd);
+  }
+  return {
+    mode: "parallel_headroom",
+    method: "node_round_robin_fallback",
+    note: "Single-process round-robin — understates true multi-writer headroom; install fio for real parallel.",
+    numJobs: jobs,
+    fsyncsPerSec: Math.round(total / elapsedSec),
+    runtimeSec: elapsedSec,
+  };
+}
+
+const serial = measureSerialBoardMatched();
+const overwriteDiagnostic = measureSerialOverwrite();
+const parallel = measureParallelFio(parallelJobs);
+
+const theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec * batchMax;
+const boardFloorExample = 256_000;
+const fractionIfBoardFloor = Number((boardFloorExample / theoreticalMaxGroupCommitPerSec).toFixed(4));
+
+const reading =
+  serial.fsyncsPerSec <= 6_000
+    ? {
+        primaryCeiling: "serial_board_matched",
+        verdict:
+          "Serial fsyncs/sec near ~4k ⇒ group_commit theo max near ~256k. Board floor at that level is disk-shaped for a single writer.",
+        action: "Read each system's sustainablePerSec as a fraction of theoreticalMaxGroupCommitPerSec (serial).",
+      }
+    : {
+        primaryCeiling: "serial_board_matched",
+        verdict:
+          "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
+        action:
+          "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
+      };
 
 const payload = {
   kind: "durable-agent-density-fsync-ceiling",
@@ -134,28 +225,29 @@ const payload = {
     hostname: hostname(),
     workDir,
   },
-  probe: {
-    blockSizeBytes: bs,
-    runtimeSec,
-    fsyncEachWrite: true,
-    ...measured,
-  },
   flushPolicy: {
     mode: "group_commit",
     batchMax,
-    note: "theoreticalMaxGroupCommitPerSec = fsyncsPerSec × batchMax (assumes full batches).",
+    note: "theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec × batchMax (full batches). Parallel must not be used as this ceiling.",
   },
-  fsyncsPerSec: measured.fsyncsPerSec,
+  serial,
+  parallel,
+  overwriteDiagnostic,
+  fsyncsPerSec: serial.fsyncsPerSec,
   theoreticalMaxGroupCommitPerSec,
+  fractionOfCeilingIfBoardFloor256k: fractionIfBoardFloor,
   reading: {
-    use: "Measure once on the shared host before either system runs. Report each system's sustainablePerSec as a fraction of theoreticalMaxGroupCommitPerSec. If both land near the ceiling, they are equal and the disk is the limit.",
+    ...reading,
+    bothSystems:
+      "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
+    priorMistake:
+      "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling.",
   },
 };
 
 mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`);
 
-// Keep work dir for inspection; optional clean via env.
 if (process.env.CLAWQL_DENSITY_FSYNC_CLEAN === "1" && existsSync(workDir)) {
   rmSync(workDir, { recursive: true, force: true });
 }
@@ -164,10 +256,13 @@ console.log(
   JSON.stringify(
     {
       out: outPath,
-      method: measured.method,
-      fsyncsPerSec: payload.fsyncsPerSec,
+      serialFsyncsPerSec: serial.fsyncsPerSec,
+      serialMeanFsyncMs: serial.meanFsyncLatencyMs,
+      parallelFsyncsPerSec: parallel.fsyncsPerSec,
       batchMax,
       theoreticalMaxGroupCommitPerSec,
+      fractionIfBoardFloor256k: fractionIfBoardFloor,
+      reading: reading.verdict,
     },
     null,
     2

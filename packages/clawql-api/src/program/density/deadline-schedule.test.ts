@@ -116,6 +116,7 @@ describe("deadline schedule", () => {
           slaTargetPct: 99,
           concurrency: 4,
           ratesPerSec: [20, 40, 200],
+          refineRelative: false,
           percentile: pct,
         })
       );
@@ -128,4 +129,38 @@ describe("deadline schedule", () => {
     }
     expect(calls).toBeGreaterThan(0);
   }, 30_000);
+
+  it("ramp binary-searches between coarse pass and fail and reports resolution", async () => {
+    const ids = Array.from({ length: 80 }, (_, i) => `id_${i}`);
+    // ~25ms/fire with concurrency 2 ⇒ drain ≈ 80/s; coarse 40 should pass, 200 fail.
+    const result = await Effect.runPromise(
+      rampSustainableRateEffect({
+        agentIds: ids,
+        fire: async () => {
+          await new Promise<void>((r) => setTimeout(r, 25));
+        },
+        windowMs: 500,
+        slaMs: 100,
+        slaTargetPct: 99,
+        concurrency: 2,
+        ratesPerSec: [40, 200],
+        refineRelative: 0.15,
+        percentile: pct,
+      })
+    );
+    expect(result.rampWentPastFailure).toBe(true);
+    expect(result.coarseSustainablePerSec).toBeGreaterThan(0);
+    expect(result.coarseFirstRateMissingSlaPerSec).toBeGreaterThan(
+      result.coarseSustainablePerSec!
+    );
+    expect(result.ramp.length).toBeGreaterThan(2); // coarse + refine mids
+    expect(result.rampResolutionRel).not.toBeNull();
+    expect(result.rampResolutionRel!).toBeLessThanOrEqual(0.15 + 1e-6);
+    expect(result.rampResolutionNote).toMatch(/±/);
+    expect(result.sustainablePerSec).toBeGreaterThanOrEqual(result.coarseSustainablePerSec!);
+    expect(result.firstRateMissingSlaPerSec!).toBeGreaterThan(result.sustainablePerSec);
+    expect(result.firstRateMissingSlaPerSec!).toBeLessThanOrEqual(
+      result.coarseFirstRateMissingSlaPerSec!
+    );
+  }, 120_000);
 });

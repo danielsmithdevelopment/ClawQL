@@ -152,7 +152,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~80ms. Different host — not a shared-host public deadline claim. SHARED_HOST campaign: 3-rep floor headlines both sides; fsync ceiling first; alternate systems across reps; then peer merge. Sustained rate under group_commit read as fraction of ceiling; rebuild format (compact array) still worth one look. No win copy.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~2–3ms after compact-array (was ~80ms). Different host — not a shared-host public deadline claim. Before campaign: same serial single-writer fsync probe as ClawQL; binary-refine ramp between last pass and first fail (±few %); 3-rep floor; alternate systems. Coarse 192k/256k steps alone are too wide. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -187,7 +187,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
       rampWentPastFailure: true,
       scaledBurstFirstMissSize: 200_000,
       deadlineRestartOk: true,
-      deadlineRestartRebuildMs: 80,
+      deadlineRestartRebuildMs: 3,
       deadlineScheduleFormat: null,
     },
     restartSurvival: true,
@@ -1121,6 +1121,11 @@ export function runFairDensityBoardEffect(
             sustainablePerSec: deadlineAccuracy.sustainablePerSec,
             firstRateMissingSlaPerSec: deadlineAccuracy.firstRateMissingSlaPerSec,
             rampWentPastFailure: deadlineAccuracy.rampWentPastFailure,
+            coarseSustainablePerSec: deadlineAccuracy.coarseSustainablePerSec ?? null,
+            coarseFirstRateMissingSlaPerSec:
+              deadlineAccuracy.coarseFirstRateMissingSlaPerSec ?? null,
+            rampResolutionRel: deadlineAccuracy.rampResolutionRel ?? null,
+            rampResolutionNote: deadlineAccuracy.rampResolutionNote ?? null,
             scaledBurstFirstMissSize: deadlineAccuracy.scaledBursts?.firstMissSize ?? null,
             deadlineRestartOk: deadlineRestart?.ok ?? null,
             deadlineRestartRebuildMs: deadlineRestart?.rebuildMs ?? null,

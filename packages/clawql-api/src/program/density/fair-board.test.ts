@@ -86,5 +86,6 @@ describe("fair density board (smoke)", () => {
     // Lab-aligned (#144) until shared-host — not null.
     expect(ont?.boardColumns?.deadlineAccuracy?.crashTestOk).toBe(true);
     expect(ont?.boardColumns?.deadlineAccuracy?.sustainablePerSec).toBe(128_000);
+    expect(ont?.boardColumns?.deadlineAccuracy?.deadlineRestartRebuildMs).toBe(3);
   }, 300_000);
 });
