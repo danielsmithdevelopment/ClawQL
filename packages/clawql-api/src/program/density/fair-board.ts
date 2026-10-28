@@ -718,17 +718,6 @@ export function runFairDensityBoardEffect(
     }
 
     // --- Wake protocol: warmup, then alternate orders for N repetitions ---
-<<<<<<< HEAD
-    const fromDisk = sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
-    const timedIds =
-      fromDisk.sampleIds.length >= Math.min(wakeSampleSize, 1)
-        ? pickSampleIds(fromDisk.sampleIds, wakeSampleSize)
-        : pickSampleIds(allIds, wakeSampleSize);
-    const warmupIds =
-      fromDisk.sampleIds.length > 0
-        ? pickSampleIds(fromDisk.sampleIds, Math.min(wakeWarmupCount, fromDisk.sampleIds.length))
-        : pickSampleIds(allIds, Math.min(wakeWarmupCount, allIds.length));
-=======
     // Prefer reservoir ids collected while building the retained index.
     const fromDisk =
       indexSampleIds.length >= Math.min(wakeSampleSize, 1)
@@ -739,7 +728,6 @@ export function runFairDensityBoardEffect(
       fromDisk.sampleIds,
       Math.min(wakeWarmupCount, fromDisk.sampleIds.length)
     );
->>>>>>> a7b187752 (fix(bench): retain wake-by-id index at density fair limit)
     const gcRecorder = yield* createGcRecorderEffect();
 
     if (warmupIds.length > 0) {
