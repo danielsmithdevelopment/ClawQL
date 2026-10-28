@@ -114,6 +114,7 @@
     "benchmark:durability-comparison": "node scripts/benchmarks/durability-comparison/run-board.mjs",
     "benchmark:program-density-fair": "node scripts/benchmarks/program-density/run-board.mjs",
     "benchmark:program-density-shared-host": "node --expose-gc --import tsx scripts/benchmarks/program-density/run-shared-host-five-arms.mjs",
+    "benchmark:program-density-fsync-ceiling": "node scripts/benchmarks/program-density/measure-fsync-ceiling.mjs",
     "smoke:program-cell-fleet-kill": "bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh",
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
     "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",

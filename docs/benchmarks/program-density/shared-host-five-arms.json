@@ -3,10 +3,19 @@
   "measuredAt": "2026-10-28T21:51:08.196Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "reading": {
-    "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Gaps across hosts are not a language verdict.",
+    "sustainedRateNote": "Under group_commit(batchMax=64), durable rate ≲ 64 × disk_fsyncs/sec. Report sustainablePerSec as a fraction of fsyncCeiling.theoreticalMaxGroupCommitPerSec. Near ceiling on both ⇒ equal / disk-bound.",
     "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
     "winCopy": false,
-    "sharedHostComplete": false
+    "sharedHostComplete": false,
+    "headlineNote": "Board headlines use min of 3 reps per system. Never compare one system's single run to the other's floor.",
+    "alternationNote": "Interleave systems across reps (ClawQL₁ → Ontologiql₁ → …). Do not run all of one then all of the other.",
+    "completeGates": {
+      "peerPresent": false,
+      "fsyncCeilingPresent": true,
+      "clawqlThreeRepFloor": false,
+      "peerThreeRepFloor": false
+    },
+    "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign."
   },
   "clawql": {
     "systemId": "clawql-typescript",
@@ -126,7 +135,34 @@
         },
         "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 45 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
       }
+    },
+    "headline": {
+      "rule": "three_rep_floor",
+      "reps": 1,
+      "sustainablePerSec": 384000,
+      "firstRateMissingSlaPerSec": 512000,
+      "scaledBurstFirstMissSize": 250000,
+      "note": "REPS=1 scaffold only — campaign headlines require REPS=3. Board still quotes 256k 3-rep floor."
     }
   },
-  "peer": null
+  "peer": null,
+  "protocol": {
+    "headlineRule": "three_rep_floor",
+    "requiredReps": 3,
+    "alternation": "clawql_then_ontologiql_each_rep",
+    "fsyncCeilingFirst": true,
+    "idleHost": true,
+    "sameAgentsAtLimit": true,
+    "sameDiskAsFsyncProbe": true
+  },
+  "fsyncCeiling": {
+    "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
+    "measuredAt": "2026-10-28T22:03:37.678Z",
+    "fsyncsPerSec": 41126,
+    "theoreticalMaxGroupCommitPerSec": 2632064,
+    "batchMax": 64,
+    "method": "fio",
+    "hostLabel": "clawql-cloud-agent-host:cursor",
+    "note": "Probe on this ClawQL cloud-agent host (script verification). Re-measure on the shared campaign host before interleaved reps."
+  }
 }

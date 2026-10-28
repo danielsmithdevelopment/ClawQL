@@ -1,0 +1,34 @@
+{
+  "kind": "durable-agent-density-fsync-ceiling",
+  "measuredAt": "2026-10-28T22:03:37.678Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "host": {
+    "label": "clawql-cloud-agent-host:cursor",
+    "hostname": "cursor",
+    "workDir": "/tmp/clawql-density-fsync-ceiling"
+  },
+  "probe": {
+    "blockSizeBytes": 4096,
+    "runtimeSec": 15,
+    "fsyncEachWrite": true,
+    "method": "fio",
+    "fioVersion": "fio-3.36",
+    "fsyncsPerSec": 41126,
+    "writeIops": 41125.924938,
+    "writeBandwidthBytesPerSec": 168451788,
+    "rawSummary": {
+      "io_bytes": 2526945280,
+      "lat_ns_mean": 2203.797301
+    }
+  },
+  "flushPolicy": {
+    "mode": "group_commit",
+    "batchMax": 64,
+    "note": "theoreticalMaxGroupCommitPerSec = fsyncsPerSec × batchMax (assumes full batches)."
+  },
+  "fsyncsPerSec": 41126,
+  "theoreticalMaxGroupCommitPerSec": 2632064,
+  "reading": {
+    "use": "Measure once on the shared host before either system runs. Report each system's sustainablePerSec as a fraction of theoreticalMaxGroupCommitPerSec. If both land near the ceiling, they are equal and the disk is the limit."
+  }
+}

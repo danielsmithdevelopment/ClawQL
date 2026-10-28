@@ -145,14 +145,14 @@ const DEFAULT_RAMP: readonly number[] = [
 
 /**
  * Ontologiql public claim (publishable) — mirrored for the comparison table.
- * Deadline lab closed in Ontologiql #144 (group_commit); shared-host five arms pending.
+ * Deadline lab closed in Ontologiql #144 (group_commit); shared-host campaign protocol next.
  */
 export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   systemId: "ontologiql-rust",
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~80ms. Different host — not a shared-host public deadline claim. Sustained rate under group_commit is disk-fsync bound; rebuild format (compact array) still worth one look. Same five arms on one host next (SHARED_HOST.md). No win copy.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~80ms. Different host — not a shared-host public deadline claim. SHARED_HOST campaign: 3-rep floor headlines both sides; fsync ceiling first; alternate systems across reps; then peer merge. Sustained rate under group_commit read as fraction of ceiling; rebuild format (compact array) still worth one look. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
