@@ -285,7 +285,8 @@ async function oneGolemTrial(input: {
 
     const uniqueWriteEffects = new Set(ledger.state.effects.map((e) => e.effectId)).size;
     const requestCount = ledger.state.effects.length;
-    const duplicates = Math.max(0, requestCount - uniqueWriteEffects);
+    // Board "duplicates" = extra effects beyond the first (same as Pi / ClawQL arms).
+    const duplicates = Math.max(0, uniqueWriteEffects - 1);
     const ok =
       input.upstreamMode === "idempotent"
         ? uniqueWriteEffects === 1 && requestCount >= 1
