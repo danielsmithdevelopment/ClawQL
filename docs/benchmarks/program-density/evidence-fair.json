@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T19:49:29.816Z",
+  "measuredAt": "2026-10-28T20:05:23.693Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -8,7 +8,7 @@
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
       "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
-      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); steady + same-instant burst; report scheduler tick/mechanism and excess-over-tick"
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (default durable_trigger_record); declare arrival rate; concurrent fires; O(log n) next-deadline; steady + burst + sustainablePerSec ramp (≥99% within 1s)"
     },
     "columns": [
       "agentsAtLimit",
@@ -18,10 +18,10 @@
       "diskBytesPerAgent",
       "wakeWarmMs.p50/p99",
       "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-      "deadlineAccuracy (slaMs, steady/burst pctMet + p99 excess-over-tick)",
+      "deadlineAccuracy (slaMs, firedDefinition, arrivalRate, steady/burst pctMet + p99 excess, sustainablePerSec)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; record scheduler tick/mechanism; quote excess-over-tick (not raw poll artifacts) under steady + burst. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; identical fired definition (durable trigger record); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Cold wake: median+range only until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s, steady + burst, report scheduler tick/mechanism. Design (timer wheel vs heap) is free; the board only scores whether deadlines are met. Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s; identical fired definition (durable trigger record vs bag wake); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Design (timer wheel vs heap) is free. Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -68,7 +68,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (2500000 = agentsAtLimit). Limit = first resource exhausted (**rss** at 2500000). Deadline SLA 1000 ms (scheduler min_heap_setTimeout_to_next_deadline, tickMs=1): steady 29.45% met / excess p99 4375 ms; burst 100% met / excess p99 707 ms. cold p99 median 1.003 ms (range 0.456–1.212; do not cross-compare cold until shared-host). Warm p99=0.207662 ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (2500000 = agentsAtLimit). Limit = first resource exhausted (**rss** at 2500000). Deadline SLA 1000 ms (≥99%; fired=durable_trigger_record; concurrency=64; next=O(log n) binary_min_heap): steady arrival 666.67/s → 100% met / excess p99 273 ms; burst drain 400000/s → 100% met / excess p99 149 ms; sustainablePerSec=1200000 (3-rep median; cliff ~1.0–1.3e6/s). Prior 29.5% steady was serial bag-wake backlog under an undeclared arrival rate — not a durable-trigger measure. cold p99 median 1.003 ms (range 0.456–1.212; do not cross-compare cold until shared-host). Warm p99=0.207662 ms. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure under the same fired definition + arrival-rate ramp. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -85,10 +85,16 @@
         },
         "deadlineAccuracy": {
           "slaMs": 1000,
-          "steadyPctMet": 29.45,
-          "steadyP99ExcessMs": 4375,
+          "slaTargetPct": 99,
+          "firedDefinition": "durable_trigger_record",
+          "concurrency": 64,
+          "steadyArrivalRatePerSec": 666.67,
+          "steadyPctMet": 100,
+          "steadyP99ExcessMs": 273,
           "burstPctMet": 100,
-          "burstP99ExcessMs": 707
+          "burstP99ExcessMs": 149,
+          "burstDrainPerSec": 400000,
+          "sustainablePerSec": 1200000
         },
         "restartSurvival": true
       },
@@ -295,37 +301,179 @@
     "deadlineScheduleRetainedAtLimit": true,
     "deadlineAccuracy": {
       "slaMs": 1000,
+      "slaTargetPct": 99,
       "scheduler": {
         "mechanism": "min_heap_setTimeout_to_next_deadline",
+        "nextDeadlineComplexity": "O(log n) binary_min_heap",
         "tickMs": 1,
-        "note": "Min-heap of (deadlineMs, agentId); sleep with setTimeout until the next deadline (no fixed poll interval). tickMs is the attributed OS-timer grain used for excess-over-tick. Board SLA is absolute (raw lateness ≤ slaMs); excess measures load beyond the tick."
+        "concurrency": 64,
+        "firedDefinition": "durable_trigger_record",
+        "note": "Fired = durable trigger record (agentId, deadlineMs, firedAt) appended to a journal — approval-expiry semantics, not bag load. Peek O(1), schedule/popDue O(log n). Concurrent trigger writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs)."
       },
       "steady": {
         "mode": "steady",
         "n": 2000,
         "fired": 2000,
         "slaMs": 1000,
-        "pctWithinSla": 29.45,
-        "latenessP50Ms": 1785,
-        "latenessP99Ms": 4376,
-        "excessOverTickP50Ms": 1784,
-        "excessOverTickP99Ms": 4375,
-        "maxLatenessMs": 4403,
-        "maxExcessOverTickMs": 4402
+        "arrivalRatePerSec": 666.67,
+        "pctWithinSla": 100,
+        "latenessP50Ms": 0,
+        "latenessP99Ms": 274,
+        "excessOverTickP50Ms": 0,
+        "excessOverTickP99Ms": 273,
+        "maxLatenessMs": 304,
+        "maxExcessOverTickMs": 303,
+        "wallMs": 2696
       },
       "burst": {
         "mode": "burst",
         "n": 2000,
         "fired": 2000,
         "slaMs": 1000,
+        "arrivalRatePerSec": 400000,
         "pctWithinSla": 100,
-        "latenessP50Ms": 136,
-        "latenessP99Ms": 708,
-        "excessOverTickP50Ms": 135,
-        "excessOverTickP99Ms": 707,
-        "maxLatenessMs": 744,
-        "maxExcessOverTickMs": 743
-      }
+        "latenessP50Ms": 148,
+        "latenessP99Ms": 150,
+        "excessOverTickP50Ms": 147,
+        "excessOverTickP99Ms": 149,
+        "maxLatenessMs": 150,
+        "maxExcessOverTickMs": 149,
+        "wallMs": 5
+      },
+      "sustainablePerSec": 1200000,
+      "sustainablePerSecNote": {
+        "singleShotFullReport": 1000000,
+        "threeRepMedian": 1200000,
+        "threeRepMin": 1200000,
+        "threeRepMax": 1200000,
+        "cliffBandPerSec": [
+          1000000,
+          1300000
+        ]
+      },
+      "ramp": [
+        {
+          "mode": "ramp",
+          "n": 500,
+          "fired": 500,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 500,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 1,
+          "latenessP99Ms": 489,
+          "excessOverTickP50Ms": 0,
+          "excessOverTickP99Ms": 488,
+          "maxLatenessMs": 499,
+          "maxExcessOverTickMs": 498,
+          "wallMs": 500
+        },
+        {
+          "mode": "ramp",
+          "n": 2000,
+          "fired": 2000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 2000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 0,
+          "latenessP99Ms": 235,
+          "excessOverTickP50Ms": 0,
+          "excessOverTickP99Ms": 234,
+          "maxLatenessMs": 245,
+          "maxExcessOverTickMs": 244,
+          "wallMs": 755
+        },
+        {
+          "mode": "ramp",
+          "n": 8000,
+          "fired": 8000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 8000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 248,
+          "latenessP99Ms": 335,
+          "excessOverTickP50Ms": 247,
+          "excessOverTickP99Ms": 334,
+          "maxLatenessMs": 345,
+          "maxExcessOverTickMs": 344,
+          "wallMs": 656
+        },
+        {
+          "mode": "ramp",
+          "n": 32000,
+          "fired": 32000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 32000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 0,
+          "latenessP99Ms": 198,
+          "excessOverTickP50Ms": 0,
+          "excessOverTickP99Ms": 197,
+          "maxLatenessMs": 208,
+          "maxExcessOverTickMs": 207,
+          "wallMs": 794
+        },
+        {
+          "mode": "ramp",
+          "n": 128000,
+          "fired": 128000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 128000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 477,
+          "latenessP99Ms": 839,
+          "excessOverTickP50Ms": 476,
+          "excessOverTickP99Ms": 838,
+          "maxLatenessMs": 847,
+          "maxExcessOverTickMs": 846,
+          "wallMs": 251
+        },
+        {
+          "mode": "ramp",
+          "n": 512000,
+          "fired": 512000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 512000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 256,
+          "latenessP99Ms": 322,
+          "excessOverTickP50Ms": 255,
+          "excessOverTickP99Ms": 321,
+          "maxLatenessMs": 325,
+          "maxExcessOverTickMs": 324,
+          "wallMs": 858
+        },
+        {
+          "mode": "ramp",
+          "n": 1000000,
+          "fired": 1000000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 1000000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 788,
+          "latenessP99Ms": 961,
+          "excessOverTickP50Ms": 787,
+          "excessOverTickP99Ms": 960,
+          "maxLatenessMs": 964,
+          "maxExcessOverTickMs": 963,
+          "wallMs": 1405
+        },
+        {
+          "mode": "ramp",
+          "n": 1200000,
+          "fired": 1200000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 1200000,
+          "pctWithinSla": 82.7,
+          "latenessP50Ms": 793,
+          "latenessP99Ms": 1142,
+          "excessOverTickP50Ms": 792,
+          "excessOverTickP99Ms": 1141,
+          "maxLatenessMs": 1149,
+          "maxExcessOverTickMs": 1148,
+          "wallMs": 1858
+        }
+      ],
+      "residentHeapSizeDuringMeasure": 2500000
     },
     "wakeByOrder": [
       {

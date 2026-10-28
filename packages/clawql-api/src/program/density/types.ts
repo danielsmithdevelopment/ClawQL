@@ -61,22 +61,37 @@ export type BoardColumns = {
   readonly wakeColdMs: LatencyPair;
   /**
    * Shared deadline SLA (default 1000 ms): % met + p99 excess-over-tick under
-   * steady and burst. Null until measured. Scheduler tick/mechanism live in
+   * steady and burst, with declared arrival rate and sustainable throughput.
+   * Null until measured. Scheduler tick/mechanism/firedDefinition live in
    * clawqlRun.deadlineAccuracy — not a poll-interval artifact.
    */
   readonly deadlineAccuracy: DeadlineBoardAccuracy | null;
   readonly restartSurvival: boolean;
 };
 
-/** Board-facing deadline accuracy (same SLA for every system). */
+/**
+ * Board-facing deadline accuracy (same SLA + fired definition for every system).
+ * Comparable headline = sustainablePerSec (max steady arrival rate with
+ * ≥slaTargetPct within slaMs).
+ */
 export type DeadlineBoardAccuracy = {
   readonly slaMs: number;
+  readonly slaTargetPct: number;
+  /** Must match across systems: durable trigger record vs bag wake. */
+  readonly firedDefinition: "durable_trigger_record" | "bag_wake";
+  readonly concurrency: number;
+  /** Offered deadlines/sec in the steady showcase arm. */
+  readonly steadyArrivalRatePerSec: number;
   readonly steadyPctMet: number;
   /** p99 of max(0, lateness − tickMs) under spread deadlines. */
   readonly steadyP99ExcessMs: number;
   readonly burstPctMet: number;
   /** p99 excess-over-tick when thousands share one deadline instant. */
   readonly burstP99ExcessMs: number;
+  /** Burst drain throughput (fires/sec) — capacity signal, not offered rate. */
+  readonly burstDrainPerSec: number;
+  /** Max steady arrival rate that still met slaTargetPct within slaMs. */
+  readonly sustainablePerSec: number;
 };
 
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
@@ -211,20 +226,25 @@ export type EvidenceFair = {
     /** True when the limit run retained a deadline schedule for every counted agent. */
     readonly deadlineScheduleRetainedAtLimit: boolean;
     /**
-     * Full deadline accuracy report: scheduler tick/mechanism, steady + burst
-     * arms, raw lateness and excess-over-tick, SLA %.
+     * Full deadline accuracy report: scheduler tick/mechanism, fired definition,
+     * steady + burst + ramp arms, arrival rates, sustainable throughput.
      */
     readonly deadlineAccuracy: {
       readonly slaMs: number;
+      readonly slaTargetPct: number;
       readonly scheduler: {
         readonly mechanism: string;
+        readonly nextDeadlineComplexity: string;
         readonly tickMs: number;
+        readonly concurrency: number;
+        readonly firedDefinition: "durable_trigger_record" | "bag_wake";
         readonly note: string;
       };
       readonly steady: {
-        readonly mode: "steady";
+        readonly mode: "steady" | "burst" | "ramp";
         readonly n: number;
         readonly fired: number;
+        readonly arrivalRatePerSec: number;
         readonly pctWithinSla: number;
         readonly latenessP50Ms: number;
         readonly latenessP99Ms: number;
@@ -232,11 +252,13 @@ export type EvidenceFair = {
         readonly excessOverTickP99Ms: number;
         readonly maxLatenessMs: number;
         readonly maxExcessOverTickMs: number;
+        readonly wallMs: number;
       };
       readonly burst: {
-        readonly mode: "burst";
+        readonly mode: "steady" | "burst" | "ramp";
         readonly n: number;
         readonly fired: number;
+        readonly arrivalRatePerSec: number;
         readonly pctWithinSla: number;
         readonly latenessP50Ms: number;
         readonly latenessP99Ms: number;
@@ -244,7 +266,19 @@ export type EvidenceFair = {
         readonly excessOverTickP99Ms: number;
         readonly maxLatenessMs: number;
         readonly maxExcessOverTickMs: number;
+        readonly wallMs: number;
       };
+      readonly sustainablePerSec: number;
+      readonly ramp: readonly {
+        readonly mode: "steady" | "burst" | "ramp";
+        readonly n: number;
+        readonly fired: number;
+        readonly arrivalRatePerSec: number;
+        readonly pctWithinSla: number;
+        readonly latenessP99Ms: number;
+        readonly excessOverTickP99Ms: number;
+        readonly wallMs: number;
+      }[];
     } | null;
     readonly wakeByOrder: readonly WakeOrderResult[];
     readonly wakeSpread: readonly WakeSpread[];

@@ -12,7 +12,10 @@
  *   CLAWQL_DENSITY_COLD_P99_CEILING_MS (optional latency limit),
  *   CLAWQL_DENSITY_DEADLINE_HORIZON_MS, CLAWQL_DENSITY_DEADLINE_MAX_FIRES,
  *   CLAWQL_DENSITY_DEADLINE_SLA_MS (default 1000),
- *   CLAWQL_DENSITY_SKIP_DEADLINE=1,
+ *   CLAWQL_DENSITY_DEADLINE_CONCURRENCY (default 64),
+ *   CLAWQL_DENSITY_FIRED_DEFINITION=durable_trigger_record|bag_wake,
+ *   CLAWQL_DENSITY_STEADY_ARRIVAL_RATE (deadlines/sec),
+ *   CLAWQL_DENSITY_SKIP_DEADLINE=1, CLAWQL_DENSITY_SKIP_DEADLINE_RAMP=1,
  *   CLAWQL_DENSITY_SKIP_COLD=1, CLAWQL_DENSITY_SKIP_RESTART=1,
  *   CLAWQL_DENSITY_HOST_LABEL,
  *   CLAWQL_DENSITY_REUSE_BAGS=1, CLAWQL_DENSITY_RESUME_FROM
@@ -73,9 +76,22 @@ async function main(): Promise<void> {
       deadlineSlaMs: process.env.CLAWQL_DENSITY_DEADLINE_SLA_MS
         ? Number(process.env.CLAWQL_DENSITY_DEADLINE_SLA_MS)
         : undefined,
+      deadlineConcurrency: process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY
+        ? Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY)
+        : undefined,
+      deadlineFiredDefinition:
+        process.env.CLAWQL_DENSITY_FIRED_DEFINITION === "bag_wake"
+          ? "bag_wake"
+          : process.env.CLAWQL_DENSITY_FIRED_DEFINITION === "durable_trigger_record"
+            ? "durable_trigger_record"
+            : undefined,
+      steadyArrivalRatePerSec: process.env.CLAWQL_DENSITY_STEADY_ARRIVAL_RATE
+        ? Number(process.env.CLAWQL_DENSITY_STEADY_ARRIVAL_RATE)
+        : undefined,
       skipCold: process.env.CLAWQL_DENSITY_SKIP_COLD === "1",
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
       skipDeadlinePump: process.env.CLAWQL_DENSITY_SKIP_DEADLINE === "1",
+      skipDeadlineRamp: process.env.CLAWQL_DENSITY_SKIP_DEADLINE_RAMP === "1",
       hostLabel: process.env.CLAWQL_DENSITY_HOST_LABEL || "clawql-cloud-agent-host",
       bagDir: process.env.CLAWQL_DENSITY_BAG_DIR,
       reuseBags: process.env.CLAWQL_DENSITY_REUSE_BAGS === "1",
@@ -104,19 +120,31 @@ async function main(): Promise<void> {
         deadlineAccuracyDetail: run?.deadlineAccuracy
           ? {
               slaMs: run.deadlineAccuracy.slaMs,
+              slaTargetPct: run.deadlineAccuracy.slaTargetPct,
               scheduler: run.deadlineAccuracy.scheduler,
+              sustainablePerSec: run.deadlineAccuracy.sustainablePerSec,
               steady: {
+                arrivalRatePerSec: run.deadlineAccuracy.steady.arrivalRatePerSec,
                 pctWithinSla: run.deadlineAccuracy.steady.pctWithinSla,
                 latenessP99Ms: run.deadlineAccuracy.steady.latenessP99Ms,
                 excessP99Ms: run.deadlineAccuracy.steady.excessOverTickP99Ms,
                 fired: run.deadlineAccuracy.steady.fired,
+                wallMs: run.deadlineAccuracy.steady.wallMs,
               },
               burst: {
+                arrivalRatePerSec: run.deadlineAccuracy.burst.arrivalRatePerSec,
                 pctWithinSla: run.deadlineAccuracy.burst.pctWithinSla,
                 latenessP99Ms: run.deadlineAccuracy.burst.latenessP99Ms,
                 excessP99Ms: run.deadlineAccuracy.burst.excessOverTickP99Ms,
                 fired: run.deadlineAccuracy.burst.fired,
+                wallMs: run.deadlineAccuracy.burst.wallMs,
               },
+              ramp: run.deadlineAccuracy.ramp.map((a) => ({
+                arrivalRatePerSec: a.arrivalRatePerSec,
+                pctWithinSla: a.pctWithinSla,
+                excessP99Ms: a.excessOverTickP99Ms,
+                fired: a.fired,
+              })),
             }
           : null,
         rssCeilingDefinition: run?.rssCeilingDefinition,

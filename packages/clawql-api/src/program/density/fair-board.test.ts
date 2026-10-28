@@ -19,6 +19,10 @@ describe("fair density board (smoke)", () => {
         deadlineHorizonMs: 1_500,
         deadlineMaxFires: 40,
         deadlineSlaMs: 1_000,
+        deadlineConcurrency: 32,
+        deadlineFiredDefinition: "durable_trigger_record",
+        skipDeadlineRamp: false,
+        deadlineRampRatesPerSec: [50, 100, 250],
         rssCeilingMiB: 512,
         continueUntilCeiling: false,
         skipCold: false,
@@ -34,8 +38,14 @@ describe("fair density board (smoke)", () => {
     expect(clawql?.status).toBe("methodology_pending");
     expect(clawql?.boardColumns?.agentsAtLimit).toBe(80);
     expect(clawql?.boardColumns?.deadlineAccuracy?.slaMs).toBe(1_000);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.firedDefinition).toBe(
+      "durable_trigger_record"
+    );
+    expect(clawql?.boardColumns?.deadlineAccuracy?.concurrency).toBe(32);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.steadyArrivalRatePerSec).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyPctMet).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.burstPctMet).toBeGreaterThanOrEqual(0);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.sustainablePerSec).toBeGreaterThanOrEqual(0);
     expect(clawql?.boardColumns?.restartSurvival).toBe(true);
 
     const run = evidence.clawqlRun!;
@@ -43,10 +53,15 @@ describe("fair density board (smoke)", () => {
     expect(run.residentAccounting.deadlineScheduleEntries).toBe(80);
     expect(run.deadlineAccuracy?.scheduler.tickMs).toBeGreaterThan(0);
     expect(run.deadlineAccuracy?.scheduler.mechanism).toMatch(/setTimeout/i);
+    expect(run.deadlineAccuracy?.scheduler.nextDeadlineComplexity).toMatch(/O\(log n\)/);
+    expect(run.deadlineAccuracy?.scheduler.firedDefinition).toBe("durable_trigger_record");
     expect(run.deadlineAccuracy?.steady.mode).toBe("steady");
     expect(run.deadlineAccuracy?.burst.mode).toBe("burst");
     expect(run.deadlineAccuracy?.steady.fired).toBeGreaterThan(0);
     expect(run.deadlineAccuracy?.burst.fired).toBeGreaterThan(0);
+    expect(run.deadlineAccuracy?.steady.arrivalRatePerSec).toBeGreaterThan(0);
+    expect(typeof run.deadlineAccuracy?.sustainablePerSec).toBe("number");
+    expect(Array.isArray(run.deadlineAccuracy?.ramp)).toBe(true);
 
     const ont = evidence.rows.find((r) => r.systemId === "ontologiql-rust");
     expect(ont?.boardColumns?.deadlineAccuracy).toBeNull();

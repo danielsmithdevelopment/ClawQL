@@ -1,14 +1,15 @@
 /**
  * Fair parked-agent density board for ClawQL TypeScript.
  *
- * Methodology (v5 — wake-deadline schedule at limit):
+ * Methodology (v7 — deadline throughput + fired definition):
  * - Ceiling / agents-at-limit = **first resource exhausted** (disk | rss | latency).
  * - Limit runs **must** retain an in-memory **wake-deadline schedule** for every
  *   counted agent (approval expiry / reminder). Bag path is derived from agentId
  *   (filesystem is the id index) — path Maps are not the capacity story.
- * - Board adds **deadlineAccuracy**: shared SLA (fire within 1s), % met + p99
- *   excess-over-tick under steady and same-instant burst. Scheduler tick/mechanism
- *   recorded in evidence. Cold wake: median + range; no cross-system cold until shared-host.
+ * - Board **deadlineAccuracy**: shared SLA (fire within 1s), declared arrival rate,
+ *   concurrent fires, identical fired definition (default: durable trigger record),
+ *   O(log n) next-deadline heap, and sustainablePerSec ramp (≥99% within 1s).
+ * - Cold wake: median + range; no cross-system cold until shared-host.
  * - Trim of id/path records alone likely makes both systems disk-bound; bag size
  *   then decides capacity (~30 vs ~32.8 KiB). Deadline state is the real resident.
  *
@@ -29,11 +30,15 @@ import {
 } from "./bag-store.js";
 import { FAIR_DEADLINE_HORIZON_MS, buildFairParkedAgentEffect } from "./fair-agent.js";
 import {
+  DEFAULT_DEADLINE_CONCURRENCY,
   DEFAULT_DEADLINE_SLA_MS,
+  DEFAULT_SLA_TARGET_PCT,
   makeDeadlineScheduleEffect,
+  openTriggerJournalEffect,
   randomDeadlineMsEffect,
   runDeadlineAccuracyEffect,
   type DeadlineAccuracyReport,
+  type DeadlineFireDefinition,
   type DeadlineSchedule,
 } from "./deadline-schedule.js";
 import {
@@ -88,10 +93,20 @@ export type FairBoardOptions = {
   readonly wakeColdP99CeilingMs?: number;
   /** Random wake deadlines spread over this horizon (ms). */
   readonly deadlineHorizonMs?: number;
-  /** Max deadline fires (bag wakes) measured per arm (steady / burst). */
+  /** Max deadline fires measured per arm (steady / burst). */
   readonly deadlineMaxFires?: number;
   /** Shared SLA: fire within this many ms of the deadline (default 1000). */
   readonly deadlineSlaMs?: number;
+  /** Bounded parallel fire workers (default 64). */
+  readonly deadlineConcurrency?: number;
+  /** What "fired" means — must match across systems (default durable_trigger_record). */
+  readonly deadlineFiredDefinition?: DeadlineFireDefinition;
+  /** Offered steady arrival rate (deadlines/sec); default = sampleN / horizonSec. */
+  readonly steadyArrivalRatePerSec?: number;
+  /** Skip the sustainable-rate ramp (smoke / reuse of prior ramp). */
+  readonly skipDeadlineRamp?: boolean;
+  /** Override ramp offered rates (deadlines/sec). */
+  readonly deadlineRampRatesPerSec?: readonly number[];
   readonly hostLabel?: string;
   readonly skipCold?: boolean;
   readonly skipRestart?: boolean;
@@ -114,7 +129,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s, steady + burst, report scheduler tick/mechanism. Design (timer wheel vs heap) is free; the board only scores whether deadlines are met. Do not read cold-wake gaps until shared-host.",
+    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s; identical fired definition (durable trigger record vs bag wake); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Design (timer wheel vs heap) is free. Do not read cold-wake gaps until shared-host.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -550,6 +565,9 @@ export function runFairDensityBoardEffect(
     const deadlineHorizonMs = options.deadlineHorizonMs ?? FAIR_DEADLINE_HORIZON_MS;
     const deadlineMaxFires = options.deadlineMaxFires ?? 2_000;
     const deadlineSlaMs = options.deadlineSlaMs ?? DEFAULT_DEADLINE_SLA_MS;
+    const deadlineConcurrency = options.deadlineConcurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
+    const deadlineFiredDefinition: DeadlineFireDefinition =
+      options.deadlineFiredDefinition ?? "durable_trigger_record";
     const hostLabel = options.hostLabel ?? "clawql-cloud-agent-host";
     const rssCeilingKiB = rssCeilingMiB * 1024;
     const exposeGc = yield* exposeGcAvailableEffect();
@@ -727,7 +745,7 @@ export function runFairDensityBoardEffect(
       ramp[lastIdx] = { ...ramp[lastIdx]!, pageCacheKiBPerAgent };
     }
 
-    // --- Deadline accuracy: steady + burst; full schedule retained for RSS ---
+    // --- Deadline accuracy: durable fire + arrival rate + concurrency + ramp ---
     let deadlineAccuracy: DeadlineAccuracyReport | null = null;
     if (!options.skipDeadlinePump && schedule.size() > 0) {
       const sampleIds = [
@@ -739,15 +757,38 @@ export function runFairDensityBoardEffect(
             .map((e) => e.agentId),
         ]),
       ].slice(0, Math.min(deadlineMaxFires, schedule.size()));
-      deadlineAccuracy = yield* runDeadlineAccuracyEffect({
-        agentIds: sampleIds,
-        wake: async (agentId) => {
-          await Effect.runPromise(bags.wake(agentId));
-        },
-        horizonMs: deadlineHorizonMs,
-        slaMs: deadlineSlaMs,
-        percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
-      });
+      const journal = yield* openTriggerJournalEffect(bagDir);
+      try {
+        const fire =
+          deadlineFiredDefinition === "bag_wake"
+            ? async (entry: { agentId: string; deadlineMs: number }, _firedAt: number) => {
+                await Effect.runPromise(bags.wake(entry.agentId));
+              }
+            : async (
+                entry: { agentId: string; deadlineMs: number },
+                firedAt: number
+              ): Promise<void> => {
+                journal.record(entry.agentId, entry.deadlineMs, firedAt);
+              };
+        deadlineAccuracy = yield* runDeadlineAccuracyEffect({
+          agentIds: sampleIds,
+          fire,
+          horizonMs: deadlineHorizonMs,
+          slaMs: deadlineSlaMs,
+          slaTargetPct: DEFAULT_SLA_TARGET_PCT,
+          concurrency: deadlineConcurrency,
+          firedDefinition: deadlineFiredDefinition,
+          steadyArrivalRatePerSec: options.steadyArrivalRatePerSec,
+          // Stress next-deadline at the claimed resident size (far-future pads).
+          residentHeapSize: schedule.size(),
+          skipRamp: options.skipDeadlineRamp === true,
+          rampWindowMs: Math.max(1_000, Math.min(deadlineHorizonMs, 3_000)),
+          rampRatesPerSec: options.deadlineRampRatesPerSec,
+          percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
+        });
+      } finally {
+        journal.close();
+      }
     }
 
     // --- Wake protocol ---
@@ -944,10 +985,16 @@ export function runFairDensityBoardEffect(
       deadlineAccuracy: deadlineAccuracy
         ? {
             slaMs: deadlineAccuracy.slaMs,
+            slaTargetPct: deadlineAccuracy.slaTargetPct,
+            firedDefinition: deadlineAccuracy.scheduler.firedDefinition,
+            concurrency: deadlineAccuracy.scheduler.concurrency,
+            steadyArrivalRatePerSec: deadlineAccuracy.steady.arrivalRatePerSec,
             steadyPctMet: deadlineAccuracy.steady.pctWithinSla,
             steadyP99ExcessMs: deadlineAccuracy.steady.excessOverTickP99Ms,
             burstPctMet: deadlineAccuracy.burst.pctWithinSla,
             burstP99ExcessMs: deadlineAccuracy.burst.excessOverTickP99Ms,
+            burstDrainPerSec: deadlineAccuracy.burst.arrivalRatePerSec,
+            sustainablePerSec: deadlineAccuracy.sustainablePerSec,
           }
         : null,
       restartSurvival,
@@ -957,7 +1004,7 @@ export function runFairDensityBoardEffect(
       ? `cold p99 median ${headlineSpread.coldP99Median.toFixed(3)} ms (range ${headlineSpread.coldP99Min.toFixed(3)}–${headlineSpread.coldP99Max.toFixed(3)}; do not cross-compare cold until shared-host)`
       : "cold spread unmeasured";
     const deadlineNote = deadlineAccuracy
-      ? `Deadline SLA ${deadlineAccuracy.slaMs} ms (scheduler ${deadlineAccuracy.scheduler.mechanism}, tickMs=${deadlineAccuracy.scheduler.tickMs}): steady ${deadlineAccuracy.steady.pctWithinSla}% met / excess p99 ${deadlineAccuracy.steady.excessOverTickP99Ms} ms; burst ${deadlineAccuracy.burst.pctWithinSla}% met / excess p99 ${deadlineAccuracy.burst.excessOverTickP99Ms} ms`
+      ? `Deadline SLA ${deadlineAccuracy.slaMs} ms (≥${deadlineAccuracy.slaTargetPct}% target; fired=${deadlineAccuracy.scheduler.firedDefinition}; concurrency=${deadlineAccuracy.scheduler.concurrency}; next=${deadlineAccuracy.scheduler.nextDeadlineComplexity}): steady arrival ${deadlineAccuracy.steady.arrivalRatePerSec}/s → ${deadlineAccuracy.steady.pctWithinSla}% met / excess p99 ${deadlineAccuracy.steady.excessOverTickP99Ms} ms; burst drain ${deadlineAccuracy.burst.arrivalRatePerSec}/s → ${deadlineAccuracy.burst.pctWithinSla}% met / excess p99 ${deadlineAccuracy.burst.excessOverTickP99Ms} ms; sustainablePerSec=${deadlineAccuracy.sustainablePerSec}`
       : "deadlineAccuracy unmeasured";
 
     const clawqlStatus =
@@ -968,7 +1015,7 @@ export function runFairDensityBoardEffect(
       hostLabel,
       honesty:
         limitHit && deadlineScheduleRetainedAtLimit
-          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). ${deadlineNote}. ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure. No win copy.`
+          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). ${deadlineNote}. ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure under the same fired definition + arrival-rate ramp. No win copy.`
           : !deadlineScheduleRetainedAtLimit
             ? `ClawQL TypeScript — **methodology_pending**: deadline schedule not retained for every counted agent (schedule=${schedule.size()}, agentsAtLimit=${agentsAtLimit}).`
             : "ClawQL TypeScript — agents-at-limit unknown (no resource exhausted; deadline schedule retained). No win copy.",
@@ -1007,7 +1054,7 @@ export function runFairDensityBoardEffect(
           park: "Waiting on that tool (idle durable)",
           offload: "Allowed; report residence (RSS / page cache / disk / object store)",
           wakeDeadline:
-            "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); steady + same-instant burst; report scheduler tick/mechanism and excess-over-tick",
+            "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (default durable_trigger_record); declare arrival rate; concurrent fires; O(log n) next-deadline; steady + burst + sustainablePerSec ramp (≥99% within 1s)",
         },
         columns: [
           "agentsAtLimit",
@@ -1017,11 +1064,11 @@ export function runFairDensityBoardEffect(
           "diskBytesPerAgent",
           "wakeWarmMs.p50/p99",
           "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-          "deadlineAccuracy (slaMs, steady/burst pctMet + p99 excess-over-tick)",
+          "deadlineAccuracy (slaMs, firedDefinition, arrivalRate, steady/burst pctMet + p99 excess, sustainablePerSec)",
           "restartSurvival",
         ],
         memoryFraming:
-          "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; record scheduler tick/mechanism; quote excess-over-tick (not raw poll artifacts) under steady + burst. Cold wake: median+range only until shared-host.",
+          "Retained at limit = wake-deadline schedule (not id→path Map). Path is derived; FS is the id index. Id/path trim on both sides likely makes capacity disk-bound — bag size decides. Deadline accuracy: shared fire-within-1s SLA; identical fired definition; declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec = max steady rate with ≥99% within 1s. Cold wake: median+range only until shared-host.",
         publicClaimScope:
           "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
         definitions: {
