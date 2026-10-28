@@ -12,36 +12,36 @@ Deadline accuracy for Ontologiql is **methodology-closed in lab (#144)** under g
 
 ## Methodology (v10 + Ontologiql #144)
 
-| Issue | Fix |
-| --- | --- |
-| Flush honesty | Both: group_commit 64/10ms; lateness after fsync; SIGKILL crash test. Ontologiql’s prior ~400k/s was undeclared **os_buffer** — superseded (not comparable to ClawQL’s 256k fsync floor). |
-| Burst honesty | One deadline per agent; **N ≤ agentsAtLimit**. Ontologiql’s old 400k-at-200k used synthetic ids — superseded. |
-| Ramp honesty | Report **sustainablePerSec** + **firstRateMissingSlaPerSec** + **rampWentPastFailure**. |
-| RebuildMs | Disclose schedule format. Compact array + single-pass heapify vs per-entry parse/sort — design, not language. |
-| Sustained-rate gaps under group_commit | Largely **disk fsync rate** (≤ 64 × fsyncs/sec). Cross-host 256k vs 128k ≈ 4k vs 2k fsync/s — do not read as TS vs Rust. |
+| Issue                                  | Fix                                                                                                                                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flush honesty                          | Both: group_commit 64/10ms; lateness after fsync; SIGKILL crash test. Ontologiql’s prior ~400k/s was undeclared **os_buffer** — superseded (not comparable to ClawQL’s 256k fsync floor). |
+| Burst honesty                          | One deadline per agent; **N ≤ agentsAtLimit**. Ontologiql’s old 400k-at-200k used synthetic ids — superseded.                                                                             |
+| Ramp honesty                           | Report **sustainablePerSec** + **firstRateMissingSlaPerSec** + **rampWentPastFailure**.                                                                                                   |
+| RebuildMs                              | Disclose schedule format. Compact array + single-pass heapify vs per-entry parse/sort — design, not language.                                                                             |
+| Sustained-rate gaps under group_commit | Largely **disk fsync rate** (≤ 64 × fsyncs/sec). Cross-host 256k vs 128k ≈ 4k vs 2k fsync/s — do not read as TS vs Rust.                                                                  |
 
 ## ClawQL TypeScript — measured (this host)
 
-| Column / check | Value |
-| --- | --- |
-| Agents at limit | **2,500,000** |
-| Schedule / format | typed_arrays; header+live NDJSON+padCount; bulk pad + bottom-up heapify |
-| Flush / crash test | group_commit; **pass** |
-| Steady @ ~667/s | 100% / excess p99 **~22 ms** |
-| Scaled bursts first miss | **250,000** |
-| Ramp | sustainable **256,000**; first miss **384,000**; `rampWentPastFailure=true` |
-| Deadline restart | **pass** — rebuild **~40–55 ms** @ 2.5e6 |
+| Column / check           | Value                                                                       |
+| ------------------------ | --------------------------------------------------------------------------- |
+| Agents at limit          | **2,500,000**                                                               |
+| Schedule / format        | typed_arrays; header+live NDJSON+padCount; bulk pad + bottom-up heapify     |
+| Flush / crash test       | group_commit; **pass**                                                      |
+| Steady @ ~667/s          | 100% / excess p99 **~22 ms**                                                |
+| Scaled bursts first miss | **250,000**                                                                 |
+| Ramp                     | sustainable **256,000**; first miss **384,000**; `rampWentPastFailure=true` |
+| Deadline restart         | **pass** — rebuild **~40–55 ms** @ 2.5e6                                    |
 
 ## Ontologiql — lab (#144, different host; not shared-host claim)
 
-| Field | Value |
-| --- | --- |
-| Flush / crash test | group_commit; **pass** (400 ACK’d; 0 missing/dups) |
-| sustainablePerSec | **128,000** |
-| firstRateMissingSlaPerSec | **192,000** (`rampWentPastFailure=true`) |
-| firstBurstSizeMissingOneSecondSla | **200,000** (N = agentsAtLimit) |
-| rebuildFromDiskMs | **80** @ 200k — still worth compact-array rebuild before shared-host |
-| overdue / no loss / no dups | prompt 1.0; true / true |
+| Field                             | Value                                                                |
+| --------------------------------- | -------------------------------------------------------------------- |
+| Flush / crash test                | group_commit; **pass** (400 ACK’d; 0 missing/dups)                   |
+| sustainablePerSec                 | **128,000**                                                          |
+| firstRateMissingSlaPerSec         | **192,000** (`rampWentPastFailure=true`)                             |
+| firstBurstSizeMissingOneSecondSla | **200,000** (N = agentsAtLimit)                                      |
+| rebuildFromDiskMs                 | **80** @ 200k — still worth compact-array rebuild before shared-host |
+| overdue / no loss / no dups       | prompt 1.0; true / true                                              |
 
 ## Before / during shared-host
 
@@ -57,8 +57,8 @@ node --expose-gc --import tsx scripts/benchmarks/program-density/measure-ramp-pa
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql (Rust) | **Publishable** capacity/wake; deadline **lab-aligned** (#144) | Shared-host five arms next; rebuild format optional tune |
-| ClawQL (TypeScript) | **measured** (fair-v2 / v10) | firstMiss=250k; ramp 256k→miss 384k; restart ~40–55 ms |
-| Golem / Infinity | Pending invite | fair-v2 / SHARED_HOST |
+| System              | Status                                                         | Notes                                                    |
+| ------------------- | -------------------------------------------------------------- | -------------------------------------------------------- |
+| Ontologiql (Rust)   | **Publishable** capacity/wake; deadline **lab-aligned** (#144) | Shared-host five arms next; rebuild format optional tune |
+| ClawQL (TypeScript) | **measured** (fair-v2 / v10)                                   | firstMiss=250k; ramp 256k→miss 384k; restart ~40–55 ms   |
+| Golem / Infinity    | Pending invite                                                 | fair-v2 / SHARED_HOST                                    |
