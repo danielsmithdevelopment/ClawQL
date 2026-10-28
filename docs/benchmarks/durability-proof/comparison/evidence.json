@@ -8,7 +8,7 @@
     "idle_between_steps",
     "during_model_tool_round"
   ],
-  "measuredAt": "2026-10-28T16:12:43.861Z",
+  "measuredAt": "2026-10-28T16:49:39.302Z",
   "metric": "duplicates + interrupted_or_unknown + completed_exactly_once; both upstream modes; agent policies (never/always/real/structural)",
   "honesty": "Crash-during-outside-write board. ClawQL structural refusal vs Pi Durable model-dependent retry. harnessValid = protocol ran correctly, not product-goodness. Pi zero-dup never-retry depends on the faux model; always-retry shows the worst case. Named public co-branded boards still need maintainer invite.",
   "arms": [
@@ -41,7 +41,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 1,
@@ -53,7 +53,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 2,
@@ -65,7 +65,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 3,
@@ -77,7 +77,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 4,
@@ -89,7 +89,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 5,
@@ -101,7 +101,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 6,
@@ -113,7 +113,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 7,
@@ -125,7 +125,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 8,
@@ -137,7 +137,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 9,
@@ -149,7 +149,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 10,
@@ -161,7 +161,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 11,
@@ -173,7 +173,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 12,
@@ -185,7 +185,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 13,
@@ -197,7 +197,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 14,
@@ -209,7 +209,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 15,
@@ -221,7 +221,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 16,
@@ -233,7 +233,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 17,
@@ -245,7 +245,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 18,
@@ -257,7 +257,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 19,
@@ -269,7 +269,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 20,
@@ -281,7 +281,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 21,
@@ -293,7 +293,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 22,
@@ -305,7 +305,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 23,
@@ -317,7 +317,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 24,
@@ -329,7 +329,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 25,
@@ -341,7 +341,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 26,
@@ -353,7 +353,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 27,
@@ -365,7 +365,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 28,
@@ -377,7 +377,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 29,
@@ -389,7 +389,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 30,
@@ -401,7 +401,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 31,
@@ -413,7 +413,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 32,
@@ -425,7 +425,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 33,
@@ -437,7 +437,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 34,
@@ -449,7 +449,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 35,
@@ -461,7 +461,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 36,
@@ -473,7 +473,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 37,
@@ -485,7 +485,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 38,
@@ -497,7 +497,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 39,
@@ -509,7 +509,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 40,
@@ -521,7 +521,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 41,
@@ -533,7 +533,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 42,
@@ -545,7 +545,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 43,
@@ -557,7 +557,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 44,
@@ -569,7 +569,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 45,
@@ -581,7 +581,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 46,
@@ -593,7 +593,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 47,
@@ -605,7 +605,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 48,
@@ -617,7 +617,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             },
             {
               "i": 49,
@@ -629,7 +629,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 refused=0"
+              "detail": "clawql/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             }
           ]
         },
@@ -656,7 +656,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 1,
@@ -668,7 +668,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 2,
@@ -680,7 +680,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 3,
@@ -692,7 +692,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 4,
@@ -704,7 +704,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 5,
@@ -716,7 +716,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 6,
@@ -728,7 +728,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 7,
@@ -740,7 +740,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 8,
@@ -752,7 +752,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 9,
@@ -764,7 +764,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 10,
@@ -776,7 +776,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 11,
@@ -788,7 +788,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 12,
@@ -800,7 +800,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 13,
@@ -812,7 +812,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 14,
@@ -824,7 +824,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 15,
@@ -836,7 +836,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 16,
@@ -848,7 +848,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 17,
@@ -860,7 +860,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 18,
@@ -872,7 +872,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 19,
@@ -884,7 +884,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 20,
@@ -896,7 +896,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 21,
@@ -908,7 +908,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 22,
@@ -920,7 +920,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 23,
@@ -932,7 +932,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 24,
@@ -944,7 +944,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 25,
@@ -956,7 +956,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 26,
@@ -968,7 +968,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 27,
@@ -980,7 +980,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 28,
@@ -992,7 +992,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 29,
@@ -1004,7 +1004,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 30,
@@ -1016,7 +1016,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 31,
@@ -1028,7 +1028,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 32,
@@ -1040,7 +1040,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 33,
@@ -1052,7 +1052,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 34,
@@ -1064,7 +1064,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 35,
@@ -1076,7 +1076,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 36,
@@ -1088,7 +1088,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 37,
@@ -1100,7 +1100,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 38,
@@ -1112,7 +1112,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 39,
@@ -1124,7 +1124,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 40,
@@ -1136,7 +1136,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 41,
@@ -1148,7 +1148,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 42,
@@ -1160,7 +1160,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 43,
@@ -1172,7 +1172,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 44,
@@ -1184,7 +1184,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 45,
@@ -1196,7 +1196,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 46,
@@ -1208,7 +1208,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 47,
@@ -1220,7 +1220,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 48,
@@ -1232,7 +1232,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             },
             {
               "i": 49,
@@ -1244,7 +1244,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=0"
+              "detail": "clawql/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=0"
             }
           ]
         }
@@ -1254,7 +1254,7 @@
       "armId": "clawql-always-retry",
       "status": "measured",
       "agentPolicy": "always-retry",
-      "honesty": "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates even when the model always retries — the contrast with Pi Durable always-retry.",
+      "honesty": "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates / interrupted-or-unknown = N / completed-exactly-once = 0 on non_idempotent — safe but unfinished until check-then-decide or keys.",
       "modes": [
         {
           "upstreamMode": "idempotent",
@@ -1279,7 +1279,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 1,
@@ -1291,7 +1291,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 2,
@@ -1303,7 +1303,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 3,
@@ -1315,7 +1315,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 4,
@@ -1327,7 +1327,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 5,
@@ -1339,7 +1339,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 6,
@@ -1351,7 +1351,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 7,
@@ -1363,7 +1363,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 8,
@@ -1375,7 +1375,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 9,
@@ -1387,7 +1387,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 10,
@@ -1399,7 +1399,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 11,
@@ -1411,7 +1411,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 12,
@@ -1423,7 +1423,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 13,
@@ -1435,7 +1435,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 14,
@@ -1447,7 +1447,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 15,
@@ -1459,7 +1459,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 16,
@@ -1471,7 +1471,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 17,
@@ -1483,7 +1483,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 18,
@@ -1495,7 +1495,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 19,
@@ -1507,7 +1507,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 20,
@@ -1519,7 +1519,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 21,
@@ -1531,7 +1531,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 22,
@@ -1543,7 +1543,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 23,
@@ -1555,7 +1555,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 24,
@@ -1567,7 +1567,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 25,
@@ -1579,7 +1579,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 26,
@@ -1591,7 +1591,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 27,
@@ -1603,7 +1603,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 28,
@@ -1615,7 +1615,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 29,
@@ -1627,7 +1627,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 30,
@@ -1639,7 +1639,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 31,
@@ -1651,7 +1651,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 32,
@@ -1663,7 +1663,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 33,
@@ -1675,7 +1675,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 34,
@@ -1687,7 +1687,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 35,
@@ -1699,7 +1699,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 36,
@@ -1711,7 +1711,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 37,
@@ -1723,7 +1723,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 38,
@@ -1735,7 +1735,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 39,
@@ -1747,7 +1747,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 40,
@@ -1759,7 +1759,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 41,
@@ -1771,7 +1771,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 42,
@@ -1783,7 +1783,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 43,
@@ -1795,7 +1795,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 44,
@@ -1807,7 +1807,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 45,
@@ -1819,7 +1819,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 46,
@@ -1831,7 +1831,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 47,
@@ -1843,7 +1843,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 48,
@@ -1855,7 +1855,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 49,
@@ -1867,7 +1867,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             }
           ]
         },
@@ -1894,7 +1894,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 1,
@@ -1906,7 +1906,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 2,
@@ -1918,7 +1918,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 3,
@@ -1930,7 +1930,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 4,
@@ -1942,7 +1942,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 5,
@@ -1954,7 +1954,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 6,
@@ -1966,7 +1966,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 7,
@@ -1978,7 +1978,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 8,
@@ -1990,7 +1990,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 9,
@@ -2002,7 +2002,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 10,
@@ -2014,7 +2014,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 11,
@@ -2026,7 +2026,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 12,
@@ -2038,7 +2038,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 13,
@@ -2050,7 +2050,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 14,
@@ -2062,7 +2062,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 15,
@@ -2074,7 +2074,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 16,
@@ -2086,7 +2086,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 17,
@@ -2098,7 +2098,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 18,
@@ -2110,7 +2110,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 19,
@@ -2122,7 +2122,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 20,
@@ -2134,7 +2134,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 21,
@@ -2146,7 +2146,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 22,
@@ -2158,7 +2158,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 23,
@@ -2170,7 +2170,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 24,
@@ -2182,7 +2182,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 25,
@@ -2194,7 +2194,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 26,
@@ -2206,7 +2206,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 27,
@@ -2218,7 +2218,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 28,
@@ -2230,7 +2230,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 29,
@@ -2242,7 +2242,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 30,
@@ -2254,7 +2254,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 31,
@@ -2266,7 +2266,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 32,
@@ -2278,7 +2278,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 33,
@@ -2290,7 +2290,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 34,
@@ -2302,7 +2302,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 35,
@@ -2314,7 +2314,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 36,
@@ -2326,7 +2326,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 37,
@@ -2338,7 +2338,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 38,
@@ -2350,7 +2350,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 39,
@@ -2362,7 +2362,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 40,
@@ -2374,7 +2374,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 41,
@@ -2386,7 +2386,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 42,
@@ -2398,7 +2398,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 43,
@@ -2410,7 +2410,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 44,
@@ -2422,7 +2422,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 45,
@@ -2434,7 +2434,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 46,
@@ -2446,7 +2446,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 47,
@@ -2458,7 +2458,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 48,
@@ -2470,7 +2470,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 49,
@@ -2482,7 +2482,630 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "armId": "clawql-check-then-decide",
+      "status": "measured",
+      "agentPolicy": "structural",
+      "honesty": "ClawQL check-then-decide on a non-idempotent mock that supports lookup-by-reference: after crash, exact match on clientReference finds the charge → reconciled (0 dups, 0 unknowns, completed exactly once). Turns “safe” into “done.” Pi has no equivalent; Golem’s only mechanism is the key this server ignores.",
+      "modes": [
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "interruptedOrUnknown": 0,
+          "completedExactlyOnce": 50,
+          "outcomeUnknown": 0,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "harnessValid": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "interruptedOrUnknown": 0,
+              "completedExactlyOnce": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql-check-then-decide/non_idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=0"
             }
           ]
         }
@@ -6246,7 +6869,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 1,
@@ -6258,7 +6881,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 2,
@@ -6270,7 +6893,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 3,
@@ -6282,7 +6905,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 4,
@@ -6294,7 +6917,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 5,
@@ -6306,7 +6929,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 6,
@@ -6318,7 +6941,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 7,
@@ -6330,7 +6953,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 8,
@@ -6342,7 +6965,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 9,
@@ -6354,7 +6977,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 10,
@@ -6366,7 +6989,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 11,
@@ -6378,7 +7001,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 12,
@@ -6390,7 +7013,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 13,
@@ -6402,7 +7025,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 14,
@@ -6414,7 +7037,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 15,
@@ -6426,7 +7049,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 16,
@@ -6438,7 +7061,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 17,
@@ -6450,7 +7073,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 18,
@@ -6462,7 +7085,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 19,
@@ -6474,7 +7097,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 20,
@@ -6486,7 +7109,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 21,
@@ -6498,7 +7121,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 22,
@@ -6510,7 +7133,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 23,
@@ -6522,7 +7145,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 24,
@@ -6534,7 +7157,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 25,
@@ -6546,7 +7169,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 26,
@@ -6558,7 +7181,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 27,
@@ -6570,7 +7193,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 28,
@@ -6582,7 +7205,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 29,
@@ -6594,7 +7217,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 30,
@@ -6606,7 +7229,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 31,
@@ -6618,7 +7241,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 32,
@@ -6630,7 +7253,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 33,
@@ -6642,7 +7265,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 34,
@@ -6654,7 +7277,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 35,
@@ -6666,7 +7289,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 36,
@@ -6678,7 +7301,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 37,
@@ -6690,7 +7313,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 38,
@@ -6702,7 +7325,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 39,
@@ -6714,7 +7337,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 40,
@@ -6726,7 +7349,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 41,
@@ -6738,7 +7361,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 42,
@@ -6750,7 +7373,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 43,
@@ -6762,7 +7385,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 44,
@@ -6774,7 +7397,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 45,
@@ -6786,7 +7409,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 46,
@@ -6798,7 +7421,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 47,
@@ -6810,7 +7433,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 48,
@@ -6822,7 +7445,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 49,
@@ -6834,7 +7457,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             }
           ]
         },
@@ -6861,7 +7484,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 1,
@@ -6873,7 +7496,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 2,
@@ -6885,7 +7508,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 3,
@@ -6897,7 +7520,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 4,
@@ -6909,7 +7532,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 5,
@@ -6921,7 +7544,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 6,
@@ -6933,7 +7556,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 7,
@@ -6945,7 +7568,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 8,
@@ -6957,7 +7580,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 9,
@@ -6969,7 +7592,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 10,
@@ -6981,7 +7604,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 11,
@@ -6993,7 +7616,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 12,
@@ -7005,7 +7628,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 13,
@@ -7017,7 +7640,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 14,
@@ -7029,7 +7652,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 15,
@@ -7041,7 +7664,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 16,
@@ -7053,7 +7676,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 17,
@@ -7065,7 +7688,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 18,
@@ -7077,7 +7700,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 19,
@@ -7089,7 +7712,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 20,
@@ -7101,7 +7724,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 21,
@@ -7113,7 +7736,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 22,
@@ -7125,7 +7748,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 23,
@@ -7137,7 +7760,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 24,
@@ -7149,7 +7772,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 25,
@@ -7161,7 +7784,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 26,
@@ -7173,7 +7796,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 27,
@@ -7185,7 +7808,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 28,
@@ -7197,7 +7820,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 29,
@@ -7209,7 +7832,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 30,
@@ -7221,7 +7844,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 31,
@@ -7233,7 +7856,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 32,
@@ -7245,7 +7868,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 33,
@@ -7257,7 +7880,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 34,
@@ -7269,7 +7892,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 35,
@@ -7281,7 +7904,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 36,
@@ -7293,7 +7916,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 37,
@@ -7305,7 +7928,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 38,
@@ -7317,7 +7940,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 39,
@@ -7329,7 +7952,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 40,
@@ -7341,7 +7964,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 41,
@@ -7353,7 +7976,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 42,
@@ -7365,7 +7988,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 43,
@@ -7377,7 +8000,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 44,
@@ -7389,7 +8012,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 45,
@@ -7401,7 +8024,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 46,
@@ -7413,7 +8036,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 47,
@@ -7425,7 +8048,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 48,
@@ -7437,7 +8060,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 49,
@@ -7449,7 +8072,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             }
           ]
         }
@@ -7484,7 +8107,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 1,
@@ -7496,7 +8119,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 2,
@@ -7508,7 +8131,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 3,
@@ -7520,7 +8143,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 4,
@@ -7532,7 +8155,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 5,
@@ -7544,7 +8167,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 6,
@@ -7556,7 +8179,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 7,
@@ -7568,7 +8191,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 8,
@@ -7580,7 +8203,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 9,
@@ -7592,7 +8215,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 10,
@@ -7604,7 +8227,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 11,
@@ -7616,7 +8239,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 12,
@@ -7628,7 +8251,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 13,
@@ -7640,7 +8263,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 14,
@@ -7652,7 +8275,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 15,
@@ -7664,7 +8287,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 16,
@@ -7676,7 +8299,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 17,
@@ -7688,7 +8311,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 18,
@@ -7700,7 +8323,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 19,
@@ -7712,7 +8335,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 20,
@@ -7724,7 +8347,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 21,
@@ -7736,7 +8359,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 22,
@@ -7748,7 +8371,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 23,
@@ -7760,7 +8383,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 24,
@@ -7772,7 +8395,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 25,
@@ -7784,7 +8407,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 26,
@@ -7796,7 +8419,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 27,
@@ -7808,7 +8431,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 28,
@@ -7820,7 +8443,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 29,
@@ -7832,7 +8455,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 30,
@@ -7844,7 +8467,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 31,
@@ -7856,7 +8479,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 32,
@@ -7868,7 +8491,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 33,
@@ -7880,7 +8503,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 34,
@@ -7892,7 +8515,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 35,
@@ -7904,7 +8527,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 36,
@@ -7916,7 +8539,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 37,
@@ -7928,7 +8551,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 38,
@@ -7940,7 +8563,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 39,
@@ -7952,7 +8575,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 40,
@@ -7964,7 +8587,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 41,
@@ -7976,7 +8599,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 42,
@@ -7988,7 +8611,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 43,
@@ -8000,7 +8623,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 44,
@@ -8012,7 +8635,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 45,
@@ -8024,7 +8647,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 46,
@@ -8036,7 +8659,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 47,
@@ -8048,7 +8671,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 48,
@@ -8060,7 +8683,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             },
             {
               "i": 49,
@@ -8072,7 +8695,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 refused=1"
+              "detail": "clawql-always-retry/idempotent: dup=0 unk=0 once=1 effects=1 reconciled=1 refused=1"
             }
           ]
         },
@@ -8099,7 +8722,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 1,
@@ -8111,7 +8734,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 2,
@@ -8123,7 +8746,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 3,
@@ -8135,7 +8758,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 4,
@@ -8147,7 +8770,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 5,
@@ -8159,7 +8782,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 6,
@@ -8171,7 +8794,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 7,
@@ -8183,7 +8806,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 8,
@@ -8195,7 +8818,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 9,
@@ -8207,7 +8830,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 10,
@@ -8219,7 +8842,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 11,
@@ -8231,7 +8854,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 12,
@@ -8243,7 +8866,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 13,
@@ -8255,7 +8878,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 14,
@@ -8267,7 +8890,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 15,
@@ -8279,7 +8902,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 16,
@@ -8291,7 +8914,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 17,
@@ -8303,7 +8926,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 18,
@@ -8315,7 +8938,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 19,
@@ -8327,7 +8950,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 20,
@@ -8339,7 +8962,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 21,
@@ -8351,7 +8974,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 22,
@@ -8363,7 +8986,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 23,
@@ -8375,7 +8998,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 24,
@@ -8387,7 +9010,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 25,
@@ -8399,7 +9022,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 26,
@@ -8411,7 +9034,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 27,
@@ -8423,7 +9046,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 28,
@@ -8435,7 +9058,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 29,
@@ -8447,7 +9070,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 30,
@@ -8459,7 +9082,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 31,
@@ -8471,7 +9094,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 32,
@@ -8483,7 +9106,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 33,
@@ -8495,7 +9118,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 34,
@@ -8507,7 +9130,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 35,
@@ -8519,7 +9142,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 36,
@@ -8531,7 +9154,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 37,
@@ -8543,7 +9166,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 38,
@@ -8555,7 +9178,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 39,
@@ -8567,7 +9190,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 40,
@@ -8579,7 +9202,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 41,
@@ -8591,7 +9214,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 42,
@@ -8603,7 +9226,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 43,
@@ -8615,7 +9238,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 44,
@@ -8627,7 +9250,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 45,
@@ -8639,7 +9262,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 46,
@@ -8651,7 +9274,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 47,
@@ -8663,7 +9286,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 48,
@@ -8675,7 +9298,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             },
             {
               "i": 49,
@@ -8687,7 +9310,7 @@
               "lost": 0,
               "uniqueWriteEffects": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 refused=1"
+              "detail": "clawql-always-retry/non_idempotent: dup=0 unk=1 once=0 effects=1 reconciled=0 refused=1"
             }
           ]
         }
