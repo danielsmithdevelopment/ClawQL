@@ -155,7 +155,8 @@ export function makeTypedDeadlineScheduleEffect(
       entries: () => {
         const out: TypedDeadlineEntry[] = [];
         for (let i = 0; i < size; i++) {
-          if (!Number.isFinite(deadlines[i]!) || deadlines[i]! === Number.POSITIVE_INFINITY) continue;
+          if (!Number.isFinite(deadlines[i]!) || deadlines[i]! === Number.POSITIVE_INFINITY)
+            continue;
           out.push({
             agentId: agentBySlot.get(i) ?? "__pad__",
             deadlineMs: deadlines[i]!,

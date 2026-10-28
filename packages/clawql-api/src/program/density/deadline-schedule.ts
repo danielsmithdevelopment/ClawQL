@@ -340,7 +340,11 @@ function attachGcObserver(): {
 
 function buildGcTrace(
   pauses: readonly GcPauseInterval[],
-  fireWindows: readonly { readonly startPerfMs: number; readonly endPerfMs: number; readonly latenessMs: number }[],
+  fireWindows: readonly {
+    readonly startPerfMs: number;
+    readonly endPerfMs: number;
+    readonly latenessMs: number;
+  }[],
   lateThresholdMs: number
 ): DeadlineGcTrace {
   const late = fireWindows.filter((f) => f.latenessMs >= lateThresholdMs);
@@ -501,9 +505,7 @@ export function runDeadlinePumpEffect(args: {
     }
 
     const gcTrace =
-      gc && fireWindows.length > 0
-        ? buildGcTrace(gc.pauses, fireWindows, lateGcThresholdMs)
-        : null;
+      gc && fireWindows.length > 0 ? buildGcTrace(gc.pauses, fireWindows, lateGcThresholdMs) : null;
 
     return summarizeArm(
       mode,
