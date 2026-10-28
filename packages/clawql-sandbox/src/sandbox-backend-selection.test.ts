@@ -51,18 +51,15 @@ describe("parseExplicitSandboxBackendEnv", () => {
     expect(parseExplicitSandboxBackendEnv()).toBe("agent-substrate");
   });
 
-  it("accepts cua aliases", () => {
+  it("does not treat cua as a sandbox_exec backend", () => {
     process.env.CLAWQL_SANDBOX_BACKEND = "cua";
-    expect(parseExplicitSandboxBackendEnv()).toBe("cua");
-    process.env.CLAWQL_SANDBOX_BACKEND = "cua-spaces";
-    expect(parseExplicitSandboxBackendEnv()).toBe("cua");
+    expect(parseExplicitSandboxBackendEnv()).toBe("bridge");
   });
 });
 
 describe("resolveSandboxBackendChoice", () => {
   const depsAllTrue: SandboxBackendAutoDeps = {
     agentSubstrate: () => Effect.succeed(true),
-    cua: () => Effect.succeed(true),
     kata: () => Effect.succeed(true),
     seatbelt: () => Effect.succeed(true),
     docker: () => Effect.succeed(true),
@@ -84,33 +81,14 @@ describe("resolveSandboxBackendChoice", () => {
     expect(r).toEqual({ ok: true, backend: "agent-substrate" });
   });
 
-  it("explicit cua pins Cua", async () => {
-    const r = await resolveSandboxBackendChoice("cua", depsAllTrue);
-    expect(r).toEqual({ ok: true, backend: "cua" });
-  });
-
   it("auto prefers Agent Substrate when available (ADR 0011)", async () => {
     const r = await Effect.runPromise(resolveSandboxBackendChoiceEffect(null, depsAllTrue));
     expect(r).toEqual({ ok: true, backend: "agent-substrate" });
   });
 
-  it("auto prefers Cua when Agent Substrate unavailable (ADR 0018)", async () => {
+  it("auto prefers kata when Agent Substrate unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
       agentSubstrate: () => Effect.succeed(false),
-      cua: () => Effect.succeed(true),
-      kata: () => Effect.succeed(true),
-      seatbelt: () => Effect.succeed(true),
-      docker: () => Effect.succeed(true),
-      bridge: () => Effect.succeed(true),
-    };
-    const r = await resolveSandboxBackendChoice(null, deps);
-    expect(r).toEqual({ ok: true, backend: "cua" });
-  });
-
-  it("auto prefers kata when Agent Substrate and Cua unavailable", async () => {
-    const deps: SandboxBackendAutoDeps = {
-      agentSubstrate: () => Effect.succeed(false),
-      cua: () => Effect.succeed(false),
       kata: () => Effect.succeed(true),
       seatbelt: () => Effect.succeed(true),
       docker: () => Effect.succeed(true),
@@ -123,7 +101,6 @@ describe("resolveSandboxBackendChoice", () => {
   it("auto uses docker when kata and substrate unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
       agentSubstrate: () => Effect.succeed(false),
-      cua: () => Effect.succeed(false),
       kata: () => Effect.succeed(false),
       seatbelt: () => Effect.succeed(true),
       docker: () => Effect.succeed(true),
@@ -136,7 +113,6 @@ describe("resolveSandboxBackendChoice", () => {
   it("auto uses bridge when only bridge is configured", async () => {
     const deps: SandboxBackendAutoDeps = {
       agentSubstrate: () => Effect.succeed(false),
-      cua: () => Effect.succeed(false),
       kata: () => Effect.succeed(false),
       seatbelt: () => Effect.succeed(false),
       docker: () => Effect.succeed(false),
@@ -149,7 +125,6 @@ describe("resolveSandboxBackendChoice", () => {
   it("auto fails when nothing is available", async () => {
     const deps: SandboxBackendAutoDeps = {
       agentSubstrate: () => Effect.succeed(false),
-      cua: () => Effect.succeed(false),
       kata: () => Effect.succeed(false),
       seatbelt: () => Effect.succeed(false),
       docker: () => Effect.succeed(false),

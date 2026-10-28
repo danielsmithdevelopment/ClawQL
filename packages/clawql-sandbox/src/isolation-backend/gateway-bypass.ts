@@ -1,16 +1,16 @@
 /**
- * C4 — no bypass of the ClawQL gateway from inside a Space.
+ * C4 — no bypass of the ClawQL gateway from inside an isolated session.
  * Attempts (direct IP, alternate DNS, IPv6, hardcoded endpoints) must fail
  * or route through ClawQL. Recording / governance / replay depend on this.
  */
 
 import { Effect } from "effect";
-import { IsolationBackendError, IsolationBackendService } from "../isolation-backend/interface.js";
-import { DEFAULT_GATEWAY_PROBES } from "../isolation-backend/conformance.js";
+import { IsolationBackendError, IsolationBackendService } from "./interface.js";
+import { DEFAULT_GATEWAY_PROBES } from "./conformance.js";
 import type {
   IsolationEscapeProbe,
   IsolationEscapeProbeResult,
-} from "../isolation-backend/types.js";
+} from "./types.js";
 
 export type GatewayBypassReport = {
   readonly sessionId: string;

@@ -5,14 +5,17 @@
 
 import { Context, Effect, Layer, Ref } from "effect";
 import { Data } from "effect";
-import { IsolationBackendError, IsolationBackendService } from "../isolation-backend/interface.js";
+import {
+  IsolationBackendError,
+  IsolationBackendService,
+} from "./interface.js";
 import type {
   IsolationSession,
   IsolationSnapshot,
   IsolationTier,
-} from "../isolation-backend/types.js";
-import { collectIsolationHostEvidenceEffect } from "../isolation-backend/host-evidence.js";
-import type { IsolationHostEvidence } from "../isolation-backend/host-evidence.js";
+} from "./types.js";
+import { collectIsolationHostEvidenceEffect } from "./host-evidence.js";
+import type { IsolationHostEvidence } from "./host-evidence.js";
 
 export class TrialCheckpointError extends Data.TaggedError("TrialCheckpointError")<{
   readonly reason: string;
@@ -31,8 +34,8 @@ export type TrialCheckpoint = {
   readonly tier: IsolationTier;
   readonly createdAt: string;
   readonly host: IsolationHostEvidence;
-  /** Publish-grade numbers must not come from Cua-backed checkpoints. */
-  readonly publishGradeAllowed: false;
+  /** Follows backend pin: false on Mac VMs; true only for dedicated-Linux Firecracker/gVisor. */
+  readonly publishGradeAllowed: boolean;
 };
 
 export class TrialCheckpointService extends Context.Service<
@@ -45,7 +48,9 @@ export class TrialCheckpointService extends Context.Service<
       checkpointId: string,
       trialIds: readonly string[]
     ) => Effect.Effect<readonly TrialArm[], TrialCheckpointError | IsolationBackendError>;
-    readonly get: (checkpointId: string) => Effect.Effect<TrialCheckpoint, TrialCheckpointError>;
+    readonly get: (
+      checkpointId: string
+    ) => Effect.Effect<TrialCheckpoint, TrialCheckpointError>;
     readonly list: () => Effect.Effect<readonly TrialCheckpoint[]>;
   }
 >()("clawql/TrialCheckpointService") {}
@@ -65,7 +70,7 @@ export function createTrialCheckpointLayer(): Layer.Layer<
         createCheckpoint: (sessionId) =>
           Effect.gen(function* () {
             const snap = yield* backend.snapshot(sessionId);
-            const host = yield* collectIsolationHostEvidenceEffect();
+            const host = yield* collectIsolationHostEvidenceEffect(snap.backend);
             const checkpoint: TrialCheckpoint = {
               checkpointId: `ckpt-${snap.snapshotId}`,
               snapshot: snap,
@@ -73,7 +78,7 @@ export function createTrialCheckpointLayer(): Layer.Layer<
               tier: snap.tier,
               createdAt: new Date().toISOString(),
               host,
-              publishGradeAllowed: false,
+              publishGradeAllowed: host.publishGradeAllowed,
             };
             yield* Ref.update(store, (m) => {
               const next = new Map(m);
@@ -126,13 +131,15 @@ export function createTrialCheckpointLayer(): Layer.Layer<
 }
 
 /** Pilot helper: admit → mount → checkpoint → fork N arms (default N=50). */
-export function forkPilotTrialsEffect(opts: {
-  readonly sessionId: string;
-  readonly tier: IsolationTier;
-  readonly worktreePath: string;
-  readonly armCount?: number;
-  readonly armPrefix?: string;
-}): Effect.Effect<
+export function forkPilotTrialsEffect(
+  opts: {
+    readonly sessionId: string;
+    readonly tier: IsolationTier;
+    readonly worktreePath: string;
+    readonly armCount?: number;
+    readonly armPrefix?: string;
+  }
+): Effect.Effect<
   { readonly checkpoint: TrialCheckpoint; readonly arms: readonly TrialArm[] },
   TrialCheckpointError | IsolationBackendError,
   IsolationBackendService | TrialCheckpointService

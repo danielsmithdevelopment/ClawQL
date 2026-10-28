@@ -59,9 +59,9 @@ const program = Effect.gen(function* () {
 | Ship a Cursor-hosted bot with ClawQL tools   | Agent SDK `mcp-connections/clawql.ts` |
 | Injection smoke on that bot                  | Agent SDK `evals/injection.eval.ts`   |
 
-## Isolation backend (Cua / Agent Substrate)
+## Isolation backend (open backends / Agent Substrate)
 
-Session containment for the open reference runner should speak **`IsolationBackendService`** (`clawql-sandbox`) — the same contract Ontologiql uses for Firecracker / Apple container later. Cua Spaces is an **optional** backend (ADR [0018](../adr/0018-cua-isolation-backend.md)): Linux Spaces on a Mac + snapshot/replay spike only. Pin `@trycua/cua@0.9.0`; never hard-depend; never publish latency/density from Cua runs. Shared conformance: `runIsolationConformanceEffect`. Guide: [`../integrations/cua-spaces.md`](../integrations/cua-spaces.md).
+Session containment for the open reference runner should speak **`IsolationBackendService`** (`clawql-sandbox`) — Firecracker (snapshot spike primary), gVisor, Apple container, Lima (ADR [0018](../adr/0018-open-isolation-backends.md)). All Apache-2.0; Cua rejected. Shared conformance: `runIsolationConformanceEffect`. Guide: [`../integrations/open-isolation-backends.md`](../integrations/open-isolation-backends.md).
 
 ## Non-goals
 

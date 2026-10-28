@@ -8,7 +8,7 @@
 
 ### Added
 
-- **Cua Spaces optional isolation backend (ADR 0018 / C1–C4)** — shared `IsolationBackendService` in `clawql-sandbox` (admit / mount / exec / snapshot / restore / fork / escape probes); optional Cua mock + live HTTP façade (`CLAWQL_SANDBOX_CUA_*`, pin `@trycua/cua@0.9.0`, never a hard dep); pilot trial checkpoint forks (C2); call record-and-replay with digest mismatch → `outcome_unknown` (C3); gateway no-bypass probes (C4); license gate (FSL-1.1-MIT self-host OK). Evidence template under [`docs/benchmarks/cua-spike/`](docs/benchmarks/cua-spike/). **No publish-grade numbers from Cua runs.** Guide: [`docs/integrations/cua-spaces.md`](docs/integrations/cua-spaces.md).
+- **Open isolation backends (ADR 0018 / C1–C4)** — shared `IsolationBackendService` with **Firecracker** (snapshot spike primary), **gVisor**, **Apple container**, and **Lima** mocks (all Apache-2.0). Cua Spaces rejected (FSL competing-use risk for sold runners); Tart avoided. C2 checkpoint forks, C3 record-and-replay (`outcome_unknown` on digest mismatch), C4 gateway no-bypass. License allowlist CI: `npm run check:isolation-backend-licenses`. Guide: [`docs/integrations/open-isolation-backends.md`](docs/integrations/open-isolation-backends.md).
 
 - **Mandate Idempotency-Key on REST** — OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) set `riskHints.idempotencyCapable`. After atomic mandate consume, REST execute sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives `outcome_unknown` without a second consume. Check-then-decide lookup + program-runner keyed resume still planned.
 

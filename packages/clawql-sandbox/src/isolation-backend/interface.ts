@@ -1,6 +1,6 @@
 /**
  * IsolationBackendService — one backend among several (ADR 0018).
- * Presence / approvals stay on the host; Spaces never host them.
+ * Presence / approvals stay on the host, never inside the guest.
  */
 
 import { Context, Effect } from "effect";

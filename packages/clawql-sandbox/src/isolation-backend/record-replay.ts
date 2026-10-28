@@ -1,5 +1,5 @@
 /**
- * C3 — record-and-replay spike for outbound calls from a Space.
+ * C3 — record-and-replay spike for outbound calls from an isolated session.
  *
  * ClawQL records every outgoing call (model calls included) by sequence
  * position. After restoring a snapshot, it serves recorded responses until

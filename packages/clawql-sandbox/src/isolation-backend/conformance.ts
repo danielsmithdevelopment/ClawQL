@@ -31,7 +31,7 @@ export type IsolationConformanceReport = {
 
 /**
  * End-to-end conformance for one tier: admit → mount → exec → snapshot →
- * restore → fork → escape probes. Used by Cua mock and Agent Substrate adapters.
+ * restore → fork → escape probes. Used by open-backend mocks and Agent Substrate.
  */
 export function runIsolationConformanceEffect(
   tier: IsolationTier,

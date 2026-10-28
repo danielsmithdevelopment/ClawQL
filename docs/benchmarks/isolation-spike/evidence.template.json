@@ -1,24 +1,25 @@
 {
   "schemaVersion": 1,
-  "board": "cua-spike",
-  "publishGradeAllowed": false,
-  "cuaPinnedPackage": "@trycua/cua",
-  "cuaPinnedVersion": "0.9.0",
+  "board": "isolation-spike",
+  "backendId": "firecracker",
+  "backendPinnedVersion": "v1.17.0",
+  "backendLicenseSpdx": "Apache-2.0",
+  "publishGradeAllowed": true,
   "host": {
     "recordedAt": "ISO-8601",
     "hostname": "",
-    "platform": "darwin",
-    "arch": "arm64",
+    "platform": "linux",
+    "arch": "x64",
     "osRelease": "",
     "macOsVersion": "",
     "macModel": "",
     "nodeVersion": "",
-    "cuaPinnedPackage": "@trycua/cua",
-    "cuaPinnedVersion": "0.9.0",
-    "publishGradeAllowed": false
+    "backendId": "firecracker",
+    "backendPinnedVersion": "v1.17.0",
+    "backendLicenseSpdx": "Apache-2.0",
+    "publishGradeAllowed": true
   },
   "c1": {
-    "tiers": ["container", "microvm", "full-vm"],
     "admitOk": null,
     "execOk": null,
     "snapshotRestoreOk": null,
@@ -38,5 +39,5 @@
     "allBlockedOrProxied": null,
     "probes": []
   },
-  "notes": "VM overhead — not for public latency/density/durability headlines."
+  "notes": "Snapshot spike: Firecracker first; Apple VZ second. No Cua."
 }

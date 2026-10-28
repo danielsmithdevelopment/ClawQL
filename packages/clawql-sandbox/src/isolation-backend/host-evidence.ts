@@ -1,12 +1,13 @@
 /**
- * Host + pinned-backend metadata for every Cua / isolation evidence file.
- * Shared rule: pin the Cua version and record Mac model + macOS version.
+ * Host + pinned-backend metadata for every isolation evidence file.
+ * Record Mac model + macOS version on Darwin; pin the backend version.
  */
 
 import { createHash } from "node:crypto";
 import os from "node:os";
 import { Effect } from "effect";
-import { PINNED_CUA_NPM_PACKAGE, PINNED_CUA_NPM_VERSION } from "../cua/pinned-version.js";
+import type { IsolationBackendId } from "./types.js";
+import { getIsolationBackendPin } from "./license-registry.js";
 
 export type IsolationHostEvidence = {
   readonly recordedAt: string;
@@ -19,19 +20,24 @@ export type IsolationHostEvidence = {
   /** Darwin only — e.g. "MacBook Pro (M2 Pro)"; empty when unknown. */
   readonly macModel: string;
   readonly nodeVersion: string;
-  readonly cuaPinnedPackage: string;
-  readonly cuaPinnedVersion: string;
+  readonly backendId: IsolationBackendId;
+  readonly backendPinnedVersion: string;
+  readonly backendLicenseSpdx: string;
   /**
-   * Always false for Cua-backed runs. VM overhead adds noise —
-   * publish-grade results stay on the dedicated Linux host.
+   * False for Mac VM backends (Apple container / Lima). Firecracker /
+   * gVisor on the dedicated Linux host may set true via the pin registry.
    */
   readonly publishGradeAllowed: boolean;
 };
 
 export function collectIsolationHostEvidenceEffect(
+  backendId: IsolationBackendId = "firecracker",
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<IsolationHostEvidence> {
   return Effect.sync(() => {
+    const pin = getIsolationBackendPin(
+      backendId === "mock" ? "firecracker" : backendId
+    );
     const overrideRelease = env.CLAWQL_ISOLATION_HOST_OS_RELEASE?.trim();
     return {
       recordedAt: new Date().toISOString(),
@@ -42,20 +48,26 @@ export function collectIsolationHostEvidenceEffect(
       macOsVersion: env.CLAWQL_ISOLATION_HOST_MACOS_VERSION?.trim() || "",
       macModel: env.CLAWQL_ISOLATION_HOST_MAC_MODEL?.trim() || "",
       nodeVersion: process.version,
-      cuaPinnedPackage: PINNED_CUA_NPM_PACKAGE,
-      cuaPinnedVersion: PINNED_CUA_NPM_VERSION,
-      publishGradeAllowed: false,
+      backendId,
+      backendPinnedVersion: pin.pinnedVersion,
+      backendLicenseSpdx: pin.licenseSpdx,
+      publishGradeAllowed: pin.publishGradeOnDedicatedLinux,
     } satisfies IsolationHostEvidence;
   });
 }
 
 /** Sync façade for evidence writers at host edges. */
-export function collectIsolationHostEvidence(env?: NodeJS.ProcessEnv): IsolationHostEvidence {
-  return Effect.runSync(collectIsolationHostEvidenceEffect(env));
+export function collectIsolationHostEvidence(
+  backendId?: IsolationBackendId,
+  env?: NodeJS.ProcessEnv
+): IsolationHostEvidence {
+  return Effect.runSync(collectIsolationHostEvidenceEffect(backendId, env));
 }
 
 export function evidencePayloadDigestEffect(payload: unknown): Effect.Effect<string> {
-  return Effect.sync(() => createHash("sha256").update(JSON.stringify(payload)).digest("hex"));
+  return Effect.sync(() =>
+    createHash("sha256").update(JSON.stringify(payload)).digest("hex")
+  );
 }
 
 export function evidencePayloadDigest(payload: unknown): string {

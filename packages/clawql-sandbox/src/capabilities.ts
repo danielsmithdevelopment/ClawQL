@@ -7,7 +7,6 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { Effect } from "effect";
 import { agentSubstrateConfigured } from "./agent-substrate/types.js";
-import { cuaConfiguredEffect } from "./cua/types.js";
 import {
   createInClusterKataClient,
   kataRuntimeClassAvailableEffect,
@@ -51,15 +50,6 @@ export function agentSubstrateReachableEffect(): Effect.Effect<boolean> {
 
 export function agentSubstrateReachable(): boolean {
   return Effect.runSync(agentSubstrateReachableEffect());
-}
-
-/** Cua Spaces configured (mock enabled or live URL+token) — ADR 0018. */
-export function cuaReachableEffect(): Effect.Effect<boolean> {
-  return cuaConfiguredEffect();
-}
-
-export function cuaReachable(): boolean {
-  return Effect.runSync(cuaReachableEffect());
 }
 
 /** macOS Seatbelt: `sandbox-exec` present and executable. */

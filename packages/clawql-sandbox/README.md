@@ -23,11 +23,12 @@ When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` f
 | Backend                                 | When                                           | Env                                                        |
 | --------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
 | **Agent Substrate** (primary, ADR 0011) | Cloud Hypervisor microVM or gVisor             | `CLAWQL_SANDBOX_AGENT_SUBSTRATE_*` / pin `agent-substrate` |
-| **Cua Spaces** (optional, ADR 0018)     | Linux Spaces on a Mac; snapshot / replay spike | `CLAWQL_SANDBOX_CUA_*` / pin `cua` (never a hard dep)      |
 | **Kata Containers**                     | Kubernetes Job + `runtimeClassName` (fallback) | `CLAWQL_SANDBOX_KATA_*` / pin `kata`                       |
 | **Docker / Podman**                     | Local CLI `docker run`                         | `docker`, `CLAWQL_SANDBOX_DOCKER_*`                        |
 | **Cloudflare bridge**                   | Workers `@cloudflare/sandbox`                  | `CLAWQL_SANDBOX_BRIDGE_URL` + token                        |
 | **macOS Seatbelt**                      | Dev macOS only                                 | `macos-seatbelt`                                           |
+
+Open isolation backends (Firecracker, gVisor, Apple container, Lima) use **`IsolationBackendService`** (ADR 0018) — OSI-only, not auto-selected for `sandbox_exec`. Cua was rejected.
 
 ### Agent Substrate (recommended for untrusted / arbitrary code)
 
@@ -42,19 +43,18 @@ See [ADR 0011](../../docs/adr/0011-isolation-agent-substrate-sandbox-celld.md).
 
 **Not for celld cells.** Fixed-shape orchestration stays on celld V8 isolates (same ADR).
 
-### Cua Spaces (optional — Mac Linux Spaces + snapshot spike)
+### Open isolation backends (ADR 0018 — Firecracker-first)
 
-See [ADR 0018](../../docs/adr/0018-cua-isolation-backend.md) and [integrations/cua-spaces.md](../../docs/integrations/cua-spaces.md).
+See [ADR 0018](../../docs/adr/0018-open-isolation-backends.md) and [integrations/open-isolation-backends.md](../../docs/integrations/open-isolation-backends.md).
 
-- **`CLAWQL_SANDBOX_BACKEND=cua`** (aliases `cua-spaces`, `spaces`)
-- **`CLAWQL_SANDBOX_CUA_ENABLED=1`** / **`CLAWQL_SANDBOX_CUA_MODE=mock|live`**
-- **`CLAWQL_SANDBOX_CUA_DEFAULT_TIER`** — `container` \| `microvm` \| `full-vm`
-- **`CLAWQL_SANDBOX_CUA_URL`** + **`CLAWQL_SANDBOX_CUA_API_TOKEN`** — live cua-spacesd façade
-- Pinned peer (optional install): **`@trycua/cua@0.9.0`** — never required to build ClawQL
-- Shared **`IsolationBackendService`** for Ontologiql / open reference runner conformance
-- **No publish-grade numbers** from Cua runs (`publishGradeAllowed: false`)
+| Backend         | License    | Host  | Notes                                      |
+| --------------- | ---------- | ----- | ------------------------------------------ |
+| Firecracker     | Apache-2.0 | Linux | Primary snapshot / replay spike            |
+| gVisor          | Apache-2.0 | Linux | Middle tier (sandboxed kernel)             |
+| Apple container | Apache-2.0 | Darwin| Per-container lightweight VM (Apple Silicon)|
+| Lima            | Apache-2.0 | Darwin| Full Linux VM                              |
 
-License: Spaces are FSL-1.1-MIT (self-host OK); competing hosted Spaces needs a Cua commercial licence. See [`docs/benchmarks/cua-spike/LICENSE-CHECK.md`](../../docs/benchmarks/cua-spike/LICENSE-CHECK.md).
+Shared **`IsolationBackendService`** for Ontologiql / open reference runner. License CI: `npm run check:isolation-backend-licenses`. **Avoid Cua and Tart.**
 
 ### Kata (fallback for production Kubernetes)
 

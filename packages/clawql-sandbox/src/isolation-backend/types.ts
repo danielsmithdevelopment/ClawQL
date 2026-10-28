@@ -1,23 +1,33 @@
 /**
  * Shared isolation-backend contract (ADR 0018).
- * Cua, Agent Substrate, and future Firecracker / Apple-container backends
- * implement the same surface so conformance tests run against every backend.
+ * Firecracker, gVisor, Apple container, Lima, and Agent Substrate implement
+ * the same surface so conformance tests run against every backend.
  */
 
 import type { SandboxCodeToolInput } from "../types.js";
 
-/** Isolation backends ClawQL can drive. Cua is optional — never a hard dependency. */
+/** Isolation backends ClawQL can drive. All listed backends must be OSI-approved. */
 export type IsolationBackendId =
-  "cua" | "agent-substrate" | "firecracker" | "apple-container" | "mock";
+  | "firecracker"
+  | "gvisor"
+  | "apple-container"
+  | "lima"
+  | "agent-substrate"
+  | "mock";
 
 /**
- * Space / guest isolation tier.
- * Honesty: container-tier Spaces share one Linux VM kernel — do not claim
- * kernel isolation between container-tier Spaces.
+ * Guest isolation tier.
+ * Apple container: each Linux container in its own lightweight VM (stronger
+ * than a shared-kernel container tier). Lima / full-vm: full Linux VM.
+ * Firecracker: microVM. gVisor: sandboxed kernel (middle tier).
  */
-export type IsolationTier = "container" | "microvm" | "full-vm";
+export type IsolationTier = "container" | "microvm" | "full-vm" | "gvisor";
 
-export type IsolationSessionState = "admitted" | "running" | "suspended" | "terminated";
+export type IsolationSessionState =
+  | "admitted"
+  | "running"
+  | "suspended"
+  | "terminated";
 
 export type IsolationSession = {
   readonly sessionId: string;
@@ -79,14 +89,12 @@ export type IsolationEscapeProbeKind =
 
 export type IsolationEscapeProbe = {
   readonly kind: IsolationEscapeProbeKind;
-  /** Target the guest attempts (IP, hostname, path, socket). */
   readonly target: string;
 };
 
 export type IsolationEscapeProbeResult = {
   readonly kind: IsolationEscapeProbeKind;
   readonly target: string;
-  /** True when the attempt failed or was forced through the gateway proxy. */
   readonly blockedOrProxied: boolean;
   readonly detail: string;
 };
@@ -96,6 +104,11 @@ export type IsolationBackendCapabilities = {
   readonly supportsSnapshot: boolean;
   readonly supportsFork: boolean;
   readonly supportsTiers: readonly IsolationTier[];
-  /** Publish-grade latency/density numbers must not come from this backend. */
+  /**
+   * Mac VM backends (Apple container, Lima) add host noise — keep false.
+   * Firecracker / gVisor on the dedicated Linux host may be true.
+   */
   readonly publishGradeNumbersAllowed: boolean;
+  readonly licenseSpdx: string;
+  readonly pinnedVersion: string;
 };
