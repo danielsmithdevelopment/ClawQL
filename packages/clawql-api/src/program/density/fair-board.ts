@@ -152,7 +152,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline methodology closed in lab (#144): group_commit(64/10ms)+crashTest; bursts N≤agentsAtLimit; ramp past failure; restart rebuild~2–3ms after compact-array (was ~80ms). Different host — not a shared-host public deadline claim. Before campaign: same serial single-writer fsync probe as ClawQL; binary-refine ramp between last pass and first fail (±few %); 3-rep floor; alternate systems. Coarse 192k/256k steps alone are too wide. No win copy.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline lab (#144): group_commit; crashTest; serial board-matched ~8.9k/s (overwrite ~50k retracted); ramp 196k/198k ±0.5%; rebuild ~2–3ms. flushStats: avgBatch~64, fsyncs~2.2k ≈24% of serial — same idle pattern ClawQL saw; profile producer before double-buffer (ClawQL double-buffer did not move fsync rate to ceiling). Different host — not a shared-host public claim. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -182,9 +182,11 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
       burstPctMet: 0,
       burstP99ExcessMs: 0,
       burstDrainPerSec: 0,
-      sustainablePerSec: 128_000,
-      firstRateMissingSlaPerSec: 192_000,
+      sustainablePerSec: 196_000,
+      firstRateMissingSlaPerSec: 198_000,
       rampWentPastFailure: true,
+      rampResolutionRel: 0.005,
+      rampResolutionNote: "±0.5% (contract ±1%)",
       scaledBurstFirstMissSize: 200_000,
       deadlineRestartOk: true,
       deadlineRestartRebuildMs: 3,

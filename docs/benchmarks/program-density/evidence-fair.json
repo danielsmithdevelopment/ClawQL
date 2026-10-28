@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "SHARED_HOST: serial fsync ceiling (sanity-check early-ack); flushStats both sides; async double-buffer (concurrency>batchMax); ramp ±1% both sides; 3-rep alternate on dedicated host with write-cache settings recorded. No win copy until sharedHostComplete.",
+    "memoryFraming": "SHARED_HOST: serial fsync (+ honesty); flushStats both sides; double-buffer active but fsync rate unchanged — producer path under investigation (pop/encode CPU ruled out at ~1.3M/s noop; durable ~286k/s). Ramp ±1%; 3-rep alternate on dedicated host. Ontologiql ~24% of serial: profile before double-buffer. No win copy until sharedHostComplete.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust: capacity/wake publishable; deadline lab; rebuild ~2–3ms (compact-array); ramp refined ±1%. Serial probe ~52k/s needs honesty check (likely hypervisor/volatile cache — inflates ceiling / understates % of true limit). flushStats (fsyncs/sec + avgBatchSize) still missing — likely same idle-writer pattern until proven. Campaign on dedicated host with write-cache recorded. No win copy.",
+      "honesty": "Ontologiql: serial board-matched ~8.9k/s (~112µs) after retracting overwrite ~50k; theo ~569k; lab sustainable ~34% of serial. flushStats: avgBatch~64, fsyncs~2.2k ≈24% of serial → same idle pattern ClawQL saw pre-double-buffer. Ramp 196k/198k ±0.5%. Profile producer before adding double-buffer — ClawQL’s double-buffer raised hits but did not move fsync rate to the ceiling. Campaign on dedicated host with write-cache recorded. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -80,14 +80,16 @@
           "burstPctMet": null,
           "burstP99ExcessMs": null,
           "burstDrainPerSec": null,
-          "sustainablePerSec": 192000,
-          "firstRateMissingSlaPerSec": 256000,
+          "sustainablePerSec": 196000,
+          "firstRateMissingSlaPerSec": 198000,
           "rampWentPastFailure": true,
           "scaledBurstFirstMissSize": 200000,
           "deadlineRestartOk": true,
           "deadlineRestartRebuildMs": 3,
           "deadlineScheduleFormat": null,
-          "labNote": "Ontologiql lab: coarse 192k/256k needs binary refine; serial fsync probe required on shared host; rebuild ~2–3ms compact-array."
+          "labNote": "Serial ~8.9k/s board-matched; flushStats avgBatch~64 fsyncs~2.2k (24% serial) — writer idle / profile producer before double-buffer.",
+          "rampResolutionRel": 0.005,
+          "rampResolutionNote": "±0.5% (contract ±1%)"
         },
         "restartSurvival": true
       },
@@ -97,7 +99,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2. group_commit(64/10ms) with async-fsync double-buffer; deadline concurrency default 128 (>batchMax). Serial ceiling ~7925/s (~126µs). flushStats after double-buffer: avgBatchSize=64, doubleBufferHits≈all, fsyncsPerSec~3.3k (~42% of serial) — idle-writer fixed; residual vs probe is path/overhead. Ramp refine default ±1% (aligned with Ontologiql). 3-rep floor + alternate on dedicated host next. Ontologiql: emit flushStats; sanity-check ~52k serial fsync/s (likely early-ack). No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. group_commit + async-fsync double-buffer (concurrency 128). Remeasure: avgBatchSize=64, doubleBufferHits≈100%, fsyncs/sec still ~3.3–4.4k (~40–55% of serial ~7.9k) — NOT idle-writer-fixed. Label: double-buffer active; fsync rate unchanged; producer-bound under investigation. Pump profile: pop~0.264µs encode~0.291µs enqueue~0.678µs; noop drain ~1318849/s; durable drain ~286161/s (fsyncs~4164/s). Heap pop/encode CPU ruled out; residual in durable/journal path under load. Ramp refine ±1%. Board floor still 256k 3-rep until shared-host campaign. Ontologiql should profile pump before double-buffer. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1075,7 +1077,7 @@
   },
   "peerLab": {
     "systemId": "ontologiql-rust",
-    "source": "Ontologiql PR #144 (lab; different host)",
+    "source": "Ontologiql #144 (lab; serial probe + flushStats fixed)",
     "agentsAtLimitContext": 200000,
     "flushPolicy": {
       "mode": "group_commit",
@@ -1084,8 +1086,8 @@
     },
     "crashTestOk": true,
     "crashTestNote": "400 ACK’d fires; 0 missing; 0 duplicates",
-    "sustainablePerSec": 192000,
-    "firstRateMissingSlaPerSec": 256000,
+    "sustainablePerSec": 196000,
+    "firstRateMissingSlaPerSec": 198000,
     "rampWentPastFailure": true,
     "firstBurstSizeMissingOneSecondSla": 200000,
     "rebuildFromDiskMs": 3,
@@ -1097,10 +1099,20 @@
       "syntheticBurst400kAt200k": "used synthetic ids — superseded by N≤agentsAtLimit ladder"
     },
     "reading": {
-      "fsyncBound": "Do not call disk-bound until serial single-writer probe on shared host. Parallel/overwrite probes overstate capacity.",
-      "rebuildFormatInvite": "Compact-array landed (~2–3ms) — rebuild gap vs ClawQL closed."
+      "serialHonesty": "Overwrite ~50k retracted; board-matched ~8.9k/s (~112µs) aligns with ClawQL ~7.9k/~126µs.",
+      "producerNote": "At 24% of serial with full batches, profile pump before double-buffer — ClawQL double-buffer did not move fsync rate to ceiling."
     },
-    "rampNote": "Three identical reps on coarse steps — refine between 192k and 256k before campaign."
+    "rampNote": "Refined 196k pass / 198k fail (±0.5%). Coarse 192k/256k superseded.",
+    "rampResolutionRel": 0.005,
+    "serialFsyncsPerSec": 8900,
+    "theoreticalMaxGroupCommitPerSec": 569600,
+    "flushStats": {
+      "avgBatchSize": 64,
+      "fsyncsPerSec": 2200,
+      "fractionOfSerial": 0.24,
+      "diagnosis": "writer_idle_between_fsyncs_consider_double_buffer",
+      "note": "Pre-double-buffer pattern. Profile producer before adding double-buffer — ClawQL double-buffer did not move fsync rate toward ceiling."
+    }
   },
   "sharedHostFiveArms": {
     "artifact": "docs/benchmarks/program-density/shared-host-five-arms.json",
@@ -1211,28 +1223,45 @@
   },
   "flushBatchStats": {
     "artifact": "docs/benchmarks/program-density/flush-batch-stats.json",
-    "measuredAt": "2026-10-28T23:07:08.467Z",
+    "measuredAt": "2026-10-28T23:28:01.759Z",
     "doubleBuffered": true,
     "concurrencyDefault": 128,
     "serialCeilingFsyncsPerSec": 7925,
     "theoreticalMaxGroupCommitPerSec": 507200,
-    "focus": {
-      "offeredRatePerSec": 384000,
-      "fsyncsPerSec": 3298.27,
+    "beforeDoubleBufferFsyncsPerSecApprox": 3200,
+    "after": {
+      "offeredFocusRatePerSec": 384000,
+      "fsyncsPerSec": 4390.67,
       "avgBatchSize": 64,
-      "avgBatchFillRatio": 1,
-      "doubleBufferHits": 11993,
-      "fsyncCount": 12000,
-      "fsyncWaitMsMean": 0.2014,
-      "flushBusyFraction": 0.6643
+      "doubleBufferHits": 11990,
+      "impliedDurablePerSec": 281002.88,
+      "fractionOfSerialFsyncs": 0.554
     },
     "compare": {
-      "fractionOfSerialFsyncs": 0.4162,
+      "fractionOfSerialFsyncs": 0.554,
       "fractionOfTheoMax": 0.7571,
-      "impliedDurablePerSec": 211089.28,
-      "diagnosis": "double_buffer_active_but_below_serial_ceiling",
-      "note": "Focus window is a sustained drain at the last passing rate. Near-ceiling fsyncs + half-full batches ⇒ early flush. Below-ceiling fsyncs + full batches ⇒ idle writer (double-buffer). Ontologiql should record the same two numbers against the same serial probe."
+      "impliedDurablePerSec": 281002.88,
+      "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
+      "note": "Focus window at last passing rate. doubleBufferHits≈100% with fsyncs/sec still ~40% of serial ⇒ double-buffer active but not the bottleneck — producer (pump pop/encode/handoff) under investigation. See pump-profile.json. Ontologiql at ~24% of serial may be the same before adding double-buffer."
     },
-    "reading": "After async-fsync double-buffer + concurrency 128: doubleBufferHits≈100%, avgBatchSize=64. fsyncsPerSec still ~42% of serial probe — writer no longer idle between syncs; residual gap is probe-vs-journal path / pump overhead, not missing double-buffer. Ontologiql still owes flushStats + serial honesty. Ramp refine default ±1%."
+    "reading": "double-buffer active; fsync rate unchanged (~3.2k→~3.3–4.4k, still ~40–55% of serial); producer-bound under investigation — NOT “idle writer fixed”."
+  },
+  "pumpProfile": {
+    "artifact": "docs/benchmarks/program-density/pump-profile.json",
+    "measuredAt": "2026-10-28T23:27:53.736Z",
+    "micro": {
+      "popPerRecordUs": 0.264,
+      "encodePerRecordUs": 0.291,
+      "sequentialEnqueueUs": 0.678
+    },
+    "noopSustainedPerSec": 1318848.58,
+    "durableSustainedPerSec": 286161.26,
+    "durableFsyncsPerSec": 4163.5,
+    "postDoubleBufferFsyncsPerSec": 3372.35,
+    "fsyncRateMoved": false,
+    "postDoubleBufferRampSustainablePerSec": 512000,
+    "postDoubleBufferRampFirstMiss": null,
+    "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
+    "reading": "Double-buffer works (hits≈100%) but fsyncs/sec stayed ~3.2–3.3k (~40% of serial). Sustained durable ≈286k/s (focus ~281k). Heap pop/encode ruled out (~1.3M/s noop). Residual in durable/journal path under load. Ontologiql at ~24% of serial may be the same — profile before double-buffer there."
   }
 }

@@ -1,0 +1,127 @@
+{
+  "kind": "durable-agent-density-pump-profile",
+  "measuredAt": "2026-10-28T23:27:53.736Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "host": {
+    "residentHeap": 250000,
+    "drainN": 64000,
+    "concurrency": 128,
+    "batchMax": 64,
+    "doubleBuffered": true
+  },
+  "serialCeiling": {
+    "fsyncsPerSec": 7925,
+    "theoreticalMaxGroupCommitPerSec": 507200
+  },
+  "micro": {
+    "popDue": {
+      "n": 64000,
+      "wallMs": 16.92,
+      "perRecordUs": 0.264,
+      "recordsPerSec": 3782378.04
+    },
+    "encode": {
+      "n": 64000,
+      "wallMs": 18.65,
+      "perRecordUs": 0.291,
+      "recordsPerSec": 3431754.81,
+      "meanLineBytes": 50.8
+    },
+    "sequentialHandoff": {
+      "n": 10000,
+      "encodePerRecordUs": 0.317,
+      "enqueueSyncPerRecordUs": 0.678,
+      "note": "Sequential CPU-side cost before await-durable; journal.record still encodes internally so encode here is sibling cost."
+    }
+  },
+  "drains": {
+    "noopFire": {
+      "label": "pop_encode_noop_fire",
+      "n": 64000,
+      "wallMs": 48.53,
+      "sustainedRecordsPerSec": 1318848.58,
+      "perRecordUs": {
+        "pop": 0.241,
+        "fireWallOverlapped": 0.51,
+        "encodeCpu": 0.212,
+        "enqueueSyncCpu": 0,
+        "awaitDurableOverlapped": 0,
+        "wall": 0.758
+      },
+      "flushStats": null
+    },
+    "durableFire": {
+      "label": "pop_encode_durable_fire",
+      "n": 64000,
+      "wallMs": 223.65,
+      "sustainedRecordsPerSec": 286161.26,
+      "perRecordUs": {
+        "pop": 0.229,
+        "fireWallOverlapped": 3.261,
+        "encodeCpu": 0.352,
+        "enqueueSyncCpu": 0.476,
+        "awaitDurableOverlapped": 373.162,
+        "wall": 3.495
+      },
+      "flushStats": {
+        "windowMs": 240.18,
+        "fsyncCount": 1000,
+        "recordsFlushed": 64000,
+        "avgBatchSize": 64,
+        "fsyncsPerSec": 4163.5,
+        "recordsPerSec": 266463.89,
+        "batchMax": 64,
+        "avgBatchFillRatio": 1,
+        "flushReasonBatchFull": 1000,
+        "flushReasonInterval": 0,
+        "flushReasonForced": 0,
+        "fsyncWaitMsTotal": 192.704,
+        "fsyncWaitMsMean": 0.1927,
+        "doubleBufferHits": 999,
+        "doubleBuffered": true,
+        "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=999/1000; fsyncsPerSec=4163.5. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
+      }
+    }
+  },
+  "postDoubleBufferRamp": {
+    "sustainablePerSec": 512000,
+    "firstRateMissingSlaPerSec": null,
+    "rampResolutionRel": null,
+    "rampResolutionNote": null,
+    "coarseSustainablePerSec": 512000,
+    "coarseFirstRateMissingSlaPerSec": null,
+    "flushStats": {
+      "windowMs": 10378.52,
+      "fsyncCount": 35000,
+      "recordsFlushed": 2240000,
+      "avgBatchSize": 64,
+      "fsyncsPerSec": 3372.35,
+      "recordsPerSec": 215830.36,
+      "batchMax": 64,
+      "avgBatchFillRatio": 1,
+      "flushReasonBatchFull": 35000,
+      "flushReasonInterval": 0,
+      "flushReasonForced": 0,
+      "fsyncWaitMsTotal": 6910.358,
+      "fsyncWaitMsMean": 0.1974,
+      "doubleBufferHits": 33348,
+      "doubleBuffered": true,
+      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=33348/35000; fsyncsPerSec=3372.35. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
+    },
+    "fractionOfSerialFsyncs": 0.4255
+  },
+  "compare": {
+    "durableSustainedRecordsPerSec": 286161.26,
+    "fsyncsPerSecDuringDurableDrain": 4163.5,
+    "avgBatchSize": 64,
+    "doubleBufferHits": 999,
+    "preDoubleBufferFsyncsPerSecApprox": 3200,
+    "postDoubleBufferFsyncsPerSec": 3372.35,
+    "fsyncRateMoved": false
+  },
+  "reading": {
+    "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
+    "summary": "Double-buffer works (hits≈100%) but fsyncs/sec stayed ~3.2–3.3k (~40% of serial). Sustained durable drain ≈ producer path limit. Profile stages to see heap pop / encode / await-durable split. Ontologiql at ~24% of serial may be the same — profile before double-buffer there.",
+    "note": "Do not label as idle-writer-fixed. Relabel: double-buffer active; fsync rate unchanged; producer-bound under investigation."
+  }
+}

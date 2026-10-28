@@ -116,7 +116,8 @@ if (fractionOfSerialFsyncs != null && fractionOfSerialFsyncs >= 0.85) {
   fractionOfSerialFsyncs != null &&
   fractionOfSerialFsyncs < 0.85
 ) {
-  diagnosis = "double_buffer_active_but_below_serial_ceiling";
+  // Hits prove the buffer works; unchanged fsync rate ⇒ producer-bound, not idle writer.
+  diagnosis = "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation";
 } else if (flushStats.avgBatchFillRatio != null && flushStats.avgBatchFillRatio >= 0.85) {
   diagnosis = "writer_idle_between_fsyncs_consider_double_buffer";
 } else {
@@ -153,7 +154,7 @@ const payload = {
     impliedDurablePerSec,
     diagnosis,
     note:
-      "Focus window is a sustained drain at the last passing rate. Near-ceiling fsyncs + half-full batches ⇒ early flush. Below-ceiling fsyncs + full batches ⇒ idle writer (double-buffer). Ontologiql should record the same two numbers against the same serial probe.",
+      "Focus window at last passing rate. doubleBufferHits≈100% with fsyncs/sec still ~40% of serial ⇒ double-buffer active but not the bottleneck — producer (pump pop/encode/handoff) under investigation. See pump-profile.json. Ontologiql at ~24% of serial may be the same before adding double-buffer.",
   },
 };
 
