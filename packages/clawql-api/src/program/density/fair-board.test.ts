@@ -43,6 +43,9 @@ describe("fair density board (smoke)", () => {
     expect(run.limitHit).toBe(false);
     expect(run.ceilingHit).toBe(false);
     expect(run.limitResource).toBe("none");
+    expect(run.idIndexRetainedAtLimit).toBe(true);
+    expect(run.residentAccounting.idIndexEntries).toBe(80);
+    expect(run.residentAccounting.idIndexShape).toBe("agentId_to_bag_path_map");
     expect(run.wakeWarmupCount).toBeGreaterThan(0);
     expect(run.wakeOrderRepetitions).toBe(2);
     expect(run.wakeByOrder).toHaveLength(4); // 2 reps × 2 orders
@@ -60,7 +63,7 @@ describe("fair density board (smoke)", () => {
       expect(s.coldP99Median).toBeLessThanOrEqual(s.coldP99Max);
     }
     expect(["warm_then_cold", "cold_then_warm"]).toContain(run.wakeHeadlineOrder);
-    expect(run.residentAccounting.retainedInProcess).toMatch(/id index/i);
+    expect(run.residentAccounting.retainedInProcess).toMatch(/Map<agentId, bagPath>/);
     expect(run.residentAccounting.totalRssKiBPerAgent).toBeGreaterThan(0);
     expect(run.residentAccounting.heapUsedKiBPerAgentAfterGc).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.residentKiBPerAgent).toBe(

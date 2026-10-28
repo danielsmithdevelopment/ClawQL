@@ -117,11 +117,14 @@ export type ResidentAccounting = {
   readonly rssDeltaKiBPerAgent: number;
   /**
    * What this implementation retains in-process per parked agent after park.
-   * TS fair bags: id-index entry (agentId string); bag body on disk.
-   * Ontologiql's higher resident/agent is likely a larger per-agent struct — trim
-   * candidate, not a Rust-vs-TS memory law.
+   * Working-system shape: Map<agentId, bagPath> so wake-by-id does not scan disk.
+   * Comparable to Ontologiql's per-agent in-memory record (their ~2 KiB/agent is a
+   * trim candidate down toward id + locator).
    */
   readonly retainedInProcess: string;
+  /** Must equal agentsAtLimit for a comparable capacity claim. */
+  readonly idIndexEntries: number;
+  readonly idIndexShape: "agentId_to_bag_path_map";
   readonly estimatedIdIndexBytesPerAgent: number;
 };
 
@@ -172,9 +175,11 @@ export type EvidenceFair = {
     readonly baseline: HeapSnapshot;
     readonly atLimit: HeapSnapshot;
     readonly residentAccounting: ResidentAccounting;
+    /** True when the limit run retained a wake-by-id index for every counted agent. */
+    readonly idIndexRetainedAtLimit: boolean;
     readonly wakeByOrder: readonly WakeOrderResult[];
     readonly wakeSpread: readonly WakeSpread[];
-    /** Headline = slower cold order (warm_then_cold); conservative. */
+    /** Headline = slower cold order; conservative (by coldP99Max). */
     readonly wakeHeadlineOrder: WakeOrderId;
     readonly wakePooled: {
       readonly warm: WakeLatency;

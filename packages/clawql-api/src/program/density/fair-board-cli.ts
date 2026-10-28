@@ -85,6 +85,8 @@ async function main(): Promise<void> {
         limitResource: cols?.limitResource,
         limitHit: run?.limitHit,
         ceilingHit: run?.ceilingHit,
+        idIndexRetainedAtLimit: run?.idIndexRetainedAtLimit,
+        idIndexEntries: run?.residentAccounting.idIndexEntries,
         rssCeilingDefinition: run?.rssCeilingDefinition,
         residentKiBPerAgent: cols?.residentKiBPerAgent,
         heapUsedKiBPerAgentAfterGc: run?.residentAccounting.heapUsedKiBPerAgentAfterGc,

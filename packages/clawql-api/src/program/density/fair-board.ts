@@ -1,19 +1,20 @@
 /**
  * Fair parked-agent density board for ClawQL TypeScript.
  *
- * Methodology (v3 — first-resource limit + wake-order spread):
+ * Methodology (v4 — wake-by-id index retained at limit):
  * - Ceiling / agents-at-limit = **first resource exhausted** (disk | rss | latency).
+ * - Limit runs **must** retain Map<agentId, bagPath> for every counted agent
+ *   (working-system wake-by-id state; comparable to Ontologiql's per-agent record).
  * - Resident board column = total process RSS / N (matches Ontologiql).
  * - Wake protocol: JIT warmup → alternate warm_then_cold / cold_then_warm
  *   for several repetitions; report cold/warm p99 spread; headline = slower
  *   cold order (conservative).
- * - In-process retention: id-index entry only; Ontologiql's higher resident/agent
- *   is a trim candidate (ID + bag locator), not a Rust-vs-TS memory law.
  *
  * Active-density lab pulse is out of scope for the public parked claim.
  */
 
-import { fork, spawnSync } from "node:child_process";
+import { fork, spawn, spawnSync } from "node:child_process";
+import { createInterface } from "node:readline";
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -127,9 +128,14 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
 
 /**
  * Fast ramp park: sync write into bagDir (same on-disk shape as ParkedBagApi.park).
- * Keeps Effect park/wake for wake + restart paths; avoids per-agent Promise churn.
+ * Populates the wake-by-id index (required working-system state at limit).
  */
-function parkUpTo(bags: ParkedBagApi, fromExclusive: number, toInclusive: number): string[] {
+function parkUpTo(
+  bags: ParkedBagApi,
+  fromExclusive: number,
+  toInclusive: number,
+  idIndex: Map<string, string>
+): string[] {
   mkdirSync(bags.bagDir, { recursive: true, mode: 0o700 });
   const ids: string[] = [];
   for (let i = fromExclusive; i < toInclusive; i++) {
@@ -139,9 +145,118 @@ function parkUpTo(bags: ParkedBagApi, fromExclusive: number, toInclusive: number
     const body = `${JSON.stringify(agent)}\n`;
     writeFileSync(tmp, body, { mode: 0o600 });
     renameSync(tmp, path);
+    idIndex.set(agent.agentId, path);
     ids.push(agent.agentId);
   }
   return ids;
+}
+
+/**
+ * Stream bag filenames into a wake-by-id Map, checkpointing RSS so a reuse
+ * measure cannot claim capacity without retaining the index Ontologiql includes.
+ */
+function loadIdIndexFromBagDir(args: {
+  readonly bagDir: string;
+  readonly idIndex: Map<string, string>;
+  readonly rssCeilingKiB: number;
+  readonly checkpointEvery: number;
+  readonly maxIds?: number;
+  readonly reservoirSize: number;
+  readonly readRssKiB: () => number;
+  readonly onCheckpoint: (n: number, rssKiB: number, within: boolean) => void;
+}): Promise<{
+  readonly loaded: number;
+  readonly rssHit: boolean;
+  readonly sampleIds: string[];
+}> {
+  const {
+    bagDir,
+    idIndex,
+    rssCeilingKiB,
+    checkpointEvery,
+    maxIds,
+    reservoirSize,
+    readRssKiB,
+    onCheckpoint,
+  } = args;
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "find",
+      [bagDir, "-maxdepth", "1", "-name", "bag_*.json", "-printf", "%f\\n"],
+      { stdio: ["ignore", "pipe", "pipe"] }
+    );
+    const rl = createInterface({ input: child.stdout! });
+    const sampleIds: string[] = [];
+    let loaded = 0;
+    let rssHit = false;
+    let settled = false;
+    let nextCheckpoint = checkpointEvery;
+
+    const finish = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      rl.close();
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        /* ignore */
+      }
+      if (err) reject(err);
+      else resolve({ loaded, rssHit, sampleIds });
+    };
+
+    rl.on("line", (line) => {
+      if (rssHit || settled) return;
+      const name = line.trim();
+      if (!name.endsWith(".json")) return;
+      const id = name.slice(0, -".json".length);
+      if (!id.startsWith("bag_")) return;
+      const path = join(bagDir, name);
+      idIndex.set(id, path);
+      loaded += 1;
+      // Reservoir sample for wake protocol without materializing all keys later.
+      if (sampleIds.length < reservoirSize) {
+        sampleIds.push(id);
+      } else {
+        const j = Math.floor(Math.random() * loaded);
+        if (j < reservoirSize) sampleIds[j] = id;
+      }
+      if (loaded >= nextCheckpoint || (maxIds !== undefined && loaded >= maxIds)) {
+        const rssKiB = readRssKiB();
+        const within = rssKiB <= rssCeilingKiB;
+        onCheckpoint(loaded, rssKiB, within);
+        nextCheckpoint += checkpointEvery;
+        if (!within) {
+          rssHit = true;
+          finish();
+          return;
+        }
+        if (maxIds !== undefined && loaded >= maxIds) {
+          finish();
+        }
+      }
+    });
+    rl.on("close", () => {
+      if (settled) return;
+      if (loaded > 0 && (loaded < nextCheckpoint - checkpointEvery || loaded % checkpointEvery !== 0)) {
+        const rssKiB = readRssKiB();
+        onCheckpoint(loaded, rssKiB, rssKiB <= rssCeilingKiB);
+        if (rssKiB > rssCeilingKiB) rssHit = true;
+      }
+      finish();
+    });
+    child.on("error", (err) => finish(err));
+    let stderr = "";
+    child.stderr?.on("data", (c) => {
+      stderr += String(c);
+    });
+    child.on("exit", (code) => {
+      if (settled) return;
+      if (code !== 0 && code !== null) {
+        finish(new Error(`find exit ${code}: ${stderr.slice(0, 200)}`));
+      }
+    });
+  });
 }
 
 function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
@@ -453,38 +568,87 @@ export function runFairDensityBoardEffect(
     const memTotalKiB = yield* readMemTotalKiBEffect();
 
     const baseline = yield* readHeapSnapshotEffect();
-    const allIds: string[] = [];
+    /** Wake-by-id index — required working-system state for a comparable capacity claim. */
+    const idIndex = new Map<string, string>();
     const ramp: FairRampStep[] = [];
     let agentsAtLimit = 0;
     let rssHit = false;
     let diskBlockedDuringPark = false;
     let diskBlockDetail = "";
+    let indexSampleIds: string[] = [];
+
+    const pushRampCheckpoint = (n: number, rssKiB: number, heapUsedKiB: number) =>
+      Effect.gen(function* () {
+        const disk = yield* diskBytesFast(bags);
+        const diskAvailBytes = yield* readDiskAvailBytesEffect(bagDir);
+        const rssDelta = Math.max(0, rssKiB - baseline.rssKiB);
+        const within = rssKiB <= rssCeilingKiB;
+        ramp.push({
+          agents: n,
+          rssKiB,
+          residentKiBPerAgent: rssKiB / Math.max(1, n),
+          rssDeltaKiBPerAgent: rssDelta / Math.max(1, n),
+          heapUsedKiBAfterGc: heapUsedKiB,
+          heapUsedKiBPerAgentAfterGc: heapUsedKiB / Math.max(1, n),
+          diskBytesTotal: disk,
+          diskBytesPerAgent: disk / Math.max(1, n),
+          diskAvailBytes,
+          pageCacheKiBPerAgent: null,
+          withinRssCeiling: within,
+        });
+        agentsAtLimit = n;
+        return within;
+      });
 
     let prev = 0;
     if (reuseBags) {
       const resumeFrom = options.resumeFromAgents ?? 0;
-      prev = resumeFrom;
-      agentsAtLimit = resumeFrom;
-      if (resumeFrom > 0) {
+      // Load the wake-by-id index for existing bags before claiming a limit.
+      // Without this, RSS stays near baseline and capacity is not comparable
+      // to Ontologiql (whose published resident includes its per-agent record).
+      const loadTarget = resumeFrom > 0 ? resumeFrom : undefined;
+      const loaded = yield* Effect.promise(() =>
+        loadIdIndexFromBagDir({
+          bagDir,
+          idIndex,
+          rssCeilingKiB,
+          checkpointEvery: 250_000,
+          maxIds: loadTarget,
+          reservoirSize: Math.max(wakeSampleSize, wakeWarmupCount, 1),
+          readRssKiB: () => Effect.runSync(readHeapSnapshotEffect()).rssKiB,
+          onCheckpoint: (n, rssKiB, within) => {
+            const heap = Effect.runSync(readHeapSnapshotEffect());
+            const disk = Effect.runSync(diskBytesFast(bags));
+            const diskAvailBytes = Effect.runSync(readDiskAvailBytesEffect(bagDir));
+            const rssDelta = Math.max(0, rssKiB - baseline.rssKiB);
+            ramp.push({
+              agents: n,
+              rssKiB,
+              residentKiBPerAgent: rssKiB / Math.max(1, n),
+              rssDeltaKiBPerAgent: rssDelta / Math.max(1, n),
+              heapUsedKiBAfterGc: heap.heapUsedKiB,
+              heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / Math.max(1, n),
+              diskBytesTotal: disk,
+              diskBytesPerAgent: disk / Math.max(1, n),
+              diskAvailBytes,
+              pageCacheKiBPerAgent: null,
+              withinRssCeiling: within,
+            });
+            agentsAtLimit = n;
+          },
+        })
+      );
+      indexSampleIds = loaded.sampleIds;
+      prev = idIndex.size;
+      agentsAtLimit = idIndex.size;
+      if (loaded.rssHit) {
+        rssHit = true;
+      } else if (idIndex.size > 0) {
         const heap = yield* readHeapSnapshotEffect();
-        const disk = yield* diskBytesFast(bags);
-        const diskAvailBytes = yield* readDiskAvailBytesEffect(bagDir);
-        const rssDelta = Math.max(0, heap.rssKiB - baseline.rssKiB);
-        ramp.push({
-          agents: resumeFrom,
-          rssKiB: heap.rssKiB,
-          residentKiBPerAgent: heap.rssKiB / resumeFrom,
-          rssDeltaKiBPerAgent: rssDelta / resumeFrom,
-          heapUsedKiBAfterGc: heap.heapUsedKiB,
-          heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / resumeFrom,
-          diskBytesTotal: disk,
-          diskBytesPerAgent: disk / resumeFrom,
-          diskAvailBytes,
-          pageCacheKiBPerAgent: null,
-          withinRssCeiling: heap.rssKiB <= rssCeilingKiB,
-        });
         if (heap.rssKiB > rssCeilingKiB) {
           rssHit = true;
+        } else if (ramp.length === 0 || ramp[ramp.length - 1]!.agents !== idIndex.size) {
+          yield* pushRampCheckpoint(idIndex.size, heap.rssKiB, heap.heapUsedKiB);
         }
       }
     }
@@ -505,7 +669,7 @@ export function runFairDensityBoardEffect(
 
       let batch: string[];
       try {
-        batch = parkUpTo(bags, prev, target);
+        batch = parkUpTo(bags, prev, target, idIndex);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (/ENOSPC|no space/i.test(msg)) {
@@ -515,34 +679,30 @@ export function runFairDensityBoardEffect(
         }
         throw err;
       }
-      for (let i = 0; i < batch.length; i++) allIds.push(batch[i]!);
+      // Reservoir into wake samples without retaining a second full id list.
+      const reservoirCap = Math.max(wakeSampleSize, wakeWarmupCount, 1);
+      for (let i = 0; i < batch.length; i++) {
+        const id = batch[i]!;
+        const n = idIndex.size - batch.length + i + 1;
+        if (indexSampleIds.length < reservoirCap) indexSampleIds.push(id);
+        else {
+          const j = Math.floor(Math.random() * n);
+          if (j < reservoirCap) indexSampleIds[j] = id;
+        }
+      }
       prev = target;
 
       const heap = yield* readHeapSnapshotEffect();
-      const disk = yield* diskBytesFast(bags);
-      const diskAvailBytes = yield* readDiskAvailBytesEffect(bagDir);
-      const within = heap.rssKiB <= rssCeilingKiB;
-      const rssDelta = Math.max(0, heap.rssKiB - baseline.rssKiB);
-      const step: FairRampStep = {
-        agents: target,
-        rssKiB: heap.rssKiB,
-        residentKiBPerAgent: heap.rssKiB / target,
-        rssDeltaKiBPerAgent: rssDelta / target,
-        heapUsedKiBAfterGc: heap.heapUsedKiB,
-        heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / target,
-        diskBytesTotal: disk,
-        diskBytesPerAgent: disk / target,
-        diskAvailBytes,
-        pageCacheKiBPerAgent: null,
-        withinRssCeiling: within,
-      };
-      ramp.push(step);
-      agentsAtLimit = target;
-
+      const within = yield* pushRampCheckpoint(target, heap.rssKiB, heap.heapUsedKiB);
       if (!within) {
         rssHit = true;
         break;
       }
+    }
+
+    // Keep idIndex reachable through the wake protocol (working-system resident).
+    if (idIndex.size !== agentsAtLimit && idIndex.size > 0 && !rssHit) {
+      agentsAtLimit = idIndex.size;
     }
 
     const atLimit = yield* readHeapSnapshotEffect();
@@ -558,6 +718,7 @@ export function runFairDensityBoardEffect(
     }
 
     // --- Wake protocol: warmup, then alternate orders for N repetitions ---
+<<<<<<< HEAD
     const fromDisk = sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
     const timedIds =
       fromDisk.sampleIds.length >= Math.min(wakeSampleSize, 1)
@@ -567,6 +728,18 @@ export function runFairDensityBoardEffect(
       fromDisk.sampleIds.length > 0
         ? pickSampleIds(fromDisk.sampleIds, Math.min(wakeWarmupCount, fromDisk.sampleIds.length))
         : pickSampleIds(allIds, Math.min(wakeWarmupCount, allIds.length));
+=======
+    // Prefer reservoir ids collected while building the retained index.
+    const fromDisk =
+      indexSampleIds.length >= Math.min(wakeSampleSize, 1)
+        ? { sampleIds: indexSampleIds, seen: idIndex.size }
+        : sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
+    const timedIds = pickSampleIds(fromDisk.sampleIds, wakeSampleSize);
+    const warmupIds = pickSampleIds(
+      fromDisk.sampleIds,
+      Math.min(wakeWarmupCount, fromDisk.sampleIds.length)
+    );
+>>>>>>> a7b187752 (fix(bench): retain wake-by-id index at density fair limit)
     const gcRecorder = yield* createGcRecorderEffect();
 
     if (warmupIds.length > 0) {
@@ -640,23 +813,12 @@ export function runFairDensityBoardEffect(
       ),
     };
 
-    const sampleId = allIds[0] ?? "";
+    const sampleId = timedIds[0] ?? indexSampleIds[0] ?? "";
+    const samplePath = (sampleId && idIndex.get(sampleId)) || join(bagDir, "bag_00000000_deadbeef.json");
     const estimatedIdIndexBytesPerAgent =
-      Buffer.byteLength(sampleId, "utf8") + 32 /* string header */ + 8; /* array slot */
-
-    const residentAccounting: ResidentAccounting = {
-      totalRssKiBPerAgent: Number((atLimit.rssKiB / Math.max(1, agentsAtLimit)).toFixed(4)),
-      heapUsedKiBPerAgentAfterGc: Number(
-        (atLimit.heapUsedKiB / Math.max(1, agentsAtLimit)).toFixed(4)
-      ),
-      rssDeltaKiBPerAgent: Number(
-        (Math.max(0, atLimit.rssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
-      ),
-      retainedInProcess: reuseBags
-        ? "reuse/measure run: wakes sampled via find(1) without retaining N ids in-process; bag bodies on disk only. Fresh park ramps retain agentId strings in allIds (id index) — ~130 B/agent class with baseline, far below Ontologiql's ~2 KiB/agent struct (trim candidate: id + bag locator)."
-        : "agentId string in the in-process id index (allIds) only; FairParkedAgent body is offloaded to disk JSON after park. Ontologiql's higher resident/agent is likely a larger per-agent struct — optimization target, not a Rust-vs-TS law.",
-      estimatedIdIndexBytesPerAgent,
-    };
+      Buffer.byteLength(sampleId, "utf8") +
+      Buffer.byteLength(samplePath, "utf8") +
+      48; /* Map entry / pointer overhead (approx) */
 
     let restartSurvival = false;
     const restartProbe = timedIds[0] ?? fromDisk.sampleIds[0];
@@ -716,6 +878,24 @@ export function runFairDensityBoardEffect(
     agentsAtLimit = classified.agentsAtLimit;
     const ceilingHit = limitHit; // deprecated alias
 
+    const idIndexRetainedAtLimit =
+      idIndex.size > 0 && idIndex.size === agentsAtLimit && agentsAtLimit > 0;
+
+    const residentAccounting: ResidentAccounting = {
+      totalRssKiBPerAgent: Number((atLimit.rssKiB / Math.max(1, agentsAtLimit)).toFixed(4)),
+      heapUsedKiBPerAgentAfterGc: Number(
+        (atLimit.heapUsedKiB / Math.max(1, agentsAtLimit)).toFixed(4)
+      ),
+      rssDeltaKiBPerAgent: Number(
+        (Math.max(0, atLimit.rssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
+      ),
+      retainedInProcess:
+        "Map<agentId, bagPath> wake-by-id index retained for every counted agent (working-system state); FairParkedAgent body offloaded to disk JSON. Comparable to Ontologiql's per-agent in-memory record — their ~2 KiB/agent is a trim candidate (id + locator), not a Rust-vs-TS memory law.",
+      idIndexEntries: idIndex.size,
+      idIndexShape: "agentId_to_bag_path_map",
+      estimatedIdIndexBytesPerAgent,
+    };
+
     const boardColumns: BoardColumns = {
       agentsAtLimit,
       limitResource,
@@ -728,14 +908,16 @@ export function runFairDensityBoardEffect(
       restartSurvival,
     };
 
-    const clawqlStatus = limitHit ? "measured" : "methodology_pending";
+    const clawqlStatus = limitHit && idIndexRetainedAtLimit ? "measured" : "methodology_pending";
     const clawqlRow: DensitySystemRow = {
       systemId: "clawql-typescript",
       status: clawqlStatus,
       hostLabel,
-      honesty: limitHit
-        ? `ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded). Agents-at-limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Wake protocol: JIT warmup + ${wakeOrderRepetitions}× alternation of warm_then_cold / cold_then_warm; headline = slower cold order (${wakeHeadlineOrder}). Resident board column = total RSS/N; in-process retention is an id-index entry (~130 B/agent class with baseline on live park) — Ontologiql's ~2 KiB/agent is a trim opportunity (id + bag locator), not a Rust loss. Measured advantages to quote later: wake speed and baseline process RSS — not "fits more agents." No cross-system win until shared-host remeasure with Golem/Infinity.`
-        : "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: no disk, RSS, or latency resource exhausted. Do not quote agentsAtLimit as a real ceiling. Wake spread and resident accounting are recorded. No cross-system win / no 'fits more agents' copy.",
+      honesty: limitHit && idIndexRetainedAtLimit
+        ? `ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded) with **wake-by-id Map retained** (${idIndex.size} entries = agentsAtLimit). Agents-at-limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Wake protocol: JIT warmup + ${wakeOrderRepetitions}× order alternation; headline = slower cold order (${wakeHeadlineOrder}). Provisional vs Ontologiql (different hosts): capacity may favor TS until Ontologiql trims its ~2 KiB/agent record; cold wakes roughly even (disk-bound); warm wakes favor Ontologiql (~10×). Ontologiql's case on this board: warm-wake speed + baseline process RSS — capacity only after trim. No cross-system win until shared-host remeasure.`
+        : !idIndexRetainedAtLimit
+          ? `ClawQL TypeScript — **methodology_pending**: limit run did not retain a wake-by-id index for every counted agent (idIndex=${idIndex.size}, agentsAtLimit=${agentsAtLimit}). Capacity claims without the index are not comparable to Ontologiql.`
+          : "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: no disk, RSS, or latency resource exhausted (id index retained). No cross-system win until shared-host remeasure.",
       boardColumns,
       activeDensityLab: null,
     };
@@ -781,7 +963,7 @@ export function runFairDensityBoardEffect(
           "restartSurvival",
         ],
         memoryFraming:
-          "Resident (total process RSS / N) is the floor; page cache is reclaimable; heapUsed-after-GC is the GC-runtime check. TS retains an id-index entry per parked agent; Ontologiql's larger per-agent struct is a trim candidate. Quote cold wake vs warm only after warmup + multi-rep order alternation (headline = slower cold order). Do not write 'fits more agents' — Ontologiql's measured edges here are wake speed and baseline process RSS.",
+          "Resident (total process RSS / N) is the floor; page cache is reclaimable; heapUsed-after-GC is the GC-runtime check. Limit runs must retain Map<agentId, bagPath> for every counted agent (wake-by-id). Ontologiql's ~2 KiB/agent record is a trim candidate toward id+locator. Provisional positioning (different hosts): TS capacity ahead until that trim; cold wakes roughly even; warm wakes favor Ontologiql. Shared-host remeasure before any win copy.",
         publicClaimScope:
           "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
         definitions: {
@@ -814,6 +996,7 @@ export function runFairDensityBoardEffect(
         baseline,
         atLimit,
         residentAccounting,
+        idIndexRetainedAtLimit,
         wakeByOrder,
         wakeSpread,
         wakeHeadlineOrder,
@@ -823,6 +1006,8 @@ export function runFairDensityBoardEffect(
       },
     };
 
+    // Final pin: evidence JSON does not embed the Map; keep it live until return.
+    if (idIndex.size < 0) throw new Error("unreachable");
     return evidence;
   });
 }
