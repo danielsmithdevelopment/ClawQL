@@ -147,7 +147,10 @@ function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
  * Sample bag ids via `find`/`awk` — do **not** `readdirSync` multi-million
  * directories (dentry fault-in alone can push RSS over the fair ceiling).
  */
-function sampleIdsFromBagDir(bagDir: string, sampleSize: number): {
+function sampleIdsFromBagDir(
+  bagDir: string,
+  sampleSize: number
+): {
   readonly sampleIds: string[];
   readonly seen: number;
 } {
@@ -390,10 +393,7 @@ export function runFairDensityBoardEffect(
 
     // --- Wake protocol: warmup, then alternate orders ---
     // Prefer on-disk samples so reused stub ids are never woken.
-    const fromDisk = sampleIdsFromBagDir(
-      bagDir,
-      Math.max(wakeSampleSize, wakeWarmupCount, 1)
-    );
+    const fromDisk = sampleIdsFromBagDir(bagDir, Math.max(wakeSampleSize, wakeWarmupCount, 1));
     const timedIds =
       fromDisk.sampleIds.length >= Math.min(wakeSampleSize, 1)
         ? pickSampleIds(fromDisk.sampleIds, wakeSampleSize)
@@ -471,8 +471,7 @@ export function runFairDensityBoardEffect(
       coldFasterThanWarmP99: false,
     };
     // Headline board columns use warm_then_cold (post-warmup canonical order).
-    const headline =
-      wakeByOrder.find((o) => o.order === "warm_then_cold") ?? wakeByOrder[0]!;
+    const headline = wakeByOrder.find((o) => o.order === "warm_then_cold") ?? wakeByOrder[0]!;
     wakePooled.coldFasterThanWarmP99 = wakeByOrder.some(
       (o) => o.cold.n > 0 && o.warm.n > 0 && o.cold.p99 < o.warm.p99
     );
