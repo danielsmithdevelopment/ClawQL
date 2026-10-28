@@ -64,8 +64,7 @@ function isBagAgentShape(v: unknown): v is {
   if (!v || typeof v !== "object" || Array.isArray(v)) return false;
   const o = v as Record<string, unknown>;
   const versionOk = o.version === 1 || o.version === 2;
-  const deadlineOk =
-    o.version === 1 || (o.version === 2 && typeof o.wakeDeadlineAt === "string");
+  const deadlineOk = o.version === 1 || (o.version === 2 && typeof o.wakeDeadlineAt === "string");
   return (
     versionOk &&
     deadlineOk &&

@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import {
-  makeDeadlineScheduleEffect,
-  runDeadlinePumpEffect,
-} from "./deadline-schedule.js";
+import { makeDeadlineScheduleEffect, runDeadlinePumpEffect } from "./deadline-schedule.js";
 
 describe("deadline schedule", () => {
   it("pops due entries in deadline order and records lateness", async () => {

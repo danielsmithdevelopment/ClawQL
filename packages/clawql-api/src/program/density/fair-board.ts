@@ -26,10 +26,7 @@ import {
   resolveBagDirEffect,
   type ParkedBagApi,
 } from "./bag-store.js";
-import {
-  FAIR_DEADLINE_HORIZON_MS,
-  buildFairParkedAgentEffect,
-} from "./fair-agent.js";
+import { FAIR_DEADLINE_HORIZON_MS, buildFairParkedAgentEffect } from "./fair-agent.js";
 import {
   makeDeadlineScheduleEffect,
   randomDeadlineMsEffect,
@@ -169,7 +166,10 @@ function pickSampleIds(ids: readonly string[], sampleSize: number): string[] {
   return out;
 }
 
-function sampleIdsFromBagDir(bagDir: string, sampleSize: number): {
+function sampleIdsFromBagDir(
+  bagDir: string,
+  sampleSize: number
+): {
   readonly sampleIds: string[];
   readonly seen: number;
 } {
@@ -483,8 +483,7 @@ function classifyLimit(args: {
       : Number.POSITIVE_INFINITY;
   const growth = rssGrowthPerAgentKiB(args.ramp);
   const rssHeadroomKiB = Math.max(0, args.rssCeilingKiB - args.rssKiB);
-  const roomInRss =
-    growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
+  const roomInRss = growth > 1e-6 ? Math.floor(rssHeadroomKiB / growth) : Number.POSITIVE_INFINITY;
   const nextBatch = args.nextParkBatch;
   const nextBatchBlocked =
     nextBatch !== null &&
@@ -980,7 +979,8 @@ export function runFairDensityBoardEffect(
         systemId: "infinity",
         status: "pending_invite",
         hostLabel: "stable-host (same host TBD)",
-        honesty: "Invite maintainers before publishing an Infinity comparison row (fair-v2 deadlines).",
+        honesty:
+          "Invite maintainers before publishing an Infinity comparison row (fair-v2 deadlines).",
         boardColumns: null,
         activeDensityLab: null,
       },
