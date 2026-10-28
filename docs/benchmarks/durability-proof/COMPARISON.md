@@ -42,10 +42,10 @@ A never-retry faux model makes Pi Durable look like “0 duplicates, nothing to 
 
 Honest non-idempotent contrast (agent policy × stack) — **measured N=50**:
 
-| Arm, non-idempotent API | Model never retries            | Model always retries             |
-| ----------------------- | ------------------------------ | -------------------------------- |
-| **Pi Durable**          | 0 dups · unk=50 · once=0       | **50 dups** · unk=0 · once=0     |
-| **ClawQL**              | 0 dups · unk=50 · once=0       | **0 dups** · unk=50 · once=0     |
+| Arm, non-idempotent API | Model never retries      | Model always retries         |
+| ----------------------- | ------------------------ | ---------------------------- |
+| **Pi Durable**          | 0 dups · unk=50 · once=0 | **50 dups** · unk=0 · once=0 |
+| **ClawQL**              | 0 dups · unk=50 · once=0 | **0 dups** · unk=50 · once=0 |
 
 ClawQL guarantees at-most-once structurally; Pi Durable leaves the retry decision to the model. That is the question for Earendil — alongside whether the faux-model setup is what they’d want, and whether a live-model arm (`pi-durable-real-model`) matches their preferred demo.
 
