@@ -50,15 +50,15 @@ That is what readers will assume “active at 50 ms” means. Lab pulses that on
 
 Fair parked ramp on the ClawQL TypeScript bag store (file-backed JSON, offloaded; Effect `ParkedBagService`), 512 MiB RSS-delta ceiling, same agent shape:
 
-| Column | ClawQL TS (this evidence) |
-| --- | --- |
-| Agents at the limit | **200,000** (ceiling not hit; completed schedule) |
-| Resident KiB / parked agent | **~0.27** (RSS delta vs empty process / N) |
-| Page cache KiB / agent | **~16.4** (mincore sample, reclaimable) |
-| Disk bytes / agent | **~32.8 KiB** |
-| Wake warm p50 / p99 | **~0.18 ms / ~2.2 ms** |
-| Wake cold p50 / p99 | **~0.16 ms / ~1.5 ms** (posix_fadvise DONTNEED) |
-| Restart survival | **yes** |
+| Column                      | ClawQL TS (this evidence)                         |
+| --------------------------- | ------------------------------------------------- |
+| Agents at the limit         | **200,000** (ceiling not hit; completed schedule) |
+| Resident KiB / parked agent | **~0.27** (RSS delta vs empty process / N)        |
+| Page cache KiB / agent      | **~16.4** (mincore sample, reclaimable)           |
+| Disk bytes / agent          | **~32.8 KiB**                                     |
+| Wake warm p50 / p99         | **~0.18 ms / ~2.2 ms**                            |
+| Wake cold p50 / p99         | **~0.16 ms / ~1.5 ms** (posix_fadvise DONTNEED)   |
+| Restart survival            | **yes**                                           |
 
 Trade-off vs Ontologiql’s publishable claim: ClawQL keeps a low resident floor by offloading bags, with a larger reclaimable page-cache working set and slower wakes (JSON parse on the TS hot path). Do **not** frame this as a cross-system win — Golem/Infinity rows are still pending invite, and hosts differ until both run on the named stable host.
 
