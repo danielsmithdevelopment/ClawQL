@@ -8,8 +8,11 @@
  *   CLAWQL_DENSITY_RAMP (comma-separated; disables auto-continue),
  *   CLAWQL_DENSITY_CONTINUE_UNTIL_CEILING=0 to stop at schedule end,
  *   CLAWQL_DENSITY_WAKE_SAMPLE, CLAWQL_DENSITY_WAKE_WARMUP,
+ *   CLAWQL_DENSITY_WAKE_ORDER_REPS (default 3),
+ *   CLAWQL_DENSITY_COLD_P99_CEILING_MS (optional latency limit),
  *   CLAWQL_DENSITY_SKIP_COLD=1, CLAWQL_DENSITY_SKIP_RESTART=1,
- *   CLAWQL_DENSITY_HOST_LABEL
+ *   CLAWQL_DENSITY_HOST_LABEL,
+ *   CLAWQL_DENSITY_REUSE_BAGS=1, CLAWQL_DENSITY_RESUME_FROM
  */
 
 import { mkdirSync } from "node:fs";
@@ -52,6 +55,12 @@ async function main(): Promise<void> {
       wakeWarmupCount: process.env.CLAWQL_DENSITY_WAKE_WARMUP
         ? Number(process.env.CLAWQL_DENSITY_WAKE_WARMUP)
         : undefined,
+      wakeOrderRepetitions: process.env.CLAWQL_DENSITY_WAKE_ORDER_REPS
+        ? Number(process.env.CLAWQL_DENSITY_WAKE_ORDER_REPS)
+        : 3,
+      wakeColdP99CeilingMs: process.env.CLAWQL_DENSITY_COLD_P99_CEILING_MS
+        ? Number(process.env.CLAWQL_DENSITY_COLD_P99_CEILING_MS)
+        : undefined,
       skipCold: process.env.CLAWQL_DENSITY_SKIP_COLD === "1",
       skipRestart: process.env.CLAWQL_DENSITY_SKIP_RESTART === "1",
       hostLabel: process.env.CLAWQL_DENSITY_HOST_LABEL || "clawql-cloud-agent-host",
@@ -73,6 +82,8 @@ async function main(): Promise<void> {
         outPath,
         status: clawql?.status,
         agentsAtLimit: cols?.agentsAtLimit,
+        limitResource: cols?.limitResource,
+        limitHit: run?.limitHit,
         ceilingHit: run?.ceilingHit,
         rssCeilingDefinition: run?.rssCeilingDefinition,
         residentKiBPerAgent: cols?.residentKiBPerAgent,
@@ -82,8 +93,12 @@ async function main(): Promise<void> {
         diskBytesPerAgent: cols?.diskBytesPerAgent,
         wakeWarmMs: cols?.wakeWarmMs,
         wakeColdMs: cols?.wakeColdMs,
+        wakeHeadlineOrder: run?.wakeHeadlineOrder,
+        wakeOrderRepetitions: run?.wakeOrderRepetitions,
+        wakeSpread: run?.wakeSpread,
         wakeByOrder: run?.wakeByOrder.map((o) => ({
           order: o.order,
+          repetition: o.repetition,
           warmP99: o.warm.p99,
           coldP99: o.cold.p99,
           gcWarmMaxMs: o.gcWarm.maxMs,

@@ -29,11 +29,16 @@ export type FairPendingTool = {
   readonly approvalId: string;
 };
 
+/** Which resource exhausted first at agents-at-limit. */
+export type LimitResource = "disk" | "rss" | "latency" | "none";
+
 /** Board columns every system must publish. */
 export type BoardColumns = {
   readonly agentsAtLimit: number;
+  /** First resource that ran out at that N (disk | rss | latency). */
+  readonly limitResource: LimitResource;
   /**
-   * Total process RSS / agents (KiB) — same ceiling definition as Ontologiql
+   * Total process RSS / agents (KiB) — same RSS ceiling definition as Ontologiql
    * (total process RSS, not RSS-delta).
    */
   readonly residentKiBPerAgent: number;
@@ -49,7 +54,12 @@ export type BoardColumns = {
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
 
 export type DensityRowStatus =
-  "measured" | "publishable" | "pending_invite" | "not_run" | "lab_only" | "methodology_pending";
+  | "measured"
+  | "publishable"
+  | "pending_invite"
+  | "not_run"
+  | "lab_only"
+  | "methodology_pending";
 
 export type DensitySystemRow = {
   readonly systemId: DensitySystemId;
@@ -77,10 +87,22 @@ export type WakeOrderId = "warm_then_cold" | "cold_then_warm";
 
 export type WakeOrderResult = {
   readonly order: WakeOrderId;
+  readonly repetition: number;
   readonly warm: WakeLatency;
   readonly cold: WakeLatency;
   readonly gcWarm: GcPauseSummary;
   readonly gcCold: GcPauseSummary;
+};
+
+export type WakeSpread = {
+  readonly order: WakeOrderId;
+  readonly coldP99Min: number;
+  readonly coldP99Max: number;
+  readonly coldP99Median: number;
+  readonly warmP99Min: number;
+  readonly warmP99Max: number;
+  readonly warmP99Median: number;
+  readonly repetitions: number;
 };
 
 export type HeapSnapshot = {
@@ -99,8 +121,10 @@ export type ResidentAccounting = {
   /** RSS-delta vs empty process / N — diagnostic only; not the board ceiling. */
   readonly rssDeltaKiBPerAgent: number;
   /**
-   * What this implementation retains in-process per parked agent after park:
-   * agentId string in the id index; bag body is on disk only.
+   * What this implementation retains in-process per parked agent after park.
+   * TS fair bags: id-index entry (agentId string); bag body on disk.
+   * Ontologiql's higher resident/agent is likely a larger per-agent struct — trim
+   * candidate, not a Rust-vs-TS memory law.
    */
   readonly retainedInProcess: string;
   readonly estimatedIdIndexBytesPerAgent: number;
@@ -123,7 +147,8 @@ export type EvidenceFair = {
     /** Shared definitions that must match across systems before comparison. */
     readonly definitions: {
       readonly rssCeiling: "total_process_rss";
-      readonly agentsAtLimit: "first_N_where_total_rss_exceeds_ceiling";
+      /** First resource exhausted: disk, rss, or latency target. */
+      readonly agentsAtLimit: "first_resource_exhausted";
     };
   };
   readonly host: {
@@ -143,21 +168,27 @@ export type EvidenceFair = {
     readonly ramp: readonly FairRampStep[];
     readonly wakeSampleSize: number;
     readonly wakeWarmupCount: number;
+    readonly wakeOrderRepetitions: number;
     readonly coldEviction: string;
     readonly limitReason: string;
-    readonly ceilingHit: boolean;
+    readonly limitHit: boolean;
+    readonly limitResource: LimitResource;
     readonly rssCeilingDefinition: "total_process_rss";
     readonly baseline: HeapSnapshot;
     readonly atLimit: HeapSnapshot;
     readonly residentAccounting: ResidentAccounting;
     readonly wakeByOrder: readonly WakeOrderResult[];
-    /** Pooled warm/cold across both orders (also copied into boardColumns). */
+    readonly wakeSpread: readonly WakeSpread[];
+    /** Headline = slower cold order (warm_then_cold); conservative. */
+    readonly wakeHeadlineOrder: WakeOrderId;
     readonly wakePooled: {
       readonly warm: WakeLatency;
       readonly cold: WakeLatency;
       readonly coldFasterThanWarmP99: boolean;
     };
     readonly exposeGc: boolean;
+    /** @deprecated use limitHit */
+    readonly ceilingHit: boolean;
   };
 };
 
@@ -171,6 +202,7 @@ export type FairRampStep = {
   readonly heapUsedKiBPerAgentAfterGc: number;
   readonly diskBytesTotal: number;
   readonly diskBytesPerAgent: number;
+  readonly diskAvailBytes: number | null;
   readonly pageCacheKiBPerAgent: number | null;
   readonly withinRssCeiling: boolean;
 };

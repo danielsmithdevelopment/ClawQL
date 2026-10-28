@@ -298,3 +298,20 @@ export function hostIdentityEffect(): Effect.Effect<{
 export function exposeGcAvailableEffect(): Effect.Effect<boolean> {
   return Effect.sync(() => typeof (globalThis as { gc?: () => void }).gc === "function");
 }
+
+/** Available bytes on the filesystem that holds `path` (`df -B1`). */
+export function readDiskAvailBytesEffect(path: string): Effect.Effect<number | null> {
+  return Effect.sync(() => {
+    const res = spawnSync("df", ["-B1", "--output=avail", path], { encoding: "utf8" });
+    if (res.status !== 0) return null;
+    const lines = (res.stdout || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    // Header "Avail" then the number.
+    const raw = lines.length >= 2 ? lines[lines.length - 1]! : lines[0];
+    if (!raw) return null;
+    const n = Number(raw.replace(/[^0-9]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  });
+}
