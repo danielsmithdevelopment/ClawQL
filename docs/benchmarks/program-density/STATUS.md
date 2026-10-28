@@ -10,32 +10,32 @@
 
 ## Where each side stands
 
-| Contract                     | ClawQL                                       | Ontologiql                                                |
-| ---------------------------- | -------------------------------------------- | --------------------------------------------------------- |
-| Serial fsync (board-matched) | ~7.9k/s (~126 µs)                            | ~8.9k/s (~112 µs); overwrite ~50k **retracted**           |
-| Ramp refine                  | ±1%                                          | 196k/198k **±0.5%**                                       |
-| flushStats                   | Done                                         | Done — avgBatch ~64, fsyncs ~2.2k ≈ **24%** of serial     |
-| Double-buffer                | Active (hits≈100%); **fsync rate unchanged** | Not yet — **profile producer first**                      |
+| Contract                     | ClawQL                                       | Ontologiql                                            |
+| ---------------------------- | -------------------------------------------- | ----------------------------------------------------- |
+| Serial fsync (board-matched) | ~7.9k/s (~126 µs)                            | ~8.9k/s (~112 µs); overwrite ~50k **retracted**       |
+| Ramp refine                  | ±1%                                          | 196k/198k **±0.5%**                                   |
+| flushStats                   | Done                                         | Done — avgBatch ~64, fsyncs ~2.2k ≈ **24%** of serial |
+| Double-buffer                | Active (hits≈100%); **fsync rate unchanged** | Not yet — **profile producer first**                  |
 
 ## ClawQL: double-buffer remeasure (corrected reading)
 
-|                 | Before                   | After                                      |
-| --------------- | ------------------------ | ------------------------------------------ |
-| avgBatchSize    | 64                       | 64                                         |
-| doubleBufferHits| n/a                      | ≈100%                                      |
-| fsyncs/sec      | ~3.2k (~40% of serial)   | ~3.3–4.4k (still ~40–55% of serial)        |
+|                  | Before                 | After                               |
+| ---------------- | ---------------------- | ----------------------------------- |
+| avgBatchSize     | 64                     | 64                                  |
+| doubleBufferHits | n/a                    | ≈100%                               |
+| fsyncs/sec       | ~3.2k (~40% of serial) | ~3.3–4.4k (still ~40–55% of serial) |
 
 **Not “idle writer fixed.”** Label: **double-buffer active; fsync rate unchanged; producer-bound under investigation.**
 
 ### Pump profile ([`pump-profile.json`](./pump-profile.json))
 
-| Stage                                    | Cost                         |
-| ---------------------------------------- | ---------------------------- |
-| Heap `popDue`                            | ~0.26 µs/record              |
-| JSON encode                              | ~0.3 µs/record               |
-| Journal enqueue (sync)                   | ~0.7 µs/record               |
-| Noop drain (pop+encode, no durable wait) | **~1.3M**/s                  |
-| Durable drain (group_commit)             | **~286k**/s; fsyncs ~4.2k/s  |
+| Stage                                    | Cost                        |
+| ---------------------------------------- | --------------------------- |
+| Heap `popDue`                            | ~0.26 µs/record             |
+| JSON encode                              | ~0.3 µs/record              |
+| Journal enqueue (sync)                   | ~0.7 µs/record              |
+| Noop drain (pop+encode, no durable wait) | **~1.3M**/s                 |
+| Durable drain (group_commit)             | **~286k**/s; fsyncs ~4.2k/s |
 
 Heap pop / encode CPU are **not** the ~210–280k bound. Residual sits in the durable/journal path under load (fsync latency vs probe, event-loop around await). Sustained durable after double-buffer ≈ **286k/s** (flushStats imply ~281k in focus window) — same order as before.
 
@@ -56,8 +56,8 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Board snapshot
 
-| System           | Status                                                          | Notes                      |
-| ---------------- | --------------------------------------------------------------- | -------------------------- |
-| Ontologiql       | Lab deadlines; serial fixed; flushStats idle pattern            | Profile before double-buffer|
-| ClawQL           | Double-buffer on; fsync rate flat; producer under investigation | Campaign-ready for compare |
-| Golem / Infinity | Pending invite                                                  | fair-v2 / SHARED_HOST      |
+| System           | Status                                                          | Notes                        |
+| ---------------- | --------------------------------------------------------------- | ---------------------------- |
+| Ontologiql       | Lab deadlines; serial fixed; flushStats idle pattern            | Profile before double-buffer |
+| ClawQL           | Double-buffer on; fsync rate flat; producer under investigation | Campaign-ready for compare   |
+| Golem / Infinity | Pending invite                                                  | fair-v2 / SHARED_HOST        |
