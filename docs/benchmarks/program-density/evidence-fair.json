@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T20:32:03.645Z",
+  "measuredAt": "2026-10-28T20:47:45.138Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -8,7 +8,7 @@
       "pendingToolBytesTarget": "~0.5 KiB JSON",
       "park": "Waiting on that tool (idle durable)",
       "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
-      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit batchMax=64 intervalMs=10); lateness stamped after fsync; typed-array schedule (board default) with object-heap A/B for GC honesty; arrival-rate ramp; SIGKILL crash test"
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit); lateness stamped after fsync; typed-array schedule; scaled bursts (Ontologiql sizes; first miss); deadline restart (rebuild + overdue catch-up); arrival-rate ramp; SIGKILL flush crash test"
     },
     "columns": [
       "agentsAtLimit",
@@ -18,10 +18,10 @@
       "diskBytesPerAgent",
       "wakeWarmMs.p50/p99",
       "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
-      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
+      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. Deadline accuracy requires identical fired definition + flush policy (or disclose each). Fired stamps after flush. os_buffer page-cache writes are not durable. Object-per-entry JS heaps at multi-million N incur major GC pauses — publish typed_arrays (best-effort TS) and disclose object_entries A/B. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. See SHARED_HOST.md for the five numbers and required deadline arms (scaled bursts + deadline restart). Fired stamps after flush. Publish typed_arrays best-effort + object_entries GC A/B. Cold wake: median+range only until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); schedule-shape disclosure (Rust has no JS GC equivalent); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2 / SHARED_HOST.md: identical fired definition + flush policy (disclose + crash test); scaled bursts (512/10k/100k+; first miss); deadline restart (rebuild at full scale, no loss/duplicates, overdue catch-up); arrival-rate ramp. Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -68,7 +68,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v9). Schedule retained at 2.5e6 (rss limit) as typed_arrays (Float64 + Int32; sparse agent Map). Fired=durable_trigger_record; flush=group_commit(batchMax=64, intervalMs=10, fsync); crashTest=pass; lateness stamped after fsync. Steady ~667/s → 100% met / excess p99 22 ms under typed_arrays. Object-heap A/B: excess p99 314 ms with major GC ~121 ms and 100% late∩major-GC overlap — fair TS runtime cost when not using typed arrays. Burst drain ~54054.05/s → 100% met / excess p99 21 ms. sustainablePerSec=256000 (typed_arrays + group_commit; 3-rep floor=median=max 256000/256000/256000; fsync_each ≈ 24000). Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded. v8 ~293 ms steady tail was GC under object_entries — superseded by typed default. Provisional vs Ontologiql until shared flush policy + crash test + schedule-shape disclosure. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v10 / SHARED_HOST arms). Schedule retained at 2.5e6 as typed_arrays. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% met / excess p99 22 ms (typed). Scaled bursts (Ontologiql sizes): first miss at N=250000 (512/10k/100k met 100% within 1s; 250000 → 63% met). Deadline restart: ok=true; rebuildMs=40 at capacity 2500000; overdue 5000/5000 prompt-fired; no loss/duplicates. sustainablePerSec=256000 (typed + group_commit floor). Object-heap GC A/B retained (~314 ms / ~121 ms major). Provisional vs Ontologiql until shared-host + their flush disclose/crash-test. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -107,7 +107,10 @@
           "burstDrainPerSec": 54054.05,
           "sustainablePerSec": 256000,
           "objectEntriesSteadyP99ExcessMs": 314,
-          "objectEntriesMajorGcMaxMs": 120.92810600064695
+          "objectEntriesMajorGcMaxMs": 120.92810600064695,
+          "scaledBurstFirstMissSize": 250000,
+          "deadlineRestartOk": true,
+          "deadlineRestartRebuildMs": 40
         },
         "restartSurvival": true
       },
@@ -784,6 +787,57 @@
           "note": "Board default. Float64 deadlines + Int32 heap indices; sparse agent Map. Steady excess p99 collapses ~10×."
         },
         "reading": "Large GC pauses appear while building/holding the object schedule; typed_arrays cuts steady excess p99 sharply. Fair column: report both shapes; board default typed_arrays."
+      },
+      "scaledBursts": {
+        "sizes": [
+          512,
+          10000,
+          100000,
+          250000
+        ],
+        "firstMissSize": 250000,
+        "note": "First miss at N=250000: pctWithinSla below 99% (1s SLA).",
+        "arms": [
+          {
+            "n": 512,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 22,
+            "wallMs": 10,
+            "arrivalRatePerSec": 51200
+          },
+          {
+            "n": 10000,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 73,
+            "wallMs": 64,
+            "arrivalRatePerSec": 156250
+          },
+          {
+            "n": 100000,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 456,
+            "wallMs": 475,
+            "arrivalRatePerSec": 210526.32
+          },
+          {
+            "n": 250000,
+            "pctWithinSla": 63,
+            "excessOverTickP99Ms": 1332,
+            "wallMs": 1358,
+            "arrivalRatePerSec": 184094.26
+          }
+        ]
+      },
+      "deadlineRestart": {
+        "ok": true,
+        "capacity": 2500000,
+        "liveCount": 10000,
+        "rebuildMs": 40,
+        "overdueExpected": 5000,
+        "overdueFired": 5000,
+        "missingLive": 0,
+        "duplicateFired": 0,
+        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 40 ms at capacity 2500000; overdue 5000/5000 prompt-fired; no loss/duplicates."
       }
     },
     "wakeByOrder": [

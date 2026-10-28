@@ -107,6 +107,11 @@ export type DeadlineBoardAccuracy = {
   readonly burstDrainPerSec: number;
   /** Max steady arrival rate that still met slaTargetPct within slaMs. */
   readonly sustainablePerSec: number;
+  /** SHARED_HOST: first co-timed burst size that misses the 1s SLA (null = all met / unmeasured). */
+  readonly scaledBurstFirstMissSize?: number | null;
+  /** SHARED_HOST deadline restart: rebuild + overdue catch-up after SIGKILL. */
+  readonly deadlineRestartOk?: boolean | null;
+  readonly deadlineRestartRebuildMs?: number | null;
 };
 
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
@@ -311,6 +316,29 @@ export type EvidenceFair = {
         readonly recoveredOnDisk: number;
         readonly missingFromDisk: number;
         readonly duplicateOnDisk: number;
+        readonly note: string;
+      } | null;
+      readonly scaledBursts?: {
+        readonly sizes: readonly number[];
+        readonly firstMissSize: number | null;
+        readonly note: string;
+        readonly arms: readonly {
+          readonly n: number;
+          readonly pctWithinSla: number;
+          readonly excessOverTickP99Ms: number;
+          readonly wallMs: number;
+          readonly arrivalRatePerSec: number;
+        }[];
+      } | null;
+      readonly deadlineRestart?: {
+        readonly ok: boolean;
+        readonly capacity: number;
+        readonly liveCount: number;
+        readonly rebuildMs: number;
+        readonly overdueExpected: number;
+        readonly overdueFired: number;
+        readonly missingLive: number;
+        readonly duplicateFired: number;
         readonly note: string;
       } | null;
     } | null;

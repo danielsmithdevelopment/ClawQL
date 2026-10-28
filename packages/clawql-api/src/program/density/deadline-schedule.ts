@@ -224,6 +224,19 @@ export type DeadlineArmResult = {
   readonly gcTrace: DeadlineGcTrace | null;
 };
 
+/** Ontologiql-aligned burst sizes for SHARED_HOST scaled-burst ladder. */
+export const DEFAULT_SCALED_BURST_SIZES: readonly number[] = [
+  512, 10_000, 100_000, 250_000, 500_000, 1_000_000,
+];
+
+export type ScaledBurstLadderResult = {
+  readonly sizes: readonly number[];
+  readonly arms: readonly DeadlineArmResult[];
+  /** First size with pctWithinSla < slaTargetPct; null if all sizes met the target. */
+  readonly firstMissSize: number | null;
+  readonly note: string;
+};
+
 export type DeadlineAccuracyReport = {
   readonly slaMs: number;
   readonly slaTargetPct: number;
@@ -239,6 +252,8 @@ export type DeadlineAccuracyReport = {
   readonly ramp: readonly DeadlineArmResult[];
   /** Crash-recovery proof for the flush policy, when run. */
   readonly crashTest: DeadlineCrashTestResult | null;
+  /** SHARED_HOST scaled bursts — first size that misses the 1s SLA. */
+  readonly scaledBursts: ScaledBurstLadderResult | null;
 };
 
 export type DeadlineCrashTestResult = {
@@ -656,6 +671,83 @@ export function padResidentHeap(
   }
 }
 
+/**
+ * SHARED_HOST scaled bursts: fire N co-timed deadlines at Ontologiql sizes
+ * (512, 10k, 100k, …). Report the first size that misses the 1s SLA target.
+ */
+export function runScaledBurstLadderEffect(args: {
+  readonly fire: (entry: DeadlineEntry) => Promise<void>;
+  readonly sizes?: readonly number[];
+  readonly slaMs?: number;
+  readonly slaTargetPct?: number;
+  readonly tickMs?: number;
+  readonly concurrency?: number;
+  readonly burstOffsetMs?: number;
+  readonly residentHeapSize?: number;
+  readonly scheduleShape?: DeadlineScheduleShape;
+  readonly percentile: (samples: readonly number[], p: number) => number;
+}): Effect.Effect<ScaledBurstLadderResult> {
+  return Effect.gen(function* () {
+    const slaMs = args.slaMs ?? DEFAULT_DEADLINE_SLA_MS;
+    const slaTargetPct = args.slaTargetPct ?? DEFAULT_SLA_TARGET_PCT;
+    const tickMs = args.tickMs ?? DEFAULT_SCHEDULER_TICK_MS;
+    const concurrency = args.concurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
+    const burstOffsetMs = args.burstOffsetMs ?? 20;
+    const scheduleShape = args.scheduleShape ?? "typed_arrays";
+    const sizes = args.sizes ?? DEFAULT_SCALED_BURST_SIZES;
+    const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
+    const arms: DeadlineArmResult[] = [];
+    let firstMissSize: number | null = null;
+
+    for (const size of sizes) {
+      const n = Math.max(1, Math.floor(size));
+      const ids = Array.from(
+        { length: n },
+        (_, i) => `bag_${i.toString(16).padStart(8, "0")}_scaled`
+      );
+      const schedule = yield* makeAccuracyScheduleEffect({
+        residentHeapSize: Math.max(n, residentHeapSize),
+        scheduleShape,
+      });
+      const burstAt = Date.now() + burstOffsetMs;
+      for (let i = 0; i < n; i++) schedule.schedule(ids[i]!, burstAt);
+      padResidentHeap(schedule, Math.max(n, residentHeapSize), burstAt + 3_600_000);
+      const arm = yield* runDeadlinePumpEffect({
+        schedule,
+        fire: args.fire,
+        maxFires: n,
+        wallDeadlineMs: burstAt + Math.max(slaMs * 3, 15_000),
+        tickMs,
+        slaMs,
+        concurrency,
+        mode: "burst",
+        arrivalRatePerSec: 0,
+        percentile: args.percentile,
+      });
+      const withRate: DeadlineArmResult = {
+        ...arm,
+        arrivalRatePerSec:
+          arm.wallMs > 0 ? Number(((arm.fired * 1000) / arm.wallMs).toFixed(2)) : 0,
+      };
+      arms.push(withRate);
+      if (withRate.pctWithinSla < slaTargetPct) {
+        firstMissSize = n;
+        break;
+      }
+    }
+
+    return {
+      sizes: arms.map((a) => a.n),
+      arms,
+      firstMissSize,
+      note:
+        firstMissSize === null
+          ? `All scaled burst sizes met ≥${slaTargetPct}% within ${slaMs} ms SLA.`
+          : `First miss at N=${firstMissSize}: pctWithinSla below ${slaTargetPct}% (1s SLA).`,
+    };
+  });
+}
+
 /** Full deadline accuracy: steady + burst at a declared rate, plus sustainable ramp. */
 export function runDeadlineAccuracyEffect(args: {
   readonly agentIds: readonly string[];
@@ -680,6 +772,12 @@ export function runDeadlineAccuracyEffect(args: {
   readonly rampWindowMs?: number;
   readonly rampRatesPerSec?: readonly number[];
   readonly skipRamp?: boolean;
+  /**
+   * Scaled bursts are SHARED_HOST-required but expensive; default skip unless
+   * the board / measure script opts in (`skipScaledBursts: false`).
+   */
+  readonly skipScaledBursts?: boolean;
+  readonly scaledBurstSizes?: readonly number[];
   readonly crashTest?: DeadlineCrashTestResult | null;
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<DeadlineAccuracyReport> {
@@ -694,6 +792,10 @@ export function runDeadlineAccuracyEffect(args: {
     const scheduleShape = args.scheduleShape ?? "typed_arrays";
     const ids = [...args.agentIds];
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
+    // Opt-in: full Ontologiql-sized ladder is multi-minute under group_commit.
+    const skipScaledBursts = args.skipScaledBursts !== false && args.scaledBurstSizes === undefined
+      ? true
+      : args.skipScaledBursts === true;
     const scheduler = makeDeadlineSchedulerInfo({
       tickMs,
       concurrency,
@@ -712,6 +814,7 @@ export function runDeadlineAccuracyEffect(args: {
         sustainablePerSec: 0,
         ramp: [],
         crashTest: args.crashTest ?? null,
+        scaledBursts: null,
       };
     }
 
@@ -783,6 +886,22 @@ export function runDeadlineAccuracyEffect(args: {
       ramp = r.ramp;
     }
 
+    let scaledBursts: ScaledBurstLadderResult | null = null;
+    if (!skipScaledBursts) {
+      scaledBursts = yield* runScaledBurstLadderEffect({
+        fire: args.fire,
+        sizes: args.scaledBurstSizes,
+        slaMs,
+        slaTargetPct,
+        tickMs,
+        concurrency,
+        burstOffsetMs,
+        residentHeapSize,
+        scheduleShape,
+        percentile: args.percentile,
+      });
+    }
+
     return {
       slaMs,
       slaTargetPct,
@@ -792,6 +911,7 @@ export function runDeadlineAccuracyEffect(args: {
       sustainablePerSec,
       ramp,
       crashTest: args.crashTest ?? null,
+      scaledBursts,
     };
   });
 }

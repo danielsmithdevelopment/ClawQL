@@ -25,6 +25,12 @@ describe("fair density board (smoke)", () => {
         skipDeadlineRamp: false,
         deadlineRampRatesPerSec: [50, 100, 250],
         skipDeadlineCrashTest: false,
+        // Tiny SHARED_HOST arms — full ladder lives in measure scripts / dedicated tests.
+        skipScaledBursts: false,
+        scaledBurstSizes: [32, 64],
+        skipDeadlineRestartTest: false,
+        deadlineRestartCapacity: 500,
+        deadlineRestartLiveCount: 40,
         rssCeilingMiB: 512,
         continueUntilCeiling: false,
         skipCold: false,
@@ -49,6 +55,9 @@ describe("fair density board (smoke)", () => {
     expect(clawql?.boardColumns?.deadlineAccuracy?.steadyPctMet).toBeGreaterThan(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.burstPctMet).toBeGreaterThanOrEqual(0);
     expect(clawql?.boardColumns?.deadlineAccuracy?.sustainablePerSec).toBeGreaterThanOrEqual(0);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === null || typeof clawql?.boardColumns?.deadlineAccuracy?.scaledBurstFirstMissSize === "number").toBe(true);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.deadlineRestartOk).toBe(true);
+    expect(clawql?.boardColumns?.deadlineAccuracy?.deadlineRestartRebuildMs).toBeGreaterThanOrEqual(0);
     expect(clawql?.boardColumns?.restartSurvival).toBe(true);
 
     const run = evidence.clawqlRun!;

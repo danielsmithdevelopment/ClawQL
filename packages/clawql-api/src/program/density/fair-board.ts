@@ -43,6 +43,7 @@ import {
   type DeadlineSchedule,
   type TriggerFlushPolicy,
 } from "./deadline-schedule.js";
+import { runDeadlineRestartTestEffect, type DeadlineRestartTestResult } from "./deadline-restart.js";
 import { runTriggerJournalCrashTestEffect } from "./trigger-journal-crash.js";
 import {
   createGcRecorderEffect,
@@ -114,6 +115,18 @@ export type FairBoardOptions = {
   readonly deadlineRampRatesPerSec?: readonly number[];
   /** Skip SIGKILL crash-recovery proof for the flush policy. */
   readonly skipDeadlineCrashTest?: boolean;
+  /**
+   * SHARED_HOST scaled bursts (default: Ontologiql sizes when not skipped).
+   * Smoke tests should pass a tiny ladder; full board opts into DEFAULT sizes.
+   */
+  readonly skipScaledBursts?: boolean;
+  readonly scaledBurstSizes?: readonly number[];
+  /** SHARED_HOST deadline restart (persist → SIGKILL → rebuild → overdue catch-up). */
+  readonly skipDeadlineRestartTest?: boolean;
+  /** Capacity for restart rebuild (default = agentsAtLimit after ramp). */
+  readonly deadlineRestartCapacity?: number;
+  /** Live pending deadlines in the restart snapshot (default min(10_000, capacity)). */
+  readonly deadlineRestartLiveCount?: number;
   readonly hostLabel?: string;
   readonly skipCold?: boolean;
   readonly skipRestart?: boolean;
@@ -762,6 +775,7 @@ export function runFairDensityBoardEffect(
 
     // --- Deadline accuracy: durable fire + flush policy + arrival rate + ramp ---
     let deadlineAccuracy: DeadlineAccuracyReport | null = null;
+    let deadlineRestart: DeadlineRestartTestResult | null = null;
     if (!options.skipDeadlinePump && schedule.size() > 0) {
       const sampleIds = [
         ...new Set([
@@ -798,6 +812,17 @@ export function runFairDensityBoardEffect(
             : async (entry: { agentId: string; deadlineMs: number }): Promise<void> => {
                 await journal!.record(entry.agentId, entry.deadlineMs);
               };
+        // Full Ontologiql-sized ladder is opt-in (measure-shared-host-deadline.mjs /
+        // skipScaledBursts:false). Smoke passes a tiny scaledBurstSizes array.
+        const runScaled =
+          options.scaledBurstSizes !== undefined
+            ? {
+                skipScaledBursts: options.skipScaledBursts === true,
+                scaledBurstSizes: options.scaledBurstSizes,
+              }
+            : options.skipScaledBursts === false
+              ? { skipScaledBursts: false as const }
+              : { skipScaledBursts: true as const };
         deadlineAccuracy = yield* runDeadlineAccuracyEffect({
           agentIds: sampleIds,
           fire,
@@ -815,11 +840,36 @@ export function runFairDensityBoardEffect(
           rampRatesPerSec: options.deadlineRampRatesPerSec,
           crashTest,
           percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
+          ...runScaled,
         });
       } finally {
         if (journal) {
           yield* Effect.promise(() => journal.close());
         }
+      }
+
+      if (
+        deadlineFiredDefinition === "durable_trigger_record" &&
+        options.skipDeadlineRestartTest !== true
+      ) {
+        const restartCapacity = Math.max(
+          1,
+          options.deadlineRestartCapacity ?? schedule.size()
+        );
+        const restartLive = Math.min(
+          restartCapacity,
+          Math.max(2, options.deadlineRestartLiveCount ?? Math.min(10_000, restartCapacity))
+        );
+        deadlineRestart = yield* runDeadlineRestartTestEffect({
+          workDir: join(bagDir, ".deadline-restart"),
+          capacity: restartCapacity,
+          liveCount: restartLive,
+          downtimeMs: 400,
+          policy: deadlineFlushPolicy,
+          concurrency: deadlineConcurrency,
+          catchUpSlaMs: deadlineSlaMs,
+          percentile: (samples, p) => Effect.runSync(percentileMsEffect(samples, p)),
+        });
       }
     }
 
@@ -1041,6 +1091,9 @@ export function runFairDensityBoardEffect(
             burstP99ExcessMs: deadlineAccuracy.burst.excessOverTickP99Ms,
             burstDrainPerSec: deadlineAccuracy.burst.arrivalRatePerSec,
             sustainablePerSec: deadlineAccuracy.sustainablePerSec,
+            scaledBurstFirstMissSize: deadlineAccuracy.scaledBursts?.firstMissSize ?? null,
+            deadlineRestartOk: deadlineRestart?.ok ?? null,
+            deadlineRestartRebuildMs: deadlineRestart?.rebuildMs ?? null,
           }
         : null,
       restartSurvival,
@@ -1059,8 +1112,14 @@ export function runFairDensityBoardEffect(
           ? `; crashTest=${deadlineAccuracy.crashTest.ok ? "pass" : "fail"}`
           : "")
       : "flush=n/a";
+    const scaledNote = deadlineAccuracy?.scaledBursts
+      ? `; scaledBurstFirstMiss=${deadlineAccuracy.scaledBursts.firstMissSize ?? "none"}`
+      : "";
+    const restartNote = deadlineRestart
+      ? `; deadlineRestart=${deadlineRestart.ok ? "pass" : "fail"} rebuildMs=${deadlineRestart.rebuildMs}`
+      : "";
     const deadlineNote = deadlineAccuracy
-      ? `Deadline SLA ${deadlineAccuracy.slaMs} ms (≥${deadlineAccuracy.slaTargetPct}% target; fired=${deadlineAccuracy.scheduler.firedDefinition}; ${flushNote}; concurrency=${deadlineAccuracy.scheduler.concurrency}; next=${deadlineAccuracy.scheduler.nextDeadlineComplexity}): steady arrival ${deadlineAccuracy.steady.arrivalRatePerSec}/s → ${deadlineAccuracy.steady.pctWithinSla}% met / excess p99 ${deadlineAccuracy.steady.excessOverTickP99Ms} ms; burst drain ${deadlineAccuracy.burst.arrivalRatePerSec}/s → ${deadlineAccuracy.burst.pctWithinSla}% met / excess p99 ${deadlineAccuracy.burst.excessOverTickP99Ms} ms; sustainablePerSec=${deadlineAccuracy.sustainablePerSec}`
+      ? `Deadline SLA ${deadlineAccuracy.slaMs} ms (≥${deadlineAccuracy.slaTargetPct}% target; fired=${deadlineAccuracy.scheduler.firedDefinition}; ${flushNote}; concurrency=${deadlineAccuracy.scheduler.concurrency}; next=${deadlineAccuracy.scheduler.nextDeadlineComplexity}): steady arrival ${deadlineAccuracy.steady.arrivalRatePerSec}/s → ${deadlineAccuracy.steady.pctWithinSla}% met / excess p99 ${deadlineAccuracy.steady.excessOverTickP99Ms} ms; burst drain ${deadlineAccuracy.burst.arrivalRatePerSec}/s → ${deadlineAccuracy.burst.pctWithinSla}% met / excess p99 ${deadlineAccuracy.burst.excessOverTickP99Ms} ms; sustainablePerSec=${deadlineAccuracy.sustainablePerSec}${scaledNote}${restartNote}`
       : "deadlineAccuracy unmeasured";
 
     const clawqlStatus =
@@ -1162,7 +1221,9 @@ export function runFairDensityBoardEffect(
         atLimit,
         residentAccounting,
         deadlineScheduleRetainedAtLimit,
-        deadlineAccuracy,
+        deadlineAccuracy: deadlineAccuracy
+          ? { ...deadlineAccuracy, deadlineRestart }
+          : null,
         wakeByOrder,
         wakeSpread,
         wakeHeadlineOrder,
