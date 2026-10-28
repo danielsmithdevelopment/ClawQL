@@ -8,12 +8,7 @@ import type { SandboxCodeToolInput } from "../types.js";
 
 /** Isolation backends ClawQL can drive. All listed backends must be OSI-approved. */
 export type IsolationBackendId =
-  | "firecracker"
-  | "gvisor"
-  | "apple-container"
-  | "lima"
-  | "agent-substrate"
-  | "mock";
+  "firecracker" | "gvisor" | "apple-container" | "lima" | "agent-substrate" | "mock";
 
 /**
  * Guest isolation tier.
@@ -23,11 +18,7 @@ export type IsolationBackendId =
  */
 export type IsolationTier = "container" | "microvm" | "full-vm" | "gvisor";
 
-export type IsolationSessionState =
-  | "admitted"
-  | "running"
-  | "suspended"
-  | "terminated";
+export type IsolationSessionState = "admitted" | "running" | "suspended" | "terminated";
 
 export type IsolationSession = {
   readonly sessionId: string;

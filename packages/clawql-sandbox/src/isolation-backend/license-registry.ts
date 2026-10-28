@@ -49,7 +49,8 @@ export const ISOLATION_BACKEND_PINS: readonly IsolationBackendPin[] = [
     repository: "https://github.com/firecracker-microvm/firecracker",
     pinnedVersion: "v1.17.0",
     licenseSpdx: "Apache-2.0",
-    licenseNotes: "Apache-2.0; some Crosvm-derived code BSD-3-Clause (also OSI). Confirmed at tag 2026-10-28.",
+    licenseNotes:
+      "Apache-2.0; some Crosvm-derived code BSD-3-Clause (also OSI). Confirmed at tag 2026-10-28.",
     hostPlatforms: ["linux"],
     preferredTiers: ["microvm"],
     snapshotSpikePriority: 1,
@@ -86,7 +87,8 @@ export const ISOLATION_BACKEND_PINS: readonly IsolationBackendPin[] = [
     repository: "https://github.com/lima-vm/lima",
     pinnedVersion: "v2.2.1",
     licenseSpdx: "Apache-2.0",
-    licenseNotes: "Apache-2.0; CNCF incubating. Full Linux VMs via Virtualization.framework. Confirmed at tag 2026-10-28.",
+    licenseNotes:
+      "Apache-2.0; CNCF incubating. Full Linux VMs via Virtualization.framework. Confirmed at tag 2026-10-28.",
     hostPlatforms: ["darwin", "linux"],
     preferredTiers: ["full-vm"],
     snapshotSpikePriority: null,
@@ -113,7 +115,10 @@ export function listIsolationBackendPinsEffect(): Effect.Effect<readonly Isolati
 
 export function getIsolationBackendPinEffect(
   id: IsolationBackendId
-): Effect.Effect<IsolationBackendPin, { readonly _tag: "UnknownIsolationBackend"; readonly id: string }> {
+): Effect.Effect<
+  IsolationBackendPin,
+  { readonly _tag: "UnknownIsolationBackend"; readonly id: string }
+> {
   return Effect.gen(function* () {
     const pin = ISOLATION_BACKEND_PINS.find((p) => p.id === id);
     if (!pin) {
@@ -147,13 +152,11 @@ export function auditIsolationBackendLicensesEffect(
 ): Effect.Effect<IsolationLicenseAuditResult> {
   return Effect.sync(() => {
     const allow = new Set<string>(ISOLATION_OSI_LICENSE_ALLOWLIST);
-    const violations = ISOLATION_BACKEND_PINS.filter((p) => !allow.has(p.licenseSpdx)).map(
-      (p) => ({
-        id: p.id,
-        licenseSpdx: p.licenseSpdx,
-        reason: `license ${p.licenseSpdx} not in OSI allowlist`,
-      })
-    );
+    const violations = ISOLATION_BACKEND_PINS.filter((p) => !allow.has(p.licenseSpdx)).map((p) => ({
+      id: p.id,
+      licenseSpdx: p.licenseSpdx,
+      reason: `license ${p.licenseSpdx} not in OSI allowlist`,
+    }));
     return {
       ok: violations.length === 0,
       checkedAt,
@@ -164,8 +167,6 @@ export function auditIsolationBackendLicensesEffect(
   });
 }
 
-export function auditIsolationBackendLicenses(
-  checkedAt?: string
-): IsolationLicenseAuditResult {
+export function auditIsolationBackendLicenses(checkedAt?: string): IsolationLicenseAuditResult {
   return Effect.runSync(auditIsolationBackendLicensesEffect(checkedAt));
 }

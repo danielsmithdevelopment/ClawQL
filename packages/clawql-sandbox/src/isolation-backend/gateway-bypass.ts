@@ -7,10 +7,7 @@
 import { Effect } from "effect";
 import { IsolationBackendError, IsolationBackendService } from "./interface.js";
 import { DEFAULT_GATEWAY_PROBES } from "./conformance.js";
-import type {
-  IsolationEscapeProbe,
-  IsolationEscapeProbeResult,
-} from "./types.js";
+import type { IsolationEscapeProbe, IsolationEscapeProbeResult } from "./types.js";
 
 export type GatewayBypassReport = {
   readonly sessionId: string;

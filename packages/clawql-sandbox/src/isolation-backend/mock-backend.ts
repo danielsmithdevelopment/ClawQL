@@ -53,7 +53,8 @@ function capabilitiesFor(backend: IsolationBackendId): IsolationBackendCapabilit
             : ["container", "microvm", "full-vm", "gvisor"];
   return {
     backend,
-    supportsSnapshot: backend === "firecracker" || backend === "apple-container" || backend === "lima",
+    supportsSnapshot:
+      backend === "firecracker" || backend === "apple-container" || backend === "lima",
     supportsFork: backend === "firecracker" || backend === "apple-container" || backend === "lima",
     supportsTiers: tiers,
     publishGradeNumbersAllowed: pin.publishGradeOnDedicatedLinux,

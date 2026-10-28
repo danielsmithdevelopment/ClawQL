@@ -17,10 +17,10 @@
 
 ## Arms
 
-| Arm                         | Backend      |
-| --------------------------- | ------------ |
-| C1 conformance              | each pin     |
-| C2 N=50 checkpoint forks    | Firecracker  |
-| C3 replay spike             | with O4      |
-| C4 gateway bypass           | Firecracker  |
-| O4 snapshot/restore timing  | Firecracker → Apple VZ |
+| Arm                        | Backend                |
+| -------------------------- | ---------------------- |
+| C1 conformance             | each pin               |
+| C2 N=50 checkpoint forks   | Firecracker            |
+| C3 replay spike            | with O4                |
+| C4 gateway bypass          | Firecracker            |
+| O4 snapshot/restore timing | Firecracker → Apple VZ |

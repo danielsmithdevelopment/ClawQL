@@ -6,12 +6,12 @@ Cua Spaces was evaluated and **rejected** (FSL competing-use risk for a commerci
 
 ## Matrix
 
-| Backend            | Pin (check LICENSE at tag) | Host   | Tier      | Snapshot spike |
-| ------------------ | -------------------------- | ------ | --------- | -------------- |
-| Firecracker        | `v1.17.0` Apache-2.0              | Linux  | microVM   | **Primary**    |
-| gVisor             | `release-20261026.0` Apache-2.0   | Linux  | gvisor    | —              |
-| Apple container    | `0.1.0` Apache-2.0                | Darwin | container | Secondary (VZ) |
-| Lima               | `v2.2.1` Apache-2.0               | Darwin | full-vm   | —              |
+| Backend         | Pin (check LICENSE at tag)      | Host   | Tier      | Snapshot spike |
+| --------------- | ------------------------------- | ------ | --------- | -------------- |
+| Firecracker     | `v1.17.0` Apache-2.0            | Linux  | microVM   | **Primary**    |
+| gVisor          | `release-20261026.0` Apache-2.0 | Linux  | gvisor    | —              |
+| Apple container | `0.1.0` Apache-2.0              | Darwin | container | Secondary (VZ) |
+| Lima            | `v2.2.1` Apache-2.0             | Darwin | full-vm   | —              |
 
 **Avoid:** Tart; Cua.
 
@@ -29,9 +29,7 @@ import {
 } from "clawql-sandbox";
 
 await Effect.runPromise(
-  runIsolationConformanceEffect("microvm").pipe(
-    Effect.provide(createMockFirecrackerLayer())
-  )
+  runIsolationConformanceEffect("microvm").pipe(Effect.provide(createMockFirecrackerLayer()))
 );
 ```
 

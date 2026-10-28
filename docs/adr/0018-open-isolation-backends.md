@@ -17,12 +17,12 @@ package: "packages/clawql-sandbox/ (isolation-backend/)"
 
 ClawQL keeps a shared **`IsolationBackendService`** and implements **fully open-source** backends only:
 
-| Host    | Backend                                      | License    | Role                                      |
-| ------- | -------------------------------------------- | ---------- | ----------------------------------------- |
-| Linux   | **Firecracker**                              | Apache-2.0 | microVM + **primary snapshot/replay spike** |
-| Linux   | **gVisor**                                   | Apache-2.0 | sandboxed-kernel middle tier              |
-| macOS   | **Apple `container` / Containerization**     | Apache-2.0 | Linux guest per lightweight VM on Apple Silicon |
-| macOS   | **Lima** (CNCF)                              | Apache-2.0 | full Linux VM tier                        |
+| Host  | Backend                                  | License    | Role                                            |
+| ----- | ---------------------------------------- | ---------- | ----------------------------------------------- |
+| Linux | **Firecracker**                          | Apache-2.0 | microVM + **primary snapshot/replay spike**     |
+| Linux | **gVisor**                               | Apache-2.0 | sandboxed-kernel middle tier                    |
+| macOS | **Apple `container` / Containerization** | Apache-2.0 | Linux guest per lightweight VM on Apple Silicon |
+| macOS | **Lima** (CNCF)                          | Apache-2.0 | full Linux VM tier                              |
 
 **Avoid:** Cua Spaces (FSL-1.1-MIT competing-use ambiguity for sold runners); **Tart** (source-available with commercial restrictions).
 
@@ -44,12 +44,12 @@ Agent Substrate (ADR 0011: Cloud Hypervisor / gVisor) remains the primary **in-c
 
 ## 3. ClawQL scope (C1–C4)
 
-| ID  | Deliverable                                                    | Done when                                         |
-| --- | -------------------------------------------------------------- | ------------------------------------------------- |
-| C1  | Same interface; mocks for Firecracker / gVisor / Apple / Lima  | Conformance green per backend                     |
-| C2  | Fork durability pilot trials (N=50) from one checkpoint        | Arms share `parentSnapshotId`                     |
-| C3  | Record-and-replay by sequence + digest; mismatch → unknown      | No repeated write; divergent caught               |
-| C4  | Gateway no-bypass probes                                       | Every probe blocked or proxied                    |
+| ID  | Deliverable                                                   | Done when                           |
+| --- | ------------------------------------------------------------- | ----------------------------------- |
+| C1  | Same interface; mocks for Firecracker / gVisor / Apple / Lima | Conformance green per backend       |
+| C2  | Fork durability pilot trials (N=50) from one checkpoint       | Arms share `parentSnapshotId`       |
+| C3  | Record-and-replay by sequence + digest; mismatch → unknown    | No repeated write; divergent caught |
+| C4  | Gateway no-bypass probes                                      | Every probe blocked or proxied      |
 
 **Out of scope here:** governance / injection / AgentDojo / token boards. Ontologiql owns O2 (enforcement + escape) and O3 (costs) unchanged.
 

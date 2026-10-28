@@ -13,14 +13,8 @@ import {
   createMockGvisorLayer,
   createMockLimaLayer,
 } from "./mock-backend.js";
-import {
-  assertReplaySpikeDoneEffect,
-  createCallRecordReplayLayer,
-} from "./record-replay.js";
-import {
-  createTrialCheckpointLayer,
-  forkPilotTrialsEffect,
-} from "./trial-checkpoint.js";
+import { assertReplaySpikeDoneEffect, createCallRecordReplayLayer } from "./record-replay.js";
+import { createTrialCheckpointLayer, forkPilotTrialsEffect } from "./trial-checkpoint.js";
 import { assertNoGatewayBypassEffect } from "./gateway-bypass.js";
 
 describe("isolation backend license allowlist", () => {

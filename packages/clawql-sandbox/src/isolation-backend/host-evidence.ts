@@ -35,9 +35,7 @@ export function collectIsolationHostEvidenceEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<IsolationHostEvidence> {
   return Effect.sync(() => {
-    const pin = getIsolationBackendPin(
-      backendId === "mock" ? "firecracker" : backendId
-    );
+    const pin = getIsolationBackendPin(backendId === "mock" ? "firecracker" : backendId);
     const overrideRelease = env.CLAWQL_ISOLATION_HOST_OS_RELEASE?.trim();
     return {
       recordedAt: new Date().toISOString(),
@@ -65,9 +63,7 @@ export function collectIsolationHostEvidence(
 }
 
 export function evidencePayloadDigestEffect(payload: unknown): Effect.Effect<string> {
-  return Effect.sync(() =>
-    createHash("sha256").update(JSON.stringify(payload)).digest("hex")
-  );
+  return Effect.sync(() => createHash("sha256").update(JSON.stringify(payload)).digest("hex"));
 }
 
 export function evidencePayloadDigest(payload: unknown): string {
