@@ -6,6 +6,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
+import { clawqlCheckThenDecideRaceArm } from "./check-then-decide-race-arm.js";
 import {
   clawqlAlwaysRetryArm,
   clawqlCheckThenDecideArm,
@@ -27,6 +28,7 @@ const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
   clawqlAlwaysRetryArm,
   clawqlCheckThenDecideArm,
+  clawqlCheckThenDecideRaceArm,
   naiveRetryArm,
   programCelldArm,
   piDurableNeverRetryArm,

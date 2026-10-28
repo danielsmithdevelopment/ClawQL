@@ -28,7 +28,7 @@ import { createModels } from "@earendil-works/pi-ai/models";
 import { createRegistry, defineExtension, defineTool, Harness } from "@earendil-works/pi-durable";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { Effect } from "effect";
-import { classifyOutcome, summarizeMode } from "./metrics.js";
+import { apiCapabilityFor, classifyOutcome, summarizeMode } from "./metrics.js";
 import type {
   AgentPolicy,
   ArmId,
@@ -376,15 +376,20 @@ function makeGolemLiveArm(): DurabilityArm {
             for (let i = 0; i < n; i++) {
               trials.push(await oneGolemTrial({ i, upstreamMode, env: process.env }));
             }
-            modes.push(summarizeMode(upstreamMode, trials));
+            modes.push(
+              summarizeMode(upstreamMode, trials, {
+                apiCapability: apiCapabilityFor({ upstreamMode }),
+              })
+            );
           }
           return {
             armId: "golem",
             status: "measured",
+            peerFraming: "out_of_the_box",
             config:
               "golem-cli 1.6.2; @golemcloud/golem-ts-sdk@2.0.2; WriteAgent + simulate-crash mid-hold",
             honesty:
-              "Live local Golem server (crash during outside write): WriteAgent fetch mid-flight + `golem agent simulate-crash`. Recovery re-sends outbound HTTP; idempotent upstream masks duplicates.",
+              "Out of the box: live Golem WriteAgent + simulate-crash mid-hold. Runtime re-sends outbound HTTP. With idempotency_keys → 0 dups; with neither → N dups. A developer could add lookup-by-reference reconciliation by hand (ask John what config they'd use) — this row is the stock path.",
             modes,
           };
         },
@@ -684,15 +689,20 @@ function makePiLiveArm(agentPolicy: PiAgentPolicy, armId: ArmId): DurabilityArm 
                   })
                 );
               }
-              modes.push(summarizeMode(upstreamMode, trials));
+              modes.push(
+                summarizeMode(upstreamMode, trials, {
+                  apiCapability: apiCapabilityFor({ upstreamMode }),
+                })
+              );
             }
             return {
               armId,
               status: "measured",
               agentPolicy: "real-model",
+              peerFraming: "out_of_the_box",
               config: `@earendil-works/pi-durable@1.4.0; replay=unsafe; live ${model.provider}/${model.modelId}`,
               honesty:
-                "Live Pi Durable + real model after interrupt. Measures whether the model re-issues peer.charge when told the prior tool was interrupted. Ask Earendil whether this is the setup they want for outreach.",
+                "Out of the box: live Pi Durable + real model after interrupt. Measures whether the model re-issues peer.charge when told the prior tool was interrupted. Ask Earendil whether this is the setup they want.",
               modes,
             };
           },
@@ -719,16 +729,21 @@ function makePiLiveArm(agentPolicy: PiAgentPolicy, armId: ArmId): DurabilityArm 
             for (let i = 0; i < n; i++) {
               trials.push(await onePiTrial({ i, upstreamMode, agentPolicy }));
             }
-            modes.push(summarizeMode(upstreamMode, trials));
+            modes.push(
+              summarizeMode(upstreamMode, trials, {
+                apiCapability: apiCapabilityFor({ upstreamMode }),
+              })
+            );
           }
           const honesty =
             agentPolicy === "never-retry"
-              ? "Pi Durable + faux model that never retries after interrupt. Tool peer.charge replay=unsafe; SIGKILL mid-execute; resume reports interrupted and does not re-run. Zero duplicates — but interrupted/unknown = N and completed-exactly-once = 0. Safety here is entirely the model's choice not to retry."
-              : "Pi Durable + faux model that always retries after interrupt (worst case). Expect non_idempotent → N duplicates; idempotent → 0 duplicates via upstream key. Shows that Pi's zero-dup never-retry arm depends on the model, not a structural gate.";
+              ? "Out of the box: Pi Durable + faux model that never retries after interrupt (replay=unsafe). Zero duplicates — but interrupted/unknown = N and completed-exactly-once = 0. Safety is the model's choice not to retry; no structural lookup/reconciliation."
+              : "Out of the box: Pi Durable + faux model that always retries after interrupt. API type neither → N duplicates; idempotency_keys → 0 dups via upstream key. Shows Pi's zero-dup never-retry arm depends on the model, not a structural gate.";
           return {
             armId,
             status: "measured",
             agentPolicy,
+            peerFraming: "out_of_the_box",
             config: `@earendil-works/pi-durable@1.4.0; tool peer.charge replay=unsafe; faux model agentPolicy=${agentPolicy}; SIGKILL mid-execute`,
             honesty,
             modes,
@@ -753,6 +768,7 @@ function makeComboArm(id: "golem+clawql" | "pi-durable+clawql"): DurabilityArm {
             armId: id,
             status: "measured",
             agentPolicy: "always-retry",
+            peerFraming: "combination",
             honesty: `${id}: ClawQL tool-gate side of the combination under always-retry (approval consumed → refuse). Peer→MCP live bridge still open; this measures the structural refusal that closes non-idempotent retries.`,
             modes: base.modes,
           };

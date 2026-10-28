@@ -96,10 +96,18 @@ export type ProgramHost = {
    * Exact-match lookup by a reference attached to the original write
    * (`clientReference` / `chargeReference` / stable program id). Used only when
    * `resolveRisk.lookupByReferenceCapable` is true.
+   *
+   * `not_found.definitive` must be true **only** when the original request can no
+   * longer take effect (deadline passed, or the API guarantees the lookup covers
+   * every earlier request). Early "not found" while a request may still be in
+   * flight must stay non-definitive — the runner then records `outcome_unknown`
+   * and never safe-resends.
    */
   readonly verifyByReference?: (input: {
     readonly operationId: string;
     readonly reference: string;
+    /** ISO timestamp when the in-flight intent was journaled. */
+    readonly intentStartedAt: string;
   }) => Effect.Effect<
     | { readonly status: "found"; readonly preview?: string }
     | { readonly status: "not_found"; readonly definitive: boolean }

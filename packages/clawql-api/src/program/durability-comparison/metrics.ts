@@ -2,7 +2,7 @@
  * Shared trial / mode aggregation for the crash-during-outside-write board.
  */
 
-import type { ArmModeResult, ComparisonTrial, UpstreamMode } from "./types.js";
+import type { ApiCapability, ArmModeResult, ComparisonTrial, UpstreamMode } from "./types.js";
 
 export function classifyOutcome(input: {
   readonly uniqueWriteEffects: number;
@@ -41,7 +41,10 @@ export function classifyOutcome(input: {
 export function summarizeMode(
   upstreamMode: UpstreamMode,
   trials: readonly ComparisonTrial[],
-  requireZeroDuplicates = false
+  opts: {
+    readonly requireZeroDuplicates?: boolean;
+    readonly apiCapability: ApiCapability;
+  }
 ): ArmModeResult {
   const n = trials.length;
   const duplicates = trials.reduce((s, t) => s + t.duplicates, 0);
@@ -52,9 +55,10 @@ export function summarizeMode(
   const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
   const trialsOk = trials.filter((t) => t.ok).length;
   const trialsFailed = n - trialsOk;
-  const harnessValid = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
+  const harnessValid = trialsFailed === 0 && (!opts.requireZeroDuplicates || duplicates === 0);
   return {
     upstreamMode,
+    apiCapability: opts.apiCapability,
     n,
     duplicates,
     interruptedOrUnknown,
@@ -67,4 +71,16 @@ export function summarizeMode(
     harnessValid,
     trials: n <= 100 ? trials : trials.filter((t) => !t.ok).slice(0, 20),
   };
+}
+
+/** Map upstream mode (+ lookup flags) to the labeled API capability. */
+export function apiCapabilityFor(input: {
+  readonly upstreamMode: UpstreamMode;
+  readonly lookupByReference?: boolean;
+  readonly lookupRace?: boolean;
+}): ApiCapability {
+  if (input.lookupRace) return "lookup_race";
+  if (input.upstreamMode === "idempotent") return "idempotency_keys";
+  if (input.lookupByReference) return "lookup_by_reference";
+  return "neither";
 }

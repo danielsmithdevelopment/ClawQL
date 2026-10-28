@@ -67,6 +67,8 @@ type HostOptions = {
   readonly lookupByReference?: boolean;
   /** References already known to have landed (exact match). */
   readonly knownReferences?: ReadonlyMap<string, string>;
+  /** When true, not_found is definitive (safe resend allowed). Default false. */
+  readonly notFoundDefinitive?: boolean;
 };
 
 type RecordingHost = {
@@ -116,7 +118,11 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
                   preview: JSON.stringify({ ok: true, effectId: known }),
                 };
               }
-              return { status: "not_found" as const, definitive: true };
+              // Race-safe: not_found is non-definitive unless the test opts in.
+              return {
+                status: "not_found" as const,
+                definitive: options.notFoundDefinitive === true,
+              };
             })
         : undefined,
     replayed: (call) =>
@@ -712,6 +718,42 @@ describe("durable programs: real process kill", () => {
     expect(resumed.diagnostics.durable).toMatchObject({
       status: "completed",
       outcomeUnknownCalls: 0,
+    });
+  });
+
+  it("check-then-decide: early not_found (non-definitive) stays outcome_unknown — no safe resend", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: WRITE_PLAN_OPS.map((operationId, i) => ({
+        tool: "execute",
+        operationId,
+        args: {
+          page: i + 1,
+          ...(operationId === "owners.create" ? { clientReference: "ref-inflight" } : {}),
+        },
+      })),
+    });
+    const slow = recordingHost({
+      writes: ["owners.create"],
+      delayMs: { "owners.create": 10_000 },
+    });
+    await run(dir, { source, programId: ID, timeoutMs: 100 }, slow.host);
+
+    const again = recordingHost({
+      writes: ["owners.create"],
+      lookupByReference: true,
+      // Empty known + notFoundDefinitive false (default) → original may still land.
+      knownReferences: new Map(),
+    });
+    const resumed = await resume(dir, again.host);
+    expect(again.executed).toEqual([]);
+    expect(resumed.ok).toBe(false);
+    expect(resumed.calls[2]).toMatchObject({
+      operationId: "owners.create",
+      ok: false,
+      status: "outcome_unknown",
     });
   });
 });

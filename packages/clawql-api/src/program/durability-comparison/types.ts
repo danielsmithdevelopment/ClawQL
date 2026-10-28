@@ -9,6 +9,12 @@ import { Effect } from "effect";
 export type UpstreamMode = "idempotent" | "non_idempotent";
 
 /**
+ * What the remote API offers for recovering an in-flight write.
+ * Label every board row with exactly one of these — the condition the numbers depend on.
+ */
+export type ApiCapability = "idempotency_keys" | "lookup_by_reference" | "neither" | "lookup_race"; // lookup capable, but original may still be in flight (race probe)
+
+/**
  * How the agent behaves after an interrupted / unknown outside write.
  * - structural: ClawQL gate — retry refused regardless of model intent
  * - never-retry / always-retry: scripted faux agent
@@ -16,10 +22,14 @@ export type UpstreamMode = "idempotent" | "non_idempotent";
  */
 export type AgentPolicy = "structural" | "never-retry" | "always-retry" | "real-model";
 
+/** Peer framing: measured out of the box, not a custom reconciliation layer. */
+export type PeerFraming = "out_of_the_box" | "clawql_structural" | "combination";
+
 export type ArmId =
   | "clawql-file-journal"
   | "clawql-always-retry"
   | "clawql-check-then-decide"
+  | "clawql-check-then-decide-race"
   | "clawql-program-celld"
   | "naive-retry"
   | "pi-durable-never-retry"
@@ -29,6 +39,29 @@ export type ArmId =
   | "golem"
   | "pi-durable+clawql"
   | "golem+clawql";
+
+/** Board trial event for TLA+ trace checking (optional export). */
+export type TrialTraceEvent = {
+  readonly t: string;
+  readonly kind:
+    | "intent_journaled"
+    | "request_sent"
+    | "request_paused"
+    | "request_applied"
+    | "request_released"
+    | "crashed"
+    | "resumed"
+    | "lookup"
+    | "reconciled"
+    | "outcome_unknown"
+    | "safe_resend"
+    | "retry_refused"
+    | "agent_retry";
+  readonly reference?: string;
+  readonly definitive?: boolean;
+  readonly found?: boolean;
+  readonly detail?: string;
+};
 
 export type ArmRunStatus = "measured" | "pilot_standin" | "pending_invite" | "skipped" | "failed";
 
@@ -57,10 +90,14 @@ export type ComparisonTrial = {
   readonly uniqueWriteEffects: number;
   readonly childSignal: string | null;
   readonly detail: string;
+  /** Optional event log for TLA+ trace conformance (DURABILITY_COMPARISON_TRACE=1). */
+  readonly events?: readonly TrialTraceEvent[];
 };
 
 export type ArmModeResult = {
   readonly upstreamMode: UpstreamMode;
+  /** Which remote-API recovery condition this mode exercises. */
+  readonly apiCapability: ApiCapability;
   readonly n: number;
   readonly duplicates: number;
   readonly interruptedOrUnknown: number;
@@ -86,6 +123,8 @@ export type ArmResult = {
   /** Pinned versions / config string for maintainer review. */
   readonly config?: string;
   readonly agentPolicy?: AgentPolicy;
+  /** Peers: measured out of the box (no custom reconciliation). */
+  readonly peerFraming?: PeerFraming;
   readonly modes: readonly ArmModeResult[];
 };
 

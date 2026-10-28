@@ -591,7 +591,11 @@ function runAttemptEffect(
             ) {
               const reference = writeClientReference(call, programId, index);
               const verified = yield* durableHost
-                .verifyByReference({ operationId: call.operationId, reference })
+                .verifyByReference({
+                  operationId: call.operationId,
+                  reference,
+                  intentStartedAt: intent.startedAt,
+                })
                 .pipe(
                   Effect.mapError(
                     (e) =>

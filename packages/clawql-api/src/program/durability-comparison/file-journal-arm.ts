@@ -15,7 +15,7 @@ import { Effect } from "effect";
 import { resumeProgramEffect } from "../durable-runner.js";
 import { programJournalFileLayer } from "../program-journal.js";
 import type { ProgramHost } from "../program-runner.js";
-import { classifyOutcome, summarizeMode } from "./metrics.js";
+import { apiCapabilityFor, classifyOutcome, summarizeMode } from "./metrics.js";
 import type {
   AgentPolicy,
   ArmModeResult,
@@ -81,6 +81,11 @@ function recordingHost(opts: {
   readonly refuseWrites?: boolean;
   /** Advertise + implement check-then-decide lookup. */
   readonly lookupByReference?: boolean;
+  /**
+   * When true, not_found is treated as definitive (original can no longer land).
+   * Default false — early not_found must stay unknown (race-safe).
+   */
+  readonly notFoundDefinitive?: boolean;
 }): {
   host: ProgramHost;
   executedWrites: string[];
@@ -173,8 +178,12 @@ function recordingHost(opts: {
                   preview: JSON.stringify({ ok: true, effectId, reference: input.reference }),
                 };
               }
-              // Board mock: after hold+kill the original can no longer land.
-              return { status: "not_found" as const, definitive: true };
+              // Race-safe default: not_found is non-definitive unless the board
+              // explicitly asserts the original can no longer take effect.
+              return {
+                status: "not_found" as const,
+                definitive: opts.notFoundDefinitive === true,
+              };
             })
         : undefined,
   };
@@ -385,13 +394,16 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               trials.push(await oneTrial({ i, upstreamMode, resumePolicy }));
             }
             modes.push(
-              summarizeMode(
-                upstreamMode,
-                trials,
-                resumePolicy === "clawql" ||
+              summarizeMode(upstreamMode, trials, {
+                requireZeroDuplicates:
+                  resumePolicy === "clawql" ||
                   resumePolicy === "clawql-always-retry" ||
-                  resumePolicy === "clawql-check-then-decide"
-              )
+                  resumePolicy === "clawql-check-then-decide",
+                apiCapability: apiCapabilityFor({
+                  upstreamMode,
+                  lookupByReference: resumePolicy === "clawql-check-then-decide",
+                }),
+              })
             );
           }
           if (resumePolicy === "clawql") {
@@ -399,8 +411,9 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               armId: id,
               status: "measured",
               agentPolicy,
+              peerFraming: "clawql_structural",
               honesty:
-                "ClawQL structural (crash during outside write): non_idempotent → interrupted/unknown, never re-send. idempotent → keyed resume (0 dups, completed exactly once). Agent policy does not matter for re-send — the gate already consumed the approval.",
+                "ClawQL structural (crash during outside write). API types: idempotency_keys → 0/0/N via keyed resume; neither (no keys, no lookup) → 0/N/0 — the honest floor. Agent policy does not matter for re-send — the gate already consumed the approval.",
               modes,
             };
           }
@@ -409,8 +422,9 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               armId: id,
               status: "measured",
               agentPolicy,
+              peerFraming: "clawql_structural",
               honesty:
-                "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). Expect 0 duplicates / interrupted-or-unknown = N / completed-exactly-once = 0 on non_idempotent — safe but unfinished until check-then-decide or keys.",
+                "ClawQL + model always retries: after resume the agent re-issues execute; structural gate refuses (mandate_consumed). On API type neither: expect 0/N/0 — safe but unfinished until check-then-decide or keys.",
               modes,
             };
           }
@@ -419,8 +433,9 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
               armId: id,
               status: "measured",
               agentPolicy,
+              peerFraming: "clawql_structural",
               honesty:
-                "ClawQL check-then-decide on a non-idempotent mock that supports lookup-by-reference: after crash, exact match on clientReference finds the charge → reconciled (0 dups, 0 unknowns, completed exactly once). Turns “safe” into “done.” Pi has no equivalent; Golem’s only mechanism is the key this server ignores.",
+                "ClawQL check-then-decide (API type lookup_by_reference): after crash, exact match on clientReference finds the charge → 0/0/N. Peers out of the box have no equivalent; a Golem developer could write the same reconciliation by hand — ask John what config they'd use. not_found is never treated as definitive while the original may still land (see clawql-check-then-decide-race).",
               modes,
             };
           }
@@ -428,8 +443,9 @@ function makeFileJournalArm(resumePolicy: ResumePolicy): DurabilityArm {
             armId: id,
             status: "measured",
             agentPolicy,
+            peerFraming: "clawql_structural",
             honesty:
-              "Reference arm: forces write re-send after kill (no gate). Idempotent upstream can mask duplicates; non_idempotent multiplies effects. Not ClawQL product behavior.",
+              "Reference arm: forces write re-send after kill (no gate). Idempotent upstream can mask duplicates; neither multiplies effects. Not ClawQL product behavior.",
             modes,
           };
         },
