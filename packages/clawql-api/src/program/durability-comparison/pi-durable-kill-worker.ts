@@ -61,10 +61,9 @@ registry.install(ext);
 
 const faux = fauxProvider({ models: [{ id: "peer-test", name: "peer-test" }] });
 faux.setResponses([
-  fauxAssistantMessage(
-    [fauxToolCall("peer.charge", { effectsPath, signalPath, holdMs })],
-    { stopReason: "toolUse" }
-  ),
+  fauxAssistantMessage([fauxToolCall("peer.charge", { effectsPath, signalPath, holdMs })], {
+    stopReason: "toolUse",
+  }),
   fauxAssistantMessage([fauxText("done")], { stopReason: "stop" }),
 ]);
 

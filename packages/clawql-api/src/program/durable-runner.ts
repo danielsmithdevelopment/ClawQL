@@ -493,9 +493,9 @@ function runAttemptEffect(
             ) {
               return yield* diverged(index, "journaled intent does not match the plan call");
             }
-            const risk = yield* durableHost.resolveRisk(call.operationId).pipe(
-              Effect.catch(() => Effect.succeed({ found: false as const }))
-            );
+            const risk = yield* durableHost
+              .resolveRisk(call.operationId)
+              .pipe(Effect.catch(() => Effect.succeed({ found: false as const })));
             if (risk.found && risk.idempotencyCapable === true) {
               // Keyed resume: re-drive once with the same args (plan carries the key).
               const key =

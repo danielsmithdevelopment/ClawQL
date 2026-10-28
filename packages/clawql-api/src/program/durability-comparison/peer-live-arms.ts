@@ -12,19 +12,9 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import {
-  Type,
-  fauxAssistantMessage,
-  fauxProvider,
-  fauxText,
-} from "@earendil-works/pi-ai";
+import { Type, fauxAssistantMessage, fauxProvider, fauxText } from "@earendil-works/pi-ai";
 import { createModels } from "@earendil-works/pi-ai/models";
-import {
-  createRegistry,
-  defineExtension,
-  defineTool,
-  Harness,
-} from "@earendil-works/pi-durable";
+import { createRegistry, defineExtension, defineTool, Harness } from "@earendil-works/pi-durable";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { Effect } from "effect";
 import type {
@@ -348,7 +338,8 @@ function makeGolemLiveArm(): DurabilityArm {
           return {
             armId: "golem",
             status: "measured",
-            config: "golem-cli 1.6.2; @golemcloud/golem-ts-sdk@2.0.2; WriteAgent + simulate-crash mid-hold",
+            config:
+              "golem-cli 1.6.2; @golemcloud/golem-ts-sdk@2.0.2; WriteAgent + simulate-crash mid-hold",
             honesty:
               "Live local Golem server (crash during outside write): WriteAgent fetch mid-flight + `golem agent simulate-crash`. Recovery re-sends outbound HTTP; idempotent upstream masks duplicates.",
             modes,
@@ -443,7 +434,9 @@ async function onePiTrial(input: {
   const registry = createRegistry();
   registry.install(ext);
   const faux = fauxProvider({ models: [{ id: "peer-test", name: "peer-test" }] });
-  faux.setResponses([fauxAssistantMessage([fauxText("done after interrupt")], { stopReason: "stop" })]);
+  faux.setResponses([
+    fauxAssistantMessage([fauxText("done after interrupt")], { stopReason: "stop" }),
+  ]);
   const models = createModels();
   models.setProvider(faux.provider);
   const harness = await Harness.open(
@@ -463,9 +456,7 @@ async function onePiTrial(input: {
   const settleDeadline = Date.now() + 10_000;
   while (Date.now() < settleDeadline) {
     const snap = await harness.inspect(context);
-    const live = snap.tasks.some(
-      (t) => t.state.kind === "ready" || t.state.kind === "running"
-    );
+    const live = snap.tasks.some((t) => t.state.kind === "ready" || t.state.kind === "running");
     if (!live) break;
     await new Promise((r) => setTimeout(r, 50));
   }

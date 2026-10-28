@@ -114,8 +114,7 @@ function recordingHost(opts: {
           method: operationId === WRITE_OP ? "POST" : "GET",
           specLabel: "pets",
         },
-        idempotencyCapable:
-          opts.upstreamMode === "idempotent" && operationId === WRITE_OP,
+        idempotencyCapable: opts.upstreamMode === "idempotent" && operationId === WRITE_OP,
       }),
   };
   return { host, executedWrites, uniqueEffects };
