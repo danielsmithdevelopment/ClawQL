@@ -517,8 +517,10 @@ function makePiLiveArm(): DurabilityArm {
           return {
             armId: "pi-durable",
             status: "measured",
+            config:
+              "@earendil-works/pi-durable@1.4.0; tool peer.charge replay=unsafe; faux model (not a live LLM); SIGKILL mid-execute",
             honesty:
-              "Live @earendil-works/pi-durable@1.4.0: tool peer.charge replay=unsafe; faux model issues one call; SIGKILL mid-execute; resume reports interrupted and does not re-run. No live LLM retry in the loop. Upstream mode does not change this arm (Pi's safety is the no-rerun rule).",
+              "Live @earendil-works/pi-durable@1.4.0 (crash during outside write): tool peer.charge replay=unsafe; faux model issues one call; SIGKILL mid-execute; resume reports interrupted and does not re-run. No live LLM retry in the loop. Upstream mode does not change this arm (Pi's safety is the no-rerun rule).",
             modes,
           };
         },
