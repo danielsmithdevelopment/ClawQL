@@ -238,7 +238,10 @@ function loadIdIndexFromBagDir(args: {
     });
     rl.on("close", () => {
       if (settled) return;
-      if (loaded > 0 && (loaded < nextCheckpoint - checkpointEvery || loaded % checkpointEvery !== 0)) {
+      if (
+        loaded > 0 &&
+        (loaded < nextCheckpoint - checkpointEvery || loaded % checkpointEvery !== 0)
+      ) {
         const rssKiB = readRssKiB();
         onCheckpoint(loaded, rssKiB, rssKiB <= rssCeilingKiB);
         if (rssKiB > rssCeilingKiB) rssHit = true;
@@ -802,7 +805,8 @@ export function runFairDensityBoardEffect(
     };
 
     const sampleId = timedIds[0] ?? indexSampleIds[0] ?? "";
-    const samplePath = (sampleId && idIndex.get(sampleId)) || join(bagDir, "bag_00000000_deadbeef.json");
+    const samplePath =
+      (sampleId && idIndex.get(sampleId)) || join(bagDir, "bag_00000000_deadbeef.json");
     const estimatedIdIndexBytesPerAgent =
       Buffer.byteLength(sampleId, "utf8") +
       Buffer.byteLength(samplePath, "utf8") +
@@ -901,11 +905,12 @@ export function runFairDensityBoardEffect(
       systemId: "clawql-typescript",
       status: clawqlStatus,
       hostLabel,
-      honesty: limitHit && idIndexRetainedAtLimit
-        ? `ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded) with **wake-by-id Map retained** (${idIndex.size} entries = agentsAtLimit). Agents-at-limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Wake protocol: JIT warmup + ${wakeOrderRepetitions}× order alternation; headline = slower cold order (${wakeHeadlineOrder}). Provisional vs Ontologiql (different hosts): capacity may favor TS until Ontologiql trims its ~2 KiB/agent record; cold wakes roughly even (disk-bound); warm wakes favor Ontologiql (~10×). Ontologiql's case on this board: warm-wake speed + baseline process RSS — capacity only after trim. No cross-system win until shared-host remeasure.`
-        : !idIndexRetainedAtLimit
-          ? `ClawQL TypeScript — **methodology_pending**: limit run did not retain a wake-by-id index for every counted agent (idIndex=${idIndex.size}, agentsAtLimit=${agentsAtLimit}). Capacity claims without the index are not comparable to Ontologiql.`
-          : "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: no disk, RSS, or latency resource exhausted (id index retained). No cross-system win until shared-host remeasure.",
+      honesty:
+        limitHit && idIndexRetainedAtLimit
+          ? `ClawQL TypeScript fair parked-agent bags (file-backed JSON, offloaded) with **wake-by-id Map retained** (${idIndex.size} entries = agentsAtLimit). Agents-at-limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). Wake protocol: JIT warmup + ${wakeOrderRepetitions}× order alternation; headline = slower cold order (${wakeHeadlineOrder}). Provisional vs Ontologiql (different hosts): capacity may favor TS until Ontologiql trims its ~2 KiB/agent record; cold wakes roughly even (disk-bound); warm wakes favor Ontologiql (~10×). Ontologiql's case on this board: warm-wake speed + baseline process RSS — capacity only after trim. No cross-system win until shared-host remeasure.`
+          : !idIndexRetainedAtLimit
+            ? `ClawQL TypeScript — **methodology_pending**: limit run did not retain a wake-by-id index for every counted agent (idIndex=${idIndex.size}, agentsAtLimit=${agentsAtLimit}). Capacity claims without the index are not comparable to Ontologiql.`
+            : "ClawQL TypeScript fair parked-agent bags — **agents-at-limit still unknown**: no disk, RSS, or latency resource exhausted (id index retained). No cross-system win until shared-host remeasure.",
       boardColumns,
       activeDensityLab: null,
     };
