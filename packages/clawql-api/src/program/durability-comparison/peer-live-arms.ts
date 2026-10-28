@@ -13,12 +13,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
-import {
-  createRegistry,
-  defineExtension,
-  defineTask,
-  Harness,
-} from "@earendil-works/pi-durable";
+import { createRegistry, defineExtension, defineTask, Harness } from "@earendil-works/pi-durable";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { Effect } from "effect";
 import type {
@@ -140,11 +135,7 @@ function startLedger(port = 0): Promise<{
   });
 }
 
-async function waitForEffects(
-  base: string,
-  min: number,
-  timeoutMs: number
-): Promise<number> {
+async function waitForEffects(base: string, min: number, timeoutMs: number): Promise<number> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
@@ -413,7 +404,9 @@ async function onePiTrial(input: {
   });
 
   const context = BACKGROUND_CONTEXT;
-  const effectsBefore = JSON.parse(await readFile(effectsPath, "utf8").catch(() => "[]")) as string[];
+  const effectsBefore = JSON.parse(
+    await readFile(effectsPath, "utf8").catch(() => "[]")
+  ) as string[];
   const taskIdRaw = (await readFile(taskIdPath, "utf8").catch(() => "")).trim();
   const taskId = Number(taskIdRaw);
   const hasTaskId = Number.isFinite(taskId) && taskId > 0;
@@ -425,7 +418,9 @@ async function onePiTrial(input: {
     phases: {
       write: async (task, runtime, taskContext) => {
         const apply = async () => {
-          const list = JSON.parse(await readFile(effectsPath, "utf8").catch(() => "[]")) as string[];
+          const list = JSON.parse(
+            await readFile(effectsPath, "utf8").catch(() => "[]")
+          ) as string[];
           list.push(`effect-${list.length + 1}`);
           await writeFile(effectsPath, JSON.stringify(list), "utf8");
         };
@@ -444,7 +439,10 @@ async function onePiTrial(input: {
       },
     },
     abort: async (_task, runtime, taskContext) => {
-      await runtime.commit(() => ({ status: "terminal", outcome: { status: "aborted" } }), taskContext);
+      await runtime.commit(
+        () => ({ status: "terminal", outcome: { status: "aborted" } }),
+        taskContext
+      );
     },
   });
 
@@ -473,7 +471,9 @@ async function onePiTrial(input: {
   } else {
     await new Promise((r) => setTimeout(r, 1000));
   }
-  const effectsAfter = JSON.parse(await readFile(effectsPath, "utf8").catch(() => "[]")) as string[];
+  const effectsAfter = JSON.parse(
+    await readFile(effectsPath, "utf8").catch(() => "[]")
+  ) as string[];
   await harness.close(context);
   await rm(dir, { recursive: true, force: true }).catch(() => undefined);
 
@@ -481,9 +481,7 @@ async function onePiTrial(input: {
   const duplicates = Math.max(0, uniqueWriteEffects - 1);
   const ok =
     effectsBefore.length >= 1 &&
-    (input.upstreamMode === "idempotent"
-      ? uniqueWriteEffects === 1
-      : uniqueWriteEffects >= 2);
+    (input.upstreamMode === "idempotent" ? uniqueWriteEffects === 1 : uniqueWriteEffects >= 2);
 
   return {
     i: input.i,
@@ -545,8 +543,7 @@ function makeComboArm(id: "golem+clawql" | "pi-durable+clawql"): DurabilityArm {
           return {
             armId: id,
             status: "measured",
-            honesty:
-              `${id}: ClawQL tool-gate side of the combination (approval consumed → outcome_unknown, never re-send). Peer→MCP live bridge still open; this measures the ClawQL refusal that closes non-idempotent retries.`,
+            honesty: `${id}: ClawQL tool-gate side of the combination (approval consumed → outcome_unknown, never re-send). Peer→MCP live bridge still open; this measures the ClawQL refusal that closes non-idempotent retries.`,
             modes: base.modes,
           };
         },

@@ -96,22 +96,22 @@ See [STATUS — How do our numbers compare to Golem?](./STATUS.md#how-do-our-num
 
 ## Implementation status
 
-| Piece                                           | Status                                                                                                                    |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Dual columns + both upstream modes              | **Shipped** — `npm run benchmark:durability-comparison`                                                                   |
-| `clawql-file-journal` + `naive-retry` reference | **Measured** in CI                                                                                                        |
-| `clawql-program-celld`                          | Tier B/C harnesses (isolate + fleet scripts); skipped inside Node board                                                   |
+| Piece                                           | Status                                                                                                                                 |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Dual columns + both upstream modes              | **Shipped** — `npm run benchmark:durability-comparison`                                                                                |
+| `clawql-file-journal` + `naive-retry` reference | **Measured** in CI                                                                                                                     |
+| `clawql-program-celld`                          | Tier B/C harnesses (isolate + fleet scripts); skipped inside Node board                                                                |
 | Pi Durable / Golem (+ combinations)             | **Live peers** when `DURABILITY_COMPARISON_LIVE_PEERS=1`; otherwise `pending_invite`. Combinations still measure the ClawQL gate side. |
-| Evidence                                        | [`comparison/evidence.json`](./comparison/evidence.json) — does **not** overwrite Tier D                                  |
+| Evidence                                        | [`comparison/evidence.json`](./comparison/evidence.json) — does **not** overwrite Tier D                                               |
 
 ### Live peer semantics
 
-| Arm                 | Resume after mid-write kill                                                                 | Idempotent upstream                         | Non-idempotent upstream                |
-| ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------- |
-| `golem`             | Live `WriteAgent` fetch mid-flight + `golem agent simulate-crash` (outbound HTTP re-sent) | 1 unique effect (key honored)               | 2 unique effects (duplicate)           |
-| `pi-durable`        | Live SIGKILL mid-phase, reopen SQLite, resume phase from top                                | 1 effect (`runtime.memo`)                   | ≥2 effects (phase re-applies write)    |
-| `golem+clawql`      | ClawQL tool gate: approval consumed → refuse re-send                                        | 0 dups + unknown                            | 0 dups + unknown                       |
-| `pi-durable+clawql` | Same ClawQL gate                                                                            | 0 dups + unknown                            | 0 dups + unknown                       |
+| Arm                 | Resume after mid-write kill                                                               | Idempotent upstream           | Non-idempotent upstream             |
+| ------------------- | ----------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------- |
+| `golem`             | Live `WriteAgent` fetch mid-flight + `golem agent simulate-crash` (outbound HTTP re-sent) | 1 unique effect (key honored) | 2 unique effects (duplicate)        |
+| `pi-durable`        | Live SIGKILL mid-phase, reopen SQLite, resume phase from top                              | 1 effect (`runtime.memo`)     | ≥2 effects (phase re-applies write) |
+| `golem+clawql`      | ClawQL tool gate: approval consumed → refuse re-send                                      | 0 dups + unknown              | 0 dups + unknown                    |
+| `pi-durable+clawql` | Same ClawQL gate                                                                          | 0 dups + unknown              | 0 dups + unknown                    |
 
 Do **not** market these as a named public third-party board without maintainer invite. Live local measurement is real; public co-branding is separate.
 

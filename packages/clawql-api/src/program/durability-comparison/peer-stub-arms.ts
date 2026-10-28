@@ -3,12 +3,7 @@
  */
 
 import { Effect } from "effect";
-import {
-  golemArm,
-  golemClawqlArm,
-  piDurableArm,
-  piDurableClawqlArm,
-} from "./peer-live-arms.js";
+import { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm } from "./peer-live-arms.js";
 import type { ArmResult, DurabilityArm } from "./types.js";
 
 export { golemArm, golemClawqlArm, piDurableArm, piDurableClawqlArm };

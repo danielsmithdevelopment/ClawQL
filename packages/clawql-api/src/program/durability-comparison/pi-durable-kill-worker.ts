@@ -59,7 +59,10 @@ const WriteTask = defineTask<{ useMemo: boolean }, { phase: "write" }, { done: t
     },
   },
   abort: async (_task, runtime, taskContext) => {
-    await runtime.commit(() => ({ status: "terminal", outcome: { status: "aborted" } }), taskContext);
+    await runtime.commit(
+      () => ({ status: "terminal", outcome: { status: "aborted" } }),
+      taskContext
+    );
   },
 });
 
