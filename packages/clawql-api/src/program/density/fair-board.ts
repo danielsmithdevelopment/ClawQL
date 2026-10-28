@@ -579,6 +579,17 @@ export function runFairDensityBoardEffect(
     let diskBlockedDuringPark = false;
     let diskBlockDetail = "";
     let indexSampleIds: string[] = [];
+    /**
+     * Bags present on disk (may exceed indexed N when RSS stops index load early).
+     * diskBytesPerAgent = diskBytesTotal / bagsOnDisk — not / indexed N.
+     */
+    let bagsOnDisk =
+      reuseBags && (options.resumeFromAgents ?? 0) > 0 ? (options.resumeFromAgents as number) : 0;
+
+    const perBagDiskBytes = (diskTotal: number, indexedN: number): number => {
+      const denom = Math.max(1, bagsOnDisk > 0 ? bagsOnDisk : indexedN);
+      return diskTotal / denom;
+    };
 
     const pushRampCheckpoint = (n: number, rssKiB: number, heapUsedKiB: number) =>
       Effect.gen(function* () {
@@ -586,6 +597,7 @@ export function runFairDensityBoardEffect(
         const diskAvailBytes = yield* readDiskAvailBytesEffect(bagDir);
         const rssDelta = Math.max(0, rssKiB - baseline.rssKiB);
         const within = rssKiB <= rssCeilingKiB;
+        if (bagsOnDisk < n) bagsOnDisk = n;
         ramp.push({
           agents: n,
           rssKiB,
@@ -594,7 +606,7 @@ export function runFairDensityBoardEffect(
           heapUsedKiBAfterGc: heapUsedKiB,
           heapUsedKiBPerAgentAfterGc: heapUsedKiB / Math.max(1, n),
           diskBytesTotal: disk,
-          diskBytesPerAgent: disk / Math.max(1, n),
+          diskBytesPerAgent: perBagDiskBytes(disk, n),
           diskAvailBytes,
           pageCacheKiBPerAgent: null,
           withinRssCeiling: within,
@@ -632,7 +644,7 @@ export function runFairDensityBoardEffect(
               heapUsedKiBAfterGc: heap.heapUsedKiB,
               heapUsedKiBPerAgentAfterGc: heap.heapUsedKiB / Math.max(1, n),
               diskBytesTotal: disk,
-              diskBytesPerAgent: disk / Math.max(1, n),
+              diskBytesPerAgent: perBagDiskBytes(disk, n),
               diskAvailBytes,
               pageCacheKiBPerAgent: null,
               withinRssCeiling: within,
@@ -646,10 +658,15 @@ export function runFairDensityBoardEffect(
       agentsAtLimit = idIndex.size;
       if (loaded.rssHit) {
         rssHit = true;
+        // Capacity column = last N still within the RSS ceiling (Ontologiql-style).
+        const lastWithin = [...ramp].reverse().find((s) => s.withinRssCeiling);
+        if (lastWithin) agentsAtLimit = lastWithin.agents;
       } else if (idIndex.size > 0) {
         const heap = yield* readHeapSnapshotEffect();
         if (heap.rssKiB > rssCeilingKiB) {
           rssHit = true;
+          const lastWithin = [...ramp].reverse().find((s) => s.withinRssCeiling);
+          if (lastWithin) agentsAtLimit = lastWithin.agents;
         } else if (ramp.length === 0 || ramp[ramp.length - 1]!.agents !== idIndex.size) {
           yield* pushRampCheckpoint(idIndex.size, heap.rssKiB, heap.heapUsedKiB);
         }
@@ -699,23 +716,38 @@ export function runFairDensityBoardEffect(
       const within = yield* pushRampCheckpoint(target, heap.rssKiB, heap.heapUsedKiB);
       if (!within) {
         rssHit = true;
+        const lastWithin = [...ramp].reverse().find((s) => s.withinRssCeiling);
+        if (lastWithin) agentsAtLimit = lastWithin.agents;
         break;
       }
     }
 
     // Keep idIndex reachable through the wake protocol (working-system resident).
-    if (idIndex.size !== agentsAtLimit && idIndex.size > 0 && !rssHit) {
+    if (!rssHit && idIndex.size > 0) {
       agentsAtLimit = idIndex.size;
     }
 
+    // If RSS overshot during a checkpoint, trim the Map back to agentsAtLimit
+    // (last N within the ceiling) so retained state matches the capacity claim.
+    if (idIndex.size > agentsAtLimit && agentsAtLimit > 0) {
+      const keys = [...idIndex.keys()];
+      for (let i = keys.length - 1; i >= agentsAtLimit; i--) {
+        idIndex.delete(keys[i]!);
+      }
+    }
+
     const atLimit = yield* readHeapSnapshotEffect();
-    const last = ramp[ramp.length - 1]!;
+    const last =
+      ramp.find((s) => s.agents === agentsAtLimit) ??
+      [...ramp].reverse().find((s) => s.withinRssCeiling) ??
+      ramp[ramp.length - 1]!;
     const pageCacheKiB = yield* measureBagPageCacheKiBEffect(bagDir, 2_000, agentsAtLimit);
     const pageCacheKiBPerAgent =
       pageCacheKiB !== null && agentsAtLimit > 0 ? pageCacheKiB / agentsAtLimit : null;
-    if (ramp.length > 0) {
-      ramp[ramp.length - 1] = {
-        ...last,
+    const lastIdx = ramp.findIndex((s) => s.agents === last.agents);
+    if (lastIdx >= 0) {
+      ramp[lastIdx] = {
+        ...ramp[lastIdx]!,
         pageCacheKiBPerAgent,
       };
     }
@@ -848,6 +880,16 @@ export function runFairDensityBoardEffect(
       wakeColdP99CeilingMs,
     });
 
+    if (rssHit && last) {
+      const overshoot = ramp.find((s) => !s.withinRssCeiling);
+      classified = {
+        limitResource: "rss",
+        limitHit: true,
+        limitReason: `total process RSS exceeded ${rssCeilingMiB} MiB when indexing past ${agentsAtLimit} agents (last within: rss=${last.rssKiB} KiB at ${agentsAtLimit}; overshoot rss=${overshoot?.rssKiB ?? atLimit.rssKiB} at ${overshoot?.agents ?? "n/a"}; wake-by-id Map retained for agentsAtLimit)`,
+        agentsAtLimit,
+      };
+    }
+
     if (diskBlockedDuringPark && classified.limitResource === "none") {
       classified = {
         limitResource: "disk",
@@ -873,13 +915,17 @@ export function runFairDensityBoardEffect(
     const idIndexRetainedAtLimit =
       idIndex.size > 0 && idIndex.size === agentsAtLimit && agentsAtLimit > 0;
 
+    // Board resident: when RSS bound, quote the within-ceiling ramp step (V8 may
+    // not return RSS after trimming the overshoot Map entries).
+    const boardRssKiB = rssHit && last?.withinRssCeiling ? last.rssKiB : atLimit.rssKiB;
+    const boardHeapKiB =
+      rssHit && last?.withinRssCeiling ? last.heapUsedKiBAfterGc : atLimit.heapUsedKiB;
+
     const residentAccounting: ResidentAccounting = {
-      totalRssKiBPerAgent: Number((atLimit.rssKiB / Math.max(1, agentsAtLimit)).toFixed(4)),
-      heapUsedKiBPerAgentAfterGc: Number(
-        (atLimit.heapUsedKiB / Math.max(1, agentsAtLimit)).toFixed(4)
-      ),
+      totalRssKiBPerAgent: Number((boardRssKiB / Math.max(1, agentsAtLimit)).toFixed(4)),
+      heapUsedKiBPerAgentAfterGc: Number((boardHeapKiB / Math.max(1, agentsAtLimit)).toFixed(4)),
       rssDeltaKiBPerAgent: Number(
-        (Math.max(0, atLimit.rssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
+        (Math.max(0, boardRssKiB - baseline.rssKiB) / Math.max(1, agentsAtLimit)).toFixed(4)
       ),
       retainedInProcess:
         "Map<agentId, bagPath> wake-by-id index retained for every counted agent (working-system state); FairParkedAgent body offloaded to disk JSON. Comparable to Ontologiql's per-agent in-memory record — their ~2 KiB/agent is a trim candidate (id + locator), not a Rust-vs-TS memory law.",
