@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "board": "cua-spike",
+  "publishGradeAllowed": false,
+  "cuaPinnedPackage": "@trycua/cua",
+  "cuaPinnedVersion": "0.9.0",
+  "host": {
+    "recordedAt": "ISO-8601",
+    "hostname": "",
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "",
+    "macOsVersion": "",
+    "macModel": "",
+    "nodeVersion": "",
+    "cuaPinnedPackage": "@trycua/cua",
+    "cuaPinnedVersion": "0.9.0",
+    "publishGradeAllowed": false
+  },
+  "c1": {
+    "tiers": ["container", "microvm", "full-vm"],
+    "admitOk": null,
+    "execOk": null,
+    "snapshotRestoreOk": null,
+    "forkOk": null,
+    "allEscapeBlocked": null
+  },
+  "c2": {
+    "armCount": 50,
+    "identicalParentSnapshot": null,
+    "checkpointId": null
+  },
+  "c3": {
+    "noRepeatedWrite": null,
+    "divergentCaught": null
+  },
+  "c4": {
+    "allBlockedOrProxied": null,
+    "probes": []
+  },
+  "notes": "VM overhead — not for public latency/density/durability headlines."
+}

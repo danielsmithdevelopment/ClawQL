@@ -1,13 +1,15 @@
 /**
  * Chooses **`sandbox_exec`** backend: explicit **`CLAWQL_SANDBOX_BACKEND`**, or **auto**
- * (**Agent Substrate** → **Kata** → **Docker** → **Cloudflare bridge** → **Seatbelt** on macOS).
+ * (**Agent Substrate** → **Cua** (optional) → **Kata** → **Docker** → **Cloudflare bridge** → **Seatbelt** on macOS).
  * @see docs/adr/0011-isolation-agent-substrate-sandbox-celld.md
+ * @see docs/adr/0018-cua-isolation-backend.md
  */
 
 import { Effect } from "effect";
 import {
   agentSubstrateReachableEffect,
   bridgeCredentialsConfiguredEffect,
+  cuaReachableEffect,
   dockerCliReachableEffect,
   kataRuntimeReachableEffect,
   seatbeltBinaryPresentEffect,
@@ -21,6 +23,7 @@ export type ExplicitSandboxBackend = SandboxExecBackendKind | null;
 /** Injected probes (for tests); defaults use real capability checks. */
 export type SandboxBackendAutoDeps = {
   agentSubstrate: () => Effect.Effect<boolean>;
+  cua: () => Effect.Effect<boolean>;
   kata: () => Effect.Effect<boolean>;
   seatbelt: () => Effect.Effect<boolean>;
   docker: () => Effect.Effect<boolean>;
@@ -29,6 +32,7 @@ export type SandboxBackendAutoDeps = {
 
 export const defaultSandboxBackendAutoDeps: SandboxBackendAutoDeps = {
   agentSubstrate: agentSubstrateReachableEffect,
+  cua: cuaReachableEffect,
   kata: kataRuntimeReachableEffect,
   seatbelt: seatbeltBinaryPresentEffect,
   docker: dockerCliReachableEffect,
@@ -51,6 +55,7 @@ export function parseExplicitSandboxBackendEnvEffect(): Effect.Effect<ExplicitSa
     ) {
       return "agent-substrate";
     }
+    if (v === "cua" || v === "cua-spaces" || v === "spaces") return "cua";
     if (v === "kata" || v === "kata-containers" || v === "kata-qemu") return "kata";
     if (v === "bridge" || v === "cloudflare") return "bridge";
     if (v === "macos-seatbelt" || v === "seatbelt") return "macos-seatbelt";
@@ -65,12 +70,13 @@ export function parseExplicitSandboxBackendEnv(): ExplicitSandboxBackend {
 }
 
 export const SANDBOX_AUTO_NONE_ERROR =
-  "No sandbox_exec backend available after auto-selection (Agent Substrate → Kata → Docker → bridge → Seatbelt). " +
+  "No sandbox_exec backend available after auto-selection (Agent Substrate → Cua → Kata → Docker → bridge → Seatbelt). " +
   "Configure one of: Agent Substrate (CLAWQL_SANDBOX_AGENT_SUBSTRATE_ENABLED=1 or URL+token; ADR 0011), " +
+  "Cua Spaces (CLAWQL_SANDBOX_CUA_ENABLED=1; ADR 0018; optional Mac Linux-Spaces backend), " +
   "Kata RuntimeClass in-cluster (CLAWQL_SANDBOX_KATA_ENABLED=1), a working `docker`/`podman` CLI " +
   "(see CLAWQL_SANDBOX_DOCKER_BIN), Cloudflare bridge (CLAWQL_SANDBOX_BRIDGE_URL + CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN), " +
   "or macOS `/usr/bin/sandbox-exec`. Set CLAWQL_SANDBOX_BACKEND=auto for automatic selection, or " +
-  "agent-substrate|kata|bridge|macos-seatbelt|docker to pin.";
+  "agent-substrate|cua|kata|bridge|macos-seatbelt|docker to pin.";
 
 export type SandboxBackendChoice =
   { ok: true; backend: SandboxExecBackendKind } | { ok: false; error: string };
@@ -81,12 +87,14 @@ export function resolveSandboxBackendChoiceEffect(
 ): Effect.Effect<SandboxBackendChoice> {
   return Effect.gen(function* () {
     if (explicit === "agent-substrate") return { ok: true as const, backend: "agent-substrate" };
+    if (explicit === "cua") return { ok: true as const, backend: "cua" };
     if (explicit === "kata") return { ok: true as const, backend: "kata" };
     if (explicit === "bridge") return { ok: true as const, backend: "bridge" };
     if (explicit === "macos-seatbelt") return { ok: true as const, backend: "macos-seatbelt" };
     if (explicit === "docker") return { ok: true as const, backend: "docker" };
 
     if (yield* deps.agentSubstrate()) return { ok: true as const, backend: "agent-substrate" };
+    if (yield* deps.cua()) return { ok: true as const, backend: "cua" };
     if (yield* deps.kata()) return { ok: true as const, backend: "kata" };
     if (yield* deps.docker()) return { ok: true as const, backend: "docker" };
     if (yield* deps.bridge()) return { ok: true as const, backend: "bridge" };

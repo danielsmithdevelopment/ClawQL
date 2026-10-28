@@ -23,6 +23,7 @@ When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` f
 | Backend                                 | When                                           | Env                                                        |
 | --------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
 | **Agent Substrate** (primary, ADR 0011) | Cloud Hypervisor microVM or gVisor             | `CLAWQL_SANDBOX_AGENT_SUBSTRATE_*` / pin `agent-substrate` |
+| **Cua Spaces** (optional, ADR 0018)     | Linux Spaces on a Mac; snapshot / replay spike | `CLAWQL_SANDBOX_CUA_*` / pin `cua` (never a hard dep)      |
 | **Kata Containers**                     | Kubernetes Job + `runtimeClassName` (fallback) | `CLAWQL_SANDBOX_KATA_*` / pin `kata`                       |
 | **Docker / Podman**                     | Local CLI `docker run`                         | `docker`, `CLAWQL_SANDBOX_DOCKER_*`                        |
 | **Cloudflare bridge**                   | Workers `@cloudflare/sandbox`                  | `CLAWQL_SANDBOX_BRIDGE_URL` + token                        |
@@ -40,6 +41,20 @@ See [ADR 0011](../../docs/adr/0011-isolation-agent-substrate-sandbox-celld.md).
 - **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_ALLOW_PRODUCTION=1`** — required for customer-facing production after allowlist GA reconfirmation (§5)
 
 **Not for celld cells.** Fixed-shape orchestration stays on celld V8 isolates (same ADR).
+
+### Cua Spaces (optional — Mac Linux Spaces + snapshot spike)
+
+See [ADR 0018](../../docs/adr/0018-cua-isolation-backend.md) and [integrations/cua-spaces.md](../../docs/integrations/cua-spaces.md).
+
+- **`CLAWQL_SANDBOX_BACKEND=cua`** (aliases `cua-spaces`, `spaces`)
+- **`CLAWQL_SANDBOX_CUA_ENABLED=1`** / **`CLAWQL_SANDBOX_CUA_MODE=mock|live`**
+- **`CLAWQL_SANDBOX_CUA_DEFAULT_TIER`** — `container` \| `microvm` \| `full-vm`
+- **`CLAWQL_SANDBOX_CUA_URL`** + **`CLAWQL_SANDBOX_CUA_API_TOKEN`** — live cua-spacesd façade
+- Pinned peer (optional install): **`@trycua/cua@0.9.0`** — never required to build ClawQL
+- Shared **`IsolationBackendService`** for Ontologiql / open reference runner conformance
+- **No publish-grade numbers** from Cua runs (`publishGradeAllowed: false`)
+
+License: Spaces are FSL-1.1-MIT (self-host OK); competing hosted Spaces needs a Cua commercial licence. See [`docs/benchmarks/cua-spike/LICENSE-CHECK.md`](../../docs/benchmarks/cua-spike/LICENSE-CHECK.md).
 
 ### Kata (fallback for production Kubernetes)
 

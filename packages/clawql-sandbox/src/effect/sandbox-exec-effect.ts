@@ -12,6 +12,7 @@ import {
 } from "../backend-selection.js";
 import { callSandboxBridgeEffect } from "../bridge-client.js";
 import { callDockerSandboxEffect } from "../container.js";
+import { callCuaSandboxEffect } from "../cua/index.js";
 import { callKataSandboxEffect } from "../kata-kubernetes.js";
 import { callMacosSeatbeltSandboxEffect } from "../macos-seatbelt.js";
 import type {
@@ -40,6 +41,7 @@ export function runSandboxBackendEffect(
   input: SandboxCodeToolInput
 ): Effect.Effect<SandboxBridgeResponse> {
   if (backend === "agent-substrate") return callAgentSubstrateSandboxEffect(input);
+  if (backend === "cua") return callCuaSandboxEffect(input);
   if (backend === "kata") return callKataSandboxEffect(input);
   if (backend === "macos-seatbelt") return callMacosSeatbeltSandboxEffect(input);
   if (backend === "docker") return callDockerSandboxEffect(input);
