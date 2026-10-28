@@ -2,6 +2,7 @@
 /**
  * Durable-agent density fair board (ClawQL TypeScript).
  *
+ * Always passes --expose-gc so heap-after-GC accounting is real.
  * Env: CLAWQL_DENSITY_* (see fair-board-cli.ts)
  */
 import { mkdirSync } from "node:fs";
@@ -20,9 +21,13 @@ const outPath =
 
 mkdirSync(dirname(outPath), { recursive: true });
 
-const res = spawnSync(process.execPath, ["--import", "tsx", tsEntry, outPath], {
-  cwd: repoRoot,
-  env: process.env,
-  stdio: "inherit",
-});
+const res = spawnSync(
+  process.execPath,
+  ["--expose-gc", "--import", "tsx", tsEntry, outPath],
+  {
+    cwd: repoRoot,
+    env: process.env,
+    stdio: "inherit",
+  }
+);
 process.exit(res.status === 0 ? 0 : res.status ?? 1);

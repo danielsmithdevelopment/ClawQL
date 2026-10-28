@@ -32,7 +32,10 @@ export type FairPendingTool = {
 /** Board columns every system must publish. */
 export type BoardColumns = {
   readonly agentsAtLimit: number;
-  /** Process RSS — hard cost (KiB per parked agent). */
+  /**
+   * Total process RSS / agents (KiB) — same ceiling definition as Ontologiql
+   * (total process RSS, not RSS-delta).
+   */
   readonly residentKiBPerAgent: number;
   /** Reclaimable OS page-cache hold of offloaded pages (KiB per agent), or null if unmeasured. */
   readonly pageCacheKiBPerAgent: number | null;
@@ -46,7 +49,12 @@ export type BoardColumns = {
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
 
 export type DensityRowStatus =
-  "measured" | "publishable" | "pending_invite" | "not_run" | "lab_only";
+  | "measured"
+  | "publishable"
+  | "pending_invite"
+  | "not_run"
+  | "lab_only"
+  | "methodology_pending";
 
 export type DensitySystemRow = {
   readonly systemId: DensitySystemId;
@@ -56,6 +64,51 @@ export type DensitySystemRow = {
   readonly boardColumns: BoardColumns | null;
   /** Lab-only active pulse — must not be quoted in the public parked claim. */
   readonly activeDensityLab?: Readonly<Record<string, unknown>> | null;
+};
+
+export type WakeLatency = {
+  readonly p50: number;
+  readonly p99: number;
+  readonly n: number;
+};
+
+export type GcPauseSummary = {
+  readonly count: number;
+  readonly totalMs: number;
+  readonly maxMs: number;
+};
+
+export type WakeOrderId = "warm_then_cold" | "cold_then_warm";
+
+export type WakeOrderResult = {
+  readonly order: WakeOrderId;
+  readonly warm: WakeLatency;
+  readonly cold: WakeLatency;
+  readonly gcWarm: GcPauseSummary;
+  readonly gcCold: GcPauseSummary;
+};
+
+export type HeapSnapshot = {
+  readonly rssKiB: number;
+  readonly heapUsedKiB: number;
+  readonly heapTotalKiB: number;
+  readonly externalKiB: number;
+  readonly arrayBuffersKiB: number;
+};
+
+export type ResidentAccounting = {
+  /** Total process RSS / N (board column definition; matches Ontologiql ceiling). */
+  readonly totalRssKiBPerAgent: number;
+  /** heapUsed after forced GC / N — GC-runtime check on RSS. */
+  readonly heapUsedKiBPerAgentAfterGc: number;
+  /** RSS-delta vs empty process / N — diagnostic only; not the board ceiling. */
+  readonly rssDeltaKiBPerAgent: number;
+  /**
+   * What this implementation retains in-process per parked agent after park:
+   * agentId string in the id index; bag body is on disk only.
+   */
+  readonly retainedInProcess: string;
+  readonly estimatedIdIndexBytesPerAgent: number;
 };
 
 export type EvidenceFair = {
@@ -72,6 +125,11 @@ export type EvidenceFair = {
     readonly columns: readonly string[];
     readonly memoryFraming: string;
     readonly publicClaimScope: string;
+    /** Shared definitions that must match across systems before comparison. */
+    readonly definitions: {
+      readonly rssCeiling: "total_process_rss";
+      readonly agentsAtLimit: "first_N_where_total_rss_exceeds_ceiling";
+    };
   };
   readonly host: {
     readonly label: string;
@@ -89,15 +147,33 @@ export type EvidenceFair = {
     readonly bagDir: string;
     readonly ramp: readonly FairRampStep[];
     readonly wakeSampleSize: number;
+    readonly wakeWarmupCount: number;
     readonly coldEviction: string;
     readonly limitReason: string;
+    readonly ceilingHit: boolean;
+    readonly rssCeilingDefinition: "total_process_rss";
+    readonly baseline: HeapSnapshot;
+    readonly atLimit: HeapSnapshot;
+    readonly residentAccounting: ResidentAccounting;
+    readonly wakeByOrder: readonly WakeOrderResult[];
+    /** Pooled warm/cold across both orders (also copied into boardColumns). */
+    readonly wakePooled: {
+      readonly warm: WakeLatency;
+      readonly cold: WakeLatency;
+      readonly coldFasterThanWarmP99: boolean;
+    };
+    readonly exposeGc: boolean;
   };
 };
 
 export type FairRampStep = {
   readonly agents: number;
   readonly rssKiB: number;
+  /** total process RSS / agents */
   readonly residentKiBPerAgent: number;
+  readonly rssDeltaKiBPerAgent: number;
+  readonly heapUsedKiBAfterGc: number;
+  readonly heapUsedKiBPerAgentAfterGc: number;
   readonly diskBytesTotal: number;
   readonly diskBytesPerAgent: number;
   readonly pageCacheKiBPerAgent: number | null;

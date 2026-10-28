@@ -1,11 +1,13 @@
 /**
- * Host metrics for the fair density board (RSS, page cache, percentiles).
+ * Host metrics for the fair density board (RSS, page cache, GC pauses, heap).
  */
 
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { PerformanceObserver, performance, type PerformanceEntry } from "node:perf_hooks";
 import { cpus, hostname, totalmem } from "node:os";
 import { Effect } from "effect";
+import type { GcPauseSummary, HeapSnapshot } from "./types.js";
 
 export type ProcessRss = {
   readonly rssKiB: number;
@@ -39,6 +41,89 @@ export function readCachedKiBEffect(): Effect.Effect<number | null> {
     } catch {
       return null;
     }
+  });
+}
+
+export function forceGcEffect(): Effect.Effect<boolean> {
+  return Effect.sync(() => {
+    const gc = (globalThis as { gc?: () => void }).gc;
+    if (typeof gc !== "function") return false;
+    gc();
+    return true;
+  });
+}
+
+export function readHeapSnapshotEffect(): Effect.Effect<HeapSnapshot> {
+  return Effect.gen(function* () {
+    yield* forceGcEffect();
+    const mu = process.memoryUsage();
+    const rss = yield* readProcessRssEffect();
+    return {
+      rssKiB: rss.rssKiB,
+      heapUsedKiB: Math.round(mu.heapUsed / 1024),
+      heapTotalKiB: Math.round(mu.heapTotal / 1024),
+      externalKiB: Math.round(mu.external / 1024),
+      arrayBuffersKiB: Math.round(mu.arrayBuffers / 1024),
+    };
+  });
+}
+
+export type GcRecorder = {
+  readonly start: () => void;
+  readonly stop: () => GcPauseSummary;
+  readonly disconnect: () => void;
+};
+
+/**
+ * Record GC pauses via PerformanceObserver during a timed window.
+ * Entries are duration-ms of GC work that landed while the recorder was active.
+ */
+export function createGcRecorderEffect(): Effect.Effect<GcRecorder> {
+  return Effect.sync(() => {
+    const pending: PerformanceEntry[] = [];
+    let active = false;
+    const obs = new PerformanceObserver((list) => {
+      if (!active) return;
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === "gc") pending.push(entry);
+      }
+    });
+    try {
+      obs.observe({ entryTypes: ["gc"], buffered: false });
+    } catch {
+      // Some runtimes disallow gc entry types; recorder then reports zeros.
+    }
+    return {
+      start: () => {
+        pending.length = 0;
+        active = true;
+        // Clear any buffered marks so the window starts clean.
+        try {
+          performance.clearMarks?.();
+        } catch {
+          /* ignore */
+        }
+      },
+      stop: () => {
+        active = false;
+        // Drain any late notifications.
+        const durations = pending.map((e) => e.duration);
+        pending.length = 0;
+        if (durations.length === 0) {
+          return { count: 0, totalMs: 0, maxMs: 0 };
+        }
+        const totalMs = durations.reduce((a, b) => a + b, 0);
+        return {
+          count: durations.length,
+          totalMs: Number(totalMs.toFixed(6)),
+          maxMs: Number(Math.max(...durations).toFixed(6)),
+        };
+      },
+      disconnect: () => {
+        active = false;
+        obs.disconnect();
+      },
+    };
   });
 }
 
@@ -177,4 +262,8 @@ export function hostIdentityEffect(): Effect.Effect<{
     nodeVersion: process.version,
     cpus: cpus().length,
   }));
+}
+
+export function exposeGcAvailableEffect(): Effect.Effect<boolean> {
+  return Effect.sync(() => typeof (globalThis as { gc?: () => void }).gc === "function");
 }
