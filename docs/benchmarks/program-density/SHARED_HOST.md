@@ -26,10 +26,10 @@ npm run benchmark:program-density-fsync-ceiling
 
 The artifact keeps **two** modes:
 
-| Mode | Pattern | Use |
-| --- | --- | --- |
-| **`serial` (PRIMARY)** | One writer; write a `batchMax` NDJSON batch; `fsync`; wait; repeat | Ceiling for this flush policy. `theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec × batchMax` |
-| **`parallel` (headroom)** | Several writers with fsync each | What a multi-writer design could use — **not** the board ceiling |
+| Mode                      | Pattern                                                            | Use                                                                                               |
+| ------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| **`serial` (PRIMARY)**    | One writer; write a `batchMax` NDJSON batch; `fsync`; wait; repeat | Ceiling for this flush policy. `theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec × batchMax` |
+| **`parallel` (headroom)** | Several writers with fsync each                                    | What a multi-writer design could use — **not** the board ceiling                                  |
 
 **Ontologiql must run the same serial probe** on the shared host. An earlier ~40k fsync/s figure came from overwrite/parallel-capable probing and **overstated** single-writer capacity — retracted as the group_commit ceiling.
 
@@ -45,12 +45,12 @@ Coarse ladders (e.g. 192k→256k or 256k→384k) only place the limit in a **33�
 
 ### 4. Same conditions + alternating systems
 
-| Constraint | Rule |
-| --- | --- |
-| Agent count | Same `agentsAtLimit` (or agreed shared N) for both |
-| Disk | Same volume the **serial** fsync ceiling was measured on |
-| Host | Otherwise idle |
-| Order | **Alternate** across reps: ClawQL₁ → Ontologiql₁ → … → ClawQL₃ → Ontologiql₃ |
+| Constraint  | Rule                                                                         |
+| ----------- | ---------------------------------------------------------------------------- |
+| Agent count | Same `agentsAtLimit` (or agreed shared N) for both                           |
+| Disk        | Same volume the **serial** fsync ceiling was measured on                     |
+| Host        | Otherwise idle                                                               |
+| Order       | **Alternate** across reps: ClawQL₁ → Ontologiql₁ → … → ClawQL₃ → Ontologiql₃ |
 
 ### 5. Merge only after both sides
 
@@ -64,13 +64,13 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Five numbers (side by side)
 
-| # | Number | Definition |
-| --- | --- | --- |
-| 1 | **agentsAtLimit** | First resource exhausted under the shared RSS ceiling. Retained at limit = wake-deadline schedule. |
-| 2 | **wakeWarmMs p99** | Cached / warm wake. |
-| 3 | **wakeColdMs** | Cold wake — median + range until orders locked. |
-| 4 | **deadlineAccuracy** | Shared 1s SLA; identical fired definition + flush policy; schedule format; **refined** ramp (3-rep floor + resolution); scaled bursts; crash test; deadline restart. |
-| 5 | **restartSurvival** | Parked bags survive process restart. |
+| #   | Number               | Definition                                                                                                                                                           |
+| --- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **agentsAtLimit**    | First resource exhausted under the shared RSS ceiling. Retained at limit = wake-deadline schedule.                                                                   |
+| 2   | **wakeWarmMs p99**   | Cached / warm wake.                                                                                                                                                  |
+| 3   | **wakeColdMs**       | Cold wake — median + range until orders locked.                                                                                                                      |
+| 4   | **deadlineAccuracy** | Shared 1s SLA; identical fired definition + flush policy; schedule format; **refined** ramp (3-rep floor + resolution); scaled bursts; crash test; deadline restart. |
+| 5   | **restartSurvival**  | Parked bags survive process restart.                                                                                                                                 |
 
 ## Five deadline arms (shared-host run)
 
@@ -82,14 +82,14 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Methodology status
 
-| Gate | ClawQL | Ontologiql |
-| --- | --- | --- |
-| Flush + crash test | group_commit 64/10ms; pass | group_commit 64/10ms; pass (#144). Prior os_buffer ~400k/s superseded |
-| Scaled bursts | first miss **250k** @ 2.5e6 | first miss **200k** @ 200k (N ≤ agentsAtLimit) |
-| Ramp (coarse) | 256k pass / 384k fail (3-rep floor) — **needs refine before campaign** | 192k pass / 256k fail (3 identical reps) — **needs refine**; band overlaps ClawQL |
-| Serial fsync ceiling | probe landed (see `fsync-ceiling.json`) | **must run same serial probe** |
-| Deadline restart | ~40–55 ms @ 2.5e6; format disclosed | **~2–3 ms** after compact-array (was ~80 ms) — rebuild gap closed |
-| Shared host | **pending** | **pending** |
+| Gate                 | ClawQL                                                                 | Ontologiql                                                                        |
+| -------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Flush + crash test   | group_commit 64/10ms; pass                                             | group_commit 64/10ms; pass (#144). Prior os_buffer ~400k/s superseded             |
+| Scaled bursts        | first miss **250k** @ 2.5e6                                            | first miss **200k** @ 200k (N ≤ agentsAtLimit)                                    |
+| Ramp (coarse)        | 256k pass / 384k fail (3-rep floor) — **needs refine before campaign** | 192k pass / 256k fail (3 identical reps) — **needs refine**; band overlaps ClawQL |
+| Serial fsync ceiling | probe landed (see `fsync-ceiling.json`)                                | **must run same serial probe**                                                    |
+| Deadline restart     | ~40–55 ms @ 2.5e6; format disclosed                                    | **~2–3 ms** after compact-array (was ~80 ms) — rebuild gap closed                 |
+| Shared host          | **pending**                                                            | **pending**                                                                       |
 
 ## Reading gaps (not win copy)
 
@@ -103,18 +103,18 @@ Compact-array on Ontologiql (~2–3 ms) closes the prior format gap vs ClawQL ~4
 
 ## Lab mirror (Ontologiql — different host; not a public deadline claim)
 
-| Field | Value |
-| --- | --- |
-| agentsAtLimit (context) | 200,000 |
-| flushPolicy | group_commit batchMax=64 flushIntervalMs=10 |
-| crashTest.ok | true |
-| sustainablePerSec (coarse / 3-rep) | 192,000 — **refine before campaign** |
-| firstRateMissingSlaPerSec (coarse) | 256,000 |
-| rampWentPastFailure | true |
-| firstBurstSizeMissingOneSecondSla | 200,000 |
-| rebuildFromDiskMs | **2–3** (compact-array) |
-| noLoss / noDuplicate | true |
-| overdue prompt | 1.0 |
+| Field                              | Value                                       |
+| ---------------------------------- | ------------------------------------------- |
+| agentsAtLimit (context)            | 200,000                                     |
+| flushPolicy                        | group_commit batchMax=64 flushIntervalMs=10 |
+| crashTest.ok                       | true                                        |
+| sustainablePerSec (coarse / 3-rep) | 192,000 — **refine before campaign**        |
+| firstRateMissingSlaPerSec (coarse) | 256,000                                     |
+| rampWentPastFailure                | true                                        |
+| firstBurstSizeMissingOneSecondSla  | 200,000                                     |
+| rebuildFromDiskMs                  | **2–3** (compact-array)                     |
+| noLoss / noDuplicate               | true                                        |
+| overdue prompt                     | 1.0                                         |
 
 ## Peer artifact (Ontologiql → merge)
 

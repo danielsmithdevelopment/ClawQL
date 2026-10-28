@@ -150,9 +150,7 @@ describe("deadline schedule", () => {
     );
     expect(result.rampWentPastFailure).toBe(true);
     expect(result.coarseSustainablePerSec).toBeGreaterThan(0);
-    expect(result.coarseFirstRateMissingSlaPerSec).toBeGreaterThan(
-      result.coarseSustainablePerSec!
-    );
+    expect(result.coarseFirstRateMissingSlaPerSec).toBeGreaterThan(result.coarseSustainablePerSec!);
     expect(result.ramp.length).toBeGreaterThan(2); // coarse + refine mids
     expect(result.rampResolutionRel).not.toBeNull();
     expect(result.rampResolutionRel!).toBeLessThanOrEqual(0.15 + 1e-6);
