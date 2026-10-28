@@ -152,7 +152,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). ~2 KiB resident/agent can likely shrink to tens of bytes if path is derived and the FS is the id index. Once both trim, capacity is disk-bound and bag size decides (~30 vs ~32.8 KiB). **deadlineAccuracy not yet measured** — invite Ontologiql to fair-v2: shared SLA fire-within-1s; identical fired definition (durable trigger record); **identical flush policy** (or disclose each); declared arrival rate; concurrent fires; O(log n) next-deadline; sustainablePerSec ramp; SIGKILL crash test (counted fires on disk, no duplicates). Design (timer wheel vs heap) is free. Do not read cold-wake gaps until shared-host.",
+    "Ontologiql Rust fair row is publishable on the pre-deadline contract (200k @ ≤512 MiB total RSS, ~30 KiB disk/agent, warm p99 < 35 µs, cold p99 < 0.6 ms, restart). **deadlineAccuracy opens (SHARED_HOST.md):** (1) flush policy disclose + SIGKILL crash test; (2) explain 400k burst @ 200k agents or rerun ladder with N ≤ agentsAtLimit; (3) confirm sustained-rate ramp continued past first failure (cliff matched burst exactly — ambiguous); (4) disclose schedule on-disk/rebuild format next to rebuildMs. Then same five arms on one host. Do not read cold-wake gaps or rebuildMs as language until format is disclosed.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -1094,6 +1094,7 @@ export function runFairDensityBoardEffect(
             scaledBurstFirstMissSize: deadlineAccuracy.scaledBursts?.firstMissSize ?? null,
             deadlineRestartOk: deadlineRestart?.ok ?? null,
             deadlineRestartRebuildMs: deadlineRestart?.rebuildMs ?? null,
+            deadlineScheduleFormat: deadlineRestart?.scheduleFormat ?? null,
           }
         : null,
       restartSurvival,

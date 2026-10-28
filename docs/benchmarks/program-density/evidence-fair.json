@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fair-v2",
-  "measuredAt": "2026-10-28T20:47:45.138Z",
+  "measuredAt": "2026-10-28T20:53:30.271Z",
   "contract": {
     "agent": {
       "turns": 20,
@@ -21,7 +21,7 @@
       "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
       "restartSurvival"
     ],
-    "memoryFraming": "Retained at limit = wake-deadline schedule. See SHARED_HOST.md for the five numbers and required deadline arms (scaled bursts + deadline restart). Fired stamps after flush. Publish typed_arrays best-effort + object_entries GC A/B. Cold wake: median+range only until shared-host.",
+    "memoryFraming": "Retained at limit = wake-deadline schedule. See SHARED_HOST.md. RebuildMs requires schedule-format disclosure (design column). Scaled bursts: N ≤ agentsAtLimit unless multi-deadline-per-agent is explained. Ramp: disclose stop-at-first-miss vs past-failure. Cold wake: median+range only until shared-host.",
     "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
     "definitions": {
       "rssCeiling": "total_process_rss",
@@ -44,7 +44,7 @@
       "systemId": "ontologiql-rust",
       "status": "publishable",
       "hostLabel": "stable-host (Ontologiql published)",
-      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2 / SHARED_HOST.md: identical fired definition + flush policy (disclose + crash test); scaled bursts (512/10k/100k+; first miss); deadline restart (rebuild at full scale, no loss/duplicates, overdue catch-up); arrival-rate ramp. Do not read cold-wake gaps until shared-host.",
+      "honesty": "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy opens (SHARED_HOST.md):** (1) flush policy disclose + SIGKILL crash test; (2) explain 400k-deadline burst at 200k agents, or rerun scaled-burst ladder with N ≤ agentsAtLimit; (3) confirm sustained-rate ramp continued past first failure (published result matched burst cliff exactly — ambiguous without post-failure sample); (4) disclose schedule on-disk layout + rebuild algorithm next to rebuildMs (ClawQL ~40ms@2.5e6 is compact typed arrays + bottom-up heapify — not a language verdict). Then both run the same five arms on one host. Do not read cold-wake gaps until shared-host.",
       "boardColumns": {
         "agentsAtLimit": 200000,
         "limitResource": "rss",
@@ -68,7 +68,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2 (methodology v10 / SHARED_HOST arms). Schedule retained at 2.5e6 as typed_arrays. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% met / excess p99 22 ms (typed). Scaled bursts (Ontologiql sizes): first miss at N=250000 (512/10k/100k met 100% within 1s; 250000 → 63% met). Deadline restart: ok=true; rebuildMs=40 at capacity 2500000; overdue 5000/5000 prompt-fired; no loss/duplicates. sustainablePerSec=256000 (typed + group_commit floor). Object-heap GC A/B retained (~314 ms / ~121 ms major). Provisional vs Ontologiql until shared-host + their flush disclose/crash-test. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2 (methodology v10 / SHARED_HOST arms). Schedule retained at 2.5e6 as typed_arrays. Schedule format (rebuild column): on-disk=json_header+live_ndjson+padCount; in-memory=Float64+Int32; rebuild=bulk_pad+bottom_up_heapify — design difference, not TS-vs-Rust. Fired=durable_trigger_record; flush=group_commit(64/10ms); crashTest=pass; lateness after fsync. Steady ~667/s → 100% met / excess p99 22 ms (typed). Scaled bursts: first miss at N=250000 (512/10k/100k met 100%; N ≤ agentsAtLimit). Deadline restart: ok; rebuildMs=40 at capacity 2500000; overdue catch-up ok; no loss/duplicates. sustainablePerSec=256000 (ramp stops at first miss; 3-rep floor). Object-heap GC A/B retained. Provisional until Ontologiql closes SHARED_HOST opens + shared-host five arms. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -110,7 +110,13 @@
           "objectEntriesMajorGcMaxMs": 120.92810600064695,
           "scaledBurstFirstMissSize": 250000,
           "deadlineRestartOk": true,
-          "deadlineRestartRebuildMs": 40
+          "deadlineRestartRebuildMs": 55,
+          "deadlineScheduleFormat": {
+            "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+            "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+            "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+            "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+          }
         },
         "restartSurvival": true
       },
@@ -832,12 +838,18 @@
         "ok": true,
         "capacity": 2500000,
         "liveCount": 10000,
-        "rebuildMs": 40,
+        "rebuildMs": 55,
+        "scheduleFormat": {
+          "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+          "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+          "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+          "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+        },
         "overdueExpected": 5000,
         "overdueFired": 5000,
         "missingLive": 0,
         "duplicateFired": 0,
-        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 40 ms at capacity 2500000; overdue 5000/5000 prompt-fired; no loss/duplicates."
+        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 55 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
       }
     },
     "wakeByOrder": [

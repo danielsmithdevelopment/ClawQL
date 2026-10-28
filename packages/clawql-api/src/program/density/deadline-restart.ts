@@ -13,7 +13,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Effect } from "effect";
 import {
+  CLAWQL_DEADLINE_SCHEDULE_FORMAT,
   rebuildDeadlineScheduleFromSnapshotEffect,
+  type DeadlineScheduleFormatInfo,
   type DeadlineScheduleLiveEntry,
 } from "./deadline-schedule-store.js";
 import {
@@ -39,6 +41,8 @@ export type DeadlineRestartTestResult = {
   readonly padCount: number;
   readonly downtimeMs: number;
   readonly rebuildMs: number;
+  /** Disclosed on-disk + rebuild path — compare as design, not language. */
+  readonly scheduleFormat: DeadlineScheduleFormatInfo;
   readonly overdueExpected: number;
   readonly overdueFired: number;
   readonly futureStillPending: number;
@@ -125,6 +129,7 @@ export function runDeadlineRestartTestEffect(args: {
         padCount,
         downtimeMs,
         rebuildMs: 0,
+        scheduleFormat: CLAWQL_DEADLINE_SCHEDULE_FORMAT,
         overdueExpected: 0,
         overdueFired: 0,
         futureStillPending: 0,
@@ -253,6 +258,7 @@ export function runDeadlineRestartTestEffect(args: {
       padCount,
       downtimeMs,
       rebuildMs: rebuilt.rebuildMs,
+      scheduleFormat: rebuilt.scheduleFormat,
       overdueExpected: overdueLive.length,
       overdueFired,
       futureStillPending: futureLive.length,
@@ -260,7 +266,7 @@ export function runDeadlineRestartTestEffect(args: {
       duplicateFired,
       overdueCatchUp,
       note: ok
-        ? `SIGKILL after durable snapshot; downtime ${downtimeMs} ms; rebuild ${rebuilt.rebuildMs} ms at capacity ${capacity}; overdue ${overdueFired}/${overdueLive.length} prompt-fired; no loss/duplicates.`
+        ? `SIGKILL after durable snapshot; downtime ${downtimeMs} ms; rebuild ${rebuilt.rebuildMs} ms at capacity ${capacity} (${rebuilt.scheduleFormat.rebuildPath}); overdue ${overdueFired}/${overdueLive.length} prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison.`
         : `Deadline restart failed: missing=${missingLive} dups=${duplicateFired} overdueFired=${overdueFired}/${overdueLive.length} catchUpOk=${catchUpOk} rebuildMs=${rebuilt.rebuildMs}. stderr=${stderr.slice(0, 300)}`,
     };
   });

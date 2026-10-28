@@ -112,6 +112,16 @@ export type DeadlineBoardAccuracy = {
   /** SHARED_HOST deadline restart: rebuild + overdue catch-up after SIGKILL. */
   readonly deadlineRestartOk?: boolean | null;
   readonly deadlineRestartRebuildMs?: number | null;
+  /**
+   * On-disk + rebuild path for deadline restart — design column, not language.
+   * Peer must disclose its own before cross-system rebuildMs comparison.
+   */
+  readonly deadlineScheduleFormat?: {
+    readonly onDisk: string;
+    readonly inMemory: string;
+    readonly rebuildPath: string;
+    readonly note: string;
+  } | null;
 };
 
 export type DensitySystemId = "ontologiql-rust" | "clawql-typescript" | "golem" | "infinity";
@@ -335,6 +345,12 @@ export type EvidenceFair = {
         readonly capacity: number;
         readonly liveCount: number;
         readonly rebuildMs: number;
+        readonly scheduleFormat?: {
+          readonly onDisk: string;
+          readonly inMemory: string;
+          readonly rebuildPath: string;
+          readonly note: string;
+        };
         readonly overdueExpected: number;
         readonly overdueFired: number;
         readonly missingLive: number;

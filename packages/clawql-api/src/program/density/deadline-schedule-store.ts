@@ -1,11 +1,17 @@
 /**
  * Durable wake-deadline schedule snapshot for the SHARED_HOST deadline restart test.
  *
+ * **Schedule format (disclose on the rebuild column — design, not language):**
+ * - On-disk: JSON header + `liveCount` NDJSON lines (`deadlineMs\\tagentId`); pads are
+ *   **not** serialized per entry — only `padCount` + `farDeadlineMs` in the header.
+ * - In-memory: `Float64Array` deadlines + `Int32Array` heap indices (typed_arrays).
+ * - Rebuild: load live lines, bulk-fill pads into the typed arrays, **bottom-up heapify
+ *   once** (O(n)). Comparable only when the peer discloses its own on-disk + rebuild path
+ *   (e.g. per-entry parse + sort vs compact array + single-pass heapify).
+ *
  * Layout (fsync'd):
  *   line 1: JSON header { version, capacity, writtenAtMs, farDeadlineMs, liveCount, padCount }
  *   next liveCount lines: `${deadlineMs}\t${agentId}`
- *
- * Pads are not written line-by-line — rebuild calls schedulePad(padCount, farDeadlineMs).
  */
 
 import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, writeSync } from "node:fs";
@@ -38,12 +44,28 @@ export type DeadlineScheduleSnapshot = {
   readonly live: readonly DeadlineScheduleLiveEntry[];
 };
 
+/** Disclosed so rebuildMs is read as a format/design column, not Rust vs TS. */
+export type DeadlineScheduleFormatInfo = {
+  readonly onDisk: "json_header_plus_live_ndjson_pads_by_count";
+  readonly inMemory: "float64_deadlines_int32_heap_typed_arrays";
+  readonly rebuildPath: "load_live_lines_bulk_pad_bottom_up_heapify";
+  readonly note: string;
+};
+
+export const CLAWQL_DEADLINE_SCHEDULE_FORMAT: DeadlineScheduleFormatInfo = {
+  onDisk: "json_header_plus_live_ndjson_pads_by_count",
+  inMemory: "float64_deadlines_int32_heap_typed_arrays",
+  rebuildPath: "load_live_lines_bulk_pad_bottom_up_heapify",
+  note: "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison.",
+};
+
 export type DeadlineScheduleRebuildResult = {
   readonly schedule: TypedDeadlineSchedule;
   readonly header: DeadlineScheduleSnapshotHeader;
   readonly live: readonly DeadlineScheduleLiveEntry[];
   /** Wall ms to load file + rebuild typed heap (including pads). */
   readonly rebuildMs: number;
+  readonly scheduleFormat: DeadlineScheduleFormatInfo;
 };
 
 export function writeDeadlineScheduleSnapshotEffect(args: {
@@ -139,6 +161,7 @@ export function rebuildDeadlineScheduleFromSnapshotEffect(
       header: snap.header,
       live: snap.live,
       rebuildMs,
+      scheduleFormat: CLAWQL_DEADLINE_SCHEDULE_FORMAT,
     };
   });
 }

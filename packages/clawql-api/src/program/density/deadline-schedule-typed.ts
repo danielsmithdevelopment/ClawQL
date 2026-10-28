@@ -86,16 +86,19 @@ export function makeTypedDeadlineScheduleEffect(
       heapLen += 1;
     };
 
+    /**
+     * Bulk-pad then **bottom-up heapify once** (O(n)), not per-entry siftUp.
+     * Restart rebuilds rely on this: durable snapshot stores padCount, not
+     * 2.5e6 parsed lines — format, not language, drives rebuildMs.
+     */
     const schedulePad = (count: number, farDeadlineMs: number) => {
       const n = Math.max(0, Math.floor(count));
       for (let i = 0; i < n; i++) {
         const slot = allocSlot();
         deadlines[slot] = farDeadlineMs + (i % 1_000);
-        // no agentBySlot entry for pads
-        heap[heapLen] = slot;
-        siftUp(heap, heapLen + 1, deadlines, heapLen);
-        heapLen += 1;
+        // no agentBySlot entry for pads; heap rebuilt below
       }
+      rebuildHeap();
     };
 
     const rebuildHeap = () => {

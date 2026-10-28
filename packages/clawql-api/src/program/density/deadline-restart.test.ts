@@ -61,6 +61,8 @@ describe("deadline schedule store + restart", () => {
     expect(result.overdueFired).toBe(result.overdueExpected);
     expect(result.overdueExpected).toBeGreaterThan(0);
     expect(result.rebuildMs).toBeGreaterThanOrEqual(0);
+    expect(result.scheduleFormat.inMemory).toContain("float64");
+    expect(result.scheduleFormat.rebuildPath).toContain("heapify");
     expect(result.overdueCatchUp?.pctWithinSla).toBeGreaterThanOrEqual(99);
   }, 120_000);
 });
