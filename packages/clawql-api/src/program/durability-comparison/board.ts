@@ -1,5 +1,6 @@
 /**
- * Durability comparison board — dual columns × upstream modes × arms.
+ * Durability comparison board — crash during an outside write.
+ * Dual columns × upstream modes × arms. Not the full multi-crash-point board.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -49,19 +50,28 @@ export function runDurabilityComparisonBoardEffect(
       results.push(yield* arm.run({ n }));
     }
     const clawql = results.find((a) => a.armId === "clawql-file-journal");
-    const clawqlBoardPass =
+    const clawqlAtMostOnce =
       clawql?.status === "measured" &&
       clawql.modes.length === 2 &&
-      clawql.modes.every((m) => m.boardPass && m.duplicates === 0);
+      clawql.modes.every((m) => m.harnessValid && m.duplicates === 0);
 
     return {
-      kind: "durability-comparison-kill-mid-write" as const,
+      kind: "durability-comparison-crash-during-outside-write" as const,
+      crashPoint: "outside_write_in_flight" as const,
+      crashPointNote:
+        "Every trial deliberately crashes after the outside write is visible and before its result is recorded — the hardest window. This is one row of a five-row crash-point board, not a claim that peers always double-charge.",
+      otherCrashPointsNotMeasured: [
+        "before_write_sent",
+        "after_write_acked",
+        "idle_between_steps",
+        "during_model_tool_round",
+      ] as const,
       measuredAt: new Date().toISOString(),
       metric: "duplicates + outcome_unknown (+ lost); both upstream modes" as const,
       honesty:
-        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem live arms require DURABILITY_COMPARISON_LIVE_PEERS=1 (local golem server + @earendil-works/pi-durable). Named public peer boards still need maintainer invite before marketing as third-party measured.",
+        "Crash-during-outside-write board. ClawQL in-process; Pi Durable / Golem live under DURABILITY_COMPARISON_LIVE_PEERS=1. harnessValid = protocol ran correctly, not product-goodness. Named public co-branded boards still need maintainer invite.",
       arms: results,
-      clawqlBoardPass,
+      clawqlAtMostOnce,
     } satisfies ComparisonEvidence;
   });
 }

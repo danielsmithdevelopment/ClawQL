@@ -114,6 +114,8 @@ function recordingHost(opts: {
           method: operationId === WRITE_OP ? "POST" : "GET",
           specLabel: "pets",
         },
+        idempotencyCapable:
+          opts.upstreamMode === "idempotent" && operationId === WRITE_OP,
       }),
   };
   return { host, executedWrites, uniqueEffects };
@@ -191,22 +193,29 @@ async function oneTrial(input: {
       );
     }
 
-    const duplicates = parent.executedWrites.length;
-    const outcomeUnknown = resumed.calls.filter((c) => c.status === "outcome_unknown").length;
     const uniqueWriteEffects = [...parent.uniqueEffects].filter(
       (e) => e.startsWith("idem:") || e.startsWith("once:")
     ).length;
     const writeAppliedBefore = before.some((l) => l.operationId === WRITE_OP && l.applied);
+    // Extra unique effects beyond the first applied write (keyed resume must not add one).
+    const duplicates = Math.max(0, uniqueWriteEffects - (writeAppliedBefore ? 1 : 0));
+    const outcomeUnknown = resumed.calls.filter((c) => c.status === "outcome_unknown").length;
     const lost = !writeAppliedBefore && duplicates === 0 ? 1 : 0;
 
     const ok =
       input.resumePolicy === "clawql"
-        ? child.signal === "SIGKILL" &&
-          writeAppliedBefore &&
-          duplicates === 0 &&
-          outcomeUnknown >= 1 &&
-          resumed.ok === false
-        : child.signal === "SIGKILL" && writeAppliedBefore && duplicates >= 1;
+        ? input.upstreamMode === "idempotent"
+          ? child.signal === "SIGKILL" &&
+            writeAppliedBefore &&
+            duplicates === 0 &&
+            outcomeUnknown === 0 &&
+            uniqueWriteEffects === 1
+          : child.signal === "SIGKILL" &&
+            writeAppliedBefore &&
+            duplicates === 0 &&
+            outcomeUnknown >= 1 &&
+            resumed.ok === false
+        : child.signal === "SIGKILL" && writeAppliedBefore && parent.executedWrites.length >= 1;
 
     return {
       i: input.i,
@@ -237,7 +246,7 @@ function summarizeMode(
   const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
   const trialsOk = trials.filter((t) => t.ok).length;
   const trialsFailed = n - trialsOk;
-  const boardPass = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
+  const harnessValid = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
   return {
     upstreamMode,
     n,
@@ -247,7 +256,7 @@ function summarizeMode(
     uniqueWriteEffects,
     trialsOk,
     trialsFailed,
-    boardPass,
+    harnessValid,
     trials: n <= 100 ? trials : trials.filter((t) => !t.ok).slice(0, 20),
   };
 }
@@ -272,7 +281,7 @@ function makeFileJournalArm(resumePolicy: "clawql" | "naive-retry"): DurabilityA
               armId: id,
               status: "measured",
               honesty:
-                "ClawQL file-journal: no write re-send after SIGKILL; resume uses outcome_unknown. Duplicates must be 0 in both upstream modes.",
+                "ClawQL file-journal (crash during outside write): non_idempotent → outcome_unknown, never re-send. idempotent → keyed resume with plan idempotencyKey (0 dups, 0 unknowns).",
               modes,
             };
           }

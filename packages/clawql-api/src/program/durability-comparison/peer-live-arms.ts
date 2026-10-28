@@ -12,8 +12,19 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+import {
+  Type,
+  fauxAssistantMessage,
+  fauxProvider,
+  fauxText,
+} from "@earendil-works/pi-ai";
 import { createModels } from "@earendil-works/pi-ai/models";
-import { createRegistry, defineExtension, defineTask, Harness } from "@earendil-works/pi-durable";
+import {
+  createRegistry,
+  defineExtension,
+  defineTool,
+  Harness,
+} from "@earendil-works/pi-durable";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { Effect } from "effect";
 import type {
@@ -60,7 +71,7 @@ function summarizeMode(
     uniqueWriteEffects,
     trialsOk,
     trialsFailed: n - trialsOk,
-    boardPass: n - trialsOk === 0,
+    harnessValid: n - trialsOk === 0,
     trials: n <= 100 ? trials : trials.filter((t) => !t.ok).slice(0, 20),
   };
 }
@@ -337,8 +348,9 @@ function makeGolemLiveArm(): DurabilityArm {
           return {
             armId: "golem",
             status: "measured",
+            config: "golem-cli 1.6.2; @golemcloud/golem-ts-sdk@2.0.2; WriteAgent + simulate-crash mid-hold",
             honesty:
-              "Live local Golem server: WriteAgent fetch mid-flight + `golem agent simulate-crash`. Recovery re-sends outbound HTTP; idempotent upstream masks duplicates.",
+              "Live local Golem server (crash during outside write): WriteAgent fetch mid-flight + `golem agent simulate-crash`. Recovery re-sends outbound HTTP; idempotent upstream masks duplicates.",
             modes,
           };
         },
@@ -359,7 +371,6 @@ async function onePiTrial(input: {
   const signalPath = join(dir, "effect.ready");
   const effectsPath = join(dir, "effects.json");
   const taskIdPath = join(dir, "task.id");
-  const useMemo = input.upstreamMode === "idempotent";
 
   const child: ChildProcess = spawn(
     process.execPath,
@@ -371,10 +382,9 @@ async function onePiTrial(input: {
         PI_SIGNAL_PATH: signalPath,
         PI_EFFECTS_PATH: effectsPath,
         PI_TASK_ID_PATH: taskIdPath,
-        PI_USE_MEMO: useMemo ? "1" : "0",
         PI_HOLD_MS: "3000",
       },
-      stdio: ["ignore", "ignore", "pipe", "ipc"],
+      stdio: ["ignore", "ignore", "pipe"],
     }
   );
   let stderr = "";
@@ -408,70 +418,58 @@ async function onePiTrial(input: {
   const effectsBefore = JSON.parse(
     await readFile(effectsPath, "utf8").catch(() => "[]")
   ) as string[];
-  const taskIdRaw = (await readFile(taskIdPath, "utf8").catch(() => "")).trim();
-  const taskId = Number(taskIdRaw);
-  const hasTaskId = Number.isFinite(taskId) && taskId > 0;
 
-  const WriteTask = defineTask<{ useMemo: boolean }, { phase: "write" }, { done: true }>({
-    name: "peer.write",
-    version: 1,
-    initial: () => ({ phase: "write" }),
-    phases: {
-      write: async (task, runtime, taskContext) => {
-        const apply = async () => {
-          const list = JSON.parse(
-            await readFile(effectsPath, "utf8").catch(() => "[]")
-          ) as string[];
-          list.push(`effect-${list.length + 1}`);
-          await writeFile(effectsPath, JSON.stringify(list), "utf8");
-        };
-        if (task.input.useMemo) {
-          if ((await runtime.memo("wrote", taskContext)) === undefined) {
-            await runtime.memo("wrote", true, taskContext);
-            await apply();
-          }
-        } else {
-          await apply();
-        }
-        await runtime.commit(
-          () => ({ status: "terminal", outcome: { status: "completed", result: { done: true } } }),
-          taskContext
-        );
-      },
-    },
-    abort: async (_task, runtime, taskContext) => {
-      await runtime.commit(
-        () => ({ status: "terminal", outcome: { status: "aborted" } }),
-        taskContext
-      );
+  // Reopen with the same tool definition. Faux model only finishes the turn;
+  // it must not re-issue peer.charge (that would be our stand-in, not Pi).
+  const Charge = defineTool({
+    name: "peer.charge",
+    description: "Apply one outside write (resume path — must not re-run after unsafe interrupt)",
+    parameters: Type.Object({
+      effectsPath: Type.String(),
+      signalPath: Type.String(),
+      holdMs: Type.Number(),
+    }),
+    replay: "unsafe",
+    execute: async (args) => {
+      const list = JSON.parse(
+        await readFile(args.effectsPath, "utf8").catch(() => "[]")
+      ) as string[];
+      list.push(`effect-${list.length + 1}`);
+      await writeFile(effectsPath, JSON.stringify(list), "utf8");
+      return { output: [{ type: "text" as const, text: "charged-resume" }] };
     },
   });
-
+  const ext = defineExtension({ name: "peer", tools: [Charge] });
   const registry = createRegistry();
-  registry.install(defineExtension({ name: "peer", tasks: [WriteTask] }));
+  registry.install(ext);
+  const faux = fauxProvider({ models: [{ id: "peer-test", name: "peer-test" }] });
+  faux.setResponses([fauxAssistantMessage([fauxText("done after interrupt")], { stopReason: "stop" })]);
+  const models = createModels();
+  models.setProvider(faux.provider);
   const harness = await Harness.open(
     await openNodeSqliteStorage(dbPath),
-    { models: createModels(), registry },
+    { models, registry, settings: { extensions: [ext] } },
     context
   );
-  // resume() admits pending tasks into the live set asynchronously. waitForTask()
-  // returns the storage record immediately when the id is not yet live (often still
-  // pending) — so wait until inspect shows ready/running, then waitForTask.
-  // Terminal tasks drop out of inspect, so do not poll for status===terminal.
+  await harness.root(context, {
+    agent: {
+      model: { provider: "faux", modelId: "peer-test" },
+      extensions: [ext],
+      tools: [Charge],
+    },
+  });
   harness.resume();
-  if (hasTaskId) {
-    const admitDeadline = Date.now() + 10_000;
-    while (Date.now() < admitDeadline) {
-      const snap = await harness.inspect(context);
-      const hit = snap.tasks.find((t) => Number(t.record.id) === taskId);
-      if (hit && (hit.state.kind === "ready" || hit.state.kind === "running")) break;
-      await new Promise((r) => setTimeout(r, 20));
-    }
-    // Task ids are numeric; a string id misses #live and waitForTask returns pending immediately.
-    await harness.waitForTask(taskId as never, context);
-  } else {
-    await new Promise((r) => setTimeout(r, 1000));
+  // Let ToolTask recovery settle (interrupted, no re-execute) and any follow-up generation finish.
+  const settleDeadline = Date.now() + 10_000;
+  while (Date.now() < settleDeadline) {
+    const snap = await harness.inspect(context);
+    const live = snap.tasks.some(
+      (t) => t.state.kind === "ready" || t.state.kind === "running"
+    );
+    if (!live) break;
+    await new Promise((r) => setTimeout(r, 50));
   }
+  await new Promise((r) => setTimeout(r, 200));
   const effectsAfter = JSON.parse(
     await readFile(effectsPath, "utf8").catch(() => "[]")
   ) as string[];
@@ -480,9 +478,8 @@ async function onePiTrial(input: {
 
   const uniqueWriteEffects = effectsAfter.length;
   const duplicates = Math.max(0, uniqueWriteEffects - 1);
-  const ok =
-    effectsBefore.length >= 1 &&
-    (input.upstreamMode === "idempotent" ? uniqueWriteEffects === 1 : uniqueWriteEffects >= 2);
+  // Both upstream modes: unsafe tool → interrupted, no automatic re-execute → 1 effect.
+  const ok = effectsBefore.length >= 1 && uniqueWriteEffects === 1 && duplicates === 0;
 
   return {
     i: input.i,
@@ -493,7 +490,7 @@ async function onePiTrial(input: {
     uniqueWriteEffects,
     childSignal: "SIGKILL",
     detail: ok
-      ? `pi-durable/${input.upstreamMode}: before=${effectsBefore.length} after=${uniqueWriteEffects}`
+      ? `pi-durable/${input.upstreamMode}: replay=unsafe interrupted; before=${effectsBefore.length} after=${uniqueWriteEffects}`
       : `fail pi-durable/${input.upstreamMode}: before=${effectsBefore.length} after=${uniqueWriteEffects} stderr=${stderr.slice(0, 120)}`,
   };
 }
@@ -521,7 +518,7 @@ function makePiLiveArm(): DurabilityArm {
             armId: "pi-durable",
             status: "measured",
             honesty:
-              "Live @earendil-works/pi-durable: SIGKILL mid-phase, reopen SQLite storage, resume. Idempotent mode uses durable memo; non-idempotent re-applies the write on recovery.",
+              "Live @earendil-works/pi-durable@1.4.0: tool peer.charge replay=unsafe; faux model issues one call; SIGKILL mid-execute; resume reports interrupted and does not re-run. No live LLM retry in the loop. Upstream mode does not change this arm (Pi's safety is the no-rerun rule).",
             modes,
           };
         },

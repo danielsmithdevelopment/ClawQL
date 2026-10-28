@@ -70,6 +70,8 @@ const host: ProgramHost = {
         reason: "kill-test",
       },
       operation: { method: writes.has(operationId) ? "POST" : "GET", specLabel: "pets" },
+      // Comparison board: idempotent mock → keyed resume; non_idempotent → outcome_unknown.
+      idempotencyCapable: upstreamMode === "idempotent" && writes.has(operationId),
     }),
 };
 

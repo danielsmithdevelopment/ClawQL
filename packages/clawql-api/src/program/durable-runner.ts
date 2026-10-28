@@ -59,7 +59,7 @@ import {
 } from "./program-runner.js";
 
 export const DURABLE_PROGRAM_HONESTY =
-  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run; a non-read call in flight when the program stopped resumes as outcome_unknown. source must be a JSON plan, not free-form JS.";
+  "v0 plan runner with a durable journal: a celld-shaped file (JSONL) stand-in until the celld pin hosts the isolate. Journaled calls replay on resume and are not re-run. A non-read call in flight resumes as outcome_unknown unless resolveRisk.idempotencyCapable — then it is re-driven once with the plan's stable idempotency key. source must be a JSON plan, not free-form JS.";
 
 /** Nondeterministic value journaled on the first attempt and replayed on every resume. */
 export const NONDET_STARTED_AT = "clock.startedAt";
@@ -104,7 +104,8 @@ export type DurableProgramRefusalCode =
   | "journal_unavailable"
   | "journal_corrupt"
   | "journal_divergence"
-  | "replay_label_failed";
+  | "replay_label_failed"
+  | "keyed_resume_failed";
 
 /** The defect {@link DurableProgramRunOptions.simulateCrashAfterCalls} dies with. */
 export class ProgramCrashSimulated extends Data.TaggedError("ProgramCrashSimulated")<{
@@ -491,6 +492,65 @@ function runAttemptEffect(
               intent.operationId !== call.operationId
             ) {
               return yield* diverged(index, "journaled intent does not match the plan call");
+            }
+            const risk = yield* durableHost.resolveRisk(call.operationId).pipe(
+              Effect.catch(() => Effect.succeed({ found: false as const }))
+            );
+            if (risk.found && risk.idempotencyCapable === true) {
+              // Keyed resume: re-drive once with the same args (plan carries the key).
+              const key =
+                typeof call.args?.idempotencyKey === "string" && call.args.idempotencyKey.length > 0
+                  ? call.args.idempotencyKey
+                  : `clawql-program:${programId}:${index}`;
+              const args = { ...call.args, idempotencyKey: key };
+              const hostResult = yield* durableHost
+                .execute({ operationId: call.operationId, args }, { programId })
+                .pipe(
+                  Effect.mapError(
+                    (e) =>
+                      new DurableProgramRefusal({
+                        programId,
+                        code: "keyed_resume_failed",
+                        message: `keyed resume of call ${index}: ${e.message}`,
+                        fixHint: "Check the provider; the idempotency key was stable.",
+                      })
+                  )
+                );
+              const preview =
+                hostResult.content
+                  ?.map((c) => ("text" in c ? String(c.text) : ""))
+                  .join("")
+                  .slice(0, 200) ?? "";
+              const outcome: ProgramCallOutcome = {
+                record: {
+                  index,
+                  id: call.id,
+                  tool: "execute",
+                  operationId: call.operationId,
+                  ok: true,
+                  programId,
+                  status: "reconciled",
+                  resultPreview: preview,
+                  replayed: true,
+                },
+                value: {
+                  ok: true,
+                  status: "reconciled",
+                  operationId: call.operationId,
+                  idempotencyKey: key,
+                  startedAt: intent.startedAt,
+                },
+              };
+              yield* land(index, call, outcome, "executed");
+              yield* auditResult({
+                toolName: "execute",
+                operationId: call.operationId,
+                ok: true,
+                status: "reconciled",
+                index,
+                keyedResume: true,
+              });
+              return Option.some(outcome);
             }
             const outcome = outcomeUnknown(programId, call, index, intent);
             yield* land(index, call, outcome, "outcome_unknown");

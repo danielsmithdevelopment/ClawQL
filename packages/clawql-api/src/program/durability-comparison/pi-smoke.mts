@@ -13,7 +13,7 @@ try {
           n: m.n,
           dups: m.duplicates,
           effects: m.uniqueWriteEffects,
-          pass: m.boardPass,
+          harnessValid: m.harnessValid,
           detail: m.trials[0]?.detail,
         })),
       },

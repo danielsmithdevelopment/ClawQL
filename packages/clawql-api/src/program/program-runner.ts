@@ -77,6 +77,12 @@ export type ProgramHost = {
        * counts as both an unknown-source read and a write (fail closed).
        */
       readonly operation?: ProgramOperationInfo;
+      /**
+       * When true, an in-flight write interrupted mid-call may be re-driven on
+       * resume with the same stable idempotency key (Stripe-class). Otherwise
+       * durable resume stays `outcome_unknown` (at most once, no re-send).
+       */
+      readonly idempotencyCapable?: boolean;
     },
     Error
   >;

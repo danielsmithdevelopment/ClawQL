@@ -145,7 +145,7 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     name: 'Dual-column comparison',
     status: 'measured',
     statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peer pilot stand-ins; named boards pending invite.',
+    detail: 'Crash during outside write: duplicates + outcome_unknown × modes. Live peers via LIVE_PEERS; named boards pending invite.',
   },
   {
     tier: 'F',
