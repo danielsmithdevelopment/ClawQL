@@ -14,15 +14,16 @@
  *   resumeDeadlineMiss  — resume not completed within deadline
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
- *   statePreserved      — claim-path §1: structural match vs no-crash baseline (outer phases)
+ *   statePreserved      — claim-path §1: exact digest equality vs no-crash twin (outer phases)
  *   waitApproval        — claim-path §4: await_approval park survives peer kill + approve resume
  *
  * Env:
- *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
+ *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
+ *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
  *   FLEET_PHASED_EVIDENCE            output path
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
- *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0)
- *   FLEET_PHASED_STATE_BASELINE      1=pair no-crash baseline for statePreserved (default 1)
+ *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
+ *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
@@ -31,7 +32,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareStructuralStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
+import { compareDigestStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -90,7 +91,7 @@ const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000))
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
 const AWAIT_TRIALS = Math.max(
   0,
-  Math.min(1_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
+  Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
 );
 const STATE_BASELINE =
   process.env.FLEET_PHASED_STATE_BASELINE === undefined
@@ -281,11 +282,48 @@ function scrapeLeaseRenewals(logPaths) {
 
 async function main() {
   const petsLog = "/tmp/fleet-phased-pets.log";
+  // Fail closed if a stale mock still owns the port (old Date.now() ids break
+  // digest-equal statePreserved). Free the port, then require a healthy start.
+  try {
+    const { execFileSync } = await import("node:child_process");
+    execFileSync("bash", ["-lc", `fuser -k ${PETS_PORT}/tcp 2>/dev/null || true`], {
+      stdio: "ignore",
+    });
+  } catch {
+    /* best-effort */
+  }
+  await sleep(300);
   const pets = spawnLogged(
     process.execPath,
     [join(STREAMS, "scripts/mock-pets-upstream.mjs"), String(PETS_PORT)],
     petsLog
   );
+  pets.on("exit", (code, signal) => {
+    if (code && code !== 0) {
+      console.error(`fleet-phased: mock-pets exited early code=${code} signal=${signal}`);
+    }
+  });
+  await waitUrl(
+    `http://127.0.0.1:${PETS_PORT}/healthz`,
+    (r) => r.ok === true || r.body?.ok === true,
+    40,
+    100
+  );
+  // Probe deterministic owner id (claim-path digest equality depends on this).
+  const probe = await fetchJson(`http://127.0.0.1:${PETS_PORT}/owners`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": "fleet_probe_key",
+    },
+    body: JSON.stringify({ name: "probe", idempotencyKey: "fleet_probe_key" }),
+  });
+  if (probe.body?.id !== "owner_fleet_probe_key") {
+    throw new Error(
+      `mock-pets not serving deterministic owner ids (got ${JSON.stringify(probe.body)}); refuse to measure statePreserved`
+    );
+  }
+  await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
 
   const cfg = join(STREAMS, "wrangler.program-cell-fleet-phased.jsonc");
   const src = readFileSync(join(STREAMS, "wrangler.jsonc"), "utf8")
@@ -464,34 +502,14 @@ async function main() {
   let totalDeadlineMisses = 0;
   let stateEligible = 0;
   let statePreserved = 0;
-  /** @type {unknown[] | null} */
-  let noCrashBaselineCalls = null;
+  let stateTwinFailures = 0;
   let primary = "A";
   const boardStarted = Date.now();
   // Trials use the worker default DO (program:default) — same as the proven
   // smoke + N=8 PASS. After SIGKILL, wait for survivor /program/health before
   // resume (ownership transfer); that wait is inside resumeMs.
-
-  if (STATE_BASELINE) {
-    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
-    const baseId = `baseline_${Date.now()}`;
-    const basePort = nodes[primary].port;
-    const baseRes = await fetchJson(`http://127.0.0.1:${basePort}/program/run`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(baselinePlan(baseId)),
-    });
-    if (baseRes.body?.status === "completed" && Array.isArray(baseRes.body?.calls)) {
-      noCrashBaselineCalls = baseRes.body.calls;
-      console.log(
-        `fleet-phased: no-crash baseline captured (${noCrashBaselineCalls.length} steps)`
-      );
-    } else {
-      console.warn(
-        `fleet-phased: baseline capture failed: ${JSON.stringify(baseRes.body).slice(0, 160)}`
-      );
-    }
-  }
+  // statePreserved uses a per-outer-trial no-crash twin with the same plan args
+  // (exact digest equality), not a once-per-board structural baseline.
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -677,17 +695,45 @@ async function main() {
 
     let statePreservedTrial = null;
     const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
-    if (
-      STATE_BASELINE &&
-      noCrashBaselineCalls &&
-      outerPhase &&
-      completedClean &&
-      resumeCalls.length
-    ) {
+    if (STATE_BASELINE && outerPhase && completedClean && resumeCalls.length) {
       stateEligible += 1;
-      const cmp = compareStructuralStepState(noCrashBaselineCalls, resumeCalls);
-      statePreservedTrial = cmp.preserved;
-      if (cmp.preserved) statePreserved += 1;
+      // Score writeCount before twin; twin resets the pets ledger.
+      await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
+      const twinId = `twin_${programId}`;
+      // Same plan args (name + idempotencyKey = programId) as the crash trial so
+      // mock owners.create returns an identical deterministic body.
+      const twinBody = baselinePlan(twinId);
+      twinBody.plan.calls = stockCalls(programId);
+      const twinPort = nodes[survivor].port;
+      const twinRes = await fetchJson(`http://127.0.0.1:${twinPort}/program/run`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(twinBody),
+      });
+      if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
+        const cmp = compareDigestStepState(
+          twinRes.body.calls,
+          resumeCalls,
+          twinRes.body?.result,
+          resume.body?.result
+        );
+        statePreservedTrial = cmp.preserved;
+        if (cmp.preserved) statePreserved += 1;
+        else if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
+          const mi = cmp.mismatchIndexes?.[0];
+          console.warn(
+            "fleet-phased: statePreserved MISMATCH",
+            JSON.stringify({
+              mismatchIndexes: cmp.mismatchIndexes,
+              twinStep: cmp.baseline?.[mi],
+              resumeStep: cmp.observed?.[mi],
+            }).slice(0, 2000)
+          );
+        }
+      } else {
+        stateTwinFailures += 1;
+        statePreservedTrial = false;
+      }
     }
 
     let expectOk = false;
@@ -969,6 +1015,10 @@ async function main() {
     const completionEligibleClean = completionEligible.filter((t) => t.completedClean).length;
     const totalWriteStepsRerun = trials.reduce((acc, t) => acc + (t.writeStepsRerun || 0), 0);
     const totalJournalDivergence = trials.filter((t) => t.journalDivergence).length;
+    const midFlight = trials.filter(
+      (t) => t.phase === "after_intent_before_call" || t.phase === "during_call"
+    );
+    const awaitOk = awaitTrials.filter((t) => t.ok).length;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
@@ -977,12 +1027,69 @@ async function main() {
       ok: zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
       status: "measured",
       n: N,
+      awaitTrialsN: AWAIT_TRIALS,
+      overallN: N + AWAIT_TRIALS,
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
       bucketRedacted: true,
       diagnoseConditionalWrite: "ok",
       celldTtlMs: CELLD_TTL_MS,
       resumeDeadlineMs: RESUME_DEADLINE_MS,
+      /**
+       * Every write-kill and await trial is counted. Column rates use property-specific
+       * denominators (not a filtered subset of “good” trials). See each note.
+       */
+      trialAccounting: {
+        writeKillTrials: N,
+        awaitApprovalTrials: AWAIT_TRIALS,
+        overallTrials: N + AWAIT_TRIALS,
+        filteredOut: 0,
+        byPhase: Object.fromEntries(
+          PHASES.map((p) => {
+            const pt = trials.filter((t) => t.phase === p);
+            return [
+              p,
+              {
+                n: pt.length,
+                completedClean: pt.filter((t) => t.completedClean).length,
+                outcomeUnknown: pt.filter((t) => t.outcomeUnknown).length,
+                statePreservedEligible: pt.filter((t) => t.statePreserved != null).length,
+                statePreservedTrue: pt.filter((t) => t.statePreserved === true).length,
+                expectOutcomeUnknown:
+                  p === "after_intent_before_call" || p === "during_call",
+                inCompletedOuterDenominator:
+                  p === "before_intent" || p === "after_call_before_journal",
+              },
+            ];
+          })
+        ),
+        completed: {
+          denominatorAllPhases: trials.length,
+          cleanCompletions: totalCompletedClean,
+          denominatorOuterPhases: completionEligible.length,
+          cleanCompletionsOuter: completionEligibleClean,
+          midFlightExcludedFromOuter: midFlight.length,
+          note: "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped.",
+        },
+        statePreserved: {
+          denominator: stateEligible,
+          preserved: statePreserved,
+          twinCaptureFailures: stateTwinFailures,
+          midFlightExcluded: midFlight.length,
+          outerIncompleteExcluded: completionEligible.length - stateEligible,
+          note: "Eligible = outer-phase trials that completedClean (and, when enabled, got a no-crash twin). Mid-flight kills have no clean final state to compare — excluded from this denominator, still counted in writeKillTrials. Compare is exact step+result digest equality vs the twin.",
+        },
+        waitApproval: {
+          denominator: AWAIT_TRIALS,
+          ok: awaitOk,
+          note: "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator.",
+        },
+        stepsRepeated: {
+          denominator: trials.length,
+          writeStepsRerun: totalWriteStepsRerun,
+          note: "Sum of pets-ledger duplicates across all write-kill trials (target 0).",
+        },
+      },
       columns: {
         duplicates: {
           total: totalDuplicates,
@@ -1027,14 +1134,16 @@ async function main() {
             "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)",
         },
         statePreserved: {
-          measured: STATE_BASELINE && noCrashBaselineCalls != null && stateEligible > 0,
+          measured: STATE_BASELINE && stateEligible > 0,
           nodeUnitGolden: true,
-          fleetBaselinePaired: STATE_BASELINE && noCrashBaselineCalls != null,
+          fleetBaselinePaired: STATE_BASELINE,
+          compareMode: "digest_equality",
           eligibleN: stateEligible,
           preservedN: statePreserved,
+          twinCaptureFailures: stateTwinFailures,
           rate: stateEligible > 0 ? statePreserved / stateEligible : null,
           meaning:
-            "claim-path §1 — structural step outcomes (index/tool/op/ok/status) after outer-phase resume match a no-crash baseline. Node compareProgramStepStateEffect remains the strict unit golden; fleet omits volatile result bodies",
+            "claim-path §1 — exact digest equality of step slices (index/tool/op/ok/status/error/result body) and program result after outer-phase resume vs a per-trial no-crash twin with the same plan args. Mid-flight phases excluded (see trialAccounting). Aligns with Node compareProgramStepStateEffect",
         },
         waitApproval: {
           measured: AWAIT_TRIALS > 0,
@@ -1048,9 +1157,9 @@ async function main() {
             AWAIT_TRIALS > 0
               ? awaitTrials.filter((t) => t.completedAfterApprove).length / AWAIT_TRIALS
               : null,
-          okRate: AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.ok).length / AWAIT_TRIALS : null,
+          okRate: AWAIT_TRIALS > 0 ? awaitOk / AWAIT_TRIALS : null,
           meaning:
-            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases",
+            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval)",
         },
       },
       awaitTrials: awaitTrials.slice(0, 50),
@@ -1079,7 +1188,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (structural baseline pairing on outer phases) and waitApproval (FLEET_PHASED_AWAIT_TRIALS arm). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),

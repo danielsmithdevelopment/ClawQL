@@ -1,7 +1,7 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Program TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is in tree. Tier C re-measure (n=100 R2) quotes `completed.rateOuterPhases=1` and `stepsRepeated.writeStepsRerun=0`. Fleet can measure `statePreserved` (structural baseline) and `waitApproval` (`FLEET_PHASED_AWAIT_TRIALS`). This does **not** yet authorize “durable execution” copy.  
+**In progress:** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Program TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is in tree. Fleet `statePreserved` is **exact digest equality** vs a per-trial no-crash twin (not structural shape). Lab N≈1000 overall sizes write-kill + await arms so every column has hundreds of trials. This does **not** yet authorize “durable execution” copy until that evidence lands clean.  
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---
@@ -37,15 +37,21 @@ The thousand-crash board already resumes programs but scores duplicates, recover
 
 | Column              | Meaning                                                         | Status                                                                                                                                                                                                                                                                                                         |
 | ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Completed**       | % of crashed programs that ran to the end after recovery        | **Measured (n=100 lab)** — outer-phase `rateOuterPhases=1` (48/48); all-phase rate ≈0.48 because mid-flight kills expect `outcome_unknown`. Evidence: [`phased-claim-path-columns-n100.json`](../benchmarks/program-cell-fleet-kill/phased-claim-path-columns-n100.json). Stock N=1000 safety claim unchanged. |
-| **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Measured (n=100 lab)** — `writeStepsRerun=0` / `journalDivergence=0` on same evidence. Read re-runs still stated separately when interrupted.                                                                                                                                                                |
-| **State preserved** | Program variables between steps match the no-crash path         | **Measured (n=40 lab)** — structural rate **1.0** (20/20 outer). Evidence: [`phased-await-state-n40.json`](../benchmarks/program-cell-fleet-kill/phased-await-state-n40.json). Node `compareProgramStepStateEffect` remains the strict unit golden.                                                            |
+| **Completed**       | % of crashed programs that ran to the end after recovery        | **Measured (n=100 lab)** — outer-phase `rateOuterPhases=1` (48/48). Denominator = outer phases only (`before_intent` + `after_call_before_journal`); the other ~52 mid-flight trials are expected `outcome_unknown` and stay in `n` / `rateAllPhases` — see `trialAccounting` in evidence. Evidence: [`phased-claim-path-columns-n100.json`](../benchmarks/program-cell-fleet-kill/phased-claim-path-columns-n100.json). |
+| **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Measured (n=100 lab)** — `writeStepsRerun=0` / `journalDivergence=0` on same evidence. Completed reads replay from the journal; interrupted reads re-request once (below).                                                                                                                                                                                                  |
+| **State preserved** | Final step digests + program result match the no-crash path     | **Scaffolding → digest equality** — fleet compares exact canonical digests of step results vs a per-trial no-crash twin (same plan args). Eligible = outer phases that `completedClean` only; mid-flight excluded by definition (see `trialAccounting.statePreserved`). Prior n=40 structural row superseded. Node `compareProgramStepStateEffect` is the unit golden.                                      |
 
 ### 2. Every side effect through a journaled step
 
 Writes already do. **Reads, model calls, timers, sleeps, and waits for approval** must too, or recovery cannot reconstruct where the program was. Deadline board: timers survive restarts. Model calls need recording **or** an explicit “re-request on recovery” rule.
 
-**Today:** plan `execute`/`search`/`sleep`/`await_approval`/`model_call` entries + write intents + `clock.startedAt` / `sleep.<i>.wakeAt` / `await_approval.<i>.executionId` / `model_call.<i>.requestDigest` nondet. Interrupted reads without an entry re-run once; interrupted sleeps re-arm from the journaled wake deadline; `await_approval` parks while the mandate is pending (observe-only — never consumes); `model_call` journals the host response and **replays** on resume (crash mid-call with no entry **re-requests once**).
+**Today:** plan `execute`/`search`/`sleep`/`await_approval`/`model_call` entries + write intents + `clock.startedAt` / `sleep.<i>.wakeAt` / `await_approval.<i>.executionId` / `model_call.<i>.requestDigest` nondet.
+
+**Reads (honest limit):** A completed read is journaled and **replayed** on resume (upstream is not hit again). An interrupted read with no journal entry is **re-requested once**. Resumption therefore assumes that re-read is acceptable — the upstream is repeatable, or the program tolerates a fresh value. If underlying data changed and a later step’s stored args no longer match the plan, recovery **hard-stops** (`journal_divergence`) rather than silently taking a divergent path. We do **not** yet claim that every mid-read crash reconstructs the exact pre-crash bytes without re-request.
+
+**Model calls (honest limit):** A completed `model_call` journals the host response and **replays** it. A crash mid-call with no entry **re-requests once**; the new response may differ from the lost one. Limit in one line: **at most one repeated model request per crash, never a repeated write.**
+
+**Other:** Interrupted sleeps re-arm from the journaled wake deadline; `await_approval` parks while the mandate is pending (observe-only — never consumes).
 
 ### 3. Deterministic recovery — or detect when it isn’t
 
@@ -57,7 +63,7 @@ If recovery reruns code between steps, nondeterminism (clock, random, iteration 
 
 A program waiting days on an approval must still resume after node restarts and failover. Deadline + fleet results are most of this evidence — make the wait/approval path a first-class board column.
 
-**Today:** **Measured (n=40 lab, 8 await trials)** — survive+complete rate **1.0**. Evidence: [`phased-await-state-n40.json`](../benchmarks/program-cell-fleet-kill/phased-await-state-n40.json). ProgramCellDO observe-only park; Node + density `restartSurvival` remain.
+**Today:** **Measured (n=40 lab, 8 await trials)** — survive+complete rate **1.0** (8/8; separate arm, not a filtered subset of write-kill N). Evidence: [`phased-await-state-n40.json`](../benchmarks/program-cell-fleet-kill/phased-await-state-n40.json). Lab N≈1000 sizes this arm to a few hundred trials. ProgramCellDO observe-only park; Node + density `restartSurvival` remain.
 
 ### 5. Model extended
 
@@ -69,9 +75,9 @@ Extend the TLA+ spec from single writes to programs: a crashed program eventuall
 
 ## What you could then say
 
-> ClawQL runs programs durably: after a crash or node failure, a program resumes from its last completed step and runs to completion, never repeating a write.
+> ClawQL runs **step-level checkpointed durable execution**: after a crash or node failure, a program resumes from its last completed step and runs to completion, never repeating a write. Limits: interrupted reads and model calls may re-request once; mid-flight writes are `outcome_unknown` for a person; this is **not** mid-step resumption of unmodified agents.
 
-Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a position no one else can claim in full today.
+Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a position no one else can claim in full today. **Do not publish that sentence until the N≈1000 fleet evidence is clean.**
 
 ---
 
