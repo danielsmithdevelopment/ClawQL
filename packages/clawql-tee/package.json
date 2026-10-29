@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "effect": "4.0.0",
-    "jose": "^6.2.12"
+    "jose": "^6.2.13"
   },
   "peerDependencies": {
     "clawql-auth": "0.1.0"

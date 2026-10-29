@@ -31,7 +31,7 @@
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "effect": "4.0.0",
-    "jose": "^6.2.12"
+    "jose": "^6.2.13"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
