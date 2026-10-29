@@ -60,15 +60,19 @@ ClawQL surfaces these as `flushStats` (`npm run benchmark:program-density-flush-
 
 **Under-load sync latency vs probe (required):** record each sync’s p50/p99 during the focus window and compare to the serial probe. If run latency is **2–4×** the probe, growing-file metadata (size/blocks on every `fsync`) is the likely gap — trial **`fdatasync` + preallocated segments** and report before/after **sustained rate + fsyncs/sec** (not hit rate).
 
-**ClawQL result on this host:** focus p50 ≈ **1.08×** probe (not 2–4×); fdatasync/prealloc arms ≈ **+3%** sustained — **does not close the gap** here. Cycle stages: sync ~156 µs of ~174 µs cycle; non-sync ~22% of the fsync period. **Pure drain ~321k/s** vs **1s-SLA sustainable ~636k/s** (`sla_rate_above_drain_one_second_slack_not_writer_bound`) — report both. At the SLA cliff, late fires are **wait-to-pop** (~307 ms), not sync. Ontologiql prealloc +31% on their host → each side discloses best journal config; re-run arms on the shared campaign disk.
+**ClawQL result on this host:** under-load sync ≈ probe; metadata arms ~+3%. After **steady-state ramp** (continuous arrivals + growing-backlog fail): **durable ~347k/s**, **sustained ~140k/s** (≤ drain; prior 636k retracted). Failures at ~144–160k show **growing backlog with pctWithinSla still 100%**. Cycle: write~10µs sync~125µs (p99~672µs) ack~2µs. Ontologiql: drain≈SLA (~0.85), ack~141µs/batch, sync mean≫p50 — disclose best journal config; same ramp rules on the shared host.
 
-### 3. Refine the ramp (binary search + resolution)
+### 3. Refine the ramp (binary search + resolution + steady state)
 
 Coarse ladders (e.g. 192k→256k or 256k→384k) only place the limit in a **33–50%** band; those bands overlap across systems.
 
+- **Continuous arrivals** for each step (not a short place-ahead burst). Default step **≥30s**.
+- **Fail a step whose overdue backlog is still growing** in the final stretch, even if pctWithinSla still looks fine. Short steps can pass rates above drain while the queue grows.
+- Record **`stepDurationMs`** and **`backlogTrend`** on every arm.
 - After the last pass and first fail, **binary-search** until `(firstFail − lastPass) / lastPass` ≤ **1%** (both systems — same resolution).
 - Report **`rampResolutionRel` / `rampResolutionNote`** in the evidence (e.g. `±1%`).
 - Neither side’s number may be fuzzier than the other’s.
+- **Invariant:** `rateSustainableWithinOneSecondSla` ≤ `durableRecordsPerSec` (within measurement noise). If not, the ramp is still too short.
 
 ### 4. Same conditions + alternating systems
 

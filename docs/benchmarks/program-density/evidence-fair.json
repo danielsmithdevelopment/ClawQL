@@ -99,7 +99,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2. Under-load sync≈probe; metadata arms ~+3%. Cycle stages: write~11µs sync~156µs ack~6µs (non-sync ~22% of fsync period). Pure durable drain ~321k/s vs 1s-SLA sustainable ~636k/s (drain/sustained≈0.50) — sla_rate_above_drain_one_second_slack_not_writer_bound. Cliff lateness is wait-to-pop (~307ms), not sync. Report both durableRecordsPerSec and rateSustainableWithinOneSecondSla. Journal: fsync append (best on this host; Ontologiql prealloc +31% elsewhere — disclose each). Board floor 256k 3-rep until shared-host. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. Steady-state ramp (continuous arrivals ≥8–30s/step; fail on growing overdue backlog). durableRecordsPerSec~347k/s; rateSustainableWithinOneSecondSla~140k/s (≤drain; prior 636k retracted — short place-ahead steps). Failures at ~144–160k: growing backlog while pctWithinSla still 100%. Cycle: write~10µs sync~125µs (p99~672µs) ack~2µs. Journal: fsync append. Ontologiql drain≈SLA ~0.85; ack~141µs. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1282,33 +1282,40 @@
   },
   "drainVsSustained": {
     "artifact": "docs/benchmarks/program-density/drain-vs-sustained.json",
-    "measuredAt": "2026-10-29T00:32:26.507Z",
+    "measuredAt": "2026-10-29T02:26:53.131Z",
     "journalConfig": {
       "dataSync": "fsync",
       "preallocateBytes": null,
       "chosenBecause": "board_default_fsync_append_metadata_arms_neutral_on_this_host"
     },
-    "durableRecordsPerSec": 321317.01,
-    "rateSustainableWithinOneSecondSla": 636000,
-    "firstRateMissingSlaPerSec": 640000,
-    "drainOverSustained": 0.505,
+    "rampMethodology": {
+      "mode": "steady_arrival_continuous",
+      "stepDurationMs": 8000,
+      "requireNonGrowingBacklog": true,
+      "campaignStepDurationMs": 30000
+    },
+    "durableRecordsPerSec": 347233.12,
+    "rateSustainableWithinOneSecondSla": 140000,
+    "firstRateMissingSlaPerSec": 144000,
+    "drainOverSustained": 2.48,
+    "sustainedAtOrBelowDrain": true,
+    "priorShortRampSustainablePerSecRetracted": 636000,
     "cycleStagesMs": {
-      "writeMeanMs": 0.0111,
-      "syncMeanMs": 0.1557,
-      "ackMeanMs": 0.0062,
-      "interFlushGapMeanMs": 0.0011,
-      "cycleMeanMs": 0.1738
+      "writeMeanMs": 0.01,
+      "syncMeanMs": 0.1252,
+      "syncP50Ms": 0.1113,
+      "syncP99Ms": 0.6723,
+      "ackMeanMs": 0.0024,
+      "interFlushGapMeanMs": 0.0004,
+      "cycleMeanMs": 0.1382
     },
-    "nonSyncShareOfPeriodPct": 21.8,
-    "cliffLateness": {
-      "offeredRatePerSec": 640000,
-      "pctWithinSla": 92.42,
-      "lateCount": 50240,
-      "meanWaitToPopMs": 306.755,
-      "meanWaitForBatchMs": 0.128,
-      "meanSyncMs": 0.143
+    "exampleFailArm": {
+      "arrivalRatePerSec": 144000,
+      "pctWithinSla": 100,
+      "failReason": "growing_backlog",
+      "note": "Short steps would have passed this rate; backlog trend catches it."
     },
-    "diagnosis": "sla_rate_above_drain_one_second_slack_not_writer_bound",
-    "reading": "Report both durableRecordsPerSec and rateSustainableWithinOneSecondSla. Cliff is wait-to-pop, not disk."
+    "diagnosis": "latency_limit_drain_exceeds_sustained_sla_rate",
+    "reading": "Steady-state ramp: sustained ≤ drain. Prior 636k retracted. Campaign uses ≥30s steps."
   }
 }

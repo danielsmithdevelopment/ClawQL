@@ -36,10 +36,14 @@ const batchMax = Number(process.env.CLAWQL_DENSITY_FLUSH_BATCH_MAX || 64);
 const concurrency = Number(process.env.CLAWQL_DENSITY_DEADLINE_CONCURRENCY || 128);
 const drainN = Number(process.env.CLAWQL_DENSITY_DRAIN_N || 64_000);
 const residentHeap = Number(process.env.CLAWQL_DENSITY_PROFILE_HEAP || 250_000);
-const cliffRates = (process.env.CLAWQL_DENSITY_CLIFF_RATES || "256000,384000,512000")
+const cliffRates = (process.env.CLAWQL_DENSITY_CLIFF_RATES || "128000,192000,256000,384000")
   .split(",")
   .map((s) => Number(s.trim()))
   .filter((n) => Number.isFinite(n) && n > 0);
+/** Board/campaign default 30s; shorter only for smoke (still must catch growing backlog). */
+const rampStepMs = Number(
+  process.env.CLAWQL_DENSITY_RAMP_STEP_MS || 30_000
+);
 
 mkdirSync(workDir, { recursive: true });
 const pct = (samples, p) => Effect.runSync(percentileMsEffect(samples, p));
@@ -130,44 +134,62 @@ async function openJournal(subdir) {
   );
 }
 
-/** Pure drain: all deadlines already due; ignore lateness / SLA. */
+/**
+ * Saturating continuous drain (same path as the ramp): offer arrivals far
+ * above capacity for `drainWindowMs` and read durable records/sec from flushStats.
+ * Prefers this over "all already due" bursts, which understate continuous capacity.
+ */
 async function measurePureDrain() {
+  const { runSteadyArrivalPumpEffect } = await import(
+    "../../../packages/clawql-api/src/program/density/deadline-schedule.ts"
+  );
   const journal = await openJournal("drain");
+  const drainWindowMs = Number(process.env.CLAWQL_DENSITY_DRAIN_WINDOW_MS || Math.min(rampStepMs, 8_000));
   try {
-    const schedule = await Effect.runPromise(
-      makeTypedDeadlineScheduleEffect(Math.max(drainN, residentHeap) + 10_000)
-    );
-    const now = Date.now();
-    const ids = Array.from({ length: drainN }, (_, i) =>
-      `bag_${i.toString(16).padStart(8, "0")}`
-    );
-    for (let i = 0; i < drainN; i++) schedule.schedule(ids[i], now - 1);
-    padResidentHeap(schedule, Math.max(drainN, residentHeap), now + 3_600_000);
-
+    const sampleIds = Array.from({ length: 4_000 }, (_, i) => `bag_${i}`);
     journal.resetFlushStats();
     const t0 = performance.now();
-    let fired = 0;
-    while (fired < drainN) {
-      const due = schedule.popDue(Date.now() + 1);
-      if (due.length === 0) break;
-      const batch = due.slice(0, drainN - fired);
-      await mapPool(batch, concurrency, async (entry) => {
-        await journal.record(entry.agentId, entry.deadlineMs);
-      });
-      fired += batch.length;
-    }
+    const saturateRate = Number(
+      process.env.CLAWQL_DENSITY_DRAIN_SATURATE_RATE ||
+        Math.max(512_000, (serialFsyncs ?? 8_000) * batchMax)
+    );
+    const arm = await Effect.runPromise(
+      runSteadyArrivalPumpEffect({
+        agentIds: sampleIds,
+        fire: async (entry) => {
+          await journal.record(entry.agentId, entry.deadlineMs);
+        },
+        // Above capacity; keep a small pending cap so GC doesn't thrash the writer.
+        arrivalRatePerSec: saturateRate,
+        stepDurationMs: drainWindowMs,
+        slaMs: 1_000,
+        slaTargetPct: 0, // ignore SLA; we want throughput only
+        concurrency,
+        requireNonGrowingBacklog: false,
+        allowBacklogEarlyStop: false,
+        maxPending: Math.max(concurrency * 64, 8_192),
+        percentile: pct,
+      })
+    );
     await journal.flush();
     const wallMs = performance.now() - t0;
     const flushStats = journal.snapshotFlushStats();
+    const fromFlush = flushStats.recordsPerSec;
+    const fromFired = arm.fired > 0 && wallMs > 0 ? (arm.fired * 1000) / wallMs : 0;
+    // Prefer journal flush accounting over wall/fired (early-stop shortens wall oddly).
+    const durableRecordsPerSec = Number((fromFlush > 0 ? fromFlush : fromFired).toFixed(2));
     return {
-      n: fired,
+      mode: "saturating_continuous",
+      n: arm.fired,
       wallMs: Number(wallMs.toFixed(2)),
-      durableRecordsPerSec: Number(((fired * 1000) / wallMs).toFixed(2)),
+      drainWindowMs,
+      durableRecordsPerSec,
       fsyncsPerSec: flushStats.fsyncsPerSec,
       avgBatchSize: flushStats.avgBatchSize,
       cycleStagesMs: flushStats.cycleStagesMs,
       fsyncLatencyMs: flushStats.fsyncLatencyMs,
       doubleBufferHits: flushStats.doubleBufferHits,
+      backlogTrend: arm.backlogTrend,
       cycleMsImplied: flushStats.cycleStagesMs?.cycleMeanMs
         ? Number((1000 / flushStats.cycleStagesMs.cycleMeanMs).toFixed(1))
         : null,
@@ -187,7 +209,7 @@ async function measurePureDrain() {
   }
 }
 
-/** Sustained rate within 1s SLA (board headline contract). */
+/** Sustained rate within 1s SLA — continuous arrivals until steady state. */
 async function measureSustained() {
   const journal = await openJournal("sustained");
   try {
@@ -199,12 +221,14 @@ async function measureSustained() {
         fire: async (entry) => {
           await journal.record(entry.agentId, entry.deadlineMs);
         },
-        windowMs: 1_000,
+        windowMs: rampStepMs,
+        minStepDurationMs: rampStepMs,
+        requireNonGrowingBacklog: true,
         slaMs: 1_000,
         slaTargetPct: 99,
         concurrency,
         ratesPerSec: cliffRates,
-        refineRelative: 0.01,
+        refineRelative: 0.05,
         residentHeapSize: 50_000,
         scheduleShape: "typed_arrays",
         percentile: pct,
@@ -216,6 +240,27 @@ async function measureSustained() {
       firstRateMissingSlaPerSec: ramp.firstRateMissingSlaPerSec,
       rampResolutionRel: ramp.rampResolutionRel,
       rampResolutionNote: ramp.rampResolutionNote,
+      rampMethodology: ramp.rampMethodology,
+      rampArms: ramp.ramp.map((a) => ({
+        arrivalRatePerSec: a.arrivalRatePerSec,
+        pctWithinSla: a.pctWithinSla,
+        stepDurationMs: a.stepDurationMs ?? null,
+        steadyStatePass: a.steadyStatePass ?? null,
+        failReason: a.failReason ?? null,
+        backlogTrend: a.backlogTrend
+          ? {
+              growing: a.backlogTrend.growing,
+              startOverdue: a.backlogTrend.startOverdue,
+              endOverdue: a.backlogTrend.endOverdue,
+              finalStretchStartOverdue: a.backlogTrend.finalStretchStartOverdue,
+              finalStretchEndOverdue: a.backlogTrend.finalStretchEndOverdue,
+              slopePerSec: a.backlogTrend.slopePerSec,
+              earlyStopBacklogExceeded: a.backlogTrend.earlyStopBacklogExceeded,
+            }
+          : null,
+        latenessP99Ms: a.latenessP99Ms,
+        wallMs: a.wallMs,
+      })),
       flushStatsAcrossRamp: {
         fsyncsPerSec: flushStats.fsyncsPerSec,
         recordsPerSec: flushStats.recordsPerSec,
@@ -378,11 +423,27 @@ async function measureLatenessSplit(offeredRatePerSec) {
 
 const pureDrain = await measurePureDrain();
 const sustained = await measureSustained();
+const skipCliffLateness = process.env.CLAWQL_DENSITY_SKIP_CLIFF_LATENESS === "1";
 const cliffRate =
   sustained.firstRateMissingSlaPerSec ??
-  Math.max(sustained.sustainablePerSec * 1.5, sustained.sustainablePerSec + 64_000);
-const cliff = await measureLatenessSplit(cliffRate);
-const atSustainable = await measureLatenessSplit(sustained.sustainablePerSec || 256_000);
+  Math.max(sustained.sustainablePerSec * 1.25, sustained.sustainablePerSec + 32_000);
+const cliff = skipCliffLateness
+  ? {
+      offeredRatePerSec: cliffRate,
+      fired: 0,
+      pctWithinSla: null,
+      metSla: null,
+      latenessMs: { n: 0, mean: null, p50: null, p99: null },
+      stagesAllFires: null,
+      lateOnly: { count: 0, meanWaitToPopMs: null, meanWaitForBatchMs: null, meanSyncMs: null, meanWaitForDurableMs: null, sample: [] },
+      flushStats: null,
+      skipped: true,
+      note: "Set CLAWQL_DENSITY_SKIP_CLIFF_LATENESS=0 to sample waitToPop/batch/sync at the cliff.",
+    }
+  : await measureLatenessSplit(cliffRate);
+const atSustainable = skipCliffLateness
+  ? null
+  : await measureLatenessSplit(sustained.sustainablePerSec || 256_000);
 
 const cycleMs = pureDrain.cycleStagesMs?.cycleMeanMs;
 const gapMs = pureDrain.cycleStagesMs?.interFlushGapMeanMs;
@@ -392,12 +453,15 @@ const observedFsyncPeriodMs =
 
 let diagnosis;
 const sustainedRate = sustained.sustainablePerSec || 0;
-if (sustainedRate > 0 && pureDrain.durableRecordsPerSec > sustainedRate * 1.25) {
-  // Classic: writer can go faster than the SLA cliff ⇒ cliff is latency/scheduling.
+const drainRate = pureDrain.durableRecordsPerSec;
+// Allow ~15% host/measurement noise between saturating-drain and ramp windows.
+const sustainedAboveDrain = sustainedRate > drainRate * 1.15;
+if (sustainedAboveDrain) {
+  diagnosis = "inconsistent_sustained_above_drain_ramp_still_too_short";
+} else if (sustainedRate > 0 && drainRate > sustainedRate * 1.25) {
   diagnosis = "latency_limit_drain_exceeds_sustained_sla_rate";
-} else if (sustainedRate > 0 && pureDrain.durableRecordsPerSec < sustainedRate * 0.95) {
-  // SLA rate above pure drain ⇒ 1s slack / queueing, not writer saturation.
-  diagnosis = "sla_rate_above_drain_one_second_slack_not_writer_bound";
+} else if (sustainedRate > 0 && drainRate >= sustainedRate * 0.85) {
+  diagnosis = "writer_bound_sustained_near_drain";
 } else if (syncMs != null && observedFsyncPeriodMs != null && observedFsyncPeriodMs > syncMs * 1.8) {
   diagnosis = "cycle_time_dominated_by_non_sync_stages";
 } else {
@@ -425,8 +489,11 @@ const payload = {
       sustained.sustainablePerSec > 0
         ? Number((pureDrain.durableRecordsPerSec / sustained.sustainablePerSec).toFixed(3))
         : null,
+    sustainedAtOrBelowDrain: !sustainedAboveDrain,
     observedFsyncPeriodMs,
     syncMeanMs: syncMs,
+    syncP50Ms: pureDrain.cycleStagesMs?.syncP50Ms ?? null,
+    syncP99Ms: pureDrain.fsyncLatencyMs?.p99 ?? null,
     writeMeanMs: pureDrain.cycleStagesMs?.writeMeanMs ?? null,
     ackMeanMs: pureDrain.cycleStagesMs?.ackMeanMs ?? null,
     interFlushGapMeanMs: gapMs,
@@ -439,7 +506,7 @@ const payload = {
   reading: {
     diagnosis,
     note:
-      "Report both numbers: durable records/sec (pure drain) and rate sustainable within the 1s target. If drain ≫ sustained, the board cliff is a latency/scheduling limit, not writer saturation. Cycle stages locate time between syncs (write / libuv sync handoff / ack / inter-flush gap). Prealloc: each system uses its best journal config and discloses it — Ontologiql +31% vs ClawQL ~+2% is host/FS, not design.",
+      "Steady-state ramp: continuous arrivals for ≥30s/step (override CLAWQL_DENSITY_RAMP_STEP_MS); fail if overdue backlog grows. Sustained must be ≤ durable drain. If drain ≫ sustained → latency limit; if near drain → writer-bound. Record stepDurationMs + backlogTrend. Sync p99 beside mean (Ontologiql heavy tail). Prealloc: disclose best journal config per side.",
     boardColumns: {
       durableRecordsPerSec: pureDrain.durableRecordsPerSec,
       rateSustainableWithinOneSecondSla: sustained.sustainablePerSec,
@@ -458,7 +525,11 @@ console.log(
       durableRecordsPerSec: pureDrain.durableRecordsPerSec,
       rateSustainableWithinOneSecondSla: sustained.sustainablePerSec,
       drainOverSustained: payload.compare.drainOverSustained,
+      sustainedAtOrBelowDrain: payload.compare.sustainedAtOrBelowDrain,
+      rampMethodology: sustained.rampMethodology,
+      rampArms: sustained.rampArms,
       cycleStagesMs: pureDrain.cycleStagesMs,
+      syncP99Ms: pureDrain.fsyncLatencyMs?.p99 ?? null,
       observedFsyncPeriodMs,
       nonSyncShareOfPeriod: payload.compare.nonSyncShareOfPeriod,
       cliffPctWithinSla: cliff.pctWithinSla,

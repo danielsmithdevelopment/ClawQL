@@ -209,6 +209,21 @@ export type DeadlineGcTrace = {
   readonly note: string;
 };
 
+export type DeadlineBacklogTrend = {
+  /** Wall samples of overdue-not-yet-started queue depth during the step. */
+  readonly sampleCount: number;
+  readonly sampleEveryMs: number;
+  readonly startOverdue: number | null;
+  readonly endOverdue: number | null;
+  readonly finalStretchStartOverdue: number | null;
+  readonly finalStretchEndOverdue: number | null;
+  /** True when overdue depth rose over the final stretch (or hit the fail threshold). */
+  readonly growing: boolean;
+  readonly slopePerSec: number | null;
+  readonly earlyStopBacklogExceeded: boolean;
+  readonly note: string;
+};
+
 export type DeadlineArmResult = {
   readonly mode: DeadlineArmMode;
   readonly n: number;
@@ -226,6 +241,15 @@ export type DeadlineArmResult = {
   readonly wallMs: number;
   readonly scheduleShape: DeadlineScheduleShape;
   readonly gcTrace: DeadlineGcTrace | null;
+  /** Step wall budget (steady-state ramp). Short place-ahead ramps omit this. */
+  readonly stepDurationMs?: number;
+  readonly backlogTrend?: DeadlineBacklogTrend | null;
+  /**
+   * Pass requires pctWithinSla ≥ target **and** non-growing backlog when
+   * steady-state ramp is enabled. Short/legacy arms omit this (treat pct only).
+   */
+  readonly steadyStatePass?: boolean | null;
+  readonly failReason?: string | null;
 };
 
 /** Ontologiql-aligned burst sizes for SHARED_HOST scaled-burst ladder. */
@@ -303,7 +327,13 @@ function summarizeArm(
   wallMs: number,
   percentile: (samples: readonly number[], p: number) => number,
   scheduleShape: DeadlineScheduleShape = "object_entries",
-  gcTrace: DeadlineGcTrace | null = null
+  gcTrace: DeadlineGcTrace | null = null,
+  extras?: {
+    readonly stepDurationMs?: number;
+    readonly backlogTrend?: DeadlineBacklogTrend | null;
+    readonly steadyStatePass?: boolean | null;
+    readonly failReason?: string | null;
+  }
 ): DeadlineArmResult {
   const excess = samples.map((l) => Math.max(0, l - tickMs));
   const within = samples.filter((l) => l <= slaMs).length;
@@ -325,7 +355,225 @@ function summarizeArm(
     wallMs: Number(wallMs.toFixed(3)),
     scheduleShape,
     gcTrace,
+    stepDurationMs: extras?.stepDurationMs,
+    backlogTrend: extras?.backlogTrend ?? null,
+    steadyStatePass: extras?.steadyStatePass ?? null,
+    failReason: extras?.failReason ?? null,
   };
+}
+
+/**
+ * Continuous offered arrivals for duration `stepDurationMs` — not a short
+ * place-ahead burst. Samples overdue queue depth; fails steady-state when the
+ * backlog is still growing in the final stretch (even if pctWithinSla looks OK).
+ */
+export function runSteadyArrivalPumpEffect(args: {
+  readonly agentIds: readonly string[];
+  readonly fire: (entry: DeadlineEntry) => Promise<void>;
+  readonly arrivalRatePerSec: number;
+  readonly stepDurationMs: number;
+  readonly slaMs?: number;
+  readonly slaTargetPct?: number;
+  readonly concurrency?: number;
+  readonly tickMs?: number;
+  readonly mode?: DeadlineArmMode;
+  readonly requireNonGrowingBacklog?: boolean;
+  /**
+   * When true (default), stop the step once overdue depth stays above ~1s of
+   * arrivals. Set false for saturating drain throughput (keep writing for the
+   * full window while capping the pending queue).
+   */
+  readonly allowBacklogEarlyStop?: boolean;
+  /** Cap overdue-not-started queue (default ≈1–2s of arrivals, bounded for drain). */
+  readonly maxPending?: number;
+  /** Sample overdue depth this often. */
+  readonly backlogSampleEveryMs?: number;
+  readonly percentile: (samples: readonly number[], p: number) => number;
+}): Effect.Effect<DeadlineArmResult> {
+  return Effect.promise(async () => {
+    const arrivalRatePerSec = Math.max(0.1, args.arrivalRatePerSec);
+    const stepDurationMs = Math.max(50, args.stepDurationMs);
+    const slaMs = args.slaMs ?? DEFAULT_DEADLINE_SLA_MS;
+    const slaTargetPct = args.slaTargetPct ?? DEFAULT_SLA_TARGET_PCT;
+    const concurrency = args.concurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
+    const tickMs = args.tickMs ?? DEFAULT_SCHEDULER_TICK_MS;
+    const mode = args.mode ?? "ramp";
+    const requireNonGrowingBacklog = args.requireNonGrowingBacklog !== false;
+    const allowBacklogEarlyStop = args.allowBacklogEarlyStop !== false;
+    const sampleEveryMs = Math.max(10, args.backlogSampleEveryMs ?? 100);
+    const ids = args.agentIds.length > 0 ? args.agentIds : ["agent_0"];
+    const intervalMs = 1000 / arrivalRatePerSec;
+    // One SLA-second of arrivals — beyond this the step is not sustainable.
+    const backlogFailThreshold = Math.max(
+      concurrency * 8,
+      Math.ceil(arrivalRatePerSec * (slaMs / 1000))
+    );
+    const maxPending = Math.max(
+      concurrency * 32,
+      Math.min(
+        args.maxPending ?? Number.POSITIVE_INFINITY,
+        Math.max(backlogFailThreshold, Math.ceil(arrivalRatePerSec * 0.25))
+      )
+    );
+
+    const samples: number[] = [];
+    const backlogSeries: { tMs: number; overdue: number; inFlight: number }[] = [];
+    const pending: DeadlineEntry[] = [];
+    let nextDeadlineMs = Date.now();
+    let idCursor = 0;
+    let inFlight = 0;
+    let consecutiveHigh = 0;
+    let earlyStopBacklogExceeded = false;
+    const t0 = Date.now();
+    const tEnd = t0 + stepDurationMs;
+
+    const launch = (entry: DeadlineEntry): void => {
+      inFlight += 1;
+      void args.fire(entry).then(
+        () => {
+          const firedAt = Date.now();
+          samples.push(Math.max(0, firedAt - entry.deadlineMs));
+          inFlight -= 1;
+        },
+        () => {
+          samples.push(Math.max(slaMs * 2, Date.now() - entry.deadlineMs));
+          inFlight -= 1;
+        }
+      );
+    };
+
+    let lastSampleAt = t0;
+    while (Date.now() < tEnd && !earlyStopBacklogExceeded) {
+      const now = Date.now();
+      while (nextDeadlineMs <= now && nextDeadlineMs < tEnd) {
+        if (pending.length >= maxPending) {
+          // Keep the arrival clock moving; drop excess rather than unbounded grow.
+          nextDeadlineMs += intervalMs;
+          if (allowBacklogEarlyStop) {
+            earlyStopBacklogExceeded = true;
+            break;
+          }
+          continue;
+        }
+        pending.push({
+          agentId: ids[idCursor % ids.length]!,
+          deadlineMs: nextDeadlineMs,
+        });
+        idCursor += 1;
+        nextDeadlineMs += intervalMs;
+      }
+      while (inFlight < concurrency && pending.length > 0) {
+        launch(pending.shift()!);
+      }
+      if (now - lastSampleAt >= sampleEveryMs) {
+        backlogSeries.push({ tMs: now - t0, overdue: pending.length, inFlight });
+        lastSampleAt = now;
+        if (allowBacklogEarlyStop && pending.length >= backlogFailThreshold) {
+          consecutiveHigh += 1;
+          if (consecutiveHigh >= 3) {
+            earlyStopBacklogExceeded = true;
+            break;
+          }
+        } else {
+          consecutiveHigh = 0;
+        }
+      }
+      if (pending.length === 0 && inFlight < concurrency && nextDeadlineMs > now) {
+        const sleepMs = Math.min(tickMs, Math.max(1, nextDeadlineMs - now));
+        await new Promise<void>((r) => setTimeout(r, sleepMs));
+      } else {
+        await new Promise<void>((r) => setImmediate(r));
+      }
+    }
+
+    // Drain what was already due; do not accept new arrivals past tEnd.
+    const drainDeadline = Date.now() + Math.max(slaMs * 2, 5_000);
+    while ((pending.length > 0 || inFlight > 0) && Date.now() < drainDeadline) {
+      while (inFlight < concurrency && pending.length > 0) {
+        launch(pending.shift()!);
+      }
+      await new Promise<void>((r) => setImmediate(r));
+    }
+
+    const stretchStart = stepDurationMs * 0.75;
+    const stretch = backlogSeries.filter((s) => s.tMs >= stretchStart);
+    const startOverdue = backlogSeries[0]?.overdue ?? null;
+    const endOverdue = backlogSeries.length
+      ? backlogSeries[backlogSeries.length - 1]!.overdue
+      : null;
+    const stretchStartOverdue = stretch[0]?.overdue ?? null;
+    const stretchEndOverdue = stretch.length ? stretch[stretch.length - 1]!.overdue : null;
+    let slopePerSec: number | null = null;
+    let growing = earlyStopBacklogExceeded;
+    if (stretch.length >= 4) {
+      const mid = stretch.length >> 1;
+      const earlyAvg =
+        stretch.slice(0, mid).reduce((a, s) => a + s.overdue, 0) / Math.max(1, mid);
+      const lateAvg =
+        stretch.slice(mid).reduce((a, s) => a + s.overdue, 0) /
+        Math.max(1, stretch.length - mid);
+      const dtSec = Math.max(
+        0.001,
+        ((stretch[stretch.length - 1]!.tMs - stretch[0]!.tMs) / 1000) * 0.5
+      );
+      slopePerSec = Number(((lateAvg - earlyAvg) / dtSec).toFixed(2));
+      const growthFloor = Math.max(10, earlyAvg * 0.05);
+      if (lateAvg > earlyAvg + growthFloor) growing = true;
+    } else if (
+      stretchStartOverdue != null &&
+      stretchEndOverdue != null &&
+      stretchEndOverdue > stretchStartOverdue + Math.max(10, stretchStartOverdue * 0.05)
+    ) {
+      growing = true;
+    }
+
+    const backlogTrend: DeadlineBacklogTrend = {
+      sampleCount: backlogSeries.length,
+      sampleEveryMs: sampleEveryMs,
+      startOverdue,
+      endOverdue,
+      finalStretchStartOverdue: stretchStartOverdue,
+      finalStretchEndOverdue: stretchEndOverdue,
+      growing,
+      slopePerSec,
+      earlyStopBacklogExceeded,
+      note: earlyStopBacklogExceeded
+        ? `Overdue queue hit ≥${backlogFailThreshold} (≈1s of arrivals) — step is not sustainable.`
+        : growing
+          ? "Overdue depth rose over the final stretch — short steps can hide this behind a still-OK lateness %."
+          : "Overdue depth stable over the final stretch.",
+    };
+
+    const within = samples.filter((l) => l <= slaMs).length;
+    const pctWithinSla = samples.length
+      ? Number(((100 * within) / samples.length).toFixed(2))
+      : 0;
+    const pctOk = pctWithinSla >= slaTargetPct;
+    const backlogOk = !requireNonGrowingBacklog || !growing;
+    const steadyStatePass = pctOk && backlogOk;
+    let failReason: string | null = null;
+    if (!pctOk && !backlogOk) failReason = "sla_and_growing_backlog";
+    else if (!pctOk) failReason = "sla_miss";
+    else if (!backlogOk) failReason = "growing_backlog";
+
+    return summarizeArm(
+      mode,
+      samples,
+      tickMs,
+      slaMs,
+      arrivalRatePerSec,
+      Date.now() - t0,
+      args.percentile,
+      "typed_arrays",
+      null,
+      {
+        stepDurationMs,
+        backlogTrend,
+        steadyStatePass,
+        failReason,
+      }
+    );
+  });
 }
 
 type GcPauseInterval = {
@@ -588,6 +836,12 @@ export function makeAccuracyScheduleEffect(args: {
   return makeDeadlineScheduleEffect();
 }
 
+/**
+ * Default ramp step duration for board/campaign honesty. Short place-ahead
+ * windows (1–2s) can pass rates above drain while the backlog is still growing.
+ */
+export const DEFAULT_RAMP_STEP_DURATION_MS = 30_000;
+
 export function rampSustainableRateEffect(args: {
   readonly agentIds: readonly string[];
   readonly fire: (entry: DeadlineEntry) => Promise<void>;
@@ -605,6 +859,18 @@ export function rampSustainableRateEffect(args: {
   /** Far-future pad so ramp arms stress the same heap size as agents-at-limit. */
   readonly residentHeapSize?: number;
   readonly scheduleShape?: DeadlineScheduleShape;
+  /**
+   * Continuous-arrival step duration. Default 30s. Pass a small value (or 0 with
+   * `legacyPlaceAheadRamp: true`) only for unit tests.
+   */
+  readonly minStepDurationMs?: number;
+  /** Fail the step when overdue depth rises in the final stretch (default true). */
+  readonly requireNonGrowingBacklog?: boolean;
+  /**
+   * Legacy: place all deadlines over `windowMs` then pump (short bursts can
+   * overstate sustainablePerSec). Default false — continuous steady-state ramp.
+   */
+  readonly legacyPlaceAheadRamp?: boolean;
   readonly percentile: (samples: readonly number[], p: number) => number;
 }): Effect.Effect<{
   readonly sustainablePerSec: number;
@@ -622,6 +888,12 @@ export function rampSustainableRateEffect(args: {
    */
   readonly rampResolutionRel: number | null;
   readonly rampResolutionNote: string | null;
+  readonly rampMethodology: {
+    readonly mode: "steady_arrival_continuous" | "legacy_place_ahead";
+    readonly stepDurationMs: number;
+    readonly requireNonGrowingBacklog: boolean;
+    readonly note: string;
+  };
 }> {
   return Effect.gen(function* () {
     const slaMs = args.slaMs ?? DEFAULT_DEADLINE_SLA_MS;
@@ -634,13 +906,42 @@ export function rampSustainableRateEffect(args: {
     const scheduleShape = args.scheduleShape ?? "typed_arrays";
     const refineRelative =
       args.refineRelative === false ? 0 : Math.max(0, args.refineRelative ?? 0.01);
+    const legacyPlaceAheadRamp = args.legacyPlaceAheadRamp === true;
+    const requireNonGrowingBacklog =
+      args.requireNonGrowingBacklog !== false && !legacyPlaceAheadRamp;
+    const stepDurationMs = legacyPlaceAheadRamp
+      ? windowMs
+      : Math.max(
+          windowMs,
+          args.minStepDurationMs ?? DEFAULT_RAMP_STEP_DURATION_MS
+        );
     // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
       ([50, 100, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 64_000, 128_000] as const);
 
-    const runRate = (rate: number): Effect.Effect<DeadlineArmResult> =>
-      Effect.gen(function* () {
+    const armPasses = (arm: DeadlineArmResult): boolean => {
+      if (arm.steadyStatePass != null) return arm.steadyStatePass;
+      return arm.pctWithinSla >= targetPct;
+    };
+
+    const runRate = (rate: number): Effect.Effect<DeadlineArmResult> => {
+      if (!legacyPlaceAheadRamp) {
+        return runSteadyArrivalPumpEffect({
+          agentIds: args.agentIds,
+          fire: args.fire,
+          arrivalRatePerSec: rate,
+          stepDurationMs,
+          slaMs,
+          slaTargetPct: targetPct,
+          concurrency,
+          tickMs,
+          mode: "ramp",
+          requireNonGrowingBacklog,
+          percentile: args.percentile,
+        });
+      }
+      return Effect.gen(function* () {
         const count = Math.max(1, Math.floor(rate * windowSec));
         const offered = count / windowSec;
         const need = Math.max(count, args.agentIds.length);
@@ -671,6 +972,7 @@ export function rampSustainableRateEffect(args: {
           percentile: args.percentile,
         });
       });
+    };
 
     const ramp: DeadlineArmResult[] = [];
     let sustainable = 0;
@@ -679,7 +981,7 @@ export function rampSustainableRateEffect(args: {
     for (const rate of rates) {
       const arm = yield* runRate(rate);
       ramp.push(arm);
-      if (arm.pctWithinSla >= targetPct) {
+      if (armPasses(arm)) {
         sustainable = arm.arrivalRatePerSec;
       } else {
         firstRateMissingSlaPerSec = Number(arm.arrivalRatePerSec.toFixed(2));
@@ -705,7 +1007,7 @@ export function rampSustainableRateEffect(args: {
         const mid = (lo + hi) / 2;
         const arm = yield* runRate(mid);
         ramp.push(arm);
-        if (arm.pctWithinSla >= targetPct) {
+        if (armPasses(arm)) {
           lo = arm.arrivalRatePerSec;
           sustainable = lo;
         } else {
@@ -733,6 +1035,14 @@ export function rampSustainableRateEffect(args: {
       coarseFirstRateMissingSlaPerSec,
       rampResolutionRel,
       rampResolutionNote,
+      rampMethodology: {
+        mode: legacyPlaceAheadRamp ? "legacy_place_ahead" : "steady_arrival_continuous",
+        stepDurationMs,
+        requireNonGrowingBacklog,
+        note: legacyPlaceAheadRamp
+          ? "Legacy place-ahead ramp — can overstate sustainablePerSec when steps are shorter than the time for lateness to reach the SLA."
+          : `Continuous arrivals for ${stepDurationMs}ms/step; fail if overdue backlog grows in the final stretch. Sustained must stay ≤ durable drain.`,
+      },
     };
   });
 }
@@ -860,6 +1170,10 @@ export function runDeadlineAccuracyEffect(args: {
   readonly rampRatesPerSec?: readonly number[];
   /** Binary-search refine target width; default 0.01 (±1%). Pass false to skip. */
   readonly rampRefineRelative?: number | false;
+  /** Continuous ramp step duration (default 30s). Short values for unit tests only. */
+  readonly rampMinStepDurationMs?: number;
+  readonly rampRequireNonGrowingBacklog?: boolean;
+  readonly rampLegacyPlaceAhead?: boolean;
   readonly skipRamp?: boolean;
   /**
    * Scaled bursts are SHARED_HOST-required but expensive; default skip unless
@@ -981,6 +1295,9 @@ export function runDeadlineAccuracyEffect(args: {
         concurrency,
         ratesPerSec: args.rampRatesPerSec,
         refineRelative: args.rampRefineRelative,
+        minStepDurationMs: args.rampMinStepDurationMs,
+        requireNonGrowingBacklog: args.rampRequireNonGrowingBacklog,
+        legacyPlaceAheadRamp: args.rampLegacyPlaceAhead,
         percentile: args.percentile,
         residentHeapSize,
         scheduleShape,

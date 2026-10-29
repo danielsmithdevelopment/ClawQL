@@ -58,6 +58,8 @@ describe("deadline schedule", () => {
           skipRamp: false,
           rampWindowMs: 400,
           rampRatesPerSec: [50, 100, 250],
+          // Unit-test short steps; board/campaign use ≥30s steady-state ramp.
+          rampMinStepDurationMs: 200,
           percentile: pct,
         })
       );
@@ -111,7 +113,8 @@ describe("deadline schedule", () => {
             calls += 1;
             await new Promise<void>((r) => setTimeout(r, 5));
           },
-          windowMs: 500,
+          windowMs: 200,
+          minStepDurationMs: 200,
           slaMs: 50,
           slaTargetPct: 99,
           concurrency: 4,
@@ -130,6 +133,36 @@ describe("deadline schedule", () => {
     expect(calls).toBeGreaterThan(0);
   }, 30_000);
 
+  it("steady-state ramp fails a rate whose overdue backlog grows even if early lateness looks fine", async () => {
+    const ids = Array.from({ length: 40 }, (_, i) => `id_${i}`);
+    // Drain ≈ 40/s (25ms × concurrency 1). Offered 200/s must grow backlog.
+    const result = await Effect.runPromise(
+      rampSustainableRateEffect({
+        agentIds: ids,
+        fire: async () => {
+          await new Promise<void>((r) => setTimeout(r, 25));
+        },
+        windowMs: 800,
+        minStepDurationMs: 800,
+        requireNonGrowingBacklog: true,
+        slaMs: 1_000,
+        slaTargetPct: 99,
+        concurrency: 1,
+        ratesPerSec: [20, 200],
+        refineRelative: false,
+        percentile: pct,
+      })
+    );
+    expect(result.rampMethodology.mode).toBe("steady_arrival_continuous");
+    expect(result.rampWentPastFailure).toBe(true);
+    expect(result.sustainablePerSec).toBeLessThan(200);
+    const failArm = result.ramp.find((a) => a.arrivalRatePerSec >= 199);
+    expect(failArm).toBeTruthy();
+    expect(failArm!.backlogTrend?.growing === true || failArm!.steadyStatePass === false).toBe(
+      true
+    );
+  }, 60_000);
+
   it("ramp binary-searches between coarse pass and fail and reports resolution", async () => {
     const ids = Array.from({ length: 80 }, (_, i) => `id_${i}`);
     // ~25ms/fire with concurrency 2 ⇒ drain ≈ 80/s; coarse 40 should pass, 200 fail.
@@ -139,7 +172,8 @@ describe("deadline schedule", () => {
         fire: async () => {
           await new Promise<void>((r) => setTimeout(r, 25));
         },
-        windowMs: 500,
+        windowMs: 300,
+        minStepDurationMs: 300,
         slaMs: 100,
         slaTargetPct: 99,
         concurrency: 2,
