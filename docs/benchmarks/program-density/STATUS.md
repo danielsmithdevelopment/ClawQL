@@ -40,6 +40,6 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 ## Pause / next focus
 
 - **This board:** pause. Shared-host deadline campaign when convenient.
-- **Infinity harness v2 (`publishable: false`, KVM VM):** byte parity ~62.4 KiB vs ClawQL matched ~61.8 KiB; slope floors Infinity **99.1** / ClawQL-resident **52.1** / offloaded **0.23** KiB/agent; 8 G cgroup last samples Infinity **80k** / ClawQL-resident harness **197.5k** ([infinity-on-pi/](./infinity-on-pi/)). No win copy — harness runtime ≠ full product stack; not Pi.
+- **Infinity harness v2 unique-content (`publishable: false`, KVM VM):** byte parity ~65.5 KiB vs ClawQL ~64.6 KiB; slope floors Infinity **102.9** / ClawQL-resident **98.7** / offloaded RSS **1.2** (disk ~65.9 KiB); integrity guard slope≥history; 8 G last samples Infinity **77.5k** / ClawQL-resident **102.5k**. Prior ~52 KiB ClawQL resident was shared-string artifact. No win copy — harness ≠ full product stack; not Pi.
 - Pi 5 as extra column when hardware is available.
 - No win copy on shared-host deadline arms until that campaign runs.

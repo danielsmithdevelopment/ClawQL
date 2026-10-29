@@ -12,79 +12,65 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 | Instance type | unknown (no cloud metadata endpoint on this pod)               |
 | Storage       | ephemeral pod disk                                             |
 | `publishable` | **false**                                                      |
+| Contract      | `infinity-agent-scale-matched-v2` (unique-per-agent text)      |
 
 ## Gate 0 — reproduce Infinity ~100 KB/agent (done)
 
-| Field      | Value                                                      |
-| ---------- | ---------------------------------------------------------- |
-| Commit     | `341f6c2`                                                  |
-| Command    | `AGENTS=10000 TURNS=20 WAVE=500 … --example agent_scale`   |
-| RSS/N @10k | **~103.1 KiB/agent** (matches published ~100 KB)           |
-| Evidence   | [`evidence-agent-scale.json`](./evidence-agent-scale.json) |
+| Field                                    | Value                                                      |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| Commit                                   | `341f6c2`                                                  |
+| Command                                  | `AGENTS=10000 TURNS=20 WAVE=500 … --example agent_scale`   |
+| RSS/N @10k (original identical fixtures) | **~103.1 KiB/agent**                                       |
+| Evidence                                 | [`evidence-agent-scale.json`](./evidence-agent-scale.json) |
 
-## Four fixes (harness v2)
+## Shared-string footgun (fixed in v2)
 
-### 1. Byte parity (done)
+An earlier ClawQL resident slope of ~52 KiB/agent was **impossible**: serialized history alone is ~63 KiB, and `197.5k × 52 KiB` cannot fit under an 8 GiB cgroup. Cause: scripted fixtures reused the same string values across agents; V8 interned/shared them so RSS did not scale with N.
 
-Same 20-turn Infinity `agent_scale` message shape (user → asst → tool_call → tool_result → asst × 20 = **100 messages**).
+**v2 fix:** every message text embeds a fixed-width unique tag from `(agentId, turn, slot)` in **both** systems. Automatic guard: resident slope (and offloaded disk KiB) must be **≥ serialized history KiB** or the harness dies.
 
-| System                        | Serialized history / agent                                      |
-| ----------------------------- | --------------------------------------------------------------- |
-| Infinity `serde_json` msgs    | **62 371 B**                                                    |
-| ClawQL matched-shape JSON     | **61 761 B**                                                    |
-| fair-v2 parked bag (contrast) | **~32 859 B** — **different workload**, not “Infinity overhead” |
+## Byte parity (v2 unique content)
 
-Fixtures: [`fixtures/`](./fixtures/). The earlier fair-v2 ~32 KiB disk figure was **not** the same history as Infinity.
+| System                      | Serialized history / agent     |
+| --------------------------- | ------------------------------ |
+| Infinity `serde_json` msgs  | **65 471 B** (~63.9 KiB)       |
+| ClawQL matched JSON         | **64 601 B** (~63.1 KiB)       |
+| fair-v2 bag (contrast only) | ~32 859 B — different workload |
 
-### 2. Turns through the runtime (done)
+Fixtures: [`fixtures/`](./fixtures/).
 
-ClawQL uses `DensityConversationRuntime`: every turn appends through the store API (scripted Infinity-matched path). **Not** prebuilt fair-v2 bags.
+## Slope floors (unique content; 3-rep ClawQL = fresh Node)
 
-Honesty: this is a **history-cost harness**, not the full ClawQL durable program / MCP agent stack.
+| System                       | 3-rep floor slope (KiB / agent) | vs history                              |
+| ---------------------------- | ------------------------------- | --------------------------------------- |
+| Infinity                     | **102.891**                     | ≥ 63.9 KiB ✓ (~39 KiB runtime overhead) |
+| ClawQL resident              | **98.654**                      | ≥ 63.1 KiB ✓                            |
+| ClawQL offloaded (RSS slope) | **1.24**                        | history on disk (~65.9 KiB/agent disk)  |
 
-### 3. Slope across N (done; 3-rep floor)
+Evidence: [`evidence-harness-v2.json`](./evidence-harness-v2.json) · `integrityOk: true`
 
-Linear fit of process RSS vs N (not RSS/N at a single N). Infinity CSV from `agent_scale` waves; ClawQL each rep = **fresh Node process**.
+Infinity’s ~103 KiB RSS/agent vs ~64 KiB raw history ⇒ **~39 KiB/agent runtime overhead** — a fair reading once workloads match and strings are unique.
 
-| System           | 3-rep floor slope (KiB / agent) | Schedule                     |
-| ---------------- | ------------------------------- | ---------------------------- |
-| Infinity         | **99.133**                      | 0…20k step 2k (2 slope reps) |
-| ClawQL resident  | **52.058**                      | 1k, 5k, 10k × 3 fresh procs  |
-| ClawQL offloaded | **0.232**                       | same; history on disk        |
+## 8 GB memory limit (not a Pi)
 
-Evidence: [`evidence-harness-v2.json`](./evidence-harness-v2.json) · Infinity CSV [`infinity-slope-reps.csv`](./infinity-slope-reps.csv)
+cgroup v2 `memory.max=8G`; process **born inside** the cgroup. Label: **“8 GB memory limit on cloud-agent-kvm-vm.”**
 
-### 4. Resident + offloaded arms (done)
-
-- **Resident** = direct compare to Infinity (history in RAM).
-- **Offloaded** = trade-off column (ids-only resident; ~matched disk bytes).
-
-## 8 GB memory limit (simulated Pi RAM claim; not a Pi)
-
-cgroup v2 `memory.max=8G` on this host (`…/cursor-agent/bench8g`). Process **born inside** the cgroup (charges do not migrate if moved after alloc). Label: **“8 GB memory limit on cloud-agent-kvm-vm”** — not “on a Raspberry Pi.”
-
-| System                  | Last sampled N before OOM | Slope in ramp              | Notes                                            |
-| ----------------------- | ------------------------- | -------------------------- | ------------------------------------------------ |
-| Infinity `agent_scale`  | **80 000** (WAVE=2500)    | **99.1 KiB/agent**         | exit 137; peak=8 GiB; ~84.5k extrapolated @8 GiB |
-| ClawQL resident harness | **197 500**               | **~39.8 KiB/agent** (ramp) | Node `--max-old-space-size=8192`; exit 137       |
+| System                  | Last sampled N before OOM | Ramp slope                     | Notes                                |
+| ----------------------- | ------------------------- | ------------------------------ | ------------------------------------ |
+| Infinity `agent_scale`  | **77 500**                | **102.9 KiB/agent**            | exit 137; ~81.4k extrapolated @8 GiB |
+| ClawQL resident harness | **102 500**               | **~65.0 KiB/agent** (ramp fit) | exit 137; last RSS/N ≈ 79.5 KiB      |
 
 Evidence: [`infinity-8g-ramp.json`](./infinity-8g-ramp.json) · [`clawql-resident-8g-ramp.json`](./clawql-resident-8g-ramp.json)
 
-Infinity’s public **75k @ 8 GB** line is below the measured last wave on this VM (80k) under a hard 8 G cap — still **not** a Pi result (CPU/storage differ).
+Infinity’s public **75k @ 8 GB** line is close to the measured last wave (**77.5k**) under a hard 8 G cap on this VM — still **not** a Pi result (CPU/storage differ).
 
 ## Commands
 
 ```bash
-# Infinity slope CSV (uncapped)
 AGENTS=20000 WAVE=2000 REP=1 npm run benchmark:infinity-slope
-
-# Infinity under 8G cgroup
 AGENTS_8G=120000 WAVE_8G=2500 npm run benchmark:infinity-8g
-
-# ClawQL under 8G cgroup (needs birth-inside helper script)
 npm run benchmark:clawql-8g
 
-# Harness v2 (byte parity + ClawQL slopes; merge Infinity CSV)
 CLAWQL_HARNESS_REPS=3 \
 CLAWQL_HARNESS_INFINITY_CSV=docs/benchmarks/program-density/infinity-on-pi/infinity-slope-reps.csv \
   npm run benchmark:infinity-harness-v2
@@ -92,8 +78,9 @@ CLAWQL_HARNESS_INFINITY_CSV=docs/benchmarks/program-density/infinity-on-pi/infin
 
 ## Later — Raspberry Pi 5
 
-Add Pi as an **extra column** (same contract): `agent_scale` slope, 8 GB-native fit, wake/throughput. Do not rewrite these VM harness numbers as Pi.
+Add Pi as an **extra column** (same v2 contract). Do not rewrite these VM harness numbers as Pi.
 
 ## Superseded
 
-[`evidence-same-host-density.json`](./evidence-same-host-density.json) — early fair-v2 park write + RSS/N; kept for history. Use harness v2.
+- [`evidence-same-host-density.json`](./evidence-same-host-density.json) — fair-v2 park write + RSS/N
+- Pre-unique harness slopes (~52 KiB ClawQL resident) — shared-string artifact

@@ -7,7 +7,10 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Effect } from "effect";
-import { infinityCsvToSlopeSampleEffect } from "../../../packages/clawql-api/src/program/density/infinity-harness-v2.ts";
+import {
+  infinityCsvToSlopeSampleEffect,
+  slopeIntegrityEffect,
+} from "../../../packages/clawql-api/src/program/density/infinity-harness-v2.ts";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const reps = Math.max(1, Number(process.env.CLAWQL_HARNESS_REPS || 3));
@@ -21,19 +24,53 @@ const outPath =
 const cli = join(repoRoot, "packages/clawql-api/src/program/density/infinity-harness-v2-cli.ts");
 
 const infinitySamples = [];
+const infinityHistoryBytes = (() => {
+  try {
+    return readFileSync(
+      join(
+        repoRoot,
+        "docs/benchmarks/program-density/infinity-on-pi/fixtures/infinity-agent-0-msgs-only.json"
+      )
+    ).byteLength;
+  } catch {
+    return null;
+  }
+})();
 if (infinityCsv) {
   const csv = readFileSync(infinityCsv, "utf8");
   const chunks = csv.split(/^---rep=(\d+)---$/m);
+  const raw = [];
   if (chunks.length === 1) {
-    infinitySamples.push(await Effect.runPromise(infinityCsvToSlopeSampleEffect(csv, 1)));
+    raw.push(await Effect.runPromise(infinityCsvToSlopeSampleEffect(csv, 1)));
   } else {
     for (let i = 1; i < chunks.length; i += 2) {
-      infinitySamples.push(
+      raw.push(
         await Effect.runPromise(
           infinityCsvToSlopeSampleEffect(chunks[i + 1] ?? "", Number(chunks[i]))
         )
       );
     }
+  }
+  for (const s of raw) {
+    if (infinityHistoryBytes == null) {
+      infinitySamples.push(s);
+      continue;
+    }
+    const integrity = await Effect.runPromise(
+      slopeIntegrityEffect({
+        historySerializedBytes: infinityHistoryBytes,
+        measuredKiBPerAgent: s.slopeKiBPerAgent,
+        kind: "resident_rss_slope",
+      })
+    );
+    if (!integrity.ok) {
+      throw new Error(`Infinity slope integrity failed (rep ${s.rep}): ${integrity.detail}`);
+    }
+    infinitySamples.push({
+      ...s,
+      historySerializedBytes: infinityHistoryBytes,
+      integrity,
+    });
   }
 }
 
@@ -92,9 +129,11 @@ const combined = {
       clawqlResidentSlopeKiBPerAgent: floor("clawql-resident"),
       clawqlOffloadedSlopeKiBPerAgent: floor("clawql-offloaded"),
     },
+    integrityOk: samples.every((s) => s.integrity?.ok !== false),
     reading:
-      "3-rep floor of slopes (fresh Node process per ClawQL rep). " +
-      "Compare Infinity vs clawql-resident. Offloaded is a different trade-off. publishable:false.",
+      "3-rep floor of slopes (fresh Node process per ClawQL rep; unique-content v2). " +
+      "Compare Infinity vs clawql-resident. Offloaded is a different trade-off. " +
+      "integrityOk ⇒ per-agent cost ≥ history bytes. publishable:false.",
   },
 };
 

@@ -61,6 +61,16 @@ export type SlopePoint = {
   readonly rssKiB: number;
 };
 
+export type SlopeIntegrity = {
+  /** Resident slope (or offloaded disk) must be ≥ serialized history KiB. */
+  readonly rule: "per_agent_cost_ge_history_bytes";
+  readonly historySerializedBytes: number;
+  readonly historyKiB: number;
+  readonly measuredKiBPerAgent: number | null;
+  readonly ok: boolean;
+  readonly detail: string;
+};
+
 export type SlopeSample = {
   readonly system: "infinity" | "clawql-resident" | "clawql-offloaded";
   readonly rep: number;
@@ -68,6 +78,8 @@ export type SlopeSample = {
   /** KiB per agent from linear regression of rssKiB vs agents (points with agents>0). */
   readonly slopeKiBPerAgent: number | null;
   readonly diskBytesPerAgent: number | null;
+  readonly historySerializedBytes: number | null;
+  readonly integrity: SlopeIntegrity | null;
   readonly detail: string;
 };
 
@@ -92,9 +104,36 @@ export type HarnessV2Evidence = {
       readonly clawqlResidentSlopeKiBPerAgent: number | null;
       readonly clawqlOffloadedSlopeKiBPerAgent: number | null;
     };
+    /** True iff every resident sample passes history-size floor (shared-string guard). */
+    readonly integrityOk: boolean;
     readonly reading: string;
   };
 };
+
+/** Resident RSS slope (or offloaded disk B→KiB) must cover serialized history. */
+export function slopeIntegrityEffect(opts: {
+  readonly historySerializedBytes: number;
+  readonly measuredKiBPerAgent: number | null;
+  readonly kind: "resident_rss_slope" | "offloaded_disk";
+}): Effect.Effect<SlopeIntegrity> {
+  return Effect.sync(() => {
+    const historyKiB = opts.historySerializedBytes / 1024;
+    const measured = opts.measuredKiBPerAgent;
+    // Tiny epsilon for float noise on slope fits; still catches shared-string undercount.
+    const ok = measured != null && Number.isFinite(measured) && measured + 0.05 >= historyKiB;
+    return {
+      rule: "per_agent_cost_ge_history_bytes",
+      historySerializedBytes: opts.historySerializedBytes,
+      historyKiB: Math.round(historyKiB * 1000) / 1000,
+      measuredKiBPerAgent: measured,
+      ok,
+      detail: ok
+        ? `${opts.kind}: ${measured} KiB/agent ≥ history ${historyKiB.toFixed(3)} KiB`
+        : `${opts.kind}: ${measured} KiB/agent < history ${historyKiB.toFixed(3)} KiB ` +
+          `(likely shared/interned strings or wrong workload)`,
+    } satisfies SlopeIntegrity;
+  });
+}
 
 function readCpuModelEffect(): Effect.Effect<string> {
   return Effect.sync(() => {
@@ -197,9 +236,10 @@ function measureClawqlArmEffect(opts: {
   readonly residence: "resident" | "offloaded";
   readonly rep: number;
   readonly bagRoot: string;
+  readonly historySerializedBytes: number;
 }): Effect.Effect<SlopeSample> {
   return Effect.gen(function* () {
-    const bagDir = join(opts.bagRoot, `${opts.residence}-rep${opts.rep}`);
+    const bagDir = join(opts.bagRoot, `${opts.residence}-rep${opts.rep}-${Date.now()}`);
     const rt = makeDensityConversationRuntime(bagDir);
     yield* rt.clear();
     yield* forceGcEffect();
@@ -234,13 +274,34 @@ function measureClawqlArmEffect(opts: {
         ? Math.round((diskAccum / diskCount) * 10) / 10
         : null;
 
+    const integrity =
+      opts.residence === "resident"
+        ? yield* slopeIntegrityEffect({
+            historySerializedBytes: opts.historySerializedBytes,
+            measuredKiBPerAgent: slopeKiBPerAgent,
+            kind: "resident_rss_slope",
+          })
+        : yield* slopeIntegrityEffect({
+            historySerializedBytes: opts.historySerializedBytes,
+            measuredKiBPerAgent: diskBytesPerAgent != null ? diskBytesPerAgent / 1024 : null,
+            kind: "offloaded_disk",
+          });
+
+    if (!integrity.ok) {
+      yield* Effect.die(
+        new Error(`slope integrity failed (${opts.residence} rep ${opts.rep}): ${integrity.detail}`)
+      );
+    }
+
     return {
       system: opts.residence === "resident" ? "clawql-resident" : "clawql-offloaded",
       rep: opts.rep,
       points,
       slopeKiBPerAgent,
       diskBytesPerAgent,
-      detail: `bagDir=${bagDir} launched=${launched}`,
+      historySerializedBytes: opts.historySerializedBytes,
+      integrity,
+      detail: `bagDir=${bagDir} launched=${launched} uniqueContent=v2`,
     } satisfies SlopeSample;
   });
 }
@@ -288,7 +349,28 @@ export function runHarnessV2ClawqlEffect(opts?: {
         `fair-v2 parked bags were ~${opts?.fairV2DiskBytesForContrast ?? 32859} B — different workload, not overhead.`,
     };
 
-    const samples: SlopeSample[] = [...(opts?.infinitySlopeSamples ?? [])];
+    const historyBytes = clawqlParity.serializedJsonBytes;
+    // Attach integrity to Infinity samples when slope is known.
+    const infinitySamples: SlopeSample[] = [];
+    for (const s of opts?.infinitySlopeSamples ?? []) {
+      const integrity = yield* slopeIntegrityEffect({
+        historySerializedBytes: infinityParity.serdeJsonMsgsBytes,
+        measuredKiBPerAgent: s.slopeKiBPerAgent,
+        kind: "resident_rss_slope",
+      });
+      if (!integrity.ok) {
+        yield* Effect.die(
+          new Error(`Infinity slope integrity failed (rep ${s.rep}): ${integrity.detail}`)
+        );
+      }
+      infinitySamples.push({
+        ...s,
+        historySerializedBytes: infinityParity.serdeJsonMsgsBytes,
+        integrity,
+      });
+    }
+
+    const samples: SlopeSample[] = [...infinitySamples];
     for (let rep = 1; rep <= reps; rep++) {
       // Alternate arms within a rep: resident then offloaded (Infinity external).
       samples.push(
@@ -297,6 +379,7 @@ export function runHarnessV2ClawqlEffect(opts?: {
           residence: "resident",
           rep,
           bagRoot,
+          historySerializedBytes: historyBytes,
         })
       );
       samples.push(
@@ -305,6 +388,7 @@ export function runHarnessV2ClawqlEffect(opts?: {
           residence: "offloaded",
           rep,
           bagRoot,
+          historySerializedBytes: historyBytes,
         })
       );
     }
@@ -318,6 +402,7 @@ export function runHarnessV2ClawqlEffect(opts?: {
     const offloadedSlopes = samples
       .filter((s) => s.system === "clawql-offloaded")
       .map((s) => s.slopeKiBPerAgent);
+    const integrityOk = samples.every((s) => s.integrity?.ok !== false);
 
     return {
       kind: "infinity-clawql-density-harness-v2",
@@ -330,9 +415,9 @@ export function runHarnessV2ClawqlEffect(opts?: {
         piHardware: "deferred",
         reps,
         note:
-          "Infinity-matched turns driven through DensityConversationRuntime. " +
-          "Slope = linear fit of process RSS vs N. publishable:false on this KVM cloud-agent host. " +
-          "Pi / bare-metal columns later.",
+          "Infinity-matched unique-per-agent turns (v2) via DensityConversationRuntime. " +
+          "Slope = linear fit of process RSS vs N. Resident slope must be ≥ history KiB. " +
+          "publishable:false on this KVM cloud-agent host. Pi / bare-metal columns later.",
       },
       byteParity,
       slope: {
@@ -343,10 +428,11 @@ export function runHarnessV2ClawqlEffect(opts?: {
           clawqlResidentSlopeKiBPerAgent: floorOf(residentSlopes),
           clawqlOffloadedSlopeKiBPerAgent: floorOf(offloadedSlopes),
         },
+        integrityOk,
         reading:
-          "Compare resident slopes (Infinity vs clawql-resident). " +
+          "Compare resident slopes (Infinity vs clawql-resident) after unique-content fixtures. " +
           "Offloaded arm is a different trade-off (history on disk). " +
-          "Do not quote RSS/N at a single N as the headline.",
+          "integrityOk requires per-agent cost ≥ serialized history (shared-string guard).",
       },
     } satisfies HarnessV2Evidence;
   });
@@ -363,7 +449,7 @@ export function writeHarnessV2EvidenceEffect(
   });
 }
 
-/** Parse Infinity agent_scale CSV stdout into a SlopeSample. */
+/** Parse Infinity agent_scale CSV stdout into a SlopeSample (integrity filled later). */
 export function infinityCsvToSlopeSampleEffect(
   csv: string,
   rep: number
@@ -383,7 +469,9 @@ export function infinityCsvToSlopeSampleEffect(
       points,
       slopeKiBPerAgent: linearSlopeKiBPerAgent(points),
       diskBytesPerAgent: null,
-      detail: "from agent_scale CSV agents,rss_bytes",
+      historySerializedBytes: null,
+      integrity: null,
+      detail: "from agent_scale CSV agents,rss_bytes (unique-content v2)",
     } satisfies SlopeSample;
   });
 }
