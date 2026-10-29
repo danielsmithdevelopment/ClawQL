@@ -1,70 +1,96 @@
 {
   "kind": "durable-agent-density-flush-batch-stats",
-  "measuredAt": "2026-10-28T23:28:01.759Z",
+  "measuredAt": "2026-10-29T00:16:35.286Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "flushPolicy": {
     "mode": "group_commit",
     "batchMax": 64,
-    "flushIntervalMs": 10
+    "flushIntervalMs": 10,
+    "dataSync": "fsync",
+    "preallocateBytes": null
   },
   "serialCeiling": {
     "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
-    "fsyncsPerSec": 7925,
-    "theoreticalMaxGroupCommitPerSec": 507200
+    "fsyncsPerSec": 7693,
+    "meanFsyncLatencyMs": 0.1213,
+    "fsyncLatencyMs": {
+      "n": 61546,
+      "meanMs": 0.1213,
+      "p50Ms": 0.1131,
+      "p99Ms": 0.4117
+    },
+    "theoreticalMaxGroupCommitPerSec": 492352
   },
   "ramp": {
-    "sustainablePerSec": 384000,
+    "sustainablePerSec": 256000,
     "firstRateMissingSlaPerSec": null,
     "rampResolutionRel": null,
     "rampResolutionNote": null,
-    "coarseSustainablePerSec": 384000,
+    "coarseSustainablePerSec": 256000,
     "coarseFirstRateMissingSlaPerSec": null,
     "flushStatsAcrossRamp": {
-      "windowMs": 4511.64,
-      "fsyncCount": 15000,
-      "recordsFlushed": 960000,
+      "windowMs": 3160.09,
+      "fsyncCount": 9000,
+      "recordsFlushed": 576000,
       "avgBatchSize": 64,
-      "fsyncsPerSec": 3324.74,
-      "recordsPerSec": 212783.16,
+      "fsyncsPerSec": 2848.02,
+      "recordsPerSec": 182273.25,
       "batchMax": 64,
       "avgBatchFillRatio": 1,
-      "flushReasonBatchFull": 15000,
+      "flushReasonBatchFull": 9000,
       "flushReasonInterval": 0,
       "flushReasonForced": 0,
-      "fsyncWaitMsTotal": 2743.863,
-      "fsyncWaitMsMean": 0.1829,
-      "doubleBufferHits": 12829,
+      "fsyncWaitMsTotal": 1727.937,
+      "fsyncWaitMsMean": 0.192,
+      "fsyncLatencyMs": {
+        "n": 9000,
+        "mean": 0.192,
+        "p50": 0.1284,
+        "p99": 1.0596
+      },
+      "dataSync": "fsync",
+      "preallocateBytes": null,
+      "doubleBufferHits": 6705,
       "doubleBuffered": true,
-      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=12829/15000; fsyncsPerSec=3324.74. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
+      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=6705/9000; fsyncsPerSec=2848.02; syncLatency p50=0.1284ms p99=1.0596ms (fsync). Compare latency to the serial probe."
     }
   },
   "focus": {
-    "offeredRatePerSec": 384000,
+    "offeredRatePerSec": 256000,
     "metSla": true,
     "flushStats": {
-      "windowMs": 2733.07,
-      "fsyncCount": 12000,
-      "recordsFlushed": 768000,
+      "windowMs": 2143.22,
+      "fsyncCount": 8000,
+      "recordsFlushed": 512000,
       "avgBatchSize": 64,
-      "fsyncsPerSec": 4390.67,
-      "recordsPerSec": 281002.77,
+      "fsyncsPerSec": 3732.71,
+      "recordsPerSec": 238893.29,
       "batchMax": 64,
       "avgBatchFillRatio": 1,
-      "flushReasonBatchFull": 12000,
+      "flushReasonBatchFull": 8000,
       "flushReasonInterval": 0,
       "flushReasonForced": 0,
-      "fsyncWaitMsTotal": 1724.433,
-      "fsyncWaitMsMean": 0.1437,
-      "doubleBufferHits": 11990,
+      "fsyncWaitMsTotal": 1204.336,
+      "fsyncWaitMsMean": 0.1505,
+      "fsyncLatencyMs": {
+        "n": 8000,
+        "mean": 0.1505,
+        "p50": 0.1229,
+        "p99": 0.8342
+      },
+      "dataSync": "fsync",
+      "preallocateBytes": null,
+      "doubleBufferHits": 6585,
       "doubleBuffered": true,
-      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=11990/12000; fsyncsPerSec=4390.67. Compare fsyncsPerSec to the serial ceiling — near ceiling ⇒ disk-bound under double-buffer."
+      "reading": "avgBatchSize 64.0/64 (near full); doubleBufferHits=6585/8000; fsyncsPerSec=3732.71; syncLatency p50=0.1229ms p99=0.8342ms (fsync). Compare latency to the serial probe."
     }
   },
   "compare": {
-    "fractionOfSerialFsyncs": 0.554,
-    "fractionOfTheoMax": 0.7571,
-    "impliedDurablePerSec": 281002.88,
-    "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
-    "note": "Focus window at last passing rate. doubleBufferHits≈100% with fsyncs/sec still ~40% of serial ⇒ double-buffer active but not the bottleneck — producer (pump pop/encode/handoff) under investigation. See pump-profile.json. Ontologiql at ~24% of serial may be the same before adding double-buffer."
+    "fractionOfSerialFsyncs": 0.4852,
+    "fractionOfTheoMax": 0.52,
+    "impliedDurablePerSec": 238893.44,
+    "latencyRatioVsProbeP50": 1.087,
+    "diagnosis": "durable_path_residual_after_double_buffer_check_sync_latency",
+    "note": "Compare focus fsyncLatencyMs.p50/p99 to serial probe. If 2–4× slower with a fast producer, growing-file metadata is the likely gap — trial fdatasync + preallocate (npm run benchmark:program-density-fsync-metadata-arms). Ontologiql: double_buffer_candidate_unverified; producer also fast."
   }
 }

@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-fsync-ceiling",
-  "measuredAt": "2026-10-28T22:42:18.696Z",
+  "measuredAt": "2026-10-29T00:15:56.772Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "host": {
     "label": "clawql-cloud-agent-host:cursor",
@@ -18,11 +18,82 @@
     "pattern": "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
     "batchMax": 64,
     "batchBytes": 3904,
-    "ops": 63399,
-    "runtimeSec": 8.000163856,
-    "fsyncsPerSec": 7925,
-    "meanFsyncLatencyMs": 0.1262,
-    "writeBandwidthBytesPerSec": 30938078.32627972
+    "ops": 61546,
+    "runtimeSec": 8.000228756,
+    "fsyncsPerSec": 7693,
+    "meanFsyncLatencyMs": 0.1213,
+    "fsyncLatencyMs": {
+      "n": 61546,
+      "meanMs": 0.1213,
+      "p50Ms": 0.1131,
+      "p99Ms": 0.4117
+    },
+    "writeBandwidthBytesPerSec": 30033589.20453349,
+    "endFileBytes": 240275584
+  },
+  "serialGrowingLong": {
+    "mode": "serial_growing_long",
+    "method": "node_append_batch_fsync_long",
+    "pattern": "Same as serial_board_matched but longer wall time so the file grows like a board focus window — tests metadata cost of a growing journal.",
+    "batchMax": 64,
+    "batchBytes": 3904,
+    "ops": 146109,
+    "runtimeSec": 20.000166124,
+    "fsyncsPerSec": 7305,
+    "meanFsyncLatencyMs": 0.1253,
+    "fsyncLatencyMs": {
+      "n": 146109,
+      "meanMs": 0.1253,
+      "p50Ms": 0.1177,
+      "p99Ms": 0.3369
+    },
+    "writeBandwidthBytesPerSec": 28520239.9051833,
+    "endFileBytes": 570409536,
+    "note": "Compare fsyncLatencyMs.p50/p99 to serial_board_matched; a 2–4× rise supports the growing-metadata hypothesis."
+  },
+  "serialFdatasync": {
+    "mode": "serial_append_fdatasync",
+    "method": "node_append_batch_fdatasync",
+    "pattern": "one writer; append batch; fdatasyncSync (data only — skips unused metadata)",
+    "batchMax": 64,
+    "batchBytes": 3904,
+    "ops": 65497,
+    "runtimeSec": 8.000097244,
+    "fsyncsPerSec": 8187,
+    "meanFsyncLatencyMs": 0.1132,
+    "fsyncLatencyMs": {
+      "n": 65497,
+      "meanMs": 0.1132,
+      "p50Ms": 0.111,
+      "p99Ms": 0.1663
+    },
+    "writeBandwidthBytesPerSec": 31962147.484116253,
+    "endFileBytes": 255700288,
+    "note": "Experimental arm — report before/after fsyncsPerSec + latency vs serial_board_matched."
+  },
+  "serialPreallocFdatasync": {
+    "mode": "serial_prealloc_fdatasync",
+    "method": "node_prealloc_positioned_fdatasync",
+    "pattern": "fallocate segment; positioned writes within allocated size; fdatasync — size/blocks stable across syncs",
+    "batchMax": 64,
+    "batchBytes": 3904,
+    "ops": 65612,
+    "runtimeSec": 8.000041672,
+    "fsyncsPerSec": 8201,
+    "meanFsyncLatencyMs": 0.1156,
+    "fsyncLatencyMs": {
+      "n": 65612,
+      "meanMs": 0.1156,
+      "p50Ms": 0.1156,
+      "p99Ms": 0.1764
+    },
+    "writeBandwidthBytesPerSec": 32018489.215689674,
+    "endFileBytes": 256149248,
+    "note": "Experimental arm — if this closes most of the board-vs-probe gap, campaign should use the same sync path.",
+    "preallocate": {
+      "method": "fallocate_cli",
+      "bytes": 268435456
+    }
   },
   "parallel": {
     "mode": "parallel_headroom",
@@ -31,30 +102,40 @@
     "pattern": "8 fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling",
     "numJobs": 8,
     "iodepth": 1,
-    "fsyncsPerSec": 194172,
-    "writeIops": 194171.957011,
-    "meanLatencyUs": 2.97,
+    "fsyncsPerSec": 175231,
+    "writeIops": 175230.605871,
+    "meanLatencyUs": 3.48,
     "runtimeSec": 8
   },
   "overwriteDiagnostic": {
     "mode": "serial_overwrite_diagnostic",
     "method": "node_overwrite_4k_fsync",
     "note": "Not the board pattern — kept only to explain prior inflated probes that rewrote one offset.",
-    "ops": 328584,
-    "runtimeSec": 8.000089442,
-    "fsyncsPerSec": 41073,
-    "meanFsyncLatencyMs": 0.0243
+    "ops": 382487,
+    "runtimeSec": 8.00009272,
+    "fsyncsPerSec": 47810,
+    "meanFsyncLatencyMs": 0.0191,
+    "fsyncLatencyMs": {
+      "n": 382487,
+      "meanMs": 0.0191,
+      "p50Ms": 0.0172,
+      "p99Ms": 0.0341
+    }
   },
-  "fsyncsPerSec": 7925,
-  "theoreticalMaxGroupCommitPerSec": 507200,
-  "fractionOfCeilingIfBoardFloor256k": 0.5047,
+  "fsyncsPerSec": 7693,
+  "theoreticalMaxGroupCommitPerSec": 492352,
+  "fractionOfCeilingIfBoardFloor256k": 0.52,
+  "armsCompare": {
+    "growingLongP50OverShortP50": 1.041,
+    "fdatasyncFsyncsPerSecOverSerial": 1.064,
+    "preallocFdatasyncFsyncsPerSecOverSerial": 1.066,
+    "hypothesis": "Appending log + fsync forces size/allocation metadata each sync; long growing runs and board focus windows may show higher latency than a short probe. fdatasync + preallocated segments are the standard fix — report before/after sustained rate and fsyncs/sec."
+  },
   "reading": {
     "primaryCeiling": "serial_board_matched",
-    "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
-    "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
-    "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
-    "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling.",
-    "honesty": "Serial rates ≫ ~10k/s (~<100µs/fsync) often mean hypervisor/volatile write cache, not media durability. SIGKILL does not catch early-ack. Record campaign-host cache settings. Ontologiql ~52k/s needs this sanity check.",
-    "clawqlHostNote": "This host serial ~7925/s (~0.1262 ms mean) — still verify on the dedicated campaign disk."
+    "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec need under-load sync latency vs this probe — growing-file metadata is the leading suspect when producer CPU is idle.",
+    "action": "Compare flushStats.fsyncLatencyMs.p50/p99 to serial.fsyncLatencyMs. If run latency is 2–4× the probe, try fdatasync + preallocate arms on both systems before the campaign.",
+    "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound. Both sides should also compare under-load sync latency to the probe and trial fdatasync+prealloc if latency is inflated.",
+    "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
   }
 }

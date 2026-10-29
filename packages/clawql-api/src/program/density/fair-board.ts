@@ -152,7 +152,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline lab (#144): group_commit; crashTest; serial board-matched ~8.9k/s (overwrite ~50k retracted); ramp 196k/198k ±0.5%; rebuild ~2–3ms. flushStats: avgBatch~64, fsyncs~2.2k ≈24% of serial — same idle pattern ClawQL saw; profile producer before double-buffer (ClawQL double-buffer did not move fsync rate to ceiling). Different host — not a shared-host public claim. No win copy.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline lab (#144): group_commit; crashTest; serial board-matched ~8.9k/s (overwrite ~50k retracted); ramp 196k/198k ±0.5%; rebuild ~2–3ms. Pump profile: producer ~0.46µs/rec (~0.06% wall), durable-wait ~444µs (~62%) — producer not the limit. Label: double_buffer_candidate_unverified (full batches, ~2.1k fsyncs/s ≈24% serial, sustained ~139k/s). Both sides: compare under-load sync latency to probe; trial fdatasync+prealloc before campaign. Different host — not a shared-host public claim. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",

@@ -38,11 +38,19 @@ const theoMax =
   ceiling?.theoreticalMaxGroupCommitPerSec ??
   (serialFsyncs != null ? serialFsyncs * batchMax : null);
 
+const dataSync =
+  process.env.CLAWQL_DENSITY_DATA_SYNC === "fdatasync" ? "fdatasync" : "fsync";
+const preallocateBytes = process.env.CLAWQL_DENSITY_PREALLOC_BYTES
+  ? Number(process.env.CLAWQL_DENSITY_PREALLOC_BYTES)
+  : undefined;
+
 const journal = await Effect.runPromise(
   openTriggerJournalEffect(workDir, {
     mode: "group_commit",
     batchMax,
     flushIntervalMs: Number(process.env.CLAWQL_DENSITY_FLUSH_INTERVAL_MS || 10),
+    dataSync,
+    ...(preallocateBytes && preallocateBytes > 0 ? { preallocateBytes } : {}),
   })
 );
 
@@ -104,20 +112,29 @@ const impliedDurablePerSec = Number(
   (flushStats.fsyncsPerSec * (flushStats.avgBatchSize || 0)).toFixed(2)
 );
 
+const probeMeanMs =
+  ceiling?.serial?.fsyncLatencyMs?.meanMs ?? ceiling?.serial?.meanFsyncLatencyMs ?? null;
+const probeP50 = ceiling?.serial?.fsyncLatencyMs?.p50Ms ?? null;
+const runP50 = flushStats.fsyncLatencyMs?.p50 ?? null;
+const latencyRatioVsProbe =
+  probeP50 && runP50 ? Number((runP50 / probeP50).toFixed(3)) : null;
+
 let diagnosis;
 if (fractionOfSerialFsyncs != null && fractionOfSerialFsyncs >= 0.85) {
   diagnosis =
     flushStats.avgBatchFillRatio != null && flushStats.avgBatchFillRatio < 0.75
       ? "disk_busy_batches_early_flush"
       : "disk_busy_near_full_batches";
+} else if (latencyRatioVsProbe != null && latencyRatioVsProbe >= 1.5) {
+  diagnosis = "under_load_fsync_slower_than_probe_try_fdatasync_prealloc";
 } else if (
   flushStats.doubleBuffered &&
   (flushStats.doubleBufferHits ?? 0) > 0 &&
   fractionOfSerialFsyncs != null &&
   fractionOfSerialFsyncs < 0.85
 ) {
-  // Hits prove the buffer works; unchanged fsync rate ⇒ producer-bound, not idle writer.
-  diagnosis = "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation";
+  // Pump profile ruled out producer CPU; residual is durable path (sync latency / journal).
+  diagnosis = "durable_path_residual_after_double_buffer_check_sync_latency";
 } else if (flushStats.avgBatchFillRatio != null && flushStats.avgBatchFillRatio >= 0.85) {
   diagnosis = "writer_idle_between_fsyncs_consider_double_buffer";
 } else {
@@ -128,10 +145,18 @@ const payload = {
   kind: "durable-agent-density-flush-batch-stats",
   measuredAt: new Date().toISOString(),
   contract: "docs/benchmarks/program-density/SHARED_HOST.md",
-  flushPolicy: { mode: "group_commit", batchMax, flushIntervalMs: 10 },
+  flushPolicy: {
+    mode: "group_commit",
+    batchMax,
+    flushIntervalMs: 10,
+    dataSync,
+    preallocateBytes: preallocateBytes ?? null,
+  },
   serialCeiling: {
     artifact: ceiling ? "docs/benchmarks/program-density/fsync-ceiling.json" : null,
     fsyncsPerSec: serialFsyncs,
+    meanFsyncLatencyMs: probeMeanMs,
+    fsyncLatencyMs: ceiling?.serial?.fsyncLatencyMs ?? null,
     theoreticalMaxGroupCommitPerSec: theoMax,
   },
   ramp: {
@@ -152,9 +177,10 @@ const payload = {
     fractionOfSerialFsyncs,
     fractionOfTheoMax,
     impliedDurablePerSec,
+    latencyRatioVsProbeP50: latencyRatioVsProbe,
     diagnosis,
     note:
-      "Focus window at last passing rate. doubleBufferHits≈100% with fsyncs/sec still ~40% of serial ⇒ double-buffer active but not the bottleneck — producer (pump pop/encode/handoff) under investigation. See pump-profile.json. Ontologiql at ~24% of serial may be the same before adding double-buffer.",
+      "Compare focus fsyncLatencyMs.p50/p99 to serial probe. If 2–4× slower with a fast producer, growing-file metadata is the likely gap — trial fdatasync + preallocate (npm run benchmark:program-density-fsync-metadata-arms). Ontologiql: double_buffer_candidate_unverified; producer also fast.",
   },
 };
 
@@ -181,6 +207,9 @@ console.log(
       },
       doubleBufferHits: flushStats.doubleBufferHits,
       doubleBuffered: flushStats.doubleBuffered,
+      fsyncLatencyMs: flushStats.fsyncLatencyMs,
+      latencyRatioVsProbeP50: latencyRatioVsProbe,
+      dataSync,
     },
     null,
     2

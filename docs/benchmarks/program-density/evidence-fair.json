@@ -99,7 +99,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2. group_commit + async-fsync double-buffer (concurrency 128). Remeasure: avgBatchSize=64, doubleBufferHits≈100%, fsyncs/sec still ~3.3–4.4k (~40–55% of serial ~7.9k) — NOT idle-writer-fixed. Label: double-buffer active; fsync rate unchanged; producer-bound under investigation. Pump profile: pop~0.264µs encode~0.291µs enqueue~0.678µs; noop drain ~1318849/s; durable drain ~286161/s (fsyncs~4164/s). Heap pop/encode CPU ruled out; residual in durable/journal path under load. Ramp refine ±1%. Board floor still 256k 3-rep until shared-host campaign. Ontologiql should profile pump before double-buffer. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. Both pumps fast; residual in durable path. Double-buffer active (hits≈100%) but fsync rate flat (~3.5–3.7k ≈46–49% of serial ~7.7k). Under-load sync p50≈1.08× probe (not 2–4×); fdatasync+prealloc arms ~+3% sustained — does not close the gap on this host (durable_path_residual_not_explained_by_metadata_arms_alone). Pump: noop ~1.3M/s; durable ~286k/s. Board floor 256k 3-rep until shared-host campaign. Re-check latency/arms on dedicated disk. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1099,8 +1099,8 @@
       "syntheticBurst400kAt200k": "used synthetic ids — superseded by N≤agentsAtLimit ladder"
     },
     "reading": {
-      "serialHonesty": "Overwrite ~50k retracted; board-matched ~8.9k/s (~112µs) aligns with ClawQL ~7.9k/~126µs.",
-      "producerNote": "At 24% of serial with full batches, profile pump before double-buffer — ClawQL double-buffer did not move fsync rate to ceiling."
+      "serialHonesty": "Overwrite ~50k retracted; board-matched ~8.9k/s (~112µs) aligns with ClawQL ~7.7k/~0.113ms p50.",
+      "producerNote": "Pump profile: producer ~0.46µs/rec (~0.06% wall), durable-wait ~62%. Label: double_buffer_candidate_unverified. Compare under-load sync latency to probe; trial fdatasync+prealloc (ClawQL saw ~+3% only on this host)."
     },
     "rampNote": "Refined 196k pass / 198k fail (±0.5%). Coarse 192k/256k superseded.",
     "rampResolutionRel": 0.005,
@@ -1110,8 +1110,9 @@
       "avgBatchSize": 64,
       "fsyncsPerSec": 2200,
       "fractionOfSerial": 0.24,
-      "diagnosis": "writer_idle_between_fsyncs_consider_double_buffer",
-      "note": "Pre-double-buffer pattern. Profile producer before adding double-buffer — ClawQL double-buffer did not move fsync rate toward ceiling."
+      "sustainedDrainPerSecApprox": 139000,
+      "diagnosis": "double_buffer_candidate_unverified",
+      "note": "Full batches + ~24% of serial. Producer fast — not idle-writer-proven. Any dbuf trial needs before/after sustained rate + fsyncs/sec."
     }
   },
   "sharedHostFiveArms": {
@@ -1223,28 +1224,31 @@
   },
   "flushBatchStats": {
     "artifact": "docs/benchmarks/program-density/flush-batch-stats.json",
-    "measuredAt": "2026-10-28T23:28:01.759Z",
+    "measuredAt": "2026-10-29T00:16:35.286Z",
     "doubleBuffered": true,
     "concurrencyDefault": 128,
-    "serialCeilingFsyncsPerSec": 7925,
-    "theoreticalMaxGroupCommitPerSec": 507200,
-    "beforeDoubleBufferFsyncsPerSecApprox": 3200,
+    "serialCeilingFsyncsPerSec": 7693,
+    "theoreticalMaxGroupCommitPerSec": 492352,
+    "probeFsyncLatencyMs": { "p50Ms": 0.1131, "p99Ms": 0.4117, "meanMs": 0.1213 },
     "after": {
-      "offeredFocusRatePerSec": 384000,
-      "fsyncsPerSec": 4390.67,
+      "offeredFocusRatePerSec": 256000,
+      "fsyncsPerSec": 3732.71,
       "avgBatchSize": 64,
-      "doubleBufferHits": 11990,
-      "impliedDurablePerSec": 281002.88,
-      "fractionOfSerialFsyncs": 0.554
+      "doubleBufferHits": 6585,
+      "impliedDurablePerSec": 238893.44,
+      "fractionOfSerialFsyncs": 0.4852,
+      "fsyncLatencyMs": { "p50": 0.1229, "p99": 0.8342, "mean": 0.1505 },
+      "latencyRatioVsProbeP50": 1.087
     },
     "compare": {
-      "fractionOfSerialFsyncs": 0.554,
-      "fractionOfTheoMax": 0.7571,
-      "impliedDurablePerSec": 281002.88,
-      "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
-      "note": "Focus window at last passing rate. doubleBufferHits≈100% with fsyncs/sec still ~40% of serial ⇒ double-buffer active but not the bottleneck — producer (pump pop/encode/handoff) under investigation. See pump-profile.json. Ontologiql at ~24% of serial may be the same before adding double-buffer."
+      "fractionOfSerialFsyncs": 0.4852,
+      "fractionOfTheoMax": 0.52,
+      "impliedDurablePerSec": 238893.44,
+      "latencyRatioVsProbeP50": 1.087,
+      "diagnosis": "durable_path_residual_after_double_buffer_check_sync_latency",
+      "note": "Under-load p50 ≈ probe; see fsync-metadata-arms for fdatasync/prealloc before/after."
     },
-    "reading": "double-buffer active; fsync rate unchanged (~3.2k→~3.3–4.4k, still ~40–55% of serial); producer-bound under investigation — NOT “idle writer fixed”."
+    "reading": "Producer fast; under-load sync p50≈probe; residual durable-path (not metadata-only on this host)."
   },
   "pumpProfile": {
     "artifact": "docs/benchmarks/program-density/pump-profile.json",
@@ -1259,9 +1263,21 @@
     "durableFsyncsPerSec": 4163.5,
     "postDoubleBufferFsyncsPerSec": 3372.35,
     "fsyncRateMoved": false,
-    "postDoubleBufferRampSustainablePerSec": 512000,
-    "postDoubleBufferRampFirstMiss": null,
-    "diagnosis": "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
-    "reading": "Double-buffer works (hits≈100%) but fsyncs/sec stayed ~3.2–3.3k (~40% of serial). Sustained durable ≈286k/s (focus ~281k). Heap pop/encode ruled out (~1.3M/s noop). Residual in durable/journal path under load. Ontologiql at ~24% of serial may be the same — profile before double-buffer there."
+    "diagnosis": "durable_path_residual_after_double_buffer_check_sync_latency",
+    "reading": "Heap/encode ruled out. Both sides' producers are fast; limit is durable write path. Ontologiql: double_buffer_candidate_unverified."
+  },
+  "fsyncMetadataArms": {
+    "artifact": "docs/benchmarks/program-density/fsync-metadata-arms.json",
+    "measuredAt": "2026-10-29T00:16:13.293Z",
+    "probeSerialFsyncsPerSec": 7693,
+    "probeP50Ms": 0.1131,
+    "growingLongP50OverShortP50": 1.041,
+    "arms": [
+      { "label": "fsync_append", "sustainedRecordsPerSec": 228441.74, "fsyncsPerSec": 3569.4, "p50Ms": 0.1221, "p99Ms": 0.9164 },
+      { "label": "fdatasync_append", "sustainedRecordsPerSec": 236494.33, "fsyncsPerSec": 3695.22, "p50Ms": 0.1214, "p99Ms": 0.9148 },
+      { "label": "fdatasync_prealloc", "sustainedRecordsPerSec": 233157.77, "fsyncsPerSec": 3643.09, "p50Ms": 0.1239, "p99Ms": 0.9556 }
+    ],
+    "diagnosis": "durable_path_residual_not_explained_by_metadata_arms_alone",
+    "reading": "Hypothesis tested: under-load p50 not 2–4× probe; fdatasync+prealloc ~+3% only. Re-run on dedicated campaign disk. Report sustained rate + fsyncs/sec before/after — not hit rate alone."
   }
 }

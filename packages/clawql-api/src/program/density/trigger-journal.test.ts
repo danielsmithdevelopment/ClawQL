@@ -64,6 +64,38 @@ describe("trigger journal flush policy", () => {
       );
       expect(stats.doubleBuffered).toBe(true);
       expect(stats.doubleBufferHits).toBeGreaterThan(0);
+      expect(stats.fsyncLatencyMs.n).toBe(stats.fsyncCount);
+      expect(stats.fsyncLatencyMs.p50).toBeGreaterThan(0);
+      expect(stats.fsyncLatencyMs.p99).toBeGreaterThanOrEqual(stats.fsyncLatencyMs.p50!);
+      expect(stats.dataSync).toBe("fsync");
+    } finally {
+      await journal.close();
+    }
+  }, 30_000);
+
+  it("group_commit fdatasync + preallocate records latency and stays crash-safe", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-tj-prealloc-"));
+    const journal = await Effect.runPromise(
+      openTriggerJournalEffect(dir, {
+        mode: "group_commit",
+        batchMax: 16,
+        flushIntervalMs: 10,
+        dataSync: "fdatasync",
+        preallocateBytes: 1024 * 1024,
+      })
+    );
+    try {
+      journal.resetFlushStats();
+      const n = 16 * 20;
+      await Promise.all(Array.from({ length: n }, (_, i) => journal.record(`p${i}`, i)));
+      await journal.flush();
+      const stats = journal.snapshotFlushStats();
+      expect(stats.recordsFlushed).toBe(n);
+      expect(stats.dataSync).toBe("fdatasync");
+      expect(stats.preallocateBytes).toBe(1024 * 1024);
+      expect(stats.fsyncLatencyMs.n).toBeGreaterThan(0);
+      expect(journal.policyInfo.syncPrimitive).toBe("fdatasync_group_commit");
+      expect(journal.policyInfo.crashSafe).toBe(true);
     } finally {
       await journal.close();
     }
