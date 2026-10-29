@@ -60,7 +60,7 @@ ClawQL surfaces these as `flushStats` (`npm run benchmark:program-density-flush-
 
 **Under-load sync latency vs probe (required):** record each sync’s p50/p99 during the focus window and compare to the serial probe. If run latency is **2–4×** the probe, growing-file metadata (size/blocks on every `fsync`) is the likely gap — trial **`fdatasync` + preallocated segments** and report before/after **sustained rate + fsyncs/sec** (not hit rate).
 
-**ClawQL result on this host:** focus p50 ≈ **1.08×** probe (not 2–4×); fdatasync/prealloc arms ≈ **+3%** sustained — **does not close the gap** here (`durable_path_residual_not_explained_by_metadata_arms_alone`). Re-check on the dedicated campaign disk.
+**ClawQL result on this host:** focus p50 ≈ **1.08×** probe (not 2–4×); fdatasync/prealloc arms ≈ **+3%** sustained — **does not close the gap** here. Cycle stages: sync ~156 µs of ~174 µs cycle; non-sync ~22% of the fsync period. **Pure drain ~321k/s** vs **1s-SLA sustainable ~636k/s** (`sla_rate_above_drain_one_second_slack_not_writer_bound`) — report both. At the SLA cliff, late fires are **wait-to-pop** (~307 ms), not sync. Ontologiql prealloc +31% on their host → each side discloses best journal config; re-run arms on the shared campaign disk.
 
 ### 3. Refine the ramp (binary search + resolution)
 
@@ -164,4 +164,4 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 # Alternate Ontologiql each rep (same serial ceiling, refined ramp), then merge peer JSON.
 ```
 
-Next: interleaved 3-rep campaign on the **dedicated** host with write-cache recorded → peer merge. Profile each side’s producer limit so shared-host numbers stay explainable. No win copy until `sharedHostComplete=true`.
+Next: interleaved 3-rep campaign on the **dedicated** host with write-cache recorded → peer merge. Publish **durableRecordsPerSec** and **rateSustainableWithinOneSecondSla** for both; disclose each side’s best journal config. No win copy until `sharedHostComplete=true`.

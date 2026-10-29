@@ -146,6 +146,45 @@ export type TriggerFsyncLatencyMs = {
   readonly p99: number | null;
 };
 
+/** Per-flush stage means — explains cycle time beyond the sync call itself. */
+export type TriggerFlushCycleStagesMs = {
+  readonly n: number;
+  /** writeSync / positioned write of the batch. */
+  readonly writeMeanMs: number | null;
+  readonly writeP50Ms: number | null;
+  /** fsync / fdatasync await (libuv thread-pool round-trip). */
+  readonly syncMeanMs: number | null;
+  readonly syncP50Ms: number | null;
+  /** Resolving waiters after durable. */
+  readonly ackMeanMs: number | null;
+  readonly ackP50Ms: number | null;
+  /** write + sync + ack for one flush. */
+  readonly cycleMeanMs: number | null;
+  readonly cycleP50Ms: number | null;
+  /**
+   * Gap from previous flush end → this flush start (batch fill / event-loop idle).
+   * Large vs sync ⇒ time between syncs, not disk.
+   */
+  readonly interFlushGapMeanMs: number | null;
+  readonly interFlushGapP50Ms: number | null;
+  /** Implied fsyncs/sec if cycle alone bound the writer (1000 / cycleMeanMs). */
+  readonly impliedFsyncsPerSecFromCycle: number | null;
+};
+
+export type TriggerRecordTrace = {
+  readonly firedAt: number;
+  readonly enqueuedAtMs: number;
+  readonly flushStartedAtMs: number;
+  readonly writeMs: number;
+  readonly syncMs: number;
+  readonly ackMs: number;
+  readonly batchSize: number;
+  /** enqueued → flush start (waiting for batch to fill / flush to begin). */
+  readonly waitForBatchMs: number;
+  /** flush start → waiter resolve (write + sync + ack share). */
+  readonly waitForDurableMs: number;
+};
+
 /**
  * Runtime flush accounting for group_commit — explains fraction-of-serial-ceiling.
  *
@@ -179,6 +218,8 @@ export type TriggerJournalFlushStats = {
    */
   readonly doubleBufferHits: number;
   readonly doubleBuffered: boolean;
+  /** Stage split of each flush cycle (write / sync / ack / inter-flush gap). */
+  readonly cycleStagesMs: TriggerFlushCycleStagesMs;
   readonly reading: string;
 };
 
@@ -213,6 +254,8 @@ export type TriggerJournal = {
    * Returns the wall clock at durability (use as firedAt for lateness).
    */
   readonly record: (agentId: string, deadlineMs: number) => Promise<number>;
+  /** Like record, but returns enqueue/flush/sync stage timestamps for lateness splits. */
+  readonly recordTraced: (agentId: string, deadlineMs: number) => Promise<TriggerRecordTrace>;
   /** Force flush of any pending batch; resolves when durable. */
   readonly flush: () => Promise<void>;
   readonly close: () => Promise<void>;
@@ -223,9 +266,22 @@ export type TriggerJournal = {
 };
 
 type Waiter = {
-  readonly resolve: (firedAt: number) => void;
+  readonly enqueuedAtMs: number;
+  readonly resolve: (trace: TriggerRecordTrace) => void;
   readonly reject: (err: unknown) => void;
 };
+
+function stageSummary(
+  samples: readonly number[],
+  p50: (xs: readonly number[]) => number
+): { mean: number | null; p50: number | null } {
+  if (samples.length === 0) return { mean: null, p50: null };
+  const sum = samples.reduce((a, b) => a + b, 0);
+  return {
+    mean: Number((sum / samples.length).toFixed(4)),
+    p50: Number(p50(samples).toFixed(4)),
+  };
+}
 
 export function openTriggerJournalEffect(
   dir: string,
@@ -270,7 +326,14 @@ export function openTriggerJournalEffect(
     let fsyncWaitMsTotal = 0;
     let doubleBufferHits = 0;
     const fsyncLatencySamples: number[] = [];
+    const writeStageSamples: number[] = [];
+    const syncStageSamples: number[] = [];
+    const ackStageSamples: number[] = [];
+    const cycleStageSamples: number[] = [];
+    const interFlushGapSamples: number[] = [];
+    let lastFlushEndNs: bigint | null = null;
     const doubleBuffered = policy.mode === "group_commit";
+    const p50Of = (xs: readonly number[]) => Effect.runSync(percentileMsEffect(xs, 50));
 
     const noteSyncLatency = (ms: number) => {
       fsyncWaitMsTotal += ms;
@@ -278,6 +341,10 @@ export function openTriggerJournalEffect(
       if (fsyncLatencySamples.length < MAX_FSYNC_LATENCY_SAMPLES) {
         fsyncLatencySamples.push(ms);
       }
+    };
+
+    const noteStage = (bucket: number[], ms: number) => {
+      if (bucket.length < MAX_FSYNC_LATENCY_SAMPLES) bucket.push(ms);
     };
 
     const syncFdAsync = async (): Promise<void> => {
@@ -316,6 +383,12 @@ export function openTriggerJournalEffect(
       fsyncWaitMsTotal = 0;
       doubleBufferHits = 0;
       fsyncLatencySamples.length = 0;
+      writeStageSamples.length = 0;
+      syncStageSamples.length = 0;
+      ackStageSamples.length = 0;
+      cycleStageSamples.length = 0;
+      interFlushGapSamples.length = 0;
+      lastFlushEndNs = null;
     };
 
     const snapshotFlushStats = (): TriggerJournalFlushStats => {
@@ -339,6 +412,28 @@ export function openTriggerJournalEffect(
               p50: Number(Effect.runSync(percentileMsEffect(fsyncLatencySamples, 50)).toFixed(4)),
               p99: Number(Effect.runSync(percentileMsEffect(fsyncLatencySamples, 99)).toFixed(4)),
             };
+      const writeS = stageSummary(writeStageSamples, p50Of);
+      const syncS = stageSummary(syncStageSamples, p50Of);
+      const ackS = stageSummary(ackStageSamples, p50Of);
+      const cycleS = stageSummary(cycleStageSamples, p50Of);
+      const gapS = stageSummary(interFlushGapSamples, p50Of);
+      const cycleStagesMs: TriggerFlushCycleStagesMs = {
+        n: cycleStageSamples.length,
+        writeMeanMs: writeS.mean,
+        writeP50Ms: writeS.p50,
+        syncMeanMs: syncS.mean,
+        syncP50Ms: syncS.p50,
+        ackMeanMs: ackS.mean,
+        ackP50Ms: ackS.p50,
+        cycleMeanMs: cycleS.mean,
+        cycleP50Ms: cycleS.p50,
+        interFlushGapMeanMs: gapS.mean,
+        interFlushGapP50Ms: gapS.p50,
+        impliedFsyncsPerSecFromCycle:
+          cycleS.mean != null && cycleS.mean > 0
+            ? Number((1000 / cycleS.mean).toFixed(1))
+            : null,
+      };
 
       let reading: string;
       if (fsyncCount === 0) {
@@ -353,7 +448,7 @@ export function openTriggerJournalEffect(
       ) {
         reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full) but doubleBufferHits=0 — next batch was not ready when fsync returned (producer starvation or sync still blocking).`;
       } else if (avgBatchFillRatio !== null && avgBatchFillRatio >= 0.9) {
-        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full); doubleBufferHits=${doubleBufferHits}/${fsyncCount}; fsyncsPerSec=${fsyncsPerSec}; syncLatency p50=${fsyncLatencyMs.p50}ms p99=${fsyncLatencyMs.p99}ms (${dataSync ?? "fsync"}). Compare latency to the serial probe.`;
+        reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax} (near full); doubleBufferHits=${doubleBufferHits}/${fsyncCount}; fsyncsPerSec=${fsyncsPerSec}; cycle p50=${cycleStagesMs.cycleP50Ms}ms (write=${cycleStagesMs.writeP50Ms} sync=${cycleStagesMs.syncP50Ms} ack=${cycleStagesMs.ackP50Ms} gap=${cycleStagesMs.interFlushGapP50Ms}).`;
       } else {
         reading = `avgBatchSize ${avgBatchSize.toFixed(1)}/${batchMax ?? "?"}; fsyncsPerSec=${fsyncsPerSec}; doubleBufferHits=${doubleBufferHits}; syncLatency p50=${fsyncLatencyMs.p50}ms.`;
       }
@@ -377,6 +472,7 @@ export function openTriggerJournalEffect(
         preallocateBytes,
         doubleBufferHits,
         doubleBuffered,
+        cycleStagesMs,
         reading,
       };
     };
@@ -410,13 +506,25 @@ export function openTriggerJournalEffect(
           pendingLines = [];
           waiters = [];
           clearTimer();
+          const flushStartedAtMs = Date.now();
+          const cycleT0 = process.hrtime.bigint();
+          if (lastFlushEndNs != null) {
+            noteStage(interFlushGapSamples, Number(cycleT0 - lastFlushEndNs) / 1e6);
+          }
           try {
+            const writeT0 = process.hrtime.bigint();
             writePayload(lines.join(""));
+            const writeMs = Number(process.hrtime.bigint() - writeT0) / 1e6;
+            noteStage(writeStageSamples, writeMs);
+
+            let syncMs = 0;
             if (policy.mode !== "os_buffer") {
-              const t0 = process.hrtime.bigint();
+              const syncT0 = process.hrtime.bigint();
               // Async sync: event loop can accept the next batch while this syncs.
               await syncFdAsync();
-              noteSyncLatency(Number(process.hrtime.bigint() - t0) / 1e6);
+              syncMs = Number(process.hrtime.bigint() - syncT0) / 1e6;
+              noteSyncLatency(syncMs);
+              noteStage(syncStageSamples, syncMs);
               if (pendingLines.length > 0) doubleBufferHits += 1;
             }
             batchSizeSum += lines.length;
@@ -424,8 +532,27 @@ export function openTriggerJournalEffect(
             if (reason === "batch_full") flushReasonBatchFull += 1;
             else if (reason === "interval") flushReasonInterval += 1;
             else flushReasonForced += 1;
+
+            const ackT0 = process.hrtime.bigint();
             const firedAt = Date.now();
-            for (const w of batchWaiters) w.resolve(firedAt);
+            for (const w of batchWaiters) {
+              w.resolve({
+                firedAt,
+                enqueuedAtMs: w.enqueuedAtMs,
+                flushStartedAtMs,
+                writeMs,
+                syncMs,
+                ackMs: 0,
+                batchSize: lines.length,
+                waitForBatchMs: Math.max(0, flushStartedAtMs - w.enqueuedAtMs),
+                waitForDurableMs: Math.max(0, firedAt - flushStartedAtMs),
+              });
+            }
+            const ackMs = Number(process.hrtime.bigint() - ackT0) / 1e6;
+            noteStage(ackStageSamples, ackMs);
+            const cycleMs = Number(process.hrtime.bigint() - cycleT0) / 1e6;
+            noteStage(cycleStageSamples, cycleMs);
+            lastFlushEndNs = process.hrtime.bigint();
           } catch (err) {
             for (const w of batchWaiters) w.reject(err);
             throw err;
@@ -445,29 +572,14 @@ export function openTriggerJournalEffect(
       return flushing;
     };
 
-    const record = (agentId: string, deadlineMs: number): Promise<number> => {
-      if (closed) return Promise.reject(new Error("trigger journal closed"));
+    const enqueueGroupCommit = (
+      agentId: string,
+      deadlineMs: number
+    ): Promise<TriggerRecordTrace> => {
       const line = `${JSON.stringify({ agentId, deadlineMs })}\n`;
-
-      if (policy.mode === "os_buffer") {
-        writePayload(line);
-        return Promise.resolve(Date.now());
-      }
-
-      if (policy.mode === "fsync_each") {
-        const t0 = process.hrtime.bigint();
-        writePayload(line);
-        syncFdSync();
-        noteSyncLatency(Number(process.hrtime.bigint() - t0) / 1e6);
-        batchSizeSum += 1;
-        recordsFlushed += 1;
-        flushReasonForced += 1;
-        return Promise.resolve(Date.now());
-      }
-
-      return new Promise<number>((resolve, reject) => {
+      return new Promise<TriggerRecordTrace>((resolve, reject) => {
         pendingLines.push(line);
-        waiters.push({ resolve, reject });
+        waiters.push({ enqueuedAtMs: Date.now(), resolve, reject });
         if (pendingLines.length >= policy.batchMax) {
           pendingFlushReason = "batch_full";
           void flushNow();
@@ -475,6 +587,63 @@ export function openTriggerJournalEffect(
           armInterval();
         }
       });
+    };
+
+    const recordTraced = async (
+      agentId: string,
+      deadlineMs: number
+    ): Promise<TriggerRecordTrace> => {
+      if (closed) throw new Error("trigger journal closed");
+      if (policy.mode === "os_buffer") {
+        const enqueuedAtMs = Date.now();
+        writePayload(`${JSON.stringify({ agentId, deadlineMs })}\n`);
+        const firedAt = Date.now();
+        return {
+          firedAt,
+          enqueuedAtMs,
+          flushStartedAtMs: enqueuedAtMs,
+          writeMs: 0,
+          syncMs: 0,
+          ackMs: 0,
+          batchSize: 1,
+          waitForBatchMs: 0,
+          waitForDurableMs: Math.max(0, firedAt - enqueuedAtMs),
+        };
+      }
+      if (policy.mode === "fsync_each") {
+        const enqueuedAtMs = Date.now();
+        const flushStartedAtMs = enqueuedAtMs;
+        const writeT0 = process.hrtime.bigint();
+        writePayload(`${JSON.stringify({ agentId, deadlineMs })}\n`);
+        const writeMs = Number(process.hrtime.bigint() - writeT0) / 1e6;
+        const syncT0 = process.hrtime.bigint();
+        syncFdSync();
+        const syncMs = Number(process.hrtime.bigint() - syncT0) / 1e6;
+        noteSyncLatency(syncMs);
+        noteStage(writeStageSamples, writeMs);
+        noteStage(syncStageSamples, syncMs);
+        batchSizeSum += 1;
+        recordsFlushed += 1;
+        flushReasonForced += 1;
+        const firedAt = Date.now();
+        return {
+          firedAt,
+          enqueuedAtMs,
+          flushStartedAtMs,
+          writeMs,
+          syncMs,
+          ackMs: 0,
+          batchSize: 1,
+          waitForBatchMs: 0,
+          waitForDurableMs: Math.max(0, firedAt - flushStartedAtMs),
+        };
+      }
+      return enqueueGroupCommit(agentId, deadlineMs);
+    };
+
+    const record = async (agentId: string, deadlineMs: number): Promise<number> => {
+      const trace = await recordTraced(agentId, deadlineMs);
+      return trace.firedAt;
     };
 
     const flush = async (): Promise<void> => {
@@ -500,6 +669,7 @@ export function openTriggerJournalEffect(
       policy,
       policyInfo,
       record,
+      recordTraced,
       flush,
       close,
       resetFlushStats,

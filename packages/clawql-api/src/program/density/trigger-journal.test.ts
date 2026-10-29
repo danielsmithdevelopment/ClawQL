@@ -68,6 +68,31 @@ describe("trigger journal flush policy", () => {
       expect(stats.fsyncLatencyMs.p50).toBeGreaterThan(0);
       expect(stats.fsyncLatencyMs.p99).toBeGreaterThanOrEqual(stats.fsyncLatencyMs.p50!);
       expect(stats.dataSync).toBe("fsync");
+      expect(stats.cycleStagesMs.n).toBe(stats.fsyncCount);
+      expect(stats.cycleStagesMs.syncMeanMs).toBeGreaterThan(0);
+      expect(stats.cycleStagesMs.writeMeanMs).not.toBeNull();
+      expect(stats.cycleStagesMs.ackMeanMs).not.toBeNull();
+    } finally {
+      await journal.close();
+    }
+  }, 30_000);
+
+  it("recordTraced splits waitForBatch from durable wait", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-tj-trace-"));
+    const journal = await Effect.runPromise(
+      openTriggerJournalEffect(dir, { mode: "group_commit", batchMax: 4, flushIntervalMs: 50 })
+    );
+    try {
+      const traces = await Promise.all(
+        Array.from({ length: 4 }, (_, i) => journal.recordTraced(`t${i}`, 100 + i))
+      );
+      expect(traces).toHaveLength(4);
+      for (const t of traces) {
+        expect(t.batchSize).toBe(4);
+        expect(t.firedAt).toBeGreaterThanOrEqual(t.flushStartedAtMs);
+        expect(t.waitForDurableMs).toBeGreaterThanOrEqual(0);
+        expect(t.syncMs).toBeGreaterThanOrEqual(0);
+      }
     } finally {
       await journal.close();
     }

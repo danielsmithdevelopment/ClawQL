@@ -99,7 +99,7 @@
       "systemId": "clawql-typescript",
       "status": "measured",
       "hostLabel": "clawql-cloud-agent-host",
-      "honesty": "ClawQL TypeScript fair-v2. Both pumps fast; residual in durable path. Double-buffer active (hits≈100%) but fsync rate flat (~3.5–3.7k ≈46–49% of serial ~7.7k). Under-load sync p50≈1.08× probe (not 2–4×); fdatasync+prealloc arms ~+3% sustained — does not close the gap on this host (durable_path_residual_not_explained_by_metadata_arms_alone). Pump: noop ~1.3M/s; durable ~286k/s. Board floor 256k 3-rep until shared-host campaign. Re-check latency/arms on dedicated disk. No win copy.",
+      "honesty": "ClawQL TypeScript fair-v2. Under-load sync≈probe; metadata arms ~+3%. Cycle stages: write~11µs sync~156µs ack~6µs (non-sync ~22% of fsync period). Pure durable drain ~321k/s vs 1s-SLA sustainable ~636k/s (drain/sustained≈0.50) — sla_rate_above_drain_one_second_slack_not_writer_bound. Cliff lateness is wait-to-pop (~307ms), not sync. Report both durableRecordsPerSec and rateSustainableWithinOneSecondSla. Journal: fsync append (best on this host; Ontologiql prealloc +31% elsewhere — disclose each). Board floor 256k 3-rep until shared-host. No win copy.",
       "boardColumns": {
         "agentsAtLimit": 2500000,
         "limitResource": "rss",
@@ -1112,7 +1112,7 @@
       "fractionOfSerial": 0.24,
       "sustainedDrainPerSecApprox": 139000,
       "diagnosis": "double_buffer_candidate_unverified",
-      "note": "Full batches + ~24% of serial. Producer fast — not idle-writer-proven. Any dbuf trial needs before/after sustained rate + fsyncs/sec."
+      "note": "Full batches + ~24% of serial. Producer fast. Prealloc +31% on their host (prealloc_partial_lift_residual_durable_path). Pair with ClawQL drain-vs-SLA split on shared host."
     }
   },
   "sharedHostFiveArms": {
@@ -1278,6 +1278,37 @@
       { "label": "fdatasync_prealloc", "sustainedRecordsPerSec": 233157.77, "fsyncsPerSec": 3643.09, "p50Ms": 0.1239, "p99Ms": 0.9556 }
     ],
     "diagnosis": "durable_path_residual_not_explained_by_metadata_arms_alone",
-    "reading": "Hypothesis tested: under-load p50 not 2–4× probe; fdatasync+prealloc ~+3% only. Re-run on dedicated campaign disk. Report sustained rate + fsyncs/sec before/after — not hit rate alone."
+    "reading": "Under-load p50 not 2–4× probe; fdatasync+prealloc ~+3% only here. Ontologiql prealloc +31% on their host — disclose best config per side on shared FS."
+  },
+  "drainVsSustained": {
+    "artifact": "docs/benchmarks/program-density/drain-vs-sustained.json",
+    "measuredAt": "2026-10-29T00:32:26.507Z",
+    "journalConfig": {
+      "dataSync": "fsync",
+      "preallocateBytes": null,
+      "chosenBecause": "board_default_fsync_append_metadata_arms_neutral_on_this_host"
+    },
+    "durableRecordsPerSec": 321317.01,
+    "rateSustainableWithinOneSecondSla": 636000,
+    "firstRateMissingSlaPerSec": 640000,
+    "drainOverSustained": 0.505,
+    "cycleStagesMs": {
+      "writeMeanMs": 0.0111,
+      "syncMeanMs": 0.1557,
+      "ackMeanMs": 0.0062,
+      "interFlushGapMeanMs": 0.0011,
+      "cycleMeanMs": 0.1738
+    },
+    "nonSyncShareOfPeriodPct": 21.8,
+    "cliffLateness": {
+      "offeredRatePerSec": 640000,
+      "pctWithinSla": 92.42,
+      "lateCount": 50240,
+      "meanWaitToPopMs": 306.755,
+      "meanWaitForBatchMs": 0.128,
+      "meanSyncMs": 0.143
+    },
+    "diagnosis": "sla_rate_above_drain_one_second_slack_not_writer_bound",
+    "reading": "Report both durableRecordsPerSec and rateSustainableWithinOneSecondSla. Cliff is wait-to-pop, not disk."
   }
 }
