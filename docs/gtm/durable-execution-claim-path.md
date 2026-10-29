@@ -9,14 +9,14 @@
 
 To say **durable execution**, you must show that the **program** survives — not just its writes: after a crash it resumes on its own from where it was and runs to completion without redoing finished work.
 
-**“Never repeats a write”** is one guarantee *inside* durable execution. Durable execution is the whole program making progress.
+**“Never repeats a write”** is one guarantee _inside_ durable execution. Durable execution is the whole program making progress.
 
 There is no single definition (John’s stream spent early minutes on a taxonomy). Pick a level you can prove and **name it**:
 
-| Level | Meaning | Who sits here |
-| --- | --- | --- |
-| **Checkpointed steps** | Resume from last completed step; completed steps never rerun | Temporal-class; **within reach for ClawQL** |
-| **Transparent durable execution** | Resume at the exact line, inside steps; no step boundaries | Golem-class; needs record-and-replay / snapshot — **not built** |
+| Level                             | Meaning                                                      | Who sits here                                                   |
+| --------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| **Checkpointed steps**            | Resume from last completed step; completed steps never rerun | Temporal-class; **within reach for ClawQL**                     |
+| **Transparent durable execution** | Resume at the exact line, inside steps; no step boundaries   | Golem-class; needs record-and-replay / snapshot — **not built** |
 
 ---
 
@@ -34,11 +34,11 @@ Do **not** say “durable execution” or “exactly once” in general. See [pu
 
 The thousand-crash board already resumes programs but scores duplicates, recovery time, and availability. Add columns durable execution is about:
 
-| Column | Meaning |
-| --- | --- |
-| **Completed** | % of crashed programs that ran to the end after recovery |
-| **Steps repeated** | Completed steps that ran again (0 for writes; stated for reads) |
-| **State preserved** | Program variables between steps match the no-crash path |
+| Column              | Meaning                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| **Completed**       | % of crashed programs that ran to the end after recovery        |
+| **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) |
+| **State preserved** | Program variables between steps match the no-crash path         |
 
 ### 2. Every side effect through a journaled step
 
@@ -68,7 +68,7 @@ Name the granularity: **“durable execution with step-level checkpoints.”** O
 
 ## Explicitly still out of scope (until designed and measured)
 
-- Transparent / mid-line resumption inside agent code  
-- Durable processes for unmodified agents  
-- “Exactly once” for arbitrary remote APIs without keys or lookup  
+- Transparent / mid-line resumption inside agent code
+- Durable processes for unmodified agents
+- “Exactly once” for arbitrary remote APIs without keys or lookup
 - Any claim that beats Golem / Pi Durable / Infinity on execution durability without a reviewed shared board
