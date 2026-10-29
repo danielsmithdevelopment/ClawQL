@@ -146,7 +146,7 @@ Crash-during-outside-write comparison board measures keyed resume (idempotent), 
 
 ---
 
-## Measure resume vs journal length (planned — find it yourself)
+## Measure resume vs journal length (file-journal probe measured)
 
 Replay-based recovery can slow down as history grows; state-first / snapshot systems exist for that reason (same pattern as long-session cost elsewhere). Program mode should measure **before** someone else points it out in a thread:
 
@@ -155,7 +155,7 @@ Replay-based recovery can slow down as history grows; state-first / snapshot sys
 | Short program | Resume wall time after SIGKILL / peer failover (already in Tier C `resumeMs`)   |
 | Long program  | Same resume clock vs journal record count / bytes (fan-out of N steps, large N) |
 
-If resume time grows with journal length, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail). Until measured, do not claim linear or constant resume cost. Status: **planned** — not a Tier C gate for John outreach.
+**File-journal probe (Tier F):** [`docs/benchmarks/durability-proof/resume-vs-journal/`](../benchmarks/durability-proof/resume-vs-journal/) — through 500 steps resume stays ~1–6 ms (~0.01 ms/record); `snapshotRecommended=false`. This is **not** fleet lease failover (~12s). If a later host shows material growth, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail). Do not claim constant resume cost beyond the measured range.
 
 ---
 
@@ -163,7 +163,7 @@ If resume time grows with journal length, add **periodic snapshots** so resume r
 
 1. **Durability, shipped** — Tier C fleet phased kill on R2 is measured (N=1000, 0 dups); preferred renew/lease tune still planned. Head-to-head Golem arm still open.
 2. **Check-then-decide lookup** — pair write ops with lookup-by-reference from the spec (above); keys already on the REST wire.
-3. **Resume vs journal length** — measure; snapshot if growth is material (above).
+3. **Resume vs journal length** — file-journal probe measured (above); snapshot only if a later host shows material growth.
 4. **Delegated permissions that narrow and cascade** — time-limited sub-agent slices; revoke parent → revoke children.
 5. **Read-only result caching** — specs already mark reads; gateway cache until next write.
 6. **Awaitable approvals in SDKs** — same strength as today, easier to code against.

@@ -3,6 +3,7 @@
 **Status:** ready to send privately (not a public dunk)  
 **PR:** https://github.com/danielsmithdevelopment/ClawQL/pull/1432  
 **Board:** [COMPARISON.md](./COMPARISON.md) · evidence [`comparison/evidence.json`](./comparison/evidence.json)  
+**Companion (ClawQL-only, strengthens first contact):** crash-point rows [`crash-points-evidence.json`](./comparison/crash-points-evidence.json) · Tier F [`resume-vs-journal/`](./resume-vs-journal/) · TLA+ + trace conformance  
 **TLA+:** [`formal/tla/write-protocol/`](../../../formal/tla/write-protocol/) (pass + recorded counterexamples)
 
 N=1000 on the stable host waits on feedback from this package. Real-model Pi Durable can follow as an update; it does not change the setup under review.

@@ -14,15 +14,15 @@ Peers are measured **out of the box** (no custom reconciliation layer). A Golem 
 
 ## Crash points (five-row board)
 
-| Crash point                 | Measured here? | Notes                                                                                                   |
-| --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------- |
-| **Outside write in flight** | **Yes**        | Hardest window: after the write is visible, before ack. Every trial on this board aims here on purpose. |
-| Before write sent           | No             | Expect 0 dups / 0 unknowns if resume re-issues once.                                                    |
-| After write acked           | No             | Expect 0 dups; resume continues past the write.                                                         |
-| Idle between steps          | No             | Journal / checkpoint already durable.                                                                   |
-| During model↔tool round     | No             | Peer-specific (Pi tool round; Golem invoke boundary).                                                   |
+| Crash point                 | Peer fairness board | ClawQL companion ([`crash-points-evidence.json`](./comparison/crash-points-evidence.json)) |
+| --------------------------- | ------------------- | ------------------------------------------------------------------------------------------ |
+| **Outside write in flight** | **Yes** (all arms)  | keys **0/0/N**; neither **0/N/0**                                                         |
+| Before write sent           | No                  | keys **0/0/N**; neither **0/N/0** (intent journaled → no blind resend)                     |
+| After write acked           | No                  | **0/0/N** both modes                                                                       |
+| Idle between steps          | No                  | **0/0/N** both modes                                                                       |
+| During model↔tool round     | No                  | Skipped (peer-specific)                                                                    |
 
-Until the other rows are measured, **do not** read this table as “Golem and Pi Durable always double-charge.” It is the in-flight-write row only.
+The peer fairness table below is still the **in-flight-write** row only — that is the window that produces peer duplicates. Companion rows show ClawQL is clean outside that window too.
 
 ---
 
@@ -85,10 +85,11 @@ The risky part is the protocol, not a pure function — **TLA+** ([`formal/tla/w
 
 Model-checked (bounded): agent retries, crashes, delayed applies, API types keys/lookup/neither. Invariants: no duplicate effect, no false “done”, no unsafe retry (early not_found). Weak config (`WeakEarlyNotFound`) must counterexample — that is the check-then-decide race. Peer-neither + blind retry must counterexample.
 
-Describe results as **model-checked** under stated bounds — never “provably correct.” Trace export: `DURABILITY_COMPARISON_TRACE=1` → `TrialTraceEvent` logs for later conformance checking against the spec.
+Describe results as **model-checked** under stated bounds — never “provably correct.” Trace export: `DURABILITY_COMPARISON_TRACE=1` → `TrialTraceEvent` logs; TypeScript conformance (`trace-conformance.ts`) checks the same safety rules (pass + recorded counterexample shapes in unit tests).
 
 ```bash
 ./scripts/formal/run-write-protocol-tlc.sh
+DURABILITY_COMPARISON_TRACE=1 DURABILITY_COMPARISON_N=5 npm run benchmark:durability-comparison
 ```
 
 ---
@@ -127,16 +128,18 @@ Describe results as **model-checked** under stated bounds — never “provably 
 
 ## Implementation status
 
-| Piece                                          | Status                                                     |
-| ---------------------------------------------- | ---------------------------------------------------------- |
-| Fairness columns + API capability labels       | **Shipped**                                                |
-| Check-then-decide + race-safe not_found        | **Shipped**                                                |
-| Race board arm (paused mock)                   | **Shipped**                                                |
-| TLA+ write-protocol (+ weak / peer cex)        | **Shipped** — `./scripts/formal/run-write-protocol-tlc.sh` |
-| Trace export (`DURABILITY_COMPARISON_TRACE=1`) | **Shipped** (conformance checker planned)                  |
-| Real-model Pi                                  | Env-gated — needs API key                                  |
-| N=1000 on stable host                          | **After** maintainer feedback                              |
-| Evidence                                       | [`comparison/evidence.json`](./comparison/evidence.json)   |
+| Piece                                          | Status                                                                  |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| Fairness columns + API capability labels       | **Shipped**                                                             |
+| Check-then-decide + race-safe not_found        | **Shipped**                                                             |
+| Race board arm (paused mock)                   | **Shipped**                                                             |
+| TLA+ write-protocol (+ weak / peer cex)        | **Shipped** — CI + `./scripts/formal/run-write-protocol-tlc.sh`         |
+| Trace export + conformance checker             | **Shipped** — `trace-conformance.ts` (+ unit cex shapes)                |
+| Crash-point companion rows (ClawQL)            | **Shipped** — [`crash-points-evidence.json`](./comparison/crash-points-evidence.json) |
+| Tier F resume vs journal length                | **Measured** (file-journal) — [`resume-vs-journal/`](./resume-vs-journal/) |
+| Real-model Pi                                  | Env-gated — needs API key                                               |
+| N=1000 on stable host                          | **After** maintainer feedback                                           |
+| Evidence                                       | [`comparison/evidence.json`](./comparison/evidence.json)                |
 
 ### Commands
 
@@ -144,5 +147,7 @@ Describe results as **model-checked** under stated bounds — never “provably 
 DURABILITY_COMPARISON_N=20 npm run benchmark:durability-comparison
 DURABILITY_COMPARISON_LIVE_PEERS=1 DURABILITY_COMPARISON_N=50 npm run benchmark:durability-comparison
 DURABILITY_COMPARISON_TRACE=1 DURABILITY_COMPARISON_N=5 npm run benchmark:durability-comparison
+DURABILITY_COMPARISON_CRASH_POINTS_N=10 npm run benchmark:durability-crash-points
+npm run benchmark:resume-vs-journal
 ./scripts/formal/run-write-protocol-tlc.sh
 ```

@@ -150,9 +150,9 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
   {
     tier: 'F',
     name: 'Resume vs journal length',
-    status: 'planned',
-    statusLabel: 'Planned',
-    detail: 'Measure resume wall time at short vs long journals; snapshots if needed.',
+    status: 'measured',
+    statusLabel: 'File-journal probe',
+    detail: 'Resume ~1–6 ms through 500 steps (~0.01 ms/record); snapshots not needed yet.',
   },
 ] as const
 
