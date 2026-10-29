@@ -6,7 +6,7 @@
 
 **Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
-**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON includes `columns.completed` + `columns.stepsRepeated` + `columns.statePreserved` + `columns.waitApproval` next to the safety/availability trio — re-measure Tier C / inject await trials before quoting those rates. Plan `sleep`, `await_approval`, and `model_call` are first-class journaled steps (model responses replay; mid-call crash re-requests once). Program-level TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is scaffolded.
+**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON includes `columns.completed` + `columns.stepsRepeated` + `columns.statePreserved` + `columns.waitApproval`. Lab re-measure **n=100** on R2 ([`phased-claim-path-columns-n100.json`](../program-cell-fleet-kill/phased-claim-path-columns-n100.json)): outer `completed` rate **1.0**, `writeStepsRerun` **0**, dups **0** (upper 95% 3%); `statePreserved` / `waitApproval` still `measured: false`. Plan `sleep`, `await_approval`, and `model_call` are first-class journaled steps; ProgramResume TLA+ dual-config oracle is in tree. Stock N=1000 safety/availability claim unchanged.
 
 ## Scoped Tier C claim (measured — stock R2)
 

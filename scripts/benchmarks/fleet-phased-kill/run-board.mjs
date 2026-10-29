@@ -42,9 +42,15 @@ const PHASES = [
 
 function autoWireR2() {
   if (process.env.CELLD_BUCKET) return;
-  const account = process.env.CLAWQL_R2_ACCOUNT_ID;
-  const key = process.env.CLAWQL_SYNC_ACCESS_KEY_ID;
-  const secret = process.env.CLAWQL_SYNC_SECRET_ACCESS_KEY;
+  // Prefer CLAWQL_R2_*; fall back to Cloudflare account + sync/access keys
+  // injected in cloud-agent / operator environments.
+  const account =
+    process.env.CLAWQL_R2_ACCOUNT_ID ||
+    process.env.CLOUDFLARE_ACCOUNT_ID ||
+    process.env.CF_ACCOUNT_ID;
+  const key = process.env.CLAWQL_SYNC_ACCESS_KEY_ID || process.env.CLOUDFLARE_ACCESS_KEY_ID;
+  const secret =
+    process.env.CLAWQL_SYNC_SECRET_ACCESS_KEY || process.env.CLOUDFLARE_SECRET_ACCESS_KEY;
   if (!account || !key || !secret) return;
   const stamp = new Date()
     .toISOString()
@@ -855,7 +861,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated + statePreserved + waitApproval (Node await_approval + density survival; fleet await trials not yet injected). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. Model-call journaling + program-level TLA+ remain open on the claim path.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path completed + stepsRepeated (lab n=100 rates in phased-claim-path-columns-n100.json) + statePreserved + waitApproval scaffolding (fleet await trials / baseline pairing not yet injected). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
