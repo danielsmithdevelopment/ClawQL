@@ -55,39 +55,55 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
       rel="stylesheet"
     />
   </head>
-  <body class="min-h-dvh">
+  <body class="min-h-dvh font-sans">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-zinc-900"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 font-sans focus:text-zinc-900"
     >
       Skip to content
     </a>
     <header
-      class="border-b border-zinc-900/10 bg-claw-warm-white/90 backdrop-blur dark:border-claw-graph/40 dark:bg-claw-bg/90"
+      class="docs-chrome border-b border-zinc-900/10 bg-claw-warm-white/90 backdrop-blur dark:border-claw-graph/40 dark:bg-claw-bg/90"
       aria-label="Site"
     >
       <div
         class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6"
       >
-        <a href="/" class="flex items-center gap-2 no-underline" aria-label="ClawQL home">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 no-underline"
+          aria-label="ClawQL home"
+        >
+          {/* Blue wordmark → light UI; white wordmark → dark UI */}
           <img
-            src="/ClawQL-logo.jpeg"
-            alt=""
-            width="32"
-            height="32"
-            class="rounded"
+            src="/brand/clawql-wordmark-light.png"
+            alt={site.name}
+            width="160"
+            height="54"
+            class="h-8 w-auto sm:h-9 dark:hidden"
+            decoding="async"
           />
-          <span class="font-display text-lg font-semibold text-zinc-900 dark:text-claw-warm-white">
-            {site.name}
-            <span class="font-sans text-sm font-normal text-zinc-500"> docs</span>
-          </span>
+          <img
+            src="/brand/clawql-wordmark-dark.png"
+            alt={site.name}
+            width="160"
+            height="54"
+            class="hidden h-8 w-auto sm:h-9 dark:block"
+            decoding="async"
+          />
+          <span
+            class="font-sans text-sm font-medium tracking-wide text-zinc-500 dark:text-zinc-400"
+            >docs</span
+          >
         </a>
-        <div class="flex items-center gap-4 text-sm">
+        <div class="flex items-center gap-4 font-sans text-sm">
           <a href={site.marketing} class="no-underline hover:underline"
             >clawql.com</a
           >
-          <a href={site.github} class="no-underline hover:underline" rel="noopener noreferrer"
-            >GitHub</a
+          <a
+            href={site.github}
+            class="no-underline hover:underline"
+            rel="noopener noreferrer">GitHub</a
           >
         </div>
       </div>
@@ -105,12 +121,14 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
       </main>
     </div>
     <footer
-      class="border-t border-zinc-900/10 py-8 text-center text-sm text-zinc-500 dark:border-claw-graph/40"
+      class="docs-chrome border-t border-zinc-900/10 py-8 text-center font-sans text-sm text-zinc-500 dark:border-claw-graph/40"
     >
       <p>
         © {new Date().getFullYear()} ClawQL · Static Astro docs (ADR 0018) ·
-        <a href={site.github} class="no-underline hover:underline" rel="noopener noreferrer"
-          >GitHub</a
+        <a
+          href={site.github}
+          class="no-underline hover:underline"
+          rel="noopener noreferrer">GitHub</a
         >
       </p>
     </footer>
