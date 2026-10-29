@@ -1,10 +1,10 @@
 {
   "kind": "durability-pilot-package-manifest",
-  "generatedAt": "2026-10-29T18:50:54.387Z",
+  "generatedAt": "2026-10-29T18:51:18.975Z",
   "git": {
     "branch": "cursor/durability-peer-pilot-f425",
-    "commit": "11590bb2af9a5c9b7219e2586a868a4771603d00",
-    "short": "11590bb2a"
+    "commit": "efa42bcceb9471e36dcda15e56ec7b2a2e8cdd75",
+    "short": "efa42bcce"
   },
   "evidence": [
     {
