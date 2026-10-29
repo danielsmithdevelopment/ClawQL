@@ -1,0 +1,16 @@
+{
+  "crashPointsTrace": {
+    "n": 50,
+    "eventsChecked": 1500,
+    "ok": true,
+    "source": "crash-points-n50-trace.log"
+  },
+  "clawqlArmsN50Trace": {
+    "n": 50,
+    "eventsChecked": 1550,
+    "ok": true,
+    "source": "clawql-n50-trace.log",
+    "evidencePath": "/opt/cursor/artifacts/clawql-n50-trace-evidence.json"
+  },
+  "wording": "every exported trace from these runs satisfies the model safety rules \u2014 not implementation verified"
+}

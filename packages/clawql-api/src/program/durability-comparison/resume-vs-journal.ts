@@ -28,9 +28,21 @@ export type ResumeVsJournalEvidence = {
   readonly kind: "durability-resume-vs-journal";
   readonly measuredAt: string;
   readonly honesty: string;
+  /** Single-host lab context — do not extrapolate beyond measured step counts. */
+  readonly host: {
+    readonly platform: string;
+    readonly arch: string;
+    readonly node: string;
+    readonly storage: string;
+    readonly flushPolicy: string;
+  };
   readonly samples: readonly ResumeVsJournalSample[];
   /** Simple linear slope estimate: ms per extra journal record (null if <2 samples). */
   readonly resumeMsPerRecord: number | null;
+  /**
+   * True only when long resume grows enough vs short to suggest snapshots.
+   * Prefer wording: "snapshots not needed up to {max nSteps} steps" when false.
+   */
   readonly snapshotRecommended: boolean;
 };
 
@@ -184,11 +196,23 @@ export function runResumeVsJournalEffect(
         long.resumeMs > Math.max(50, short.resumeMs * 5) &&
         (resumeMsPerRecord ?? 0) > 0.05;
 
+      const maxSteps = Math.max(...samples.map((s) => s.nSteps));
       return {
         kind: "durability-resume-vs-journal",
         measuredAt: new Date().toISOString(),
         honesty:
-          "File-journal stand-in resume wall time vs journal record count/bytes. Not fleet lease failover (Tier C ~12s). Snapshots only if growth is material — see snapshotRecommended.",
+          `File-journal stand-in resume wall time vs journal record count/bytes on a single host. ` +
+          `Measured up to ${maxSteps} steps — do not extrapolate. Not fleet lease failover (Tier C ~12s). ` +
+          (snapshotRecommended
+            ? "Growth material enough to recommend snapshots."
+            : `Snapshots not needed up to ${maxSteps} steps.`),
+        host: {
+          platform: `${process.platform} ${process.version}`,
+          arch: process.arch,
+          node: process.version,
+          storage: "local filesystem (tmpdir JSONL program journal)",
+          flushPolicy: "append entry + fsync per journaled call (program-journal file backend)",
+        },
         samples,
         resumeMsPerRecord,
         snapshotRecommended,

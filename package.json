@@ -115,6 +115,7 @@
     "benchmark:durability-crash-points": "node scripts/benchmarks/durability-comparison/run-crash-points.mjs",
     "benchmark:resume-vs-journal": "node scripts/benchmarks/durability-comparison/run-resume-vs-journal.mjs",
     "formal:write-protocol-tlc": "bash scripts/formal/run-write-protocol-tlc.sh",
+    "benchmark:durability-package-manifest": "node scripts/benchmarks/durability-comparison/write-package-manifest.mjs",
     "benchmark:program-density-fair": "node scripts/benchmarks/program-density/run-board.mjs",
     "benchmark:program-density-shared-host": "node --expose-gc --import tsx scripts/benchmarks/program-density/run-shared-host-five-arms.mjs",
     "benchmark:program-density-fsync-ceiling": "node scripts/benchmarks/program-density/measure-fsync-ceiling.mjs",

@@ -1,0 +1,60 @@
+{
+  "kind": "durability-pilot-package-manifest",
+  "generatedAt": "2026-10-29T18:50:40.585Z",
+  "git": {
+    "branch": "cursor/durability-peer-pilot-f425",
+    "commit": "ec2045e65d3c199d3a435966c0503859dd2aaa2d",
+    "short": "ec2045e65"
+  },
+  "evidence": [
+    {
+      "path": "docs/benchmarks/durability-proof/comparison/evidence.json",
+      "bytes": 405098,
+      "sha256": "ec4240c64a31217e9e771325e1539321e16f4261ff60747cfa05910ee66f39c6"
+    },
+    {
+      "path": "docs/benchmarks/durability-proof/comparison/crash-points-evidence.json",
+      "bytes": 477653,
+      "sha256": "27e6a26ec7aed563032db61c90aea69bbfe815ef42fa32758664c9725d9de708"
+    },
+    {
+      "path": "docs/benchmarks/durability-proof/resume-vs-journal/evidence.json",
+      "bytes": 1652,
+      "sha256": "1ad52152ce0b26ad6bc44b9b79a1ad3b87d4e2ac910784b0e74c0897aa117d21"
+    },
+    {
+      "path": "docs/benchmarks/durability-proof/comparison/trace-conformance-summary.json",
+      "bytes": 451,
+      "sha256": "30a4cbf146549aabb396671b08f914d0ea3b9129c953eac97c2613b70f7545b9"
+    }
+  ],
+  "sampleSizes": {
+    "peerBoardN": 50,
+    "crashPointsN": 50,
+    "peerBoardMeasuredAt": "2026-10-29T18:46:23.156Z",
+    "crashPointsMeasuredAt": "2026-10-29T18:24:28.806Z",
+    "resumeVsJournalMeasuredAt": "2026-10-29T18:46:39.762Z"
+  },
+  "zeroEventUpperBound95": {
+    "formula": "1 - 0.05^(1/N)",
+    "peerBoard": 0.0582,
+    "crashPoints": 0.0582,
+    "note": "Use for zero-count rate claims only. N=10 → ~0.26; N=50 → ~0.06. Prefer 'behaves as designed' wording for small-N harness checks."
+  },
+  "traceConformance": {
+    "crashPointsTrace": {
+      "n": 50,
+      "eventsChecked": 1500,
+      "ok": true,
+      "source": "crash-points-n50-trace.log"
+    },
+    "clawqlArmsN50Trace": {
+      "n": 50,
+      "eventsChecked": 1550,
+      "ok": true,
+      "source": "clawql-n50-trace.log",
+      "evidencePath": "/opt/cursor/artifacts/clawql-n50-trace-evidence.json"
+    },
+    "wording": "every exported trace from these runs satisfies the model safety rules — not “the implementation is verified”"
+  }
+}
