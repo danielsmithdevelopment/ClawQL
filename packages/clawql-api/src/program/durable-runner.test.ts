@@ -385,8 +385,9 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
         { tool: "execute", operationId: "pets.get", args: { page: 1 } },
       ],
     });
-    const plan = await Effect.runPromise(parseProgramPlanEffect(source));
-    if ("ok" in plan && plan.ok === false) throw new Error(plan.error);
+    const parsed = await Effect.runPromise(parseProgramPlanEffect(source));
+    if ("ok" in parsed && parsed.ok === false) throw new Error(parsed.error);
+    const plan = parsed as Exclude<typeof parsed, { ok: false }>;
     await Effect.runPromise(
       Effect.gen(function* () {
         const journal = yield* makeFileProgramJournalEffect(dir);
