@@ -6,7 +6,7 @@
 
 **Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
-**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON now includes `columns.completed` + `columns.stepsRepeated` next to the safety/availability trio — re-measure Tier C before quoting those rates. State preserved, journaled model/timer/approval steps, and program-level TLA+ remain open.
+**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON includes `columns.completed` + `columns.stepsRepeated` + `columns.statePreserved` next to the safety/availability trio — re-measure Tier C before quoting completed/stepsRepeated rates; `statePreserved` is Node-golden only until fleet baselines are paired. Journaled model/timer/approval steps and program-level TLA+ remain open.
 
 ## Scoped Tier C claim (measured — stock R2)
 

@@ -33,10 +33,10 @@ import {
 import {
   runProgramEffect,
   type ExecuteProgramResult,
-  type ProgramCallRecord,
   type ProgramHost,
   type ProgramReplayedCall,
 } from "./program-runner.js";
+import { compareProgramStepStateEffect } from "./program-step-state.js";
 
 const ID = "prog_durabletest01";
 const OPS = ["pets.get", "pets.list", "owners.list"] as const;
@@ -159,19 +159,6 @@ function baseline(source = SOURCE): Promise<ExecuteProgramResult> {
   return Effect.runPromise(runProgramEffect({ source }, recordingHost().host, {}));
 }
 
-/** Call records minus per-run fields (programId) and replay markers. */
-function comparable(calls: readonly ProgramCallRecord[]) {
-  return calls.map((c) => ({
-    index: c.index,
-    tool: c.tool,
-    operationId: c.operationId,
-    ok: c.ok,
-    status: c.status,
-    error: c.error,
-    resultPreview: c.resultPreview,
-  }));
-}
-
 /** Pin wall-clock reads to `iso`; sleeps and timeouts still use the real clock. */
 const atTime =
   (iso: string) =>
@@ -212,8 +199,15 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     ]);
     expect(resumed.ok).toBe(true);
     expect(resumed.programId).toBe(ID);
-    expect(resumed.result).toEqual(expected.result);
-    expect(comparable(resumed.calls)).toEqual(comparable(expected.calls));
+    const state = await Effect.runPromise(
+      compareProgramStepStateEffect({
+        baselineCalls: expected.calls,
+        observedCalls: resumed.calls,
+        baselineResult: expected.result,
+        observedResult: resumed.result,
+      })
+    );
+    expect(state.preserved, `mismatches=${state.mismatchIndexes.join(",")}`).toBe(true);
     expect(resumed.calls.map((c) => c.replayed)).toEqual([true, true, undefined]);
     expect(resumed.diagnostics.honesty).toBe(DURABLE_PROGRAM_HONESTY);
     expect(resumed.diagnostics.durable).toMatchObject({
