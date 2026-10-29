@@ -42,9 +42,15 @@ const PHASES = [
 
 function autoWireR2() {
   if (process.env.CELLD_BUCKET) return;
-  const account = process.env.CLAWQL_R2_ACCOUNT_ID;
-  const key = process.env.CLAWQL_SYNC_ACCESS_KEY_ID;
-  const secret = process.env.CLAWQL_SYNC_SECRET_ACCESS_KEY;
+  // Prefer CLAWQL_R2_*; fall back to Cloudflare account + sync/access keys
+  // injected in cloud-agent / operator environments.
+  const account =
+    process.env.CLAWQL_R2_ACCOUNT_ID ||
+    process.env.CLOUDFLARE_ACCOUNT_ID ||
+    process.env.CF_ACCOUNT_ID;
+  const key = process.env.CLAWQL_SYNC_ACCESS_KEY_ID || process.env.CLOUDFLARE_ACCESS_KEY_ID;
+  const secret =
+    process.env.CLAWQL_SYNC_SECRET_ACCESS_KEY || process.env.CLOUDFLARE_SECRET_ACCESS_KEY;
   if (!account || !key || !secret) return;
   const stamp = new Date()
     .toISOString()
