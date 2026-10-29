@@ -36,8 +36,7 @@ export type TraceConformanceInput = {
   readonly structuralGate?: boolean;
 };
 
-const NAMED_GUARANTEE_RE =
-  /server_enforced_expiry|lookup_covers_prior_accepts|connection_rejected/;
+const NAMED_GUARANTEE_RE = /server_enforced_expiry|lookup_covers_prior_accepts|connection_rejected/;
 
 /**
  * Check one trial's event log against WriteProtocol safety rules.

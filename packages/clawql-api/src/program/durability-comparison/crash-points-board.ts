@@ -313,7 +313,8 @@ export type CrashPointsEvidence = {
 export function runCrashPointsBoardEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<CrashPointsEvidence> {
-  const raw = env.DURABILITY_COMPARISON_CRASH_POINTS_N?.trim() || env.DURABILITY_COMPARISON_N?.trim();
+  const raw =
+    env.DURABILITY_COMPARISON_CRASH_POINTS_N?.trim() || env.DURABILITY_COMPARISON_N?.trim();
   const n = raw ? Math.min(100, Math.max(1, Math.floor(Number(raw)))) : 5;
   if (!Number.isFinite(n)) {
     return Effect.die(new Error("DURABILITY_COMPARISON_CRASH_POINTS_N must be a positive int"));
@@ -355,7 +356,10 @@ export function defaultCrashPointsEvidencePath(env: NodeJS.ProcessEnv = process.
   if (env.DURABILITY_COMPARISON_CRASH_POINTS_PATH?.trim()) {
     return env.DURABILITY_COMPARISON_CRASH_POINTS_PATH.trim();
   }
-  return join(process.cwd(), "docs/benchmarks/durability-proof/comparison/crash-points-evidence.json");
+  return join(
+    process.cwd(),
+    "docs/benchmarks/durability-proof/comparison/crash-points-evidence.json"
+  );
 }
 
 export function writeCrashPointsEvidence(

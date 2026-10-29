@@ -16,7 +16,7 @@ Peers are measured **out of the box** (no custom reconciliation layer). A Golem 
 
 | Crash point                 | Peer fairness board | ClawQL companion ([`crash-points-evidence.json`](./comparison/crash-points-evidence.json)) |
 | --------------------------- | ------------------- | ------------------------------------------------------------------------------------------ |
-| **Outside write in flight** | **Yes** (all arms)  | keys **0/0/N**; neither **0/N/0**                                                         |
+| **Outside write in flight** | **Yes** (all arms)  | keys **0/0/N**; neither **0/N/0**                                                          |
 | Before write sent           | No                  | keys **0/0/N**; neither **0/N/0** (intent journaled → no blind resend)                     |
 | After write acked           | No                  | **0/0/N** both modes                                                                       |
 | Idle between steps          | No                  | **0/0/N** both modes                                                                       |
@@ -128,18 +128,18 @@ DURABILITY_COMPARISON_TRACE=1 DURABILITY_COMPARISON_N=5 npm run benchmark:durabi
 
 ## Implementation status
 
-| Piece                                          | Status                                                                  |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| Fairness columns + API capability labels       | **Shipped**                                                             |
-| Check-then-decide + race-safe not_found        | **Shipped**                                                             |
-| Race board arm (paused mock)                   | **Shipped**                                                             |
-| TLA+ write-protocol (+ weak / peer cex)        | **Shipped** — CI + `./scripts/formal/run-write-protocol-tlc.sh`         |
-| Trace export + conformance checker             | **Shipped** — `trace-conformance.ts` (+ unit cex shapes)                |
-| Crash-point companion rows (ClawQL)            | **Shipped** — [`crash-points-evidence.json`](./comparison/crash-points-evidence.json) |
-| Tier F resume vs journal length                | **Measured** (file-journal) — [`resume-vs-journal/`](./resume-vs-journal/) |
-| Real-model Pi                                  | Env-gated — needs API key                                               |
-| N=1000 on stable host                          | **After** maintainer feedback                                           |
-| Evidence                                       | [`comparison/evidence.json`](./comparison/evidence.json)                |
+| Piece                                    | Status                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| Fairness columns + API capability labels | **Shipped**                                                                           |
+| Check-then-decide + race-safe not_found  | **Shipped**                                                                           |
+| Race board arm (paused mock)             | **Shipped**                                                                           |
+| TLA+ write-protocol (+ weak / peer cex)  | **Shipped** — CI + `./scripts/formal/run-write-protocol-tlc.sh`                       |
+| Trace export + conformance checker       | **Shipped** — `trace-conformance.ts` (+ unit cex shapes)                              |
+| Crash-point companion rows (ClawQL)      | **Shipped** — [`crash-points-evidence.json`](./comparison/crash-points-evidence.json) |
+| Tier F resume vs journal length          | **Measured** (file-journal) — [`resume-vs-journal/`](./resume-vs-journal/)            |
+| Real-model Pi                            | Env-gated — needs API key                                                             |
+| N=1000 on stable host                    | **After** maintainer feedback                                                         |
+| Evidence                                 | [`comparison/evidence.json`](./comparison/evidence.json)                              |
 
 ### Commands
 

@@ -202,10 +202,7 @@ export function defaultResumeVsJournalEvidencePath(env: NodeJS.ProcessEnv = proc
   if (env.DURABILITY_RESUME_JOURNAL_PATH?.trim()) {
     return env.DURABILITY_RESUME_JOURNAL_PATH.trim();
   }
-  return join(
-    process.cwd(),
-    "docs/benchmarks/durability-proof/resume-vs-journal/evidence.json"
-  );
+  return join(process.cwd(), "docs/benchmarks/durability-proof/resume-vs-journal/evidence.json");
 }
 
 export function writeResumeVsJournalEvidence(

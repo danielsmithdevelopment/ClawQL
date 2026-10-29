@@ -299,7 +299,11 @@ async function oneTrial(input: {
           args: { page: 3, idempotencyKey: "kill-mid-write-key" },
         })
       );
-      events.push({ t: new Date().toISOString(), kind: "agent_retry", reference: CLIENT_REFERENCE });
+      events.push({
+        t: new Date().toISOString(),
+        kind: "agent_retry",
+        reference: CLIENT_REFERENCE,
+      });
       events.push({
         t: new Date().toISOString(),
         kind: "request_applied",
