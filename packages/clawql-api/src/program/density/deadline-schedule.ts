@@ -507,11 +507,9 @@ export function runSteadyArrivalPumpEffect(args: {
     let growing = earlyStopBacklogExceeded;
     if (stretch.length >= 4) {
       const mid = stretch.length >> 1;
-      const earlyAvg =
-        stretch.slice(0, mid).reduce((a, s) => a + s.overdue, 0) / Math.max(1, mid);
+      const earlyAvg = stretch.slice(0, mid).reduce((a, s) => a + s.overdue, 0) / Math.max(1, mid);
       const lateAvg =
-        stretch.slice(mid).reduce((a, s) => a + s.overdue, 0) /
-        Math.max(1, stretch.length - mid);
+        stretch.slice(mid).reduce((a, s) => a + s.overdue, 0) / Math.max(1, stretch.length - mid);
       const dtSec = Math.max(
         0.001,
         ((stretch[stretch.length - 1]!.tMs - stretch[0]!.tMs) / 1000) * 0.5
@@ -545,9 +543,7 @@ export function runSteadyArrivalPumpEffect(args: {
     };
 
     const within = samples.filter((l) => l <= slaMs).length;
-    const pctWithinSla = samples.length
-      ? Number(((100 * within) / samples.length).toFixed(2))
-      : 0;
+    const pctWithinSla = samples.length ? Number(((100 * within) / samples.length).toFixed(2)) : 0;
     const pctOk = pctWithinSla >= slaTargetPct;
     const backlogOk = !requireNonGrowingBacklog || !growing;
     const steadyStatePass = pctOk && backlogOk;
@@ -911,10 +907,7 @@ export function rampSustainableRateEffect(args: {
       args.requireNonGrowingBacklog !== false && !legacyPlaceAheadRamp;
     const stepDurationMs = legacyPlaceAheadRamp
       ? windowMs
-      : Math.max(
-          windowMs,
-          args.minStepDurationMs ?? DEFAULT_RAMP_STEP_DURATION_MS
-        );
+      : Math.max(windowMs, args.minStepDurationMs ?? DEFAULT_RAMP_STEP_DURATION_MS);
     // Defaults sized for fsync / group-commit (not os_buffer page-cache rates).
     const rates =
       args.ratesPerSec ??
