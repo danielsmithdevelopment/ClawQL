@@ -423,7 +423,7 @@ if core.get("wormUrlConfigured") is not True:
 if core.get("coreInCelld") is not True:
   raise SystemExit("coreInCelld expected true")
 event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
-print("full-stack assertions: CoreToolsDO+memory_park/adapter/inference/compliance-WORM OK")
+print("full-stack assertions: CoreToolsDO+memory_ingest/adapter/inference/compliance-WORM OK")
 print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 
