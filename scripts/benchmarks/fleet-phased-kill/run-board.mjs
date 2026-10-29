@@ -15,6 +15,7 @@
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
  *   statePreserved      — claim-path §1: scaffolding only until fleet pairs a no-crash baseline
+ *   waitApproval        — claim-path §4: scaffolding; Node await_approval + density survival
  *
  * Env:
  *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
@@ -820,6 +821,14 @@ async function main() {
           meaning:
             "claim-path §1 — program step outcomes after resume match the no-crash baseline. Proven on Node durable-runner + kill-node stand-in via compareProgramStepStateEffect; this fleet board does not yet pair each trial with a no-crash baseline, so no rate is quoted here",
         },
+        waitApproval: {
+          measured: false,
+          nodeAwaitApproval: true,
+          densityRestartSurvival: true,
+          fleetAwaitTrials: false,
+          meaning:
+            "claim-path §4 — long waits that survive crash/failover. Node plan await_approval parks while pending and resumes after settle (observe-only); density board already measures deadline restartSurvival. This fleet phased harness does not yet inject await_approval waits, so no rate is quoted here",
+        },
       },
       totalDuplicates,
       zeroDuplicates: zeroDup,
@@ -846,7 +855,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated + statePreserved (outer-phase completion rate; write-step re-runs via ledger; statePreserved is Node-golden only until fleet baselines are paired). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. Journaled model/timer/approval steps + program-level TLA+ remain open on the claim path.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated + statePreserved + waitApproval (Node await_approval + density survival; fleet await trials not yet injected). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. Model-call journaling + program-level TLA+ remain open on the claim path.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
