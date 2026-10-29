@@ -1,0 +1,82 @@
+---
+title: Quickstart
+description: "npx gets you running in a few minutes. Run clawql-mcp; for OpenAPI single-spec loads, execute prefers in-process OpenAPI→GraphQL. Optional CLAWQLGRAPHQLSOURCES / CLAWQLGRPCSOURCES add native protocols to the same search "
+---
+
+# Quickstart
+
+`npx` gets you running in a few minutes. Run `clawql-mcp`; for OpenAPI single-spec loads, `execute` prefers in-process OpenAPI→GraphQL. Optional `CLAWQL_GRAPHQL_SOURCES` / `CLAWQL_GRPC_SOURCES` add native protocols to the same `search` index ([spec configuration](/spec-configuration)).
+
+The published package is large on disk (~90+ MB) because it ships bundled specs under `providers/`. That size is intentional — offline discovery works without network calls.
+
+---
+
+## 1. Start the MCP server
+
+```bash
+npx -p clawql-mcp clawql-mcp
+```
+
+For every bundled vendor at once:
+
+```bash
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+```
+
+---
+
+## 2. Connect your client
+
+Add an MCP server entry that runs `clawql-mcp` on stdio (see [MCP clients](/mcp-clients)). The server handles GraphQL internally — there's no separate GraphQL process or `GRAPHQL_URL` to configure.
+
+---
+
+## 3. Use your own API spec
+
+**Local file**
+
+```bash
+CLAWQL_SPEC_PATH=./openapi.yaml npx -p clawql-mcp clawql-mcp
+```
+
+**Remote OpenAPI**
+
+```bash
+CLAWQL_SPEC_URL=https://example.com/openapi.json npx -p clawql-mcp clawql-mcp
+```
+
+**Google Discovery**
+
+```bash
+CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1" npx -p clawql-mcp clawql-mcp
+```
+
+---
+
+## 4. HTTP transport (optional)
+
+For `clawql-mcp-http`, MCP is at `/mcp` and GraphQL at `/graphql` on the same `PORT` (see [Install](/install)).
+
+---
+
+## 5. Local bundled docs via Helm (Docker Desktop)
+
+```bash
+make local-k8s-up
+```
+
+Opens the bundled dashboard at `http://clawql.localhost`, bundled docs UI at `http://docs.localhost`, and points MCP clients at `http://clawql-mcp.localhost/mcp` (Ingress — same hostname + `/mcp` pattern as production). The script installs Kyverno and admits only Cosign-signed ClawQL images from GHCR (MCP, website, and dashboard) — see [Security](/security) and [golden-image-pipeline.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/golden-image-pipeline.md).
+
+---
+
+## Next steps
+
+- [Install](/install) — binaries, Docker, HTTP transport
+- [Spec configuration](/spec-configuration) — merge rules and environment variables
+- [Tools](/tools) — `search` and `execute`
+
+---
+
+[← Overview](/getting-started) · [Install →](/install)
+
+© Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

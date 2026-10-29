@@ -34,7 +34,7 @@ Managed hosting will live at **`cloud.clawql.com`**: org, API keys, billing, usa
 ## Consequences
 
 - `cloud.clawql.com` is a **deployment of `apps/dashboard`**, not a new Catalyst app under `apps/www`.
-- Signup on `clawql.com` (`apps/www`) remains Plus; post-signup session lands on the shadcn console.
+- Signup on `clawql.com` (`apps/www`) remains Plus **visuals**; post-signup session lands on the shadcn console. **Framework for public marketing + docs is Astro** — see [ADR 0018](./0018-public-sites-astro-console-next.md) (this ADR’s console kit decision is unchanged; “marketing stays Next” is **not** implied).
 - `packages/clawql-payments` dashboard **data** (topology, credits HATEOAS) feeds the Next console; it is not a second visual kit.
 - Follow-on: align `apps/dashboard/src/styles/tailwind.css` variables with Oatmeal mist tokens; wire managed auth (Supabase) behind `CLAWQL_CONSOLE_SURFACE=managed`.
 

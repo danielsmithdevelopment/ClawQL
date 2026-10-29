@@ -1,0 +1,85 @@
+---
+import DocsLayout from '@/layouts/DocsLayout.astro'
+import history from '@/data/security-scan-history.json'
+
+const title = 'Security status — verifiable scan history'
+const description =
+  'Append-only CI scan history (Trivy, OSV), SBOM artifact links, and Cosign verification — not self-reported badges.'
+
+const runs = Array.isArray(history.runs) ? history.runs.slice(0, 12) : []
+const latest = history.latestRelease
+---
+
+<DocsLayout title={title} description={description}>
+  <h1>Security status</h1>
+  <p>
+    Verifiable scan history from CI — not live open findings on unmerged
+    branches. Spec on GitHub:{' '}
+    <a
+      href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/security-status-page-spec.md"
+      rel="noopener noreferrer">security-status-page-spec.md</a
+    >.
+  </p>
+  <p><a href="/security">← Security overview</a></p>
+
+  {
+    latest ? (
+      <section class="not-prose mt-10">
+        <h2 class="font-display text-2xl font-semibold">Latest release</h2>
+        <dl class="mt-4 space-y-2 font-mono text-sm">
+          {latest.tag ? (
+            <div>
+              <dt class="inline text-zinc-500">tag</dt>{' '}
+              <dd class="inline">{latest.tag}</dd>
+            </div>
+          ) : null}
+          {latest.publishedAt ? (
+            <div>
+              <dt class="inline text-zinc-500">published</dt>{' '}
+              <dd class="inline">{String(latest.publishedAt).slice(0, 10)}</dd>
+            </div>
+          ) : null}
+        </dl>
+      </section>
+    ) : null
+  }
+
+  <section class="not-prose mt-10 overflow-x-auto">
+    <h2 class="font-display text-2xl font-semibold">Recent CI runs</h2>
+    <table class="mt-4 w-full min-w-[36rem] border-collapse text-left text-sm">
+      <thead>
+        <tr class="border-b border-zinc-900/10 dark:border-claw-graph/40">
+          <th class="py-2 pr-4 font-medium">Date</th>
+          <th class="py-2 pr-4 font-medium">Ref</th>
+          <th class="py-2 pr-4 font-medium">Trivy</th>
+          <th class="py-2 font-medium">OSV</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          runs.map((row) => {
+            const trivy = row.scanners?.trivy?.result ?? '—'
+            const osv = row.scanners?.osv?.result ?? '—'
+            return (
+              <tr class="border-b border-zinc-900/5 dark:border-claw-graph/20">
+                <td class="py-2 pr-4 font-mono text-xs">
+                  {String(row.at ?? row.date ?? '').slice(0, 10)}
+                </td>
+                <td class="py-2 pr-4 font-mono text-xs">
+                  {row.ref ?? row.sha?.slice?.(0, 7) ?? '—'}
+                </td>
+                <td class="py-2 pr-4">{trivy}</td>
+                <td class="py-2">{osv}</td>
+              </tr>
+            )
+          })
+        }
+      </tbody>
+    </table>
+    {
+      runs.length === 0 ? (
+        <p class="mt-4 text-sm text-zinc-500">No runs in security-scan-history.json.</p>
+      ) : null
+    }
+  </section>
+</DocsLayout>

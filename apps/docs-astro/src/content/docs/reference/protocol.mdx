@@ -1,0 +1,40 @@
+---
+title: Protocol reference (v2.1)
+description: "The ClawQL gateway uses a uniform response envelope, classification-aware routing, and two-phase commit for high-impact tool calls. Human operators receive HATEOAS links and htmx-friendly HTML; agents receive JSON with t"
+---
+
+# Protocol reference (v2.1)
+
+The ClawQL gateway uses a **uniform response envelope**, **classification-aware routing**, and **two-phase commit** for high-impact tool calls. Human operators receive **HATEOAS** links and **htmx**-friendly HTML; agents receive JSON with the same semantics. 
+
+
+
+## Core concepts
+
+### Uniform envelope
+
+Every gateway response follows a versioned envelope: status, classification metadata, projected payload (`minimumNecessary`), and optional **`_links`** for discoverable next actions.
+
+### Tool classification
+
+Tools are **safe** (immediate execution) or require approval when classified as **external_write**, **destructive**, or **financial**.
+
+### Two-phase commit
+
+High-impact calls receive a UUID **`action_id`** and human-readable confirmation code, stored in **`PENDING_ACTIONS`** with TTL. Execution proceeds only after matching approval with the correct code. Re-approval and cancellation are idempotent.
+
+### HATEOAS & htmx
+
+Approval and cancellation endpoints serve JSON for agents and HTML with htmx for humans. Responses embed **`approval_url`** so clients discover the next action from the payload — not hardcoded routes.
+
+### Replay protection
+
+Sequence-based and nonce-based replay prevention (fail-closed nonce store) — see [Security curriculum: authentication](/security/best-practices/authentication-session-management-scoped-tokens).
+
+
+
+## Related
+
+- [Core concepts](/concepts) — MCP architecture and feature tiers
+- [Defense in depth](/security/defense-in-depth) — ATR, Presidio, audit
+- [Architecture](/architecture) — Layer 2 gateway summary

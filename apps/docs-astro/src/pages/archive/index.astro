@@ -1,0 +1,42 @@
+---
+import DocsLayout from '@/layouts/DocsLayout.astro'
+import archive from '@/data/docs-archive.json'
+
+const title = 'Legacy URL redirects'
+const description =
+  'Old bookmark paths that redirect into Learn modules — schedule, notify, and session cache.'
+---
+
+<DocsLayout title={title} description={description}>
+  <h1>Legacy URL redirects</h1>
+  <p>
+    Most docs pages are in the sidebar. This index lists older bookmark paths
+    that redirect — {archive.entryCount} entries.
+  </p>
+  {
+    archive.groups.map((group) => (
+      <section class="not-prose mt-8">
+        <h2 class="font-display text-xl font-semibold text-zinc-900 dark:text-white">
+          {group.name}
+        </h2>
+        <ul class="mt-4 space-y-3">
+          {group.entries.map((entry) => (
+            <li class="rounded-md border border-zinc-900/10 p-3 dark:border-claw-graph/40">
+              <a class="font-medium no-underline hover:underline" href={entry.href}>
+                {entry.title}
+              </a>
+              <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                {entry.description}
+              </p>
+              {entry.redirectTo ? (
+                <p class="mt-1 font-mono text-xs text-zinc-500">
+                  → <a href={entry.redirectTo}>{entry.redirectTo}</a>
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</DocsLayout>

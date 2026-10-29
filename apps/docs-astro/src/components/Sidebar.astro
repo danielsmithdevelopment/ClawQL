@@ -1,0 +1,51 @@
+---
+import { docsNavigation } from '@/lib/nav'
+
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/'
+---
+
+<aside
+  class="docs-chrome w-full shrink-0 border-b border-zinc-900/10 pb-6 md:sticky md:top-4 md:max-h-[calc(100dvh-2rem)] md:w-64 md:overflow-y-auto md:border-b-0 md:border-r md:pb-0 md:pr-6 dark:border-claw-graph/40"
+  aria-label="Documentation"
+>
+  <nav class="space-y-6 font-sans">
+    {
+      docsNavigation.map((group) => (
+        <div>
+          <h2 class="mb-2 font-sans text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            {group.title}
+          </h2>
+          <ul class="space-y-0.5">
+            {group.links.map((link) => {
+              const href = link.href.replace(/\/$/, '') || '/'
+              const active =
+                pathname === href ||
+                (href !== '/' && pathname.startsWith(href + '/'))
+              return (
+                <li>
+                  <a
+                    href={link.href}
+                    aria-current={pathname === href ? 'page' : undefined}
+                    class:list={[
+                      'block rounded-md px-2 py-1 font-sans text-sm no-underline transition',
+                      active
+                        ? 'bg-zinc-900/5 font-medium text-zinc-900 dark:bg-white/10 dark:text-white'
+                        : 'text-zinc-600 hover:bg-zinc-900/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white',
+                    ]}
+                  >
+                    {link.title}
+                    {link.tag ? (
+                      <span class="ml-1 font-sans text-[0.65rem] text-zinc-400">
+                        {link.tag}
+                      </span>
+                    ) : null}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+</aside>

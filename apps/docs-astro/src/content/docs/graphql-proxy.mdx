@@ -1,0 +1,25 @@
+---
+title: GraphQL layer
+description: "Two related ideas: OpenAPI→GraphQL (in-process, for REST-backed APIs) and native GraphQL (HTTP to your endpoint). clawql-mcp / clawql-mcp-http implement both behind the same search → execute contract. Streamable HTTP exp"
+---
+
+# GraphQL layer
+
+Two related ideas: **OpenAPI→GraphQL** (in-process, for REST-backed APIs) and **native GraphQL** (HTTP to your endpoint). **`clawql-mcp`** / **`clawql-mcp-http`** implement both behind the same **`search`** → **`execute`** contract. Streamable HTTP exposes **`/graphql`** for the **loaded OpenAPI** debug schema on the MCP port. 
+
+## OpenAPI→GraphQL (same process as MCP)
+
+For **OpenAPI/Discovery** operations, **`execute`** builds a GraphQL schema from the loaded spec and proxies to upstream REST with **`@omnigraph/openapi`** (same engine as [GraphQL Mesh OpenAPI](https://the-guild.dev/graphql/mesh/docs/handlers/openapi)). Upstream calls use spec **`servers`** or **`CLAWQL_API_BASE_URL`**.
+
+## Native GraphQL (`CLAWQL_GRAPHQL_SOURCES`)
+
+Set a JSON array of **`{ name, endpoint, headers? }`** (see [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example)). At startup the server runs HTTP **introspection** against each endpoint and merges Query/Mutation fields into **`search`**. **`execute`** POSTs `{ query, variables }` to that endpoint — this is **not** the in-process OpenAPI schema; it is a separate HTTP client path ([ADR 0002](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0002-multi-protocol-supergraph.md)).
+
+## Multi-spec and fallback (OpenAPI ops)
+
+- **Merged OpenAPI/Discovery specs:** **`execute`** uses **REST** per owning document for those operations.
+- **Single OpenAPI spec:** in-process GraphQL is preferred when the schema builds; on translation or runtime errors, **`execute` falls back to REST** with the same operation map.
+
+**Native** GraphQL/gRPC operations are routed **before** that branch when present.
+
+Pregenerated **`introspection.json`** (bundled or **`CLAWQL_INTROSPECTION_PATH`**) speeds OpenAPI→GraphQL field matching at MCP startup.

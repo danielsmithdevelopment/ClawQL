@@ -1,0 +1,7 @@
+/*
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=86400
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

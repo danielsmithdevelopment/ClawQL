@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-09-02T06:19:30.121Z",
+  "sidebarHrefCount": 157,
+  "entryCount": 3,
+  "groups": [
+    {
+      "name": "Legacy redirects",
+      "entries": [
+        {
+          "href": "/cache",
+          "title": "Session cache (`cache`)",
+          "description": "Redirects to /learn/cache-handoff-between-chats",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/cache-handoff-between-chats"
+        },
+        {
+          "href": "/notify",
+          "title": "Slack `notify`",
+          "description": "Redirects to /learn/schedule-notify-workflows",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/schedule-notify-workflows"
+        },
+        {
+          "href": "/schedule",
+          "title": "`schedule` (synthetic checks)",
+          "description": "Redirects to /learn/schedule-notify-workflows",
+          "group": "Legacy redirects",
+          "redirectTo": "/learn/schedule-notify-workflows"
+        }
+      ]
+    }
+  ]
+}
