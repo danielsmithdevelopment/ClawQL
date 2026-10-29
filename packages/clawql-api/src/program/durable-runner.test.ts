@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Clock, Deferred, Duration, Effect, Exit, Layer, Result } from "effect";
 import { describe, expect, it } from "vitest";
+import { canonicalizeForHash } from "../pending/args-hash.js";
 import type { PendingExecutionStatus } from "../pending/pending-execution-types.js";
 import {
   DURABLE_PROGRAM_HONESTY,
@@ -14,6 +15,7 @@ import {
   executeDurableProgramEffect,
   NONDET_STARTED_AT,
   nondetAwaitApprovalKey,
+  nondetModelCallRequestDigestKey,
   nondetSleepWakeAtKey,
   ProgramCrashSimulated,
   resumeProgramEffect,
@@ -70,17 +72,23 @@ type HostOptions = {
   readonly onExecute?: (operationId: string) => Effect.Effect<void>;
   /** Observe-only mandate statuses for await_approval (mutated by tests). */
   readonly pending?: Map<string, PendingExecutionStatus | null>;
+  /** Delay inside modelCall (ms) for crash-mid-call tests. */
+  readonly modelDelayMs?: number;
+  /** Text for each model_call (default: echo prompt). */
+  readonly modelText?: (prompt: string) => string;
 };
 
 type RecordingHost = {
   readonly host: ProgramHost;
   readonly executed: string[];
+  readonly modelCalls: string[];
   readonly replayed: ProgramReplayedCall[];
 };
 
 /** Same response shape as durable-runner-kill-worker.ts, so results compare across processes. */
 function recordingHost(options: HostOptions = {}): RecordingHost {
   const executed: string[] = [];
+  const modelCalls: string[] = [];
   const replayed: ProgramReplayedCall[] = [];
   const writes = new Set(options.writes ?? []);
   const host: ProgramHost = {
@@ -95,6 +103,15 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
       }),
     search: (input) =>
       Effect.succeed({ formattedText: JSON.stringify({ ok: true, query: input.query }) }),
+    modelCall: (input) =>
+      Effect.gen(function* () {
+        modelCalls.push(input.prompt);
+        if (options.modelDelayMs !== undefined) {
+          yield* Effect.sleep(Duration.millis(options.modelDelayMs));
+        }
+        const text = options.modelText?.(input.prompt) ?? `echo:${input.prompt}`;
+        return { text, ...(input.model !== undefined ? { model: input.model } : {}) };
+      }),
     resolveRisk: (operationId) =>
       Effect.succeed({
         found: true,
@@ -122,7 +139,7 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
         }
       : {}),
   };
-  return { host, executed, replayed };
+  return { host, executed, modelCalls, replayed };
 }
 
 const tempDir = () => mkdtemp(join(tmpdir(), "clawql-durable-"));
@@ -453,6 +470,92 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     });
     // Replayed sleep must not re-wait the full duration.
     expect(elapsed).toBeLessThan(25);
+  });
+
+  it("journals model_call response; resume replays without a second host call", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "model_call", prompt: "summarize pets", model: "test-model" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost({ modelText: () => "three pets found" });
+    await crashAfter(dir, first.host, 1, { source, programId: ID });
+    expect(first.modelCalls).toEqual(["summarize pets"]);
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetModelCallRequestDigestKey(0));
+    expect(mid?.entries.map((e) => e.tool)).toEqual(["model_call"]);
+    expect(mid?.entries[0]?.result.value).toMatchObject({
+      ok: true,
+      text: "three pets found",
+      model: "test-model",
+    });
+
+    const again = recordingHost({ modelText: () => "SHOULD_NOT_RUN" });
+    const resumed = await resume(dir, again.host);
+    expect(again.modelCalls).toEqual([]);
+    expect(again.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({
+      tool: "model_call",
+      ok: true,
+      status: "modelled",
+      replayed: true,
+    });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 1,
+      executedCalls: 1,
+      status: "completed",
+    });
+  });
+
+  it("re-requests model_call once when crashed mid-call (digest journaled, no entry)", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "model_call", prompt: "hello" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const parsed = await Effect.runPromise(parseProgramPlanEffect(source));
+    if ("ok" in parsed && parsed.ok === false) throw new Error(parsed.error);
+    const plan = parsed as Exclude<typeof parsed, { ok: false }>;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const journal = yield* makeFileProgramJournalEffect(dir);
+        const sourceHash = yield* hashProgramSourceEffect(source);
+        yield* journal.create({
+          programId: ID,
+          sourceHash,
+          owner: "default",
+          plan,
+        });
+        // Simulate crash after requestDigest but before landing the entry.
+        yield* journal.appendNondet(ID, {
+          key: nondetModelCallRequestDigestKey(0),
+          value: canonicalizeForHash({ prompt: "hello" }),
+        });
+      })
+    );
+
+    const host = recordingHost({ modelText: (p) => `reply:${p}` });
+    const resumed = await resume(dir, host.host);
+    expect(host.modelCalls).toEqual(["hello"]);
+    expect(host.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "model_call", ok: true, status: "modelled" });
+    expect(resumed.calls[0]?.replayed).toBeUndefined();
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 0,
+      executedCalls: 2,
+      status: "completed",
+    });
   });
 
   it("re-arms an interrupted sleep from the journaled wakeAt (remaining may be zero)", async () => {

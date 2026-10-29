@@ -6,7 +6,7 @@
 
 **Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
-**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON includes `columns.completed` + `columns.stepsRepeated` + `columns.statePreserved` + `columns.waitApproval` next to the safety/availability trio — re-measure Tier C / inject await trials before quoting those rates. Plan `sleep` and `await_approval` are first-class journaled wait steps. Model-call journaling and program-level TLA+ remain open.
+**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON includes `columns.completed` + `columns.stepsRepeated` + `columns.statePreserved` + `columns.waitApproval` next to the safety/availability trio — re-measure Tier C / inject await trials before quoting those rates. Plan `sleep`, `await_approval`, and `model_call` are first-class journaled steps (model responses replay; mid-call crash re-requests once). Program-level TLA+ remains open.
 
 ## Scoped Tier C claim (measured — stock R2)
 

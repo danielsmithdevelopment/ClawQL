@@ -41,6 +41,12 @@ export function journaledArgs(call) {
   if (call?.tool === "await_approval") {
     return { executionId: call.executionId };
   }
+  if (call?.tool === "model_call") {
+    return {
+      prompt: call.prompt,
+      ...(call.model !== undefined ? { model: call.model } : {}),
+    };
+  }
   return { ...(call?.args || {}) };
 }
 
