@@ -1,7 +1,7 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Program TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is in tree. Tier C re-measure (n=100 R2) quotes `completed.rateOuterPhases=1` and `stepsRepeated.writeStepsRerun=0`; `statePreserved` / `waitApproval` still unmeasured on fleet (baseline pairing / await-trial injection open). This does **not** yet authorize “durable execution” copy.  
+**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Program TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is in tree. Tier C re-measure (n=100 R2) quotes `completed.rateOuterPhases=1` and `stepsRepeated.writeStepsRerun=0`. Fleet can measure `statePreserved` (structural baseline) and `waitApproval` (`FLEET_PHASED_AWAIT_TRIALS`). This does **not** yet authorize “durable execution” copy.  
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---
@@ -39,7 +39,7 @@ The thousand-crash board already resumes programs but scores duplicates, recover
 | ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Completed**       | % of crashed programs that ran to the end after recovery        | **Measured (n=100 lab)** — outer-phase `rateOuterPhases=1` (48/48); all-phase rate ≈0.48 because mid-flight kills expect `outcome_unknown`. Evidence: [`phased-claim-path-columns-n100.json`](../benchmarks/program-cell-fleet-kill/phased-claim-path-columns-n100.json). Stock N=1000 safety claim unchanged. |
 | **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Measured (n=100 lab)** — `writeStepsRerun=0` / `journalDivergence=0` on same evidence. Read re-runs still stated separately when interrupted.                                                                                                                                                                |
-| **State preserved** | Program variables between steps match the no-crash path         | **Scaffolded** — `compareProgramStepStateEffect` + Node durable-runner / kill-node stand-in golden; fleet `columns.statePreserved` stub (`measured: false` until trials pair a no-crash baseline)                                                                                                              |
+| **State preserved** | Program variables between steps match the no-crash path         | **Measured (n=40 lab)** — structural rate **1.0** (20/20 outer). Evidence: [`phased-await-state-n40.json`](../benchmarks/program-cell-fleet-kill/phased-await-state-n40.json). Node `compareProgramStepStateEffect` remains the strict unit golden.                                                            |
 
 ### 2. Every side effect through a journaled step
 
@@ -57,7 +57,7 @@ If recovery reruns code between steps, nondeterminism (clock, random, iteration 
 
 A program waiting days on an approval must still resume after node restarts and failover. Deadline + fleet results are most of this evidence — make the wait/approval path a first-class board column.
 
-**Today:** **Scaffolded** — fleet `columns.waitApproval` (`measured: false`; points at Node `await_approval` + density `restartSurvival`). Fleet phased harness does not yet inject await_approval waits, so no rate is quoted.
+**Today:** **Measured (n=40 lab, 8 await trials)** — survive+complete rate **1.0**. Evidence: [`phased-await-state-n40.json`](../benchmarks/program-cell-fleet-kill/phased-await-state-n40.json). ProgramCellDO observe-only park; Node + density `restartSurvival` remain.
 
 ### 5. Model extended
 
