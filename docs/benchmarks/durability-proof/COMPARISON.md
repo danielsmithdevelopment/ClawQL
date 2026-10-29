@@ -3,7 +3,8 @@
 **Status:** ClawQL + live Pi Durable / Golem measured under `DURABILITY_COMPARISON_LIVE_PEERS=1`  
 **Crash point on the peer fairness table:** **outside write in flight** (request visible / sent; result not yet recorded)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md) · [TLA+ write protocol](../../../formal/tla/write-protocol/)  
-**Pinned package:** [`comparison/PACKAGE-MANIFEST.json`](./comparison/PACKAGE-MANIFEST.json) (commit + evidence SHA-256)
+**Fixed reference:** tag [`durability-pilot-v1`](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/durability-pilot-v1) (not a moving PR tip) · [`comparison/PACKAGE-MANIFEST.json`](./comparison/PACKAGE-MANIFEST.json) (evidence SHA-256)  
+**Review window:** feedback by **13 November 2026** is included before any social/marketing promotion. The repo is public; promotion is what’s held.
 
 This board measures **effect** outcomes under one deliberate crash window, not whether a runtime’s in-process execution is durable. See [two kinds of durable](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate).
 
@@ -11,19 +12,19 @@ This board measures **effect** outcomes under one deliberate crash window, not w
 
 Peers are measured **out of the box** (no custom reconciliation layer). A Golem developer could write lookup-by-reference by hand with transaction helpers — fair to ask John: “Is there a configuration you’d use for this case?” If the answer is “write the reconciliation yourself,” the ClawQL automatic row stands.
 
-**Sample-size honesty:** with **0** events in N trials, a one-sided 95% upper bound on the true rate is `1 − 0.05^(1/N)` (≈ **26%** at N=10, ≈ **6%** at N=50). Small-N zero counts are harness checks (“behaves as designed”), not rate claims. Fold into N=1000 after maintainer feedback.
+**Sample-size honesty:** with **0** events in N trials, a one-sided **95% upper bound** on the true rate is `1 − 0.05^(1/N)` (about **26%** at N=10, about **6%** at N=50). Small-N zero counts are harness checks (“behaves as designed”), not rate claims. Fold into N=1000 after maintainer feedback.
 
 ---
 
 ## Coverage matrix (crash point × arm)
 
-Cells: **measured** (N, ũ₉₅ when zeros) or **not measured**. Peers are only measured at **outside write in flight** so far — that is intentional and visible here.
+Cells: **measured** (N, and the **95% upper bound** when zeros) or **not measured**. Peers are only measured at **outside write in flight** so far — that is intentional and visible here.
 
-ũ₉₅ = `1 − 0.05^(1/N)` when the quoted product metric is a zero count (e.g. 0 duplicates).
+**95% upper bound** (zero events) = `1 − 0.05^(1/N)` when the quoted product metric is a zero count (e.g. 0 duplicates).
 
 | Crash point ↓ \\ Arm →      | ClawQL structural                                                                      | Pi Durable (OOTB) | Golem (OOTB)      |
 | --------------------------- | -------------------------------------------------------------------------------------- | ----------------- | ----------------- |
-| **Outside write in flight** | **measured** N=50 (ũ₉₅≈6% on zero-dup cells) — peer fairness table                     | **measured** N=50 | **measured** N=50 |
+| **Outside write in flight** | **measured** N=50 (95% upper bound ≈6% on zero-dup cells) — peer fairness table        | **measured** N=50 | **measured** N=50 |
 | Before write sent           | **measured** N=50 ClawQL companion — behaves as designed (keys 0/0/50; neither 0/50/0) | not measured      | not measured      |
 | After write acked           | **measured** N=50 ClawQL companion — behaves as designed (0/0/50)                      | not measured      | not measured      |
 | Idle between steps          | **measured** N=50 ClawQL companion — behaves as designed (0/0/50)                      | not measured      | not measured      |
@@ -154,12 +155,12 @@ Not fleet lease failover (Tier C ~12s p50).
 
 ---
 
-## Reproduce (pinned tip)
+## Reproduce (fixed tag)
 
-All package numbers should come from **one** git commit (see [`PACKAGE-MANIFEST.json`](./comparison/PACKAGE-MANIFEST.json)).
+All package numbers should come from tag **`durability-pilot-v1`** (see [`PACKAGE-MANIFEST.json`](./comparison/PACKAGE-MANIFEST.json) for evidence hashes).
 
 ```bash
-git checkout <commit-from-PACKAGE-MANIFEST>
+git checkout durability-pilot-v1
 # Peer fairness board (outside-write) + live peers
 DURABILITY_COMPARISON_LIVE_PEERS=1 DURABILITY_COMPARISON_N=50 \
   npm run benchmark:durability-comparison
