@@ -10,41 +10,41 @@
 
 ## Two board numbers (required)
 
-| Number | ClawQL (this host) | Meaning |
-| --- | --- | --- |
-| **durableRecordsPerSec** | **~321k/s** | Pure drain of already-due deadlines (ignore lateness) |
-| **rateSustainableWithinOneSecondSla** | **~636k/s** (±0.6% refine) | Highest arrival rate with ≥99% fires within 1s |
+| Number                                | ClawQL (this host)         | Meaning                                               |
+| ------------------------------------- | -------------------------- | ----------------------------------------------------- |
+| **durableRecordsPerSec**              | **~321k/s**                | Pure drain of already-due deadlines (ignore lateness) |
+| **rateSustainableWithinOneSecondSla** | **~636k/s** (±0.6% refine) | Highest arrival rate with ≥99% fires within 1s        |
 
 `drain / sustained ≈ 0.50` → SLA rate uses the one-second slack; it is **not** the writer ceiling. Campaign headlines that only quote the SLA ramp mis-label a latency cliff as durable throughput.
 
 ## Cycle stages (per flush batch)
 
-| Stage | Mean | Share of observed fsync period (~0.20 ms) |
-| --- | --- | --- |
-| write | ~11 µs | ~5% |
-| sync (fsync await) | ~156 µs | ~78% |
-| ack | ~6 µs | ~3% |
-| inter-flush gap | ~1 µs (drain) | ≈0 (double-buffer full) |
-| non-sync residual | — | **~22%** |
+| Stage              | Mean          | Share of observed fsync period (~0.20 ms) |
+| ------------------ | ------------- | ----------------------------------------- |
+| write              | ~11 µs        | ~5%                                       |
+| sync (fsync await) | ~156 µs       | ~78%                                      |
+| ack                | ~6 µs         | ~3%                                       |
+| inter-flush gap    | ~1 µs (drain) | ≈0 (double-buffer full)                   |
+| non-sync residual  | —             | **~22%**                                  |
 
 Sync is not 2–4× slower under load. Time “between syncs” in earlier ~3.3k fsync/s focus windows was mostly **the pump not feeding the writer at full drain**, not a mysterious 180–300 µs inside the journal.
 
 ## Lateness at the cliff (~640k/s offered)
 
-| Split (late fires only) | Mean |
-| --- | --- |
-| waitToPop | **~307 ms** |
-| waitForBatch | ~0.13 ms |
-| sync | ~0.14 ms |
-| waitForDurable | ~0.15 ms |
+| Split (late fires only) | Mean        |
+| ----------------------- | ----------- |
+| waitToPop               | **~307 ms** |
+| waitForBatch            | ~0.13 ms    |
+| sync                    | ~0.14 ms    |
+| waitForDurable          | ~0.15 ms    |
 
 Late work is almost entirely **waiting to be popped** (scheduler backlog), not disk.
 
 ## Prealloc / journal config (disclose each side’s best)
 
-| System | Best on its host | Notes |
-| --- | --- | --- |
-| ClawQL | **fsync append** (board default) | fdatasync/prealloc ~+2–3.5% here — neutral |
+| System     | Best on its host                         | Notes                                                                   |
+| ---------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| ClawQL     | **fsync append** (board default)         | fdatasync/prealloc ~+2–3.5% here — neutral                              |
 | Ontologiql | **fdatasync + 256 MiB prealloc** (~+31%) | Host/FS difference; label `prealloc_partial_lift_residual_durable_path` |
 
 Each system runs its best disclosed config on the **shared** campaign host (same FS), then compare.
@@ -64,8 +64,8 @@ Board floor until campaign: ClawQL **256k** 3-rep (SLA ramp). Publish **both** d
 
 ## Board snapshot
 
-| System | Status | Notes |
-| --- | --- | --- |
-| Ontologiql | Lab; prealloc helps +31% on their host; dbuf unverified | Same drain vs SLA split |
-| ClawQL | Drain vs SLA labeled; cycle stages shipped | Campaign-ready |
-| Golem / Infinity | Pending invite | fair-v2 / SHARED_HOST |
+| System           | Status                                                  | Notes                   |
+| ---------------- | ------------------------------------------------------- | ----------------------- |
+| Ontologiql       | Lab; prealloc helps +31% on their host; dbuf unverified | Same drain vs SLA split |
+| ClawQL           | Drain vs SLA labeled; cycle stages shipped              | Campaign-ready          |
+| Golem / Infinity | Pending invite                                          | fair-v2 / SHARED_HOST   |

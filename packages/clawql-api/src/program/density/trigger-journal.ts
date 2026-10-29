@@ -430,9 +430,7 @@ export function openTriggerJournalEffect(
         interFlushGapMeanMs: gapS.mean,
         interFlushGapP50Ms: gapS.p50,
         impliedFsyncsPerSecFromCycle:
-          cycleS.mean != null && cycleS.mean > 0
-            ? Number((1000 / cycleS.mean).toFixed(1))
-            : null,
+          cycleS.mean != null && cycleS.mean > 0 ? Number((1000 / cycleS.mean).toFixed(1)) : null,
       };
 
       let reading: string;
