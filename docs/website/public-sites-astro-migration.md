@@ -18,12 +18,12 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 **Docs first** (operator decision 2026-10-29): largest public page set and primary scraper/`_rsc` burn surface. Marketing (`www`) follows once docs Astro has a preview URL.
 
-| Phase | App | Why |
-| ----- | --- | --- |
-| **0** | Ops | Keep docs WAF + middleware RSC guard live on **Next** until Astro cutover ([guardrails](./website-performance-workers-guardrails.md)). |
-| **1** | `apps/docs-astro` → replaces `apps/docs` | Scaffold + content port; static HTML; drop OpenNext as HTML origin. |
-| **2** | `apps/www` | Marketing + signup; same Astro/Pages stack. |
-| **3** | Cleanup | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps. |
+| Phase | App                                      | Why                                                                                                                                    |
+| ----- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **0** | Ops                                      | Keep docs WAF + middleware RSC guard live on **Next** until Astro cutover ([guardrails](./website-performance-workers-guardrails.md)). |
+| **1** | `apps/docs-astro` → replaces `apps/docs` | Scaffold + content port; static HTML; drop OpenNext as HTML origin.                                                                    |
+| **2** | `apps/www`                               | Marketing + signup; same Astro/Pages stack.                                                                                            |
+| **3** | Cleanup                                  | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps.                                                |
 
 ## Phase 1 — `apps/docs-astro` (docs.clawql.com)
 
