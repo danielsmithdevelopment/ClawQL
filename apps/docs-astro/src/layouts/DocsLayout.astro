@@ -74,21 +74,23 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
           class="inline-flex items-center gap-2 no-underline"
           aria-label="ClawQL home"
         >
-          {/* Blue wordmark → light UI; white wordmark → dark UI */}
+          {/* Blue wordmark → light UI; white → dark. Soft-matted PNGs + 2x for retina. */}
           <img
             src="/brand/clawql-wordmark-light.png"
+            srcset="/brand/clawql-wordmark-light.png 1x, /brand/clawql-wordmark-light@2x.png 2x"
             alt={site.name}
-            width="160"
-            height="54"
-            class="h-8 w-auto sm:h-9 dark:hidden"
+            width="146"
+            height="50"
+            class="h-11 w-auto dark:hidden"
             decoding="async"
           />
           <img
             src="/brand/clawql-wordmark-dark.png"
+            srcset="/brand/clawql-wordmark-dark.png 1x, /brand/clawql-wordmark-dark@2x.png 2x"
             alt={site.name}
-            width="160"
-            height="54"
-            class="hidden h-8 w-auto sm:h-9 dark:block"
+            width="146"
+            height="50"
+            class="hidden h-11 w-auto dark:block"
             decoding="async"
           />
           <span
