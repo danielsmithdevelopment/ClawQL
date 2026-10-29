@@ -27,15 +27,15 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 ## Phase 1 — `apps/docs-astro` (docs.clawql.com)
 
-**In progress:** package at [`apps/docs-astro/`](../../apps/docs-astro/). Production remains [`apps/docs/`](../../apps/docs/) (Next) until DNS cutover.
+**Live (2026-10-29):** [`apps/docs-astro/`](../../apps/docs-astro/) is the production origin for **https://docs.clawql.com** via Worker Assets `clawql-docs-astro` (custom domain + route). Pages preview: https://clawql-docs-astro.pages.dev/. Legacy Next package [`apps/docs/`](../../apps/docs/) is no longer the live origin (OpenNext Worker `clawql-docs` retained only for rollback).
 
 1. ~~Scaffold Astro (TS + Tailwind v4 + MDX), static `output`, starter layout/nav.~~
 2. ~~Bulk-import MDX / generated bodies / plugins / security training via `apps/docs-astro/scripts/import-from-next.mjs` (`prebuild`).~~ (~157 content pages + `/archive` + `/security/status`)
 3. ~~Sidebar nav generated from imported tree; Next redirects mirrored in `astro.config.mjs`.~~
 4. Re-home upstream `sync-*.mjs` to emit into Astro content directly (optional cleanup — importer reads `apps/docs` today).
 5. Agent `Accept: text/markdown` negotiation on Pages Functions (static `llms.txt` / `AGENTS.md` already in `public/`).
-6. Preview on Cloudflare Pages → cut over `docs.clawql.com` → retire `clawql-docs` OpenNext Worker.
-7. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders.
+6. ~~Preview on Cloudflare Pages → cut over `docs.clawql.com` → retire OpenNext as HTML origin.~~ (Worker Assets + route; Pages custom domain deferred until Zone DNS Edit on deploy token.)
+7. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders (`/_rsc` is now a static 404).
 8. Nice-to-have after cutover: FlexSearch UI, plugin registry explorer React island, richer Note/Button MDX components (hub JSX currently stripped to prose).
 
 ## Phase 2 — `apps/www` (clawql.com)
@@ -55,7 +55,8 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 ## Success criteria
 
-- [ ] No production HTML for `clawql.com` / `docs.clawql.com` served by Next App Router / OpenNext RSC.
+- [x] No production HTML for `docs.clawql.com` served by Next App Router / OpenNext RSC (Astro Worker Assets live). `clawql.com` still pending Phase 2.
+- [ ] No production HTML for `clawql.com` served by Next App Router / OpenNext RSC.
 - [ ] Signup still reaches managed console session on `cloud.clawql.com`.
 - [ ] Docs SEO (sitemap, canonicals) and agent discovery files still published.
 - [ ] Observability: no return of `_rsc`-dominated public traffic cliffs on Free plan.
