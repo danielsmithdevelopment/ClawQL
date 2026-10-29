@@ -10,11 +10,11 @@
 
 ## ClawQL — same-campaign 3-rep (interleaved drain→sustained)
 
-| | Mean | Min–Max | Stdev |
-| --- | --- | --- | --- |
-| durableRecordsPerSec | **~312k**/s | 278–333k | ~30k |
-| rateSustainableWithinOneSecondSla | **~312k**/s | 280–336k | ~29k |
-| drain / sustained | **1.01** | 0.87–1.19 | ~0.16 |
+|                                   | Mean        | Min–Max   | Stdev |
+| --------------------------------- | ----------- | --------- | ----- |
+| durableRecordsPerSec              | **~312k**/s | 278–333k  | ~30k  |
+| rateSustainableWithinOneSecondSla | **~312k**/s | 280–336k  | ~29k  |
+| drain / sustained                 | **1.01**    | 0.87–1.19 | ~0.16 |
 
 Diagnosis: `sustained_equals_drain_within_measurement_error` (ranges overlap). Single-run 352k vs 333k was noise — not a contradiction.
 
@@ -24,11 +24,11 @@ Sync p50/p99 ~129/**679** µs · ack **~2.5 µs**.
 
 ## Ontologiql (their report)
 
-| Lever | Before → After |
-| --- | --- |
-| Journal ack | ~154 µs → **~2.5 µs** |
+| Lever                    | Before → After         |
+| ------------------------ | ---------------------- |
+| Journal ack              | ~154 µs → **~2.5 µs**  |
 | Pure drain (dbuf off→on) | 161k → **235k (+46%)** |
-| fsyncs/sec | 2.4k → **3.4k (+42%)** |
+| fsyncs/sec               | 2.4k → **3.4k (+42%)** |
 
 Double-buffer on by default; hit rate ~27% when concurrency ≥ 2× batch — still room if concurrency lifts hit rate. **Sustained ramp after ack+dbuf still needed** on their side for the comparable number.
 
