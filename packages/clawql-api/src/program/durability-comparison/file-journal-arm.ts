@@ -22,6 +22,7 @@ import type {
   ArmResult,
   ComparisonTrial,
   DurabilityArm,
+  TrialTraceEvent,
   UpstreamMode,
 } from "./types.js";
 
@@ -230,6 +231,8 @@ async function oneTrial(input: {
   readonly resumePolicy: ResumePolicy;
 }): Promise<ComparisonTrial> {
   const lookup = input.resumePolicy === "clawql-check-then-decide";
+  const wantTrace = process.env.DURABILITY_COMPARISON_TRACE === "1";
+  const events: TrialTraceEvent[] = [];
   const dir = await mkdtemp(join(tmpdir(), `clawql-cmp-${input.i}-`));
   const hostLog = join(dir, "host.log");
   const programId = `prog_cmp_${input.resumePolicy}_${String(input.i).padStart(4, "0")}`;
@@ -242,11 +245,26 @@ async function oneTrial(input: {
       SESSION_ID: sessionId,
       SOURCE: planSource({ withClientReference: lookup }),
       KILL_AT_OPERATION: WRITE_OP,
+      KILL_PHASE: "after_log",
       WRITE_OPERATIONS: WRITE_OP,
       UPSTREAM_MODE: input.upstreamMode,
       ...(lookup ? { LOOKUP_BY_REFERENCE: "1" } : {}),
     });
+    events.push({
+      t: new Date().toISOString(),
+      kind: "crashed",
+      detail: `signal=${child.signal}`,
+    });
     const before = parseHostLog(await readFile(hostLog, "utf8"));
+    if (before.some((l) => l.operationId === WRITE_OP && l.applied)) {
+      const line = before.find((l) => l.operationId === WRITE_OP && l.applied);
+      events.push({
+        t: new Date().toISOString(),
+        kind: "request_applied",
+        reference: line?.reference ?? CLIENT_REFERENCE,
+        detail: line?.effectId,
+      });
+    }
     const priorEffects = new Set(
       before.filter((l) => l.operationId === WRITE_OP && l.applied).map((l) => l.effectId)
     );
@@ -271,6 +289,7 @@ async function oneTrial(input: {
         Effect.provide(programJournalFileLayer(dir))
       )
     );
+    events.push({ t: new Date().toISOString(), kind: "resumed" });
 
     let refusedWrites = 0;
     if (input.resumePolicy === "naive-retry") {
@@ -280,6 +299,13 @@ async function oneTrial(input: {
           args: { page: 3, idempotencyKey: "kill-mid-write-key" },
         })
       );
+      events.push({ t: new Date().toISOString(), kind: "agent_retry", reference: CLIENT_REFERENCE });
+      events.push({
+        t: new Date().toISOString(),
+        kind: "request_applied",
+        reference: CLIENT_REFERENCE,
+        detail: "naive-retry",
+      });
     } else if (input.resumePolicy === "clawql-always-retry") {
       // Model always retries: attempt a fresh execute; structural gate refuses.
       const gated = recordingHost({
@@ -295,6 +321,12 @@ async function oneTrial(input: {
       );
       refusedWrites = gated.getRefusedWrites();
       for (const e of gated.uniqueEffects) parent.uniqueEffects.add(e);
+      events.push({
+        t: new Date().toISOString(),
+        kind: "retry_refused",
+        reference: CLIENT_REFERENCE,
+        detail: `refused=${refusedWrites}`,
+      });
     }
 
     const uniqueWriteEffects = [...parent.uniqueEffects].filter(
@@ -315,6 +347,27 @@ async function oneTrial(input: {
 
     const interruptedOrUnknown = outcomeUnknownCalls > 0;
     const completedKnownSuccess = resolvedKnown;
+    if (interruptedOrUnknown) {
+      events.push({ t: new Date().toISOString(), kind: "outcome_unknown" });
+    }
+    if (reconciledCalls >= 1) {
+      events.push({
+        t: new Date().toISOString(),
+        kind: "reconciled",
+        reference: CLIENT_REFERENCE,
+        detail: lookup ? "lookup_by_reference" : "idempotency_key",
+      });
+      if (lookup) {
+        events.push({
+          t: new Date().toISOString(),
+          kind: "lookup",
+          reference: CLIENT_REFERENCE,
+          found: true,
+          definitive: false,
+          detail: "lookup_covers_prior_accepts",
+        });
+      }
+    }
 
     const classified = classifyOutcome({
       uniqueWriteEffects,
@@ -363,6 +416,7 @@ async function oneTrial(input: {
       detail: ok
         ? `${input.resumePolicy}/${input.upstreamMode}: dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} once=${classified.completedExactlyOnce} effects=${uniqueWriteEffects} reconciled=${reconciledCalls} refused=${refusedWrites}`
         : `fail signal=${child.signal} dup=${classified.duplicates} unk=${classified.interruptedOrUnknown} reconciled=${reconciledCalls} stderr=${child.stderr.slice(0, 80)}`,
+      ...(wantTrace ? { events } : {}),
     };
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);

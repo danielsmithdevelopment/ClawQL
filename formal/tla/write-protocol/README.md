@@ -53,7 +53,13 @@ Peer-neither shape: `SendWrite` → `ApplyInflight` → `AgentBlindRetry` → `a
 
 ## Trace checking (bridge to TypeScript)
 
-`DURABILITY_COMPARISON_TRACE=1` exports `TrialTraceEvent` logs. Conformance checker planned for the thousand-trial host run.
+`DURABILITY_COMPARISON_TRACE=1` exports `TrialTraceEvent` logs. The TypeScript conformance checker (`packages/clawql-api/src/program/durability-comparison/trace-conformance.ts`) maps those events onto the same safety rules (`NoDuplicateEffect`, `NoUnsafeRetry`, `GuaranteeNamed`, structural no blind retry). It is **not** a full TLC replay — it checks exported trial logs against the rules the model encodes.
+
+```bash
+DURABILITY_COMPARISON_TRACE=1 DURABILITY_COMPARISON_N=5 npm run benchmark:durability-comparison
+# unit: pass + recorded counterexample shapes
+npx vitest run packages/clawql-api/src/program/durability-comparison/trace-conformance.test.ts
+```
 
 ## Mapping to code
 
