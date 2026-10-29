@@ -159,4 +159,18 @@ assert.equal(entryMatchesCall(forgedOp, call, 1), false);
 const forgedCallId = { ...matchingEntry, callId: "c99" };
 assert.equal(entryMatchesCall(forgedCallId, call, 1), false);
 
+const sleepCall = { tool: "sleep", durationMs: 250 };
+const sleepEntry = {
+  index: 2,
+  callId: "c2",
+  tool: "sleep",
+  args: { durationMs: 250 },
+};
+assert.equal(entryMatchesCall(sleepEntry, sleepCall, 2), true);
+assert.equal(
+  canonicalizeForHash(journaledArgs(sleepCall)),
+  canonicalizeForHash({ durationMs: 250 })
+);
+assert.equal(entryMatchesCall({ ...sleepEntry, args: { durationMs: 999 } }, sleepCall, 2), false);
+
 console.log("program-cell-resume.test: PASS");

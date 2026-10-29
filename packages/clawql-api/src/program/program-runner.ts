@@ -45,7 +45,7 @@ export type ProgramHostSearchResult = {
 /** A plan call served from the durable journal instead of the host. */
 export type ProgramReplayedCall = {
   readonly index: number;
-  readonly tool: "execute" | "search";
+  readonly tool: "execute" | "search" | "sleep";
   readonly operationId?: string;
   readonly ok: boolean;
 };
@@ -100,7 +100,7 @@ export type ExecuteProgramInput = {
 export type ProgramCallRecord = {
   readonly index: number;
   readonly id?: string;
-  readonly tool: "execute" | "search";
+  readonly tool: "execute" | "search" | "sleep";
   readonly operationId?: string;
   readonly query?: string;
   readonly ok: boolean;
@@ -439,6 +439,46 @@ export function runProgramPlanEffect<E = never>(
 
     const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
       Effect.gen(function* () {
+        if (call.tool === "sleep") {
+          yield* appendProcessWormEffect({
+            type: "TOOL_CALL_ATTEMPT",
+            timestamp: new Date().toISOString(),
+            sessionId: input.sessionId ?? "",
+            metadata: {
+              source: "execute_program",
+              programId,
+              toolName: "sleep",
+              durationMs: call.durationMs,
+              index,
+            },
+          }).pipe(Effect.catch(() => Effect.void));
+          yield* Effect.sleep(Duration.millis(call.durationMs));
+          const value = { ok: true as const, sleptMs: call.durationMs };
+          const record: ProgramCallRecord = {
+            index,
+            id: call.id,
+            tool: "sleep",
+            ok: true,
+            programId,
+            status: "slept",
+            resultPreview: previewText(JSON.stringify(value)),
+          };
+          yield* appendProcessWormEffect({
+            type: "TOOL_CALL_RESULT",
+            timestamp: new Date().toISOString(),
+            sessionId: input.sessionId ?? "",
+            metadata: {
+              source: "execute_program",
+              programId,
+              toolName: "sleep",
+              ok: true,
+              status: "slept",
+              index,
+            },
+          }).pipe(Effect.catch(() => Effect.void));
+          return { record, value };
+        }
+
         if (call.tool === "search") {
           yield* appendProcessWormEffect({
             type: "TOOL_CALL_ATTEMPT",

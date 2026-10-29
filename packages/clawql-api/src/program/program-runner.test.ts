@@ -119,6 +119,34 @@ describe("parseProgramPlanEffect", () => {
     if (!("ok" in err) || err.ok !== false) throw new Error("expected parse error");
     expect(err.fixHint).toMatch(/OpenCode vendor is next/i);
   });
+
+  it("parses sleep timer steps", async () => {
+    const plan = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          v: 1,
+          mode: "sequential",
+          calls: [{ tool: "sleep", durationMs: 10 }],
+        })
+      )
+    );
+    expect("ok" in plan && plan.ok === false).toBe(false);
+    if ("ok" in plan && plan.ok === false) throw new Error("unexpected");
+    expect(plan.calls[0]).toMatchObject({ tool: "sleep", durationMs: 10 });
+  });
+
+  it("rejects oversized sleep durationMs", async () => {
+    const err = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          v: 1,
+          mode: "sequential",
+          calls: [{ tool: "sleep", durationMs: 999_999_999 }],
+        })
+      )
+    );
+    expect(err).toMatchObject({ ok: false });
+  });
 });
 
 describe("runProgramEffect", () => {

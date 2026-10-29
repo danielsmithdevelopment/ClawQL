@@ -35,6 +35,9 @@ export function journaledArgs(call) {
       ...(call.limit !== undefined ? { limit: call.limit } : {}),
     };
   }
+  if (call?.tool === "sleep") {
+    return { durationMs: call.durationMs };
+  }
   return { ...(call?.args || {}) };
 }
 

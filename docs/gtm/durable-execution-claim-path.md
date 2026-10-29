@@ -1,7 +1,7 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board publishes **`columns.completed`**, **`columns.stepsRepeated`**, and **`columns.statePreserved`** (Node unit/SIGKILL golden via `compareProgramStepStateEffect`; fleet rate still needs paired no-crash baselines). Measured Tier C rates for completed/stepsRepeated land on the next re-run; this does **not** yet authorize “durable execution” copy.  
+**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved`) plus first-class plan **`sleep`** (journaled `sleep.<i>.wakeAt`, replay without re-wait). Fleet rates still need Tier C re-measure / baseline pairing; model-call and approval-wait journaling remain open. This does **not** yet authorize “durable execution” copy.  
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---
@@ -45,7 +45,7 @@ The thousand-crash board already resumes programs but scores duplicates, recover
 
 Writes already do. **Reads, model calls, timers, sleeps, and waits for approval** must too, or recovery cannot reconstruct where the program was. Deadline board: timers survive restarts. Model calls need recording **or** an explicit “re-request on recovery” rule.
 
-**Today:** plan `execute`/`search` entries + write intents + `clock.startedAt` nondet. Interrupted reads without an entry re-run once. Model / timer / sleep / approval-wait as first-class journaled steps — **open**.
+**Today:** plan `execute`/`search`/`sleep` entries + write intents + `clock.startedAt` / `sleep.<i>.wakeAt` nondet. Interrupted reads without an entry re-run once; interrupted sleeps re-arm from the journaled wake deadline. Model calls and approval-wait as first-class journaled steps — **open**.
 
 ### 3. Deterministic recovery — or detect when it isn’t
 
