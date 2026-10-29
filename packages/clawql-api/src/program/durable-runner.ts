@@ -71,6 +71,14 @@ export const nondetSleepWakeAtKey = (index: number): string => `sleep.${index}.w
 export const nondetAwaitApprovalKey = (index: number): string =>
   `await_approval.${index}.executionId`;
 
+/**
+ * Optional pre-call request digest for plan `model_call` at `index`.
+ * Entry args already bind prompt/model; this captures the digest before the
+ * host returns so a mid-call crash still has a bound request fingerprint.
+ */
+export const nondetModelCallRequestDigestKey = (index: number): string =>
+  `model_call.${index}.requestDigest`;
+
 const PARKED_HINT =
   "Resume with execute_program { programId }: journaled calls replay and are not re-run. Raise timeoutMs (capped) if a single call needs longer.";
 
@@ -164,7 +172,11 @@ function journaledArgs(call: ProgramPlanCall): Record<string, unknown> {
     return { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
   }
   if (call.tool === "sleep") return { durationMs: call.durationMs };
-  return { executionId: call.executionId };
+  if (call.tool === "await_approval") return { executionId: call.executionId };
+  return {
+    prompt: call.prompt,
+    ...(call.model !== undefined ? { model: call.model } : {}),
+  };
 }
 
 function entryMatchesCall(entry: ProgramJournalEntry, call: ProgramPlanCall, index: number) {
@@ -604,6 +616,36 @@ function runAttemptEffect(
               );
             }
             return Option.some(outcome);
+          }
+          if (call.tool === "model_call") {
+            // Claim-path §2: journal request digest before the host call; land
+            // the response as an entry. Resume replays the entry (no re-request).
+            // Interrupted mid-call with no entry falls through to runOne → one
+            // re-request (explicit recovery rule).
+            const digestKey = nondetModelCallRequestDigestKey(index);
+            const expectedDigest = canonicalizeForHash(journaledArgs(call));
+            const journaledDigest = journal.nondet.find((n) => n.key === digestKey)?.value;
+            if (journaledDigest === undefined) {
+              yield* journalEffect(
+                api.appendNondet(programId, { key: digestKey, value: expectedDigest })
+              );
+            } else if (journaledDigest !== expectedDigest) {
+              return yield* diverged(
+                index,
+                "journaled model_call requestDigest does not match the plan call"
+              );
+            }
+            if (durableHost.modelCall === undefined) {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "invalid_plan",
+                  message: `model_call requires host.modelCall`,
+                  fixHint: "Wire ProgramHost.modelCall to the inference gateway.",
+                })
+              );
+            }
+            return Option.none();
           }
           if (call.tool === "await_approval") {
             // Claim-path §2: observe-only wait on a parked mandate. Journal the

@@ -186,4 +186,21 @@ assert.equal(
   false
 );
 
+const modelCall = { tool: "model_call", prompt: "hi", model: "m1" };
+const modelEntry = {
+  index: 4,
+  callId: "c4",
+  tool: "model_call",
+  args: { prompt: "hi", model: "m1" },
+};
+assert.equal(entryMatchesCall(modelEntry, modelCall, 4), true);
+assert.equal(
+  canonicalizeForHash(journaledArgs(modelCall)),
+  canonicalizeForHash({ prompt: "hi", model: "m1" })
+);
+assert.equal(
+  entryMatchesCall({ ...modelEntry, args: { prompt: "other", model: "m1" } }, modelCall, 4),
+  false
+);
+
 console.log("program-cell-resume.test: PASS");
