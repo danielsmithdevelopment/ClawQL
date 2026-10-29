@@ -1,8 +1,8 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). Ontologiql after ack+dbuf is **scheduler-bound** (185k sustained vs 320k drain) — same coalesce/pop-all-due levers ClawQL already shipped. Shared-host deadline campaign can wait; time-sensitive next work is the **Infinity comparison on the Pi**.
+**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). ClawQL-only density/deadline numbers are **publishable as single-host lab** (mark “cross-system comparison pending”; parked-state caveat) — see [publish-readiness](../../gtm/publish-readiness.md). Ontologiql numbers stay private. Shared-host deadline campaign can wait; time-sensitive next work is the **Infinity comparison on the Pi**.
 
-Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](https://github.com/danielsmithdevelopment/ClawQL/pull/1433) · Ontologiql #144.
+Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](https://github.com/danielsmithdevelopment/ClawQL/pull/1433).
 
 **Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
 

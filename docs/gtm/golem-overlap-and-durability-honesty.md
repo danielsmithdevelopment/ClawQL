@@ -74,6 +74,8 @@ ClawQL is **not** trying to be that runtime.
 
 Env flag **`CLAWQL_ENABLE_DURABLE_PROGRAMS`** means _journaled program resume_, not Golem-style durable execution. Keep that distinction in every sentence that mentions the flag.
 
+**What it would take to earn a named step-level durable-execution claim** (checkpointed steps, not mid-line transparency): [durable-execution-claim-path.md](./durable-execution-claim-path.md). Ready-now public wording: [publish-readiness.md](./publish-readiness.md).
+
 ---
 
 ## Overlap (honest)
