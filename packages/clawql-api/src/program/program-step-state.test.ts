@@ -103,9 +103,7 @@ describe("program step state (claim-path §1 state preserved)", () => {
   });
 
   it("ProgramStepStateService compare matches the Effect helper", async () => {
-    const calls = [
-      call({ index: 0, tool: "search", ok: true, resultPreview: "q", status: "ok" }),
-    ];
+    const calls = [call({ index: 0, tool: "search", ok: true, resultPreview: "q", status: "ok" })];
     const viaService = await Effect.runPromise(
       Effect.gen(function* () {
         const svc = yield* ProgramStepStateService;

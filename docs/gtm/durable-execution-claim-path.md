@@ -35,10 +35,10 @@ Do **not** say “durable execution” or “exactly once” in general. See [pu
 
 The thousand-crash board already resumes programs but scores duplicates, recovery time, and availability. Add columns durable execution is about:
 
-| Column              | Meaning                                                         | Status                                                                                                                                               |
-| ------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Completed**       | % of crashed programs that ran to the end after recovery        | **Scaffolded** — `columns.completed` on fleet phased board (`rateOuterPhases` is the fair window; mid-flight phases expect `outcome_unknown`)        |
-| **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Scaffolded** — `columns.stepsRepeated.writeStepsRerun` (= pets ledger duplicates; target 0). Read re-runs still stated separately when interrupted |
+| Column              | Meaning                                                         | Status                                                                                                                                                                                            |
+| ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Completed**       | % of crashed programs that ran to the end after recovery        | **Scaffolded** — `columns.completed` on fleet phased board (`rateOuterPhases` is the fair window; mid-flight phases expect `outcome_unknown`)                                                     |
+| **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Scaffolded** — `columns.stepsRepeated.writeStepsRerun` (= pets ledger duplicates; target 0). Read re-runs still stated separately when interrupted                                              |
 | **State preserved** | Program variables between steps match the no-crash path         | **Scaffolded** — `compareProgramStepStateEffect` + Node durable-runner / kill-node stand-in golden; fleet `columns.statePreserved` stub (`measured: false` until trials pair a no-crash baseline) |
 
 ### 2. Every side effect through a journaled step
