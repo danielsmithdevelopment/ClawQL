@@ -144,8 +144,17 @@ export function decideCallResume(input) {
  * @param {{ method?: string, risk?: string }} call
  */
 export function isWriteCall(call) {
+  const tool = call?.tool;
+  if (tool === "await_approval" || tool === "sleep" || tool === "model_call" || tool === "search") {
+    return false;
+  }
   if (call?.risk === "write") return true;
   if (call?.risk === "read") return false;
   const method = String(call?.method || "").toUpperCase();
   return method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
+}
+
+/** Nondet key for plan await_approval at index (mirrors Node durable-runner). */
+export function nondetAwaitApprovalKey(index) {
+  return `await_approval.${index}.executionId`;
 }

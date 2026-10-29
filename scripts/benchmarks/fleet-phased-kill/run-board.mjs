@@ -14,13 +14,15 @@
  *   resumeDeadlineMiss  — resume not completed within deadline
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
- *   statePreserved      — claim-path §1: scaffolding only until fleet pairs a no-crash baseline
- *   waitApproval        — claim-path §4: scaffolding; Node await_approval + density survival
+ *   statePreserved      — claim-path §1: structural match vs no-crash baseline (outer phases)
+ *   waitApproval        — claim-path §4: await_approval park survives peer kill + approve resume
  *
  * Env:
  *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
  *   FLEET_PHASED_EVIDENCE            output path
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
+ *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0)
+ *   FLEET_PHASED_STATE_BASELINE      1=pair no-crash baseline for statePreserved (default 1)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
@@ -29,6 +31,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { compareStructuralStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -85,6 +88,14 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+const AWAIT_TRIALS = Math.max(
+  0,
+  Math.min(1_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
+);
+const STATE_BASELINE =
+  process.env.FLEET_PHASED_STATE_BASELINE === undefined
+    ? true
+    : process.env.FLEET_PHASED_STATE_BASELINE !== "0";
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -151,9 +162,8 @@ function percentile(sorted, p) {
   return sorted[idx];
 }
 
-function phasePlan(phase, programId) {
-  const writeIdx = 2;
-  const calls = [
+function stockCalls(programId) {
+  return [
     { operationId: "listPets", method: "GET", path: "/pets", risk: "read" },
     { operationId: "streams.session.noop", risk: "read" },
     {
@@ -164,6 +174,11 @@ function phasePlan(phase, programId) {
       args: { name: programId, idempotencyKey: programId },
     },
   ];
+}
+
+function phasePlan(phase, programId) {
+  const writeIdx = 2;
+  const calls = stockCalls(programId);
   const body = { programId, plan: { calls } };
   if (phase === "before_intent") body.pauseBeforeIndex = writeIdx;
   else if (phase === "after_intent_before_call") body.pauseAfterIntentIndex = writeIdx;
@@ -174,6 +189,20 @@ function phasePlan(phase, programId) {
     body.pauseAfterUpstreamBeforeJournalIndex = writeIdx;
   }
   return body;
+}
+
+/** No-crash baseline plan (same calls as stock; no pause* flags). */
+function baselinePlan(programId) {
+  return { programId, plan: { calls: stockCalls(programId) } };
+}
+
+function awaitPlan(programId, executionId) {
+  return {
+    programId,
+    plan: {
+      calls: [{ tool: "await_approval", executionId }, ...stockCalls(programId)],
+    },
+  };
 }
 
 function pickPhase(i) {
@@ -428,15 +457,41 @@ async function main() {
 
   const phaseStats = emptyPhaseStats();
   const trials = [];
+  const awaitTrials = [];
   let totalDuplicates = 0;
   let totalSelfFences = 0;
   let totalSurvivorRestarts = 0;
   let totalDeadlineMisses = 0;
+  let stateEligible = 0;
+  let statePreserved = 0;
+  /** @type {unknown[] | null} */
+  let noCrashBaselineCalls = null;
   let primary = "A";
   const boardStarted = Date.now();
   // Trials use the worker default DO (program:default) — same as the proven
   // smoke + N=8 PASS. After SIGKILL, wait for survivor /program/health before
   // resume (ownership transfer); that wait is inside resumeMs.
+
+  if (STATE_BASELINE) {
+    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
+    const baseId = `baseline_${Date.now()}`;
+    const basePort = nodes[primary].port;
+    const baseRes = await fetchJson(`http://127.0.0.1:${basePort}/program/run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(baselinePlan(baseId)),
+    });
+    if (baseRes.body?.status === "completed" && Array.isArray(baseRes.body?.calls)) {
+      noCrashBaselineCalls = baseRes.body.calls;
+      console.log(
+        `fleet-phased: no-crash baseline captured (${noCrashBaselineCalls.length} steps)`
+      );
+    } else {
+      console.warn(
+        `fleet-phased: baseline capture failed: ${JSON.stringify(baseRes.body).slice(0, 160)}`
+      );
+    }
+  }
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -620,6 +675,21 @@ async function main() {
     // duplicate write on the pets ledger (writes) — target 0 for completed steps.
     const writeStepsRerun = duplicates;
 
+    let statePreservedTrial = null;
+    const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
+    if (
+      STATE_BASELINE &&
+      noCrashBaselineCalls &&
+      outerPhase &&
+      completedClean &&
+      resumeCalls.length
+    ) {
+      stateEligible += 1;
+      const cmp = compareStructuralStepState(noCrashBaselineCalls, resumeCalls);
+      statePreservedTrial = cmp.preserved;
+      if (cmp.preserved) statePreserved += 1;
+    }
+
     let expectOk = false;
     if (!avail.resumeDeadlineMiss) {
       if (phase === "before_intent") {
@@ -674,6 +744,7 @@ async function main() {
       journalDivergence,
       writeStepsRerun,
       replayedSteps,
+      statePreserved: statePreservedTrial,
       resumeMs,
       recoveryMs: avail.recoveryMs,
       survivorSelfFence: avail.survivorSelfFence,
@@ -706,6 +777,141 @@ async function main() {
       );
       writeEvidencePartial();
     }
+  }
+
+  // Claim-path §4 — separate await_approval arm (does not mix into write-kill phases).
+  for (let a = 0; a < AWAIT_TRIALS; a++) {
+    const victim = primary;
+    const survivor = primary === "A" ? "B" : "A";
+    const programId = `await_${a}_${Date.now()}`;
+    const executionId = `pex_await_${a}_${Date.now()}`;
+    const baseV = `http://127.0.0.1:${nodes[victim].port}`;
+    const baseS = `http://127.0.0.1:${nodes[survivor].port}`;
+    nodes[victim].pendingSelfFence = false;
+
+    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
+    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__pending`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ executionId, status: "pending" }),
+    });
+
+    const parkRes = await fetchJson(`${baseV}/program/run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(awaitPlan(programId, executionId)),
+    });
+    const parked = parkRes.body?.status === "parked" || parkRes.body?.code === "awaiting_approval";
+    if (!parked) {
+      awaitTrials.push({
+        a,
+        ok: false,
+        survived: false,
+        completedAfterApprove: false,
+        detail: `park failed: ${JSON.stringify(parkRes.body).slice(0, 120)}`,
+      });
+      if (!nodes[victim].pid) await restartNode(victim);
+      continue;
+    }
+
+    if (nodes[victim].pid) {
+      process.kill(nodes[victim].pid, "SIGKILL");
+      nodes[victim].pid = null;
+    }
+    await sleep(Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600)));
+
+    const avail = {
+      survivorSelfFence: false,
+      survivorRestart: false,
+      recoveryMs: 0,
+      resumeDeadlineMiss: false,
+    };
+    const resumeStart = Date.now();
+    if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+      await ensureSurvivor(survivor, avail);
+    }
+    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+      if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+        await ensureSurvivor(survivor, avail);
+      }
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
+      await sleep(250);
+    }
+
+    let mid = { ok: false, body: null };
+    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+      if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+        await ensureSurvivor(survivor, avail);
+      }
+      mid = await fetchJson(
+        `${baseS}/program/resume`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ programId }),
+        },
+        20_000
+      );
+      if (mid.fetchError || mid.status === 500) {
+        await sleep(200);
+        continue;
+      }
+      break;
+    }
+    const survived = mid.body?.status === "parked" || mid.body?.code === "awaiting_approval";
+
+    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__pending`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ executionId, status: "approved" }),
+    });
+
+    let done = { ok: false, body: null };
+    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+      if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+        await ensureSurvivor(survivor, avail);
+      }
+      done = await fetchJson(
+        `${baseS}/program/resume`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ programId }),
+        },
+        20_000
+      );
+      if (done.fetchError || done.status === 500) {
+        await sleep(200);
+        continue;
+      }
+      break;
+    }
+    const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+    const writeCount = ledger.body?.count || 0;
+    const completedAfterApprove =
+      done.body?.status === "completed" && done.body?.ok === true && writeCount === 1;
+    const ok = survived && completedAfterApprove && writeCount === 1;
+    awaitTrials.push({
+      a,
+      ok,
+      survived,
+      completedAfterApprove,
+      writeCount,
+      resumeMs: Date.now() - resumeStart,
+    });
+
+    try {
+      startNode(victim);
+      await waitNode(victim, { requireProgram: false });
+    } catch (err) {
+      console.warn(`fleet-phased: await victim restart failed (${err.message}); rebuild`);
+      await rebuildFleet();
+    }
+    primary = survivor;
+    console.log(
+      `fleet-phased: await ${a + 1}/${AWAIT_TRIALS} survived=${survived} completed=${completedAfterApprove} ok=${ok}`
+    );
   }
 
   function summarize() {
@@ -821,21 +1027,33 @@ async function main() {
             "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)",
         },
         statePreserved: {
-          measured: false,
+          measured: STATE_BASELINE && noCrashBaselineCalls != null && stateEligible > 0,
           nodeUnitGolden: true,
-          fleetBaselinePaired: false,
+          fleetBaselinePaired: STATE_BASELINE && noCrashBaselineCalls != null,
+          eligibleN: stateEligible,
+          preservedN: statePreserved,
+          rate: stateEligible > 0 ? statePreserved / stateEligible : null,
           meaning:
-            "claim-path §1 — program step outcomes after resume match the no-crash baseline. Proven on Node durable-runner + kill-node stand-in via compareProgramStepStateEffect; this fleet board does not yet pair each trial with a no-crash baseline, so no rate is quoted here",
+            "claim-path §1 — structural step outcomes (index/tool/op/ok/status) after outer-phase resume match a no-crash baseline. Node compareProgramStepStateEffect remains the strict unit golden; fleet omits volatile result bodies",
         },
         waitApproval: {
-          measured: false,
+          measured: AWAIT_TRIALS > 0,
           nodeAwaitApproval: true,
           densityRestartSurvival: true,
-          fleetAwaitTrials: false,
+          fleetAwaitTrials: AWAIT_TRIALS > 0,
+          n: AWAIT_TRIALS,
+          survivedRate:
+            AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.survived).length / AWAIT_TRIALS : null,
+          completedAfterApproveRate:
+            AWAIT_TRIALS > 0
+              ? awaitTrials.filter((t) => t.completedAfterApprove).length / AWAIT_TRIALS
+              : null,
+          okRate: AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.ok).length / AWAIT_TRIALS : null,
           meaning:
-            "claim-path §4 — long waits that survive crash/failover. Node plan await_approval parks while pending and resumes after settle (observe-only); density board already measures deadline restartSurvival. This fleet phased harness does not yet inject await_approval waits, so no rate is quoted here",
+            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases",
         },
       },
+      awaitTrials: awaitTrials.slice(0, 50),
       totalDuplicates,
       zeroDuplicates: zeroDup,
       ruleOfThreeUpperBound95: upper95,
@@ -861,7 +1079,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path completed + stepsRepeated (lab n=100 rates in phased-claim-path-columns-n100.json) + statePreserved + waitApproval scaffolding (fleet await trials / baseline pairing not yet injected). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (structural baseline pairing on outer phases) and waitApproval (FLEET_PHASED_AWAIT_TRIALS arm). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
