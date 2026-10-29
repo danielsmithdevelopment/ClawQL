@@ -5,6 +5,8 @@
   "type": "module",
   "description": "ClawQL docs site (Astro) — migrates docs.clawql.com off Next/OpenNext (ADR 0018)",
   "scripts": {
+    "prebuild": "node scripts/import-from-next.mjs",
+    "import:next": "node scripts/import-from-next.mjs",
     "dev": "astro dev --port 4321",
     "build": "astro build",
     "preview": "astro preview --port 4321",

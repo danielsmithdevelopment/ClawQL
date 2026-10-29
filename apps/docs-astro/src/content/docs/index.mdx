@@ -1,35 +1,104 @@
 ---
 title: ClawQL documentation
+description: Getting started(/getting-started) · Quickstart(/quickstart) · Architecture(/architecture) · Deployment(/deployment)
 absoluteTitle: ClawQL documentation
-description: >-
-  ClawQL documentation: MCP server for OpenAPI 3, Swagger 2, Google Discovery,
-  optional native GraphQL and gRPC — search and execute, optional sandbox, vault
-  memory, schedule synthetics, notify, Onyx, Ouroboros, stdio or HTTP or MCP gRPC,
-  Docker and Kubernetes.
 ---
 
 # ClawQL documentation
 
 **ClawQL** is the secure, persistent MCP gateway for production agents — **`search`** and **`execute`** across OpenAPI, Discovery, and optional GraphQL/gRPC sources, with always-on **`audit`** and **`cache`**, optional vault memory, and defense-in-depth controls.
 
-[Quickstart](/quickstart) · [Migration status](/migration-status) · [Production docs (Next)](https://docs.clawql.com/getting-started)
+[Getting started](/getting-started) · [Quickstart](/quickstart) · [Architecture](/architecture) · [Deployment](/deployment)
 
 ---
 
 ## Agent-first operating system
 
-Everything flows through one intelligent gateway. Components you leave off add no overhead. Official artifacts verify against **Layer 0 immutable releases**.
+Everything flows through one intelligent gateway. Components you leave off add no overhead. Official artifacts verify against **Layer 0 immutable releases**. Start with the [Vision & Roadmap](/vision/roadmap), then the [Master enablement guide](/vision/technical-enablement) for the full 6-layer architecture.
 
-This Astro preview currently ships a **slice** of the docs while we migrate off Next.js / OpenNext (ADR 0018). Full production content remains on the live Next Worker until cutover.
+[Vision & Roadmap](/vision/roadmap)
 
-## Getting started (ported)
+---
 
+## Getting started
+
+- [Overview](/getting-started)
 - [Quickstart](/quickstart)
-- [Migration status](/migration-status)
+- [Install](/install)
+- [MCP clients](/mcp-clients)
+- [Choose your tier](/deployment)
 
-## Full catalog (live site)
+## Architecture & vision
 
-Until cutover, browse the complete tree on [docs.clawql.com](https://docs.clawql.com/) — Getting started, Architecture, Deployment, Learn, Plugins, Security curriculum, and Reference.
+- [Architecture hub](/architecture)
+- [Vision & Roadmap](/vision/roadmap)
+- [IDP Platform](/vision/idp-platform)
+- [Master enablement guide](/vision/technical-enablement)
+- [Modularization v2.1](/vision/modularization)
+- [Plugin model & registry](/reference/plugins)
+- [Immutable releases (Layer 0)](/vision/immutable-releases)
+- [DAOS Unified Architecture](/ouroboros/daos)
+- [Coordination layer](/ouroboros/specification)
+- [DAOS build plan](/ouroboros/build-plan)
+- [Ouroboros library](/ouroboros)
+- [Slide deck](/vision/slide-deck)
+
+## Deployment & operations
+
+- [Deployment hub](/deployment)
+- [Operations guide (Helm)](/deployment/operations-guide)
+- [Operator target architecture (planned)](/design/operator-target-architecture)
+- [Tier 2: Kubernetes](/deployment/kubernetes)
+- [Helm chart](/helm)
+- [Platform ops (HTTP, Docker)](/deployment/platforms)
+- [Tailscale & Headscale](/tailscale)
+- [Dashboard on Kubernetes](/dashboard-kubernetes)
+- [Istio & observability lab](/docker-desktop-observability)
+- [OpenClaw + ClawQL](/openclaw)
+
+## Guides
+
+- [Guides hub](/guides)
+- [ClawQL Learn](/learn)
+- [Token efficiency](/architecture/token-efficiency)
+- [Security overview](/security)
+- [Defense in depth](/security/defense-in-depth)
+- [Security curriculum (32 modules)](/security/best-practices)
+- [HITL & human interfaces](/reference/hitl)
+- [Verticals guide](/reference/verticals)
+- [Troubleshooting](/troubleshooting)
+
+## Reference
+
+- [Reference hub](/reference)
+- [Plugin model & registry](/reference/plugins)
+- [Protocol v2.1](/reference/protocol)
+- [Core concepts](/concepts)
+- [MCP tools](/tools)
+- [Configuration](/spec-configuration)
+- [Contributor specification](/contributing/technical-specification)
+- [Optional tools hub](/reference/optional-tools)
+- [Ouroboros library](/ouroboros)
+- [Bundled specs](/bundled-specs)
+- [GraphQL layer](/graphql-proxy)
+- [NATS JetStream](/nats-jetstream)
+- [Benchmarks](/benchmarks)
+
+## Examples
+
+- [Examples hub](/examples)
+- [Cloudflare docs deploy](/case-studies/cloudflare-docs-mcp)
+- [Vault + GitHub session](/case-studies/vault-memory-github-session-2026-04)
+- [Cross-thread vault recall](/case-studies/cross-thread-vault-recall)
+- [OpenClaw memory_recall](/case-studies/openclaw-clawql-memory-recall-2026-06)
+
+## Resources
+
+- [Resources hub](/resources)
+- [Roadmap](/vision/roadmap)
+- [Changelog & releases](/resources/changelog)
+- [Migration guide](/resources/migration)
+- [GitHub](https://github.com/danielsmithdevelopment/ClawQL)
 
 ---
 

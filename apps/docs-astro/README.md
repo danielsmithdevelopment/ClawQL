@@ -1,14 +1,17 @@
 # ClawQL docs (Astro)
 
-Migration target for **[docs.clawql.com](https://docs.clawql.com)** per [ADR 0018](../../docs/adr/0018-public-sites-astro-console-next.md).
+Static Astro rebuild of **[docs.clawql.com](https://docs.clawql.com)** per [ADR 0018](../../docs/adr/0018-public-sites-astro-console-next.md).
 
-**Production today** is still [`apps/docs`](../docs/) (Next.js + OpenNext Workers). This package is the static Astro replacement — no RSC flight URLs, Cloudflare Pages / static assets friendly.
+**No Next.js / OpenNext / RSC flight URLs** — `output: 'static'` for Cloudflare Pages (or any static host).
+
+Until DNS cutover, production may still point at [`apps/docs`](../docs/) (Next Worker). This package is the cutover target.
 
 ## Dev
 
 ```bash
 cd apps/docs-astro
 npm install
+npm run import:next   # refresh MDX from apps/docs (optional; also runs on prebuild)
 npm run dev
 ```
 
@@ -17,16 +20,23 @@ Open [http://localhost:4321](http://localhost:4321).
 ## Build
 
 ```bash
-npm run build    # → dist/
+npm run build    # import-from-next + astro build → dist/
 npm run preview
 ```
 
-Cloudflare Pages: build command `npm run build`, output directory `dist`, root `apps/docs-astro` (or filter accordingly).
+Cloudflare Pages: root `apps/docs-astro`, build `npm run build`, output `dist`.
 
-## Porting content
+## Content pipeline
 
-1. Add MDX under `src/content/docs/` with `title` + `description` frontmatter.
-2. Extend `src/lib/nav.ts` sidebar links.
-3. Prefer relative links for pages that already live here; keep absolute `https://docs.clawql.com/...` for not-yet-ported routes.
+`scripts/import-from-next.mjs` pulls:
 
-See [public-sites-astro-migration.md](../../docs/website/public-sites-astro-migration.md).
+- `apps/docs/src/app/**/page.mdx`
+- `apps/docs/src/generated/*-body.mdx` (+ plugins + security-training bodies)
+- Writes `src/content/docs/**/*.mdx` and `src/lib/nav.generated.json`
+
+Hub JSX (`Note`, `Button`, registry explorers) is stripped to prose for the first cutover. FlexSearch / React islands can land after DNS flip.
+
+## Related
+
+- [Migration plan](../../docs/website/public-sites-astro-migration.md)
+- Interim RSC WAF guard on the live Next Worker until cutover

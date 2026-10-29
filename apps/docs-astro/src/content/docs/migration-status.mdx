@@ -1,36 +1,11 @@
 ---
 title: Astro migration status
-description: >-
-  Progress migrating docs.clawql.com from Next.js OpenNext Workers to static
-  Astro (ADR 0018).
+description: "This site is the static Astro build of ClawQL docs (apps/docs-astro, ADR 0018). Content is imported from the former Next.js app."
 ---
 
 # Astro migration status
 
-`docs.clawql.com` is moving from **Next.js + OpenNext on Cloudflare Workers** to **static Astro on Cloudflare Pages / static assets** so public traffic cannot hammer RSC flight URLs (`?_rsc=`).
+This site is the **static Astro** build of ClawQL docs (`apps/docs-astro`, ADR 0018). Content is imported from the former Next.js app.
 
-## Why
-
-Scrapers and bots replay Next App Router flight query strings without `RSC: 1`, forcing expensive Worker HTML work and burning free-plan quota. Static Astro HTML has no flight protocol.
-
-## What this app is
-
-| Item | Status |
-| ---- | ------ |
-| Package | `apps/docs-astro` |
-| Output | `output: 'static'` — no OpenNext, no RSC |
-| Live production | Still **`apps/docs`** (Next) until DNS cutover |
-| Ported pages | `/`, `/quickstart`, `/migration-status` |
-
-## Next milestones
-
-1. Bulk-import MDX from `apps/docs` content + generated sync scripts into `src/content/docs/`.
-2. Port sidebar parity (`docs-nav-data`), search, plugin registry, security training modules.
-3. Agent markdown / `llms.txt` negotiation on Pages Functions (mirror `apps/www` middleware pattern).
-4. Preview project on Cloudflare Pages → cut over `docs.clawql.com` → retire OpenNext Worker.
-
-## Related
-
-- [ADR 0018](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0018-public-sites-astro-console-next.md)
-- [Migration plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/website/public-sites-astro-migration.md)
-- Interim RSC guard on the live Next Worker (WAF + middleware) until cutover
+- **Output:** static HTML (no OpenNext / no `_rsc` flight URLs)
+- **Host target:** Cloudflare Pages / static assets

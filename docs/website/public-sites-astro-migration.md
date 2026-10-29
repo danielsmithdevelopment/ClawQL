@@ -29,13 +29,14 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 **In progress:** package at [`apps/docs-astro/`](../../apps/docs-astro/). Production remains [`apps/docs/`](../../apps/docs/) (Next) until DNS cutover.
 
-1. ~~Scaffold Astro (TS + Tailwind v4 + MDX), static `output`, starter layout/nav.~~ (started — `/`, `/quickstart`, `/migration-status`)
-2. Bulk-import MDX / generated sync outputs into `src/content/docs/`.
-3. Port nav parity, search, plugin registry, security training modules, case studies.
-4. Re-home `prebuild` sync scripts to emit into the Astro content tree (same markdown sources under `docs/`).
-5. Agent `Accept: text/markdown` + `llms.txt` / `AGENTS.md` parity (Pages Function if needed).
+1. ~~Scaffold Astro (TS + Tailwind v4 + MDX), static `output`, starter layout/nav.~~
+2. ~~Bulk-import MDX / generated bodies / plugins / security training via `apps/docs-astro/scripts/import-from-next.mjs` (`prebuild`).~~ (~157 content pages + `/archive` + `/security/status`)
+3. ~~Sidebar nav generated from imported tree; Next redirects mirrored in `astro.config.mjs`.~~
+4. Re-home upstream `sync-*.mjs` to emit into Astro content directly (optional cleanup — importer reads `apps/docs` today).
+5. Agent `Accept: text/markdown` negotiation on Pages Functions (static `llms.txt` / `AGENTS.md` already in `public/`).
 6. Preview on Cloudflare Pages → cut over `docs.clawql.com` → retire `clawql-docs` OpenNext Worker.
 7. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders.
+8. Nice-to-have after cutover: FlexSearch UI, plugin registry explorer React island, richer Note/Button MDX components (hub JSX currently stripped to prose).
 
 ## Phase 2 — `apps/www` (clawql.com)
 

@@ -108,8 +108,10 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
       class="border-t border-zinc-900/10 py-8 text-center text-sm text-zinc-500 dark:border-claw-graph/40"
     >
       <p>
-        Astro migration in progress (ADR 0018). Production docs remain on the
-        Next.js Worker until cutover.
+        © {new Date().getFullYear()} ClawQL · Static Astro docs (ADR 0018) ·
+        <a href={site.github} class="no-underline hover:underline" rel="noopener noreferrer"
+          >GitHub</a
+        >
       </p>
     </footer>
   </body>
