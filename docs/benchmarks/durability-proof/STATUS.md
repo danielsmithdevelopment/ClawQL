@@ -6,6 +6,8 @@
 
 **Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
+**Claim-path scaffolding (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board JSON now includes `columns.completed` + `columns.stepsRepeated` next to the safety/availability trio — re-measure Tier C before quoting those rates. State preserved, journaled model/timer/approval steps, and program-level TLA+ remain open.
+
 ## Scoped Tier C claim (measured — stock R2)
 
 > Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.

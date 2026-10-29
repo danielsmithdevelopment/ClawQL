@@ -12,6 +12,8 @@
  *   survivorSelfFences  — availability (celld exit code 3 / lease watchdog)
  *   survivorRestarts    — orchestrator recoveries (counted, not hidden)
  *   resumeDeadlineMiss  — resume not completed within deadline
+ *   completed           — claim-path §1: clean program completions after resume
+ *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
  *
  * Env:
  *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
@@ -22,14 +24,7 @@
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
 import { spawn } from "node:child_process";
-import {
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  openSync,
-  unlinkSync,
-  existsSync,
-} from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -49,7 +44,10 @@ function autoWireR2() {
   const key = process.env.CLAWQL_SYNC_ACCESS_KEY_ID;
   const secret = process.env.CLAWQL_SYNC_SECRET_ACCESS_KEY;
   if (!account || !key || !secret) return;
-  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:TZ.]/g, "")
+    .slice(0, 14);
   process.env.CELLD_BUCKET = `s3://clawql-streams-state/tier-c-phased-${stamp}`;
   process.env.S3_ENDPOINT =
     process.env.S3_ENDPOINT || `https://${account}.r2.cloudflarestorage.com`;
@@ -89,9 +87,7 @@ if (!process.env.CELLD_BUCKET) {
   process.exit(0);
 }
 
-const endpointArgs = process.env.S3_ENDPOINT
-  ? ["--endpoint", process.env.S3_ENDPOINT]
-  : [];
+const endpointArgs = process.env.S3_ENDPOINT ? ["--endpoint", process.env.S3_ENDPOINT] : [];
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -111,8 +107,7 @@ async function fetchJson(url, init = {}, timeoutMs = 15_000) {
     }
     return { ok: res.ok, status: res.status, body };
   } catch (err) {
-    const msg =
-      err?.name === "AbortError" ? `timeout ${timeoutMs}ms` : String(err?.message || err);
+    const msg = err?.name === "AbortError" ? `timeout ${timeoutMs}ms` : String(err?.message || err);
     return { ok: false, status: 0, body: { error: msg }, fetchError: true };
   } finally {
     clearTimeout(timer);
@@ -189,6 +184,9 @@ function emptyPhaseStats() {
         duplicates: 0,
         outcomeUnknown: 0,
         completedClean: 0,
+        writeStepsRerun: 0,
+        journalDivergence: 0,
+        replayedSteps: 0,
         survivorSelfFences: 0,
         survivorRestarts: 0,
         resumeDeadlineMisses: 0,
@@ -240,8 +238,7 @@ function scrapeLeaseRenewals(logPaths) {
       min: headroom.length ? headroom[0] : null,
     },
     selfFenceLogHits: fenceAt.length,
-    note:
-      "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md.",
+    note: "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md.",
   };
 }
 
@@ -474,7 +471,8 @@ async function main() {
     }
 
     await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
-    const writesBefore = (await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`)).body?.count || 0;
+    const writesBefore =
+      (await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`)).body?.count || 0;
 
     const body = phasePlan(phase, programId);
     let runRes;
@@ -582,13 +580,11 @@ async function main() {
       if (resume.ok || resume.status === 404 || (resume.status && resume.status !== 0)) break;
       await sleep(100);
     }
-    if (
-      !(
-        resume.ok ||
-        (resume.status === 404 && resume.body?.error === "not_found") ||
-        (resume.status && resume.status !== 500 && !resume.fetchError)
-      )
-    ) {
+    if (!(
+      resume.ok ||
+      (resume.status === 404 && resume.body?.error === "not_found") ||
+      (resume.status && resume.status !== 500 && !resume.fetchError)
+    )) {
       // Deadline miss if we never got a definitive program response.
       if (!resume.ok && (resume.fetchError || resume.status === 500 || resume.status === 0)) {
         avail.resumeDeadlineMiss = true;
@@ -601,12 +597,20 @@ async function main() {
     const duplicates = Math.max(0, writeCount - 1);
     const outcomeUnknown = Boolean(
       resume.body?.outcomeUnknown ||
-        (resume.body?.calls || []).some(
-          (c) => c.outcomeUnknown || c.result?.status === "outcome_unknown"
-        )
+      (resume.body?.calls || []).some(
+        (c) => c.outcomeUnknown || c.result?.status === "outcome_unknown"
+      )
     );
     const completedClean =
       resume.body?.status === "completed" && resume.body?.ok === true && !outcomeUnknown;
+    const journalDivergence = Boolean(
+      resume.body?.journalDivergence || resume.body?.diagnostics?.code === "journal_divergence"
+    );
+    const resumeCalls = Array.isArray(resume.body?.calls) ? resume.body.calls : [];
+    const replayedSteps = resumeCalls.filter((c) => c.replayed === true).length;
+    // Host re-execution of a call that already had a journal entry would surface as a
+    // duplicate write on the pets ledger (writes) — target 0 for completed steps.
+    const writeStepsRerun = duplicates;
 
     let expectOk = false;
     if (!avail.resumeDeadlineMiss) {
@@ -645,6 +649,9 @@ async function main() {
       st.resumeDeadlineMisses += 1;
       totalDeadlineMisses += 1;
     }
+    if (journalDivergence) st.journalDivergence = (st.journalDivergence || 0) + 1;
+    st.writeStepsRerun = (st.writeStepsRerun || 0) + writeStepsRerun;
+    st.replayedSteps = (st.replayedSteps || 0) + replayedSteps;
     if (expectOk) st.ok += 1;
     else st.failures += 1;
 
@@ -656,6 +663,9 @@ async function main() {
       writeCount,
       outcomeUnknown,
       completedClean,
+      journalDivergence,
+      writeStepsRerun,
+      replayedSteps,
       resumeMs,
       recoveryMs: avail.recoveryMs,
       survivorSelfFence: avail.survivorSelfFence,
@@ -691,7 +701,10 @@ async function main() {
   }
 
   function summarize() {
-    const allResume = trials.filter((t) => t.resumeMs != null).map((t) => t.resumeMs).sort((a, b) => a - b);
+    const allResume = trials
+      .filter((t) => t.resumeMs != null)
+      .map((t) => t.resumeMs)
+      .sort((a, b) => a - b);
     const allRecovery = trials
       .filter((t) => t.recoveryMs > 0)
       .map((t) => t.recoveryMs)
@@ -709,6 +722,9 @@ async function main() {
         outcomeUnknown: s.outcomeUnknown,
         outcomeUnknownRate: s.n ? s.outcomeUnknown / s.n : 0,
         completedClean: s.completedClean,
+        completedCleanRate: s.n ? s.completedClean / s.n : 0,
+        writeStepsRerun: s.writeStepsRerun || 0,
+        journalDivergence: s.journalDivergence || 0,
         survivorSelfFences: s.survivorSelfFences,
         survivorSelfFenceRate: s.n ? s.survivorSelfFences / s.n : 0,
         survivorRestarts: s.survivorRestarts,
@@ -731,6 +747,14 @@ async function main() {
     const upper95 = zeroDup && N > 0 ? 3 / N : null;
     const lease = scrapeLeaseRenewals([nodes.A.log, nodes.B.log]);
     const allPhaseOk = trials.length > 0 && trials.every((t) => t.ok === true);
+    const totalCompletedClean = trials.filter((t) => t.completedClean).length;
+    // Outer phases must complete cleanly; mid-flight phases intentionally end outcome_unknown.
+    const completionEligible = trials.filter(
+      (t) => t.phase === "before_intent" || t.phase === "after_call_before_journal"
+    );
+    const completionEligibleClean = completionEligible.filter((t) => t.completedClean).length;
+    const totalWriteStepsRerun = trials.reduce((acc, t) => acc + (t.writeStepsRerun || 0), 0);
+    const totalJournalDivergence = trials.filter((t) => t.journalDivergence).length;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
@@ -754,9 +778,7 @@ async function main() {
         },
         outcomeUnknown: {
           total: trials.filter((t) => t.outcomeUnknown).length,
-          rate: trials.length
-            ? trials.filter((t) => t.outcomeUnknown).length / trials.length
-            : 0,
+          rate: trials.length ? trials.filter((t) => t.outcomeUnknown).length / trials.length : 0,
           meaning: "honest uncertainty — person resolves",
         },
         availability: {
@@ -773,6 +795,23 @@ async function main() {
           meaning:
             "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs",
         },
+        completed: {
+          cleanCompletions: totalCompletedClean,
+          rateAllPhases: trials.length ? totalCompletedClean / trials.length : 0,
+          rateOuterPhases: completionEligible.length
+            ? completionEligibleClean / completionEligible.length
+            : 0,
+          outerPhaseN: completionEligible.length,
+          meaning:
+            "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown",
+        },
+        stepsRepeated: {
+          writeStepsRerun: totalWriteStepsRerun,
+          zeroWriteStepsRerun: totalWriteStepsRerun === 0,
+          journalDivergence: totalJournalDivergence,
+          meaning:
+            "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)",
+        },
       },
       totalDuplicates,
       zeroDuplicates: zeroDup,
@@ -784,11 +823,8 @@ async function main() {
         const p50 = percentile(allResume, 50);
         const aboutSec = p50 != null ? Math.round(p50 / 1000) : null;
         const fenceRate = trials.length ? totalSelfFences / trials.length : 0;
-        const deadlineRate = trials.length
-          ? totalDeadlineMisses / trials.length
-          : 0;
-        const upperPct =
-          upper95 != null ? `${(upper95 * 100).toFixed(1)}%` : "n/a";
+        const deadlineRate = trials.length ? totalDeadlineMisses / trials.length : 0;
+        const upperPct = upper95 != null ? `${(upper95 * 100).toFixed(1)}%` : "n/a";
         const median =
           aboutSec != null
             ? `The median resume took about ${aboutSec} seconds, set by the lease timeout.`
@@ -802,7 +838,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Three columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated (outer-phase completion rate; write-step re-runs via ledger). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. State preserved + journaled model/timer/approval steps + program-level TLA+ remain open on the claim path.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
