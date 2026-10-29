@@ -1,0 +1,662 @@
+{
+  "docsNavigation": [
+    {
+      "title": "Getting started",
+      "links": [
+        {
+          "title": "Overview",
+          "href": "/getting-started"
+        },
+        {
+          "title": "Quickstart",
+          "href": "/quickstart"
+        },
+        {
+          "title": "Agent setup",
+          "href": "/agent-setup"
+        },
+        {
+          "title": "Inference setup",
+          "href": "/getting-started/inference"
+        },
+        {
+          "title": "Custom sources",
+          "href": "/getting-started/custom-sources",
+          "tag": "MCP"
+        },
+        {
+          "title": "MCP clients",
+          "href": "/mcp-clients"
+        },
+        {
+          "title": "For teams",
+          "href": "/getting-started/for-teams"
+        },
+        {
+          "title": "Immutable releases",
+          "href": "/getting-started/immutable-releases"
+        },
+        {
+          "title": "Migrate to 8.0",
+          "href": "/getting-started/migrate-to-8.0",
+          "tag": "Breaking"
+        }
+      ]
+    },
+    {
+      "title": "Security",
+      "links": [
+        {
+          "title": "Overview",
+          "href": "/security"
+        },
+        {
+          "title": "Security status",
+          "href": "/security/status",
+          "tag": "Evidence"
+        },
+        {
+          "title": "Defense in depth",
+          "href": "/security/defense-in-depth"
+        },
+        {
+          "title": "Best practices",
+          "href": "/security/best-practices"
+        },
+        {
+          "title": "Container Image Security",
+          "href": "/security/best-practices/container-image-security-pinning-distroless-golden-images",
+          "tag": "1"
+        },
+        {
+          "title": "Cluster Admission Control",
+          "href": "/security/best-practices/cluster-admission-control-signing-policy",
+          "tag": "2"
+        },
+        {
+          "title": "ClawHub Skill Vetting and Safe Installation",
+          "href": "/security/best-practices/clawhub-skill-vetting-safe-installation",
+          "tag": "3"
+        },
+        {
+          "title": "Zero Trust Network Architecture",
+          "href": "/security/best-practices/zero-trust-network-mtls-istio-rbac",
+          "tag": "4"
+        },
+        {
+          "title": "Agent Gateway Hardening",
+          "href": "/security/best-practices/agent-gateway-hardening-dns-rebinding",
+          "tag": "5"
+        },
+        {
+          "title": "Egress Filtering, DNS Controls, and Data Loss Prevention",
+          "href": "/security/best-practices/egress-filtering-dns-dlp",
+          "tag": "6"
+        },
+        {
+          "title": "Least Privilege and Scoped Kubernetes Identities",
+          "href": "/security/best-practices/least-privilege-scoped-kubernetes-identities",
+          "tag": "7"
+        },
+        {
+          "title": "Secrets at Rest",
+          "href": "/security/best-practices/secrets-at-rest-vault-hsm-audit",
+          "tag": "8"
+        },
+        {
+          "title": "All 32 modules…",
+          "href": "/security/best-practices"
+        }
+      ]
+    },
+    {
+      "title": "Deploy",
+      "links": [
+        {
+          "title": "Deployment",
+          "href": "/deployment"
+        },
+        {
+          "title": "Operations guide",
+          "href": "/deployment/operations-guide"
+        },
+        {
+          "title": "Platforms",
+          "href": "/deployment/platforms"
+        },
+        {
+          "title": "Kubernetes & Helm",
+          "href": "/deployment/kubernetes"
+        },
+        {
+          "title": "Helm charts",
+          "href": "/helm"
+        },
+        {
+          "title": "NATS JetStream",
+          "href": "/nats-jetstream"
+        },
+        {
+          "title": "Docker Desktop observability",
+          "href": "/docker-desktop-observability"
+        },
+        {
+          "title": "Dashboard on Kubernetes",
+          "href": "/dashboard-kubernetes"
+        },
+        {
+          "title": "OpenClaw",
+          "href": "/openclaw"
+        },
+        {
+          "title": "Tailscale",
+          "href": "/tailscale"
+        }
+      ]
+    },
+    {
+      "title": "Learn",
+      "links": [
+        {
+          "title": "Overview",
+          "href": "/learn"
+        },
+        {
+          "title": "Concepts",
+          "href": "/concepts"
+        },
+        {
+          "title": "Using search & execute",
+          "href": "/learn/search-and-execute-mcp"
+        },
+        {
+          "title": "clawql-memory (Memory 2.0)",
+          "href": "/learn/memory"
+        },
+        {
+          "title": "External ingest & knowledge lake",
+          "href": "/learn/external-ingest-knowledge"
+        },
+        {
+          "title": "Onyx enterprise search",
+          "href": "/learn/knowledge-search-onyx"
+        },
+        {
+          "title": "Document pipeline",
+          "href": "/learn/document-pipeline"
+        },
+        {
+          "title": "Payments & entitlements",
+          "href": "/learn/payments-and-entitlements"
+        },
+        {
+          "title": "Sandbox exec",
+          "href": "/learn/sandbox-exec"
+        },
+        {
+          "title": "Optional MCP tools",
+          "href": "/learn/optional-mcp-tools"
+        },
+        {
+          "title": "Effect-TS in ClawQL",
+          "href": "/learn/effect-ts"
+        },
+        {
+          "title": "Ouroboros tools",
+          "href": "/learn/ouroboros-tools"
+        },
+        {
+          "title": "Streams getting started",
+          "href": "/learn/streams-getting-started"
+        },
+        {
+          "title": "NATS IDP pipeline",
+          "href": "/learn/nats-idp-pipeline"
+        },
+        {
+          "title": "Schedule & notify workflows",
+          "href": "/learn/schedule-notify-workflows"
+        },
+        {
+          "title": "Cache handoff between chats",
+          "href": "/learn/cache-handoff-between-chats"
+        },
+        {
+          "title": "Audit tool & observability",
+          "href": "/learn/audit-tool-and-observability"
+        },
+        {
+          "title": "Panguard MCP enforcement",
+          "href": "/learn/panguard-mcp-enforcement"
+        },
+        {
+          "title": "Token efficiency",
+          "href": "/architecture/token-efficiency"
+        },
+        {
+          "title": "Troubleshooting",
+          "href": "/troubleshooting"
+        }
+      ]
+    },
+    {
+      "title": "Plugins",
+      "links": [
+        {
+          "title": "Overview",
+          "href": "/plugins"
+        },
+        {
+          "title": "Domain verticals",
+          "href": "/plugins#verticals"
+        },
+        {
+          "title": "Plugin model",
+          "href": "/plugins#plugin-model"
+        },
+        {
+          "title": "Gateway core",
+          "href": "/plugins/core"
+        },
+        {
+          "title": "Panguard MCP proxy",
+          "href": "/plugins/panguard-proxy"
+        },
+        {
+          "title": "Memory (vault)",
+          "href": "/plugins/memory"
+        },
+        {
+          "title": "Code graph",
+          "href": "/plugins/codegraph"
+        },
+        {
+          "title": "Documents & IDP",
+          "href": "/plugins/documents"
+        },
+        {
+          "title": "Bundled providers",
+          "href": "/plugins/bundled-providers"
+        },
+        {
+          "title": "Automation",
+          "href": "/plugins/automation"
+        },
+        {
+          "title": "Sandbox",
+          "href": "/plugins/sandbox"
+        },
+        {
+          "title": "Ouroboros",
+          "href": "/plugins/ouroboros"
+        },
+        {
+          "title": "Inference providers",
+          "href": "/plugins/inference-providers"
+        },
+        {
+          "title": "Payments",
+          "href": "/plugins/payments"
+        },
+        {
+          "title": "HITL (Label Studio)",
+          "href": "/plugins/hitl-label-studio"
+        },
+        {
+          "title": "All 13 plugins…",
+          "href": "/plugins"
+        }
+      ]
+    },
+    {
+      "title": "Platform",
+      "links": [
+        {
+          "title": "Vision & status",
+          "href": "/vision/roadmap"
+        },
+        {
+          "title": "Architecture",
+          "href": "/architecture"
+        },
+        {
+          "title": "Zero-Trust Agentic Fabric",
+          "href": "/architecture/agentic-fabric"
+        },
+        {
+          "title": "Enterprise Ontology",
+          "href": "/architecture/enterprise-ontology"
+        },
+        {
+          "title": "IDP platform",
+          "href": "/vision/idp-platform"
+        },
+        {
+          "title": "Operator target architecture",
+          "href": "/design/operator-target-architecture"
+        },
+        {
+          "title": "memory_recall structured filters",
+          "href": "/specs/memory/memory-recall-structured-filter",
+          "tag": "v0.1"
+        },
+        {
+          "title": "Legal domain ontology",
+          "href": "/specs/ontology/legal-domain",
+          "tag": "v0.1"
+        },
+        {
+          "title": "Fast Decision routing closeout",
+          "href": "/specs/classifier/fast-decision-routing-closeout",
+          "tag": "v0.4"
+        },
+        {
+          "title": "clawql-network",
+          "href": "/specs/network/clawql-network",
+          "tag": "v0.1"
+        },
+        {
+          "title": "clawql-agents",
+          "href": "/agents/clawql-agents",
+          "tag": "v0.1"
+        },
+        {
+          "title": ".cq* extensions",
+          "href": "/specs/cq-extensions"
+        },
+        {
+          "title": ".cqe contracts",
+          "href": "/specs/cq-extensions/cqe",
+          "tag": "Ext"
+        },
+        {
+          "title": ".cqm memory",
+          "href": "/specs/cq-extensions/cqm",
+          "tag": "Ext"
+        },
+        {
+          "title": ".cqk knowledge",
+          "href": "/specs/cq-extensions/cqk",
+          "tag": "Ext"
+        },
+        {
+          "title": ".cqw workflows",
+          "href": "/specs/cq-extensions/cqw",
+          "tag": "Ext"
+        },
+        {
+          "title": "Bundled specs",
+          "href": "/bundled-specs"
+        },
+        {
+          "title": "GraphQL layer",
+          "href": "/graphql-proxy"
+        },
+        {
+          "title": "HITL — Label Studio",
+          "href": "/hitl-label-studio"
+        },
+        {
+          "title": "Flink Onyx sync",
+          "href": "/flink-onyx-sync"
+        },
+        {
+          "title": "Onyx knowledge (legacy)",
+          "href": "/onyx-knowledge",
+          "tag": "Legacy"
+        },
+        {
+          "title": "clawql-inference",
+          "href": "/inference/clawql-inference"
+        },
+        {
+          "title": "clawql-payments",
+          "href": "/payments/clawql-payments"
+        },
+        {
+          "title": "Immutable releases vision",
+          "href": "/vision/immutable-releases"
+        },
+        {
+          "title": "clawql-surveillance",
+          "href": "/surveillance/clawql-surveillance",
+          "tag": "Spec"
+        },
+        {
+          "title": "ClawQL Streams",
+          "href": "/streams/clawql-streams",
+          "tag": "Draft"
+        },
+        {
+          "title": "Durable Objects",
+          "href": "/streams/clawql-durable-objects",
+          "tag": "Draft"
+        },
+        {
+          "title": "celld integration",
+          "href": "/streams/clawql-celld",
+          "tag": "Draft"
+        },
+        {
+          "title": "Streams + celld evidence",
+          "href": "/streams/streams-celld-evidence",
+          "tag": "Evidence"
+        },
+        {
+          "title": "Bursty Streams on AWS",
+          "href": "/streams/aws-celld-burst",
+          "tag": "Draft"
+        },
+        {
+          "title": "clawql-cellrt",
+          "href": "/streams/clawql-cellrt",
+          "tag": "Draft"
+        },
+        {
+          "title": "clawql-tee",
+          "href": "/streams/clawql-tee",
+          "tag": "Draft"
+        },
+        {
+          "title": "TEE air-gap audit",
+          "href": "/streams/clawql-tee-airgap-audit",
+          "tag": "Draft"
+        },
+        {
+          "title": "QR stream transport",
+          "href": "/streams/clawql-qr-stream-transport",
+          "tag": "Draft"
+        },
+        {
+          "title": "clawql-government",
+          "href": "/government/clawql-government",
+          "tag": "Draft"
+        },
+        {
+          "title": "Ouroboros",
+          "href": "/ouroboros"
+        },
+        {
+          "title": "DAOS architecture",
+          "href": "/ouroboros/daos"
+        },
+        {
+          "title": "DAOS specification",
+          "href": "/ouroboros/specification"
+        },
+        {
+          "title": "DAOS build plan",
+          "href": "/ouroboros/build-plan"
+        }
+      ]
+    },
+    {
+      "title": "Reference",
+      "links": [
+        {
+          "title": "Overview",
+          "href": "/reference"
+        },
+        {
+          "title": "MCP tools",
+          "href": "/tools"
+        },
+        {
+          "title": "Protocol",
+          "href": "/reference/protocol"
+        },
+        {
+          "title": "Optional tools",
+          "href": "/reference/optional-tools"
+        },
+        {
+          "title": "HITL reference",
+          "href": "/reference/hitl"
+        },
+        {
+          "title": "Plugin contracts",
+          "href": "/reference/plugins"
+        },
+        {
+          "title": "Verticals reference",
+          "href": "/reference/verticals"
+        },
+        {
+          "title": "Authentication",
+          "href": "/auth"
+        },
+        {
+          "title": "Audit Trail",
+          "href": "/audit"
+        },
+        {
+          "title": "Observability",
+          "href": "/observability"
+        },
+        {
+          "title": "mcp-api-adapter",
+          "href": "/mcp/mcp-api-adapter"
+        },
+        {
+          "title": "/mcp-ui",
+          "href": "/mcp/mcp-ui"
+        },
+        {
+          "title": "Protocol Fabric",
+          "href": "/mcp/protocol-fabric"
+        },
+        {
+          "title": "Configuration",
+          "href": "/spec-configuration"
+        },
+        {
+          "title": "Contributor spec",
+          "href": "/contributing/technical-specification"
+        }
+      ]
+    },
+    {
+      "title": "More",
+      "links": [
+        {
+          "title": "Resources",
+          "href": "/resources"
+        },
+        {
+          "title": "Examples",
+          "href": "/examples"
+        },
+        {
+          "title": "Cloudflare docs deploy",
+          "href": "/case-studies/cloudflare-docs-mcp"
+        },
+        {
+          "title": "Vault + GitHub session",
+          "href": "/case-studies/vault-memory-github-session-2026-04"
+        },
+        {
+          "title": "Cross-thread vault recall",
+          "href": "/case-studies/cross-thread-vault-recall"
+        },
+        {
+          "title": "TrueNAS homelab",
+          "href": "/case-studies/truenas-scale-corgicave-homelab"
+        },
+        {
+          "title": "Worker 1102 incident",
+          "href": "/case-studies/docs-clawql-worker-1102-mcp-memory-2026-04"
+        },
+        {
+          "title": "Deck parity session",
+          "href": "/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04"
+        },
+        {
+          "title": "OpenClaw memory_recall",
+          "href": "/case-studies/openclaw-clawql-memory-recall-2026-06"
+        },
+        {
+          "title": "Benchmarks",
+          "href": "/benchmarks"
+        },
+        {
+          "title": "Executor comparison",
+          "href": "/benchmarks/executor-comparison"
+        },
+        {
+          "title": "Dominance roadmap (marketing)",
+          "href": "https://clawql.com/benchmarks/#dominance"
+        },
+        {
+          "title": "Slide deck",
+          "href": "/vision/slide-deck"
+        },
+        {
+          "title": "Changelog",
+          "href": "/resources/changelog"
+        },
+        {
+          "title": "Legacy URLs",
+          "href": "/archive"
+        }
+      ]
+    }
+  ],
+  "docsMobileShortcuts": [
+    {
+      "title": "Home",
+      "href": "/"
+    },
+    {
+      "title": "Quickstart",
+      "href": "/quickstart"
+    },
+    {
+      "title": "Security",
+      "href": "/security"
+    },
+    {
+      "title": "Security status",
+      "href": "/security/status"
+    },
+    {
+      "title": "Deploy",
+      "href": "/deployment"
+    },
+    {
+      "title": "Learn",
+      "href": "/learn"
+    },
+    {
+      "title": "Plugins",
+      "href": "/plugins"
+    },
+    {
+      "title": "Reference",
+      "href": "/reference"
+    },
+    {
+      "title": "GitHub",
+      "href": "https://github.com/danielsmithdevelopment/ClawQL"
+    }
+  ]
+}
