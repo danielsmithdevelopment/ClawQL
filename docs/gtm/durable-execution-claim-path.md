@@ -57,6 +57,8 @@ If recovery reruns code between steps, nondeterminism (clock, random, iteration 
 
 A program waiting days on an approval must still resume after node restarts and failover. Deadline + fleet results are most of this evidence — make the wait/approval path a first-class board column.
 
+**Today:** **Scaffolded** — fleet `columns.waitApproval` (`measured: false`; points at Node `await_approval` + density `restartSurvival`). Fleet phased harness does not yet inject await_approval waits, so no rate is quoted.
+
 ### 5. Model extended
 
 Extend the TLA+ spec from single writes to programs: a crashed program eventually completes (under fair scheduling), and no completed step reruns. Check board traces against it. Still: **“model-checked under bounds,”** never “provably correct.”
