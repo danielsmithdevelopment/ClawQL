@@ -40,5 +40,5 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 ## Pause / next focus
 
 - **This board:** pause. Shared-host deadline campaign when convenient.
-- **Time-sensitive:** Infinity comparison on the Pi while people are still talking about it.
+- **Time-sensitive:** Infinity comparison on the Pi — step 1 done: reproduced ~103 KiB/agent via their `agent_scale` at pinned `341f6c2` ([infinity-on-pi/](./infinity-on-pi/)); Pi hardware + fair ClawQL comparison next.
 - No win copy until shared-host (or Pi Infinity) evidence.
