@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** Short ramp steps were overstating the 1s-SLA rate (ClawQL printed 636k against a ~321k drain). **Fixed:** continuous-arrival steps with backlog trend; fail when overdue depth grows. Remeasure: **durable ~347k/s**, **sustained ~140k/s** (≤ drain). Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json).
+**Status:** Steady-state ramp made both systems consistent. ClawQL’s gap (140k sustained vs 347k drain) was **scheduler-bound**; after pop-all-due + coalesce wakes + no idle-sleep while writers are busy, sustained climbs to the drain. Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json).
 
 **Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
 
@@ -8,43 +8,43 @@
 
 > On one node, Ontologiql held 200,000 parked agents, each with a 20-turn history and a pending tool call, within a 512 MiB process memory ceiling, with state stored on disk at about 30 KiB per agent. A parked agent woke in under 0.6 ms at p99 with a cold cache, and under 35 µs with its state cached. Parked agents survived a restart.
 
-## Ramp honesty (both systems)
+## Honest summary (different hosts)
 
-A sustained arrival rate **cannot** exceed durable drain — backlog would grow without bound. Short steps (1–2s) hide that: lateness reaches 1s only after ~1s of growth, so the step still “passes.”
+Roughly equal sustained throughput (~140–150k before ClawQL’s scheduler fix; ClawQL now ~drain), both well short of serial fsync×batch ceiling, **different bottlenecks**.
 
-| Rule          | Requirement                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Step duration | Continuous arrivals for **≥30s** (campaign); smoke may use 8s                              |
-| Fail if       | overdue backlog still **growing** in the final stretch — even when pctWithinSla looks fine |
-| Evidence      | `stepDurationMs` + `backlogTrend` on every ramp arm                                        |
+| System | Sustained | Drain | Ratio | Bound |
+| --- | --- | --- | --- | --- |
+| **ClawQL** (after coalesce) | **~352k**/s | **~333k**/s | ~0.95 | **writer-bound** (was scheduler at ~140k) |
+| **Ontologiql** (30s steps) | **~148k**/s | **~156k**/s | ~1.05 | **write-path** (ack ~154 µs/batch) |
 
-## Two board numbers (ClawQL, this host, 8s smoke steps)
+## ClawQL scheduler fix
 
-| Number                                           | Result                                                       |
-| ------------------------------------------------ | ------------------------------------------------------------ |
-| **durableRecordsPerSec** (saturating continuous) | **~347k/s**                                                  |
-| **rateSustainableWithinOneSecondSla**            | **~140k/s** (first fail ~144k on growing backlog @ 100% SLA) |
-| drain / sustained                                | **~2.5** → latency limit once the ramp is honest             |
+| Lever | Change |
+| --- | --- |
+| Pop-all-due | Each wake emits **every** arrival due through now |
+| Coalesce | Idle sleeps ≤1 ms (`coalesceWakeMs`); never sleep while `inFlight>0` |
+| Queue | O(1) pending head (no `Array.shift`) |
 
-Diagnosis: `latency_limit_drain_exceeds_sustained_sla_rate`. Prior 636k figure **retracted** (short place-ahead ramp).
+Before: sustained **~140k** vs drain **~347k** (`latency_limit_…`). After: sustained **~352k** ≈ drain — `writer_bound_sustained_near_drain`. Prior short-ramp **636k** remains retracted.
 
-## Cycle stages (drain window)
+## Cycle / sync tails
 
-| Stage           | Mean    | p50                   |
-| --------------- | ------- | --------------------- |
-| write           | ~10 µs  | ~9 µs                 |
-| sync            | ~125 µs | ~111 µs (p99 ~672 µs) |
-| ack             | ~2 µs   | ~2 µs                 |
-| inter-flush gap | ~0.4 µs | —                     |
+| | ClawQL | Ontologiql |
+| --- | --- | --- |
+| write | ~10 µs | ~37 µs |
+| sync p50 / p99 | ~114 / **426** µs | ~101 / **986** µs |
+| ack / batch | **~2 µs** | **~154 µs** ← next Ontologiql lever |
 
-ClawQL ack stays tiny vs Ontologiql’s ~141 µs/batch. Record sync **p99** beside mean (Ontologiql mean 252 vs p50 100).
+Record sync **p99** on every result. Disk tails differ by host — campaign host will shift both.
 
-## Prealloc / journal config
+## Ontologiql next levers
 
-| System     | Best on its host                                             |
-| ---------- | ------------------------------------------------------------ |
-| ClawQL     | fsync append (~+3% for prealloc here)                        |
-| Ontologiql | fdatasync + 256 MiB prealloc (~+31%) — disclose on shared FS |
+- Cut ack ~154 µs/batch (largest non-sync cost)
+- Double-buffer trial judged by before/after **drain + fsyncs/sec** (writer ~24% of serial ceiling)
+
+## Ramp honesty (both)
+
+Continuous arrivals ≥30s/step; fail growing backlog; record `stepDurationMs` + `backlogTrend`. Sustained ≤ drain.
 
 ## Shared-host campaign
 
@@ -55,11 +55,3 @@ CLAWQL_DENSITY_REPS=3 \
 CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.json \
   npm run benchmark:program-density-shared-host
 ```
-
-## Board snapshot
-
-| System           | Status                                              | Notes                        |
-| ---------------- | --------------------------------------------------- | ---------------------------- |
-| Ontologiql       | Drain≈SLA (~0.85); between_syncs_ack_write_material | Same steady-state ramp rules |
-| ClawQL           | Steady-state ramp; sustained ≤ drain; latency-bound | Campaign-ready               |
-| Golem / Infinity | Pending invite                                      | fair-v2 / SHARED_HOST        |

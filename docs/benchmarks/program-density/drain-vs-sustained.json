@@ -1,6 +1,6 @@
 {
   "kind": "durable-agent-density-drain-vs-sustained",
-  "measuredAt": "2026-10-29T02:26:53.131Z",
+  "measuredAt": "2026-10-29T02:45:26.019Z",
   "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
   "journalConfig": {
     "mode": "group_commit",
@@ -19,53 +19,53 @@
   },
   "pureDrain": {
     "mode": "saturating_continuous",
-    "n": 3697408,
-    "wallMs": 10648.02,
+    "n": 3663744,
+    "wallMs": 10992.12,
     "drainWindowMs": 8000,
-    "durableRecordsPerSec": 347233.12,
-    "fsyncsPerSec": 5425.52,
+    "durableRecordsPerSec": 333300.76,
+    "fsyncsPerSec": 5207.82,
     "avgBatchSize": 64,
     "cycleStagesMs": {
-      "n": 57772,
-      "writeMeanMs": 0.01,
-      "writeP50Ms": 0.0094,
-      "syncMeanMs": 0.1252,
-      "syncP50Ms": 0.1113,
+      "n": 57246,
+      "writeMeanMs": 0.0098,
+      "writeP50Ms": 0.0077,
+      "syncMeanMs": 0.1264,
+      "syncP50Ms": 0.1144,
       "ackMeanMs": 0.0024,
       "ackP50Ms": 0.0022,
-      "cycleMeanMs": 0.1382,
-      "cycleP50Ms": 0.1236,
-      "interFlushGapMeanMs": 0.0004,
-      "interFlushGapP50Ms": 0.0004,
-      "impliedFsyncsPerSecFromCycle": 7235.9
+      "cycleMeanMs": 0.1392,
+      "cycleP50Ms": 0.1259,
+      "interFlushGapMeanMs": 0.0006,
+      "interFlushGapP50Ms": 0.0003,
+      "impliedFsyncsPerSecFromCycle": 7183.9
     },
     "fsyncLatencyMs": {
-      "n": 57772,
-      "mean": 0.1252,
-      "p50": 0.1113,
-      "p99": 0.6723
+      "n": 57246,
+      "mean": 0.1264,
+      "p50": 0.1144,
+      "p99": 0.4255
     },
-    "doubleBufferHits": 57771,
+    "doubleBufferHits": 57224,
     "backlogTrend": {
       "sampleCount": 79,
       "sampleEveryMs": 100,
-      "startOverdue": 8192,
-      "endOverdue": 7744,
+      "startOverdue": 8128,
+      "endOverdue": 7424,
       "finalStretchStartOverdue": 8192,
-      "finalStretchEndOverdue": 7744,
+      "finalStretchEndOverdue": 7424,
       "growing": false,
-      "slopePerSec": -114.53,
+      "slopePerSec": -891.78,
       "earlyStopBacklogExceeded": false,
       "note": "Overdue depth stable over the final stretch."
     },
-    "cycleMsImplied": 7235.9,
-    "gapPlusCycleMs": 0.1386
+    "cycleMsImplied": 7183.9,
+    "gapPlusCycleMs": 0.1398
   },
   "sustainedWithinOneSecondSla": {
-    "sustainablePerSec": 140000,
-    "firstRateMissingSlaPerSec": 144000,
-    "rampResolutionRel": 0.0286,
-    "rampResolutionNote": "±2.9% (refined bracket; coarse ladder alone is too wide for cross-system compare)",
+    "sustainablePerSec": 352000,
+    "firstRateMissingSlaPerSec": 368000,
+    "rampResolutionRel": 0.0455,
+    "rampResolutionNote": "±4.5% (refined bracket; coarse ladder alone is too wide for cross-system compare)",
     "rampMethodology": {
       "mode": "steady_arrival_continuous",
       "stepDurationMs": 8000,
@@ -81,118 +81,196 @@
         "failReason": null,
         "backlogTrend": {
           "growing": false,
-          "startOverdue": 193,
-          "endOverdue": 193,
+          "startOverdue": 1,
+          "endOverdue": 1,
+          "finalStretchStartOverdue": 1,
+          "finalStretchEndOverdue": 1,
+          "slopePerSec": -214.45,
+          "earlyStopBacklogExceeded": false
+        },
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 807176.2,
+          "maxDuePerWake": 2048,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 4.102,
+        "wallMs": 8009
+      },
+      {
+        "arrivalRatePerSec": 192000,
+        "pctWithinSla": 100,
+        "stepDurationMs": 8000,
+        "steadyStatePass": true,
+        "failReason": null,
+        "backlogTrend": {
+          "growing": false,
+          "startOverdue": 113,
+          "endOverdue": 77,
+          "finalStretchStartOverdue": 110,
+          "finalStretchEndOverdue": 77,
+          "slopePerSec": -221.05,
+          "earlyStopBacklogExceeded": false
+        },
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 776304.6,
+          "maxDuePerWake": 1950,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 5.895,
+        "wallMs": 8008
+      },
+      {
+        "arrivalRatePerSec": 256000,
+        "pctWithinSla": 100,
+        "stepDurationMs": 8000,
+        "steadyStatePass": true,
+        "failReason": null,
+        "backlogTrend": {
+          "growing": false,
+          "startOverdue": 129,
+          "endOverdue": 129,
           "finalStretchStartOverdue": 129,
-          "finalStretchEndOverdue": 193,
-          "slopePerSec": 6.72,
+          "finalStretchEndOverdue": 129,
+          "slopePerSec": -114.53,
           "earlyStopBacklogExceeded": false
         },
-        "latenessP99Ms": 5.742,
-        "wallMs": 8034
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 735772,
+          "maxDuePerWake": 2816,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 5.871,
+        "wallMs": 8009
       },
       {
-        "arrivalRatePerSec": 160000,
+        "arrivalRatePerSec": 320000,
+        "pctWithinSla": 100,
+        "stepDurationMs": 8000,
+        "steadyStatePass": true,
+        "failReason": null,
+        "backlogTrend": {
+          "growing": false,
+          "startOverdue": 212,
+          "endOverdue": 212,
+          "finalStretchStartOverdue": 222,
+          "finalStretchEndOverdue": 212,
+          "slopePerSec": -35.26,
+          "earlyStopBacklogExceeded": false
+        },
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 693221.8,
+          "maxDuePerWake": 4726,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 15.717,
+        "wallMs": 8008
+      },
+      {
+        "arrivalRatePerSec": 384000,
         "pctWithinSla": 100,
         "stepDurationMs": 8000,
         "steadyStatePass": false,
         "failReason": "growing_backlog",
         "backlogTrend": {
           "growing": true,
-          "startOverdue": 74,
-          "endOverdue": 537,
+          "startOverdue": 245,
+          "endOverdue": 12230,
+          "finalStretchStartOverdue": 262,
+          "finalStretchEndOverdue": 12230,
+          "slopePerSec": 683.91,
+          "earlyStopBacklogExceeded": false
+        },
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 608317,
+          "maxDuePerWake": 12288,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 21.948,
+        "wallMs": 8020
+      },
+      {
+        "arrivalRatePerSec": 352000,
+        "pctWithinSla": 100,
+        "stepDurationMs": 8000,
+        "steadyStatePass": true,
+        "failReason": null,
+        "backlogTrend": {
+          "growing": false,
+          "startOverdue": 214,
+          "endOverdue": 214,
           "finalStretchStartOverdue": 257,
-          "finalStretchEndOverdue": 537,
-          "slopePerSec": 143.4,
+          "finalStretchEndOverdue": 214,
+          "slopePerSec": -597.37,
           "earlyStopBacklogExceeded": false
         },
-        "latenessP99Ms": 6.377,
-        "wallMs": 8041
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 631118.2,
+          "maxDuePerWake": 6827,
+          "idleSleepMs": 0
+        },
+        "latenessP99Ms": 13.062,
+        "wallMs": 8010
       },
       {
-        "arrivalRatePerSec": 144000,
+        "arrivalRatePerSec": 368000,
         "pctWithinSla": 100,
         "stepDurationMs": 8000,
         "steadyStatePass": false,
         "failReason": "growing_backlog",
         "backlogTrend": {
           "growing": true,
-          "startOverdue": 37,
-          "endOverdue": 74,
-          "finalStretchStartOverdue": 174,
-          "finalStretchEndOverdue": 74,
-          "slopePerSec": 78.86,
+          "startOverdue": 1205,
+          "endOverdue": 6889,
+          "finalStretchStartOverdue": 262,
+          "finalStretchEndOverdue": 6889,
+          "slopePerSec": 739.79,
           "earlyStopBacklogExceeded": false
         },
-        "latenessP99Ms": 5.65,
-        "wallMs": 8038
-      },
-      {
-        "arrivalRatePerSec": 136000,
-        "pctWithinSla": 100,
-        "stepDurationMs": 8000,
-        "steadyStatePass": true,
-        "failReason": null,
-        "backlogTrend": {
-          "growing": false,
-          "startOverdue": 86,
-          "endOverdue": 56,
-          "finalStretchStartOverdue": 466,
-          "finalStretchEndOverdue": 56,
-          "slopePerSec": -16.19,
-          "earlyStopBacklogExceeded": false
+        "schedulerStats": {
+          "coalesceWakeMs": 1,
+          "wakesPerSec": 608391,
+          "maxDuePerWake": 6331,
+          "idleSleepMs": 0
         },
-        "latenessP99Ms": 6.198,
-        "wallMs": 8031
-      },
-      {
-        "arrivalRatePerSec": 140000,
-        "pctWithinSla": 100,
-        "stepDurationMs": 8000,
-        "steadyStatePass": true,
-        "failReason": null,
-        "backlogTrend": {
-          "growing": false,
-          "startOverdue": 45,
-          "endOverdue": 76,
-          "finalStretchStartOverdue": 56,
-          "finalStretchEndOverdue": 76,
-          "slopePerSec": -52.71,
-          "earlyStopBacklogExceeded": false
-        },
-        "latenessP99Ms": 5.841,
-        "wallMs": 8036
+        "latenessP99Ms": 18.202,
+        "wallMs": 8010
       }
     ],
     "flushStatsAcrossRamp": {
-      "fsyncsPerSec": 1993.14,
-      "recordsPerSec": 127557.54,
-      "avgBatchSize": 63.998,
+      "fsyncsPerSec": 3716.54,
+      "recordsPerSec": 237855.06,
+      "avgBatchSize": 63.999,
       "cycleStagesMs": {
-        "n": 88689,
-        "writeMeanMs": 0.0114,
-        "writeP50Ms": 0.0097,
-        "syncMeanMs": 0.2299,
-        "syncP50Ms": 0.1339,
-        "ackMeanMs": 0.0029,
-        "ackP50Ms": 0.0025,
-        "cycleMeanMs": 0.2449,
-        "cycleP50Ms": 0.1484,
-        "interFlushGapMeanMs": 0.2455,
+        "n": 100000,
+        "writeMeanMs": 0.01,
+        "writeP50Ms": 0.009,
+        "syncMeanMs": 0.1727,
+        "syncP50Ms": 0.1273,
+        "ackMeanMs": 0.0025,
+        "ackP50Ms": 0.0022,
+        "cycleMeanMs": 0.1858,
+        "cycleP50Ms": 0.1404,
+        "interFlushGapMeanMs": 0.1379,
         "interFlushGapP50Ms": 0.0004,
-        "impliedFsyncsPerSecFromCycle": 4083.3
+        "impliedFsyncsPerSecFromCycle": 5382.1
       },
       "fsyncLatencyMs": {
-        "n": 88689,
-        "mean": 0.2299,
-        "p50": 0.1339,
-        "p99": 1.0425
+        "n": 100000,
+        "mean": 0.1444,
+        "p50": 0.1273,
+        "p99": 0.8503
       }
     }
   },
   "latenessAtSustainable": null,
   "latenessAtCliff": {
-    "offeredRatePerSec": 144000,
+    "offeredRatePerSec": 368000,
     "fired": 0,
     "pctWithinSla": null,
     "metSla": null,
@@ -216,26 +294,26 @@
     "note": "Set CLAWQL_DENSITY_SKIP_CLIFF_LATENESS=0 to sample waitToPop/batch/sync at the cliff."
   },
   "compare": {
-    "durableRecordsPerSec": 347233.12,
-    "rateSustainableWithinOneSecondSla": 140000,
-    "drainOverSustained": 2.48,
+    "durableRecordsPerSec": 333300.76,
+    "rateSustainableWithinOneSecondSla": 352000,
+    "drainOverSustained": 0.947,
     "sustainedAtOrBelowDrain": true,
-    "observedFsyncPeriodMs": 0.184,
-    "syncMeanMs": 0.1252,
-    "syncP50Ms": 0.1113,
-    "syncP99Ms": 0.6723,
-    "writeMeanMs": 0.01,
+    "observedFsyncPeriodMs": 0.192,
+    "syncMeanMs": 0.1264,
+    "syncP50Ms": 0.1144,
+    "syncP99Ms": 0.4255,
+    "writeMeanMs": 0.0098,
     "ackMeanMs": 0.0024,
-    "interFlushGapMeanMs": 0.0004,
-    "cycleMeanMs": 0.1382,
-    "nonSyncShareOfPeriod": 32
+    "interFlushGapMeanMs": 0.0006,
+    "cycleMeanMs": 0.1392,
+    "nonSyncShareOfPeriod": 34.2
   },
   "reading": {
-    "diagnosis": "latency_limit_drain_exceeds_sustained_sla_rate",
+    "diagnosis": "writer_bound_sustained_near_drain",
     "note": "Steady-state ramp: continuous arrivals for ≥30s/step (override CLAWQL_DENSITY_RAMP_STEP_MS); fail if overdue backlog grows. Sustained must be ≤ durable drain. If drain ≫ sustained → latency limit; if near drain → writer-bound. Record stepDurationMs + backlogTrend. Sync p99 beside mean (Ontologiql heavy tail). Prealloc: disclose best journal config per side.",
     "boardColumns": {
-      "durableRecordsPerSec": 347233.12,
-      "rateSustainableWithinOneSecondSla": 140000
+      "durableRecordsPerSec": 333300.76,
+      "rateSustainableWithinOneSecondSla": 352000
     }
   }
 }

@@ -152,7 +152,7 @@ export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   status: "publishable",
   hostLabel: "stable-host (Ontologiql published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline lab (#144): serial ~8.9k/s; rebuild ~2–3ms. Drain≈SLA (~149k/~176k, ratio~0.85); between_syncs_ack_write_material (ack~141µs/batch; sync mean~252 vs p50~100). Prealloc +31% host/FS option. ClawQL steady-state ramp: durable~347k/s, sustained~140k/s (prior 636k retracted — short steps). Same continuous-arrival + growing-backlog fail rules both sides. Different host — not a shared-host public claim. No win copy.",
+    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB, ~30 KiB/agent, warm/cold wakes, restart). Deadline lab (#144): steady-state ~148k sustained ≈ ~156k drain (write-path; ack~154µs/batch; sync p99~986µs). Prealloc +31% host/FS option. ClawQL: after pop-all-due+coalesce, sustained~352k ≈ drain~333k (was scheduler-bound at ~140k; short-ramp 636k retracted). Sync p99 recorded both sides. Different host — not a shared-host public claim. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",

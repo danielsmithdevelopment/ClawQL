@@ -258,6 +258,14 @@ async function measureSustained() {
               earlyStopBacklogExceeded: a.backlogTrend.earlyStopBacklogExceeded,
             }
           : null,
+        schedulerStats: a.schedulerStats
+          ? {
+              coalesceWakeMs: a.schedulerStats.coalesceWakeMs,
+              wakesPerSec: a.schedulerStats.wakesPerSec,
+              maxDuePerWake: a.schedulerStats.maxDuePerWake,
+              idleSleepMs: a.schedulerStats.idleSleepMs,
+            }
+          : null,
         latenessP99Ms: a.latenessP99Ms,
         wallMs: a.wallMs,
       })),

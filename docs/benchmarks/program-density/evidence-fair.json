@@ -1282,7 +1282,7 @@
   },
   "drainVsSustained": {
     "artifact": "docs/benchmarks/program-density/drain-vs-sustained.json",
-    "measuredAt": "2026-10-29T02:26:53.131Z",
+    "measuredAt": "2026-10-29T02:45:26.019Z",
     "journalConfig": {
       "dataSync": "fsync",
       "preallocateBytes": null,
@@ -1292,30 +1292,31 @@
       "mode": "steady_arrival_continuous",
       "stepDurationMs": 8000,
       "requireNonGrowingBacklog": true,
-      "campaignStepDurationMs": 30000
+      "campaignStepDurationMs": 30000,
+      "scheduler": "pop_all_due_coalesce_wake_1ms_no_idle_sleep_while_inflight"
     },
-    "durableRecordsPerSec": 347233.12,
-    "rateSustainableWithinOneSecondSla": 140000,
-    "firstRateMissingSlaPerSec": 144000,
-    "drainOverSustained": 2.48,
+    "durableRecordsPerSec": 333300.76,
+    "rateSustainableWithinOneSecondSla": 352000,
+    "firstRateMissingSlaPerSec": 368000,
+    "drainOverSustained": 0.947,
     "sustainedAtOrBelowDrain": true,
     "priorShortRampSustainablePerSecRetracted": 636000,
+    "priorSchedulerBoundSustainablePerSec": 140000,
     "cycleStagesMs": {
-      "writeMeanMs": 0.01,
-      "syncMeanMs": 0.1252,
-      "syncP50Ms": 0.1113,
-      "syncP99Ms": 0.6723,
+      "writeMeanMs": 0.0098,
+      "syncMeanMs": 0.1264,
+      "syncP50Ms": 0.1144,
+      "syncP99Ms": 0.4255,
       "ackMeanMs": 0.0024,
-      "interFlushGapMeanMs": 0.0004,
-      "cycleMeanMs": 0.1382
+      "interFlushGapMeanMs": 0.0006,
+      "cycleMeanMs": 0.1392
     },
     "exampleFailArm": {
-      "arrivalRatePerSec": 144000,
+      "arrivalRatePerSec": 368000,
       "pctWithinSla": 100,
-      "failReason": "growing_backlog",
-      "note": "Short steps would have passed this rate; backlog trend catches it."
+      "failReason": "growing_backlog"
     },
-    "diagnosis": "latency_limit_drain_exceeds_sustained_sla_rate",
-    "reading": "Steady-state ramp: sustained ≤ drain. Prior 636k retracted. Campaign uses ≥30s steps."
+    "diagnosis": "writer_bound_sustained_near_drain",
+    "reading": "After pop-all-due+coalesce, sustained≈drain (was scheduler-bound at ~140k). Sync p99 recorded. Campaign ≥30s steps."
   }
 }

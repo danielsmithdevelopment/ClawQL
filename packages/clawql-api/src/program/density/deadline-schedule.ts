@@ -224,6 +224,17 @@ export type DeadlineBacklogTrend = {
   readonly note: string;
 };
 
+/** Continuous-arrival scheduler accounting (prove pop-all-due + coalesce). */
+export type DeadlineSchedulerStats = {
+  readonly coalesceWakeMs: number;
+  readonly wakeCount: number;
+  readonly wakesPerSec: number;
+  readonly idleSleepMs: number;
+  readonly dueEmitted: number;
+  readonly maxDuePerWake: number;
+  readonly note: string;
+};
+
 export type DeadlineArmResult = {
   readonly mode: DeadlineArmMode;
   readonly n: number;
@@ -244,6 +255,7 @@ export type DeadlineArmResult = {
   /** Step wall budget (steady-state ramp). Short place-ahead ramps omit this. */
   readonly stepDurationMs?: number;
   readonly backlogTrend?: DeadlineBacklogTrend | null;
+  readonly schedulerStats?: DeadlineSchedulerStats | null;
   /**
    * Pass requires pctWithinSla ≥ target **and** non-growing backlog when
    * steady-state ramp is enabled. Short/legacy arms omit this (treat pct only).
@@ -331,6 +343,7 @@ function summarizeArm(
   extras?: {
     readonly stepDurationMs?: number;
     readonly backlogTrend?: DeadlineBacklogTrend | null;
+    readonly schedulerStats?: DeadlineSchedulerStats | null;
     readonly steadyStatePass?: boolean | null;
     readonly failReason?: string | null;
   }
@@ -357,6 +370,7 @@ function summarizeArm(
     gcTrace,
     stepDurationMs: extras?.stepDurationMs,
     backlogTrend: extras?.backlogTrend ?? null,
+    schedulerStats: extras?.schedulerStats ?? null,
     steadyStatePass: extras?.steadyStatePass ?? null,
     failReason: extras?.failReason ?? null,
   };
@@ -386,6 +400,11 @@ export function runSteadyArrivalPumpEffect(args: {
   readonly allowBacklogEarlyStop?: boolean;
   /** Cap overdue-not-started queue (default ≈1–2s of arrivals, bounded for drain). */
   readonly maxPending?: number;
+  /**
+   * Coalesce timer wakes to at most one per this many ms (default = tickMs ≥ 1).
+   * On each wake, emit **all** arrivals due through now (batch), then fill writers.
+   */
+  readonly coalesceWakeMs?: number;
   /** Sample overdue depth this often. */
   readonly backlogSampleEveryMs?: number;
   readonly percentile: (samples: readonly number[], p: number) => number;
@@ -397,6 +416,7 @@ export function runSteadyArrivalPumpEffect(args: {
     const slaTargetPct = args.slaTargetPct ?? DEFAULT_SLA_TARGET_PCT;
     const concurrency = args.concurrency ?? DEFAULT_DEADLINE_CONCURRENCY;
     const tickMs = args.tickMs ?? DEFAULT_SCHEDULER_TICK_MS;
+    const coalesceWakeMs = Math.max(1, args.coalesceWakeMs ?? Math.max(1, tickMs));
     const mode = args.mode ?? "ramp";
     const requireNonGrowingBacklog = args.requireNonGrowingBacklog !== false;
     const allowBacklogEarlyStop = args.allowBacklogEarlyStop !== false;
@@ -418,12 +438,25 @@ export function runSteadyArrivalPumpEffect(args: {
 
     const samples: number[] = [];
     const backlogSeries: { tMs: number; overdue: number; inFlight: number }[] = [];
+    // Ring-style pending: avoid O(n) Array.shift under high rate.
     const pending: DeadlineEntry[] = [];
+    let pendingHead = 0;
+    const pendingLen = () => pending.length - pendingHead;
+    const pendingCompact = () => {
+      if (pendingHead > 1024 && pendingHead * 2 > pending.length) {
+        pending.splice(0, pendingHead);
+        pendingHead = 0;
+      }
+    };
     let nextDeadlineMs = Date.now();
     let idCursor = 0;
     let inFlight = 0;
     let consecutiveHigh = 0;
     let earlyStopBacklogExceeded = false;
+    let wakeCount = 0;
+    let idleSleepMs = 0;
+    let dueEmitted = 0;
+    let maxDuePerWake = 0;
     const t0 = Date.now();
     const tEnd = t0 + stepDurationMs;
 
@@ -442,12 +475,11 @@ export function runSteadyArrivalPumpEffect(args: {
       );
     };
 
-    let lastSampleAt = t0;
-    while (Date.now() < tEnd && !earlyStopBacklogExceeded) {
-      const now = Date.now();
+    /** Emit every arrival due through `now` (pop-all-due), not just the next one. */
+    const emitAllDue = (now: number): number => {
+      let emitted = 0;
       while (nextDeadlineMs <= now && nextDeadlineMs < tEnd) {
-        if (pending.length >= maxPending) {
-          // Keep the arrival clock moving; drop excess rather than unbounded grow.
+        if (pendingLen() >= maxPending) {
           nextDeadlineMs += intervalMs;
           if (allowBacklogEarlyStop) {
             earlyStopBacklogExceeded = true;
@@ -461,14 +493,30 @@ export function runSteadyArrivalPumpEffect(args: {
         });
         idCursor += 1;
         nextDeadlineMs += intervalMs;
+        emitted += 1;
       }
-      while (inFlight < concurrency && pending.length > 0) {
-        launch(pending.shift()!);
+      dueEmitted += emitted;
+      if (emitted > maxDuePerWake) maxDuePerWake = emitted;
+      return emitted;
+    };
+
+    const fillWriters = () => {
+      while (inFlight < concurrency && pendingHead < pending.length) {
+        launch(pending[pendingHead++]!);
       }
+      pendingCompact();
+    };
+
+    let lastSampleAt = t0;
+    while (Date.now() < tEnd && !earlyStopBacklogExceeded) {
+      wakeCount += 1;
+      const now = Date.now();
+      emitAllDue(now);
+      fillWriters();
       if (now - lastSampleAt >= sampleEveryMs) {
-        backlogSeries.push({ tMs: now - t0, overdue: pending.length, inFlight });
+        backlogSeries.push({ tMs: now - t0, overdue: pendingLen(), inFlight });
         lastSampleAt = now;
-        if (allowBacklogEarlyStop && pending.length >= backlogFailThreshold) {
+        if (allowBacklogEarlyStop && pendingLen() >= backlogFailThreshold) {
           consecutiveHigh += 1;
           if (consecutiveHigh >= 3) {
             earlyStopBacklogExceeded = true;
@@ -478,23 +526,39 @@ export function runSteadyArrivalPumpEffect(args: {
           consecutiveHigh = 0;
         }
       }
-      if (pending.length === 0 && inFlight < concurrency && nextDeadlineMs > now) {
-        const sleepMs = Math.min(tickMs, Math.max(1, nextDeadlineMs - now));
-        await new Promise<void>((r) => setTimeout(r, sleepMs));
-      } else {
+
+      const now2 = Date.now();
+      if (now2 >= tEnd || earlyStopBacklogExceeded) break;
+
+      // Never long-sleep while writers are busy or overdue work remains — that
+      // idles free concurrency slots and starves group_commit double-buffer fill.
+      if (pendingLen() > 0 || inFlight > 0) {
         await new Promise<void>((r) => setImmediate(r));
+        continue;
       }
+
+      // Fully idle: coalesce wakes (≤1 per coalesceWakeMs) then pop all due.
+      const waitFor = nextDeadlineMs - now2;
+      if (waitFor <= 0) {
+        await new Promise<void>((r) => setImmediate(r));
+        continue;
+      }
+      const sleepMs =
+        waitFor > coalesceWakeMs
+          ? Math.min(Math.ceil(waitFor), Math.max(1, tEnd - now2))
+          : Math.min(coalesceWakeMs, Math.max(1, tEnd - now2));
+      idleSleepMs += sleepMs;
+      await new Promise<void>((r) => setTimeout(r, sleepMs));
     }
 
     // Drain what was already due; do not accept new arrivals past tEnd.
     const drainDeadline = Date.now() + Math.max(slaMs * 2, 5_000);
-    while ((pending.length > 0 || inFlight > 0) && Date.now() < drainDeadline) {
-      while (inFlight < concurrency && pending.length > 0) {
-        launch(pending.shift()!);
-      }
+    while ((pendingLen() > 0 || inFlight > 0) && Date.now() < drainDeadline) {
+      fillWriters();
       await new Promise<void>((r) => setImmediate(r));
     }
 
+    const wallMs = Date.now() - t0;
     const stretchStart = stepDurationMs * 0.75;
     const stretch = backlogSeries.filter((s) => s.tMs >= stretchStart);
     const startOverdue = backlogSeries[0]?.overdue ?? null;
@@ -542,6 +606,16 @@ export function runSteadyArrivalPumpEffect(args: {
           : "Overdue depth stable over the final stretch.",
     };
 
+    const schedulerStats: DeadlineSchedulerStats = {
+      coalesceWakeMs,
+      wakeCount,
+      wakesPerSec: wallMs > 0 ? Number(((wakeCount * 1000) / wallMs).toFixed(1)) : 0,
+      idleSleepMs,
+      dueEmitted,
+      maxDuePerWake,
+      note: `Pop-all-due each wake; coalesce idle sleeps to ${coalesceWakeMs}ms; no sleep while inFlight>0 (keeps writers fed).`,
+    };
+
     const within = samples.filter((l) => l <= slaMs).length;
     const pctWithinSla = samples.length ? Number(((100 * within) / samples.length).toFixed(2)) : 0;
     const pctOk = pctWithinSla >= slaTargetPct;
@@ -558,13 +632,14 @@ export function runSteadyArrivalPumpEffect(args: {
       tickMs,
       slaMs,
       arrivalRatePerSec,
-      Date.now() - t0,
+      wallMs,
       args.percentile,
       "typed_arrays",
       null,
       {
         stepDurationMs,
         backlogTrend,
+        schedulerStats,
         steadyStatePass,
         failReason,
       }
@@ -659,8 +734,13 @@ function buildGcTrace(
   };
 }
 
+/**
+ * Sleep until `deadlineMs`, coalescing wakes to ~`tickMs` (default 1ms).
+ * Never arms a timer per individual deadline when many fall inside one tick.
+ */
 function sleepUntil(deadlineMs: number, tickMs: number, wallDeadlineMs: number): Promise<void> {
   return new Promise((resolve) => {
+    const coalesceMs = Math.max(1, tickMs);
     const step = () => {
       const now = Date.now();
       if (now >= deadlineMs || now >= wallDeadlineMs) {
@@ -668,36 +748,15 @@ function sleepUntil(deadlineMs: number, tickMs: number, wallDeadlineMs: number):
         return;
       }
       const remaining = Math.min(deadlineMs, wallDeadlineMs) - now;
-      if (remaining <= tickMs) {
-        setImmediate(step);
+      if (remaining <= coalesceMs) {
+        // Inside the coalesce window — one short sleep then pop-all-due.
+        setTimeout(step, remaining <= 1 ? 1 : Math.min(coalesceMs, remaining));
         return;
       }
-      setTimeout(step, Math.max(1, remaining - tickMs));
+      setTimeout(step, Math.max(coalesceMs, remaining - coalesceMs));
     };
     step();
   });
-}
-
-/** Bounded parallel map. */
-async function mapPool<T, R>(
-  items: readonly T[],
-  concurrency: number,
-  fn: (item: T, index: number) => Promise<R>
-): Promise<R[]> {
-  const out: R[] = new Array(items.length);
-  let next = 0;
-  const workers = Array.from(
-    { length: Math.max(1, Math.min(concurrency, items.length || 1)) },
-    async () => {
-      for (;;) {
-        const i = next++;
-        if (i >= items.length) return;
-        out[i] = await fn(items[i]!, i);
-      }
-    }
-  );
-  await Promise.all(workers);
-  return out;
 }
 
 /**
@@ -740,43 +799,78 @@ export function runDeadlinePumpEffect(args: {
     const scheduleShape: DeadlineScheduleShape = schedule.shape ?? "object_entries";
     const gc = traceGc ? attachGcObserver() : null;
     let fired = 0;
+    let inFlight = 0;
+    // Due-but-not-yet-launched (pop-all-due may exceed free concurrency slots).
+    const ready: DeadlineEntry[] = [];
+    let readyHead = 0;
+    const readyLen = () => ready.length - readyHead;
     const t0 = Date.now();
     const { performance } = await import("node:perf_hooks");
     // Map Date.now() ↔ performance.now() so GC pauses can overlap the
     // full deadline→fired window (including sleepUntil waits), not just fire().
     const dateToPerfOffset = Date.now() - performance.now();
 
+    const launchOne = (entry: DeadlineEntry): void => {
+      inFlight += 1;
+      void fire(entry).then(
+        () => {
+          const firedAt = Date.now();
+          const latenessMs = Math.max(0, firedAt - entry.deadlineMs);
+          samples.push(latenessMs);
+          fireWindows.push({
+            latenessMs,
+            startPerfMs: entry.deadlineMs - dateToPerfOffset,
+            endPerfMs: firedAt - dateToPerfOffset,
+          });
+          fired += 1;
+          inFlight -= 1;
+        },
+        () => {
+          samples.push(Math.max(0, Date.now() - entry.deadlineMs));
+          fired += 1;
+          inFlight -= 1;
+        }
+      );
+    };
+
     try {
-      while (fired < maxFires && Date.now() < wallDeadlineMs) {
-        const next = schedule.peekDeadlineMs();
-        if (next === null || !Number.isFinite(next)) break;
+      // Continuous fill: each wake pops *all* currently due into `ready`, then
+      // fills free writer slots. Do not await a whole batch before new due work.
+      while ((fired + inFlight + readyLen() < maxFires || inFlight > 0 || readyLen() > 0) &&
+        Date.now() < wallDeadlineMs) {
         const now = Date.now();
-        if (next > now) {
+        const next = schedule.peekDeadlineMs();
+        if (
+          readyLen() === 0 &&
+          inFlight === 0 &&
+          next !== null &&
+          Number.isFinite(next) &&
+          next > now
+        ) {
           await sleepUntil(next, tickMs, wallDeadlineMs);
           continue;
         }
-        const due = schedule.popDue(Date.now());
-        if (due.length === 0) {
-          await new Promise<void>((r) => setImmediate(r));
-          continue;
+        if (
+          next !== null &&
+          Number.isFinite(next) &&
+          next <= now &&
+          fired + inFlight + readyLen() < maxFires
+        ) {
+          const due = schedule.popDue(Date.now());
+          for (const entry of due) {
+            if (fired + inFlight + readyLen() >= maxFires) break;
+            ready.push(entry);
+          }
         }
-        const batch = due.slice(0, maxFires - fired);
-        const batchMeta = await mapPool(batch, concurrency, async (entry) => {
-          await fire(entry);
-          const firedAt = Date.now();
-          const latenessMs = Math.max(0, firedAt - entry.deadlineMs);
-          return {
-            latenessMs,
-            // Window from when the deadline fell due through durable fire.
-            startPerfMs: entry.deadlineMs - dateToPerfOffset,
-            endPerfMs: firedAt - dateToPerfOffset,
-          };
-        });
-        for (const m of batchMeta) {
-          samples.push(m.latenessMs);
-          fireWindows.push(m);
-          fired += 1;
+        while (inFlight < concurrency && readyHead < ready.length && fired + inFlight < maxFires) {
+          launchOne(ready[readyHead++]!);
         }
+        if (readyHead > 1024 && readyHead * 2 > ready.length) {
+          ready.splice(0, readyHead);
+          readyHead = 0;
+        }
+        if (fired >= maxFires && inFlight === 0) break;
+        await new Promise<void>((r) => setImmediate(r));
       }
     } finally {
       gc?.disconnect();
