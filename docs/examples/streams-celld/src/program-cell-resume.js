@@ -38,6 +38,9 @@ export function journaledArgs(call) {
   if (call?.tool === "sleep") {
     return { durationMs: call.durationMs };
   }
+  if (call?.tool === "await_approval") {
+    return { executionId: call.executionId };
+  }
   return { ...(call?.args || {}) };
 }
 

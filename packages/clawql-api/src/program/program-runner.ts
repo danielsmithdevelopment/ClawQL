@@ -11,6 +11,7 @@ import { randomBytes } from "node:crypto";
 import { appendProcessWormEffect } from "clawql-audit";
 import { Context, Duration, Effect, Layer, Option } from "effect";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
+import type { PendingExecutionStatus } from "../pending/pending-execution-types.js";
 import type { ExecuteInputDecoded, SearchInputDecoded } from "../schema/search-execute-schema.js";
 import type { OperationRisk, OperationRiskPolicy } from "../risk/operation-risk-types.js";
 import {
@@ -45,7 +46,7 @@ export type ProgramHostSearchResult = {
 /** A plan call served from the durable journal instead of the host. */
 export type ProgramReplayedCall = {
   readonly index: number;
-  readonly tool: "execute" | "search" | "sleep";
+  readonly tool: "execute" | "search" | "sleep" | "await_approval";
   readonly operationId?: string;
   readonly ok: boolean;
 };
@@ -89,6 +90,13 @@ export type ProgramHost = {
     call: ProgramReplayedCall,
     ctx: { readonly programId: string }
   ) => Effect.Effect<void, Error>;
+  /**
+   * Observe-only mandate status for plan `await_approval` (never consumes).
+   * Return `null` when the execution id is unknown.
+   */
+  readonly pendingStatus?: (
+    executionId: string
+  ) => Effect.Effect<PendingExecutionStatus | null, Error>;
 };
 
 export type ExecuteProgramInput = {
@@ -100,7 +108,7 @@ export type ExecuteProgramInput = {
 export type ProgramCallRecord = {
   readonly index: number;
   readonly id?: string;
-  readonly tool: "execute" | "search" | "sleep";
+  readonly tool: "execute" | "search" | "sleep" | "await_approval";
   readonly operationId?: string;
   readonly query?: string;
   readonly ok: boolean;
@@ -473,6 +481,97 @@ export function runProgramPlanEffect<E = never>(
               toolName: "sleep",
               ok: true,
               status: "slept",
+              index,
+            },
+          }).pipe(Effect.catch(() => Effect.void));
+          return { record, value };
+        }
+
+        if (call.tool === "await_approval") {
+          yield* appendProcessWormEffect({
+            type: "TOOL_CALL_ATTEMPT",
+            timestamp: new Date().toISOString(),
+            sessionId: input.sessionId ?? "",
+            metadata: {
+              source: "execute_program",
+              programId,
+              toolName: "await_approval",
+              executionId: call.executionId,
+              index,
+            },
+          }).pipe(Effect.catch(() => Effect.void));
+          if (gatedHost.pendingStatus === undefined) {
+            const record: ProgramCallRecord = {
+              index,
+              id: call.id,
+              tool: "await_approval",
+              ok: false,
+              programId,
+              status: "await_approval_unavailable",
+              error: "host does not expose pendingStatus for await_approval",
+            };
+            return {
+              record,
+              value: {
+                ok: false,
+                status: record.status,
+                executionId: call.executionId,
+                error: record.error,
+              },
+            };
+          }
+          const status = yield* gatedHost
+            .pendingStatus(call.executionId)
+            .pipe(Effect.catch(() => Effect.succeed(null as PendingExecutionStatus | null)));
+          const terminalOk = status === "approved" || status === "completed";
+          const terminalFail =
+            status === "declined" ||
+            status === "expired" ||
+            status === "failed" ||
+            status === "outcome_unknown" ||
+            status === null;
+          const waiting = status === "pending";
+          const ok = terminalOk;
+          const callStatus = waiting
+            ? "awaiting_approval"
+            : terminalOk
+              ? status
+              : status === null
+                ? "mandate_missing"
+                : status;
+          const value = {
+            ok,
+            status: callStatus,
+            executionId: call.executionId,
+            pendingStatus: status,
+          };
+          const record: ProgramCallRecord = {
+            index,
+            id: call.id,
+            tool: "await_approval",
+            ok,
+            programId,
+            status: callStatus,
+            ...(terminalFail && !waiting
+              ? {
+                  error:
+                    status === null
+                      ? `pending execution ${call.executionId} not found`
+                      : `mandate ${status}`,
+                }
+              : {}),
+            resultPreview: previewText(JSON.stringify(value)),
+          };
+          yield* appendProcessWormEffect({
+            type: "TOOL_CALL_RESULT",
+            timestamp: new Date().toISOString(),
+            sessionId: input.sessionId ?? "",
+            metadata: {
+              source: "execute_program",
+              programId,
+              toolName: "await_approval",
+              ok,
+              status: callStatus,
               index,
             },
           }).pipe(Effect.catch(() => Effect.void));

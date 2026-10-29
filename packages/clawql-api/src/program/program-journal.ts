@@ -48,7 +48,7 @@ export type ProgramJournalCallResult = {
 export type ProgramJournalEntry = {
   readonly index: number;
   readonly callId: string;
-  readonly tool: "execute" | "search" | "sleep";
+  readonly tool: "execute" | "search" | "sleep" | "await_approval";
   readonly operationId?: string;
   readonly args?: Readonly<Record<string, unknown>>;
   readonly result: ProgramJournalCallResult;
@@ -373,7 +373,10 @@ function isEntry(v: unknown, callCount: number): v is ProgramJournalEntry {
     index >= 0 &&
     index < callCount &&
     typeof v.callId === "string" &&
-    (v.tool === "execute" || v.tool === "search" || v.tool === "sleep") &&
+    (v.tool === "execute" ||
+      v.tool === "search" ||
+      v.tool === "sleep" ||
+      v.tool === "await_approval") &&
     typeof v.completedAt === "string" &&
     typeof v.result.ok === "boolean"
   );
