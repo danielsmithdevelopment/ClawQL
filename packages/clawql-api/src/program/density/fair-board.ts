@@ -25,6 +25,7 @@ import { Effect } from "effect";
 import {
   clearBagDirEffect,
   makeParkedBagApi,
+  ParkedBagError,
   resolveBagDirEffect,
   type ParkedBagApi,
 } from "./bag-store.js";
@@ -82,7 +83,7 @@ function diskBytesFast(bags: ParkedBagApi): Effect.Effect<number> {
       const n = Number((res.stdout || "").trim().split(/\s+/)[0]);
       if (Number.isFinite(n)) return n;
     }
-    return yield* bags.diskBytesTotal().pipe(Effect.catchAll(() => Effect.succeed(0)));
+    return yield* bags.diskBytesTotal().pipe(Effect.orElseSucceed(() => 0));
   });
 }
 
@@ -598,7 +599,7 @@ function classifyLimit(args: {
 
 export function runFairDensityBoardEffect(
   options: FairBoardOptions = {}
-): Effect.Effect<EvidenceFair> {
+): Effect.Effect<EvidenceFair, ParkedBagError> {
   return Effect.gen(function* () {
     const bagDir = options.bagDir ?? (yield* resolveBagDirEffect());
     const rssCeilingMiB = options.rssCeilingMiB ?? 512;

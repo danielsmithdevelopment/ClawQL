@@ -578,7 +578,8 @@ export function openTriggerJournalEffect(
       return new Promise<TriggerRecordTrace>((resolve, reject) => {
         pendingLines.push(line);
         waiters.push({ enqueuedAtMs: Date.now(), resolve, reject });
-        if (pendingLines.length >= policy.batchMax) {
+        const batchMax = policy.mode === "group_commit" ? policy.batchMax : 1;
+        if (pendingLines.length >= batchMax) {
           pendingFlushReason = "batch_full";
           void flushNow();
         } else {
@@ -686,7 +687,7 @@ export function readTriggerJournalEffect(
   path: string
 ): Effect.Effect<readonly TriggerJournalLine[]> {
   return Effect.sync(() => {
-    let raw = "";
+    let raw: string;
     try {
       raw = readFileSync(path, "utf8");
     } catch {
