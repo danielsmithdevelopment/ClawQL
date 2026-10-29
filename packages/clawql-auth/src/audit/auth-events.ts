@@ -148,6 +148,26 @@ export type AuthEvent =
       timestamp: string;
     }
   | {
+      /** Transit decrypt failed (Vault down, wrong context, revoked key, …). Fail closed. */
+      type: "VAULT_TRANSIT_DECRYPT_FAILED";
+      path: string;
+      reason: string;
+      timestamp: string;
+    }
+  | {
+      /** Non-ciphertext row in a Transit-backed store (integrity failure). */
+      type: "VAULT_TRANSIT_PLAINTEXT_REJECTED";
+      path: string;
+      timestamp: string;
+    }
+  | {
+      type: "VAULT_TRANSIT_REWRAP_COMPLETED";
+      rewrapped: number;
+      skipped: number;
+      failed: number;
+      timestamp: string;
+    }
+  | {
       type: "DOMAIN_TXT_VERIFIED";
       domain: string;
       timestamp: string;

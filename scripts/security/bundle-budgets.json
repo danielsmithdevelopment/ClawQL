@@ -1,0 +1,35 @@
+{
+  "$schema_comment": "Max sizes for packed npm artifacts (attacker-visible / release RE gates). Adjust deliberately when intentional growth lands.",
+  "tarballs": {
+    "clawql-mcp": {
+      "maxBytes": 83886080,
+      "comment": "80 MiB — root pack includes providers/ OpenAPI corpus + dist"
+    },
+    "clawql-*": {
+      "maxBytes": 15728640,
+      "comment": "15 MiB default for workspace clawql-* and mcp-* packs"
+    },
+    "mcp-grpc-transport": {
+      "maxBytes": 5242880
+    },
+    "mcp-api-adapter": {
+      "maxBytes": 5242880
+    }
+  },
+  "forbidBasenames": [
+    ".env",
+    ".env.local",
+    ".env.production",
+    ".npmrc",
+    "id_rsa",
+    "id_ed25519",
+    "credentials.json",
+    "service-account.json"
+  ],
+  "forbidExtensions": [".pem", ".p12", ".pfx"],
+  "allowBasenames": [".env.example", "mcp.json.example"],
+  "sourceMaps": {
+    "forbidInProductionPacks": true,
+    "comment": "Policy: strip maps from published packs via files negation (!dist/**/*.map). Local tsup may still emit .map for debugging; they must not ship."
+  }
+}

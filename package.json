@@ -50,6 +50,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "bin",
     "providers",
     "README.md",

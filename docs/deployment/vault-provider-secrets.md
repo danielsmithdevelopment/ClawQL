@@ -24,11 +24,54 @@ Do **not** put provider tokens in **`extraEnv`** or chart-managed **`documentPip
 
 ---
 
+## Vault Transit encrypt-at-rest (recommended for SecretStore)
+
+When ClawQL persists secrets in a database or local store (SQLite `SecretStore`, inference credential rows, etc.), prefer **Vault Transit** so a stealer that dumps the store gets ciphertext only — the encryption key never leaves Vault. That closes the common failure mode where malware or a compromised dependency reads plaintext credential tables from disk.
+
+**Claim:** a database dump yields only ciphertext that **cannot be moved between tenants** (derived-key context binds tenant ID + secret path). Non-ciphertext rows are always rejected.
+
+```bash
+# Enable Transit; derived=true is required for context binding:
+vault secrets enable transit
+vault write -f transit/keys/clawql-secrets derived=true
+
+# ClawQL wraps any SecretStore backend when this is set:
+export CLAWQL_VAULT_TRANSIT_KEY=clawql-secrets
+export CLAWQL_VAULT_TRANSIT_MOUNT=transit          # optional
+export CLAWQL_VAULT_TRANSIT_TENANT=acme           # fallback tenant (or CLAWQL_DEFAULT_ORG_ID)
+export CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS=30000    # brief in-memory decrypt cache; never disk
+export VAULT_ADDR=https://vault.example:8200
+export VAULT_TOKEN=…                              # prefer K8s/AppRole/JWT — short-lived
+```
+
+Library entry points (`clawql-auth`): `VaultTransitProvider`, `TransitEncryptedSecretStore`, `scanPlaintextSecretsEffect` / `rewrapAllSecretsEffect`, `resolveSecretStore({ vaultTransit: true })`.
+
+### Operating invariants
+
+1. **Context binding** — encrypt/decrypt/rewrap always send Transit `context` = base64(`v1\ntenant=…\npath=…`). Paths under `tenants/{id}/…` use `{id}` as tenant; otherwise `CLAWQL_VAULT_TRANSIT_TENANT`.
+2. **Ciphertext only** — reads fail closed on non-`vault:vN:` rows (`VAULT_TRANSIT_PLAINTEXT_REJECTED`). Use `scanPlaintextSecretsEffect` as an integrity check (`plaintextPaths` must stay empty).
+3. **Fail closed on Vault outage** — decrypt errors emit `VAULT_TRANSIT_DECRYPT_FAILED`. A short in-memory cache (`CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`, default 30s) rides out brief blips; plaintext is never written to disk. **Vault is on the critical path for SecretStore-backed inference.**
+4. **Rotation / rewrap** — on a schedule: `vault write -f transit/keys/clawql-secrets/rotate`, then `rewrapAllSecretsEffect(store)`, then raise `min_decryption_version` once rewrap is clean.
+
+### Python environments outside the repo lockfiles
+
+Repo lockfiles are not the only install surface. Harnesses, `pipx` tools, and developer laptops have their own site-packages. After a public package compromise, scan those hosts with:
+
+```bash
+bash scripts/security/scan-litellm-ioc.sh
+# optional: bash scripts/security/scan-litellm-ioc.sh /path/to/venv/lib/python3.x/site-packages
+```
+
+The script looks for known site-packages droppers (`cook.pth` / `cook.py`) and `/tmp` persistence markers. Broader supply-chain posture: [`docs/security/supply-chain-posture.md`](../security/supply-chain-posture.md).
+
+**KV vs Transit:** Helm + ESO still sync **KV** `secret/clawql/providers` into `clawql-provider-env` for process env. Transit protects **application SecretStore** values at rest. Use both: KV for injection, Transit for anything ClawQL writes to a DB.
+
 ## Vault KV shape
 
-| Mount            | Path               | Purpose                                             |
-| ---------------- | ------------------ | --------------------------------------------------- |
-| `secret` (KV v2) | `clawql/providers` | All bundled provider credentials (camelCase fields) |
+| Mount            | Path                                   | Purpose                                                         |
+| ---------------- | -------------------------------------- | --------------------------------------------------------------- |
+| `secret` (KV v2) | `clawql/providers`                     | All bundled provider credentials (camelCase fields)             |
+| `transit`        | `keys/clawql-secrets` (`derived=true`) | Encryption key for SecretStore ciphertext + tenant/path context |
 
 ### Field catalog
 
