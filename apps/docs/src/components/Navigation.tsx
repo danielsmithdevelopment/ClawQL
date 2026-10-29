@@ -38,6 +38,7 @@ function TopLevelNavItem({
       <CloseButton
         as={Link}
         href={href}
+        prefetch={false}
         rel={external ? 'noopener noreferrer' : undefined}
         className="block py-1 text-sm text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
       >
@@ -65,6 +66,8 @@ function NavLink({
     <CloseButton
       as={Link}
       href={href}
+      // Avoid OpenNext/Workers RSC prefetch amplification on free-plan quotas.
+      prefetch={false}
       rel={external ? 'noopener noreferrer' : undefined}
       aria-current={active ? 'page' : undefined}
       className={clsx(

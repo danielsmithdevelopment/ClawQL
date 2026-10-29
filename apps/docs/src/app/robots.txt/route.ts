@@ -14,15 +14,41 @@ const RULES: Array<{
   disallow?: string | string[]
   crawlDelay?: number
 }> = [
-  { userAgent: '*', allow: '/' },
-  { userAgent: 'GPTBot', allow: '/' },
-  { userAgent: 'ChatGPT-User', allow: '/' },
-  { userAgent: 'Google-Extended', allow: '/' },
-  { userAgent: 'ClaudeBot', allow: '/' },
-  { userAgent: 'Claude-Web', allow: '/' },
-  { userAgent: 'anthropic-ai', allow: '/' },
-  { userAgent: 'PerplexityBot', allow: '/' },
-  { userAgent: 'Applebot-Extended', allow: '/' },
+  // Disallow Next.js RSC flight query URLs — not documents; bots hammering them
+  // burn Workers CPU. Middleware also 429s these without `RSC: 1`.
+  {
+    userAgent: '*',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*&_rsc=', '/*?*rsc=', '/*?*&rsc='],
+  },
+  { userAgent: 'GPTBot', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
+  {
+    userAgent: 'ChatGPT-User',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
+  {
+    userAgent: 'Google-Extended',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
+  { userAgent: 'ClaudeBot', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
+  { userAgent: 'Claude-Web', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
+  {
+    userAgent: 'anthropic-ai',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
+  {
+    userAgent: 'PerplexityBot',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
+  {
+    userAgent: 'Applebot-Extended',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
 ]
 
 function resolveArray<T>(value: T | T[] | undefined): T[] {

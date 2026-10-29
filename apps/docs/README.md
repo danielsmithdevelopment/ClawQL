@@ -74,6 +74,7 @@ Edit the **Markdown sources**, then run `npm run dev` or `npm run build` so gene
 ## Performance, accessibility (WCAG-oriented), and SEO
 
 - **Runbook (incident prevention, Lighthouse CI, Workers):** [`../../docs/website/website-performance-workers-guardrails.md`](../../docs/website/website-performance-workers-guardrails.md)
+- **RSC / bot quota guard:** middleware 429s `?_rsc=` / `?rsc=` without `RSC: 1` (`src/lib/rsc-bot-guard.ts`). On Cloudflare Free, also add the **zone WAF block** documented in that runbook so scrapers never reach the Worker.
 - **Crawlers & link previews:** Long-form generated MDX (e.g. `/vision/slide-deck`, `/security/defense-in-depth`) uses **synchronous** imports so the **full article body is in the HTML response** at build time. Avoid wrapping that MDX in `Suspense` + `import()` unless you accept that many bots and “paste URL” tools only read the first HTML chunk (often a loading placeholder).
 - **Local Lighthouse** needs a **Chromium-based** binary. Lighthouse looks for **Google Chrome** by default; if you only have **Brave** (or another Chromium), set **`CHROME_PATH`** to the executable (macOS Brave: `/Applications/Brave Browser.app/Contents/MacOS/Brave Browser`). Example against a local **`next start`**: `CHROME_PATH="…/Brave Browser" npx lighthouse@13.1.0 http://127.0.0.1:3000/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --view`. **`npm run lh:docs`** hits production and writes `lighthouse-report.html` (gitignored).
 

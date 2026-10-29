@@ -63,8 +63,25 @@ npm run lh -- http://127.0.0.1:3000/case-studies/cloudflare-docs-mcp --preset=de
 - [ ] **Watch Observability** for **`waitUntil()`** warnings and **1102** spikes after every **large MDX** or **OpenNext** upgrade.
 - [ ] **OpenNext static cache:** **`staticAssetsIncrementalCache`** + **`enableCacheInterception`** in **`apps/docs/open-next.config.ts`**; root **`force-static`** in **`apps/docs/src/app/layout.tsx`**.
 - [ ] **Cache strategy:** keep **`Cache-Control`** sensible (`apps/docs/next.config.mjs` + `public/_headers` + **`apps/docs/src/lib/edge-cache-control.mjs`**); heavy MDX routes use **30d `s-maxage`** — avoid unnecessary **purge-all** after deploy (purge only when you need immediate HTML consistency).
-- [ ] **Plan limits:** confirm whether **Free vs Paid** Workers CPU limits are acceptable for **worst-case** case-study pages.
-- [ ] **Upstream:** track **`@opennextjs/cloudflare`** and **Next.js** releases for Worker **`waitUntil` / `after()`** fixes.
+- [ ] **RSC flight bot guard:** middleware returns **429** for `?_rsc=` / `?rsc=` without **`RSC: 1`** (`apps/docs/src/lib/rsc-bot-guard.ts`). Sidebar links use **`prefetch={false}`**.
+- [ ] **Zone WAF before the Worker (Cloudflare Free — do this):** middleware still **counts as a Worker invocation**. To avoid free-plan request overages, add a **Custom rule** on the **`clawql.com` zone** that **Blocks** (or Managed Challenges) before the Worker runs:
+
+  - **Expression (copy/paste):**
+
+    ```txt
+    (http.host eq "docs.clawql.com") and
+    (
+      http.request.uri.query contains "_rsc=" or
+      http.request.uri.query contains "rsc="
+    ) and
+    not any(http.request.headers["rsc"][*] eq "1")
+    ```
+
+  - **Action:** `Block` (or `Managed Challenge` if you want soft verification).
+  - Also enable **Bot Fight Mode** (Security → Bots) on the zone — free and stops a lot of scrapers before Workers.
+
+- [ ] **Plan limits:** stay on **Workers Free** only with the WAF rule above; upgrading Workers without a spend cap can produce bill shock under `_rsc` floods. Prefer **WAF block + Free** over uncapped paid Workers until traffic is understood.
+- [ ] **Upstream:** track **`@opennextjs/cloudflare`** and **Next.js** releases for Worker **`waitUntil` / `after()`** fixes and RSC prefetch-loop regressions (OpenNext **#1334**).
 
 ### Content / front-end (reduces per-invocation cost)
 
@@ -113,7 +130,8 @@ Pick up in issues or small PRs; not all are automated today.
 | **`eslint-plugin-jsx-a11y`** in `apps/docs/`                            | Catches **a11y** issues Lighthouse does not (e.g. some interactive patterns).                                                                 |
 | **Route-level `dynamic` / caching hints**                               | If Next exposes stable static paths for some MDX, **reduce** Worker invocations (validate with OpenNext).                                     |
 | **Image pipeline**                                                      | Prefer **`next/image`** with explicit **sizes** for hero assets; keep markdown bodies on **`loading="lazy"`** (already default in `mdx.tsx`). |
-| **Paid Workers / higher CPU**                                           | Product decision when **case studies** are business-critical on **Free** limits.                                                              |
+| **Paid Workers / higher CPU**                                           | Product decision when **case studies** are business-critical on **Free** limits — only with a **spend cap**; WAF-block `_rsc` first.          |
+| **Zone rate-limit by IP**                                               | Caps remaining clean-URL scrape storms after `_rsc` is blocked at the edge.                                                                   |
 | **Content splits**                                                      | Long case studies → **multiple pages** or shorter “summary + deep link to GitHub” lowers **per-request** HTML and MDX compile cost.           |
 
 ---
