@@ -1,7 +1,8 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Fleet rates still need Tier C re-measure / baseline pairing / await-trial injection; program TLA+ remains open. This does **not** yet authorize “durable execution” copy.  
+**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** / **`model_call`** steps. Program TLA+ (`formal/tla/program/ProgramResume`) dual-config oracle is in tree. Fleet rates still need Tier C re-measure / baseline pairing / await-trial injection. This does **not** yet authorize “durable execution” copy.  
+
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---
@@ -62,6 +63,8 @@ A program waiting days on an approval must still resume after node restarts and 
 ### 5. Model extended
 
 Extend the TLA+ spec from single writes to programs: a crashed program eventually completes (under fair scheduling), and no completed step reruns. Check board traces against it. Still: **“model-checked under bounds,”** never “provably correct.”
+
+**Today:** [`formal/tla/program/ProgramResume`](../../formal/tla/program/) — `NoCompletedStepRerun` + `OutcomeUnknownHonest` under `MaxSteps≤3` / `MaxCrashes≤2`; weak config (`WeakAllowCompletedRerun`) must counterexample. Does not yet ingest board JSON traces or model `sleep` / `await_approval` / `model_call` as distinct actions.
 
 ---
 

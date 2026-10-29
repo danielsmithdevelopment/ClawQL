@@ -67,3 +67,6 @@ jobs:
             exit 1
           fi
           echo "OK: event at-least-once+dedup green; weak counterexample (exit=$WEAK)"
+
+      - name: Run program-resume TLC dual configs
+        run: bash scripts/formal/run-program-resume-tlc.sh
