@@ -3,8 +3,11 @@
   "generatedAt": "2026-10-29T18:51:18.975Z",
   "git": {
     "branch": "cursor/durability-peer-pilot-f425",
-    "commit": "efa42bcceb9471e36dcda15e56ec7b2a2e8cdd75",
-    "short": "efa42bcce"
+    "commit": "0dda57a316af7bd3e504b4d45c014244e2cd7531",
+    "short": "0dda57a31",
+    "tip": "0dda57a316af7bd3e504b4d45c014244e2cd7531",
+    "evidenceContentCommit": "11590bb2af9a5c9b7219e2586a868a4771603d00",
+    "note": "Evidence JSON SHA-256s are for files introduced in evidenceContentCommit; tip includes docs/manifest only after that."
   },
   "evidence": [
     {
@@ -39,7 +42,7 @@
     "formula": "1 - 0.05^(1/N)",
     "peerBoard": 0.0582,
     "crashPoints": 0.0582,
-    "note": "Use for zero-count rate claims only. N=10 → ~0.26; N=50 → ~0.06. Prefer 'behaves as designed' wording for small-N harness checks."
+    "note": "Use for zero-count rate claims only. N=10 \u2192 ~0.26; N=50 \u2192 ~0.06. Prefer 'behaves as designed' wording for small-N harness checks."
   },
   "traceConformance": {
     "crashPointsTrace": {
@@ -55,6 +58,6 @@
       "source": "clawql-n50-trace.log",
       "evidencePath": "/opt/cursor/artifacts/clawql-n50-trace-evidence.json"
     },
-    "wording": "every exported trace from these runs satisfies the model safety rules — not “the implementation is verified”"
+    "wording": "every exported trace from these runs satisfies the model safety rules \u2014 not \u201cthe implementation is verified\u201d"
   }
 }
