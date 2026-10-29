@@ -1,7 +1,7 @@
 {
   "name": "clawql-mcp",
   "version": "8.0.0",
-  "description": "Agentic Gateway \u2014 Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+  "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -211,6 +211,7 @@
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.2",
     "graphql-http": "^1.23.0",
+    "graphql-scalars": "2.0.1",
     "ip-address": "10.7.4",
     "mcp-grpc-transport": "1.0.0",
     "nanoid": "6.0.1",
@@ -260,6 +261,8 @@
     "proxy-addr": "2.0.8",
     "source-map-js": "1.2.2",
     "@graphql-tools/utils": "12.0.3",
+    "graphql-scalars": "2.0.1",
+    "systeminformation": "5.33.18",
     "qs": "6.16.0",
     "protobufjs": "8.7.1",
     "google-proto-files": {
