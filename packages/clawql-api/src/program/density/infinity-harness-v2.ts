@@ -22,7 +22,7 @@ import {
   INFINITY_MATCHED_TURNS,
   serializeDensityMessagesBytesEffect,
 } from "./infinity-matched-shape.js";
-import { forceGcEffect, readMemTotalKiBEffect, readProcessRssEffect } from "./host-metrics.js";
+import { forceFullGcEffect, readMemTotalKiBEffect, readProcessRssEffect } from "./host-metrics.js";
 
 export type HostDisclosure = {
   readonly hostname: string;
@@ -135,6 +135,44 @@ export function slopeIntegrityEffect(opts: {
   });
 }
 
+export type FitCapIntegrity = {
+  readonly rule: "last_fit_times_slope_le_cap";
+  readonly lastFitAgents: number;
+  readonly slopeKiBPerAgent: number;
+  readonly memoryMaxBytes: number;
+  readonly productBytes: number;
+  readonly ok: boolean;
+  readonly detail: string;
+};
+
+/**
+ * lastFitAgents × slope must fit under the memory cap (catches overstated slopes
+ * from unreclaimed GC garbage, or silent swap extending past memory.max).
+ */
+export function fitCapIntegrityEffect(opts: {
+  readonly lastFitAgents: number;
+  readonly slopeKiBPerAgent: number;
+  readonly memoryMaxBytes: number;
+}): Effect.Effect<FitCapIntegrity> {
+  return Effect.sync(() => {
+    const productBytes = opts.lastFitAgents * opts.slopeKiBPerAgent * 1024;
+    // 1% slack for wave granularity / float noise.
+    const ok = productBytes <= opts.memoryMaxBytes * 1.01;
+    return {
+      rule: "last_fit_times_slope_le_cap",
+      lastFitAgents: opts.lastFitAgents,
+      slopeKiBPerAgent: opts.slopeKiBPerAgent,
+      memoryMaxBytes: opts.memoryMaxBytes,
+      productBytes: Math.round(productBytes),
+      ok,
+      detail: ok
+        ? `${opts.lastFitAgents} × ${opts.slopeKiBPerAgent} KiB = ${(productBytes / (1024 * 1024 * 1024)).toFixed(2)} GiB ≤ cap`
+        : `${opts.lastFitAgents} × ${opts.slopeKiBPerAgent} KiB = ${(productBytes / (1024 * 1024 * 1024)).toFixed(2)} GiB > cap ` +
+          `(overstated slope and/or swap; force full GC + memory.swap.max=0)`,
+    } satisfies FitCapIntegrity;
+  });
+}
+
 function readCpuModelEffect(): Effect.Effect<string> {
   return Effect.sync(() => {
     try {
@@ -242,7 +280,7 @@ function measureClawqlArmEffect(opts: {
     const bagDir = join(opts.bagRoot, `${opts.residence}-rep${opts.rep}-${Date.now()}`);
     const rt = makeDensityConversationRuntime(bagDir);
     yield* rt.clear();
-    yield* forceGcEffect();
+    yield* forceFullGcEffect(3);
     const points: SlopePoint[] = [];
     const rss0 = (yield* readProcessRssEffect()).rssKiB;
     points.push({ agents: 0, rssKiB: rss0 });
@@ -263,7 +301,8 @@ function measureClawqlArmEffect(opts: {
         }
         launched += 1;
       }
-      yield* forceGcEffect();
+      // Full GC before RSS so slope reflects live history, not turn garbage.
+      yield* forceFullGcEffect(3);
       const rss = (yield* readProcessRssEffect()).rssKiB;
       points.push({ agents: launched, rssKiB: rss });
     }

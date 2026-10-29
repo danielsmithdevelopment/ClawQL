@@ -53,6 +53,21 @@ export function forceGcEffect(): Effect.Effect<boolean> {
   });
 }
 
+/**
+ * Aggressive live-set GC before RSS samples. A single `gc()` often leaves
+ * short-lived turn strings resident and inflates slope at small N; under 8G
+ * pressure V8 collects harder, which made last-fit × slope disagree with the cap.
+ * Requires `--expose-gc`.
+ */
+export function forceFullGcEffect(passes = 3): Effect.Effect<boolean> {
+  return Effect.sync(() => {
+    const gc = (globalThis as { gc?: () => void }).gc;
+    if (typeof gc !== "function") return false;
+    for (let i = 0; i < Math.max(1, passes); i++) gc();
+    return true;
+  });
+}
+
 export function readHeapSnapshotEffect(): Effect.Effect<HeapSnapshot> {
   return Effect.gen(function* () {
     yield* forceGcEffect();

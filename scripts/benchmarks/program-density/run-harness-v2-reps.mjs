@@ -87,11 +87,15 @@ for (let rep = 1; rep <= reps; rep++) {
   };
   delete env.CLAWQL_HARNESS_INFINITY_CSV;
   console.error(`harness rep ${rep}/${reps} (fresh process)`);
-  const r = spawnSync(process.execPath, ["--expose-gc", "--import", "tsx", cli, tmp], {
-    env,
-    encoding: "utf8",
-    cwd: repoRoot,
-  });
+  const r = spawnSync(
+    process.execPath,
+    ["--expose-gc", "--max-old-space-size=8192", "--import", "tsx", cli, tmp],
+    {
+      env,
+      encoding: "utf8",
+      cwd: repoRoot,
+    }
+  );
   if (r.status !== 0) {
     console.error(r.stdout);
     console.error(r.stderr);

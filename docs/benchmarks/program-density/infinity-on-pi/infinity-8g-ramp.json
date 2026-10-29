@@ -1,153 +1,179 @@
 {
   "kind": "infinity-agent-scale-8g-ramp",
   "publishable": false,
-  "measuredAt": "2026-10-29T22:20:00.000Z",
+  "measuredAt": "2026-10-29T22:36:46.594Z",
   "label": "8 GB memory limit on cloud-agent-kvm-vm (not Raspberry Pi)",
   "memoryMaxBytes": 8589934592,
+  "memorySwapMax": "0",
+  "memorySwapCurrent": "0",
+  "memorySwapPeak": "0",
+  "memoryPeak": "8589934592",
   "pinnedCommit": "341f6c2",
   "uniqueContent": "v2",
-  "command": "AGENTS=120000 TURNS=20 WAVE=2500 agent_scale (unique-content; birth inside cgroup memory.max=8G)",
+  "command": "AGENTS=\u2026 TURNS=20 WAVE=\u2026 agent_scale (unique-content; birth inside cgroup; memory.swap.max=0)",
   "points": [
     {
       "agents": 0,
-      "rssKiB": 5444
+      "rssKiB": 5420
     },
     {
       "agents": 2500,
-      "rssKiB": 438660
+      "rssKiB": 438724
     },
     {
       "agents": 5000,
-      "rssKiB": 696448
+      "rssKiB": 696344
     },
     {
       "agents": 7500,
-      "rssKiB": 954604
+      "rssKiB": 954740
     },
     {
       "agents": 10000,
-      "rssKiB": 1210800
+      "rssKiB": 1210852
     },
     {
       "agents": 12500,
-      "rssKiB": 1467628
+      "rssKiB": 1467076
     },
     {
       "agents": 15000,
-      "rssKiB": 1727376
+      "rssKiB": 1727844
     },
     {
       "agents": 17500,
-      "rssKiB": 1983676
+      "rssKiB": 1983524
     },
     {
       "agents": 20000,
-      "rssKiB": 2239532
+      "rssKiB": 2239872
     },
     {
       "agents": 22500,
-      "rssKiB": 2496212
+      "rssKiB": 2496064
     },
     {
       "agents": 25000,
-      "rssKiB": 2752300
+      "rssKiB": 2751832
     },
     {
       "agents": 27500,
-      "rssKiB": 3008684
+      "rssKiB": 3008440
     },
     {
       "agents": 30000,
-      "rssKiB": 3272240
+      "rssKiB": 3272848
     },
     {
       "agents": 32500,
-      "rssKiB": 3528420
+      "rssKiB": 3528848
     },
     {
       "agents": 35000,
-      "rssKiB": 3785188
+      "rssKiB": 3784816
     },
     {
       "agents": 37500,
-      "rssKiB": 4041508
+      "rssKiB": 4041440
     },
     {
       "agents": 40000,
-      "rssKiB": 4297068
+      "rssKiB": 4297524
     },
     {
       "agents": 42500,
-      "rssKiB": 4553184
+      "rssKiB": 4554156
     },
     {
       "agents": 45000,
-      "rssKiB": 4809800
+      "rssKiB": 4810276
     },
     {
       "agents": 47500,
-      "rssKiB": 5065948
+      "rssKiB": 5066068
     },
     {
       "agents": 50000,
-      "rssKiB": 5322540
+      "rssKiB": 5322472
     },
     {
       "agents": 52500,
-      "rssKiB": 5578692
+      "rssKiB": 5578832
     },
     {
       "agents": 55000,
-      "rssKiB": 5834652
+      "rssKiB": 5835152
     },
     {
       "agents": 57500,
-      "rssKiB": 6106300
+      "rssKiB": 6106104
     },
     {
       "agents": 60000,
-      "rssKiB": 6362764
+      "rssKiB": 6363460
     },
     {
       "agents": 62500,
-      "rssKiB": 6619004
+      "rssKiB": 6618856
     },
     {
       "agents": 65000,
-      "rssKiB": 6875196
+      "rssKiB": 6875096
     },
     {
       "agents": 67500,
-      "rssKiB": 7131436
+      "rssKiB": 7131396
     },
     {
       "agents": 70000,
-      "rssKiB": 7387604
+      "rssKiB": 7388028
     },
     {
       "agents": 72500,
-      "rssKiB": 7643712
+      "rssKiB": 7643864
     },
     {
       "agents": 75000,
-      "rssKiB": 7899732
+      "rssKiB": 7899880
     },
     {
       "agents": 77500,
-      "rssKiB": 8156052
+      "rssKiB": 8156408
     }
   ],
   "agentsReachedLastSample": 77500,
   "exitCode": 137,
-  "memoryPeakBytes": 8589934592,
-  "slopeKiBPerAgent": 102.929,
-  "extrapolatedAgentsAt8GiB": 81446,
+  "slopeKiBPerAgent": 102.933,
+  "extrapolatedAgentsAt8GiB": 81443,
   "historySerializedBytes": 65471,
-  "integrity": {
+  "historyIntegrity": {
     "rule": "per_agent_cost_ge_history_bytes",
+    "historySerializedBytes": 65471,
     "historyKiB": 63.937,
-    "ok": true
+    "measuredKiBPerAgent": 102.933,
+    "ok": true,
+    "detail": "resident_rss_slope: 102.933 KiB/agent \u2265 history 63.937 KiB"
   },
-  "honesty": "Unique-per-agent message content (v2). Process born inside cgroup. OOM at memory.max; last CSV sample is last completed wave before kill. Not a Raspberry Pi measurement.",
-  "hostKind": "cloud-agent-kvm-vm"
+  "fitCapIntegrity": {
+    "rule": "last_fit_times_slope_le_cap",
+    "lastFitAgents": 77500,
+    "slopeKiBPerAgent": 102.933,
+    "memoryMaxBytes": 8589934592,
+    "productBytes": 8168762880,
+    "ok": true,
+    "detail": "77500 \u00d7 102.933 KiB = 7.61 GiB \u2264 cap"
+  },
+  "honesty": "Unique-per-agent content (v2). Process born inside cgroup with memory.swap.max=0. fitCapIntegrity: lastFit \u00d7 slope \u2264 memory.max. Not a Raspberry Pi measurement.",
+  "hostKind": "cloud-agent-kvm-vm",
+  "harnessFloorCrossCheck": {
+    "rule": "harness_floor_times_8g_lastfit_le_cap",
+    "harnessResidentSlopeKiBPerAgent": 102.891,
+    "lastFitAgents": 77500,
+    "memoryMaxBytes": 8589934592,
+    "productBytes": 8165429760,
+    "productGiB": 7.605,
+    "ok": true,
+    "detail": "harness floor 102.891 KiB \u00d7 77500 = 7.60 GiB"
+  },
+  "impliedKiBPerAgentAtLastFit": 105.244
 }

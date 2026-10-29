@@ -6,7 +6,7 @@ import {
   INFINITY_MATCHED_TURNS,
   serializeDensityMessagesBytesEffect,
 } from "./infinity-matched-shape.js";
-import { slopeIntegrityEffect } from "./infinity-harness-v2.js";
+import { fitCapIntegrityEffect, slopeIntegrityEffect } from "./infinity-harness-v2.js";
 
 describe("infinity-matched-shape v2 unique content", () => {
   it("builds 100 unique-per-slot messages near Infinity byte scale", async () => {
@@ -56,6 +56,25 @@ describe("infinity-matched-shape v2 unique content", () => {
         historySerializedBytes: 61_761,
         measuredKiBPerAgent: 70,
         kind: "resident_rss_slope",
+      })
+    );
+    expect(good.ok).toBe(true);
+  });
+
+  it("rejects lastFit × slope above memory cap", async () => {
+    const bad = await Effect.runPromise(
+      fitCapIntegrityEffect({
+        lastFitAgents: 102_500,
+        slopeKiBPerAgent: 98.7,
+        memoryMaxBytes: 8 * 1024 * 1024 * 1024,
+      })
+    );
+    expect(bad.ok).toBe(false);
+    const good = await Effect.runPromise(
+      fitCapIntegrityEffect({
+        lastFitAgents: 77_500,
+        slopeKiBPerAgent: 102.9,
+        memoryMaxBytes: 8 * 1024 * 1024 * 1024,
       })
     );
     expect(good.ok).toBe(true);
