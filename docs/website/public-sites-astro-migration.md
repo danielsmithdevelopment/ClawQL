@@ -16,12 +16,12 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 ## Order of work
 
-| Phase | App | Why first |
-| ----- | --- | --------- |
-| **0** | Ops | Keep docs WAF + middleware RSC guard live until Astro docs cutover ([guardrails](./website-performance-workers-guardrails.md)). |
-| **1** | `apps/www` | Smaller surface; signup/pricing/marketing; proves Astro + Pages + Plus visuals. |
-| **2** | `apps/docs` | Larger MDX/content-collection port; drop OpenNext Worker as primary HTML path. |
-| **3** | Cleanup | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps. |
+| Phase | App         | Why first                                                                                                                       |
+| ----- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **0** | Ops         | Keep docs WAF + middleware RSC guard live until Astro docs cutover ([guardrails](./website-performance-workers-guardrails.md)). |
+| **1** | `apps/www`  | Smaller surface; signup/pricing/marketing; proves Astro + Pages + Plus visuals.                                                 |
+| **2** | `apps/docs` | Larger MDX/content-collection port; drop OpenNext Worker as primary HTML path.                                                  |
+| **3** | Cleanup     | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps.                                         |
 
 ## Phase 1 — `apps/www` (clawql.com)
 

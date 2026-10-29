@@ -16,11 +16,11 @@ Public ClawQL sites (`clawql.com`, `docs.clawql.com`) currently run **Next.js Ap
 
 Meanwhile the product split is already clear:
 
-| Surface | Host | Job |
-| ------- | ---- | --- |
-| Marketing + signup | `clawql.com` | Waitlist / Supabase / Stripe Checkout → hand off to cloud |
-| Documentation | `docs.clawql.com` | Mostly static MDX / SEO / agent markdown |
-| Managed + self-host console | `cloud.clawql.com` / dashboard | Auth’d org, keys, billing, audit — **behind login** |
+| Surface                     | Host                           | Job                                                       |
+| --------------------------- | ------------------------------ | --------------------------------------------------------- |
+| Marketing + signup          | `clawql.com`                   | Waitlist / Supabase / Stripe Checkout → hand off to cloud |
+| Documentation               | `docs.clawql.com`              | Mostly static MDX / SEO / agent markdown                  |
+| Managed + self-host console | `cloud.clawql.com` / dashboard | Auth’d org, keys, billing, audit — **behind login**       |
 
 Signup and “get started with cloud plans” do **not** require App Router on the public marketing site; they are forms and redirects into the console ([ADR 0012](./0012-console-typescript-shadcn.md)). Docs do not need RSC at all. The console **does** need a rich authenticated SPA/app — and is not a public scrape target in the same way.
 
