@@ -31,6 +31,14 @@ reason = "LOW (CVE-2026-103923): katex@0.16.47 prototype-pollution bypass; merma
 id = "GHSA-86w9-cpqp-85rv"
 reason = "HIGH (CVE-2026-85393 / CVE-2026-33894): node-forge@1.4.0 RSA PKCS#1 v1.5 verification accepts nested DigestAlgorithm. OSV lists no fixed version beyond 1.4.0 (npm latest). Transitive via Expo CLI / @expo/code-signing-certificates in apps/mobile lockfile — build-time signing tooling, not PhoneApprove or MCP runtime. Remove when node-forge or Expo ships a patched release."
 
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+reason = "MODERATE (CVE-2026-93753): deepmerge@4.3.1 mergeObject prototype poisoning. OSV last_affected 4.3.1 with no fixed npm release (npm latest still 4.3.1). Transitive via apps/dashboard and apps/mobile graphs. Remove when deepmerge ships a patched release."
+
+[[IgnoredVulns]]
+id = "GHSA-x8rm-f576-gq67"
+reason = "MODERATE (CVE-2026-115887): graphql-scalars@1.26.0 PhoneNumber ReDoS. Fixed only in 2.0.1; GraphQL Mesh packages still require ^1.22–^1.23. Forcing 2.x via override risks Mesh runtime break. Transitive Mesh path, not a first-party scalar. Remove when @graphql-mesh/* accepts graphql-scalars >=2.0.1."
+
 # GHSA-hp3w-g68c-fv3c (sprintf-js@1.1.3) — removed unused ignore; OSV tip no longer
 # reports it against apps/desktop electron-builder graph (was filtered on older tip).
 

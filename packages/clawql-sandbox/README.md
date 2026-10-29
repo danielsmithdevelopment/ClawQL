@@ -28,6 +28,8 @@ When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` f
 | **Cloudflare bridge**                   | Workers `@cloudflare/sandbox`                  | `CLAWQL_SANDBOX_BRIDGE_URL` + token                        |
 | **macOS Seatbelt**                      | Dev macOS only                                 | `macos-seatbelt`                                           |
 
+Open isolation backends (Firecracker, gVisor, Apple container, Lima) use **`IsolationBackendService`** (ADR 0018) — OSI-only, not auto-selected for `sandbox_exec`. Cua was rejected.
+
 ### Agent Substrate (recommended for untrusted / arbitrary code)
 
 See [ADR 0011](../../docs/adr/0011-isolation-agent-substrate-sandbox-celld.md).
@@ -40,6 +42,19 @@ See [ADR 0011](../../docs/adr/0011-isolation-agent-substrate-sandbox-celld.md).
 - **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_ALLOW_PRODUCTION=1`** — required for customer-facing production after allowlist GA reconfirmation (§5)
 
 **Not for celld cells.** Fixed-shape orchestration stays on celld V8 isolates (same ADR).
+
+### Open isolation backends (ADR 0018 — Firecracker-first)
+
+See [ADR 0018](../../docs/adr/0018-open-isolation-backends.md) and [integrations/open-isolation-backends.md](../../docs/integrations/open-isolation-backends.md).
+
+| Backend         | License    | Host   | Notes                                        |
+| --------------- | ---------- | ------ | -------------------------------------------- |
+| Firecracker     | Apache-2.0 | Linux  | Primary snapshot / replay spike              |
+| gVisor          | Apache-2.0 | Linux  | Middle tier (sandboxed kernel)               |
+| Apple container | Apache-2.0 | Darwin | Per-container lightweight VM (Apple Silicon) |
+| Lima            | Apache-2.0 | Darwin | Full Linux VM                                |
+
+Shared **`IsolationBackendService`** for Ontologiql / open reference runner. License CI: `npm run check:isolation-backend-licenses`. **Avoid Cua and Tart.**
 
 ### Kata (fallback for production Kubernetes)
 

@@ -1,7 +1,10 @@
 /**
  * Chooses **`sandbox_exec`** backend: explicit **`CLAWQL_SANDBOX_BACKEND`**, or **auto**
  * (**Agent Substrate** → **Kata** → **Docker** → **Cloudflare bridge** → **Seatbelt** on macOS).
+ * Open isolation backends (Firecracker / gVisor / Apple container / Lima) are
+ * opt-in via pin — never auto-selected (ADR 0018).
  * @see docs/adr/0011-isolation-agent-substrate-sandbox-celld.md
+ * @see docs/adr/0018-open-isolation-backends.md
  */
 
 import { Effect } from "effect";
@@ -55,6 +58,8 @@ export function parseExplicitSandboxBackendEnvEffect(): Effect.Effect<ExplicitSa
     if (v === "bridge" || v === "cloudflare") return "bridge";
     if (v === "macos-seatbelt" || v === "seatbelt") return "macos-seatbelt";
     if (v === "docker" || v === "container" || v === "orbstack" || v === "podman") return "docker";
+    // Open isolation backends are IsolationBackendService-only for now (ADR 0018).
+    // Pinning them as sandbox_exec falls through to auto/bridge rather than a Cua path.
     return inKubernetesCluster() ? null : "bridge";
   });
 }
@@ -70,7 +75,8 @@ export const SANDBOX_AUTO_NONE_ERROR =
   "Kata RuntimeClass in-cluster (CLAWQL_SANDBOX_KATA_ENABLED=1), a working `docker`/`podman` CLI " +
   "(see CLAWQL_SANDBOX_DOCKER_BIN), Cloudflare bridge (CLAWQL_SANDBOX_BRIDGE_URL + CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN), " +
   "or macOS `/usr/bin/sandbox-exec`. Set CLAWQL_SANDBOX_BACKEND=auto for automatic selection, or " +
-  "agent-substrate|kata|bridge|macos-seatbelt|docker to pin.";
+  "agent-substrate|kata|bridge|macos-seatbelt|docker to pin. " +
+  "Open isolation (Firecracker/gVisor/Apple container/Lima) uses IsolationBackendService — see ADR 0018.";
 
 export type SandboxBackendChoice =
   { ok: true; backend: SandboxExecBackendKind } | { ok: false; error: string };

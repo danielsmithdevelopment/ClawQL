@@ -50,6 +50,11 @@ describe("parseExplicitSandboxBackendEnv", () => {
     process.env.CLAWQL_SANDBOX_BACKEND = "gvisor";
     expect(parseExplicitSandboxBackendEnv()).toBe("agent-substrate");
   });
+
+  it("does not treat cua as a sandbox_exec backend", () => {
+    process.env.CLAWQL_SANDBOX_BACKEND = "cua";
+    expect(parseExplicitSandboxBackendEnv()).toBe("bridge");
+  });
 });
 
 describe("resolveSandboxBackendChoice", () => {

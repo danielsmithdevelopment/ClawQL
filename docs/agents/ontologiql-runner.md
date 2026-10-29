@@ -59,6 +59,10 @@ const program = Effect.gen(function* () {
 | Ship a Cursor-hosted bot with ClawQL tools   | Agent SDK `mcp-connections/clawql.ts` |
 | Injection smoke on that bot                  | Agent SDK `evals/injection.eval.ts`   |
 
+## Isolation backend (open backends / Agent Substrate)
+
+Session containment for the open reference runner should speak **`IsolationBackendService`** (`clawql-sandbox`) — Firecracker (snapshot spike primary), gVisor, Apple container, Lima (ADR [0018](../adr/0018-open-isolation-backends.md)). All Apache-2.0; Cua rejected. Shared conformance: `runIsolationConformanceEffect`. Guide: [`../integrations/open-isolation-backends.md`](../integrations/open-isolation-backends.md).
+
 ## Non-goals
 
 - Re-implementing `search` / `execute` / mandates as ACP extension methods.

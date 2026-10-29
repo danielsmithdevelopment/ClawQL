@@ -142,6 +142,7 @@
     "test:coverage": "npm run build && vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\" \"packages/clawql-merkle/src/**/*.ts\" \"packages/clawql-gdp/src/**/*.ts\" \"packages/clawql-audit/src/**/*.ts\" \"packages/clawql-analytics/src/**/*.ts\" \"packages/clawql-observability/src/**/*.ts\" \"packages/clawql-auth/src/**/*.ts\" \"packages/clawql-tee/src/**/*.ts\" \"packages/clawql-network/src/**/*.ts\" \"packages/clawql-mcp-events/src/**/*.ts\" \"packages/clawql-agents/src/**/*.ts\" \"packages/clawql-harness/src/**/*.ts\" \"packages/clawql-harness/plugins/**/*.ts\" \"packages/clawql-harness/bench/**/*.ts\" \"packages/clawql-core/src/**/*.ts\" \"packages/clawql-api/src/**/*.ts\" \"packages/clawql-memory/src/**/*.ts\" \"packages/clawql-ontology/src/**/*.ts\" \"packages/clawql-web/src/**/*.ts\" \"packages/clawql-chatgpt-extensions/src/**/*.ts\" \"packages/clawql-documents/src/**/*.ts\" \"packages/clawql-automation/src/**/*.ts\" \"packages/clawql-sandbox/src/**/*.ts\" \"packages/clawql-supabase/src/**/*.ts\" \"packages/clawql-data/src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-inference/src/**/*.ts\" \"packages/clawql-payments/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"packages/clawql-operator/src/**/*.ts\" \"packages/clawql-release/src/**/*.ts\" \"vitest.config.ts\" --max-warnings 0 --cache --cache-location .eslintcache",
     "check:effect-every-package": "node scripts/check-effect-every-package.mjs",
+    "check:isolation-backend-licenses": "node scripts/check-isolation-backend-licenses.mjs",
     "effect-v4:inventory": "node scripts/effect-v4-spike-inventory.mjs",
     "effect-v4:try-rc": "node scripts/effect-v4-spike-try-rc.mjs",
     "lint:fix": "eslint \"src/**/*.ts\" \"packages/clawql-merkle/src/**/*.ts\" \"packages/clawql-gdp/src/**/*.ts\" \"packages/clawql-audit/src/**/*.ts\" \"packages/clawql-analytics/src/**/*.ts\" \"packages/clawql-observability/src/**/*.ts\" \"packages/clawql-auth/src/**/*.ts\" \"packages/clawql-tee/src/**/*.ts\" \"packages/clawql-network/src/**/*.ts\" \"packages/clawql-agents/src/**/*.ts\" \"packages/clawql-core/src/**/*.ts\" \"packages/clawql-api/src/**/*.ts\" \"packages/clawql-memory/src/**/*.ts\" \"packages/clawql-ontology/src/**/*.ts\" \"packages/clawql-web/src/**/*.ts\" \"packages/clawql-chatgpt-extensions/src/**/*.ts\" \"packages/clawql-documents/src/**/*.ts\" \"packages/clawql-automation/src/**/*.ts\" \"packages/clawql-sandbox/src/**/*.ts\" \"packages/clawql-supabase/src/**/*.ts\" \"packages/clawql-data/src/**/*.ts\" \"packages/mcp-grpc-transport/src/**/*.ts\" \"packages/clawql-inference/src/**/*.ts\" \"packages/clawql-payments/src/**/*.ts\" \"packages/clawql-ouroboros/src/**/*.ts\" \"packages/panguard-mcp-bridge/src/**/*.ts\" \"packages/clawql-operator/src/**/*.ts\" \"packages/clawql-release/src/**/*.ts\" \"vitest.config.ts\" --fix --cache --cache-location .eslintcache",
@@ -235,7 +236,7 @@
   },
   "overrides": {
     "@protobufjs/utf8": "1.1.1",
-    "@hono/node-server": "2.0.11",
+    "@hono/node-server": "2.1.5",
     "fast-uri": "3.1.9",
     "ip-address": "10.7.4",
     "@opentelemetry/core": "2.9.0",
@@ -253,7 +254,8 @@
     "proxy-addr": "2.0.8",
     "source-map-js": "1.2.2",
     "@graphql-tools/utils": "12.0.3",
-    "qs": "6.16.0",
+    "qs": "6.17.0",
+    "systeminformation": "5.33.18",
     "protobufjs": "8.7.1",
     "google-proto-files": {
       "protobufjs": "8.7.1"
