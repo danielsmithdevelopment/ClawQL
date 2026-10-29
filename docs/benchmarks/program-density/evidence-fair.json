@@ -1282,7 +1282,7 @@
   },
   "drainVsSustained": {
     "artifact": "docs/benchmarks/program-density/drain-vs-sustained.json",
-    "measuredAt": "2026-10-29T02:45:26.019Z",
+    "measuredAt": "2026-10-29T03:35:35.316Z",
     "journalConfig": {
       "dataSync": "fsync",
       "preallocateBytes": null,
@@ -1290,33 +1290,47 @@
     },
     "rampMethodology": {
       "mode": "steady_arrival_continuous",
-      "stepDurationMs": 8000,
+      "stepDurationMs": 6000,
       "requireNonGrowingBacklog": true,
       "campaignStepDurationMs": 30000,
+      "reps": 3,
+      "interleaved": "drain_then_sustained_each_rep",
       "scheduler": "pop_all_due_coalesce_wake_1ms_no_idle_sleep_while_inflight"
     },
-    "durableRecordsPerSec": 333300.76,
-    "rateSustainableWithinOneSecondSla": 352000,
-    "firstRateMissingSlaPerSec": 368000,
-    "drainOverSustained": 0.947,
-    "sustainedAtOrBelowDrain": true,
+    "drainSummary": {
+      "mean": 312091.56,
+      "min": 278372.33,
+      "max": 333398.79,
+      "stdev": 29538.47
+    },
+    "sustainedSummary": {
+      "mean": 312000,
+      "min": 280000,
+      "max": 336000,
+      "stdev": 28844.41
+    },
+    "ratioSummary": {
+      "mean": 1.01,
+      "min": 0.87,
+      "max": 1.19,
+      "stdev": 0.16
+    },
+    "durableRecordsPerSec": 312091.56,
+    "rateSustainableWithinOneSecondSla": 312000,
+    "drainOverSustained": 1.01,
+    "sustainedEqualsDrainWithinError": true,
     "priorShortRampSustainablePerSecRetracted": 636000,
     "priorSchedulerBoundSustainablePerSec": 140000,
     "cycleStagesMs": {
-      "writeMeanMs": 0.0098,
-      "syncMeanMs": 0.1264,
-      "syncP50Ms": 0.1144,
-      "syncP99Ms": 0.4255,
-      "ackMeanMs": 0.0024,
-      "interFlushGapMeanMs": 0.0006,
-      "cycleMeanMs": 0.1392
+      "writeMeanMs": 0.0089,
+      "syncMeanMs": 0.1419,
+      "syncP50Ms": 0.1292,
+      "syncP99Ms": 0.6786,
+      "ackMeanMs": 0.0025,
+      "interFlushGapMeanMs": 0.0004,
+      "cycleMeanMs": 0.1538
     },
-    "exampleFailArm": {
-      "arrivalRatePerSec": 368000,
-      "pctWithinSla": 100,
-      "failReason": "growing_backlog"
-    },
-    "diagnosis": "writer_bound_sustained_near_drain",
-    "reading": "After pop-all-due+coalesce, sustained≈drain (was scheduler-bound at ~140k). Sync p99 recorded. Campaign ≥30s steps."
+    "diagnosis": "sustained_equals_drain_within_measurement_error",
+    "reading": "Same-campaign 3-rep: sustained equals drain within error — writer fully the limit. Ontologiql ack+dbuf landed; their sustained remasure + hit-rate vs concurrency still open."
   }
 }

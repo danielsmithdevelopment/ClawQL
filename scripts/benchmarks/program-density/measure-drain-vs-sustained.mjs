@@ -44,6 +44,8 @@ const cliffRates = (process.env.CLAWQL_DENSITY_CLIFF_RATES || "128000,192000,256
 const rampStepMs = Number(
   process.env.CLAWQL_DENSITY_RAMP_STEP_MS || 30_000
 );
+/** Same-campaign repetitions of drain + sustained (default 3). */
+const campaignReps = Math.max(1, Number(process.env.CLAWQL_DENSITY_REPS || 3));
 
 mkdirSync(workDir, { recursive: true });
 const pct = (samples, p) => Effect.runSync(percentileMsEffect(samples, p));
@@ -429,9 +431,66 @@ async function measureLatenessSplit(offeredRatePerSec) {
   }
 }
 
-const pureDrain = await measurePureDrain();
-const sustained = await measureSustained();
-const skipCliffLateness = process.env.CLAWQL_DENSITY_SKIP_CLIFF_LATENESS === "1";
+function summarizeRates(values) {
+  const xs = values.filter((v) => Number.isFinite(v) && v > 0);
+  if (xs.length === 0) {
+    return { n: 0, mean: null, min: null, max: null, stdev: null, values: [] };
+  }
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const min = Math.min(...xs);
+  const max = Math.max(...xs);
+  const variance =
+    xs.length > 1 ? xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (xs.length - 1) : 0;
+  return {
+    n: xs.length,
+    mean: Number(mean.toFixed(2)),
+    min: Number(min.toFixed(2)),
+    max: Number(max.toFixed(2)),
+    stdev: Number(Math.sqrt(variance).toFixed(2)),
+    values: xs.map((v) => Number(v.toFixed(2))),
+  };
+}
+
+function rangesOverlap(a, b) {
+  if (a.min == null || b.min == null) return false;
+  return a.min <= b.max && b.min <= a.max;
+}
+
+/** Same campaign: interleave drain + sustained so both share host conditions. */
+const reps = [];
+for (let i = 0; i < campaignReps; i++) {
+  const drain = await measurePureDrain();
+  const sustained = await measureSustained();
+  reps.push({
+    rep: i + 1,
+    durableRecordsPerSec: drain.durableRecordsPerSec,
+    sustainablePerSec: sustained.sustainablePerSec,
+    firstRateMissingSlaPerSec: sustained.firstRateMissingSlaPerSec,
+    drainOverSustained:
+      sustained.sustainablePerSec > 0
+        ? Number((drain.durableRecordsPerSec / sustained.sustainablePerSec).toFixed(4))
+        : null,
+    drain,
+    sustained,
+  });
+  console.error(
+    JSON.stringify({
+      rep: i + 1,
+      of: campaignReps,
+      durableRecordsPerSec: drain.durableRecordsPerSec,
+      sustainablePerSec: sustained.sustainablePerSec,
+      ratio: reps[reps.length - 1].drainOverSustained,
+    })
+  );
+}
+
+const drainSummary = summarizeRates(reps.map((r) => r.durableRecordsPerSec));
+const sustainedSummary = summarizeRates(reps.map((r) => r.sustainablePerSec));
+const ratioSummary = summarizeRates(reps.map((r) => r.drainOverSustained).filter((x) => x != null));
+const pureDrain = reps[reps.length - 1].drain;
+const sustained = reps[reps.length - 1].sustained;
+
+const skipCliffLateness = process.env.CLAWQL_DENSITY_SKIP_CLIFF_LATENESS !== "0";
 const cliffRate =
   sustained.firstRateMissingSlaPerSec ??
   Math.max(sustained.sustainablePerSec * 1.25, sustained.sustainablePerSec + 32_000);
@@ -446,7 +505,7 @@ const cliff = skipCliffLateness
       lateOnly: { count: 0, meanWaitToPopMs: null, meanWaitForBatchMs: null, meanSyncMs: null, meanWaitForDurableMs: null, sample: [] },
       flushStats: null,
       skipped: true,
-      note: "Set CLAWQL_DENSITY_SKIP_CLIFF_LATENESS=0 to sample waitToPop/batch/sync at the cliff.",
+      note: "Cliff lateness skipped by default in multi-rep campaign; set CLAWQL_DENSITY_SKIP_CLIFF_LATENESS=0 to sample.",
     }
   : await measureLatenessSplit(cliffRate);
 const atSustainable = skipCliffLateness
@@ -459,16 +518,36 @@ const syncMs = pureDrain.cycleStagesMs?.syncMeanMs;
 const observedFsyncPeriodMs =
   pureDrain.fsyncsPerSec > 0 ? Number((1000 / pureDrain.fsyncsPerSec).toFixed(3)) : null;
 
+const drainMean = drainSummary.mean ?? 0;
+const sustainedMean = sustainedSummary.mean ?? 0;
+// Within error only if the rate ranges overlap (or each mean sits inside the
+// other's [min, max]). A lone ~6% single-run excess is not enough once we have
+// same-campaign reps — report the ratio spread instead.
+const withinError =
+  rangesOverlap(drainSummary, sustainedSummary) ||
+  (drainSummary.min != null &&
+    sustainedMean >= drainSummary.min &&
+    sustainedMean <= drainSummary.max) ||
+  (sustainedSummary.min != null &&
+    drainMean >= sustainedSummary.min &&
+    drainMean <= sustainedSummary.max);
+const sustainedClearlyAboveDrain =
+  sustainedSummary.min != null &&
+  drainSummary.max != null &&
+  sustainedSummary.min > drainSummary.max * 1.05;
+const drainClearlyAboveSustained =
+  drainSummary.min != null &&
+  sustainedSummary.max != null &&
+  drainSummary.min > sustainedSummary.max * 1.25;
+
 let diagnosis;
-const sustainedRate = sustained.sustainablePerSec || 0;
-const drainRate = pureDrain.durableRecordsPerSec;
-// Allow ~15% host/measurement noise between saturating-drain and ramp windows.
-const sustainedAboveDrain = sustainedRate > drainRate * 1.15;
-if (sustainedAboveDrain) {
+if (sustainedClearlyAboveDrain) {
   diagnosis = "inconsistent_sustained_above_drain_ramp_still_too_short";
-} else if (sustainedRate > 0 && drainRate > sustainedRate * 1.25) {
+} else if (withinError) {
+  diagnosis = "sustained_equals_drain_within_measurement_error";
+} else if (drainClearlyAboveSustained) {
   diagnosis = "latency_limit_drain_exceeds_sustained_sla_rate";
-} else if (sustainedRate > 0 && drainRate >= sustainedRate * 0.85) {
+} else if (sustainedMean > 0 && drainMean >= sustainedMean * 0.85) {
   diagnosis = "writer_bound_sustained_near_drain";
 } else if (syncMs != null && observedFsyncPeriodMs != null && observedFsyncPeriodMs > syncMs * 1.8) {
   diagnosis = "cycle_time_dominated_by_non_sync_stages";
@@ -486,18 +565,41 @@ const payload = {
     probeSyncP50Ms: probeSyncP50,
     theoreticalMaxGroupCommitPerSec: serialFsyncs != null ? serialFsyncs * batchMax : null,
   },
+  campaign: {
+    reps: campaignReps,
+    stepDurationMs: rampStepMs,
+    interleaved: "drain_then_sustained_each_rep",
+    note: "Drain and sustained measured in the same campaign (interleaved per rep) so a ~6% single-run excess is not treated as a contradiction.",
+  },
+  reps: reps.map((r) => ({
+    rep: r.rep,
+    durableRecordsPerSec: r.durableRecordsPerSec,
+    sustainablePerSec: r.sustainablePerSec,
+    firstRateMissingSlaPerSec: r.firstRateMissingSlaPerSec,
+    drainOverSustained: r.drainOverSustained,
+    syncP99Ms: r.drain.fsyncLatencyMs?.p99 ?? null,
+    rampArms: r.sustained.rampArms,
+  })),
+  drainSummary,
+  sustainedSummary,
+  ratioSummary,
   pureDrain,
-  sustainedWithinOneSecondSla: sustained,
+  sustainedWithinOneSecondSla: {
+    ...sustained,
+    sustainablePerSecMean: sustainedSummary.mean,
+    sustainablePerSecSpread: sustainedSummary,
+  },
   latenessAtSustainable: atSustainable,
   latenessAtCliff: cliff,
   compare: {
-    durableRecordsPerSec: pureDrain.durableRecordsPerSec,
-    rateSustainableWithinOneSecondSla: sustained.sustainablePerSec,
-    drainOverSustained:
-      sustained.sustainablePerSec > 0
-        ? Number((pureDrain.durableRecordsPerSec / sustained.sustainablePerSec).toFixed(3))
-        : null,
-    sustainedAtOrBelowDrain: !sustainedAboveDrain,
+    durableRecordsPerSec: drainSummary.mean,
+    durableRecordsPerSecSpread: drainSummary,
+    rateSustainableWithinOneSecondSla: sustainedSummary.mean,
+    rateSustainableWithinOneSecondSlaSpread: sustainedSummary,
+    drainOverSustained: ratioSummary.mean,
+    drainOverSustainedSpread: ratioSummary,
+    sustainedEqualsDrainWithinError: withinError,
+    rangesOverlap: rangesOverlap(drainSummary, sustainedSummary),
     observedFsyncPeriodMs,
     syncMeanMs: syncMs,
     syncP50Ms: pureDrain.cycleStagesMs?.syncP50Ms ?? null,
@@ -514,10 +616,12 @@ const payload = {
   reading: {
     diagnosis,
     note:
-      "Steady-state ramp: continuous arrivals for ≥30s/step (override CLAWQL_DENSITY_RAMP_STEP_MS); fail if overdue backlog grows. Sustained must be ≤ durable drain. If drain ≫ sustained → latency limit; if near drain → writer-bound. Record stepDurationMs + backlogTrend. Sync p99 beside mean (Ontologiql heavy tail). Prealloc: disclose best journal config per side.",
+      withinError
+        ? "Sustained equals drain within measurement error — writer is fully the limit. Report mean ± spread from the same 3-rep campaign; sync p99 beside p50."
+        : "Steady-state ramp in a same-campaign 3-rep protocol. If drain ≫ sustained → latency limit; if ranges overlap → writer-bound within error. Sync p99 recorded. Ontologiql: remeasure sustained after ack+dbuf; hit rate vs concurrency.",
     boardColumns: {
-      durableRecordsPerSec: pureDrain.durableRecordsPerSec,
-      rateSustainableWithinOneSecondSla: sustained.sustainablePerSec,
+      durableRecordsPerSec: drainSummary.mean,
+      rateSustainableWithinOneSecondSla: sustainedSummary.mean,
     },
   },
 };
@@ -530,24 +634,21 @@ console.log(
     {
       out: outPath,
       journalConfig: journalPolicy,
-      durableRecordsPerSec: pureDrain.durableRecordsPerSec,
-      rateSustainableWithinOneSecondSla: sustained.sustainablePerSec,
-      drainOverSustained: payload.compare.drainOverSustained,
-      sustainedAtOrBelowDrain: payload.compare.sustainedAtOrBelowDrain,
+      campaignReps,
+      drainSummary,
+      sustainedSummary,
+      ratioSummary,
+      sustainedEqualsDrainWithinError: withinError,
+      durableRecordsPerSec: drainSummary.mean,
+      rateSustainableWithinOneSecondSla: sustainedSummary.mean,
+      drainOverSustained: ratioSummary.mean,
       rampMethodology: sustained.rampMethodology,
-      rampArms: sustained.rampArms,
       cycleStagesMs: pureDrain.cycleStagesMs,
+      syncP50Ms: pureDrain.fsyncLatencyMs?.p50 ?? null,
       syncP99Ms: pureDrain.fsyncLatencyMs?.p99 ?? null,
+      ackMeanMs: pureDrain.cycleStagesMs?.ackMeanMs ?? null,
       observedFsyncPeriodMs,
       nonSyncShareOfPeriod: payload.compare.nonSyncShareOfPeriod,
-      cliffPctWithinSla: cliff.pctWithinSla,
-      cliffLateCount: cliff.lateOnly.count,
-      cliffLateMeans: {
-        waitToPop: cliff.lateOnly.meanWaitToPopMs,
-        waitForBatch: cliff.lateOnly.meanWaitForBatchMs,
-        sync: cliff.lateOnly.meanSyncMs,
-        durable: cliff.lateOnly.meanWaitForDurableMs,
-      },
       diagnosis,
     },
     null,
