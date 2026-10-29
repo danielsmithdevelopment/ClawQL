@@ -14,6 +14,7 @@
  *   resumeDeadlineMiss  — resume not completed within deadline
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
+ *   statePreserved      — claim-path §1: scaffolding only until fleet pairs a no-crash baseline
  *
  * Env:
  *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
@@ -812,6 +813,13 @@ async function main() {
           meaning:
             "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)",
         },
+        statePreserved: {
+          measured: false,
+          nodeUnitGolden: true,
+          fleetBaselinePaired: false,
+          meaning:
+            "claim-path §1 — program step outcomes after resume match the no-crash baseline. Proven on Node durable-runner + kill-node stand-in via compareProgramStepStateEffect; this fleet board does not yet pair each trial with a no-crash baseline, so no rate is quoted here",
+        },
       },
       totalDuplicates,
       zeroDuplicates: zeroDup,
@@ -838,7 +846,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated (outer-phase completion rate; write-step re-runs via ledger). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. State preserved + journaled model/timer/approval steps + program-level TLA+ remain open on the claim path.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), plus claim-path scaffolding completed + stepsRepeated + statePreserved (outer-phase completion rate; write-step re-runs via ledger; statePreserved is Node-golden only until fleet baselines are paired). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md. Journaled model/timer/approval steps + program-level TLA+ remain open on the claim path.",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),

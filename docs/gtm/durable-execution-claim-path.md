@@ -1,7 +1,7 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** ProgramCellDO resume now hard-stops on journal/plan digest mismatch (`journal_divergence`, same contract as Node `durable-runner`). Fleet phased board evidence JSON publishes **`columns.completed`** and **`columns.stepsRepeated`** alongside the safety/availability trio — measured rates land on the next Tier C re-run; this does **not** yet authorize “durable execution” copy.  
+**In progress (scaffolding):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet phased board publishes **`columns.completed`**, **`columns.stepsRepeated`**, and **`columns.statePreserved`** (Node unit/SIGKILL golden via `compareProgramStepStateEffect`; fleet rate still needs paired no-crash baselines). Measured Tier C rates for completed/stepsRepeated land on the next re-run; this does **not** yet authorize “durable execution” copy.  
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---
@@ -39,7 +39,7 @@ The thousand-crash board already resumes programs but scores duplicates, recover
 | ------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Completed**       | % of crashed programs that ran to the end after recovery        | **Scaffolded** — `columns.completed` on fleet phased board (`rateOuterPhases` is the fair window; mid-flight phases expect `outcome_unknown`)        |
 | **Steps repeated**  | Completed steps that ran again (0 for writes; stated for reads) | **Scaffolded** — `columns.stepsRepeated.writeStepsRerun` (= pets ledger duplicates; target 0). Read re-runs still stated separately when interrupted |
-| **State preserved** | Program variables between steps match the no-crash path         | **Open**                                                                                                                                             |
+| **State preserved** | Program variables between steps match the no-crash path         | **Scaffolded** — `compareProgramStepStateEffect` + Node durable-runner / kill-node stand-in golden; fleet `columns.statePreserved` stub (`measured: false` until trials pair a no-crash baseline) |
 
 ### 2. Every side effect through a journaled step
 
