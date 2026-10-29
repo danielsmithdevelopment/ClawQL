@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "cost-plus-drugs-pricing",
+      "name": "Cost Plus Drugs Pricing (public MCP)",
+      "kind": "mcp",
+      "mcpUrl": "https://mcp.costplusdrugs.com/",
+      "trusted": true,
+      "notes": "Official read-only MCP — price, availability, pharmacy locator, order *estimates*. No auth. Scope explicitly excludes clinical advice and anything beyond price & availability. See https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html"
+    },
+    {
+      "id": "cpd-mock-writes",
+      "name": "Cost Plus Drugs Mock Writes (ClawQL demo)",
+      "kind": "mcp",
+      "mcpUrl": "http://127.0.0.1:9892/mcp",
+      "trusted": false,
+      "notes": "LOCAL DEMO ONLY — mock place_refill_order. Keep untrusted so ClawQL defaults toward mandate unless overridden. Never point this at production patients."
+    }
+  ]
+}

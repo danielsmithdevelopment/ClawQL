@@ -14,5 +14,6 @@ Sample stacks and fixtures for docs and local demos. None of this is a supported
 | [`operator/`](operator/)                                       | Minimal `ClawQLInstance` CR                                   |
 | [`personal-agent/`](personal-agent/)                           | Homelab Loki overlay                                          |
 | [`agent-sdk/`](agent-sdk/)                                     | Cursor Agent SDK: MCP connection, audit hook, injection evals |
+| [`cost-plus-drugs-governance/`](cost-plus-drugs-governance/)   | CPD public pricing MCP + mock mandated refill + BAA routing   |
 
 The docs site hub [`/examples`](https://docs.clawql.com/examples) is case-study walkthroughs, not a file browser for this folder.

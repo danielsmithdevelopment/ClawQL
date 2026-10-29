@@ -1,0 +1,24 @@
+{
+  "query": "atorvastatin 20mg",
+  "source": "api.costplusdrugs.com/pricelist/cpd/search",
+  "fetched_note": "Public cash pricing snapshot for offline demos. Not medical advice. Prices change; re-fetch from the live API or MCP when presenting live.",
+  "results": [
+    {
+      "medication_name": "Atorvastatin",
+      "brand_name": "Lipitor",
+      "strength": "20mg",
+      "form": "Tablet",
+      "equivalent_ndcs": ["00904-6291-61", "68084-0098-01", "68071-0915-30"],
+      "url": "https://www.costplusdrugs.com/medications/atorvastatin-20mg-tablet/?utm_source=api&utm_content=pricing-api",
+      "cpd_channel": {
+        "in_stock": true,
+        "price_per_unit": 0.01365,
+        "cash_dispensing_fee": 5,
+        "sample_pack_size": 30,
+        "sample_pack_price": "0.41",
+        "sample_pack_price_total_to_patient_without_shipping": "5.41",
+        "sample_pack_price_w_shipping_dispensing": "10.66"
+      }
+    }
+  ]
+}
