@@ -20,9 +20,7 @@ export function hasRscFlightQuery(
 }
 
 /** True when the request looks like a real Next.js RSC flight/prefetch. */
-export function hasLegitimateRscHeader(
-  headers: Pick<Headers, 'get'>,
-): boolean {
+export function hasLegitimateRscHeader(headers: Pick<Headers, 'get'>): boolean {
   return headers.get('rsc') === '1'
 }
 

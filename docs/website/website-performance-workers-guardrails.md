@@ -130,7 +130,7 @@ Pick up in issues or small PRs; not all are automated today.
 | **`eslint-plugin-jsx-a11y`** in `apps/docs/`                            | Catches **a11y** issues Lighthouse does not (e.g. some interactive patterns).                                                                 |
 | **Route-level `dynamic` / caching hints**                               | If Next exposes stable static paths for some MDX, **reduce** Worker invocations (validate with OpenNext).                                     |
 | **Image pipeline**                                                      | Prefer **`next/image`** with explicit **sizes** for hero assets; keep markdown bodies on **`loading="lazy"`** (already default in `mdx.tsx`). |
-| **Paid Workers / higher CPU**                                           | Product decision when **case studies** are business-critical on **Free** limits — only with a **spend cap**; WAF-block `_rsc` first.           |
+| **Paid Workers / higher CPU**                                           | Product decision when **case studies** are business-critical on **Free** limits — only with a **spend cap**; WAF-block `_rsc` first.          |
 | **Zone rate-limit by IP**                                               | Caps remaining clean-URL scrape storms after `_rsc` is blocked at the edge.                                                                   |
 | **Content splits**                                                      | Long case studies → **multiple pages** or shorter “summary + deep link to GitHub” lowers **per-request** HTML and MDX compile cost.           |
 

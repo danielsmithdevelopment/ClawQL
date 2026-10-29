@@ -22,7 +22,11 @@ const RULES: Array<{
     disallow: ['/*?*_rsc=', '/*?*&_rsc=', '/*?*rsc=', '/*?*&rsc='],
   },
   { userAgent: 'GPTBot', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
-  { userAgent: 'ChatGPT-User', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
+  {
+    userAgent: 'ChatGPT-User',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
   {
     userAgent: 'Google-Extended',
     allow: '/',
@@ -30,7 +34,11 @@ const RULES: Array<{
   },
   { userAgent: 'ClaudeBot', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
   { userAgent: 'Claude-Web', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
-  { userAgent: 'anthropic-ai', allow: '/', disallow: ['/*?*_rsc=', '/*?*rsc='] },
+  {
+    userAgent: 'anthropic-ai',
+    allow: '/',
+    disallow: ['/*?*_rsc=', '/*?*rsc='],
+  },
   {
     userAgent: 'PerplexityBot',
     allow: '/',
