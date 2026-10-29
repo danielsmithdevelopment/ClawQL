@@ -8,17 +8,17 @@ Cost Plus already ships a public, unauthenticated MCP for **reads**
 (`https://mcp.costplusdrugs.com/`). Duplicating price lookup would not impress
 anyone. This example shows the **next step**: governed writes across models.
 
-| Layer | What |
-| ----- | ---- |
-| Reads | Official CPD MCP / pricing API (or offline fixture) |
-| Writes | **Mock** `place_refill_order` — no public ordering API exists |
-| Gate | Digest-bound **mandate** (agent cannot self-approve) |
-| PHI | BAA routing — patient fields only to providers marked `baa: true` |
-| Trail | Hash-chained demo audit log (stand-in for MCP `audit` + clawql-audit WORM) |
+| Layer  | What                                                                       |
+| ------ | -------------------------------------------------------------------------- |
+| Reads  | Official CPD MCP / pricing API (or offline fixture)                        |
+| Writes | **Mock** `place_refill_order` — no public ordering API exists              |
+| Gate   | Digest-bound **mandate** (agent cannot self-approve)                       |
+| PHI    | BAA routing — patient fields only to providers marked `baa: true`          |
+| Trail  | Hash-chained demo audit log (stand-in for MCP `audit` + clawql-audit WORM) |
 
-Pitch in one line: *You've built the read side. Here's how agents can safely stage
+Pitch in one line: _You've built the read side. Here's how agents can safely stage
 orders across every model — patient approval bound to exact drug/qty/price, PHI
-only to BAA-covered providers, full audit trail.*
+only to BAA-covered providers, full audit trail._
 
 ## Quick smoke (offline)
 
@@ -63,17 +63,17 @@ Mandate park/resume: [`docs/specs/risk/execute-pause-resume-v0.1.md`](../../spec
 
 ## Layout
 
-| Path | Role |
-| ---- | ---- |
-| `scripts/governance-demo.mjs` | End-to-end offline story (price → BAA → mandate → audit) |
-| `scripts/mock-pharmacy-write-mcp.mjs` | Streamable HTTP MCP stub for writes |
-| `scripts/lib/*` | Digest, pending store, BAA gate, audit helpers |
-| `fixtures/atorvastatin-search.json` | Public price snapshot for CI / airplanes |
-| `sources.example.json` | CPD read MCP + local mock write MCP |
-| `operation-risk.example.json` | `allow` reads / `mandate` writes |
-| `baa-routing.example.yaml` | Illustrative multi-model PHI routing |
-| `TERMS.md` | Third-party API caution (no LICENSE on their docs repo) |
-| `tests/governance-demo.test.mjs` | Digest / BAA / mandate / audit unit checks |
+| Path                                  | Role                                                     |
+| ------------------------------------- | -------------------------------------------------------- |
+| `scripts/governance-demo.mjs`         | End-to-end offline story (price → BAA → mandate → audit) |
+| `scripts/mock-pharmacy-write-mcp.mjs` | Streamable HTTP MCP stub for writes                      |
+| `scripts/lib/*`                       | Digest, pending store, BAA gate, audit helpers           |
+| `fixtures/atorvastatin-search.json`   | Public price snapshot for CI / airplanes                 |
+| `sources.example.json`                | CPD read MCP + local mock write MCP                      |
+| `operation-risk.example.json`         | `allow` reads / `mandate` writes                         |
+| `baa-routing.example.yaml`            | Illustrative multi-model PHI routing                     |
+| `TERMS.md`                            | Third-party API caution (no LICENSE on their docs repo)  |
+| `tests/governance-demo.test.mjs`      | Digest / BAA / mandate / audit unit checks               |
 
 ## Safety checklist (before any public reply / video)
 

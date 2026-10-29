@@ -5,11 +5,11 @@ API and MCP server. It is **not** an official Cost Plus Drugs product.
 
 ## What we checked (2026-10-29)
 
-| Surface | URL | Auth | Notes |
-| ------- | --- | ---- | ----- |
-| Pricing API | `https://api.costplusdrugs.com/pricelist/...` | None | Documented at [pricing-api-documentation](https://mccpdc-llc.github.io/pricing-api-documentation/) |
-| MCP (reads) | `https://mcp.costplusdrugs.com/` | None | Thin proxy over the same read-only endpoints; [MCP docs](https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html) |
-| Docs GitHub | [MCCPDC-LLC/pricing-api-documentation](https://github.com/MCCPDC-LLC/pricing-api-documentation) | — | **No LICENSE file** in the docs repo at check time |
+| Surface     | URL                                                                                             | Auth | Notes                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| Pricing API | `https://api.costplusdrugs.com/pricelist/...`                                                   | None | Documented at [pricing-api-documentation](https://mccpdc-llc.github.io/pricing-api-documentation/)                        |
+| MCP (reads) | `https://mcp.costplusdrugs.com/`                                                                | None | Thin proxy over the same read-only endpoints; [MCP docs](https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html) |
+| Docs GitHub | [MCCPDC-LLC/pricing-api-documentation](https://github.com/MCCPDC-LLC/pricing-api-documentation) | —    | **No LICENSE file** in the docs repo at check time                                                                        |
 
 Their MCP **scope** page states the server **will not**: give clinical or dosing
 advice, suggest substitutions, say whether a drug is right for a patient, or do
