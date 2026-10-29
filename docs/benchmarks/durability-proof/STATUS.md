@@ -6,7 +6,27 @@
 
 **Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
-**Claim-path (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet `statePreserved` is **exact digest equality** vs a per-trial no-crash twin (same plan args); evidence files carry `trialAccounting` so outer-only denominators are explicit (mid-flight `outcome_unknown` is expected, not filtered). Prior n=40 structural + 8 await: [`phased-await-state-n40.json`](../program-cell-fleet-kill/phased-await-state-n40.json). n=100 columns: [`phased-claim-path-columns-n100.json`](../program-cell-fleet-kill/phased-claim-path-columns-n100.json). Plan `sleep` / `await_approval` / `model_call` journaled; reads completed→replay, interrupted→re-request once; model calls: at most one repeated request per crash, never a repeated write. ProgramResume TLA+ in tree. Thursday, Oct 29, 2026 lab N≈1000 (write-kill + await arms) pending clean evidence before step-level checkpointed claim copy.
+**Claim-path (not a publishable “durable execution” row yet):** ProgramCellDO resume hard-stops on journal/plan digest mismatch (`journal_divergence`). Fleet `statePreserved` is **exact digest equality** vs a per-trial no-crash twin (same plan args); evidence files carry `trialAccounting` so outer-only denominators are explicit (mid-flight `outcome_unknown` is expected, not filtered). Prior n=40 structural + 8 await: [`phased-await-state-n40.json`](../program-cell-fleet-kill/phased-await-state-n40.json). n=100 columns: [`phased-claim-path-columns-n100.json`](../program-cell-fleet-kill/phased-claim-path-columns-n100.json). Plan `sleep` / `await_approval` / `model_call` journaled; reads completed→replay, interrupted→re-request once; model calls: at most one repeated request per crash, never a repeated write. ProgramResume TLA+ in tree. Thursday, Oct 29, 2026 lab N≈1000 (write-kill + await arms) pending clean evidence against the **pass criteria fixed below before results**.
+
+### N≈1000 claim-path pass criteria (fixed before results — Thursday, Oct 29, 2026)
+
+Lab shape: `FLEET_PHASED_N=750` write-kill + `FLEET_PHASED_AWAIT_TRIALS=250` (overall 1000). Evidence target: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n1000-claim-path.json). **These bars are committed before the run lands; do not loosen them to fit the data.**
+
+| Gate | Pass iff | Denominator / note |
+| ---- | -------- | ------------------ |
+| **Duplicates** | `columns.duplicates.total === 0` | All write-kill trials |
+| **Journal divergence** | `columns.stepsRepeated.journalDivergence === 0` | All write-kill trials |
+| **Write steps rerun** | `columns.stepsRepeated.writeStepsRerun === 0` | Pets-ledger duplicates; target 0 |
+| **Resume deadline** | `columns.availability.resumeDeadlineMisses === 0` | All write-kill (+ await) resumes within budget |
+| **Completed (outer)** | `columns.completed.rateOuterPhases === 1` | Only `before_intent` + `after_call_before_journal`; every outer trial `completedClean` |
+| **State preserved** | `columns.statePreserved.rate === 1` and `compareMode === "digest_equality"` | Eligible = outer + `completedClean` + twin captured; exact step/result digests |
+| **Wait approval** | `columns.waitApproval.okRate === 1` | Separate arm; every await trial survives peer kill and completes after approve |
+| **Mid-flight honesty** | Mid-flight phases (`after_intent_before_call`, `during_call`) end `outcome_unknown` as expected; **not** required to `completedClean`; must appear in `trialAccounting` with `filteredOut === 0` | Expected unknown ≠ failure |
+| **Board ok** | Evidence `ok === true` (zero dups, zero deadline misses, every phase expectation met) | Includes mid-flight unknown expectations |
+
+**Fail (do not claim):** any duplicate write, any `journal_divergence`, any outer trial not cleanly completed, any eligible outer twin digest mismatch, any await trial that fails survive+complete, any resume deadline miss, or any change to these criteria after seeing results.
+
+**Claim authorized only if clean:** step-level checkpointed durable execution, with stated limits (interrupted read/model re-request once; mid-flight writes → person; **not** mid-step unmodified agents). See [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
 ## Scoped Tier C claim (measured — stock R2)
 
