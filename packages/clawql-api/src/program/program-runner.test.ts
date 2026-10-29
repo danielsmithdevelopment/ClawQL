@@ -135,6 +135,21 @@ describe("parseProgramPlanEffect", () => {
     expect(plan.calls[0]).toMatchObject({ tool: "sleep", durationMs: 10 });
   });
 
+  it("parses await_approval steps", async () => {
+    const plan = await Effect.runPromise(
+      parseProgramPlanEffect(
+        JSON.stringify({
+          v: 1,
+          mode: "sequential",
+          calls: [{ tool: "await_approval", executionId: "pex_1" }],
+        })
+      )
+    );
+    expect("ok" in plan && plan.ok === false).toBe(false);
+    if ("ok" in plan && plan.ok === false) throw new Error("unexpected");
+    expect(plan.calls[0]).toMatchObject({ tool: "await_approval", executionId: "pex_1" });
+  });
+
   it("rejects oversized sleep durationMs", async () => {
     const err = await Effect.runPromise(
       parseProgramPlanEffect(

@@ -173,4 +173,17 @@ assert.equal(
 );
 assert.equal(entryMatchesCall({ ...sleepEntry, args: { durationMs: 999 } }, sleepCall, 2), false);
 
+const awaitCall = { tool: "await_approval", executionId: "pex_1" };
+const awaitEntry = {
+  index: 3,
+  callId: "c3",
+  tool: "await_approval",
+  args: { executionId: "pex_1" },
+};
+assert.equal(entryMatchesCall(awaitEntry, awaitCall, 3), true);
+assert.equal(
+  entryMatchesCall({ ...awaitEntry, args: { executionId: "pex_other" } }, awaitCall, 3),
+  false
+);
+
 console.log("program-cell-resume.test: PASS");

@@ -6,12 +6,14 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Clock, Deferred, Duration, Effect, Exit, Layer, Result } from "effect";
 import { describe, expect, it } from "vitest";
+import type { PendingExecutionStatus } from "../pending/pending-execution-types.js";
 import {
   DURABLE_PROGRAM_HONESTY,
   DurableProgramRunnerLive,
   DurableProgramRunnerService,
   executeDurableProgramEffect,
   NONDET_STARTED_AT,
+  nondetAwaitApprovalKey,
   nondetSleepWakeAtKey,
   ProgramCrashSimulated,
   resumeProgramEffect,
@@ -66,6 +68,8 @@ type HostOptions = {
   readonly failReplayed?: boolean;
   /** Runs inside the host call, before it returns. */
   readonly onExecute?: (operationId: string) => Effect.Effect<void>;
+  /** Observe-only mandate statuses for await_approval (mutated by tests). */
+  readonly pending?: Map<string, PendingExecutionStatus | null>;
 };
 
 type RecordingHost = {
@@ -109,6 +113,14 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
         : Effect.sync(() => {
             replayed.push(call);
           }),
+    ...(options.pending
+      ? {
+          pendingStatus: (executionId: string) =>
+            Effect.succeed(
+              options.pending!.has(executionId) ? (options.pending!.get(executionId) ?? null) : null
+            ),
+        }
+      : {}),
   };
   return { host, executed, replayed };
 }
@@ -340,6 +352,74 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     expect(again.executed).toHaveLength(OPS.length - landed);
     expect(resumed.ok).toBe(true);
     expect(resumed.result).toEqual((await baseline(source)).result);
+  });
+
+  it("await_approval parks while pending and resumes after approve without consuming", async () => {
+    const dir = await tempDir();
+    const pending = new Map<string, PendingExecutionStatus | null>([["pex_wait1", "pending"]]);
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "await_approval", executionId: "pex_wait1" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost({ pending });
+    const parked = await run(dir, { source, programId: ID }, first.host);
+    expect(parked.ok).toBe(false);
+    expect(parked.diagnostics.code).toBe("awaiting_approval");
+    expect(parked.diagnostics.durable?.status).toBe("parked");
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.status).toBe("parked");
+    expect(mid?.entries).toEqual([]);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetAwaitApprovalKey(0));
+
+    const still = recordingHost({ pending });
+    const again = await resume(dir, still.host);
+    expect(again.diagnostics.code).toBe("awaiting_approval");
+    expect(again.diagnostics.durable?.status).toBe("parked");
+    expect(still.executed).toEqual([]);
+    expect(
+      (await loadJournal(dir))?.nondet.filter((n) => n.key === nondetAwaitApprovalKey(0))
+    ).toHaveLength(1);
+
+    pending.set("pex_wait1", "approved");
+    const doneHost = recordingHost({ pending });
+    const resumed = await resume(dir, doneHost.host);
+    expect(resumed.ok).toBe(true);
+    expect(doneHost.executed).toEqual(["pets.get"]);
+    expect(resumed.calls[0]).toMatchObject({
+      tool: "await_approval",
+      ok: true,
+      status: "approved",
+    });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      status: "completed",
+      replayedCalls: 0,
+      executedCalls: 2,
+    });
+  });
+
+  it("await_approval fails closed when the mandate is missing", async () => {
+    const dir = await tempDir();
+    const pending = new Map<string, PendingExecutionStatus | null>();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [{ tool: "await_approval", executionId: "pex_missing" }],
+    });
+    const host = recordingHost({ pending });
+    const out = await run(dir, { source, programId: ID }, host.host);
+    expect(out.ok).toBe(false);
+    expect(out.calls[0]).toMatchObject({
+      tool: "await_approval",
+      ok: false,
+      status: "mandate_missing",
+    });
+    expect(out.diagnostics.durable?.status).toBe("completed");
+    expect(host.executed).toEqual([]);
   });
 
   it("journals sleep wakeAt once; resume replays completed sleep without waiting again", async () => {

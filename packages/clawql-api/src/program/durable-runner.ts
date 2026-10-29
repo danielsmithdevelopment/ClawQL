@@ -67,6 +67,10 @@ export const NONDET_STARTED_AT = "clock.startedAt";
 /** Journaled wake deadline for plan `sleep` at `index` (claim-path §2). */
 export const nondetSleepWakeAtKey = (index: number): string => `sleep.${index}.wakeAt`;
 
+/** Journaled mandate id for plan `await_approval` at `index` (claim-path §2). */
+export const nondetAwaitApprovalKey = (index: number): string =>
+  `await_approval.${index}.executionId`;
+
 const PARKED_HINT =
   "Resume with execute_program { programId }: journaled calls replay and are not re-run. Raise timeoutMs (capped) if a single call needs longer.";
 
@@ -107,7 +111,8 @@ export type DurableProgramRefusalCode =
   | "journal_unavailable"
   | "journal_corrupt"
   | "journal_divergence"
-  | "replay_label_failed";
+  | "replay_label_failed"
+  | "awaiting_approval";
 
 /** The defect {@link DurableProgramRunOptions.simulateCrashAfterCalls} dies with. */
 export class ProgramCrashSimulated extends Data.TaggedError("ProgramCrashSimulated")<{
@@ -158,7 +163,8 @@ function journaledArgs(call: ProgramPlanCall): Record<string, unknown> {
   if (call.tool === "search") {
     return { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
   }
-  return { durationMs: call.durationMs };
+  if (call.tool === "sleep") return { durationMs: call.durationMs };
+  return { executionId: call.executionId };
 }
 
 function entryMatchesCall(entry: ProgramJournalEntry, call: ProgramPlanCall, index: number) {
@@ -201,6 +207,35 @@ function recordFieldsForCall(call: ProgramPlanCall): Partial<{
   if (call.tool === "execute") return { operationId: call.operationId };
   if (call.tool === "search") return { query: call.query };
   return {};
+}
+
+function awaitApprovalOutcome(
+  programId: string,
+  call: Extract<ProgramPlanCall, { tool: "await_approval" }>,
+  index: number,
+  status: string,
+  ok: boolean,
+  error?: string
+): ProgramCallOutcome {
+  const value = {
+    ok,
+    status,
+    executionId: call.executionId,
+    pendingStatus: status === "mandate_missing" ? null : status,
+  };
+  return {
+    record: {
+      index,
+      id: call.id,
+      tool: "await_approval",
+      ok,
+      programId,
+      status,
+      ...(error !== undefined ? { error } : {}),
+      resultPreview: JSON.stringify(value).slice(0, 512),
+    },
+    value,
+  };
 }
 
 /** The call as the program first observed it, rebuilt from its journal entry. */
@@ -570,6 +605,83 @@ function runAttemptEffect(
             }
             return Option.some(outcome);
           }
+          if (call.tool === "await_approval") {
+            // Claim-path §2: observe-only wait on a parked mandate. Journal the
+            // executionId; park while pending; land once the mandate settles.
+            // Never consumes — Review / resume / submit_program_proposals do that.
+            const waitKey = nondetAwaitApprovalKey(index);
+            const journaledId = journal.nondet.find((n) => n.key === waitKey)?.value;
+            if (journaledId === undefined) {
+              yield* journalEffect(
+                api.appendNondet(programId, { key: waitKey, value: call.executionId })
+              );
+            } else if (journaledId !== call.executionId) {
+              return yield* diverged(
+                index,
+                "journaled await_approval executionId does not match the plan call"
+              );
+            }
+            if (durableHost.pendingStatus === undefined) {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "invalid_plan",
+                  message: `await_approval requires host.pendingStatus`,
+                  fixHint: "Wire pendingStatus to the mandate store (observe-only).",
+                })
+              );
+            }
+            const status = yield* durableHost.pendingStatus(call.executionId).pipe(
+              Effect.mapError(
+                (e) =>
+                  new DurableProgramRefusal({
+                    programId,
+                    code: "journal_unavailable",
+                    message: `await_approval status lookup failed: ${e.message}`,
+                    fixHint: "Fix mandate store access and resume the program.",
+                  })
+              )
+            );
+            if (status === "pending") {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "awaiting_approval",
+                  message: `program ${programId} waiting on pending execution ${call.executionId}`,
+                  fixHint:
+                    "Approve or decline the mandate in Review, then resume with execute_program { programId }.",
+                })
+              );
+            }
+            const terminalOk = status === "approved" || status === "completed";
+            const callStatus = status === null ? "mandate_missing" : status;
+            const outcome = awaitApprovalOutcome(
+              programId,
+              call,
+              index,
+              callStatus,
+              terminalOk,
+              terminalOk
+                ? undefined
+                : status === null
+                  ? `pending execution ${call.executionId} not found`
+                  : `mandate ${status}`
+            );
+            yield* land(index, call, outcome, "executed");
+            yield* auditResult({
+              toolName: "await_approval",
+              ok: terminalOk,
+              status: callStatus,
+              index,
+              executionId: call.executionId,
+            });
+            if (crashAfter !== undefined && crashAfter > 0 && executedCalls >= crashAfter) {
+              return yield* Effect.die(
+                new ProgramCrashSimulated({ programId, afterCalls: executedCalls })
+              );
+            }
+            return Option.some(outcome);
+          }
           if (call.tool === "execute" && (yield* mayRunAsWriteEffect(call, durableHost))) {
             const intentAt = yield* nowIsoEffect;
             yield* journalEffect(
@@ -624,6 +736,28 @@ function runAttemptEffect(
         yield* api
           .markStatus(programId, "failed", { error: refusal.message })
           .pipe(Effect.catch(() => Effect.void));
+      }
+      if (refusal.code === "awaiting_approval") {
+        yield* api.markStatus(programId, "parked").pipe(Effect.catch(() => Effect.void));
+        const parkedProgress = progress("parked");
+        return {
+          ok: false,
+          programId,
+          result: null,
+          calls: parkedProgress.calls,
+          diagnostics: {
+            interpreter: "plan-runner-v0" as const,
+            honesty: DURABLE_PROGRAM_HONESTY,
+            programId,
+            callCount: parkedProgress.callCount,
+            elapsedMs: Date.now() - ctx.startedAtMs,
+            mode: parkedProgress.mode,
+            code: "awaiting_approval",
+            error: refusal.message,
+            fixHint: refusal.fixHint ?? PARKED_HINT,
+            durable: parkedProgress.durable,
+          },
+        };
       }
       const status = refusal.code === "journal_divergence" ? "failed" : journal.status;
       return refusalResult(refusal, Date.now() - ctx.startedAtMs, progress(status));
