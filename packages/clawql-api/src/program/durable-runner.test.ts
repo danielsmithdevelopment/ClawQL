@@ -12,6 +12,7 @@ import {
   DurableProgramRunnerService,
   executeDurableProgramEffect,
   NONDET_STARTED_AT,
+  nondetSleepWakeAtKey,
   ProgramCrashSimulated,
   resumeProgramEffect,
   runDurableProgramEffect,
@@ -19,11 +20,13 @@ import {
 } from "./durable-runner.js";
 import { hostLogOperationIds } from "./host-log.js";
 import {
+  hashProgramSourceEffect,
   makeFileProgramJournalEffect,
   programJournalFileLayer,
   type ProgramJournal,
   type ProgramJournalService,
 } from "./program-journal.js";
+import { parseProgramPlanEffect } from "./program-plan.js";
 import {
   durableProgramsEnabled,
   programsEnabled,
@@ -337,6 +340,78 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     expect(again.executed).toHaveLength(OPS.length - landed);
     expect(resumed.ok).toBe(true);
     expect(resumed.result).toEqual((await baseline(source)).result);
+  });
+
+  it("journals sleep wakeAt once; resume replays completed sleep without waiting again", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "sleep", durationMs: 30 },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost();
+    await crashAfter(dir, first.host, 1, { source, programId: ID });
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetSleepWakeAtKey(0));
+    expect(mid?.entries.map((e) => e.tool)).toEqual(["sleep"]);
+
+    const again = recordingHost();
+    const t0 = Date.now();
+    const resumed = await resume(dir, again.host);
+    const elapsed = Date.now() - t0;
+    expect(again.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "sleep", ok: true, replayed: true });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 1,
+      executedCalls: 1,
+      status: "completed",
+    });
+    // Replayed sleep must not re-wait the full duration.
+    expect(elapsed).toBeLessThan(25);
+  });
+
+  it("re-arms an interrupted sleep from the journaled wakeAt (remaining may be zero)", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "sleep", durationMs: 60_000 },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const plan = await Effect.runPromise(parseProgramPlanEffect(source));
+    if ("ok" in plan && plan.ok === false) throw new Error(plan.error);
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const journal = yield* makeFileProgramJournalEffect(dir);
+        const sourceHash = yield* hashProgramSourceEffect(source);
+        yield* journal.create({
+          programId: ID,
+          sourceHash,
+          owner: "default",
+          plan,
+        });
+        yield* journal.appendNondet(ID, {
+          key: nondetSleepWakeAtKey(0),
+          value: new Date(Date.now() - 5_000).toISOString(),
+        });
+      })
+    );
+
+    const host = recordingHost();
+    const t0 = Date.now();
+    const resumed = await resume(dir, host.host);
+    expect(Date.now() - t0).toBeLessThan(500);
+    expect(host.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "sleep", ok: true, status: "slept" });
+    expect(resumed.calls[0]?.replayed).toBeUndefined();
   });
 
   it("journals clock.startedAt once and replays it on every attempt", async () => {

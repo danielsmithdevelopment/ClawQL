@@ -41,7 +41,22 @@ export type ProgramPlanSearchCall = {
   readonly id: string;
 };
 
-export type ProgramPlanCall = ProgramPlanExecuteCall | ProgramPlanSearchCall;
+/**
+ * Claim-path §2 — first-class timer step. Durable runner journals a wake deadline
+ * before waiting so resume re-arms the remaining delay instead of restarting blind.
+ */
+export type ProgramPlanSleepCall = {
+  readonly tool: "sleep";
+  /** Wall-clock delay in milliseconds (integer, ≥ 0, ≤ {@link PROGRAM_SLEEP_MAX_MS}). */
+  readonly durationMs: number;
+  /** Explicit id, or `call_<index>` when the plan omits it. */
+  readonly id: string;
+};
+
+/** Hard cap on plan `sleep.durationMs` (5 minutes). */
+export const PROGRAM_SLEEP_MAX_MS = 300_000;
+
+export type ProgramPlanCall = ProgramPlanExecuteCall | ProgramPlanSearchCall | ProgramPlanSleepCall;
 
 /** A write the program proposes; never executed inside the program. */
 export type ProgramPlanProposal = {
@@ -97,7 +112,7 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
   if (!isRecord(raw)) {
     return parseError(
       `calls[${index}] must be an object`,
-      'Use { "tool": "execute", "operationId": "...", "args": {} } or { "tool": "search", "query": "..." }'
+      'Use { "tool": "execute", "operationId": "...", "args": {} }, { "tool": "search", "query": "..." }, or { "tool": "sleep", "durationMs": 1000 }'
     );
   }
   const id = typeof raw.id === "string" ? raw.id : `call_${index}`;
@@ -140,9 +155,22 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
         : undefined;
     return { tool: "search", query, limit, id };
   }
+  if (tool === "sleep") {
+    const durationMs =
+      typeof raw.durationMs === "number" && Number.isFinite(raw.durationMs)
+        ? Math.trunc(raw.durationMs)
+        : NaN;
+    if (!Number.isInteger(durationMs) || durationMs < 0 || durationMs > PROGRAM_SLEEP_MAX_MS) {
+      return parseError(
+        `calls[${index}].durationMs must be an integer 0..${PROGRAM_SLEEP_MAX_MS}`,
+        'Use { "tool": "sleep", "durationMs": 1000 }.'
+      );
+    }
+    return { tool: "sleep", durationMs, id };
+  }
   return parseError(
-    `calls[${index}].tool must be "execute" or "search" (got ${JSON.stringify(tool)})`,
-    "v0 plan runner only allows host-injected search/execute. OpenCode-style JS programs are not supported yet."
+    `calls[${index}].tool must be "execute", "search", or "sleep" (got ${JSON.stringify(tool)})`,
+    "v0 plan runner allows host-injected search/execute plus journaled sleep timers. OpenCode-style JS programs are not supported yet."
   );
 }
 

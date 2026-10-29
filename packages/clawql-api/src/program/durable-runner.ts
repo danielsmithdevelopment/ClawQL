@@ -4,7 +4,7 @@
  * Runs a v0 plan with each host-served call journaled (fsync'd) before the program
  * moves on. A program that crashed, timed out or was interrupted resumes from its
  * journal: journaled calls replay without calling the host again, and journaled
- * nondeterministic values (`clock.startedAt`) replay unchanged.
+ * nondeterministic values (`clock.startedAt`, `sleep.<i>.wakeAt`) replay unchanged.
  *
  * At most once for writes: before a call that can reach the host as a write, an
  * intent is journaled. On resume, an intent without an entry means the write may or
@@ -17,7 +17,7 @@
  */
 
 import { appendProcessWormEffect } from "clawql-audit";
-import { Clock, Context, Data, Effect, Layer, Option, Result } from "effect";
+import { Clock, Context, Data, Duration, Effect, Layer, Option, Result } from "effect";
 import { isReadOperation } from "../ifc/session-ifc-enforce.js";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
 import { canonicalizeForHash } from "../pending/args-hash.js";
@@ -63,6 +63,9 @@ export const DURABLE_PROGRAM_HONESTY =
 
 /** Nondeterministic value journaled on the first attempt and replayed on every resume. */
 export const NONDET_STARTED_AT = "clock.startedAt";
+
+/** Journaled wake deadline for plan `sleep` at `index` (claim-path §2). */
+export const nondetSleepWakeAtKey = (index: number): string => `sleep.${index}.wakeAt`;
 
 const PARKED_HINT =
   "Resume with execute_program { programId }: journaled calls replay and are not re-run. Raise timeoutMs (capped) if a single call needs longer.";
@@ -151,9 +154,11 @@ function callIdFor(call: ProgramPlanCall, index: number): string {
 
 /** Call inputs an entry is bound to, besides its tool and operationId. */
 function journaledArgs(call: ProgramPlanCall): Record<string, unknown> {
-  return call.tool === "execute"
-    ? { ...(call.args ?? {}) }
-    : { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
+  if (call.tool === "execute") return { ...(call.args ?? {}) };
+  if (call.tool === "search") {
+    return { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
+  }
+  return { durationMs: call.durationMs };
 }
 
 function entryMatchesCall(entry: ProgramJournalEntry, call: ProgramPlanCall, index: number) {
@@ -189,6 +194,15 @@ function toJournalEntry(
   };
 }
 
+function recordFieldsForCall(call: ProgramPlanCall): Partial<{
+  operationId: string;
+  query: string;
+}> {
+  if (call.tool === "execute") return { operationId: call.operationId };
+  if (call.tool === "search") return { query: call.query };
+  return {};
+}
+
 /** The call as the program first observed it, rebuilt from its journal entry. */
 function replayedOutcome(
   programId: string,
@@ -202,7 +216,7 @@ function replayedOutcome(
       index,
       id: call.id,
       tool: call.tool,
-      ...(call.tool === "execute" ? { operationId: call.operationId } : { query: call.query }),
+      ...recordFieldsForCall(call),
       ok: result.ok,
       programId,
       error: result.error,
@@ -211,6 +225,27 @@ function replayedOutcome(
       replayed: true,
     },
     value: result.value,
+  };
+}
+
+function sleepOutcome(
+  programId: string,
+  call: Extract<ProgramPlanCall, { tool: "sleep" }>,
+  index: number,
+  wakeAt: string
+): ProgramCallOutcome {
+  const value = { ok: true as const, sleptMs: call.durationMs, wakeAt };
+  return {
+    record: {
+      index,
+      id: call.id,
+      tool: "sleep",
+      ok: true,
+      programId,
+      status: "slept",
+      resultPreview: JSON.stringify(value).slice(0, 512),
+    },
+    value,
   };
 }
 
@@ -501,6 +536,38 @@ function runAttemptEffect(
               status: "outcome_unknown",
               index,
             });
+            return Option.some(outcome);
+          }
+          if (call.tool === "sleep") {
+            // Claim-path §2: journal wake deadline before waiting; resume re-arms
+            // remaining delay. Completed sleep lands here so runOne does not re-sleep.
+            const wakeKey = nondetSleepWakeAtKey(index);
+            const journaledWake = journal.nondet.find((n) => n.key === wakeKey)?.value;
+            let wakeAt =
+              typeof journaledWake === "string" && Number.isFinite(Date.parse(journaledWake))
+                ? journaledWake
+                : undefined;
+            if (wakeAt === undefined) {
+              const now = yield* nowIsoEffect;
+              wakeAt = new Date(Date.parse(now) + call.durationMs).toISOString();
+              yield* journalEffect(api.appendNondet(programId, { key: wakeKey, value: wakeAt }));
+            }
+            const remainingMs = Math.max(0, Date.parse(wakeAt) - Date.now());
+            yield* Effect.sleep(Duration.millis(remainingMs));
+            const outcome = sleepOutcome(programId, call, index, wakeAt);
+            yield* land(index, call, outcome, "executed");
+            yield* auditResult({
+              toolName: "sleep",
+              ok: true,
+              status: "slept",
+              index,
+              wakeAt,
+            });
+            if (crashAfter !== undefined && crashAfter > 0 && executedCalls >= crashAfter) {
+              return yield* Effect.die(
+                new ProgramCrashSimulated({ programId, afterCalls: executedCalls })
+              );
+            }
             return Option.some(outcome);
           }
           if (call.tool === "execute" && (yield* mayRunAsWriteEffect(call, durableHost))) {
