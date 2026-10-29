@@ -12,28 +12,28 @@
 
 Roughly equal sustained throughput (~140–150k before ClawQL’s scheduler fix; ClawQL now ~drain), both well short of serial fsync×batch ceiling, **different bottlenecks**.
 
-| System | Sustained | Drain | Ratio | Bound |
-| --- | --- | --- | --- | --- |
+| System                      | Sustained   | Drain       | Ratio | Bound                                     |
+| --------------------------- | ----------- | ----------- | ----- | ----------------------------------------- |
 | **ClawQL** (after coalesce) | **~352k**/s | **~333k**/s | ~0.95 | **writer-bound** (was scheduler at ~140k) |
-| **Ontologiql** (30s steps) | **~148k**/s | **~156k**/s | ~1.05 | **write-path** (ack ~154 µs/batch) |
+| **Ontologiql** (30s steps)  | **~148k**/s | **~156k**/s | ~1.05 | **write-path** (ack ~154 µs/batch)        |
 
 ## ClawQL scheduler fix
 
-| Lever | Change |
-| --- | --- |
-| Pop-all-due | Each wake emits **every** arrival due through now |
-| Coalesce | Idle sleeps ≤1 ms (`coalesceWakeMs`); never sleep while `inFlight>0` |
-| Queue | O(1) pending head (no `Array.shift`) |
+| Lever       | Change                                                               |
+| ----------- | -------------------------------------------------------------------- |
+| Pop-all-due | Each wake emits **every** arrival due through now                    |
+| Coalesce    | Idle sleeps ≤1 ms (`coalesceWakeMs`); never sleep while `inFlight>0` |
+| Queue       | O(1) pending head (no `Array.shift`)                                 |
 
 Before: sustained **~140k** vs drain **~347k** (`latency_limit_…`). After: sustained **~352k** ≈ drain — `writer_bound_sustained_near_drain`. Prior short-ramp **636k** remains retracted.
 
 ## Cycle / sync tails
 
-| | ClawQL | Ontologiql |
-| --- | --- | --- |
-| write | ~10 µs | ~37 µs |
-| sync p50 / p99 | ~114 / **426** µs | ~101 / **986** µs |
-| ack / batch | **~2 µs** | **~154 µs** ← next Ontologiql lever |
+|                | ClawQL            | Ontologiql                          |
+| -------------- | ----------------- | ----------------------------------- |
+| write          | ~10 µs            | ~37 µs                              |
+| sync p50 / p99 | ~114 / **426** µs | ~101 / **986** µs                   |
+| ack / batch    | **~2 µs**         | **~154 µs** ← next Ontologiql lever |
 
 Record sync **p99** on every result. Disk tails differ by host — campaign host will shift both.
 

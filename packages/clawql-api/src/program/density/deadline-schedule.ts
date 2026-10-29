@@ -836,8 +836,10 @@ export function runDeadlinePumpEffect(args: {
     try {
       // Continuous fill: each wake pops *all* currently due into `ready`, then
       // fills free writer slots. Do not await a whole batch before new due work.
-      while ((fired + inFlight + readyLen() < maxFires || inFlight > 0 || readyLen() > 0) &&
-        Date.now() < wallDeadlineMs) {
+      while (
+        (fired + inFlight + readyLen() < maxFires || inFlight > 0 || readyLen() > 0) &&
+        Date.now() < wallDeadlineMs
+      ) {
         const now = Date.now();
         const next = schedule.peekDeadlineMs();
         if (
