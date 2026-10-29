@@ -74,21 +74,26 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
           class="inline-flex items-center gap-2 no-underline"
           aria-label="ClawQL home"
         >
-          {/* Exact originals: blue JPG for light UI, white JPG for dark UI */}
+          {/* Soft-matted from originals: white plate removed, AA/glow kept; @2x for retina.
+              Raw JPGs can't drop in as-is — both have opaque white backgrounds, and the
+              dark JPG is cream-on-white (near-invisible ink) so dark UI uses cream recolor
+              of the light master. Originals kept as *-original.jpg / *.jpg for provenance. */}
           <img
-            src="/brand/clawql-wordmark-light.jpg"
+            src="/brand/clawql-wordmark-light.png"
+            srcset="/brand/clawql-wordmark-light.png 1x, /brand/clawql-wordmark-light@2x.png 2x"
             alt={site.name}
             width="146"
             height="50"
-            class="h-10 w-auto dark:hidden"
+            class="h-11 w-auto dark:hidden"
             decoding="async"
           />
           <img
-            src="/brand/clawql-wordmark-dark.jpg"
+            src="/brand/clawql-wordmark-dark.png"
+            srcset="/brand/clawql-wordmark-dark.png 1x, /brand/clawql-wordmark-dark@2x.png 2x"
             alt={site.name}
             width="146"
             height="50"
-            class="hidden h-10 w-auto dark:block"
+            class="hidden h-11 w-auto dark:block"
             decoding="async"
           />
           <span
