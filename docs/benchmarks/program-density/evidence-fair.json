@@ -1,0 +1,1337 @@
+{
+  "kind": "durable-agent-density-fair-v2",
+  "measuredAt": "2026-10-28T21:46:41.828Z",
+  "contract": {
+    "agent": {
+      "turns": 20,
+      "turnPairBytesTarget": "~1–2 KiB text each turn pair",
+      "pendingToolBytesTarget": "~0.5 KiB JSON",
+      "park": "Waiting on that tool (idle durable)",
+      "offload": "Allowed; report residence (RSS / page cache / disk / object store)",
+      "wakeDeadline": "Randomly spread wakeDeadlineAt; fire within shared SLA (default 1s); identical fired definition (durable_trigger_record); explicit flush policy (default group_commit); lateness stamped after fsync; typed-array schedule; scaled bursts (Ontologiql sizes; first miss); deadline restart (rebuild + overdue catch-up); arrival-rate ramp; SIGKILL flush crash test"
+    },
+    "columns": [
+      "agentsAtLimit",
+      "limitResource",
+      "residentKiBPerAgent",
+      "pageCacheKiBPerAgent",
+      "diskBytesPerAgent",
+      "wakeWarmMs.p50/p99",
+      "wakeColdMs.p50/p99 (quote median+range; no cross-system cold until shared-host)",
+      "deadlineAccuracy (slaMs, firedDefinition, flushPolicy, scheduleShape, scaledBursts, deadlineRestart, crashTest, arrivalRate, steady/burst, sustainablePerSec, gcAb)",
+      "restartSurvival"
+    ],
+    "memoryFraming": "SHARED_HOST: serial fsync (+ honesty); flushStats both sides; double-buffer active but fsync rate unchanged — producer path under investigation (pop/encode CPU ruled out at ~1.3M/s noop; durable ~286k/s). Ramp ±1%; 3-rep alternate on dedicated host. Ontologiql ~24% of serial: profile before double-buffer. No win copy until sharedHostComplete.",
+    "publicClaimScope": "Parked durable agents only. Do not quote activeDensityLab or Ready RSS boards as this claim.",
+    "definitions": {
+      "rssCeiling": "total_process_rss",
+      "agentsAtLimit": "first_resource_exhausted",
+      "retainedAtLimit": "wake_deadline_schedule"
+    }
+  },
+  "host": {
+    "label": "clawql-cloud-agent-host",
+    "hostname": "cursor",
+    "platform": "linux",
+    "arch": "x64",
+    "nodeVersion": "v22.23.4",
+    "cpus": 4,
+    "memTotalKiB": 16387280,
+    "rssCeilingMiB": 512
+  },
+  "rows": [
+    {
+      "systemId": "ontologiql-rust",
+      "status": "publishable",
+      "hostLabel": "stable-host (Ontologiql published)",
+      "honesty": "Ontologiql: serial board-matched ~8.9k/s (~112µs) after retracting overwrite ~50k; theo ~569k; lab sustainable ~34% of serial. flushStats: avgBatch~64, fsyncs~2.2k ≈24% of serial → same idle pattern ClawQL saw pre-double-buffer. Ramp 196k/198k ±0.5%. Profile producer before adding double-buffer — ClawQL’s double-buffer raised hits but did not move fsync rate to the ceiling. Campaign on dedicated host with write-cache recorded. No win copy.",
+      "boardColumns": {
+        "agentsAtLimit": 200000,
+        "limitResource": "rss",
+        "residentKiBPerAgent": 2.621,
+        "pageCacheKiBPerAgent": null,
+        "diskBytesPerAgent": 30720,
+        "wakeWarmMs": {
+          "p50": 0.000035,
+          "p99": 0.000035
+        },
+        "wakeColdMs": {
+          "p50": 0.6,
+          "p99": 0.6
+        },
+        "deadlineAccuracy": {
+          "slaMs": 1000,
+          "slaTargetPct": 99,
+          "firedDefinition": "durable_trigger_record",
+          "concurrency": null,
+          "flushPolicy": {
+            "mode": "group_commit",
+            "batchMax": 64,
+            "flushIntervalMs": 10,
+            "durabilityWindowTriggers": 0,
+            "durabilityWindowMs": 0,
+            "crashSafe": true,
+            "syncPrimitive": "fsync_group_commit"
+          },
+          "crashTestOk": true,
+          "steadyArrivalRatePerSec": null,
+          "steadyPctMet": null,
+          "steadyP99ExcessMs": null,
+          "burstPctMet": null,
+          "burstP99ExcessMs": null,
+          "burstDrainPerSec": null,
+          "sustainablePerSec": 196000,
+          "firstRateMissingSlaPerSec": 198000,
+          "rampWentPastFailure": true,
+          "scaledBurstFirstMissSize": 200000,
+          "deadlineRestartOk": true,
+          "deadlineRestartRebuildMs": 3,
+          "deadlineScheduleFormat": null,
+          "labNote": "Serial ~8.9k/s board-matched; flushStats avgBatch~64 fsyncs~2.2k (24% serial) — writer idle / profile producer before double-buffer.",
+          "rampResolutionRel": 0.005,
+          "rampResolutionNote": "±0.5% (contract ±1%)"
+        },
+        "restartSurvival": true
+      },
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "clawql-typescript",
+      "status": "measured",
+      "hostLabel": "clawql-cloud-agent-host",
+      "honesty": "ClawQL TypeScript fair-v2. Steady-state ramp (continuous arrivals ≥8–30s/step; fail on growing overdue backlog). durableRecordsPerSec~347k/s; rateSustainableWithinOneSecondSla~140k/s (≤drain; prior 636k retracted — short place-ahead steps). Failures at ~144–160k: growing backlog while pctWithinSla still 100%. Cycle: write~10µs sync~125µs (p99~672µs) ack~2µs. Journal: fsync append. Ontologiql drain≈SLA ~0.85; ack~141µs. No win copy.",
+      "boardColumns": {
+        "agentsAtLimit": 2500000,
+        "limitResource": "rss",
+        "residentKiBPerAgent": 0.2065,
+        "pageCacheKiBPerAgent": 0.162,
+        "diskBytesPerAgent": 32817.8,
+        "wakeWarmMs": {
+          "p50": 0.091776,
+          "p99": 0.207662
+        },
+        "wakeColdMs": {
+          "p50": 0.134358,
+          "p99": 1.003399
+        },
+        "deadlineAccuracy": {
+          "slaMs": 1000,
+          "slaTargetPct": 99,
+          "firedDefinition": "durable_trigger_record",
+          "concurrency": 64,
+          "scheduleShape": "typed_arrays",
+          "flushPolicy": {
+            "mode": "group_commit",
+            "batchMax": 64,
+            "flushIntervalMs": 10,
+            "durabilityWindowTriggers": 0,
+            "durabilityWindowMs": 0,
+            "crashSafe": true,
+            "syncPrimitive": "fsync_group_commit"
+          },
+          "crashTestOk": true,
+          "steadyArrivalRatePerSec": 666.67,
+          "steadyPctMet": 100,
+          "steadyP99ExcessMs": 22,
+          "burstPctMet": 100,
+          "burstP99ExcessMs": 21,
+          "burstDrainPerSec": 54054.05,
+          "sustainablePerSec": 256000,
+          "objectEntriesSteadyP99ExcessMs": 314,
+          "objectEntriesMajorGcMaxMs": 120.92810600064695,
+          "scaledBurstFirstMissSize": 250000,
+          "deadlineRestartOk": true,
+          "deadlineRestartRebuildMs": 55,
+          "deadlineScheduleFormat": {
+            "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+            "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+            "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+            "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+          },
+          "firstRateMissingSlaPerSec": 384000,
+          "rampWentPastFailure": true
+        },
+        "restartSurvival": true
+      },
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "golem",
+      "status": "pending_invite",
+      "hostLabel": "stable-host (same host TBD)",
+      "honesty": "Invite maintainers before publishing a Golem comparison row (fair-v2 deadlines).",
+      "boardColumns": null,
+      "activeDensityLab": null
+    },
+    {
+      "systemId": "infinity",
+      "status": "pending_invite",
+      "hostLabel": "stable-host (same host TBD)",
+      "honesty": "Invite maintainers before publishing an Infinity comparison row (fair-v2 deadlines).",
+      "boardColumns": null,
+      "activeDensityLab": null
+    }
+  ],
+  "clawqlRun": {
+    "bagDir": "/tmp/clawql-density-bags-fair",
+    "ramp": [
+      {
+        "agents": 250000,
+        "rssKiB": 178360,
+        "residentKiBPerAgent": 0.71344,
+        "rssDeltaKiBPerAgent": 0.196016,
+        "heapUsedKiBAfterGc": 62117,
+        "heapUsedKiBPerAgentAfterGc": 0.248468,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 500000,
+        "rssKiB": 216436,
+        "residentKiBPerAgent": 0.432872,
+        "rssDeltaKiBPerAgent": 0.17416,
+        "heapUsedKiBAfterGc": 97714,
+        "heapUsedKiBPerAgentAfterGc": 0.195428,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 750000,
+        "rssKiB": 257364,
+        "residentKiBPerAgent": 0.343152,
+        "rssDeltaKiBPerAgent": 0.17067733333333332,
+        "heapUsedKiBAfterGc": 131609,
+        "heapUsedKiBPerAgentAfterGc": 0.17547866666666667,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1000000,
+        "rssKiB": 295292,
+        "residentKiBPerAgent": 0.295292,
+        "rssDeltaKiBPerAgent": 0.165936,
+        "heapUsedKiBAfterGc": 169825,
+        "heapUsedKiBPerAgentAfterGc": 0.169825,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1250000,
+        "rssKiB": 331960,
+        "residentKiBPerAgent": 0.265568,
+        "rssDeltaKiBPerAgent": 0.1620832,
+        "heapUsedKiBAfterGc": 197380,
+        "heapUsedKiBPerAgentAfterGc": 0.157904,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1500000,
+        "rssKiB": 371212,
+        "residentKiBPerAgent": 0.24747466666666668,
+        "rssDeltaKiBPerAgent": 0.16123733333333334,
+        "heapUsedKiBAfterGc": 240696,
+        "heapUsedKiBPerAgentAfterGc": 0.160464,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 1750000,
+        "rssKiB": 409780,
+        "residentKiBPerAgent": 0.23416,
+        "rssDeltaKiBPerAgent": 0.16024228571428573,
+        "heapUsedKiBAfterGc": 268829,
+        "heapUsedKiBPerAgentAfterGc": 0.15361657142857144,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2000000,
+        "rssKiB": 456360,
+        "residentKiBPerAgent": 0.22818,
+        "rssDeltaKiBPerAgent": 0.163502,
+        "heapUsedKiBAfterGc": 319786,
+        "heapUsedKiBPerAgentAfterGc": 0.159893,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2250000,
+        "rssKiB": 488744,
+        "residentKiBPerAgent": 0.21721955555555555,
+        "rssDeltaKiBPerAgent": 0.159728,
+        "heapUsedKiBAfterGc": 347922,
+        "heapUsedKiBPerAgentAfterGc": 0.154632,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2500000,
+        "rssKiB": 516164,
+        "residentKiBPerAgent": 0.2064656,
+        "rssDeltaKiBPerAgent": 0.1547232,
+        "heapUsedKiBAfterGc": 375953,
+        "heapUsedKiBPerAgentAfterGc": 0.1503812,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": 0.162,
+        "withinRssCeiling": true
+      },
+      {
+        "agents": 2750000,
+        "rssKiB": 548932,
+        "residentKiBPerAgent": 0.19961163636363635,
+        "rssDeltaKiBPerAgent": 0.1525730909090909,
+        "heapUsedKiBAfterGc": 404074,
+        "heapUsedKiBPerAgentAfterGc": 0.146936,
+        "diskBytesTotal": 196906888890,
+        "diskBytesPerAgent": 32817.814815,
+        "diskAvailBytes": 40163176448,
+        "pageCacheKiBPerAgent": null,
+        "withinRssCeiling": false
+      }
+    ],
+    "wakeSampleSize": 200,
+    "wakeWarmupCount": 3000,
+    "wakeOrderRepetitions": 3,
+    "deadlineHorizonMs": 3000,
+    "deadlineMaxFires": 2000,
+    "deadlineSlaMs": 1000,
+    "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files",
+    "limitReason": "total process RSS exceeded 512 MiB when scheduling past 2500000 agents (last within: rss=516164 KiB at 2500000; overshoot rss=548932 at 2750000; wake-deadline schedule retained)",
+    "limitHit": true,
+    "limitResource": "rss",
+    "rssCeilingDefinition": "total_process_rss",
+    "baseline": {
+      "rssKiB": 129356,
+      "heapUsedKiB": 27484,
+      "heapTotalKiB": 64688,
+      "externalKiB": 6794,
+      "arrayBuffersKiB": 2206
+    },
+    "atLimit": {
+      "rssKiB": 550664,
+      "heapUsedKiB": 381210,
+      "heapTotalKiB": 418924,
+      "externalKiB": 5985,
+      "arrayBuffersKiB": 2179
+    },
+    "residentAccounting": {
+      "totalRssKiBPerAgent": 0.2065,
+      "heapUsedKiBPerAgentAfterGc": 0.1504,
+      "rssDeltaKiBPerAgent": 0.1547,
+      "retainedInProcess": "Wake-deadline typed-array min-heap (Float64 deadline + Int32 index) for every counted agent — approval expiry / reminder schedule. Sparse agentId Map for live agents only. Bag path derived from agentId (FS is the id index).",
+      "deadlineScheduleEntries": 2500000,
+      "scheduleShape": "deadline_typed_arrays",
+      "estimatedScheduleBytesPerAgent": 20
+    },
+    "deadlineScheduleRetainedAtLimit": true,
+    "deadlineAccuracy": {
+      "slaMs": 1000,
+      "slaTargetPct": 99,
+      "scheduler": {
+        "mechanism": "min_heap_setTimeout_to_next_deadline",
+        "nextDeadlineComplexity": "O(log n) binary_min_heap",
+        "tickMs": 1,
+        "concurrency": 64,
+        "firedDefinition": "durable_trigger_record",
+        "flushPolicy": {
+          "mode": "group_commit",
+          "batchMax": 64,
+          "flushIntervalMs": 10,
+          "durabilityWindowTriggers": 0,
+          "durabilityWindowMs": 0,
+          "crashSafe": true,
+          "storage": "append_ndjson_file",
+          "syncPrimitive": "fsync_group_commit",
+          "note": "Group commit: flush when batch reaches 64 or every 10 ms, then fsync. Fired stamps only after fsync — an unflushed batch is never counted, so a crash loses at most in-flight (not-yet-acked) work, not counted fires. Max wait for a fire ≈ flushIntervalMs (or sooner if batch fills)."
+        },
+        "note": "Fired = trigger record flushed per policy (group_commit; crashSafe=true). Approval-expiry semantics, not bag load. Lateness stamped after flush. Peek O(1), schedule/popDue O(log n). Concurrent writers bounded by concurrency. Excess-over-tick = max(0, lateness − tickMs)."
+      },
+      "steady": {
+        "mode": "steady",
+        "n": 2000,
+        "fired": 2000,
+        "slaMs": 1000,
+        "arrivalRatePerSec": 666.67,
+        "pctWithinSla": 100,
+        "latenessP50Ms": 16,
+        "latenessP99Ms": 23,
+        "excessOverTickP50Ms": 15,
+        "excessOverTickP99Ms": 22,
+        "maxLatenessMs": 45,
+        "maxExcessOverTickMs": 44,
+        "wallMs": 2980,
+        "scheduleShape": "typed_arrays",
+        "gcTrace": {
+          "pauseCount": 1,
+          "pauseTotalMs": 4.972,
+          "pauseMaxMs": 4.972,
+          "majorPauseCount": 0,
+          "majorPauseMaxMs": 0,
+          "lateFiresOverlappingGc": 0,
+          "lateFiresOverlappingMajorGc": 0,
+          "lateOverlapFraction": 0,
+          "lateThresholdMs": 100,
+          "note": "No fires at/above late threshold."
+        }
+      },
+      "burst": {
+        "mode": "burst",
+        "n": 2000,
+        "fired": 2000,
+        "slaMs": 1000,
+        "arrivalRatePerSec": 54054.05,
+        "pctWithinSla": 100,
+        "latenessP50Ms": 13,
+        "latenessP99Ms": 22,
+        "excessOverTickP50Ms": 12,
+        "excessOverTickP99Ms": 21,
+        "maxLatenessMs": 33,
+        "maxExcessOverTickMs": 32,
+        "wallMs": 37,
+        "scheduleShape": "typed_arrays",
+        "gcTrace": {
+          "pauseCount": 0,
+          "pauseTotalMs": 0,
+          "pauseMaxMs": 0,
+          "majorPauseCount": 0,
+          "majorPauseMaxMs": 0,
+          "lateFiresOverlappingGc": 0,
+          "lateFiresOverlappingMajorGc": 0,
+          "lateOverlapFraction": 0,
+          "lateThresholdMs": 100,
+          "note": "No fires at/above late threshold."
+        }
+      },
+      "sustainablePerSec": 256000,
+      "ramp": [
+        {
+          "mode": "ramp",
+          "n": 50,
+          "fired": 50,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 50,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 11,
+          "latenessP99Ms": 38,
+          "excessOverTickP50Ms": 10,
+          "excessOverTickP99Ms": 37,
+          "maxLatenessMs": 38,
+          "maxExcessOverTickMs": 37,
+          "wallMs": 966,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 3.283,
+            "pauseMaxMs": 3.283,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 100,
+          "fired": 100,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 100,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 16,
+          "latenessP99Ms": 32,
+          "excessOverTickP50Ms": 15,
+          "excessOverTickP99Ms": 31,
+          "maxLatenessMs": 42,
+          "maxExcessOverTickMs": 41,
+          "wallMs": 971,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 0,
+            "pauseTotalMs": 0,
+            "pauseMaxMs": 0,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 250,
+          "fired": 250,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 250,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 38,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 37,
+          "maxLatenessMs": 46,
+          "maxExcessOverTickMs": 45,
+          "wallMs": 981,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 2.475,
+            "pauseMaxMs": 2.475,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 500,
+          "fired": 500,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 500,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 47,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 46,
+          "maxLatenessMs": 57,
+          "maxExcessOverTickMs": 56,
+          "wallMs": 973,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 2.051,
+            "pauseMaxMs": 2.051,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 1000,
+          "fired": 1000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 1000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 49,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 48,
+          "maxLatenessMs": 59,
+          "maxExcessOverTickMs": 58,
+          "wallMs": 975,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 2,
+            "pauseTotalMs": 13.779,
+            "pauseMaxMs": 13.212,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 2000,
+          "fired": 2000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 2000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 17,
+          "latenessP99Ms": 25,
+          "excessOverTickP50Ms": 16,
+          "excessOverTickP99Ms": 24,
+          "maxLatenessMs": 35,
+          "maxExcessOverTickMs": 34,
+          "wallMs": 982,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 2,
+            "pauseTotalMs": 2.589,
+            "pauseMaxMs": 1.974,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 4000,
+          "fired": 4000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 4000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 16,
+          "latenessP99Ms": 23,
+          "excessOverTickP50Ms": 15,
+          "excessOverTickP99Ms": 22,
+          "maxLatenessMs": 30,
+          "maxExcessOverTickMs": 29,
+          "wallMs": 987,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 1,
+            "pauseTotalMs": 3.004,
+            "pauseMaxMs": 3.004,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 8000,
+          "fired": 8000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 8000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 10,
+          "latenessP99Ms": 20,
+          "excessOverTickP50Ms": 9,
+          "excessOverTickP99Ms": 19,
+          "maxLatenessMs": 24,
+          "maxExcessOverTickMs": 23,
+          "wallMs": 989,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 3,
+            "pauseTotalMs": 3,
+            "pauseMaxMs": 1.944,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 16000,
+          "fired": 16000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 16000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 9,
+          "latenessP99Ms": 19,
+          "excessOverTickP50Ms": 8,
+          "excessOverTickP99Ms": 18,
+          "maxLatenessMs": 25,
+          "maxExcessOverTickMs": 24,
+          "wallMs": 994,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 4,
+            "pauseTotalMs": 8.221,
+            "pauseMaxMs": 5.929,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 32000,
+          "fired": 32000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 32000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 10,
+          "latenessP99Ms": 32,
+          "excessOverTickP50Ms": 9,
+          "excessOverTickP99Ms": 31,
+          "maxLatenessMs": 38,
+          "maxExcessOverTickMs": 37,
+          "wallMs": 978,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 6,
+            "pauseTotalMs": 6.387,
+            "pauseMaxMs": 2.739,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        },
+        {
+          "mode": "ramp",
+          "n": 64000,
+          "fired": 64000,
+          "slaMs": 1000,
+          "arrivalRatePerSec": 64000,
+          "pctWithinSla": 100,
+          "latenessP50Ms": 0,
+          "latenessP99Ms": 24,
+          "excessOverTickP50Ms": 0,
+          "excessOverTickP99Ms": 23,
+          "maxLatenessMs": 27,
+          "maxExcessOverTickMs": 26,
+          "wallMs": 976,
+          "scheduleShape": "typed_arrays",
+          "gcTrace": {
+            "pauseCount": 25,
+            "pauseTotalMs": 12.188,
+            "pauseMaxMs": 2.916,
+            "majorPauseCount": 0,
+            "majorPauseMaxMs": 0,
+            "lateFiresOverlappingGc": 0,
+            "lateFiresOverlappingMajorGc": 0,
+            "lateOverlapFraction": 0,
+            "lateThresholdMs": 100,
+            "note": "No fires at/above late threshold."
+          }
+        }
+      ],
+      "crashTest": {
+        "ok": true,
+        "note": "SIGKILL mid-drain under group_commit + typed_arrays — counted fires on disk, no duplicates"
+      },
+      "scheduleShape": "typed_arrays",
+      "sustainablePerSecNote": {
+        "policy": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10,
+        "scheduleShape": "typed_arrays",
+        "conservativeFloor": 256000,
+        "threeRepMedian": 256000,
+        "threeRepMax": 256000,
+        "threeRepValues": [
+          256000,
+          256000,
+          256000
+        ],
+        "crashTestOk": true,
+        "fsyncEachSustainablePerSec": 24000,
+        "osBufferWasNotCrashDurable": "~1.2e6 prior v7 figure was writeSync/page-cache only — superseded",
+        "objectHeapSteadyP99WasGc": "v8 object_entries steady excess p99 ~293–314 ms lined up with major GC (~121 ms); typed_arrays is the published best-effort TS column",
+        "firstRateMissingSlaPerSec": 384000,
+        "rampWentPastFailure": true,
+        "fsyncBoundNote": "group_commit batchMax=64 → durable rate ≲ 64 × disk_fsyncs_per_sec. Cross-host ClawQL 256k vs Ontologiql lab 128k ≈ 4k vs 2k fsync/s — not a language verdict; remeasure on shared disk."
+      },
+      "flushPolicyCompare": {
+        "group_commit": {
+          "batchMax": 64,
+          "flushIntervalMs": 10,
+          "sustainablePerSecMedian": 512000,
+          "sustainablePerSecMin": 256000,
+          "sustainablePerSecMax": 512000,
+          "reps": [
+            512000,
+            512000,
+            256000
+          ],
+          "scheduleShapeNote": "v8 compare used object_entries; v9 sustainable floor remeasured under typed_arrays = 256k×3"
+        },
+        "fsync_each": {
+          "sustainablePerSec": 24000,
+          "ramp": [
+            {
+              "arrivalRatePerSec": 8000,
+              "pctWithinSla": 100,
+              "excessP99": 29,
+              "wallMs": 973
+            },
+            {
+              "arrivalRatePerSec": 16000,
+              "pctWithinSla": 100,
+              "excessP99": 212,
+              "wallMs": 1191
+            },
+            {
+              "arrivalRatePerSec": 24000,
+              "pctWithinSla": 100,
+              "excessP99": 633,
+              "wallMs": 1619
+            },
+            {
+              "arrivalRatePerSec": 32000,
+              "pctWithinSla": 83,
+              "excessP99": 1212,
+              "wallMs": 2205
+            }
+          ]
+        }
+      },
+      "scheduleShapeAb": {
+        "residentHeapSize": 2500000,
+        "object_entries": {
+          "steadyExcessP99Ms": 314,
+          "majorPauseMaxMs": 120.92810600064695,
+          "lateOverlapFraction": 1,
+          "lateFiresOverlappingMajorGc": 205,
+          "note": "Object-per-entry heap under 2.5e6 pad: major GC ~121 ms; 100% of late fires (≥50 ms) overlap that pause."
+        },
+        "typed_arrays": {
+          "steadyExcessP99Ms": 22,
+          "majorPauseMaxMs": 0,
+          "lateOverlapFraction": 0,
+          "note": "Board default. Float64 deadlines + Int32 heap indices; sparse agent Map. Steady excess p99 collapses ~10×."
+        },
+        "reading": "Large GC pauses appear while building/holding the object schedule; typed_arrays cuts steady excess p99 sharply. Fair column: report both shapes; board default typed_arrays."
+      },
+      "scaledBursts": {
+        "sizes": [
+          512,
+          10000,
+          100000,
+          250000
+        ],
+        "firstMissSize": 250000,
+        "note": "First miss at N=250000: pctWithinSla below 99% (1s SLA).",
+        "arms": [
+          {
+            "n": 512,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 22,
+            "wallMs": 10,
+            "arrivalRatePerSec": 51200
+          },
+          {
+            "n": 10000,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 73,
+            "wallMs": 64,
+            "arrivalRatePerSec": 156250
+          },
+          {
+            "n": 100000,
+            "pctWithinSla": 100,
+            "excessOverTickP99Ms": 456,
+            "wallMs": 475,
+            "arrivalRatePerSec": 210526.32
+          },
+          {
+            "n": 250000,
+            "pctWithinSla": 63,
+            "excessOverTickP99Ms": 1332,
+            "wallMs": 1358,
+            "arrivalRatePerSec": 184094.26
+          }
+        ]
+      },
+      "deadlineRestart": {
+        "ok": true,
+        "capacity": 2500000,
+        "liveCount": 10000,
+        "rebuildMs": 55,
+        "scheduleFormat": {
+          "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+          "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+          "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+          "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+        },
+        "overdueExpected": 5000,
+        "overdueFired": 5000,
+        "missingLive": 0,
+        "duplicateFired": 0,
+        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 55 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
+      },
+      "firstRateMissingSlaPerSec": 384000,
+      "rampWentPastFailure": true
+    },
+    "wakeByOrder": [
+      {
+        "order": "warm_then_cold",
+        "repetition": 0,
+        "warm": {
+          "p50": 0.086522,
+          "p99": 0.126,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.13976,
+          "p99": 0.650227,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.880671,
+          "maxMs": 0.880671
+        },
+        "gcCold": {
+          "count": 1,
+          "totalMs": 0.87785,
+          "maxMs": 0.87785
+        }
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 0,
+        "warm": {
+          "p50": 0.091776,
+          "p99": 0.177696,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.134358,
+          "p99": 1.211868,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.811034,
+          "maxMs": 0.811034
+        },
+        "gcCold": {
+          "count": 2,
+          "totalMs": 2.04521,
+          "maxMs": 1.1271
+        }
+      },
+      {
+        "order": "warm_then_cold",
+        "repetition": 1,
+        "warm": {
+          "p50": 0.084313,
+          "p99": 0.560185,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.137356,
+          "p99": 0.55895,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.698293,
+          "maxMs": 0.698293
+        },
+        "gcCold": {
+          "count": 1,
+          "totalMs": 1.017645,
+          "maxMs": 1.017645
+        }
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 1,
+        "warm": {
+          "p50": 0.086523,
+          "p99": 0.303553,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.128874,
+          "p99": 0.455541,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.839352,
+          "maxMs": 0.839352
+        },
+        "gcCold": {
+          "count": 2,
+          "totalMs": 2.342059,
+          "maxMs": 1.449878
+        }
+      },
+      {
+        "order": "warm_then_cold",
+        "repetition": 2,
+        "warm": {
+          "p50": 0.082789,
+          "p99": 0.114712,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.13987,
+          "p99": 0.844776,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.676993,
+          "maxMs": 0.676993
+        },
+        "gcCold": {
+          "count": 2,
+          "totalMs": 1.569198,
+          "maxMs": 0.841248
+        }
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 2,
+        "warm": {
+          "p50": 0.086111,
+          "p99": 0.207662,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.131595,
+          "p99": 1.003399,
+          "n": 200
+        },
+        "gcWarm": {
+          "count": 1,
+          "totalMs": 0.705761,
+          "maxMs": 0.705761
+        },
+        "gcCold": {
+          "count": 1,
+          "totalMs": 0.799475,
+          "maxMs": 0.799475
+        }
+      }
+    ],
+    "wakeSpread": [
+      {
+        "order": "warm_then_cold",
+        "coldP99Min": 0.55895,
+        "coldP99Max": 0.844776,
+        "coldP99Median": 0.650227,
+        "warmP99Min": 0.114712,
+        "warmP99Max": 0.560185,
+        "warmP99Median": 0.126,
+        "repetitions": 3
+      },
+      {
+        "order": "cold_then_warm",
+        "coldP99Min": 0.455541,
+        "coldP99Max": 1.211868,
+        "coldP99Median": 1.003399,
+        "warmP99Min": 0.177696,
+        "warmP99Max": 0.303553,
+        "warmP99Median": 0.207662,
+        "repetitions": 3
+      }
+    ],
+    "wakeHeadlineOrder": "cold_then_warm",
+    "wakePooled": {
+      "warm": {
+        "p50": 0.086339,
+        "p99": 0.560185,
+        "n": 1200
+      },
+      "cold": {
+        "p50": 0.135302,
+        "p99": 1.211868,
+        "n": 1200
+      },
+      "coldFasterThanWarmP99": true
+    },
+    "exposeGc": true,
+    "ceilingHit": true
+  },
+  "peerLab": {
+    "systemId": "ontologiql-rust",
+    "source": "Ontologiql #144 (lab; serial probe + flushStats fixed)",
+    "agentsAtLimitContext": 200000,
+    "flushPolicy": {
+      "mode": "group_commit",
+      "batchMax": 64,
+      "flushIntervalMs": 10
+    },
+    "crashTestOk": true,
+    "crashTestNote": "400 ACK’d fires; 0 missing; 0 duplicates",
+    "sustainablePerSec": 196000,
+    "firstRateMissingSlaPerSec": 198000,
+    "rampWentPastFailure": true,
+    "firstBurstSizeMissingOneSecondSla": 200000,
+    "rebuildFromDiskMs": 3,
+    "noLoss": true,
+    "noDuplicate": true,
+    "overduePrompt": 1,
+    "superseded": {
+      "osBufferRate": "~400k/s undeclared page-cache — not comparable to fsync floor",
+      "syntheticBurst400kAt200k": "used synthetic ids — superseded by N≤agentsAtLimit ladder"
+    },
+    "reading": {
+      "serialHonesty": "Overwrite ~50k retracted; board-matched ~8.9k/s (~112µs) aligns with ClawQL ~7.7k/~0.113ms p50.",
+      "producerNote": "Pump profile: producer ~0.46µs/rec (~0.06% wall), durable-wait ~62%. Label: double_buffer_candidate_unverified. Compare under-load sync latency to probe; trial fdatasync+prealloc (ClawQL saw ~+3% only on this host)."
+    },
+    "rampNote": "Refined 196k pass / 198k fail (±0.5%). Coarse 192k/256k superseded.",
+    "rampResolutionRel": 0.005,
+    "serialFsyncsPerSec": 8900,
+    "theoreticalMaxGroupCommitPerSec": 569600,
+    "flushStats": {
+      "avgBatchSize": 64,
+      "fsyncsPerSec": 2200,
+      "fractionOfSerial": 0.24,
+      "sustainedDrainPerSecApprox": 139000,
+      "diagnosis": "double_buffer_candidate_unverified",
+      "note": "Full batches + ~24% of serial. Producer fast. Prealloc +31% on their host (prealloc_partial_lift_residual_durable_path). Pair with ClawQL drain-vs-SLA split on shared host."
+    }
+  },
+  "sharedHostFiveArms": {
+    "artifact": "docs/benchmarks/program-density/shared-host-five-arms.json",
+    "kind": "durable-agent-density-shared-host-five-arms",
+    "measuredAt": "2026-10-28T21:51:08.196Z",
+    "protocol": {
+      "headlineRule": "three_rep_floor",
+      "requiredReps": 3,
+      "alternation": "clawql_then_ontologiql_each_rep",
+      "fsyncCeilingFirst": true,
+      "idleHost": true,
+      "sameAgentsAtLimit": true,
+      "sameDiskAsFsyncProbe": true
+    },
+    "fsyncCeiling": {
+      "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
+      "measuredAt": "2026-10-28T22:42:18.696Z",
+      "serial": {
+        "mode": "serial_board_matched",
+        "method": "node_append_batch_fsync",
+        "pattern": "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
+        "batchMax": 64,
+        "batchBytes": 3904,
+        "ops": 63399,
+        "runtimeSec": 8.000163856,
+        "fsyncsPerSec": 7925,
+        "meanFsyncLatencyMs": 0.1262,
+        "writeBandwidthBytesPerSec": 30938078.32627972
+      },
+      "parallel": {
+        "mode": "parallel_headroom",
+        "method": "fio",
+        "fioVersion": "fio-3.36",
+        "pattern": "8 fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling",
+        "numJobs": 8,
+        "iodepth": 1,
+        "fsyncsPerSec": 194172,
+        "writeIops": 194171.957011,
+        "meanLatencyUs": 2.97,
+        "runtimeSec": 8
+      },
+      "fsyncsPerSec": 7925,
+      "theoreticalMaxGroupCommitPerSec": 507200,
+      "batchMax": 64,
+      "method": "node_append_batch_fsync",
+      "hostLabel": "clawql-cloud-agent-host:cursor",
+      "reading": {
+        "primaryCeiling": "serial_board_matched",
+        "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
+        "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
+        "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
+        "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
+      }
+    },
+    "sharedHostComplete": false,
+    "winCopy": false,
+    "peerPresent": false,
+    "peer": null,
+    "clawql": {
+      "hostLabel": "clawql-cloud-agent-host:cursor",
+      "agentsAtLimit": 2500000,
+      "scheduleShape": "typed_arrays",
+      "flushPolicy": {
+        "mode": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10
+      },
+      "headline": {
+        "rule": "three_rep_floor",
+        "reps": 1,
+        "sustainablePerSec": 384000,
+        "firstRateMissingSlaPerSec": 512000,
+        "scaledBurstFirstMissSize": 250000,
+        "note": "REPS=1 scaffold only — campaign headlines require REPS=3. Board still quotes 256k 3-rep floor."
+      },
+      "firstBurstMiss": 250000,
+      "sustainablePerSec": 384000,
+      "firstRateMissingSlaPerSec": 512000,
+      "rampWentPastFailure": true,
+      "crashOk": true,
+      "restartOk": true,
+      "rebuildMs": 45,
+      "scheduleFormat": {
+        "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+        "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+        "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+        "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+      },
+      "note": "Scaffold / single-run snapshot only. Board deadlineAccuracy quotes the conservative 256k 3-rep floor until the shared-host campaign (SHARED_HOST.md protocol)."
+    },
+    "reading": {
+      "sustainedRateNote": "Use serial.fsyncsPerSec × batchMax as the group_commit ceiling. Parallel is headroom only. This host: board 256k ≈ 50% of serial theo — software headroom, not proven disk-bound.",
+      "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
+      "winCopy": false,
+      "sharedHostComplete": false,
+      "headlineNote": "Board headlines use min of 3 reps per system. Never compare one system's single run to the other's floor.",
+      "alternationNote": "Interleave systems across reps (ClawQL₁ → Ontologiql₁ → …). Do not run all of one then all of the other.",
+      "completeGates": {
+        "peerPresent": false,
+        "fsyncCeilingPresent": true,
+        "clawqlThreeRepFloor": false,
+        "peerThreeRepFloor": false
+      },
+      "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign.",
+      "fsyncProbeCorrection": "Prior ~41k fsync/s / 10%-of-ceiling reading retracted (overwrite/parallel-capable probe).",
+      "rampRefineNote": "Coarse ladders are too wide; binary-refine to ±few % and report rampResolutionNote before campaign compare."
+    }
+  },
+  "flushBatchStats": {
+    "artifact": "docs/benchmarks/program-density/flush-batch-stats.json",
+    "measuredAt": "2026-10-29T00:16:35.286Z",
+    "doubleBuffered": true,
+    "concurrencyDefault": 128,
+    "serialCeilingFsyncsPerSec": 7693,
+    "theoreticalMaxGroupCommitPerSec": 492352,
+    "probeFsyncLatencyMs": { "p50Ms": 0.1131, "p99Ms": 0.4117, "meanMs": 0.1213 },
+    "after": {
+      "offeredFocusRatePerSec": 256000,
+      "fsyncsPerSec": 3732.71,
+      "avgBatchSize": 64,
+      "doubleBufferHits": 6585,
+      "impliedDurablePerSec": 238893.44,
+      "fractionOfSerialFsyncs": 0.4852,
+      "fsyncLatencyMs": { "p50": 0.1229, "p99": 0.8342, "mean": 0.1505 },
+      "latencyRatioVsProbeP50": 1.087
+    },
+    "compare": {
+      "fractionOfSerialFsyncs": 0.4852,
+      "fractionOfTheoMax": 0.52,
+      "impliedDurablePerSec": 238893.44,
+      "latencyRatioVsProbeP50": 1.087,
+      "diagnosis": "durable_path_residual_after_double_buffer_check_sync_latency",
+      "note": "Under-load p50 ≈ probe; see fsync-metadata-arms for fdatasync/prealloc before/after."
+    },
+    "reading": "Producer fast; under-load sync p50≈probe; residual durable-path (not metadata-only on this host)."
+  },
+  "pumpProfile": {
+    "artifact": "docs/benchmarks/program-density/pump-profile.json",
+    "measuredAt": "2026-10-28T23:27:53.736Z",
+    "micro": {
+      "popPerRecordUs": 0.264,
+      "encodePerRecordUs": 0.291,
+      "sequentialEnqueueUs": 0.678
+    },
+    "noopSustainedPerSec": 1318848.58,
+    "durableSustainedPerSec": 286161.26,
+    "durableFsyncsPerSec": 4163.5,
+    "postDoubleBufferFsyncsPerSec": 3372.35,
+    "fsyncRateMoved": false,
+    "diagnosis": "durable_path_residual_after_double_buffer_check_sync_latency",
+    "reading": "Heap/encode ruled out. Both sides' producers are fast; limit is durable write path. Ontologiql: double_buffer_candidate_unverified."
+  },
+  "fsyncMetadataArms": {
+    "artifact": "docs/benchmarks/program-density/fsync-metadata-arms.json",
+    "measuredAt": "2026-10-29T00:16:13.293Z",
+    "probeSerialFsyncsPerSec": 7693,
+    "probeP50Ms": 0.1131,
+    "growingLongP50OverShortP50": 1.041,
+    "arms": [
+      { "label": "fsync_append", "sustainedRecordsPerSec": 228441.74, "fsyncsPerSec": 3569.4, "p50Ms": 0.1221, "p99Ms": 0.9164 },
+      { "label": "fdatasync_append", "sustainedRecordsPerSec": 236494.33, "fsyncsPerSec": 3695.22, "p50Ms": 0.1214, "p99Ms": 0.9148 },
+      { "label": "fdatasync_prealloc", "sustainedRecordsPerSec": 233157.77, "fsyncsPerSec": 3643.09, "p50Ms": 0.1239, "p99Ms": 0.9556 }
+    ],
+    "diagnosis": "durable_path_residual_not_explained_by_metadata_arms_alone",
+    "reading": "Under-load p50 not 2–4× probe; fdatasync+prealloc ~+3% only here. Ontologiql prealloc +31% on their host — disclose best config per side on shared FS."
+  },
+  "drainVsSustained": {
+    "artifact": "docs/benchmarks/program-density/drain-vs-sustained.json",
+    "measuredAt": "2026-10-29T03:35:35.316Z",
+    "journalConfig": {
+      "dataSync": "fsync",
+      "preallocateBytes": null,
+      "chosenBecause": "board_default_fsync_append_metadata_arms_neutral_on_this_host"
+    },
+    "rampMethodology": {
+      "mode": "steady_arrival_continuous",
+      "stepDurationMs": 6000,
+      "requireNonGrowingBacklog": true,
+      "campaignStepDurationMs": 30000,
+      "reps": 3,
+      "interleaved": "drain_then_sustained_each_rep",
+      "scheduler": "pop_all_due_coalesce_wake_1ms_no_idle_sleep_while_inflight"
+    },
+    "drainSummary": {
+      "mean": 312091.56,
+      "min": 278372.33,
+      "max": 333398.79,
+      "stdev": 29538.47
+    },
+    "sustainedSummary": {
+      "mean": 312000,
+      "min": 280000,
+      "max": 336000,
+      "stdev": 28844.41
+    },
+    "ratioSummary": {
+      "mean": 1.01,
+      "min": 0.87,
+      "max": 1.19,
+      "stdev": 0.16
+    },
+    "durableRecordsPerSec": 312091.56,
+    "rateSustainableWithinOneSecondSla": 312000,
+    "drainOverSustained": 1.01,
+    "sustainedEqualsDrainWithinError": true,
+    "priorShortRampSustainablePerSecRetracted": 636000,
+    "priorSchedulerBoundSustainablePerSec": 140000,
+    "cycleStagesMs": {
+      "writeMeanMs": 0.0089,
+      "syncMeanMs": 0.1419,
+      "syncP50Ms": 0.1292,
+      "syncP99Ms": 0.6786,
+      "ackMeanMs": 0.0025,
+      "interFlushGapMeanMs": 0.0004,
+      "cycleMeanMs": 0.1538
+    },
+    "diagnosis": "sustained_equals_drain_within_measurement_error",
+    "reading": "ClawQL done on this host (writer fully the limit). Ontologiql post ack+dbuf: drain~320k sustained~185k — scheduler-bound; same coalesce levers. Board paused; Infinity-on-Pi next.",
+    "boardStatus": "paused_clawql_done_ontologiql_scheduler_next_infinity_pi_time_sensitive"
+  }
+}

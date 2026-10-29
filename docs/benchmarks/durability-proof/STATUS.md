@@ -4,6 +4,8 @@
 
 **Live marketing:** [clawql.com/benchmarks#durability](https://clawql.com/benchmarks#durability) publishes the measured Tier C claim, per-phase table, three columns, and ladder. Chip elsewhere: **Lab Yes · fleet Yes (R2 peer kill)**. Still not a durable execution engine. Peer boards vs Pi Durable / Golem wait on maintainer invite.
 
+**Publish copy:** ready-now wording, hold-backs, and never-claims — [publish-readiness](../../gtm/publish-readiness.md). Path to a named step-level durable-execution claim — [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
+
 ## Scoped Tier C claim (measured — stock R2)
 
 > Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.
@@ -72,13 +74,13 @@ Send the claim above, the evidence JSON, the per-phase table, the harness, the h
 
 We cannot say yet on a shared board — Golem has not published the kind of crash measurement above. Public Golem figures describe different things:
 
-| What's measured                  | Golem (their claims)           | ClawQL (your measurements)                         |
-| -------------------------------- | ------------------------------ | -------------------------------------------------- |
-| Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                   |
-| Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements) |
-| Density                          | 10,000+ Active agents per node | Not yet measured                                   |
-| Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                        |
-| Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease      |
+| What's measured                  | Golem (their claims)           | ClawQL (your measurements)                                                                                                                                                                                         |
+| -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Starting a unit of work          | 2 ms Agent cold start          | Not yet measured for celld cells                                                                                                                                                                                   |
+| Memory per unit                  | 1 MB Min memory per agent      | About 471 KB per celld cell (earlier measurements)                                                                                                                                                                 |
+| Density                          | 10,000+ Active agents per node | **Parked fair board `measured` (fair-v2)** — [program-density](../program-density/STATUS.md) (deadline schedule @ **rss** 2.5e6; 1s SLA steady+burst with tick/excess; cold=median+range only; not active-at-50ms) |
+| Duplicated writes after a crash  | No published crash test        | **0 in 1,000** phased kills                                                                                                                                                                                        |
+| Failover time after a node crash | No published figure            | About **12 seconds** median, set by the lease                                                                                                                                                                      |
 
 **Trade-off (now in his words):** Golem favors completing the work — retry; without upstream keys an interrupted POST can happen twice. ClawQL favors never repeating a consequential action — consume the approval first; cost is an explicit `outcome_unknown` instead of a silent miss or a blind retry. Same unavoidable limit; opposite choices. That does **not** mean “person forever”: when the API supports idempotency keys or lookup-by-reference, the unknown should resolve automatically ([check-then-decide](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability)) — planned, not claimed.
 
@@ -86,7 +88,7 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 
 **Where ClawQL is probably behind:** failover speed (~12s lease floor). A mature durable runtime may recover faster — renew more often and keep leases on regional storage.
 
-**Where unmeasured / planned:** celld cold start and agents per node; mandate-derived keys **and** reconciliation-by-lookup so Stripe-class (and lookup-capable) APIs auto-resolve in-flight unknowns without dropping at-most-once elsewhere.
+**Where unmeasured / planned:** celld cold start; **active** agents-per-node (fair parked density is separate — [program-density](../program-density/STATUS.md)); mandate-derived keys **and** reconciliation-by-lookup so Stripe-class (and lookup-capable) APIs auto-resolve in-flight unknowns without dropping at-most-once elsewhere.
 
 **Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
@@ -108,6 +110,7 @@ Peer comparison design (celld = own substrate; Pi Durable + Golem = peers; dual 
 ## Related
 
 - Comparison board plan — [`COMPARISON.md`](./COMPARISON.md)
+- Durable parked-agent density (fair contract) — [`../program-density/STATUS.md`](../program-density/STATUS.md)
 - ADR 0015 — [`docs/adr/0015-program-mode-alongside-search-execute.md`](../../adr/0015-program-mode-alongside-search-execute.md)
 - Streams evidence — [`docs/streams/streams-celld-evidence.md`](../../streams/streams-celld-evidence.md)
 - Security suite roadmap — [`docs/benchmarks/security-suite/ROADMAP.md`](../security-suite/ROADMAP.md)

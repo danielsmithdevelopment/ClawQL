@@ -1,0 +1,200 @@
+{
+  "kind": "durable-agent-density-shared-host-five-arms",
+  "measuredAt": "2026-10-28T21:51:08.196Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "reading": {
+    "sustainedRateNote": "Use serial.fsyncsPerSec × batchMax as the group_commit ceiling. Parallel is headroom only. This host: board 256k ≈ 50% of serial theo — software headroom, not proven disk-bound.",
+    "rebuildNote": "rebuildMs is a schedule-format column — compare only when both disclose onDisk/inMemory/rebuildPath.",
+    "winCopy": false,
+    "sharedHostComplete": false,
+    "headlineNote": "Board headlines use min of 3 reps per system. Never compare one system's single run to the other's floor.",
+    "alternationNote": "Interleave systems across reps (ClawQL₁ → Ontologiql₁ → …). Do not run all of one then all of the other.",
+    "completeGates": {
+      "peerPresent": false,
+      "fsyncCeilingPresent": true,
+      "clawqlThreeRepFloor": false,
+      "peerThreeRepFloor": false
+    },
+    "scaffoldNote": "Existing clawql.arms values are a single harness run (384k/512k ramp). Headlines for the board remain the prior 256k 3-rep floor until the interleaved campaign.",
+    "fsyncProbeCorrection": "Prior ~41k fsync/s / 10%-of-ceiling reading retracted (overwrite/parallel-capable probe).",
+    "rampRefineNote": "Coarse ladders are too wide; binary-refine to ±few % and report rampResolutionNote before campaign compare."
+  },
+  "clawql": {
+    "systemId": "clawql-typescript",
+    "hostLabel": "clawql-cloud-agent-host:cursor",
+    "agentsAtLimit": 2500000,
+    "flushPolicy": {
+      "mode": "group_commit",
+      "batchMax": 64,
+      "flushIntervalMs": 10
+    },
+    "scheduleShape": "typed_arrays",
+    "scheduleFormat": {
+      "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+      "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+      "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+      "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+    },
+    "arms": {
+      "steady": {
+        "arrivalRatePerSec": 666.67,
+        "pctWithinSla": 100,
+        "excessP99Ms": 25,
+        "wallMs": 2975
+      },
+      "scaledBursts": {
+        "firstMissSize": 250000,
+        "sizes": [
+          512,
+          10000,
+          100000,
+          250000
+        ],
+        "arms": [
+          {
+            "n": 512,
+            "pctWithinSla": 100,
+            "excessP99Ms": 24,
+            "wallMs": 3,
+            "drainPerSec": 170666.67
+          },
+          {
+            "n": 10000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 51,
+            "wallMs": 45,
+            "drainPerSec": 222222.22
+          },
+          {
+            "n": 100000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 394,
+            "wallMs": 403,
+            "drainPerSec": 248138.96
+          },
+          {
+            "n": 250000,
+            "pctWithinSla": 77.11,
+            "excessP99Ms": 1249,
+            "wallMs": 1283,
+            "drainPerSec": 194855.81
+          }
+        ],
+        "note": "First miss at N=250000: pctWithinSla below 99% (1s SLA)."
+      },
+      "ramp": {
+        "sustainablePerSec": 384000,
+        "firstRateMissingSlaPerSec": 512000,
+        "rampWentPastFailure": true,
+        "steps": [
+          {
+            "arrivalRatePerSec": 128000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 58
+          },
+          {
+            "arrivalRatePerSec": 192000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 102
+          },
+          {
+            "arrivalRatePerSec": 256000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 144
+          },
+          {
+            "arrivalRatePerSec": 384000,
+            "pctWithinSla": 100,
+            "excessP99Ms": 950
+          },
+          {
+            "arrivalRatePerSec": 512000,
+            "pctWithinSla": 84.83,
+            "excessP99Ms": 1030
+          }
+        ]
+      },
+      "crashTest": {
+        "ok": true,
+        "countedFired": 416,
+        "missingFromDisk": 0,
+        "duplicateOnDisk": 0,
+        "note": "SIGKILL after 416 durable acks; all counted fires present on disk exactly once (journal=/tmp/clawql-density-shared-host/.crash/deadline-triggers-20683-1793224253963.ndjson)."
+      },
+      "deadlineRestart": {
+        "ok": true,
+        "rebuildMs": 45,
+        "capacity": 2500000,
+        "overdueFired": 5000,
+        "overdueExpected": 5000,
+        "missingLive": 0,
+        "duplicateFired": 0,
+        "scheduleFormat": {
+          "onDisk": "json_header_plus_live_ndjson_pads_by_count",
+          "inMemory": "float64_deadlines_int32_heap_typed_arrays",
+          "rebuildPath": "load_live_lines_bulk_pad_bottom_up_heapify",
+          "note": "Pads are reconstructed from padCount (not parsed line-by-line). Heap is bottom-up heapified once after bulk fill. A peer that parses/sorts every entry individually will show a different rebuildMs for the same N — disclose format before cross-system rebuild comparison."
+        },
+        "note": "SIGKILL after durable snapshot; downtime 500 ms; rebuild 45 ms at capacity 2500000 (load_live_lines_bulk_pad_bottom_up_heapify); overdue 5000/5000 prompt-fired; no loss/duplicates. RebuildMs is a schedule-format column — disclose peer on-disk/rebuild path before language comparison."
+      }
+    },
+    "headline": {
+      "rule": "three_rep_floor",
+      "reps": 1,
+      "sustainablePerSec": 384000,
+      "firstRateMissingSlaPerSec": 512000,
+      "scaledBurstFirstMissSize": 250000,
+      "note": "REPS=1 scaffold only — campaign headlines require REPS=3. Board still quotes 256k 3-rep floor."
+    }
+  },
+  "peer": null,
+  "protocol": {
+    "headlineRule": "three_rep_floor",
+    "requiredReps": 3,
+    "alternation": "clawql_then_ontologiql_each_rep",
+    "fsyncCeilingFirst": true,
+    "idleHost": true,
+    "sameAgentsAtLimit": true,
+    "sameDiskAsFsyncProbe": true
+  },
+  "fsyncCeiling": {
+    "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
+    "measuredAt": "2026-10-28T22:42:18.696Z",
+    "serial": {
+      "mode": "serial_board_matched",
+      "method": "node_append_batch_fsync",
+      "pattern": "one writer; write(batchMax NDJSON lines); fsyncSync; wait; repeat — matches trigger-journal group_commit",
+      "batchMax": 64,
+      "batchBytes": 3904,
+      "ops": 63399,
+      "runtimeSec": 8.000163856,
+      "fsyncsPerSec": 7925,
+      "meanFsyncLatencyMs": 0.1262,
+      "writeBandwidthBytesPerSec": 30938078.32627972
+    },
+    "parallel": {
+      "mode": "parallel_headroom",
+      "method": "fio",
+      "fioVersion": "fio-3.36",
+      "pattern": "8 fio jobs; each write+fsync; aggregate IOPS — NOT the group_commit ceiling",
+      "numJobs": 8,
+      "iodepth": 1,
+      "fsyncsPerSec": 194172,
+      "writeIops": 194171.957011,
+      "meanLatencyUs": 2.97,
+      "runtimeSec": 8
+    },
+    "fsyncsPerSec": 7925,
+    "theoreticalMaxGroupCommitPerSec": 507200,
+    "batchMax": 64,
+    "method": "node_append_batch_fsync",
+    "hostLabel": "clawql-cloud-agent-host:cursor",
+    "reading": {
+      "primaryCeiling": "serial_board_matched",
+      "verdict": "Serial single-writer fsyncs/sec still far above ~4k. Board rates well below theoreticalMaxGroupCommitPerSec are software headroom (likely CPU in the write/drain path) — not proven disk-bound. Profile the drain on both systems.",
+      "action": "Do not call ClawQL-vs-Ontologiql gaps disk-shaped until both are measured against this serial ceiling on one host. Keep parallel as multi-writer headroom only.",
+      "bothSystems": "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound.",
+      "priorMistake": "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling."
+    }
+  }
+}

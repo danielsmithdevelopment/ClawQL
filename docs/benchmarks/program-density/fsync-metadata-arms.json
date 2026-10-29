@@ -1,0 +1,150 @@
+{
+  "kind": "durable-agent-density-fsync-metadata-arms",
+  "measuredAt": "2026-10-29T00:16:13.293Z",
+  "contract": "docs/benchmarks/program-density/SHARED_HOST.md",
+  "probe": {
+    "artifact": "docs/benchmarks/program-density/fsync-ceiling.json",
+    "serialFsyncsPerSec": 7693,
+    "serialLatencyMs": {
+      "n": 61546,
+      "meanMs": 0.1213,
+      "p50Ms": 0.1131,
+      "p99Ms": 0.4117
+    },
+    "growingLong": {
+      "fsyncsPerSec": 7305,
+      "latencyMs": {
+        "n": 146109,
+        "meanMs": 0.1253,
+        "p50Ms": 0.1177,
+        "p99Ms": 0.3369
+      }
+    },
+    "probeArmsCompare": {
+      "growingLongP50OverShortP50": 1.041,
+      "fdatasyncFsyncsPerSecOverSerial": 1.064,
+      "preallocFdatasyncFsyncsPerSecOverSerial": 1.066,
+      "hypothesis": "Appending log + fsync forces size/allocation metadata each sync; long growing runs and board focus windows may show higher latency than a short probe. fdatasync + preallocated segments are the standard fix — report before/after sustained rate and fsyncs/sec."
+    }
+  },
+  "focus": {
+    "offeredRatePerSec": 256000,
+    "windowMs": 2500,
+    "concurrency": 128,
+    "batchMax": 64
+  },
+  "arms": [
+    {
+      "label": "fsync_append",
+      "policy": {
+        "mode": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10,
+        "dataSync": "fsync",
+        "preallocateBytes": null
+      },
+      "offeredRatePerSec": 256000,
+      "metSla": true,
+      "sustainablePerSecReported": 256000,
+      "sustainedRecordsPerSec": 228441.74,
+      "fsyncsPerSec": 3569.4,
+      "avgBatchSize": 64,
+      "doubleBufferHits": 9284,
+      "fsyncLatencyMs": {
+        "n": 10000,
+        "mean": 0.1693,
+        "p50": 0.1221,
+        "p99": 0.9164
+      },
+      "latencyRatioVsProbeP50": 1.08,
+      "fractionOfSerialFsyncs": 0.464
+    },
+    {
+      "label": "fdatasync_append",
+      "policy": {
+        "mode": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10,
+        "dataSync": "fdatasync",
+        "preallocateBytes": null
+      },
+      "offeredRatePerSec": 256000,
+      "metSla": true,
+      "sustainablePerSecReported": 256000,
+      "sustainedRecordsPerSec": 236494.33,
+      "fsyncsPerSec": 3695.22,
+      "avgBatchSize": 64,
+      "doubleBufferHits": 8840,
+      "fsyncLatencyMs": {
+        "n": 10000,
+        "mean": 0.1645,
+        "p50": 0.1214,
+        "p99": 0.9148
+      },
+      "latencyRatioVsProbeP50": 1.073,
+      "fractionOfSerialFsyncs": 0.4803
+    },
+    {
+      "label": "fdatasync_prealloc",
+      "policy": {
+        "mode": "group_commit",
+        "batchMax": 64,
+        "flushIntervalMs": 10,
+        "dataSync": "fdatasync",
+        "preallocateBytes": 268435456
+      },
+      "offeredRatePerSec": 256000,
+      "metSla": true,
+      "sustainablePerSecReported": 256000,
+      "sustainedRecordsPerSec": 233157.77,
+      "fsyncsPerSec": 3643.09,
+      "avgBatchSize": 64,
+      "doubleBufferHits": 9168,
+      "fsyncLatencyMs": {
+        "n": 10000,
+        "mean": 0.1738,
+        "p50": 0.1239,
+        "p99": 0.9556
+      },
+      "latencyRatioVsProbeP50": 1.095,
+      "fractionOfSerialFsyncs": 0.4736
+    }
+  ],
+  "compare": [
+    {
+      "label": "fsync_append",
+      "sustainedRecordsPerSec": 228441.74,
+      "fsyncsPerSec": 3569.4,
+      "fsyncLatencyP50Ms": 0.1221,
+      "fsyncLatencyP99Ms": 0.9164,
+      "latencyRatioVsProbeP50": 1.08,
+      "sustainedOverBaseline": 1,
+      "fsyncsOverBaseline": 1
+    },
+    {
+      "label": "fdatasync_append",
+      "sustainedRecordsPerSec": 236494.33,
+      "fsyncsPerSec": 3695.22,
+      "fsyncLatencyP50Ms": 0.1214,
+      "fsyncLatencyP99Ms": 0.9148,
+      "latencyRatioVsProbeP50": 1.073,
+      "sustainedOverBaseline": 1.035,
+      "fsyncsOverBaseline": 1.035
+    },
+    {
+      "label": "fdatasync_prealloc",
+      "sustainedRecordsPerSec": 233157.77,
+      "fsyncsPerSec": 3643.09,
+      "fsyncLatencyP50Ms": 0.1239,
+      "fsyncLatencyP99Ms": 0.9556,
+      "latencyRatioVsProbeP50": 1.095,
+      "sustainedOverBaseline": 1.021,
+      "fsyncsOverBaseline": 1.021
+    }
+  ],
+  "reading": {
+    "diagnosis": "durable_path_residual_not_explained_by_metadata_arms_alone",
+    "note": "Both ClawQL and Ontologiql pump profiles show a fast producer; residual is the durable write path. If under-load sync p50 is 2–4× the probe, growing-file metadata is the likely culprit. Report sustained rate + fsyncs/sec before/after — not doubleBufferHits alone. Ontologiql label: double_buffer_candidate_unverified.",
+    "next": "Keep board on fsync append for campaign fairness unless Ontologiql adopts the same experimental path; re-run on the dedicated host."
+  }
+}
