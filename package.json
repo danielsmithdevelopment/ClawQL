@@ -264,6 +264,7 @@
     "graphql-scalars": "2.0.1",
     "systeminformation": "5.33.18",
     "qs": "6.17.1",
+    "decode-uri-component": "0.5.1",
     "protobufjs": "8.7.1",
     "google-proto-files": {
       "protobufjs": "8.7.1"

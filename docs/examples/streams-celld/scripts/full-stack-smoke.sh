@@ -383,21 +383,13 @@ if search.get("transport") != "celld-isolate":
 mi=tools.get("memory_ingest") or {}
 if mi.get("transport") != "streamable-http":
   raise SystemExit(f"memory_ingest expected streamable-http: {mi!r}"[:800])
-# Native-tool gate parks destructive memory_ingest (fail-closed) — must not complete unchecked.
-park=None
-for src in (mi.get("error"), mi.get("text")):
-  if isinstance(src, str) and src.lstrip().startswith("{"):
-    try:
-      park=json.loads(src)
-      break
-    except Exception:
-      pass
-if mi.get("ok") is True:
-  raise SystemExit(f"memory_ingest must not complete without mandate: {mi!r}"[:800])
-if not park or park.get("status") != "mandate_required" or park.get("mechanism") != "park_destructive_write":
-  raise SystemExit(f"memory_ingest expected park (mandate_required/park_destructive_write): {mi!r}"[:800])
-if not park.get("executionId"):
-  raise SystemExit(f"memory_ingest park missing executionId: {mi!r}"[:800])
+# memory_ingest is native-tool kind **write** (not destructive) since 06e0e6f03 —
+# session IFC still gates untrusted→vault, but agents may persist lessons without
+# a mandate park on every note. Destructive natives (schedule/notify/…) still park.
+if mi.get("ok") is not True:
+  raise SystemExit(f"memory_ingest not ok: {mi!r}"[:800])
+if mi.get("parsed", {}).get("ok") is not True and mi.get("result") is None:
+  raise SystemExit(f"memory_ingest missing vault result: {mi!r}"[:800])
 mr=tools.get("memory_recall") or {}
 if mr.get("ok") is not True:
   raise SystemExit(f"memory_recall not ok: {mr!r}"[:800])
@@ -431,7 +423,7 @@ if core.get("wormUrlConfigured") is not True:
 if core.get("coreInCelld") is not True:
   raise SystemExit("coreInCelld expected true")
 event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
-print("full-stack assertions: CoreToolsDO+memory_park/adapter/inference/compliance-WORM OK")
+print("full-stack assertions: CoreToolsDO+memory_ingest/adapter/inference/compliance-WORM OK")
 print(f"event_id={event_id}")
 ' || fail "python assertions failed"
 

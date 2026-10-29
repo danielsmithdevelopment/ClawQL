@@ -12,12 +12,12 @@
  */
 
 import { CORE_IN_CELLD_HONESTY, resolveSlimExecute } from "./core-catalog.js";
-import { decideCallResume, isWriteCall } from "./program-cell-resume.js";
+import { decideCallResume, entryMatchesCall, isWriteCall } from "./program-cell-resume.js";
 
 export const PROGRAM_CELL_HONESTY =
   "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.";
 
-export { decideCallResume, isWriteCall } from "./program-cell-resume.js";
+export { decideCallResume, entryMatchesCall, isWriteCall } from "./program-cell-resume.js";
 
 function metaKey(programId) {
   return `program:${programId}:meta`;
@@ -211,8 +211,7 @@ export class ProgramCellDO {
         : typeof body.hangAfterIndex === "number"
           ? body.hangAfterIndex
           : -1;
-    const pauseBeforeIndex =
-      typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
+    const pauseBeforeIndex = typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
     const pauseDuringCallIndex =
       typeof body.pauseDuringCallIndex === "number" ? body.pauseDuringCallIndex : -1;
     const pauseAfterUpstreamBeforeJournalIndex =
@@ -411,10 +410,11 @@ export class ProgramCellDO {
       const existing = await this.state.storage.get(entryKey(programId, i));
       const intent = await this.state.storage.get(intentKey(programId, i));
       const metaFinalize =
-        meta.finalizeAtIndex === i && meta.finalizeResult != null
-          ? meta.finalizeResult
-          : null;
+        meta.finalizeAtIndex === i && meta.finalizeResult != null ? meta.finalizeResult : null;
       const intentHasUpstreamResult = Boolean(intent?.upstreamResult) || Boolean(metaFinalize);
+      const entryMatches = existing
+        ? entryMatchesCall(existing, { ...call, tool: call.tool || "execute" }, i)
+        : undefined;
       const decision = decideCallResume({
         hasEntry: Boolean(existing),
         hasIntent: Boolean(intent) || Boolean(metaFinalize),
@@ -423,7 +423,29 @@ export class ProgramCellDO {
         pauseKind: meta.pauseKind,
         pausedAtIndex: meta.pausedAtIndex,
         callIndex: i,
+        entryMatches,
       });
+      if (decision.action === "journal_divergence") {
+        meta.status = "failed";
+        meta.lastError = "journal_divergence";
+        meta.updatedAt = new Date().toISOString();
+        await this.state.storage.put(metaKey(programId), meta);
+        return Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          calls: results,
+          journalDivergence: true,
+          diagnostics: {
+            code: "journal_divergence",
+            index: i,
+            message:
+              "Journal entry no longer matches plan call at this index — recovery hard-stopped (do not continue)",
+          },
+          honesty: PROGRAM_CELL_HONESTY,
+        });
+      }
       if (decision.action === "replay") {
         results.push({ ...existing, replayed: true });
         continue;
