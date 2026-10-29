@@ -119,6 +119,7 @@
     "benchmark:program-density-drain-vs-sustained": "node --expose-gc --import tsx scripts/benchmarks/program-density/measure-drain-vs-sustained.mjs",
     "benchmark:program-density-flush-stats": "node --expose-gc --import tsx scripts/benchmarks/program-density/measure-flush-batch-stats.mjs",
     "benchmark:program-density-pump-profile": "node --expose-gc --import tsx scripts/benchmarks/program-density/measure-pump-profile.mjs",
+    "benchmark:infinity-same-host-density": "node --expose-gc --import tsx packages/clawql-api/src/program/density/infinity-same-host-compare-cli.ts",
     "smoke:program-cell-fleet-kill": "bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh",
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
     "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",
