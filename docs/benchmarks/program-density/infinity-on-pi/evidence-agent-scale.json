@@ -28,5 +28,6 @@
     "note": "Cloud agent x86_64 host \u2014 not a Raspberry Pi 5. First step is reproduce Infinity agent_scale at pinned commit; Pi hardware run is next."
   },
   "honesty": "Reproduced Infinity agent_scale at pinned commit 341f6c2 on this host: ~103 KiB/agent idle RSS after 20 scripted turns (in-memory stores, simulated model). Matches the public ~100 KB/agent shape. Not a Raspberry Pi measurement; 75k@8GB remains their extrapolation until measured on Pi hardware. Compaction off / scripted model \u2014 history-dominated, as Infinity documents.",
-  "next": "Same-host ClawQL fair parked column done (see evidence-same-host-density.json). Raspberry Pi 5 agent_scale when hardware is available."
+  "publishable": false,
+  "next": "See evidence-harness-v2.json + 8g ramp JSONs. Raspberry Pi 5 as extra column when hardware is available."
 }

@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). ClawQL-only density/deadline numbers are **publishable as single-host lab** (mark “cross-system comparison pending”; parked-state caveat) — see [publish-readiness](../../gtm/publish-readiness.md). Ontologiql numbers stay private. Shared-host deadline campaign can wait. Infinity same-host density columns are in ([infinity-on-pi/](./infinity-on-pi/)); **Pi 5 hardware deferred**.
+**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). ClawQL-only density/deadline numbers are **publishable as single-host lab** (mark “cross-system comparison pending”; parked-state caveat) — see [publish-readiness](../../gtm/publish-readiness.md). Ontologiql numbers stay private. Shared-host deadline campaign can wait. Infinity harness v2 (byte parity, runtime turns, slope, resident+offloaded, 8 G cgroup) is in ([infinity-on-pi/](./infinity-on-pi/)) marked **`publishable: false`** on this KVM cloud-agent VM; **Pi 5 deferred**.
 
 Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](https://github.com/danielsmithdevelopment/ClawQL/pull/1433).
 
@@ -40,6 +40,6 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 ## Pause / next focus
 
 - **This board:** pause. Shared-host deadline campaign when convenient.
-- **Infinity (same host, Pi deferred):** reproduced ~103.1 KiB/agent `agent_scale` at `341f6c2`; fair ClawQL parked column at N=10k ≈31.6 KiB RSS/N (rssΔ≈0.2) + ~32.1 KiB disk — adjacent columns, no win copy ([infinity-on-pi/](./infinity-on-pi/)).
-- Pi 5 `agent_scale` (+ optional ClawQL on Pi) when hardware is available.
+- **Infinity harness v2 (`publishable: false`, KVM VM):** byte parity ~62.4 KiB vs ClawQL matched ~61.8 KiB; slope floors Infinity **99.1** / ClawQL-resident **52.1** / offloaded **0.23** KiB/agent; 8 G cgroup last samples Infinity **80k** / ClawQL-resident harness **197.5k** ([infinity-on-pi/](./infinity-on-pi/)). No win copy — harness runtime ≠ full product stack; not Pi.
+- Pi 5 as extra column when hardware is available.
 - No win copy on shared-host deadline arms until that campaign runs.

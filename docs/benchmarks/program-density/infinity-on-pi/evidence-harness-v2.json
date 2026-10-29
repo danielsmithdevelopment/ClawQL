@@ -1,0 +1,309 @@
+{
+  "kind": "infinity-clawql-density-harness-v2",
+  "measuredAt": "2026-10-29T21:47:35.069Z",
+  "publishable": false,
+  "host": {
+    "hostname": "cursor",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "memTotalKiB": 16387280,
+    "cpuModel": "Intel(R) Xeon(R) Processor",
+    "hypervisor": "KVM",
+    "hostKind": "cloud-agent-kvm-vm",
+    "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
+    "storage": "ephemeral pod disk (bind-mounted workspace)",
+    "publishable": false,
+    "note": "Cloud-agent VM (KVM). Headline numbers from this host stay publishable:false; use for harness debugging. Publish from Pi / bare-metal when available."
+  },
+  "contract": {
+    "id": "infinity-agent-scale-matched-v1",
+    "turns": 20,
+    "piHardware": "deferred",
+    "reps": 3,
+    "note": "Infinity-matched turns driven through DensityConversationRuntime. Slope = linear fit of process RSS vs N. publishable:false on this KVM cloud-agent host. Pi / bare-metal columns later."
+  },
+  "byteParity": {
+    "contract": "infinity-agent-scale-matched-v1",
+    "turns": 20,
+    "infinity": {
+      "source": "docs/benchmarks/program-density/infinity-on-pi/fixtures/infinity-agent-0-msgs-only.json",
+      "messageCount": 100,
+      "serdeJsonMsgsBytes": 62371,
+      "serdeJsonWithIdsBytes": 67751
+    },
+    "clawqlMatched": {
+      "messageCount": 100,
+      "serializedJsonBytes": 61761
+    },
+    "fairV2DiskBytesForContrast": 32859,
+    "reading": "Infinity serde_json msgs \u2248 62371 B; ClawQL matched-shape JSON \u2248 61761 B (100 msgs). fair-v2 parked bags were ~32859 B \u2014 different workload, not overhead."
+  },
+  "slope": {
+    "scheduleN": [1000, 5000, 10000],
+    "samples": [
+      {
+        "system": "infinity",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5544
+          },
+          {
+            "agents": 2000,
+            "rssKiB": 341620
+          },
+          {
+            "agents": 4000,
+            "rssKiB": 541280
+          },
+          {
+            "agents": 6000,
+            "rssKiB": 739164
+          },
+          {
+            "agents": 8000,
+            "rssKiB": 938068
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1135416
+          },
+          {
+            "agents": 12000,
+            "rssKiB": 1333044
+          },
+          {
+            "agents": 14000,
+            "rssKiB": 1530628
+          },
+          {
+            "agents": 16000,
+            "rssKiB": 1731600
+          },
+          {
+            "agents": 18000,
+            "rssKiB": 1928780
+          },
+          {
+            "agents": 20000,
+            "rssKiB": 2126480
+          }
+        ],
+        "slopeKiBPerAgent": 99.133,
+        "diskBytesPerAgent": null,
+        "detail": "from agent_scale CSV agents,rss_bytes"
+      },
+      {
+        "system": "infinity",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5440
+          },
+          {
+            "agents": 2000,
+            "rssKiB": 341776
+          },
+          {
+            "agents": 4000,
+            "rssKiB": 541468
+          },
+          {
+            "agents": 6000,
+            "rssKiB": 738864
+          },
+          {
+            "agents": 8000,
+            "rssKiB": 938516
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1135680
+          },
+          {
+            "agents": 12000,
+            "rssKiB": 1333096
+          },
+          {
+            "agents": 14000,
+            "rssKiB": 1530316
+          },
+          {
+            "agents": 16000,
+            "rssKiB": 1732120
+          },
+          {
+            "agents": 18000,
+            "rssKiB": 1929248
+          },
+          {
+            "agents": 20000,
+            "rssKiB": 2126260
+          }
+        ],
+        "slopeKiBPerAgent": 99.133,
+        "diskBytesPerAgent": null,
+        "detail": "from agent_scale CSV agents,rss_bytes"
+      },
+      {
+        "system": "clawql-resident",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 120320
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 219468
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 493764
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 692712
+          }
+        ],
+        "slopeKiBPerAgent": 52.058,
+        "diskBytesPerAgent": null,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/resident-rep1 launched=10000"
+      },
+      {
+        "system": "clawql-offloaded",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 692260
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 700356
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 716196
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 705184
+          }
+        ],
+        "slopeKiBPerAgent": 0.424,
+        "diskBytesPerAgent": 64642,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/offloaded-rep1 launched=10000"
+      },
+      {
+        "system": "clawql-resident",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 120948
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 218676
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 511696
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 701848
+          }
+        ],
+        "slopeKiBPerAgent": 53.044,
+        "diskBytesPerAgent": null,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/resident-rep1 launched=10000"
+      },
+      {
+        "system": "clawql-offloaded",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 701396
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 702624
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 718036
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 705748
+          }
+        ],
+        "slopeKiBPerAgent": 0.232,
+        "diskBytesPerAgent": 64642,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/offloaded-rep1 launched=10000"
+      },
+      {
+        "system": "clawql-resident",
+        "rep": 3,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 120328
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 218376
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 499460
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 701588
+          }
+        ],
+        "slopeKiBPerAgent": 53.147,
+        "diskBytesPerAgent": null,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/resident-rep1 launched=10000"
+      },
+      {
+        "system": "clawql-offloaded",
+        "rep": 3,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 701136
+          },
+          {
+            "agents": 1000,
+            "rssKiB": 701160
+          },
+          {
+            "agents": 5000,
+            "rssKiB": 713696
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 715644
+          }
+        ],
+        "slopeKiBPerAgent": 1.559,
+        "diskBytesPerAgent": 64642,
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/offloaded-rep1 launched=10000"
+      }
+    ],
+    "floors": {
+      "infinitySlopeKiBPerAgent": 99.133,
+      "clawqlResidentSlopeKiBPerAgent": 52.058,
+      "clawqlOffloadedSlopeKiBPerAgent": 0.232
+    },
+    "reading": "3-rep floor of slopes (fresh Node process per ClawQL rep). Compare Infinity vs clawql-resident. Offloaded is a different trade-off. publishable:false."
+  }
+}

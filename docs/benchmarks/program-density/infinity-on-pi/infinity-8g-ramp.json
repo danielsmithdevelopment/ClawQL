@@ -1,0 +1,150 @@
+{
+  "kind": "infinity-agent-scale-8g-ramp",
+  "publishable": false,
+  "measuredAt": "2026-10-29T21:42:00.000Z",
+  "label": "8 GB memory limit on cloud-agent-kvm-vm (not Raspberry Pi)",
+  "memoryMaxBytes": 8589934592,
+  "pinnedCommit": "341f6c2",
+  "command": "AGENTS=120000 TURNS=20 WAVE=2500 agent_scale (birth inside cgroup memory.max=8G)",
+  "points": [
+    {
+      "agents": 0,
+      "rssKiB": 5552
+    },
+    {
+      "agents": 2500,
+      "rssKiB": 424980
+    },
+    {
+      "agents": 5000,
+      "rssKiB": 674576
+    },
+    {
+      "agents": 7500,
+      "rssKiB": 923308
+    },
+    {
+      "agents": 10000,
+      "rssKiB": 1170000
+    },
+    {
+      "agents": 12500,
+      "rssKiB": 1416936
+    },
+    {
+      "agents": 15000,
+      "rssKiB": 1667332
+    },
+    {
+      "agents": 17500,
+      "rssKiB": 1914536
+    },
+    {
+      "agents": 20000,
+      "rssKiB": 2161500
+    },
+    {
+      "agents": 22500,
+      "rssKiB": 2407624
+    },
+    {
+      "agents": 25000,
+      "rssKiB": 2654476
+    },
+    {
+      "agents": 27500,
+      "rssKiB": 2901252
+    },
+    {
+      "agents": 30000,
+      "rssKiB": 3155616
+    },
+    {
+      "agents": 32500,
+      "rssKiB": 3402788
+    },
+    {
+      "agents": 35000,
+      "rssKiB": 3649392
+    },
+    {
+      "agents": 37500,
+      "rssKiB": 3896160
+    },
+    {
+      "agents": 40000,
+      "rssKiB": 4142276
+    },
+    {
+      "agents": 42500,
+      "rssKiB": 4389160
+    },
+    {
+      "agents": 45000,
+      "rssKiB": 4635996
+    },
+    {
+      "agents": 47500,
+      "rssKiB": 4882960
+    },
+    {
+      "agents": 50000,
+      "rssKiB": 5129696
+    },
+    {
+      "agents": 52500,
+      "rssKiB": 5375912
+    },
+    {
+      "agents": 55000,
+      "rssKiB": 5622476
+    },
+    {
+      "agents": 57500,
+      "rssKiB": 5885240
+    },
+    {
+      "agents": 60000,
+      "rssKiB": 6131572
+    },
+    {
+      "agents": 62500,
+      "rssKiB": 6378544
+    },
+    {
+      "agents": 65000,
+      "rssKiB": 6625372
+    },
+    {
+      "agents": 67500,
+      "rssKiB": 6871672
+    },
+    {
+      "agents": 70000,
+      "rssKiB": 7118492
+    },
+    {
+      "agents": 72500,
+      "rssKiB": 7365092
+    },
+    {
+      "agents": 75000,
+      "rssKiB": 7611816
+    },
+    {
+      "agents": 77500,
+      "rssKiB": 7858768
+    },
+    {
+      "agents": 80000,
+      "rssKiB": 8105236
+    }
+  ],
+  "agentsReachedLastSample": 80000,
+  "exitCode": 137,
+  "memoryPeakBytes": 8589934592,
+  "slopeKiBPerAgent": 99.121,
+  "extrapolatedAgentsAt8GiB": 84574,
+  "honesty": "Process born inside cgroup (charges do not migrate if moved after alloc). OOM at memory.max; last CSV sample is last completed wave before kill. Not a Raspberry Pi measurement; CPU/storage differ.",
+  "hostKind": "cloud-agent-kvm-vm"
+}

@@ -64,7 +64,7 @@ ClawQL surfaces these as `flushStats` (`npm run benchmark:program-density-flush-
 
 **Ontologiql (post ack+dbuf):** drain **320k**, sustained only **185k** (ratio ~0.58) — **scheduler-bound**, same signature ClawQL fixed with pop-all-due + ≤1ms coalesce + no idle-sleep while busy. Conc 256 maximized drain; hit ~35%.
 
-**Board pause:** shared-host deadline run can wait. Infinity same-host density columns are recorded under `infinity-on-pi/` (Pi hardware deferred).
+**Board pause:** shared-host deadline run can wait. Infinity harness v2 under `infinity-on-pi/` (`publishable: false` on this KVM VM; Pi deferred).
 
 ### 3. Refine the ramp (binary search + resolution + steady state)
 

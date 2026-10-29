@@ -10,7 +10,7 @@
   },
   "contract": {
     "turns": 20,
-    "note": "Shared conversation depth ≈20 turns. Infinity: in-memory idle after scripted tool turns. ClawQL: fair-v2 parked (20 turn-pairs + pending tool) on disk bags with ids-only resident. Pi 5 hardware deferred until available — same-host cloud x86_64 first (like other density peers).",
+    "note": "Shared conversation depth \u224820 turns. Infinity: in-memory idle after scripted tool turns. ClawQL: fair-v2 parked (20 turn-pairs + pending tool) on disk bags with ids-only resident. Pi 5 hardware deferred until available \u2014 same-host cloud x86_64 first (like other density peers).",
     "piHardware": "deferred"
   },
   "infinity": {
@@ -22,7 +22,7 @@
     "rssMiB": 1007.2,
     "storage": "in-memory",
     "sourceEvidence": "docs/benchmarks/program-density/infinity-on-pi/evidence-agent-scale.json",
-    "honesty": "Their agent_scale: scripted model, in-memory stores, RSS after agents idle. Reproduced on this host at pinned commit — not Pi hardware."
+    "honesty": "Their agent_scale: scripted model, in-memory stores, RSS after agents idle. Reproduced on this host at pinned commit \u2014 not Pi hardware."
   },
   "clawql": {
     "samples": [
@@ -58,5 +58,8 @@
     "agentShape": "fair-v2-20-turns-plus-pending-tool",
     "honesty": "Parked fair agents via ParkedBagApi (JSON bags). Process keeps agent ids only after park; residentKiBPerAgent = total process VmRSS / N (same board definition as fair-v2). diskBytesPerAgent = sum(bag file sizes) / N. History lives on disk, not in RSS."
   },
-  "reading": "At N=10000: Infinity idle RSS ≈ 103.1 KiB/agent (history in RAM). ClawQL fair-v2 parked: total RSS/N ≈ 31.628 KiB/agent (rssΔ/N ≈ 0.193 KiB — ids-only after park) and ≈32.1 KiB/agent on disk for the same 20-turn+tool shape. Adjacent columns, not a single-number contest. Pi 5 hardware deferred."
+  "reading": "At N=10000: Infinity idle RSS \u2248 103.1 KiB/agent (history in RAM). ClawQL fair-v2 parked: total RSS/N \u2248 31.628 KiB/agent (rss\u0394/N \u2248 0.193 KiB \u2014 ids-only after park) and \u224832.1 KiB/agent on disk for the same 20-turn+tool shape. Adjacent columns, not a single-number contest. Pi 5 hardware deferred.",
+  "supersededBy": "docs/benchmarks/program-density/infinity-on-pi/evidence-harness-v2.json",
+  "publishable": false,
+  "note": "Superseded by harness v2 (byte parity + runtime-driven turns + slope + resident arm). Kept for history."
 }
