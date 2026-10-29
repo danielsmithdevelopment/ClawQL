@@ -1331,6 +1331,7 @@
       "cycleMeanMs": 0.1538
     },
     "diagnosis": "sustained_equals_drain_within_measurement_error",
-    "reading": "Same-campaign 3-rep: sustained equals drain within error — writer fully the limit. Ontologiql ack+dbuf landed; their sustained remasure + hit-rate vs concurrency still open."
+    "reading": "ClawQL done on this host (writer fully the limit). Ontologiql post ack+dbuf: drain~320k sustained~185k — scheduler-bound; same coalesce levers. Board paused; Infinity-on-Pi next.",
+    "boardStatus": "paused_clawql_done_ontologiql_scheduler_next_infinity_pi_time_sensitive"
   }
 }

@@ -60,7 +60,11 @@ ClawQL surfaces these as `flushStats` (`npm run benchmark:program-density-flush-
 
 **Under-load sync latency vs probe (required):** record each sync’s p50/p99 during the focus window and compare to the serial probe. If run latency is **2–4×** the probe, growing-file metadata (size/blocks on every `fsync`) is the likely gap — trial **`fdatasync` + preallocated segments** and report before/after **sustained rate + fsyncs/sec** (not hit rate).
 
-**ClawQL result on this host:** after coalesce/pop-all-due, a **same-campaign 3-rep** drain+sustained protocol gives drain **~312k** (278–333) and sustained **~312k** (280–336), ratio **1.01** (0.87–1.19) — `sustained_equals_drain_within_measurement_error`. Sync p50/p99 ~129/**679** µs; ack ~2.5 µs. Ontologiql: ack ~154→**~2.5 µs**, dbuf drain **161k→235k**; remeasure sustained + hit-rate vs concurrency still open — disclose best journal config; same 3-rep protocol on the shared host.
+**ClawQL (done on this host):** same-campaign 3-rep drain **~312k** ≈ sustained **~312k** (ratio **1.01**, ranges overlap) — `sustained_equals_drain_within_measurement_error`. Sync p50/p99 ~129/**679** µs; ack ~2.5 µs.
+
+**Ontologiql (post ack+dbuf):** drain **320k**, sustained only **185k** (ratio ~0.58) — **scheduler-bound**, same signature ClawQL fixed with pop-all-due + ≤1ms coalesce + no idle-sleep while busy. Conc 256 maximized drain; hit ~35%.
+
+**Board pause:** shared-host deadline run can wait; Infinity-on-Pi is the time-sensitive comparison.
 
 ### 3. Refine the ramp (binary search + resolution + steady state)
 
