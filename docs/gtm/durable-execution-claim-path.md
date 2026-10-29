@@ -1,7 +1,7 @@
 # Path from “never repeats a write” to “durable execution”
 
 **Status:** claim ladder — what is earned today vs what is still required.  
-**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved`) plus first-class plan **`sleep`** / **`await_approval`** waits. Fleet rates still need Tier C re-measure / baseline pairing; model-call journaling and §4 wait board column remain open. This does **not** yet authorize “durable execution” copy.  
+**In progress (scaffolding):** Digest hard-stop + board columns (`completed` / `stepsRepeated` / `statePreserved` / `waitApproval`) plus first-class plan **`sleep`** / **`await_approval`** waits. Fleet rates still need Tier C re-measure / baseline pairing / await-trial injection; model-call journaling and program TLA+ remain open. This does **not** yet authorize “durable execution” copy.  
 **Related:** [publish-readiness](./publish-readiness.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md)
 
 ---

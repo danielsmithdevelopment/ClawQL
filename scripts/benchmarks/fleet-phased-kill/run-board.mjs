@@ -15,6 +15,7 @@
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
  *   statePreserved      — claim-path §1: scaffolding only until fleet pairs a no-crash baseline
+ *   waitApproval        — claim-path §4: scaffolding; Node await_approval + density survival
  *
  * Env:
  *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
