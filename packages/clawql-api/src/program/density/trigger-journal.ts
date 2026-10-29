@@ -119,8 +119,7 @@ export function describeFlushPolicy(policy: TriggerFlushPolicy): TriggerFlushPol
   }
   const dataSync: TriggerDataSync = policy.dataSync ?? "fsync";
   const preallocateBytes = policy.preallocateBytes ?? null;
-  const syncPrimitive =
-    dataSync === "fdatasync" ? "fdatasync_group_commit" : "fsync_group_commit";
+  const syncPrimitive = dataSync === "fdatasync" ? "fdatasync_group_commit" : "fsync_group_commit";
   const preNote = preallocateBytes
     ? ` Preallocated ${preallocateBytes} bytes (fixed-offset writes; size stable during segment).`
     : "";
@@ -236,7 +235,11 @@ export function openTriggerJournalEffect(
     const path = join(dir, `deadline-triggers-${process.pid}-${Date.now()}.ndjson`);
     const policyInfo = describeFlushPolicy(policy);
     const dataSync: TriggerDataSync | null =
-      policy.mode === "group_commit" ? (policy.dataSync ?? "fsync") : policy.mode === "fsync_each" ? "fsync" : null;
+      policy.mode === "group_commit"
+        ? (policy.dataSync ?? "fsync")
+        : policy.mode === "fsync_each"
+          ? "fsync"
+          : null;
     const preallocateBytes =
       policy.mode === "group_commit" && policy.preallocateBytes && policy.preallocateBytes > 0
         ? policy.preallocateBytes
