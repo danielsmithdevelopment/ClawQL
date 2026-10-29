@@ -1,0 +1,116 @@
+---
+import Sidebar from '@/components/Sidebar.astro'
+import { getSiteOrigin, site } from '@/lib/site'
+import '@/styles/global.css'
+
+type Props = {
+  title: string
+  description: string
+  absoluteTitle?: string
+}
+
+const { title, description, absoluteTitle } = Astro.props
+const origin = getSiteOrigin()
+const pageTitle = absoluteTitle ?? `${title} - ClawQL`
+const canonical = new URL(Astro.url.pathname, origin).toString()
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="application-name" content="ClawQL" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ClawQL" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={`${origin}/og-image.png`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/ClawQL-logo.jpeg" type="image/jpeg" />
+    <link rel="apple-touch-icon" href="/ClawQL-logo.jpeg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta
+      name="theme-color"
+      content="#faf8f5"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0f1419"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-dvh">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-zinc-900"
+    >
+      Skip to content
+    </a>
+    <header
+      class="border-b border-zinc-900/10 bg-claw-warm-white/90 backdrop-blur dark:border-claw-graph/40 dark:bg-claw-bg/90"
+      aria-label="Site"
+    >
+      <div
+        class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6"
+      >
+        <a href="/" class="flex items-center gap-2 no-underline" aria-label="ClawQL home">
+          <img
+            src="/ClawQL-logo.jpeg"
+            alt=""
+            width="32"
+            height="32"
+            class="rounded"
+          />
+          <span class="font-display text-lg font-semibold text-zinc-900 dark:text-claw-warm-white">
+            {site.name}
+            <span class="font-sans text-sm font-normal text-zinc-500"> docs</span>
+          </span>
+        </a>
+        <div class="flex items-center gap-4 text-sm">
+          <a href={site.marketing} class="no-underline hover:underline"
+            >clawql.com</a
+          >
+          <a href={site.github} class="no-underline hover:underline" rel="noopener noreferrer"
+            >GitHub</a
+          >
+        </div>
+      </div>
+    </header>
+    <div
+      class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 md:flex-row md:gap-10"
+    >
+      <Sidebar />
+      <main id="main-content" class="min-w-0 flex-1">
+        <article
+          class="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-display prose-a:text-claw-terra dark:prose-a:text-claw-cyan"
+        >
+          <slot />
+        </article>
+      </main>
+    </div>
+    <footer
+      class="border-t border-zinc-900/10 py-8 text-center text-sm text-zinc-500 dark:border-claw-graph/40"
+    >
+      <p>
+        Astro migration in progress (ADR 0018). Production docs remain on the
+        Next.js Worker until cutover.
+      </p>
+    </footer>
+  </body>
+</html>

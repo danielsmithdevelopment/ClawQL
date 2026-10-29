@@ -28,7 +28,7 @@ Signup and “get started with cloud plans” do **not** require App Router on t
 
 1. **Migrate both public sites off Next.js to Astro** (static-first, Cloudflare Pages / static assets — not OpenNext Workers as the primary HTML path):
    - `apps/www` → Astro (keep Tailwind Plus / Oatmeal **visual** kit where licensing allows; framework changes, design system intent stays)
-   - `apps/docs` → Astro (content collections / MDX; Starlight or equivalent only if it fits ClawQL nav — do not force a theme that fights the brand)
+   - `apps/docs` → Astro via **`apps/docs-astro`** during migration (content collections / MDX; replace `apps/docs` at cutover; Starlight only if it fits ClawQL nav — do not force a theme that fights the brand). **Docs migrate before www** (largest scrape surface).
 2. **`apps/dashboard` stays Next.js + shadcn** for self-host and **`cloud.clawql.com`** ([ADR 0012](./0012-console-typescript-shadcn.md)). Logged-in console traffic is out of scope for this public-bot class of problem.
 3. **Do not put the product console on Astro** to “unify frameworks.” Unify **public** sites; keep the **app** on Next.
 4. **Until cutover**, keep defense-in-depth on the current docs Worker (`RSC` header guard, zone WAF block for flight queries without `RSC: 1`, Bot Fight Mode). Migration removes the class of bug; WAF remains useful.

@@ -1,0 +1,25 @@
+{
+  "name": "clawql-docs-astro",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ClawQL docs site (Astro) — migrates docs.clawql.com off Next/OpenNext (ADR 0018)",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --port 4321",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.12",
+    "@astrojs/sitemap": "^3.6.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.1.17",
+    "astro": "^5.15.9",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.6",
+    "typescript": "^5.9.3"
+  }
+}

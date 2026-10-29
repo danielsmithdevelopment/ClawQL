@@ -16,35 +16,41 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 
 ## Order of work
 
-| Phase | App         | Why first                                                                                                                       |
-| ----- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **0** | Ops         | Keep docs WAF + middleware RSC guard live until Astro docs cutover ([guardrails](./website-performance-workers-guardrails.md)). |
-| **1** | `apps/www`  | Smaller surface; signup/pricing/marketing; proves Astro + Pages + Plus visuals.                                                 |
-| **2** | `apps/docs` | Larger MDX/content-collection port; drop OpenNext Worker as primary HTML path.                                                  |
-| **3** | Cleanup     | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps.                                         |
+**Docs first** (operator decision 2026-10-29): largest public page set and primary scraper/`_rsc` burn surface. Marketing (`www`) follows once docs Astro has a preview URL.
 
-## Phase 1 — `apps/www` (clawql.com)
+| Phase | App | Why |
+| ----- | --- | --- |
+| **0** | Ops | Keep docs WAF + middleware RSC guard live on **Next** until Astro cutover ([guardrails](./website-performance-workers-guardrails.md)). |
+| **1** | `apps/docs-astro` → replaces `apps/docs` | Scaffold + content port; static HTML; drop OpenNext as HTML origin. |
+| **2** | `apps/www` | Marketing + signup; same Astro/Pages stack. |
+| **3** | Cleanup | Remove OpenNext deploy path, obsolete Worker gzip checks, Next-only CI for public apps. |
 
-1. Scaffold Astro (TS + Tailwind v4) alongside or in-place behind a feature flag / preview project.
+## Phase 1 — `apps/docs-astro` (docs.clawql.com)
+
+**In progress:** package at [`apps/docs-astro/`](../../apps/docs-astro/). Production remains [`apps/docs/`](../../apps/docs/) (Next) until DNS cutover.
+
+1. ~~Scaffold Astro (TS + Tailwind v4 + MDX), static `output`, starter layout/nav.~~ (started — `/`, `/quickstart`, `/migration-status`)
+2. Bulk-import MDX / generated sync outputs into `src/content/docs/`.
+3. Port nav parity, search, plugin registry, security training modules, case studies.
+4. Re-home `prebuild` sync scripts to emit into the Astro content tree (same markdown sources under `docs/`).
+5. Agent `Accept: text/markdown` + `llms.txt` / `AGENTS.md` parity (Pages Function if needed).
+6. Preview on Cloudflare Pages → cut over `docs.clawql.com` → retire `clawql-docs` OpenNext Worker.
+7. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders.
+
+## Phase 2 — `apps/www` (clawql.com)
+
+1. Scaffold Astro (TS + Tailwind v4) alongside or in-place behind a preview project.
 2. Port routes: `/`, `/signup`, `/pricing`, `/about`, industry/GTM landings, benchmarks, legal.
 3. Preserve Cloudflare Pages `functions` middleware behavior (Link headers, markdown negotiation) or Astro equivalents.
 4. Keep FormSubmit / Supabase Auth / Stripe Checkout CTAs; redirect success into `cloud.clawql.com`.
 5. Preview deploy → DNS cutover → delete Next build for www.
-
-## Phase 2 — `apps/docs` (docs.clawql.com)
-
-1. Scaffold Astro content collections from existing MDX / generated sync outputs.
-2. Port nav, search, plugin registry, security training modules, case studies.
-3. Re-home `prebuild` sync scripts to emit into the Astro content tree (same markdown sources under `docs/`).
-4. Agent `Accept: text/markdown` + `llms.txt` / `AGENTS.md` parity.
-5. Deploy static (Pages or Workers static assets **without** OpenNext RSC). Retire `clawql-docs` OpenNext Worker as the HTML origin after verification.
-6. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders.
 
 ## Phase 3 — cleanup
 
 - CI: Lighthouse / Playwright smoke targets Astro preview servers.
 - Docs: update deploy scripts (`scripts/deploy/deploy-docs-to-cloudflare.sh`), READMEs, case studies that assume OpenNext.
 - Remove `@opennextjs/cloudflare` from docs when unused.
+- Optionally rename `apps/docs-astro` → `apps/docs` after Next tree is deleted.
 
 ## Success criteria
 
