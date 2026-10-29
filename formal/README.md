@@ -5,6 +5,7 @@ Design-time models for ClawQL protocols and policy. See [ADR 0014](../docs/adr/0
 | Path                                               | Kind                                                     | Status                                                            |
 | -------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
 | [`tla/mandate/`](tla/mandate/)                     | TLA+ / TLC — mandate lifecycle + crash/`outcome_unknown` | Atomic SQLite CAS; dual CI                                        |
+| [`tla/write-protocol/`](tla/write-protocol/)       | TLA+ / TLC — outside-write crash / check-then-decide     | Race-safe lookup; weak early-not_found counterexample             |
 | [`tla/events/`](tla/events/)                       | TLA+ / TLC — event delivery / resume                     | Starter; dual configs                                             |
 | [`lean/`](lean/)                                   | Lean — approval-policy + IFC oracles                     | No-sorry CI + differential + exhaustive                           |
 | _(planned)_ `crates/clawql-dataplane/` Verus specs | Verus — policy / labels / digests on running Rust        | Spike only — [ADR 0016](../docs/adr/0016-rust-dataplane-spike.md) |

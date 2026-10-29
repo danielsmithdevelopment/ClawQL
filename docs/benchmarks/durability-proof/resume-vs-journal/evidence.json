@@ -1,0 +1,56 @@
+{
+  "kind": "durability-resume-vs-journal",
+  "measuredAt": "2026-10-29T18:46:39.762Z",
+  "honesty": "File-journal stand-in resume wall time vs journal record count/bytes on a single host. Measured up to 500 steps — do not extrapolate. Not fleet lease failover (Tier C ~12s). Snapshots not needed up to 500 steps.",
+  "host": {
+    "platform": "linux v24.22.1",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "storage": "local filesystem (tmpdir JSONL program journal)",
+    "flushPolicy": "append entry + fsync per journaled call (program-journal file backend)"
+  },
+  "samples": [
+    {
+      "nSteps": 10,
+      "journalBytes": 4397,
+      "journalRecords": 13,
+      "firstRunMs": 22.3,
+      "resumeMs": 1.583,
+      "replayedCalls": 10,
+      "ok": true,
+      "detail": "n=10 resumeMs=1.58 records=13 bytes=4397"
+    },
+    {
+      "nSteps": 50,
+      "journalBytes": 20597,
+      "journalRecords": 53,
+      "firstRunMs": 67.616,
+      "resumeMs": 2.641,
+      "replayedCalls": 50,
+      "ok": true,
+      "detail": "n=50 resumeMs=2.64 records=53 bytes=20597"
+    },
+    {
+      "nSteps": 200,
+      "journalBytes": 82251,
+      "journalRecords": 203,
+      "firstRunMs": 133.46,
+      "resumeMs": 2.687,
+      "replayedCalls": 200,
+      "ok": true,
+      "detail": "n=200 resumeMs=2.69 records=203 bytes=82251"
+    },
+    {
+      "nSteps": 500,
+      "journalBytes": 206451,
+      "journalRecords": 503,
+      "firstRunMs": 397.64,
+      "resumeMs": 5.262,
+      "replayedCalls": 500,
+      "ok": true,
+      "detail": "n=500 resumeMs=5.26 records=503 bytes=206451"
+    }
+  ],
+  "resumeMsPerRecord": 0.008,
+  "snapshotRecommended": false
+}

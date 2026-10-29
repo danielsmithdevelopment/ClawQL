@@ -136,17 +136,17 @@ When a program sends a charge and the cell dies before the reply arrives, two ca
 
 Default: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out.
 
-| Capability                                  | Status             | Behavior                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Idempotency keys** (Stripe-class)         | **Shipped (REST)** | OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) park as `idempotencyCapable`. After mandate consume, REST sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives without a second consume ([execute-pause-resume](../specs/risk/execute-pause-resume-v0.1.md)). |
-| **Check-then-decide (lookup by reference)** | **Planned**        | Spec-driven “is there an effect with _this_ reference?” after the original can no longer land; then record success or one safe resend. Exact match only — not “similar recent charge.”                                                                                                                                               |
-| **Neither**                                 | Shipped            | Stay **at most once**; person marks applied / not applied.                                                                                                                                                                                                                                                                           |
+| Capability                                  | Status                                      | Behavior                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Idempotency keys** (Stripe-class)         | **Shipped (REST + program journal)**        | OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) park as `idempotencyCapable`. After mandate consume, REST sends `Idempotency-Key: clawql-mandate:<executionId>`. Program durable-runner: when `resolveRisk.idempotencyCapable`, an in-flight write resumes with a **keyed re-drive** (plan `idempotencyKey` or `clawql-program:<id>:<index>`); otherwise `outcome_unknown`. |
+| **Check-then-decide (lookup by reference)** | **Shipped (durable-runner + board + TLA+)** | Found → reconcile; `not_found` safe-resends only when `definitive` (original can no longer land); else `outcome_unknown`. Race arm pauses the charge to prove early not_found stays unknown. OpenAPI: `x-clawql-lookupByReferenceCapable`. Model: [`formal/tla/write-protocol/`](../../formal/tla/write-protocol/).                                                                                              |
+| **Neither**                                 | Shipped                                     | Stay **at most once**; person marks applied / not applied.                                                                                                                                                                                                                                                                                                                                                       |
 
-Program durable-runner still hard-stops at `outcome_unknown` (never re-sends) until keyed resume is measured there. Do **not** claim board unknowns → 0 until an idempotent-mock board is re-run.
+Crash-during-outside-write comparison board measures keyed resume (idempotent), check-then-decide lookup (non_idempotent + reference), and unchanged `outcome_unknown` when neither is available.
 
 ---
 
-## Measure resume vs journal length (planned — find it yourself)
+## Measure resume vs journal length (file-journal probe measured)
 
 Replay-based recovery can slow down as history grows; state-first / snapshot systems exist for that reason (same pattern as long-session cost elsewhere). Program mode should measure **before** someone else points it out in a thread:
 
@@ -155,7 +155,7 @@ Replay-based recovery can slow down as history grows; state-first / snapshot sys
 | Short program | Resume wall time after SIGKILL / peer failover (already in Tier C `resumeMs`)   |
 | Long program  | Same resume clock vs journal record count / bytes (fan-out of N steps, large N) |
 
-If resume time grows with journal length, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail). Until measured, do not claim linear or constant resume cost. Status: **planned** — not a Tier C gate for John outreach.
+**File-journal probe (Tier F):** [`docs/benchmarks/durability-proof/resume-vs-journal/`](../benchmarks/durability-proof/resume-vs-journal/) — through 500 steps resume stays ~1–6 ms (~0.01 ms/record); `snapshotRecommended=false`. This is **not** fleet lease failover (~12s). If a later host shows material growth, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail). Do not claim constant resume cost beyond the measured range.
 
 ---
 
@@ -163,7 +163,7 @@ If resume time grows with journal length, add **periodic snapshots** so resume r
 
 1. **Durability, shipped** — Tier C fleet phased kill on R2 is measured (N=1000, 0 dups); preferred renew/lease tune still planned. Head-to-head Golem arm still open.
 2. **Check-then-decide lookup** — pair write ops with lookup-by-reference from the spec (above); keys already on the REST wire.
-3. **Resume vs journal length** — measure; snapshot if growth is material (above).
+3. **Resume vs journal length** — file-journal probe measured (above); snapshot only if a later host shows material growth.
 4. **Delegated permissions that narrow and cascade** — time-limited sub-agent slices; revoke parent → revoke children.
 5. **Read-only result caching** — specs already mark reads; gateway cache until next write.
 6. **Awaitable approvals in SDKs** — same strength as today, easier to code against.
@@ -196,7 +196,7 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 > Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once where idempotency keys exist. Here are the crash-test numbers. Want to check our setup and show the combination together?
 
-Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys shipped + check-then-decide lookup still planned (not overclaimed).
+Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys + check-then-decide shipped (race-safe definitive = named server guarantee only). Ready-to-send copy: [`PILOT-OUTREACH.md`](../benchmarks/durability-proof/PILOT-OUTREACH.md).
 
 **Later — own calm public post** on the two kinds of durability with measured data, without referencing the argument. Readers following the debate will find it; it answers the question both left open. Not a dunk.
 
@@ -221,7 +221,7 @@ He is publicly pressure-testing frameworks that overclaim durability. Use his fr
 - [ ] “Survives a crash” only with the scoped Tier C claim (failover seconds + availability costs); never without the per-phase unknown framing if quoting the ~48% rate.
 - [ ] Preferred production row stays **planned** until measured at stock N; TTL-only 30s always labeled **n=40**.
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
-- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys are shipped; do not claim program-runner keyed resume or lookup reconciliation until measured.
+- [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys, program keyed resume, and check-then-decide are shipped — cite the board + TLA+; never claim client timeout alone makes not_found definitive.
 - [ ] Do not frame in-flight recovery as only “retry / silent / person” — lead with check-by-reference (exact match; not-found ≠ failed yet), then keys, then person.
 - [ ] Do not claim constant resume cost until journal-length board exists.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

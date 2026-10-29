@@ -1,25 +1,39 @@
 /**
- * Durability comparison board — dual columns × upstream modes × arms.
+ * Durability comparison board — crash during an outside write.
+ * Dual columns × upstream modes × agent policies × arms.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
-import { clawqlFileJournalArm, naiveRetryArm } from "./file-journal-arm.js";
+import { clawqlCheckThenDecideRaceArm } from "./check-then-decide-race-arm.js";
+import {
+  clawqlAlwaysRetryArm,
+  clawqlCheckThenDecideArm,
+  clawqlFileJournalArm,
+  naiveRetryArm,
+} from "./file-journal-arm.js";
 import {
   golemArm,
   golemClawqlArm,
-  piDurableArm,
+  piDurableAlwaysRetryArm,
   piDurableClawqlArm,
+  piDurableNeverRetryArm,
+  piDurableRealModelArm,
   programCelldArm,
 } from "./peer-stub-arms.js";
 import type { ArmResult, ComparisonEvidence, DurabilityArm } from "./types.js";
 
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
+  clawqlAlwaysRetryArm,
+  clawqlCheckThenDecideArm,
+  clawqlCheckThenDecideRaceArm,
   naiveRetryArm,
   programCelldArm,
-  piDurableArm,
+  piDurableNeverRetryArm,
+  piDurableAlwaysRetryArm,
+  piDurableRealModelArm,
   golemArm,
   piDurableClawqlArm,
   golemClawqlArm,
@@ -49,19 +63,33 @@ export function runDurabilityComparisonBoardEffect(
       results.push(yield* arm.run({ n }));
     }
     const clawql = results.find((a) => a.armId === "clawql-file-journal");
-    const clawqlBoardPass =
+    const clawqlAlways = results.find((a) => a.armId === "clawql-always-retry");
+    const clawqlAtMostOnce =
       clawql?.status === "measured" &&
       clawql.modes.length === 2 &&
-      clawql.modes.every((m) => m.boardPass && m.duplicates === 0);
+      clawql.modes.every((m) => m.harnessValid && m.duplicates === 0) &&
+      (clawqlAlways === undefined ||
+        (clawqlAlways.status === "measured" &&
+          clawqlAlways.modes.every((m) => m.harnessValid && m.duplicates === 0)));
 
     return {
-      kind: "durability-comparison-kill-mid-write" as const,
+      kind: "durability-comparison-crash-during-outside-write" as const,
+      crashPoint: "outside_write_in_flight" as const,
+      crashPointNote:
+        "Every trial deliberately crashes after the outside write is visible and before its result is recorded — the hardest window. This is one row of a five-row crash-point board, not a claim that peers always double-charge.",
+      otherCrashPointsNotMeasured: [
+        "before_write_sent",
+        "after_write_acked",
+        "idle_between_steps",
+        "during_model_tool_round",
+      ] as const,
       measuredAt: new Date().toISOString(),
-      metric: "duplicates + outcome_unknown (+ lost); both upstream modes" as const,
+      metric:
+        "duplicates + interrupted_or_unknown + completed_exactly_once; both upstream modes; agent policies (never/always/real/structural)" as const,
       honesty:
-        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+        "Crash-during-outside-write board. ClawQL structural refusal vs Pi Durable model-dependent retry. harnessValid = protocol ran correctly, not product-goodness. Pi zero-dup never-retry depends on the faux model; always-retry shows the worst case. Named public co-branded boards still need maintainer invite.",
       arms: results,
-      clawqlBoardPass,
+      clawqlAtMostOnce,
     } satisfies ComparisonEvidence;
   });
 }

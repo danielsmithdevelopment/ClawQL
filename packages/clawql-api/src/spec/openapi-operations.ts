@@ -55,6 +55,11 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
       const responseBody = extractResponseSchemaName(operation.responses);
       const scopes = extractScopes(operation.security, doc);
       const idempotencyCapable = openApiDeclaresIdempotencyCapable(operation, pi);
+      const lookupByReferenceCapable = openApiDeclaresLookupByReferenceCapable(operation, pi);
+      const riskHints = {
+        ...(idempotencyCapable ? { idempotencyCapable: true as const } : {}),
+        ...(lookupByReferenceCapable ? { lookupByReferenceCapable: true as const } : {}),
+      };
 
       ops.push({
         id: operationId,
@@ -71,7 +76,7 @@ export function operationsFromOpenAPI(doc: OpenAPIDocLike): Operation[] {
         requestBody: rb.schemaName,
         requestBodyContentType: rb.contentType,
         responseBody,
-        ...(idempotencyCapable ? { riskHints: { idempotencyCapable: true as const } } : {}),
+        ...(Object.keys(riskHints).length > 0 ? { riskHints } : {}),
       });
     }
   }
@@ -99,6 +104,19 @@ export function openApiDeclaresIdempotencyCapable(
     if (param.in !== "header") continue;
     if (String(param.name ?? "").toLowerCase() === "idempotency-key") return true;
   }
+  return false;
+}
+
+/**
+ * True when the operation declares exact lookup-by-reference for check-then-decide
+ * recovery: extension `x-clawql-lookupByReferenceCapable: true`.
+ */
+export function openApiDeclaresLookupByReferenceCapable(
+  operation: Record<string, unknown>,
+  pathItem?: Record<string, unknown>
+): boolean {
+  if (operation["x-clawql-lookupByReferenceCapable"] === true) return true;
+  if (pathItem?.["x-clawql-lookupByReferenceCapable"] === true) return true;
   return false;
 }
 

@@ -77,7 +77,53 @@ export type ProgramHost = {
        * counts as both an unknown-source read and a write (fail closed).
        */
       readonly operation?: ProgramOperationInfo;
+      /**
+       * When true, an in-flight write interrupted mid-call may be re-driven on
+       * resume with the same stable idempotency key (Stripe-class). Otherwise
+       * durable resume stays `outcome_unknown` (at most once, no re-send) unless
+       * {@link lookupByReferenceCapable} + {@link ProgramHost.verifyByReference}.
+       */
+      readonly idempotencyCapable?: boolean;
+      /**
+       * When true (and not idempotencyCapable), resume may ask the host whether an
+       * effect with the plan's stable client reference already landed — check-then-decide.
+       */
+      readonly lookupByReferenceCapable?: boolean;
     },
+    Error
+  >;
+  /**
+   * Exact-match lookup by a reference attached to the original write
+   * (`clientReference` / `chargeReference` / stable program id). Used only when
+   * `resolveRisk.lookupByReferenceCapable` is true.
+   *
+   * `not_found.definitive` must be true **only** when a **server-side guarantee**
+   * says the original can no longer take effect — never a client-side timeout.
+   * Named reasons (match TLA+ `GuaranteeReasons`):
+   * - `server_enforced_expiry` — request carried an expiry the server rejects past
+   * - `lookup_covers_prior_accepts` — API docs: this lookup reflects every accept before it
+   * - `connection_rejected` — connection-level reject proved (not mere silence)
+   * Where the API offers none of these, keep `definitive: false` forever →
+   * `outcome_unknown`, never safe-resend.
+   */
+  readonly verifyByReference?: (input: {
+    readonly operationId: string;
+    readonly reference: string;
+    /** ISO timestamp when the in-flight intent was journaled. */
+    readonly intentStartedAt: string;
+  }) => Effect.Effect<
+    | { readonly status: "found"; readonly preview?: string }
+    | {
+        readonly status: "not_found";
+        readonly definitive: false;
+      }
+    | {
+        readonly status: "not_found";
+        readonly definitive: true;
+        readonly reason:
+          "server_enforced_expiry" | "lookup_covers_prior_accepts" | "connection_rejected";
+      }
+    | { readonly status: "unsupported" },
     Error
   >;
   /**

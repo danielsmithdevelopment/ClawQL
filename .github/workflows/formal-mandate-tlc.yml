@@ -67,3 +67,13 @@ jobs:
             exit 1
           fi
           echo "OK: event at-least-once+dedup green; weak counterexample (exit=$WEAK)"
+
+      - name: Run write-protocol TLC (pass + weak/peer counterexamples)
+        run: |
+          set -euo pipefail
+          export TLA2TOOLS_JAR=/tmp/tla2tools.jar
+          if [[ ! -f "$TLA2TOOLS_JAR" ]]; then
+            curl -fsSL -o "$TLA2TOOLS_JAR" \
+              "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+          fi
+          bash scripts/formal/run-write-protocol-tlc.sh

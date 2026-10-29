@@ -145,14 +145,14 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     name: 'Dual-column comparison',
     status: 'measured',
     statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peers pending invite.',
+    detail: 'Crash during outside write: duplicates + outcome_unknown × modes. Live peers via LIVE_PEERS; named boards pending invite.',
   },
   {
     tier: 'F',
     name: 'Resume vs journal length',
-    status: 'planned',
-    statusLabel: 'Planned',
-    detail: 'Measure resume wall time at short vs long journals; snapshots if needed.',
+    status: 'measured',
+    statusLabel: 'File-journal probe',
+    detail: 'Resume ~1–6 ms through 500 steps (~0.01 ms/record); snapshots not needed yet.',
   },
 ] as const
 
@@ -211,8 +211,8 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'clawql-file-journal',
     status: 'measured',
-    idempotent: '0 dups / 20 unknown (n=20)',
-    nonIdempotent: '0 dups / 20 unknown (n=20)',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
   },
   {
     arm: 'naive-retry (reference)',
@@ -221,10 +221,22 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     nonIdempotent: 'Duplicates when upstream ignores keys',
   },
   {
-    arm: 'golem / pi-durable (+ combos)',
-    status: 'pending invite',
-    idempotent: '—',
-    nonIdempotent: '—',
+    arm: 'golem (pilot stand-in)',
+    status: 'pilot stand-in · not live',
+    idempotent: '50 re-sends → 50 effects (keyed)',
+    nonIdempotent: '50 re-sends → 100 effects',
+  },
+  {
+    arm: 'pi-durable (pilot stand-in)',
+    status: 'pilot stand-in · not live',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
+  },
+  {
+    arm: 'golem/pi + clawql (pilot)',
+    status: 'pilot stand-in · not live',
+    idempotent: '0 dups / 50 unknown (n=50)',
+    nonIdempotent: '0 dups / 50 unknown (n=50)',
   },
 ] as const
 
@@ -247,7 +259,7 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
   },
   {
     title: 'Peer boards pending invite',
-    body: 'Named Golem / Pi Durable numbers wait on maintainer config. ClawQL-only crash evidence is public here.',
+    body: 'Private pilot stand-ins encode published Pi Durable / Golem recovery semantics against mock upstreams (N=50). Named public peer boards still wait on maintainer invitation and live arm config. ClawQL-only crash evidence is public here.',
   },
 ] as const
 
