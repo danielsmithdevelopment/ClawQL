@@ -436,12 +436,12 @@ async function main() {
   async function restartNode(name) {
     startNode(name);
     try {
-      await waitNode(name, { requireProgram: true, programAttempts: 120 });
+      await waitNode(name, { requireProgram: true, programAttempts: 80 });
     } catch (err) {
       console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
       startNode(name);
       await sleep(1500);
-      await waitNode(name, { requireProgram: true, programAttempts: 180 });
+      await waitNode(name, { requireProgram: true, programAttempts: 120 });
     }
   }
 
@@ -450,8 +450,19 @@ async function main() {
     startNode("A");
     startNode("B");
     await sleep(2000);
-    await waitNode("A", { requireProgram: true, programAttempts: 180 });
-    await waitNode("B", { requireProgram: true, programAttempts: 180 });
+    // Bound each wait — an unbounded ready_gate stall previously hung the N=1000 lab
+    // after a survivor SELF-FENCE. Prefer a shorter dual restart over never finishing.
+    try {
+      await waitNode("A", { requireProgram: true, programAttempts: 120 });
+      await waitNode("B", { requireProgram: true, programAttempts: 120 });
+    } catch (err) {
+      console.warn(`fleet-phased: rebuildFleet wait failed (${err.message}); hard restart once`);
+      startNode("A");
+      startNode("B");
+      await sleep(3000);
+      await waitNode("A", { requireProgram: true, programAttempts: 120 });
+      await waitNode("B", { requireProgram: true, programAttempts: 120 });
+    }
   }
 
   /**
@@ -468,7 +479,18 @@ async function main() {
       if (n.lastExit?.selfFence) counters.survivorSelfFence = true;
       counters.survivorRestart = true;
       const t0 = Date.now();
-      await restartNode(name);
+      try {
+        await restartNode(name);
+      } catch (err) {
+        console.warn(
+          `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
+        );
+        try {
+          await rebuildFleet();
+        } catch (rebuildErr) {
+          console.warn(`fleet-phased: ensureSurvivor rebuildFleet failed (${rebuildErr.message})`);
+        }
+      }
       counters.recoveryMs += Date.now() - t0;
       return;
     }
@@ -479,7 +501,18 @@ async function main() {
       n.pendingSelfFence = false;
       counters.survivorRestart = true;
       const t0 = Date.now();
-      await restartNode(name);
+      try {
+        await restartNode(name);
+      } catch (err) {
+        console.warn(
+          `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
+        );
+        try {
+          await rebuildFleet();
+        } catch (rebuildErr) {
+          console.warn(`fleet-phased: ensureSurvivor rebuildFleet failed (${rebuildErr.message})`);
+        }
+      }
       counters.recoveryMs += Date.now() - t0;
     }
   }
@@ -704,33 +737,46 @@ async function main() {
       // mock owners.create returns an identical deterministic body.
       const twinBody = baselinePlan(twinId);
       twinBody.plan.calls = stockCalls(programId);
-      const twinPort = nodes[survivor].port;
-      const twinRes = await fetchJson(`http://127.0.0.1:${twinPort}/program/run`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(twinBody),
-      });
-      if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
-        const cmp = compareDigestStepState(
-          twinRes.body.calls,
-          resumeCalls,
-          twinRes.body?.result,
-          resume.body?.result
-        );
-        statePreservedTrial = cmp.preserved;
-        if (cmp.preserved) statePreserved += 1;
-        else if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
-          const mi = cmp.mismatchIndexes?.[0];
-          console.warn(
-            "fleet-phased: statePreserved MISMATCH",
-            JSON.stringify({
-              mismatchIndexes: cmp.mismatchIndexes,
-              twinStep: cmp.baseline?.[mi],
-              resumeStep: cmp.observed?.[mi],
-            }).slice(0, 2000)
-          );
+      try {
+        if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+          await ensureSurvivor(survivor, avail);
         }
-      } else {
+        const twinPort = nodes[survivor].port;
+        const twinRes = await fetchJson(
+          `http://127.0.0.1:${twinPort}/program/run`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(twinBody),
+          },
+          30_000
+        );
+        if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
+          const cmp = compareDigestStepState(
+            twinRes.body.calls,
+            resumeCalls,
+            twinRes.body?.result,
+            resume.body?.result
+          );
+          statePreservedTrial = cmp.preserved;
+          if (cmp.preserved) statePreserved += 1;
+          else if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
+            const mi = cmp.mismatchIndexes?.[0];
+            console.warn(
+              "fleet-phased: statePreserved MISMATCH",
+              JSON.stringify({
+                mismatchIndexes: cmp.mismatchIndexes,
+                twinStep: cmp.baseline?.[mi],
+                resumeStep: cmp.observed?.[mi],
+              }).slice(0, 2000)
+            );
+          }
+        } else {
+          stateTwinFailures += 1;
+          statePreservedTrial = false;
+        }
+      } catch (twinErr) {
+        console.warn(`fleet-phased: twin capture failed (${twinErr.message})`);
         stateTwinFailures += 1;
         statePreservedTrial = false;
       }
@@ -810,7 +856,13 @@ async function main() {
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: victim ${victim} restart failed (${err.message}); rebuild fleet`);
-      await rebuildFleet();
+      try {
+        await rebuildFleet();
+      } catch (rebuildErr) {
+        console.warn(
+          `fleet-phased: rebuildFleet after victim failed (${rebuildErr.message}); continuing with survivor only next loop will rebuild`
+        );
+      }
     }
     primary = survivor;
 
@@ -952,7 +1004,11 @@ async function main() {
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: await victim restart failed (${err.message}); rebuild`);
-      await rebuildFleet();
+      try {
+        await rebuildFleet();
+      } catch (rebuildErr) {
+        console.warn(`fleet-phased: await rebuildFleet failed (${rebuildErr.message})`);
+      }
     }
     primary = survivor;
     console.log(
@@ -1019,14 +1075,20 @@ async function main() {
       (t) => t.phase === "after_intent_before_call" || t.phase === "during_call"
     );
     const awaitOk = awaitTrials.filter((t) => t.ok).length;
+    const writeKillDone = trials.length >= N;
+    const awaitDone = awaitTrials.length >= AWAIT_TRIALS;
+    const complete = writeKillDone && awaitDone;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
       // Safety + liveness: zero dups, zero deadline misses, every phase expectation met.
       // Self-fence with counted recovery does not fail ok by itself.
-      ok: zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
-      status: "measured",
+      // Partial mid-run snapshots must not look like a finished clean board.
+      ok: complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
+      status: complete ? "measured" : "partial",
       n: N,
+      trialsCompleted: trials.length,
+      awaitTrialsCompleted: awaitTrials.length,
       awaitTrialsN: AWAIT_TRIALS,
       overallN: N + AWAIT_TRIALS,
       nodeCount: 2,
