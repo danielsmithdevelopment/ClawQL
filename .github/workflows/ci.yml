@@ -330,7 +330,7 @@ jobs:
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
             minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
-          for i in $(seq 1 40); do
+          for _ in $(seq 1 40); do
             if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
               echo "MinIO ready"
               exit 0
