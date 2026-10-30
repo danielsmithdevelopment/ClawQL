@@ -1,0 +1,43 @@
+# Demo BAA / PHI routing policy for Cost Plus Drugs governance walkthrough.
+#
+# Copy insight into production as ClawQL routing rules: patient-identifying
+# fields only reach model providers covered by a Business Associate Agreement.
+# Public drug prices are not PHI.
+#
+# This file is illustrative — ClawQL does not yet load it as a first-class
+# config (see docs/mcp/enterprise-mcp-tools.md § Regulated deployments).
+
+policyVersion: "2026.10.29-demo"
+defaultDenyWithoutBaa: true
+
+# Which fields the demo treats as patient-identifying (mock only).
+phiFields:
+  - patient_name
+  - patient_dob
+  - patient_email
+  - patient_phone
+  - shipping_address
+  - member_id
+  - rx_number
+
+# Model providers the gateway may forward PHI-bearing tool context to.
+# Update against real BAA coverage before any pilot with patient data.
+providers:
+  anthropic-claude-baa:
+    baa: true
+    notes: "Example — only if your Anthropic business plan includes a signed BAA."
+  openai-chatgpt-baa:
+    baa: true
+    notes: "Example — only if your OpenAI enterprise plan includes a signed BAA."
+  xai-grok:
+    baa: false
+    notes: "Demo default: treat as no BAA until confirmed. Prices-only prompts still OK."
+  local-ollama:
+    baa: false
+    notes: "Self-hosted models may still need a BAA analysis if you are a BA handling ePHI."
+
+# Reads that stay on the public Cost Plus pricing MCP never need PHI.
+publicPricingSources:
+  - cost-plus-drugs-pricing
+  - https://mcp.costplusdrugs.com/
+  - https://api.costplusdrugs.com/

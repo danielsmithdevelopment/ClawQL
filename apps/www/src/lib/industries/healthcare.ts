@@ -122,6 +122,10 @@ export const healthcareIndustry: Industry = {
     'Planned vertical RLS and ATR scoping for clinical vs admin agent roles',
   ],
   relatedResources: [
+    {
+      label: 'Cost Plus Drugs governance demo',
+      href: '/demo/cost-plus-drugs',
+    },
     { label: 'Modularization v2.1 — clawql-healthcare', href: 'https://docs.clawql.com/vision/modularization' },
     { label: 'Security overview', href: 'https://docs.clawql.com/security' },
     { label: 'IDP pipeline reference', href: 'https://docs.clawql.com/providers/idp-pipeline' },

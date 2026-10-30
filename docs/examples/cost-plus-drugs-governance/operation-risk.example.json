@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "trustedMcpSources": ["cost-plus-drugs-pricing"],
+  "overrides": {
+    "mcp__cost_plus_drugs_pricing__search": {
+      "policy": "allow",
+      "level": "LOW",
+      "reason": "Public cash pricing; read-only Cost Plus Drugs MCP tool"
+    },
+    "mcp__cost_plus_drugs_pricing__order_estimate": {
+      "policy": "allow",
+      "level": "LOW",
+      "reason": "Public estimate only; no order placement"
+    },
+    "mcp__cost_plus_drugs_pricing__pricelist_all": {
+      "policy": "allow",
+      "level": "LOW",
+      "reason": "Public catalog; prefer compact search for token efficiency"
+    },
+    "mcp__cpd_mock_writes__place_refill_order": {
+      "policy": "mandate",
+      "level": "HIGH",
+      "reason": "Mock refill write binds drug/qty/price and may carry patient fields — human patient approval required"
+    },
+    "mcp__cpd_mock_writes__list_mock_orders": {
+      "policy": "allow",
+      "level": "LOW",
+      "reason": "Demo ledger read"
+    }
+  }
+}

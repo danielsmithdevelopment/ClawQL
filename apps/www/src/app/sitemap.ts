@@ -33,6 +33,7 @@ const ROUTES: Array<{
   { path: '/industries/surveillance', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/industries/government', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/industries/healthcare', changeFrequency: 'monthly', priority: 0.65 },
+  { path: '/demo/cost-plus-drugs', changeFrequency: 'weekly', priority: 0.88 },
   { path: '/industries/legal', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/industries/insurance', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/industries/education', changeFrequency: 'monthly', priority: 0.65 },
