@@ -14,10 +14,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
 import { makeDensityConversationRuntime } from "./density-conversation-runtime.js";
-import {
-  INFINITY_MATCHED_CONTRACT_ID,
-  INFINITY_MATCHED_TURNS,
-} from "./infinity-matched-shape.js";
+import { INFINITY_MATCHED_CONTRACT_ID, INFINITY_MATCHED_TURNS } from "./infinity-matched-shape.js";
 import {
   evictBagPageCacheEffect,
   forceFullGcEffect,
@@ -154,9 +151,7 @@ export function runOffloadedTradeoffEffect(opts?: {
     const pageCacheAfterPark = yield* measureBagPageCacheKiBEffect(bagDir, 2_000, agentCount);
     const diskBytesPerAgent = Math.round((diskAccum / agentCount) * 10) / 10;
     const idsOnlySlope =
-      agentCount > 0
-        ? Math.round(((rssAfterPark - rss0) / agentCount) * 1000) / 1000
-        : null;
+      agentCount > 0 ? Math.round(((rssAfterPark - rss0) / agentCount) * 1000) / 1000 : null;
 
     const timedIds = ids.slice(0, wakeSampleSize);
     const timedPaths = timedIds.map((id) => rt.bagPath(id));

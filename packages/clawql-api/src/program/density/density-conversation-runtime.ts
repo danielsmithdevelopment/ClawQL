@@ -42,9 +42,7 @@ export type DensityRuntimeApi = {
    * Load a parked bag from disk into the in-process map (inverse of parkOffloaded).
    * Bag file remains on disk; residence becomes resident.
    */
-  readonly wake: (
-    agentId: string
-  ) => Effect.Effect<{
+  readonly wake: (agentId: string) => Effect.Effect<{
     readonly messageCount: number;
     readonly diskBytes: number;
     readonly turnsCompleted: number;
@@ -202,7 +200,9 @@ export function makeDensityConversationRuntime(bagDir: string): DensityRuntimeAp
         const agent = yield* requireAgent(agentId);
         if (agent.residence !== "offloaded") {
           return yield* Effect.die(
-            new Error(`wake on non-offloaded density agent ${agentId} (residence=${agent.residence})`)
+            new Error(
+              `wake on non-offloaded density agent ${agentId} (residence=${agent.residence})`
+            )
           );
         }
         const path = bagPath(agentId);

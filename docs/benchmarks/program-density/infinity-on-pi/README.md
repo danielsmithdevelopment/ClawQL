@@ -51,13 +51,13 @@ Evidence: [`infinity-8g-ramp.json`](./infinity-8g-ramp.json) · [`clawql-residen
 
 ClawQL offloaded keeps history on disk (~65.9 KiB/agent bag) with ~**1 KiB** process RSS slope (ids-only). That is a **different product shape**, not a denser Infinity. Measured on this KVM host (`publishable: false`, 500 parked agents, 200 wake sample × 3 order reps):
 
-| Cost / property      | ClawQL offloaded (measured)                         | Closest Infinity analogue                            |
-| -------------------- | --------------------------------------------------- | ---------------------------------------------------- |
-| Resident RSS / agent | ~1 KiB (ids-only slope)                             | In-memory idle ~103 KiB (their `agent_scale`)        |
-| Durable history      | **~65.9 KiB** disk / agent (`dens_*.json`)          | Serverless / external store path (not measured here) |
-| Page cache           | **~68 KiB/agent** (mincore after park)              | N/A for pure in-memory bench                         |
-| Warm wake            | **p50 ≈ 0.10 ms**, p99 ≈ 0.27 ms (read+parse+restore) | Warm store hit / in-process reload                 |
-| Cold wake            | **p50 ≈ 0.20 ms**, p99 ≈ 0.96 ms (after `DONTNEED`) | Cold start / store fetch (their serverless story)    |
+| Cost / property      | ClawQL offloaded (measured)                           | Closest Infinity analogue                            |
+| -------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| Resident RSS / agent | ~1 KiB (ids-only slope)                               | In-memory idle ~103 KiB (their `agent_scale`)        |
+| Durable history      | **~65.9 KiB** disk / agent (`dens_*.json`)            | Serverless / external store path (not measured here) |
+| Page cache           | **~68 KiB/agent** (mincore after park)                | N/A for pure in-memory bench                         |
+| Warm wake            | **p50 ≈ 0.10 ms**, p99 ≈ 0.27 ms (read+parse+restore) | Warm store hit / in-process reload                   |
+| Cold wake            | **p50 ≈ 0.20 ms**, p99 ≈ 0.96 ms (after `DONTNEED`)   | Cold start / store fetch (their serverless story)    |
 
 Present offloaded **beside** Infinity’s serverless/external-store mode as the fair pairing — not against in-memory `agent_scale`. No win copy on the resident column.
 
