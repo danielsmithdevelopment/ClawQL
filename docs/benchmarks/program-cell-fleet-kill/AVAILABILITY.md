@@ -24,7 +24,7 @@ So the TTL pulls two ways:
 
 ## Parallel product work (does not block claim-path v2)
 
-Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% failure-rate ceiling; resume/recovery tails **reported without a ceiling**). Deadline / “in time” is **wall clock including orchestrator recovery**. These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
+Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% failure-rate ceiling on **all 1000** trials = 750 write-kill + 250 await; resume/recovery tails **reported without a ceiling**). “In time” = wall clock **`FLEET_PHASED_RESUME_DEADLINE_MS=60000`**, including orchestrator recovery. These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
 
 | Track                            | Meaning                                                                                                                                                                                                | Where                                                                                                                                         |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
