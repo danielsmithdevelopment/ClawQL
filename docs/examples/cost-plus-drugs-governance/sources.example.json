@@ -5,17 +5,21 @@
       "id": "cost-plus-drugs-pricing",
       "name": "Cost Plus Drugs Pricing (public MCP)",
       "kind": "mcp",
+      "addedAt": "2026-10-29T00:00:00.000Z",
+      "url": "https://mcp.costplusdrugs.com/",
       "mcpUrl": "https://mcp.costplusdrugs.com/",
       "trusted": true,
-      "notes": "Official read-only MCP — price, availability, pharmacy locator, order *estimates*. No auth. Scope explicitly excludes clinical advice and anything beyond price & availability. See https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html"
+      "notes": "Official read-only MCP — price, availability, pharmacy locator, order *estimates*. No auth. Scope excludes clinical advice. Prefer via: clawql sources add https://mcp.costplusdrugs.com/ --kind mcp --name \"Cost Plus Drugs Pricing\" (CLI sets addedAt)."
     },
     {
       "id": "cpd-mock-writes",
       "name": "Cost Plus Drugs Mock Writes (ClawQL demo)",
       "kind": "mcp",
+      "addedAt": "2026-10-29T00:00:00.000Z",
+      "url": "http://127.0.0.1:9892/mcp",
       "mcpUrl": "http://127.0.0.1:9892/mcp",
       "trusted": false,
-      "notes": "LOCAL DEMO ONLY — mock place_refill_order. Keep untrusted so ClawQL defaults toward mandate unless overridden. Never point this at production patients."
+      "notes": "LOCAL DEMO ONLY — mock place_refill_order. Keep untrusted. Prefer clawql sources add so addedAt is set (entries without addedAt are ignored)."
     }
   ]
 }

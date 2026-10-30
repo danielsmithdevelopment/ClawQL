@@ -34,35 +34,41 @@ Optional live public price fetch (still no PHI, still no real order):
 CPD_LIVE_PRICE=1 ./scripts/smoke.sh
 ```
 
-## Wire into a real ClawQL gateway
+## Live ClawQL gateway smoke
 
 After `npm ci && npm run build` from the repo root:
 
 ```bash
-# Terminal A — mock write MCP (local only)
-node docs/examples/cost-plus-drugs-governance/scripts/mock-pharmacy-write-mcp.mjs
+# One-shot: mock write MCP + clawql-mcp-http + price → mandate → resume → audit
+node docs/examples/cost-plus-drugs-governance/scripts/gateway-smoke.mjs
 
-# Register sources (merge into ~/.ClawQL/sources.json — do not overwrite other sources)
-# See sources.example.json for the intended entries.
-clawql sources add https://mcp.costplusdrugs.com/ --kind mcp --name "Cost Plus Drugs Pricing"
-clawql sources add http://127.0.0.1:9892/mcp --kind mcp --name "CPD Mock Writes"
-
-# Risk overrides — copy fields into ~/.ClawQL/operation-risk.json
-# (operation-risk.example.json). Ensure place_refill_order is policy: mandate.
-
-export CLAWQL_OPERATION_RISK_ENFORCE=1
-# Restart clawql-mcp / Managed Gateway, then from an agent:
-#   search "atorvastatin" → execute mcp/cost-plus-drugs-pricing/search
-#   execute mcp/cpd-mock-writes/place_refill_order {…} → mandate_required
-#   human: clawql resume <executionId>
-#   audit list
+# Leave services up for a screen recording:
+CPD_GW_KEEP=1 node docs/examples/cost-plus-drugs-governance/scripts/gateway-smoke.mjs
 ```
+
+Or via the offline smoke wrapper: `CPD_GATEWAY_SMOKE=1 ./scripts/smoke.sh`.
+
+**Operator notes learned while wiring this:**
+
+| Knob | Why |
+| ---- | --- |
+| `CLAWQL_CATALOG_SQLITE=0` | Default SQLite `LOAD=db` indexes custom MCP ops but does **not** keep live MCP client bindings; writes fail with “MCP source not connected” after resume. |
+| `CLAWQL_CAPABILITY_SESSION_SEED` | Capability lifecycle checks the **inner** `operationId` (`mcp__…`), not just `execute`. Seed federated ops or calls are intercepted. |
+| `CLAWQL_ENABLE_SESSION_IFC=0` (smoke only) | Default IFC labels a session after a CPD price read and **blocks** writes to `cpd-mock-writes` — a real healthcare-relevant gate. The smoke disables IFC to isolate the mandate path; show IFC separately if you want the harder story. |
+| `addedAt` on sources | Hand-written `sources.json` entries without `addedAt` are ignored — prefer `clawql sources add`. |
+
+Operation ids use underscores: `mcp__cost_plus_drugs_pricing__search`, `mcp__cpd_mock_writes__place_refill_order` (see `operation-risk.example.json`).
 
 Custom-source mechanics: [`docs/getting-started/custom-sources.md`](../../getting-started/custom-sources.md).  
 Mandate park/resume: [`docs/specs/risk/execute-pause-resume-v0.1.md`](../../specs/risk/execute-pause-resume-v0.1.md).
 
+## Outreach
+
+Draft reply + 90s video narration: [`REPLY.md`](REPLY.md).
+
 ## Layout
 
+<<<<<<< HEAD
 | Path                                  | Role                                                     |
 | ------------------------------------- | -------------------------------------------------------- |
 | `scripts/governance-demo.mjs`         | End-to-end offline story (price → BAA → mandate → audit) |
@@ -74,6 +80,22 @@ Mandate park/resume: [`docs/specs/risk/execute-pause-resume-v0.1.md`](../../spec
 | `baa-routing.example.yaml`            | Illustrative multi-model PHI routing                     |
 | `TERMS.md`                            | Third-party API caution (no LICENSE on their docs repo)  |
 | `tests/governance-demo.test.mjs`      | Digest / BAA / mandate / audit unit checks               |
+=======
+| Path | Role |
+| ---- | ---- |
+| `scripts/governance-demo.mjs` | End-to-end offline story (price → BAA → mandate → audit) |
+| `scripts/gateway-smoke.mjs` | Live ClawQL HTTP gateway + CPD MCP + mock write mandate |
+| `scripts/token-compaction-demo.mjs` | Full catalog vs targeted search payload size |
+| `scripts/mock-pharmacy-write-mcp.mjs` | Streamable HTTP MCP stub for writes |
+| `scripts/lib/*` | Digest, pending store, BAA gate, audit helpers |
+| `fixtures/atorvastatin-search.json` | Public price snapshot for CI / airplanes |
+| `sources.example.json` | CPD read MCP + local mock write MCP |
+| `operation-risk.example.json` | `allow` reads / `mandate` writes (underscore op ids) |
+| `baa-routing.example.yaml` | Illustrative multi-model PHI routing |
+| `REPLY.md` | Cuban-thread reply + video narration |
+| `TERMS.md` | Third-party API caution (no LICENSE on their docs repo) |
+| `tests/governance-demo.test.mjs` | Digest / BAA / mandate / audit unit checks |
+>>>>>>> a10168894 (docs(examples): live CPD gateway smoke, compaction, Cuban reply draft)
 
 ## Safety checklist (before any public reply / video)
 
