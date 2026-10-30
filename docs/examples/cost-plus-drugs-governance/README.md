@@ -10,12 +10,12 @@ Cost Plus already ships a public, unauthenticated MCP for **reads**
 (`https://mcp.costplusdrugs.com/`). Duplicating price lookup would not impress
 anyone. This example shows the **next step**: governed writes across models.
 
-| Layer  | What                                                                       |
-| ------ | -------------------------------------------------------------------------- |
-| Reads  | Official CPD MCP / pricing API (or offline fixture)                        |
-| Writes | **Mock** `place_refill_order` — no public ordering API exists              |
-| Gate   | Digest-bound **mandate** (agent cannot self-approve)                       |
-| PHI    | BAA routing — patient fields only to providers marked `baa: true`          |
+| Layer  | What                                                                                                                                 |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Reads  | Official CPD MCP / pricing API (or offline fixture)                                                                                  |
+| Writes | **Mock** `place_refill_order` — no public ordering API exists                                                                        |
+| Gate   | Digest-bound **mandate** (agent cannot self-approve)                                                                                 |
+| PHI    | BAA routing — patient fields only to providers marked `baa: true`                                                                    |
 | Trail  | Offline: hash-chained demo JSONL. Live gateway smoke: MCP `audit` ring + `CLAWQL_WORM_ENABLED=1` dual-write to clawql-audit (sqlite) |
 
 Pitch in one line: _You've built the read side. Here's how agents can safely stage
