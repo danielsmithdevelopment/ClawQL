@@ -1,5 +1,7 @@
 # Cost Plus Drugs × ClawQL governance demo
 
+**Marketing page:** [clawql.com/demo/cost-plus-drugs](https://clawql.com/demo/cost-plus-drugs) (walkthrough video + step results).
+
 **Not medical advice.** Public cash **prices** + **mock** refill orders only. No
 clinical, dosing, or substitution guidance — same line Cost Plus Drugs draws on
 their [MCP scope page](https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html).

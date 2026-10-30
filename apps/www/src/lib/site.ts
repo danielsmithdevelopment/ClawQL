@@ -46,6 +46,8 @@ export const site = {
     /** HTML contact page (agents: also /contact.md). */
     contact: '/contact',
     contactEmail: 'mailto:hello@clawql.com',
+    /** Cost Plus Drugs × ClawQL healthcare governance demo (public pricing MCP + mock writes). */
+    costPlusDrugsDemo: '/demo/cost-plus-drugs',
   },
   installCommand: 'npx clawql-mcp',
   /** Example providers — catalog is empty by default; opt in via CLAWQL_PROVIDER / providers.pack / CLAWQL_TIER. */

@@ -1,0 +1,271 @@
+/* Cost Plus Drugs × ClawQL demo — slate clinical field, teal signal (not purple / cream) */
+
+.cpd-demo-page {
+  --cpd-ink: oklch(16% 0.02 220);
+  --cpd-foam: oklch(98% 0.01 195);
+  --cpd-signal: oklch(62% 0.11 195);
+  --cpd-signal-deep: oklch(42% 0.08 210);
+  --cpd-body: oklch(30% 0.02 220);
+  --cpd-muted: oklch(42% 0.02 220);
+  --cpd-surface: oklch(97% 0.008 210);
+  --cpd-band: oklch(94% 0.015 205);
+  --cpd-border: oklch(50% 0.03 210 / 0.28);
+  --cpd-ok: oklch(48% 0.1 155);
+  color: var(--cpd-body);
+}
+
+@media (prefers-color-scheme: dark) {
+  .cpd-demo-page {
+    --cpd-ink: oklch(96% 0.01 195);
+    --cpd-foam: oklch(96% 0.01 195);
+    --cpd-signal: oklch(72% 0.1 195);
+    --cpd-signal-deep: oklch(72% 0.1 195);
+    --cpd-body: oklch(86% 0.015 210);
+    --cpd-muted: oklch(72% 0.02 210);
+    --cpd-surface: oklch(18% 0.02 230);
+    --cpd-band: oklch(14% 0.015 230);
+    --cpd-border: oklch(70% 0.02 210 / 0.3);
+    --cpd-ok: oklch(72% 0.12 155);
+  }
+}
+
+.cpd-demo-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: min(92svh, 44rem);
+  display: flex;
+  align-items: flex-end;
+  padding-block: 5rem 4rem;
+  color: var(--cpd-foam);
+  background:
+    radial-gradient(95% 70% at 8% 0%, oklch(40% 0.08 195 / 0.35), transparent 55%),
+    radial-gradient(80% 60% at 100% 90%, oklch(28% 0.05 240 / 0.35), transparent 50%),
+    linear-gradient(168deg, oklch(14% 0.02 230) 0%, oklch(18% 0.025 220) 48%, oklch(20% 0.03 195) 100%);
+}
+
+.cpd-demo-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(oklch(100% 0 0 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(100% 0 0 / 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, oklch(0% 0 0 / 0.55), transparent 90%);
+  pointer-events: none;
+}
+
+.cpd-demo-hero__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.cpd-demo-brand {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 7vw, 4.5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.cpd-demo-kicker {
+  margin: 1.25rem 0 0;
+  max-width: 36rem;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: oklch(90% 0.02 195 / 0.92);
+}
+
+.cpd-demo-disclaimer {
+  margin-top: 1.5rem;
+  display: inline-block;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: oklch(82% 0.04 195 / 0.85);
+  border-bottom: 1px solid oklch(82% 0.04 195 / 0.35);
+  padding-bottom: 0.2rem;
+}
+
+.cpd-demo-cta-row {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.cpd-demo-band {
+  background: var(--cpd-band);
+  border-block: 1px solid var(--cpd-border);
+}
+
+.cpd-demo-accomplishments {
+  display: grid;
+  gap: 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .cpd-demo-accomplishments {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cpd-demo-accomplishment {
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--cpd-border);
+}
+
+.cpd-demo-accomplishment h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: var(--cpd-ink);
+  margin: 0 0 0.4rem;
+}
+
+.cpd-demo-accomplishment p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--cpd-muted);
+}
+
+.cpd-demo-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: cpd-step;
+}
+
+.cpd-demo-step {
+  counter-increment: cpd-step;
+  display: grid;
+  gap: 1rem;
+  padding: 1.75rem 0;
+  border-top: 1px solid var(--cpd-border);
+}
+
+@media (min-width: 768px) {
+  .cpd-demo-step {
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1.5rem 2rem;
+  }
+}
+
+.cpd-demo-step__index::before {
+  content: counter(cpd-step, decimal-leading-zero);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  color: var(--cpd-signal-deep);
+}
+
+.cpd-demo-step__title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 550;
+  letter-spacing: -0.015em;
+  color: var(--cpd-ink);
+  margin: 0 0 0.35rem;
+}
+
+.cpd-demo-step__body {
+  margin: 0 0 0.75rem;
+  font-size: 0.975rem;
+  line-height: 1.55;
+  color: var(--cpd-muted);
+  max-width: 40rem;
+}
+
+.cpd-demo-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.cpd-demo-result__label {
+  font-weight: 600;
+  color: var(--cpd-ok);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+}
+
+.cpd-demo-result__value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: var(--cpd-ink);
+  word-break: break-word;
+}
+
+.cpd-demo-media {
+  margin-top: 1.5rem;
+  max-width: 52rem;
+}
+
+.cpd-demo-media video,
+.cpd-demo-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--cpd-border);
+  background: var(--cpd-surface);
+}
+
+.cpd-demo-code {
+  margin: 1rem 0 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--cpd-ink);
+  background: var(--cpd-surface);
+  border: 1px solid var(--cpd-border);
+}
+
+.cpd-demo-motion-brand {
+  animation: cpd-rise 0.7s ease-out both;
+}
+
+.cpd-demo-motion-kicker {
+  animation: cpd-rise 0.75s ease-out 0.08s both;
+}
+
+.cpd-demo-motion-cta {
+  animation: cpd-rise 0.8s ease-out 0.16s both;
+}
+
+@keyframes cpd-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.65rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cpd-demo-motion-brand,
+  .cpd-demo-motion-kicker,
+  .cpd-demo-motion-cta {
+    animation: none;
+  }
+}

@@ -191,6 +191,7 @@ export default function RootLayout({
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href={site.urls.protocolFabric}>Protocol Fabric</FooterLink>
                   <FooterLink href={site.urls.security}>Security</FooterLink>
+                  <FooterLink href={site.urls.costPlusDrugsDemo}>Cost Plus Drugs demo</FooterLink>
                   <FooterLink href={site.urls.pricing}>Pricing</FooterLink>
                   <FooterLink href={site.urls.benchmarks}>Benchmarks</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
