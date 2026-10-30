@@ -27,8 +27,7 @@ import { WORM_GENESIS_PREV_HASH, type WORMEntry } from "../entry.js";
 import { S3Backend } from "./s3.js";
 
 const endpoint =
-  process.env.CLAWQL_WORM_S3_IT_ENDPOINT?.trim() ||
-  process.env.CLAWQL_WORM_MINIO_ENDPOINT?.trim();
+  process.env.CLAWQL_WORM_S3_IT_ENDPOINT?.trim() || process.env.CLAWQL_WORM_MINIO_ENDPOINT?.trim();
 const accessKeyId =
   process.env.CLAWQL_WORM_S3_IT_ACCESS_KEY?.trim() ||
   process.env.CLAWQL_WORM_MINIO_ACCESS_KEY?.trim() ||
