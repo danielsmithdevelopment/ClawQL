@@ -51,22 +51,22 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 
 **Definitions (outcome, not column):**
 
-| Class | Meaning | Counts as |
-| ----- | ------- | --------- |
-| **Correctness failure** | A **wrong** outcome | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`) |
+| Class                    | Meaning                          | Counts as                                                                                                                                        |
+| ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Correctness failure**  | A **wrong** outcome              | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`)                       |
 | **Availability failure** | **No** outcome in time / capture | resume deadline miss; pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
-| **Outer completion** | Reported overall | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate |
+| **Outer completion**     | Reported overall                 | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                     |
 
 **Pass gates (frozen for v2 — do not loosen after results):**
 
-| Gate | Pass iff | Note |
-| ---- | -------- | ---- |
-| **Correctness** | `gates.correctness.failures === 0` | Zero wrong outcomes across write-kill + await |
-| **Availability ceiling** | `gates.availability.failureRate ≤ 0.02` (2%) | Denominator = all write-kill + await trials (`overallN`). Consistent with published ~1.5%-class disclosure band |
-| **Availability tail** | Evidence reports `resumeMs.p99`, `resumeMs.max`, and `recoveryMs.p99` | A 904s resume must stay visible — not absorbed into a single miss count |
-| **Outer completion** | Reported with per-miss class | Informational for the claim; misses classified, not required to be 0 if they are availability |
-| **Wait approval** | Wrong-write → correctness; no survive/complete in time → availability | Same split |
-| **Board ok** | Correctness zero **and** availability ≤ 2% | `status=measured` only when both arms finish |
+| Gate                     | Pass iff                                                              | Note                                                                                                            |
+| ------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Correctness**          | `gates.correctness.failures === 0`                                    | Zero wrong outcomes across write-kill + await                                                                   |
+| **Availability ceiling** | `gates.availability.failureRate ≤ 0.02` (2%)                          | Denominator = all write-kill + await trials (`overallN`). Consistent with published ~1.5%-class disclosure band |
+| **Availability tail**    | Evidence reports `resumeMs.p99`, `resumeMs.max`, and `recoveryMs.p99` | A 904s resume must stay visible — not absorbed into a single miss count                                         |
+| **Outer completion**     | Reported with per-miss class                                          | Informational for the claim; misses classified, not required to be 0 if they are availability                   |
+| **Wait approval**        | Wrong-write → correctness; no survive/complete in time → availability | Same split                                                                                                      |
+| **Board ok**             | Correctness zero **and** availability ≤ 2%                            | `status=measured` only when both arms finish                                                                    |
 
 **Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates, ceiling 2%, resume p99/max). Still not mid-step unmodified agents. Celld lease-sweep / alive-vs-ready / pause-aware clocks remain parallel product work.
 
