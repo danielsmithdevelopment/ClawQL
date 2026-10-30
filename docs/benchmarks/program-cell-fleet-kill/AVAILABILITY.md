@@ -26,12 +26,12 @@ So the TTL pulls two ways:
 
 Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% ceiling + resume/recovery p99/max). These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
 
-| Track | Meaning | Where |
-| ----- | ------- | ----- |
-| **Lease renew / regional store** | Cut false `SELF-FENCE` under R2 RTT (preferred levers above) | Upstream celld — no `CELLD_RENEW_*` yet |
-| **Lease-sweep** | Retire dead node-session leases so a restarted peer is not blocked by a fenced identity | Upstream (`dead_node_gc`); harness mitigates with fresh `CELLD_NODE` per start |
-| **Alive vs ready** | `/health` can answer while `ready_gate` is still closed — callers must wait `/program/health` (or ready_gate), not confuse alive with serving | Harness already probes `/program/health?cell=health`; product docs / SDK should match |
-| **Pause-aware clocks** | Freeze the resume **deadline** during orchestrator `ensureSurvivor`/rebuild; wall `resumeMs` still includes recovery so multi-minute stalls stay visible in tails | Harness default on (`FLEET_PHASED_PAUSE_AWARE_DEADLINE=1`); reports `resumeMs` (wall), `resumeActiveMs` (deadline-charged), `recoveryMs` |
+| Track                            | Meaning                                                                                                                                                           | Where                                                                                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lease renew / regional store** | Cut false `SELF-FENCE` under R2 RTT (preferred levers above)                                                                                                      | Upstream celld — no `CELLD_RENEW_*` yet                                                                                                  |
+| **Lease-sweep**                  | Retire dead node-session leases so a restarted peer is not blocked by a fenced identity                                                                           | Upstream (`dead_node_gc`); harness mitigates with fresh `CELLD_NODE` per start                                                           |
+| **Alive vs ready**               | `/health` can answer while `ready_gate` is still closed — callers must wait `/program/health` (or ready_gate), not confuse alive with serving                     | Harness already probes `/program/health?cell=health`; product docs / SDK should match                                                    |
+| **Pause-aware clocks**           | Freeze the resume **deadline** during orchestrator `ensureSurvivor`/rebuild; wall `resumeMs` still includes recovery so multi-minute stalls stay visible in tails | Harness default on (`FLEET_PHASED_PAUSE_AWARE_DEADLINE=1`); reports `resumeMs` (wall), `resumeActiveMs` (deadline-charged), `recoveryMs` |
 
 ## Stall forensics (stock 10s / R2)
 
