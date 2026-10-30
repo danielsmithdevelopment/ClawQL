@@ -36,7 +36,7 @@ Implements [ADR 0018](../adr/0018-public-sites-astro-console-next.md): **`clawql
 5. Agent `Accept: text/markdown` negotiation on Pages Functions (static `llms.txt` / `AGENTS.md` already in `public/`).
 6. ~~Preview on Cloudflare Pages → cut over `docs.clawql.com` → retire OpenNext as HTML origin.~~ (Worker Assets + route; Pages custom domain deferred until Zone DNS Edit on deploy token.)
 7. Keep zone Bot Fight + optional WAF; flight-query rules become belt-and-suspenders (`/_rsc` is now a static 404).
-8. Nice-to-have after cutover: FlexSearch UI, plugin registry explorer React island, richer Note/Button MDX components (hub JSX currently stripped to prose).
+8. ~~FlexSearch UI~~ (⌘K dialog on Astro; index from `scripts/generate-search-index.mjs`). Nice-to-have: plugin registry explorer React island, richer Note/Button MDX components (hub JSX currently stripped to prose).
 
 ## Phase 2 — `apps/www` (clawql.com)
 

@@ -1,4 +1,5 @@
 ---
+import DocsSearch from '@/components/DocsSearch.astro'
 import Sidebar from '@/components/Sidebar.astro'
 import { getSiteOrigin, site } from '@/lib/site'
 import '@/styles/global.css'
@@ -106,7 +107,11 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
           </a>
         </div>
 
-        <nav class="docs-chrome hidden items-center gap-6 md:flex" aria-label="Site">
+        <div class="hidden min-w-0 flex-1 justify-center px-4 lg:flex">
+          <DocsSearch variant="desktop-trigger" />
+        </div>
+
+        <nav class="docs-chrome hidden items-center gap-6 xl:flex" aria-label="Site">
           <a href="/" class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
             >Home</a
           >
@@ -132,7 +137,10 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
           >
         </nav>
 
-        <div class="ml-auto flex items-center gap-2">
+        <div class="ml-auto flex items-center gap-2 lg:ml-0">
+          <div class="lg:hidden">
+            <DocsSearch variant="mobile-trigger" />
+          </div>
           <a
             href={site.marketing}
             class="hidden text-sm text-zinc-600 no-underline hover:text-zinc-900 sm:inline dark:text-zinc-400 dark:hover:text-white"
@@ -289,6 +297,8 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
         </footer>
       </div>
     </div>
+
+    <DocsSearch variant="dialog" />
 
     <script>
       function closeNav() {

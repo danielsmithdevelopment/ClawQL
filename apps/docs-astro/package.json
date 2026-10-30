@@ -5,9 +5,10 @@
   "type": "module",
   "description": "ClawQL docs site (Astro) — migrates docs.clawql.com off Next/OpenNext (ADR 0018)",
   "scripts": {
-    "prebuild": "node scripts/import-from-next.mjs",
+    "prebuild": "node scripts/import-from-next.mjs && node scripts/generate-search-index.mjs",
     "import:next": "node scripts/import-from-next.mjs",
     "nav:curated": "node scripts/generate-curated-nav.mjs",
+    "search:index": "node scripts/generate-search-index.mjs",
     "dev": "astro dev --port 4321",
     "build": "astro build",
     "preview": "astro preview --port 4321",
@@ -21,6 +22,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.17",
     "astro": "^7.4.4",
+    "flexsearch": "^0.8.212",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.1.17"
   },
