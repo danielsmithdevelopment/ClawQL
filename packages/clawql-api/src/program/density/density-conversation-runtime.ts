@@ -48,6 +48,14 @@ export type DensityRuntimeApi = {
     readonly turnsCompleted: number;
   }>;
   readonly retainResident: (agentId: string) => Effect.Effect<void>;
+  /**
+   * Drop the last `count` in-memory messages and rewind turnsCompleted.
+   * Used after fit-latency probes so sample agents do not accumulate history.
+   */
+  readonly rollbackMessages: (
+    agentId: string,
+    count: number
+  ) => Effect.Effect<{ readonly messageCount: number; readonly turnsCompleted: number }>;
   readonly serializedBytes: (agentId: string) => Effect.Effect<number>;
   readonly messageCount: (agentId: string) => Effect.Effect<number>;
   readonly listIds: () => Effect.Effect<readonly string[]>;
@@ -222,6 +230,25 @@ export function makeDensityConversationRuntime(bagDir: string): DensityRuntimeAp
       Effect.gen(function* () {
         const agent = yield* requireAgent(agentId);
         agent.residence = "resident";
+      }),
+
+    rollbackMessages: (agentId: string, count: number) =>
+      Effect.gen(function* () {
+        const agent = yield* requireAgent(agentId);
+        if (agent.residence !== "resident") {
+          return yield* Effect.die(
+            new Error(`rollbackMessages on non-resident agent ${agentId}`)
+          );
+        }
+        const n = Math.max(0, Math.min(count, agent.messages.length));
+        if (n > 0) agent.messages.splice(agent.messages.length - n, n);
+        // Matched shape: 5 messages per turn.
+        const turnsFromMsgs = Math.floor(agent.messages.length / 5);
+        agent.turnsCompleted = Math.min(agent.turnsCompleted, turnsFromMsgs);
+        return {
+          messageCount: agent.messages.length,
+          turnsCompleted: agent.turnsCompleted,
+        };
       }),
 
     serializedBytes: (agentId: string) =>

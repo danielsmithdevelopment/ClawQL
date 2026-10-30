@@ -127,6 +127,8 @@
     "benchmark:clawql-8g": "bash scripts/benchmarks/program-density/run-clawql-8g-ramp.sh",
     "benchmark:infinity-8g:finalize": "node --import tsx scripts/benchmarks/program-density/finalize-infinity-8g-evidence.mjs",
     "benchmark:offloaded-tradeoff": "node --expose-gc --import tsx packages/clawql-api/src/program/density/offloaded-tradeoff-cli.ts",
+    "benchmark:clawql-fit-latency": "bash scripts/benchmarks/program-density/run-clawql-fit-latency.sh",
+    "benchmark:infinity-fit-latency": "bash scripts/benchmarks/program-density/run-infinity-fit-latency.sh",
     "smoke:program-cell-fleet-kill": "bash docs/examples/streams-celld/scripts/smoke-program-cell-fleet-kill.sh",
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
     "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",

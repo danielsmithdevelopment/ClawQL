@@ -59,4 +59,18 @@ describe("DensityConversationRuntime park/wake", () => {
     await Effect.runPromise(rt.driveAllTurns(id, 1));
     await expect(Effect.runPromise(rt.wake(id))).rejects.toThrow(/non-offloaded/);
   });
+
+  it("rolls back probe turns without leaving history growth", async () => {
+    const bagDir = await mkdtemp(join(tmpdir(), "clawql-dens-rt-"));
+    const rt = makeDensityConversationRuntime(bagDir);
+    const id = await Effect.runPromise(rt.createAgent(2));
+    await Effect.runPromise(rt.driveAllTurns(id, 2));
+    const before = await Effect.runPromise(rt.messageCount(id));
+    await Effect.runPromise(rt.driveTurn(id, 2));
+    const mid = await Effect.runPromise(rt.messageCount(id));
+    expect(mid).toBe(before + 5);
+    const rolled = await Effect.runPromise(rt.rollbackMessages(id, 5));
+    expect(rolled.messageCount).toBe(before);
+    expect(await Effect.runPromise(rt.messageCount(id))).toBe(before);
+  });
 });

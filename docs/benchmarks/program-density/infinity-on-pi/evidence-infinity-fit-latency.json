@@ -1,0 +1,224 @@
+{
+  "kind": "infinity-agent-scale-8g-fit-latency-v1",
+  "measuredAt": "2026-10-30T16:45:58.855Z",
+  "publishable": false,
+  "host": {
+    "hostname": "cursor",
+    "hostKind": "cloud-agent-kvm-vm",
+    "publishable": false
+  },
+  "cgroup": {
+    "path": "/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g",
+    "memoryMaxBytes": 8589934592,
+    "memorySwapMax": "0",
+    "memoryPeakBytes": 8589934592,
+    "memorySwapPeak": "0"
+  },
+  "tuning": {
+    "allocator": "glibc malloc + malloc_trim(0)",
+    "env": "none (no jemalloc/mimalloc/MALLOC_* overrides observed)",
+    "note": "Fair-compare question for Infinity/Shadaj team: should a density operator set an allocator or heap analog to ClawQL's required --max-old-space-size=8192 under an 8 GiB cap?"
+  },
+  "protocol": {
+    "agentsTarget": 77500,
+    "turns": 20,
+    "wave": 2500,
+    "probeSample": 100,
+    "probeAt": [
+      2500,
+      77500
+    ],
+    "ceilingMultiple": 2,
+    "exitCode": 0
+  },
+  "baseline": {
+    "agents": 2500,
+    "rssKiB": 439056,
+    "turn": {
+      "p50Ms": 2.776474,
+      "p99Ms": 3.893635,
+      "meanMs": 3.194715,
+      "n": 100,
+      "turnsPerSec": 313.02
+    },
+    "within2xOfBaseline": true,
+    "note": "baseline"
+  },
+  "atLastFit": {
+    "agents": 77500,
+    "rssKiB": 8161016,
+    "turn": {
+      "p50Ms": 3.059452,
+      "p99Ms": 4.045532,
+      "meanMs": 3.162417,
+      "n": 100,
+      "turnsPerSec": 316.21
+    },
+    "within2xOfBaseline": true,
+    "note": "probe"
+  },
+  "checkpoints": [
+    {
+      "agents": 2500,
+      "rssKiB": 439056,
+      "turn": {
+        "p50Ms": 2.776474,
+        "p99Ms": 3.893635,
+        "meanMs": 3.194715,
+        "n": 100,
+        "turnsPerSec": 313.02
+      },
+      "within2xOfBaseline": true,
+      "note": "baseline"
+    },
+    {
+      "agents": 77500,
+      "rssKiB": 8161016,
+      "turn": {
+        "p50Ms": 3.059452,
+        "p99Ms": 4.045532,
+        "meanMs": 3.162417,
+        "n": 100,
+        "turnsPerSec": 316.21
+      },
+      "within2xOfBaseline": true,
+      "note": "probe"
+    }
+  ],
+  "highestNWithin2x": 77500,
+  "highestContiguousNWithin2x": 77500,
+  "peakMemKiBPerAgentAtLastFit": 108.24,
+  "rssKiBPerAgentAtLastFit": 105.303,
+  "lastFitAgents": 77500,
+  "rssPoints": [
+    {
+      "agents": 0,
+      "rssKiB": 5704
+    },
+    {
+      "agents": 2500,
+      "rssKiB": 439056
+    },
+    {
+      "agents": 5000,
+      "rssKiB": 696788
+    },
+    {
+      "agents": 7500,
+      "rssKiB": 955600
+    },
+    {
+      "agents": 10000,
+      "rssKiB": 1212012
+    },
+    {
+      "agents": 12500,
+      "rssKiB": 1468548
+    },
+    {
+      "agents": 15000,
+      "rssKiB": 1728488
+    },
+    {
+      "agents": 17500,
+      "rssKiB": 1985464
+    },
+    {
+      "agents": 20000,
+      "rssKiB": 2241216
+    },
+    {
+      "agents": 22500,
+      "rssKiB": 2497960
+    },
+    {
+      "agents": 25000,
+      "rssKiB": 2754164
+    },
+    {
+      "agents": 27500,
+      "rssKiB": 3010616
+    },
+    {
+      "agents": 30000,
+      "rssKiB": 3274896
+    },
+    {
+      "agents": 32500,
+      "rssKiB": 3531036
+    },
+    {
+      "agents": 35000,
+      "rssKiB": 3787076
+    },
+    {
+      "agents": 37500,
+      "rssKiB": 4043868
+    },
+    {
+      "agents": 40000,
+      "rssKiB": 4300044
+    },
+    {
+      "agents": 42500,
+      "rssKiB": 4556232
+    },
+    {
+      "agents": 45000,
+      "rssKiB": 4812664
+    },
+    {
+      "agents": 47500,
+      "rssKiB": 5069064
+    },
+    {
+      "agents": 50000,
+      "rssKiB": 5325692
+    },
+    {
+      "agents": 52500,
+      "rssKiB": 5582044
+    },
+    {
+      "agents": 55000,
+      "rssKiB": 5838352
+    },
+    {
+      "agents": 57500,
+      "rssKiB": 6109932
+    },
+    {
+      "agents": 60000,
+      "rssKiB": 6366572
+    },
+    {
+      "agents": 62500,
+      "rssKiB": 6622612
+    },
+    {
+      "agents": 65000,
+      "rssKiB": 6879304
+    },
+    {
+      "agents": 67500,
+      "rssKiB": 7135656
+    },
+    {
+      "agents": 70000,
+      "rssKiB": 7391760
+    },
+    {
+      "agents": 72500,
+      "rssKiB": 7648512
+    },
+    {
+      "agents": 75000,
+      "rssKiB": 7905012
+    },
+    {
+      "agents": 77500,
+      "rssKiB": 8161016
+    }
+  ],
+  "reading": "Infinity lastFit latency under 8G (swap.max=0). exit=0. Baseline N=2500: p50=2.776474 ms p99=3.893635 ms. At N=77500: p50=3.059452 ms p99=4.045532 ms; within2x=true. highestNWithin2x=77500. peak_mem/N ≈ 108.24 KiB/agent. Tuning: glibc malloc + malloc_trim(0); no extra allocator env."
+}

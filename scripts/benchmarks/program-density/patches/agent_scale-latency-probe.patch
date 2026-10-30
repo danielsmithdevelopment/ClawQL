@@ -1,0 +1,287 @@
+diff --git a/crates/infinity-agent-core/examples/agent_scale.rs b/crates/infinity-agent-core/examples/agent_scale.rs
+index b364256..d67c7ad 100644
+--- a/crates/infinity-agent-core/examples/agent_scale.rs
++++ b/crates/infinity-agent-core/examples/agent_scale.rs
+@@ -47,6 +47,50 @@ use infinity_provider_protocol::{ModelEntry, SingleModelProvider};
+ const CHUNK_TEXT: &str = "Reviewed the module and updated the failing case; the assertion now covers the boundary path. ";
+ /// Chunks per completion (~1.2 KB of assistant text each round).
+ const CHUNKS_PER_COMPLETION: usize = 12;
++/// Fixed-width unique tag (must match ClawQL UNIQUE_TAG_WIDTH).
++const UNIQUE_TAG_WIDTH: usize = 64;
++
++fn unique_tag(seed: &str, slot: &str) -> String {
++    let mut raw = format!("{seed}|{slot}|");
++    let mut i = 0usize;
++    while raw.len() < UNIQUE_TAG_WIDTH {
++        let b = (raw.as_bytes()[i % raw.len()] as usize).wrapping_add(i.wrapping_mul(17)) % 36;
++        raw.push(char::from_digit(b as u32, 36).unwrap_or('0'));
++        i += 1;
++    }
++    raw.truncate(UNIQUE_TAG_WIDTH);
++    raw
++}
++
++fn with_unique_suffix(base: &str, tag: &str) -> String {
++    let tag = if tag.len() == UNIQUE_TAG_WIDTH {
++        tag.to_owned()
++    } else {
++        let mut t = tag.to_owned();
++        t.extend(std::iter::repeat('0').take(UNIQUE_TAG_WIDTH.saturating_sub(t.len())));
++        t.truncate(UNIQUE_TAG_WIDTH);
++        t
++    };
++    if base.len() >= UNIQUE_TAG_WIDTH {
++        format!("{}{tag}", &base[..base.len() - UNIQUE_TAG_WIDTH])
++    } else {
++        format!("{base}{tag}")
++    }
++}
++
++fn history_seed(history: &[Message]) -> String {
++    // Prefer the first user text (contains agent id); fall back to history length.
++    for msg in history {
++        if let Message::User { content } = msg {
++            for c in content {
++                if let UserContent::Text(t) = c {
++                    return format!("n{}:{}", history.len(), t.text);
++                }
++            }
++        }
++    }
++    format!("n{}", history.len())
++}
+ 
+ // ── Scripted model ──
+ //
+@@ -69,16 +113,21 @@ impl infinity_provider_protocol::CompletionModel for ScriptedModel {
+                 .any(|c| matches!(c, UserContent::ToolResult(_)))
+         );
+ 
++        let seed = history_seed(&request.chat_history);
++        let slot = if after_tool_result { "a2" } else { "a1" };
++        let completion = with_unique_suffix(
++            &CHUNK_TEXT.repeat(CHUNKS_PER_COMPLETION),
++            &unique_tag(&seed, slot),
++        );
+         let mut chunks: Vec<Result<StreamChunk, CompletionError>> =
+-            Vec::with_capacity(CHUNKS_PER_COMPLETION + 2);
+-        for _ in 0..CHUNKS_PER_COMPLETION {
+-            chunks.push(Ok(StreamChunk::Text(CHUNK_TEXT.to_owned())));
+-        }
++            Vec::with_capacity(3);
++        chunks.push(Ok(StreamChunk::Text(completion)));
+         if !after_tool_result {
++            let nonce = unique_tag(&seed, "tc");
+             chunks.push(Ok(StreamChunk::ToolCall(ToolCall::new(
+                 uuid::Uuid::new_v4().to_string(),
+                 "run_command",
+-                serde_json::json!({"command": "cargo test --workspace"}),
++                serde_json::json!({"command": "cargo test --workspace", "nonce": nonce}),
+             ))));
+         }
+         chunks.push(Ok(StreamChunk::Final(FinalResponse {
+@@ -129,8 +178,11 @@ impl Tool<ChannelSender> for RunCommand {
+                     call_id: call_id.map(|c| c.into_inner()),
+                     content:
+                         vec![ToolResultContent::Text(infinity_provider_protocol::message::Text {
+-                    text: "test result: ok. 148 passed; 0 failed; 3 ignored; finished in 21.38s"
+-                        .repeat(5),
++                    text: with_unique_suffix(
++                        &"test result: ok. 148 passed; 0 failed; 3 ignored; finished in 21.38s"
++                            .repeat(5),
++                        &unique_tag(context.group_id.as_str(), "tr"),
++                    ),
+                 })],
+                 })),
+                 group_id: context.group_id.clone(),
+@@ -199,11 +251,64 @@ fn env_usize(name: &str, default: usize) -> usize {
+     }
+ }
+ 
++/// Comma-separated agent counts at which to run a sequential turn-latency probe.
++fn env_probe_at() -> Vec<usize> {
++    match std::env::var("PROBE_AT") {
++        Ok(v) if !v.trim().is_empty() => v
++            .split(',')
++            .filter_map(|s| s.trim().parse::<usize>().ok())
++            .filter(|n| *n > 0)
++            .collect(),
++        _ => Vec::new(),
++    }
++}
++
++fn percentile_ms(samples: &mut [f64], p: f64) -> f64 {
++    if samples.is_empty() {
++        return 0.0;
++    }
++    samples.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
++    let idx = ((p / 100.0) * samples.len() as f64).ceil() as usize;
++    let idx = idx.saturating_sub(1).min(samples.len() - 1);
++    samples[idx]
++}
++
++/// Sequential per-agent turn probe (one user message → 2 completions).
++async fn probe_turn_latency(
++    sender: &ChannelSender,
++    finished: &Rc<Cell<u64>>,
++    expected: &mut u64,
++    agent_ids: &[String],
++    sample: usize,
++    probe_turn: usize,
++) -> (f64, f64, f64, usize) {
++    let n = sample.min(agent_ids.len());
++    let mut samples_ms = Vec::with_capacity(n);
++    for id in agent_ids.iter().take(n) {
++        let t0 = Instant::now();
++        sender
++            .send_to_input_queue(user_text(id, probe_turn), &uuid::Uuid::new_v4().to_string())
++            .await
++            .expect("probe send");
++        *expected += 2;
++        wait_for(finished, *expected).await;
++        samples_ms.push(t0.elapsed().as_secs_f64() * 1000.0);
++    }
++    let mean = if samples_ms.is_empty() {
++        0.0
++    } else {
++        samples_ms.iter().sum::<f64>() / samples_ms.len() as f64
++    };
++    let p50 = percentile_ms(&mut samples_ms.clone(), 50.0);
++    let p99 = percentile_ms(&mut samples_ms, 99.0);
++    (p50, p99, mean, n)
++}
++
+ fn user_text(thread_id: &str, turn: usize) -> InputMessage {
++    let tag = unique_tag(&format!("{thread_id}|{turn}"), "u");
+     InputMessage {
+         content: InputMessageContent::User(UserContent::text(format!(
+-            "Turn {turn}: re-run the affected tests for {thread_id} and summarize any failures \
+-             along with the modules they belong to."
++            "Turn {turn}: re-run the affected tests for {thread_id} and summarize any failures              along with the modules they belong to. [{tag}]"
+         ))),
+         group_id: thread_id.into(),
+         metadata: None,
+@@ -237,6 +342,19 @@ async fn main() {
+     let agents = env_usize("AGENTS", 10_000);
+     let turns = env_usize("TURNS", 20);
+     let wave = env_usize("WAVE", 500);
++    let probe_sample = env_usize("PROBE_SAMPLE", 100);
++    let mut probe_at = env_probe_at();
++    // Default: baseline wave (min(wave, agents)) and final AGENTS when PROBE_AT unset
++    // but PROBE_SAMPLE > 0 and LATENCY_PROBE=1.
++    let latency_probe = std::env::var("LATENCY_PROBE").is_ok() || !probe_at.is_empty();
++    if latency_probe && probe_at.is_empty() {
++        probe_at.push(wave.min(agents));
++        if agents > wave {
++            probe_at.push(agents);
++        }
++    }
++    probe_at.sort_unstable();
++    probe_at.dedup();
+ 
+     tokio::task::LocalSet::new()
+         .run_until(async move {
+@@ -254,8 +372,10 @@ async fn main() {
+ 
+             let finished = Rc::new(Cell::new(0u64));
+             let observer_count = finished.clone();
++            let conversation_store = InMemoryConversationStore::new();
++            let dump_store = conversation_store.clone();
+             let mut running = AgentSystemBuilder::new_local(
+-                InMemoryConversationStore::new(),
++                conversation_store,
+                 InMemoryStateStore::new(),
+                 model,
+             )
+@@ -268,10 +388,17 @@ async fn main() {
+             trim_allocator();
+             println!("agents,rss_bytes");
+             println!("0,{}", rss_bytes());
++            if latency_probe {
++                eprintln!("latency_probe,agents,p50_ms,p99_ms,mean_ms,n,turns_per_sec");
++            }
+ 
+             let start = Instant::now();
+             let mut launched = 0usize;
+             let mut expected = 0u64;
++            let mut all_ids: Vec<String> = Vec::with_capacity(agents);
++            let mut probe_turn = turns; // next turn index after scripted history
++            let mut baseline_p50: Option<f64> = None;
++            let mut baseline_p99: Option<f64> = None;
+             while launched < agents {
+                 let batch = wave.min(agents - launched);
+                 let ids: Vec<String> = (launched..launched + batch)
+@@ -294,6 +421,7 @@ async fn main() {
+                     wait_for(&finished, expected).await;
+                 }
+ 
++                all_ids.extend(ids.iter().cloned());
+                 launched += batch;
+                 // Let idle drivers finish exiting before sampling.
+                 tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+@@ -303,6 +431,54 @@ async fn main() {
+                 while running.try_next_lifecycle_event().is_ok() {}
+                 trim_allocator();
+                 println!("{launched},{}", rss_bytes());
++
++                if latency_probe && probe_at.iter().any(|&n| n == launched) {
++                    let (p50, p99, mean, n) = probe_turn_latency(
++                        &sender,
++                        &finished,
++                        &mut expected,
++                        &all_ids,
++                        probe_sample,
++                        probe_turn,
++                    )
++                    .await;
++                    probe_turn += 1;
++                    let tps = if mean > 0.0 { 1000.0 / mean } else { 0.0 };
++                    eprintln!(
++                        "latency_probe,{launched},{p50:.6},{p99:.6},{mean:.6},{n},{tps:.2}"
++                    );
++                    if baseline_p50.is_none() {
++                        baseline_p50 = Some(p50);
++                        baseline_p99 = Some(p99);
++                    }
++                    if let (Some(b50), Some(b99)) = (baseline_p50, baseline_p99) {
++                        let within = p50 <= b50 * 2.0 && p99 <= b99 * 2.0;
++                        eprintln!(
++                            "latency_probe_vs_baseline,agents={launched},within_2x={within},baseline_p50_ms={b50:.6},baseline_p99_ms={b99:.6},p50_ms={p50:.6},p99_ms={p99:.6}"
++                        );
++                    }
++                    while running.try_next_lifecycle_event().is_ok() {}
++                    trim_allocator();
++                }
++            }
++
++            if std::env::var("DUMP_BYTES").is_ok() {
++                let tid = ThreadId::new("agent-0");
++                if let Some(msgs) = dump_store.thread_messages(&tid) {
++                    let json = serde_json::to_vec(&msgs).expect("serialize");
++                    let msgs_only: Vec<_> = msgs.iter().map(|(m, _)| m).collect();
++                    let msgs_json = serde_json::to_vec(&msgs_only).expect("serialize msgs");
++                    eprintln!(
++                        "DUMP_BYTES agent-0 n_messages={} serde_json_with_ids_bytes={} serde_json_msgs_bytes={}",
++                        msgs.len(),
++                        json.len(),
++                        msgs_json.len(),
++                    );
++                    let _ = std::fs::write("/tmp/infinity-agent-0-messages.json", &json);
++                    let _ = std::fs::write("/tmp/infinity-agent-0-msgs-only.json", &msgs_json);
++                } else {
++                    eprintln!("DUMP_BYTES: no messages for agent-0");
++                }
+             }
+ 
+             let elapsed = start.elapsed();
+@@ -315,6 +491,10 @@ async fn main() {
+                 total as f64 / (1024.0 * 1024.0),
+                 total as f64 / 1024.0 / agents as f64,
+             );
++            eprintln!(
++                "TUNING: agent_scale uses glibc malloc + malloc_trim(0); no jemalloc/mimalloc env. \
++                 Compare against ClawQL --max-old-space-size=8192 disclosure."
++            );
+ 
+             running.shutdown().await;
+         })
