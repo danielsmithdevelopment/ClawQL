@@ -236,9 +236,7 @@ export function makeDensityConversationRuntime(bagDir: string): DensityRuntimeAp
       Effect.gen(function* () {
         const agent = yield* requireAgent(agentId);
         if (agent.residence !== "resident") {
-          return yield* Effect.die(
-            new Error(`rollbackMessages on non-resident agent ${agentId}`)
-          );
+          return yield* Effect.die(new Error(`rollbackMessages on non-resident agent ${agentId}`));
         }
         const n = Math.max(0, Math.min(count, agent.messages.length));
         if (n > 0) agent.messages.splice(agent.messages.length - n, n);

@@ -28,10 +28,10 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 
 **Do not** lead with open-host slope × cap. Extrapolating ClawQL’s open-host ~100 KiB slope undercounts fit by ~25%; Infinity’s open-host slope predicts its 8 G fit well. Under the cap ClawQL collects/compacts harder (~79 KiB/agent); Infinity barely changes (~105 KiB).
 
-| System          | lastFit (no swap) | RSS/N at lastFit | vs Infinity lastFit      |
-| --------------- | ----------------- | ---------------- | ------------------------ |
-| Infinity        | **77 500**        | **~105.3 KiB**   | —                        |
-| ClawQL resident | **102 500**       | **~78.9 KiB**    | **~32% more agents**     |
+| System          | lastFit (no swap) | RSS/N at lastFit | vs Infinity lastFit  |
+| --------------- | ----------------- | ---------------- | -------------------- |
+| Infinity        | **77 500**        | **~105.3 KiB**   | —                    |
+| ClawQL resident | **102 500**       | **~78.9 KiB**    | **~32% more agents** |
 
 Paired per-agent figure = **RSS at lastFit / N** (same definition both sides). Cgroup `memory.peak` often saturates at `memory.max` during GC spikes — prefer RSS/N for the quote; peak/N is an upper bound.
 
@@ -41,10 +41,10 @@ Evidence: [`infinity-8g-ramp.json`](./infinity-8g-ramp.json) · [`clawql-residen
 
 Probed after the population is resident: baseline **N=2 500**, then at lastFit (ClawQL quality-checked at **100 000** — within ~2.4% of ramp lastFit 102.5k; Infinity at **77 500**). Ceiling = **2×** baseline p50 and p99.
 
-| System   | Baseline turn p50 / p99     | At lastFit p50 / p99        | Within 2×? | Throughput (turns/s) |
-| -------- | --------------------------- | --------------------------- | ---------- | -------------------- |
-| Infinity | 2.78 ms / 3.89 ms           | 3.06 ms / 4.05 ms           | **yes**    | ~313 → ~316          |
-| ClawQL   | 0.025 ms / 0.051 ms         | 0.023 ms / 0.086 ms         | **yes**    | ~35k → ~38k          |
+| System   | Baseline turn p50 / p99 | At lastFit p50 / p99 | Within 2×? | Throughput (turns/s) |
+| -------- | ----------------------- | -------------------- | ---------- | -------------------- |
+| Infinity | 2.78 ms / 3.89 ms       | 3.06 ms / 4.05 ms    | **yes**    | ~313 → ~316          |
+| ClawQL   | 0.025 ms / 0.051 ms     | 0.023 ms / 0.086 ms  | **yes**    | ~35k → ~38k          |
 
 Absolute ms are **not** cross-system comparable (Infinity = full runtime round-trip; ClawQL harness = matched-shape `driveTurn` append). Within-system 2× gate is the quality check. **highestNWithin2x** = lastFit for both on this host.
 
@@ -52,10 +52,10 @@ Evidence: [`evidence-infinity-fit-latency.json`](./evidence-infinity-fit-latency
 
 ### Tuning disclosure (fair operator)
 
-| System   | Flags / allocator                                                                 | Notes |
-| -------- | --------------------------------------------------------------------------------- | ----- |
-| ClawQL   | **`--expose-gc --max-old-space-size=8192`**                                       | Required so V8 old-space can use the 8 GiB cgroup; default heap aborts the ramp early. |
-| Infinity | glibc **malloc** + **`malloc_trim(0)`** after each wave; **no** jemalloc/mimalloc / `MALLOC_*` env | Matches stock `agent_scale`. |
+| System   | Flags / allocator                                                                                  | Notes                                                                                  |
+| -------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| ClawQL   | **`--expose-gc --max-old-space-size=8192`**                                                        | Required so V8 old-space can use the 8 GiB cgroup; default heap aborts the ramp early. |
+| Infinity | glibc **malloc** + **`malloc_trim(0)`** after each wave; **no** jemalloc/mimalloc / `MALLOC_*` env | Matches stock `agent_scale`.                                                           |
 
 **Question for Infinity / Shadaj Laddad’s team:** under an 8 GiB hard cap, should a fair density operator set an allocator or heap analog to ClawQL’s required `--max-old-space-size=8192` (jemalloc/mimalloc arenas, glibc `M_TRIM_THRESHOLD` / `MALLOC_ARENA_MAX`, etc.)? If yes, which knobs and what defaults would you want quoted beside their 75k@8 GB line?
 

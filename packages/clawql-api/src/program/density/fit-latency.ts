@@ -12,15 +12,8 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
 import { makeDensityConversationRuntime } from "./density-conversation-runtime.js";
-import {
-  INFINITY_MATCHED_CONTRACT_ID,
-  INFINITY_MATCHED_TURNS,
-} from "./infinity-matched-shape.js";
-import {
-  forceFullGcEffect,
-  percentileMsEffect,
-  readProcessRssEffect,
-} from "./host-metrics.js";
+import { INFINITY_MATCHED_CONTRACT_ID, INFINITY_MATCHED_TURNS } from "./infinity-matched-shape.js";
+import { forceFullGcEffect, percentileMsEffect, readProcessRssEffect } from "./host-metrics.js";
 import { hostDisclosureEffect, type HostDisclosure } from "./infinity-harness-v2.js";
 
 export type TurnLatencyStats = {
@@ -146,9 +139,7 @@ function withinCeiling(
   multiple: number
 ): boolean {
   if (baseline.p50Ms <= 0 || baseline.p99Ms <= 0) return true;
-  return (
-    measured.p50Ms <= baseline.p50Ms * multiple && measured.p99Ms <= baseline.p99Ms * multiple
-  );
+  return measured.p50Ms <= baseline.p50Ms * multiple && measured.p99Ms <= baseline.p99Ms * multiple;
 }
 
 export function runClawqlFitLatencyEffect(opts?: {
