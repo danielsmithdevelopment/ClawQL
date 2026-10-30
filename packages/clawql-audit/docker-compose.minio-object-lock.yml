@@ -1,0 +1,17 @@
+# S3 Object Lock integration target for clawql-audit.
+# CI uses LocalStack (public Docker Hub). Local MinIO works the same API when available.
+#
+#   docker compose -f packages/clawql-audit/docker-compose.minio-object-lock.yml up -d
+#   until curl -sf http://127.0.0.1:4566/_localstack/health | grep -q '"s3"'; do sleep 1; done
+#   export CLAWQL_WORM_S3_IT_ENDPOINT=http://127.0.0.1:4566
+#   export CLAWQL_WORM_S3_IT_ACCESS_KEY=test
+#   export CLAWQL_WORM_S3_IT_SECRET_KEY=test
+#   npm test -w clawql-audit -- src/storage/s3-object-lock.integration.test.ts
+services:
+  localstack:
+    image: localstack/localstack:4.3.0
+    environment:
+      SERVICES: s3
+      DEBUG: "0"
+    ports:
+      - "4566:4566"

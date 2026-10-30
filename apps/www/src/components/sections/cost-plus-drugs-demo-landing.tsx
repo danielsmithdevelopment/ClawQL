@@ -12,6 +12,8 @@ const GH_EXAMPLE =
 const CPD_MCP_DOCS = 'https://mccpdc-llc.github.io/pricing-api-documentation/mcp.html'
 const CPD_MCP = 'https://mcp.costplusdrugs.com/'
 
+const PRICE_AS_OF = 'Oct 30, 2026'
+
 const accomplishments = [
   {
     label: '01',
@@ -36,7 +38,7 @@ const accomplishments = [
 ] as const
 
 const measured = [
-  { metric: '~949×', detail: 'smaller than full CPD catalog dump' },
+  { metric: '~950×', detail: 'smaller than full CPD catalog dump' },
   { metric: 'mandate', detail: 'before any mock refill write' },
   { metric: 'digest-bound', detail: 'NDC / qty / price locked at park' },
   { metric: 'hash chain', detail: 'execute → park → resume in audit' },
@@ -52,19 +54,20 @@ const steps = [
     title: 'Read live cash prices (not medical advice)',
     action:
       'execute routes mcp__cost_plus_drugs_pricing__search to https://mcp.costplusdrugs.com/. Example: atorvastatin 20mg cash pricing for a 30-count fill.',
-    result: 'Live lookup ok · ~4.5KB structured response · $5.41 cash (fixture/live demo)',
+    result: `Live gateway execute ok · ~4.5KB MCP response · $5.41 cash as of ${PRICE_AS_OF}`,
   },
   {
     title: 'Prefer compact tools over full-catalog dumps',
     action:
-      'pricelist_all / pricelist_cpd return multi-megabyte payloads. ClawQL steers agents to search / pricelist_*_search for the same answer.',
-    result: '~3.9KB targeted search vs ~3.7MB full CPD catalog (~949×)',
+      'pricelist_all / pricelist_cpd return multi-megabyte payloads. ClawQL steers agents to search / pricelist_*_search for the same answer. Compaction math below is raw HTTP API bytes (not the MCP execute envelope in step 2).',
+    result: '~3.9KB targeted search vs ~3.7MB full CPD catalog (~950×)',
   },
   {
     title: 'Redact PHI before non-BAA models',
     action:
       'Before any multi-model hop, BAA routing keeps patient fields on BAA-covered providers and strips them for others. Public cash prices still flow.',
-    result: 'Grok path: patient_name / address / rx_number redacted · Claude-BAA retains fields',
+    result:
+      'non-BAA provider: patient_name / address / rx_number redacted · BAA-covered provider retains fields',
   },
   {
     title: 'Stage a refill — agent cannot self-approve',
@@ -76,13 +79,14 @@ const steps = [
     title: 'Human resumes the exact parked order',
     action:
       'Only a human (patient/operator) may clawql resume / MCP resume. Args cannot be swapped at approval time. Labeled MOCK — never sent to Cost Plus.',
-    result: 'accepted_mock · bound NDC 00904-6291-61 · qty 30 · $5.41',
+    result: `accepted_mock · bound NDC 00904-6291-61 · qty 30 · $5.41 as of ${PRICE_AS_OF}`,
   },
   {
     title: 'Everything lands in the audit trail',
     action:
-      'Price reads, mandate park, and resume finalize append to the MCP audit ring (and can dual-write durable WORM in production).',
-    result: 'Hash-chained audit entries for execute + resume (seq 1→N)',
+      'Price reads, mandate park, and resume finalize append to the MCP audit ring. With CLAWQL_WORM_ENABLED=1 the gateway dual-writes a hash-chained, tamper-evident trail to durable storage (sqlite/postgres + optional S3). Storage-level WORM retention is separate: enable S3/MinIO Object Lock in compliance mode (verified by tests that refuse deletion of locked versions). Offline demo JSONL is a walkthrough stand-in. Audit payloads use hashes/refs — not raw patient fields.',
+    result:
+      'Tamper-evident dual-write (opt-in) · WORM via S3 Object Lock when configured · hash-chained seq 1→N',
   },
 ] as const
 
@@ -95,6 +99,9 @@ export function CostPlusDrugsDemoLanding() {
           <p className="cpd-demo-motion-kicker cpd-demo-kicker">
             Cost Plus Drugs demo — one governed gateway for multi-LLM pharmacy reads, with patient approval and audit
             before any write.
+          </p>
+          <p className="cpd-demo-motion-kicker cpd-demo-affiliation">
+            Independent demo; not affiliated with or endorsed by Cost Plus Drugs.
           </p>
           <p className="cpd-demo-motion-kicker cpd-demo-disclaimer">
             Not medical advice · Mock orders only · Prescription stays with a clinician
@@ -200,6 +207,7 @@ export function CostPlusDrugsDemoLanding() {
         subheadline="Aligned with Cost Plus Drugs’ own MCP scope — and with how you should talk about it publicly."
       >
         <ul className="m-0 flex max-w-2xl list-disc flex-col gap-3 pl-5 text-[var(--cpd-muted)]">
+          <li>No claim of affiliation with or endorsement by Cost Plus Drugs</li>
           <li>No clinical, dosing, or substitution advice</li>
           <li>No claim that a real Cost Plus order was placed</li>
           <li>No real patient data — synthetic fields only until BAAs and HIPAA safeguards exist</li>

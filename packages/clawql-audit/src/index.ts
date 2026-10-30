@@ -55,7 +55,17 @@ export type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
 export { MemoryBackend, memoryBackendMaxEntriesFromEnv } from "./storage/memory.js";
 export type { MemoryBackendOptions } from "./storage/memory.js";
 export { SQLiteBackend, type SQLiteBackendOptions } from "./storage/sqlite.js";
-export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
+export {
+  S3Backend,
+  contentMd5Base64,
+  entryObjectKey,
+  objectLockRetainUntilDate,
+  sha256HexOf,
+  type ObjectLockProtectionResult,
+  type S3BackendConfig,
+  type S3ObjectLockConfig,
+  type S3ObjectLockMode,
+} from "./storage/s3.js";
 export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";
 export {
   verifyTEESignature,

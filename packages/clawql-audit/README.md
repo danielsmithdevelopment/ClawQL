@@ -1,14 +1,29 @@
 # clawql-audit
 
-Tamper-evident **WORM** audit trail for AI agent deployments. Standalone — no dependency on `clawql-core`, `clawql-memory`, or other ClawQL packages (only `clawql-merkle` + Effect + AWS SDK / CBOR / QR / RaptorQ; optional `pg`).
+Tamper-evident audit trail for AI agent deployments, with optional **storage-level WORM** via S3 Object Lock. Standalone — no dependency on `clawql-core`, `clawql-memory`, or other ClawQL packages (only `clawql-merkle` + Effect + AWS SDK / CBOR / QR / RaptorQ; optional `pg`).
 
 **Public docs:** [docs.clawql.com/audit](https://docs.clawql.com/audit) — hash chain, Merkle batch roots, dual-ack replication, and external verification.
+
+## Tamper-evident vs storage WORM
+
+| Configuration                                                                  | What you get                                                                                                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Local sqlite/postgres (+ hash chain, dual-write)                               | **Tamper-evident** durable audit. An admin who controls the DB can still alter bytes; the hash chain would detect it after the fact. |
+| Remote S3/MinIO **without** Object Lock                                        | Create-once tip via `IfNoneMatch: *` + dual-ack. Still not storage WORM.                                                             |
+| Remote S3/MinIO **with Object Lock** (`CLAWQL_WORM_S3_OBJECT_LOCK=compliance`) | **WORM retention**: locked versions cannot be deleted or altered until retention expires (verified by tests).                        |
+
+Object Lock requires a versioned bucket created with lock enabled. A PUT to an existing key creates a **new version**; the locked version stays. Plain `DeleteObject` adds a delete marker; `DeleteObject(VersionId=…)` on a locked version is refused.
+
+**Providers:** Amazon S3 and MinIO support the S3 Object Lock API (CI verifies against LocalStack S3). **Cloudflare R2 does not** — use R2’s own bucket-lock controls separately, or set `CLAWQL_WORM_S3_OBJECT_LOCK=0` for R2 remotes.
+
+**Privacy:** Prefer hashes / references in audit payloads (especially healthcare). Write-once retention can conflict with erasure duties if raw personal data is stored in the trail.
 
 ## Capabilities
 
 - Hash-chained append (`sealHashChainRecord`) — **CBOR** hash dialect by default (RFC 8949 canonical); legacy JSON via `chainMetadata`
 - Spec addition: [`docs/audit/clawql-audit-cbor-serialization-v0.1.md`](../../docs/audit/clawql-audit-cbor-serialization-v0.1.md)
 - Dual-ack local + remote (SQLite/`node:sqlite`, Postgres, or memory + S3/R2)
+- Optional S3/MinIO Object Lock (COMPLIANCE / GOVERNANCE) with Content-MD5 on PutObject
 - Outbox drain on startup + optional background reconciler
 - Periodic Merkle batch roots (handoff for multi-chain anchoring)
 - Query, verify, JSON/CSV/QR export
@@ -62,7 +77,10 @@ Set `CLAWQL_WORM_ENABLED=1` to boot a process-scoped trail. Callers dual-write v
 | `CLAWQL_WORM_SQLITE_PATH`                    | SQLite file (implies local=sqlite when unset)                           |
 | `CLAWQL_WORM_POSTGRES_URL`                   | Postgres DSN                                                            |
 | `CLAWQL_WORM_REMOTE`                         | `memory` \| `s3`                                                        |
-| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote                                                            |
+| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/MinIO/R2 remote (`_FORCE_PATH_STYLE=1` for MinIO)                    |
+| `CLAWQL_WORM_S3_OBJECT_LOCK`                 | `compliance` \| `governance` \| `0` (R2: use `0`)                       |
+| `CLAWQL_WORM_S3_OBJECT_LOCK_DAYS`            | Retention days (default `365`; S3 minimum `1`)                          |
+| `CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK`          | `1` = fail boot unless bucket Object Lock is Enabled                    |
 | `CLAWQL_WORM_SESSION_ID`                     | Default `sessionId` on append                                           |
 | `CLAWQL_WORM_RECONCILE_MS`                   | Outbox drain interval (`0` disables)                                    |
 | `CLAWQL_WORM_TEE`                            | `1` = ECDSA P-256 `teeSignature` on append                              |

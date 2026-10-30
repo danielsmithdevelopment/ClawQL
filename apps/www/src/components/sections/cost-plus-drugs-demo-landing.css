@@ -80,8 +80,16 @@
   color: oklch(90% 0.02 195 / 0.92);
 }
 
+.cpd-demo-affiliation {
+  margin: 1rem 0 0;
+  max-width: 36rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: oklch(86% 0.025 195 / 0.88);
+}
+
 .cpd-demo-disclaimer {
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   display: inline-block;
   font-size: 0.8125rem;
   letter-spacing: 0.02em;

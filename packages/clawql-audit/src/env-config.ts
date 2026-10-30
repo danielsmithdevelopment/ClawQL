@@ -6,17 +6,30 @@
  * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
  * CLAWQL_WORM_MEMORY_MAX_ENTRIES — ring cap for memory backend (default 10000; 0 = unbounded)
  * CLAWQL_WORM_SQLITE_PATH, CLAWQL_WORM_POSTGRES_URL, CLAWQL_WORM_S3_* for backends
+ * CLAWQL_WORM_S3_OBJECT_LOCK=compliance|governance|0 — storage WORM (S3/MinIO Object Lock).
+ *   Cloudflare R2 does not support the S3 Object Lock API; use 0 for R2.
+ * CLAWQL_WORM_S3_OBJECT_LOCK_DAYS — retention days (default 365; S3 minimum 1).
+ * CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK=1 — boot-check bucket Object Lock Enabled.
  */
 
 import { Effect } from "effect";
 import { AuditError } from "./errors.js";
 import { MemoryBackend, memoryBackendMaxEntriesFromEnv } from "./storage/memory.js";
 import { PostgresBackend } from "./storage/postgres.js";
-import { S3Backend } from "./storage/s3.js";
+import { S3Backend, type S3ObjectLockMode } from "./storage/s3.js";
 import { SQLiteBackend } from "./storage/sqlite.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
 import { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
 import type { WORMAuditTrailConfig } from "./trail.js";
+
+function parseObjectLockMode(raw: string | undefined): S3ObjectLockMode | undefined {
+  if (!raw) return undefined;
+  const v = raw.trim().toLowerCase();
+  if (v === "0" || v === "off" || v === "false" || v === "none") return undefined;
+  if (v === "1" || v === "true" || v === "compliance") return "COMPLIANCE";
+  if (v === "governance") return "GOVERNANCE";
+  throw new Error(`CLAWQL_WORM_S3_OBJECT_LOCK must be compliance|governance|0 (got ${raw})`);
+}
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {
   const v = env[key]?.trim();
@@ -91,13 +104,19 @@ function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, Audit
         }
         const accessKeyId = envTrim(env, "CLAWQL_WORM_S3_ACCESS_KEY_ID");
         const secretAccessKey = envTrim(env, "CLAWQL_WORM_S3_SECRET_ACCESS_KEY");
+        const lockMode = parseObjectLockMode(envTrim(env, "CLAWQL_WORM_S3_OBJECT_LOCK"));
+        const lockDays = parseIntEnv(env, "CLAWQL_WORM_S3_OBJECT_LOCK_DAYS") ?? 365;
         return new S3Backend({
           bucket,
           endpoint: envTrim(env, "CLAWQL_WORM_S3_ENDPOINT"),
           region: envTrim(env, "CLAWQL_WORM_S3_REGION") ?? "auto",
           prefix: envTrim(env, "CLAWQL_WORM_S3_PREFIX") ?? "worm/",
+          forcePathStyle: envTrim(env, "CLAWQL_WORM_S3_FORCE_PATH_STYLE") === "1",
           credentials:
             accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined,
+          ...(lockMode
+            ? { objectLock: { mode: lockMode, retainDays: Math.max(1, lockDays) } }
+            : {}),
         });
       }
       throw new Error(`Unknown CLAWQL_WORM_REMOTE=${mode}`);
@@ -120,6 +139,13 @@ export const createWormTrailConfigFromEnvEffect = (
     if (!(yield* wormEnabledFromEnv(env))) return null;
     const local = yield* makeLocal(env);
     const remote = yield* makeRemote(env);
+    if (
+      remote instanceof S3Backend &&
+      remote.hasObjectLockWorm &&
+      envTrim(env, "CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK") === "1"
+    ) {
+      yield* remote.verifyBucketObjectLockEnabled();
+    }
     const tee = yield* createWormTeeSignerFromEnvEffect(env);
     const httpPort = parseIntEnv(env, "CLAWQL_WORM_HTTP_PORT");
     return {
