@@ -726,59 +726,105 @@ async function main() {
     // duplicate write on the pets ledger (writes) — target 0 for completed steps.
     const writeStepsRerun = duplicates;
 
+    /** @type {null | { preserved: boolean, reason: string, attempts?: number }} */
     let statePreservedTrial = null;
     const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
     if (STATE_BASELINE && outerPhase && completedClean && resumeCalls.length) {
       stateEligible += 1;
       // Score writeCount before twin; twin resets the pets ledger.
-      await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
       const twinId = `twin_${programId}`;
       // Same plan args (name + idempotencyKey = programId) as the crash trial so
       // mock owners.create returns an identical deterministic body.
       const twinBody = baselinePlan(twinId);
       twinBody.plan.calls = stockCalls(programId);
-      try {
-        if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-          await ensureSurvivor(survivor, avail);
-        }
-        const twinPort = nodes[survivor].port;
-        const twinRes = await fetchJson(
-          `http://127.0.0.1:${twinPort}/program/run`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(twinBody),
-          },
-          30_000
-        );
-        if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
-          const cmp = compareDigestStepState(
-            twinRes.body.calls,
-            resumeCalls,
-            twinRes.body?.result,
-            resume.body?.result
-          );
-          statePreservedTrial = cmp.preserved;
-          if (cmp.preserved) statePreserved += 1;
-          else if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
-            const mi = cmp.mismatchIndexes?.[0];
-            console.warn(
-              "fleet-phased: statePreserved MISMATCH",
-              JSON.stringify({
-                mismatchIndexes: cmp.mismatchIndexes,
-                twinStep: cmp.baseline?.[mi],
-                resumeStep: cmp.observed?.[mi],
-              }).slice(0, 2000)
-            );
+      // Twin runs on the same fleet as resume — a SELF-FENCE can kill the capture.
+      // Retry a few times; classify twin_capture_failed vs digest_mismatch (both fail
+      // the frozen rate gate, but they are not the same cause).
+      const twinAttemptsMax = Math.max(
+        1,
+        Math.min(5, Number(process.env.FLEET_PHASED_TWIN_ATTEMPTS || 3))
+      );
+      let twinAttempt = 0;
+      let twinLastErr = null;
+      while (twinAttempt < twinAttemptsMax) {
+        twinAttempt += 1;
+        try {
+          await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
+          if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+            await ensureSurvivor(survivor, avail);
           }
-        } else {
-          stateTwinFailures += 1;
-          statePreservedTrial = false;
+          const twinPort = nodes[survivor].port;
+          const twinRes = await fetchJson(
+            `http://127.0.0.1:${twinPort}/program/run`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(twinBody),
+            },
+            30_000
+          );
+          if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
+            const cmp = compareDigestStepState(
+              twinRes.body.calls,
+              resumeCalls,
+              twinRes.body?.result,
+              resume.body?.result
+            );
+            if (cmp.preserved) {
+              statePreserved += 1;
+              statePreservedTrial = {
+                preserved: true,
+                reason: "digest_match",
+                attempts: twinAttempt,
+              };
+              twinLastErr = null;
+              break;
+            }
+            statePreservedTrial = {
+              preserved: false,
+              reason: "digest_mismatch",
+              attempts: twinAttempt,
+              mismatchIndexes: cmp.mismatchIndexes,
+            };
+            if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
+              const mi = cmp.mismatchIndexes?.[0];
+              console.warn(
+                "fleet-phased: statePreserved digest_mismatch",
+                JSON.stringify({
+                  mismatchIndexes: cmp.mismatchIndexes,
+                  twinStep: cmp.baseline?.[mi],
+                  resumeStep: cmp.observed?.[mi],
+                }).slice(0, 2000)
+              );
+            }
+            // Digest mismatch will not improve on retry with the same journaled resume.
+            twinLastErr = null;
+            break;
+          }
+          twinLastErr = `twin status=${twinRes.body?.status || twinRes.status}`;
+        } catch (twinErr) {
+          twinLastErr = twinErr instanceof Error ? twinErr.message : String(twinErr);
+          console.warn(
+            `fleet-phased: twin capture attempt ${twinAttempt}/${twinAttemptsMax} failed (${twinLastErr})`
+          );
+          try {
+            await rebuildFleet();
+          } catch {
+            /* next attempt */
+          }
         }
-      } catch (twinErr) {
-        console.warn(`fleet-phased: twin capture failed (${twinErr.message})`);
+      }
+      if (statePreservedTrial == null) {
         stateTwinFailures += 1;
-        statePreservedTrial = false;
+        statePreservedTrial = {
+          preserved: false,
+          reason: "twin_capture_failed",
+          attempts: twinAttempt,
+          detail: twinLastErr,
+        };
+      } else if (statePreservedTrial.preserved === false) {
+        if (statePreservedTrial.reason === "twin_capture_failed") stateTwinFailures += 1;
+        // digest_mismatch still fails the rate (preservedN) without counting as twinCaptureFailures
       }
     }
 
@@ -1116,7 +1162,9 @@ async function main() {
                 completedClean: pt.filter((t) => t.completedClean).length,
                 outcomeUnknown: pt.filter((t) => t.outcomeUnknown).length,
                 statePreservedEligible: pt.filter((t) => t.statePreserved != null).length,
-                statePreservedTrue: pt.filter((t) => t.statePreserved === true).length,
+                statePreservedTrue: pt.filter(
+                  (t) => t.statePreserved === true || t.statePreserved?.preserved === true
+                ).length,
                 expectOutcomeUnknown:
                   p === "after_intent_before_call" || p === "during_call",
                 inCompletedOuterDenominator:
@@ -1137,9 +1185,11 @@ async function main() {
           denominator: stateEligible,
           preserved: statePreserved,
           twinCaptureFailures: stateTwinFailures,
+          digestMismatches: trials.filter((t) => t.statePreserved?.reason === "digest_mismatch")
+            .length,
           midFlightExcluded: midFlight.length,
           outerIncompleteExcluded: completionEligible.length - stateEligible,
-          note: "Eligible = outer-phase trials that completedClean (and, when enabled, got a no-crash twin). Mid-flight kills have no clean final state to compare — excluded from this denominator, still counted in writeKillTrials. Compare is exact step+result digest equality vs the twin.",
+          note: "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed — often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition.",
         },
         waitApproval: {
           denominator: AWAIT_TRIALS,
@@ -1203,9 +1253,11 @@ async function main() {
           eligibleN: stateEligible,
           preservedN: statePreserved,
           twinCaptureFailures: stateTwinFailures,
+          digestMismatches: trials.filter((t) => t.statePreserved?.reason === "digest_mismatch")
+            .length,
           rate: stateEligible > 0 ? statePreserved / stateEligible : null,
           meaning:
-            "claim-path §1 — exact digest equality of step slices (index/tool/op/ok/status/error/result body) and program result after outer-phase resume vs a per-trial no-crash twin with the same plan args. Mid-flight phases excluded (see trialAccounting). Aligns with Node compareProgramStepStateEffect",
+            "claim-path §1 — exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting).",
         },
         waitApproval: {
           measured: AWAIT_TRIALS > 0,

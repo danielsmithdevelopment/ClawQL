@@ -28,6 +28,30 @@ Lab shape: `FLEET_PHASED_N=750` write-kill + `FLEET_PHASED_AWAIT_TRIALS=250` (ov
 
 **Claim authorized only if clean:** step-level checkpointed durable execution, with stated limits (interrupted read/model re-request once; mid-flight writes → person; **not** mid-step unmodified agents). See [durable-execution-claim-path](../../gtm/durable-execution-claim-path.md).
 
+### N≈1000 lab — fail report (criteria unchanged; snapshot while run continues)
+
+Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n1000-claim-path.json) (`status=partial` until write-kill + await finish). **Frozen criteria above are not loosened.** Snapshot at ~370/750 write-kill (await not started):
+
+| Gate                   | Result (so far)                         | Cause |
+| ---------------------- | --------------------------------------- | ----- |
+| Duplicates             | **PASS** 0                              | — |
+| Journal divergence     | **PASS** 0                              | — |
+| Write steps rerun      | **PASS** 0                              | — |
+| Resume deadline        | **FAIL** ≥4 misses                      | Known celld availability: survivor `SELF-FENCE` (code 3) → rebuild inside resume clock; `resumeMs` can run to minutes (e.g. trial 132 ≈904s). Rate ~1% so far, in line with stock board **0.9%** deadline / **0.6%** fence — not a fluke. |
+| Completed (outer)      | **FAIL** ~183/185                       | **Both** outer incompletes are availability/harness, not divergent program state: (1) trial **132** `before_intent` — `resumeDeadlineMiss` after fence ~130; (2) trial **276** `before_intent` — `pause failed: fetch failed` after fence ~270. `after_call_before_journal` still **92/92** clean. |
+| State preserved        | **FAIL** rate &lt;1 (1 miss in eligible) | **Classified: `twin_capture_failed`, not digest mismatch.** Resumed journal was not shown to differ; the no-crash twin never completed (twin shares the same fleet — fences can kill the capture). Still counts as fail under frozen criteria. |
+| Wait approval          | pending                                 | Arm not started |
+| Mid-flight honesty     | mostly                                  | Some mid-flight trials miss `outcome_unknown` when resume deadline misses first — same availability storm |
+
+**Do not just re-run the same board.** ~0.9% self-fence matches the published stock availability cost; with **zero deadline misses** as a gate, the same failure will recur on unchanged celld.
+
+**Next-run options (pick one before starting; write criteria first):**
+
+1. **Fix celld first (preferred if keeping zero-deadline).** Land pending celld availability work (bounded lease sweep, alive vs ready health, pause-aware clocks), then re-run **the same frozen criteria**. This fail stays published.
+2. **Split correctness vs availability (honest only if fixed in advance).** New board criteria, written before the run: correctness = zero dups, zero divergence, zero write reruns, outer completed 1.0, statePreserved digest rate 1.0 (with twin retry), await okRate 1.0; availability = report fence rate + deadline-miss rate with upper bound (as the published Tier C claim already does at 0.6% / 0.9%). Keep **this failed zero-deadline run** published next to it. Reasoning: mirrors existing claim structure; does not pretend availability is correctness.
+
+**Harness follow-ups already in flight for the next run (not a criteria change):** classify `statePreserved.reason` as `digest_match` \| `digest_mismatch` \| `twin_capture_failed`; make twin capture **retry-safe** (several attempts + rebuild) so a fence during twin does not look like a state mutation.
+
 ## Scoped Tier C claim (measured — stock R2)
 
 > Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.
