@@ -54,7 +54,7 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 | Class                    | Meaning                          | Counts as                                                                                                                                        |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Correctness failure**  | A **wrong** outcome              | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`)                       |
-| **Availability failure** | **No** outcome in time / capture | resume deadline miss; pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
+| **Availability failure** | **No** outcome in **wall-clock** time / capture | resume deadline miss (**wall clock, recovery inclusive**); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
 | **Outer completion**     | Reported overall                 | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                     |
 
 **Pass gates (frozen for v2 — do not loosen after results):**
@@ -62,13 +62,13 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 | Gate                     | Pass iff                                                              | Note                                                                                                            |
 | ------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Correctness**          | `gates.correctness.failures === 0`                                    | Zero wrong outcomes across write-kill + await                                                                   |
-| **Availability ceiling** | `gates.availability.failureRate ≤ 0.02` (2%)                          | Denominator = all write-kill + await trials (`overallN`). Consistent with published ~1.5%-class disclosure band |
-| **Availability tail**    | Evidence reports `resumeMs.p99`, `resumeMs.max`, and `recoveryMs.p99` | A 904s resume must stay visible — not absorbed into a single miss count                                         |
+| **Availability ceiling** | `gates.availability.failureRate ≤ 0.02` (2%)                          | Denominator = all write-kill + await trials (`overallN`). Consistent with published ~1.5%-class disclosure band. Deadline / “in time” = **wall clock including orchestrator recovery** — a 15-minute stall is a miss |
+| **Availability tail**    | Evidence reports `resumeMs.p99`/`max`, `recoveryMs.p99`/`max`, and `resumeActiveMs` | **Reported without a pass/fail ceiling.** Diagnostic split only: wall `resumeMs` = active + recovery. A 904s stall must stay visible and must count toward the rate gate when it exceeds the resume deadline |
 | **Outer completion**     | Reported with per-miss class                                          | Informational for the claim; misses classified, not required to be 0 if they are availability                   |
-| **Wait approval**        | Wrong-write → correctness; no survive/complete in time → availability | Same split                                                                                                      |
+| **Wait approval**        | Wrong-write → correctness; no survive/complete in time → availability | Same split; “in time” is wall clock                                                                             |
 | **Board ok**             | Correctness zero **and** availability ≤ 2%                            | `status=measured` only when both arms finish                                                                    |
 
-**Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates, ceiling 2%, resume p99/max). Still not mid-step unmodified agents. Upstream celld lease renew / lease-sweep / alive-vs-ready remain parallel product work. Harness **pause-aware deadline** (default on) freezes the resume deadline during orchestrator recovery while wall `resumeMs` + `recoveryMs` tails stay visible.
+**Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates ≤2%; resume/recovery p99/max reported, no separate tail ceiling). Still not mid-step unmodified agents. Parallel celld product work (not a v2 gate): lease renew / lease-sweep / alive-vs-ready / **pause-aware clocks** (host pause/suspend — wall time jumps while the machine was not running; distinct from orchestrator recovery). Do **not** freeze the resume deadline during `ensureSurvivor`/rebuild — that would quietly loosen the availability criterion.
 
 ## Scoped Tier C claim (measured — stock R2)
 
