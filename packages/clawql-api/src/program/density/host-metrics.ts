@@ -163,16 +163,18 @@ known_total = ${knownTotalFiles == null ? "None" : Number(knownTotalFiles)}
 if not root.is_dir():
     print("null"); sys.exit(0)
 # Reservoir / stride sample without sorting millions of paths.
+# Fair board uses bag_*.json; Infinity-matched density runtime uses dens_*.json.
 paths = []
 total_seen = 0
-for p in root.glob("bag_*.json"):
-    total_seen += 1
-    if len(paths) < sample_n:
-        paths.append(p)
-    else:
-        # periodic replace to spread across the directory walk
-        if total_seen % max(1, total_seen // sample_n) == 0:
-            paths[total_seen % sample_n] = p
+for pattern in ("bag_*.json", "dens_*.json"):
+    for p in root.glob(pattern):
+        total_seen += 1
+        if len(paths) < sample_n:
+            paths.append(p)
+        else:
+            # periodic replace to spread across the directory walk
+            if total_seen % max(1, total_seen // sample_n) == 0:
+                paths[total_seen % sample_n] = p
 total_files = known_total if known_total is not None else total_seen
 if total_files == 0 or not paths:
     print(0); sys.exit(0)
@@ -258,15 +260,19 @@ from pathlib import Path
 root = Path(${JSON.stringify(bagDir)})
 n = 0
 # Cap full-dir eviction — prefer sample paths for large boards.
-for i, p in enumerate(root.glob("bag_*.json")):
-    if i >= 5000:
+# Include dens_*.json (Infinity-matched density bags) alongside bag_*.json.
+for pattern in ("bag_*.json", "dens_*.json"):
+    for p in root.glob(pattern):
+        if n >= 5000:
+            break
+        fd = os.open(p, os.O_RDONLY)
+        try:
+            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+            n += 1
+        finally:
+            os.close(fd)
+    if n >= 5000:
         break
-    fd = os.open(p, os.O_RDONLY)
-    try:
-        os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
-        n += 1
-    finally:
-        os.close(fd)
 print(n)
 `;
     const res = spawnSync("python3", ["-c", py], { encoding: "utf8", timeout: 300_000 });

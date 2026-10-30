@@ -1,0 +1,148 @@
+{
+  "kind": "infinity-clawql-offloaded-tradeoff-v1",
+  "measuredAt": "2026-10-30T12:43:09.407Z",
+  "publishable": false,
+  "host": {
+    "hostname": "cursor",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "memTotalKiB": 16387280,
+    "cpuModel": "Intel(R) Xeon(R) Processor",
+    "hypervisor": "KVM",
+    "hostKind": "cloud-agent-kvm-vm",
+    "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
+    "storage": "ephemeral pod disk (bind-mounted workspace)",
+    "publishable": false,
+    "note": "Cloud-agent VM (KVM). Headline numbers from this host stay publishable:false; use for harness debugging. Publish from Pi / bare-metal when available."
+  },
+  "contract": {
+    "id": "infinity-agent-scale-matched-v2",
+    "turns": 20,
+    "note": "Offloaded dens_*.json bags after Infinity-matched unique-content turns. Wake = read + parse + restore into DensityConversationRuntime, then re-park. Cold = posix_fadvise DONTNEED on the timed sample before wake. publishable:false on this KVM cloud-agent host."
+  },
+  "population": {
+    "agentsParked": 500,
+    "wakeSampleSize": 200,
+    "wakeOrderRepetitions": 3,
+    "diskBytesPerAgent": 67482,
+    "diskBytesTotal": 33741000,
+    "bagDir": "/tmp/clawql-offloaded-tradeoff/dens-1793364187791"
+  },
+  "pageCache": {
+    "afterParkKiB": 34000,
+    "afterParkKiBPerAgent": 68,
+    "afterColdEvictKiB": 20570,
+    "method": "mincore sample of dens_*.json (host-metrics); cold residual = after sample DONTNEED only"
+  },
+  "wake": {
+    "warmMs": {
+      "p50": 0.095727,
+      "p99": 0.267995,
+      "n": 1200
+    },
+    "coldMs": {
+      "p50": 0.200496,
+      "p99": 0.963629,
+      "n": 1200
+    },
+    "byOrder": [
+      {
+        "order": "warm_then_cold",
+        "repetition": 0,
+        "warm": {
+          "p50": 0.103644,
+          "p99": 0.178323,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.178844,
+          "p99": 0.718982,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 0,
+        "warm": {
+          "p50": 0.119709,
+          "p99": 0.166543,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.262705,
+          "p99": 0.944988,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      },
+      {
+        "order": "warm_then_cold",
+        "repetition": 1,
+        "warm": {
+          "p50": 0.070237,
+          "p99": 0.115238,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.178424,
+          "p99": 0.698029,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 1,
+        "warm": {
+          "p50": 0.093907,
+          "p99": 0.135628,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.174804,
+          "p99": 0.626386,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      },
+      {
+        "order": "warm_then_cold",
+        "repetition": 2,
+        "warm": {
+          "p50": 0.092456,
+          "p99": 0.267995,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.20324,
+          "p99": 0.744415,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      },
+      {
+        "order": "cold_then_warm",
+        "repetition": 2,
+        "warm": {
+          "p50": 0.094406,
+          "p99": 0.178488,
+          "n": 200
+        },
+        "cold": {
+          "p50": 0.204957,
+          "p99": 0.963629,
+          "n": 200
+        },
+        "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+      }
+    ],
+    "coldEviction": "posix_fadvise_DONTNEED_sample: advised 200 files"
+  },
+  "rss": {
+    "afterParkKiB": 203228,
+    "idsOnlySlopeKiBPerAgent": 135.368
+  },
+  "reading": "Offloaded trade-off: ~67482 B disk/agent; page cache ≈ 68 KiB/agent after park; warm wake p50=0.095727 ms p99=0.267995 ms; cold wake p50=0.200496 ms p99=0.963629 ms. Pair with Infinity serverless/external-store, not in-memory agent_scale. No win copy."
+}
