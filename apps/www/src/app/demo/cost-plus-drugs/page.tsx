@@ -4,7 +4,7 @@ import { pageMetadata } from '@/lib/seo'
 export const metadata = pageMetadata({
   title: 'Cost Plus Drugs demo',
   description:
-    'ClawQL governance demo for Cost Plus Drugs: live public pricing MCP, digest-bound mock refill approval, BAA-aware multi-model routing, token-efficient search, and audit trail. Not medical advice.',
+    'Independent ClawQL governance demo (not affiliated with Cost Plus Drugs): live public pricing MCP, digest-bound mock refill approval, BAA-aware multi-model routing, token-efficient search, and hash-chained audit. Not medical advice.',
   path: '/demo/cost-plus-drugs',
 })
 
