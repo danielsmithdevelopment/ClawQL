@@ -28,6 +28,9 @@
  *                                    correctness_availability_v2 (split gates; see durability STATUS)
  *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
  *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
+ *   FLEET_PHASED_PAUSE_AWARE_DEADLINE 1=freeze resume deadline during orchestrator
+ *                                    ensureSurvivor/rebuild (default 1); wall resumeMs
+ *                                    still includes recovery so tails stay visible
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
@@ -111,6 +114,8 @@ const AVAIL_CEILING = Math.min(
   1,
   Math.max(0, Number(process.env.FLEET_PHASED_AVAIL_CEILING || 0.02))
 );
+/** Freeze deadline clock during orchestrator recovery (default on). */
+const PAUSE_AWARE_DEADLINE = process.env.FLEET_PHASED_PAUSE_AWARE_DEADLINE !== "0";
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -184,6 +189,21 @@ async function waitPortFree(port, attempts = 40, delayMs = 100) {
     if (free) return;
     await sleep(delayMs);
   }
+}
+
+/**
+ * Elapsed time charged against the resume deadline.
+ * When pause-aware, orchestrator recovery (ensureSurvivor/rebuild) is excluded —
+ * that cost stays in recoveryMs / wall resumeMs so multi-minute stalls remain visible.
+ */
+function deadlineElapsedMs(resumeStart, recoveryMs = 0) {
+  const wall = Date.now() - resumeStart;
+  if (!PAUSE_AWARE_DEADLINE) return wall;
+  return Math.max(0, wall - Math.max(0, recoveryMs));
+}
+
+function withinResumeDeadline(resumeStart, recoveryMs = 0) {
+  return deadlineElapsedMs(resumeStart, recoveryMs) < RESUME_DEADLINE_MS;
 }
 
 function percentile(sorted, p) {
@@ -506,7 +526,8 @@ async function main() {
 
   /**
    * Ensure survivor is alive for resume. Counts self-fence / restart; time spent
-   * here is charged to the caller's resume clock (recovery ⊆ resumeMs).
+   * here goes to recoveryMs. Wall resumeMs still includes it (tails stay visible);
+   * the resume *deadline* freezes during this work when PAUSE_AWARE_DEADLINE is on.
    */
   async function ensureSurvivor(name, counters) {
     const n = nodes[name];
@@ -693,15 +714,16 @@ async function main() {
     const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
 
-    // Resume clock includes ownership transfer (/program/health) + any survivor
-    // restart + the resume HTTP call (availability cost visible in p99/p999).
+    // Wall resume clock includes ownership transfer + survivor restart + resume HTTP.
+    // Deadline clock is pause-aware: ensureSurvivor/rebuild time is not charged against
+    // RESUME_DEADLINE_MS (recoveryMs / wall resumeMs still show the stall).
     const resumeStart = Date.now();
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
       await ensureSurvivor(survivor, avail);
     }
 
     // Smoke parity: wait until survivor can route ProgramCellDO before resume.
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart, avail.recoveryMs)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
@@ -711,7 +733,7 @@ async function main() {
     }
 
     let resume = { ok: false, status: 0, body: null, fetchError: true };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart, avail.recoveryMs)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
@@ -741,12 +763,14 @@ async function main() {
       (resume.status === 404 && resume.body?.error === "not_found") ||
       (resume.status && resume.status !== 500 && !resume.fetchError)
     )) {
-      // Deadline miss if we never got a definitive program response.
+      // Deadline miss if we never got a definitive program response within the
+      // pause-aware budget (orchestrator recovery already excluded).
       if (!resume.ok && (resume.fetchError || resume.status === 500 || resume.status === 0)) {
         avail.resumeDeadlineMiss = true;
       }
     }
     const resumeMs = Date.now() - resumeStart;
+    const resumeActiveMs = deadlineElapsedMs(resumeStart, avail.recoveryMs);
 
     const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
     const writeCount = ledger.body?.count || 0;
@@ -958,6 +982,7 @@ async function main() {
       failureClass,
       failureReason,
       resumeMs,
+      resumeActiveMs,
       recoveryMs: avail.recoveryMs,
       survivorSelfFence: avail.survivorSelfFence,
       survivorRestart: avail.survivorRestart,
@@ -1048,7 +1073,7 @@ async function main() {
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
       await ensureSurvivor(survivor, avail);
     }
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart, avail.recoveryMs)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
@@ -1058,7 +1083,7 @@ async function main() {
     }
 
     let mid = { ok: false, body: null };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart, avail.recoveryMs)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
@@ -1086,7 +1111,7 @@ async function main() {
     });
 
     let done = { ok: false, body: null };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart, avail.recoveryMs)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
         await ensureSurvivor(survivor, avail);
       }
@@ -1121,6 +1146,7 @@ async function main() {
         ? "await_not_survived"
         : "await_not_completed_in_time";
     }
+    const awaitResumeMs = Date.now() - resumeStart;
     awaitTrials.push({
       a,
       ok,
@@ -1130,7 +1156,8 @@ async function main() {
       failureClass: awaitFailureClass,
       failureReason: awaitFailureReason,
       resumeDeadlineMiss: avail.resumeDeadlineMiss,
-      resumeMs: Date.now() - resumeStart,
+      resumeMs: awaitResumeMs,
+      resumeActiveMs: deadlineElapsedMs(resumeStart, avail.recoveryMs),
       recoveryMs: avail.recoveryMs,
     });
 
@@ -1313,6 +1340,7 @@ async function main() {
       ok: SCORE_MODE === "correctness_availability_v2" ? okV2 : okLegacy,
       status: complete ? "measured" : "partial",
       scoreMode: SCORE_MODE,
+      pauseAwareDeadline: PAUSE_AWARE_DEADLINE,
       gates,
       n: N,
       trialsCompleted: trials.length,

@@ -68,7 +68,7 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 | **Wait approval**        | Wrong-write → correctness; no survive/complete in time → availability | Same split                                                                                                      |
 | **Board ok**             | Correctness zero **and** availability ≤ 2%                            | `status=measured` only when both arms finish                                                                    |
 
-**Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates, ceiling 2%, resume p99/max). Still not mid-step unmodified agents. Celld lease-sweep / alive-vs-ready / pause-aware clocks remain parallel product work.
+**Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates, ceiling 2%, resume p99/max). Still not mid-step unmodified agents. Upstream celld lease renew / lease-sweep / alive-vs-ready remain parallel product work. Harness **pause-aware deadline** (default on) freezes the resume deadline during orchestrator recovery while wall `resumeMs` + `recoveryMs` tails stay visible.
 
 ## Scoped Tier C claim (measured — stock R2)
 
