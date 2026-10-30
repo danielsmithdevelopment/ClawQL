@@ -6,7 +6,7 @@
     "hostname": "cursor",
     "hostKind": "cloud-agent-kvm-vm",
     "publishable": true,
-    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later.",
+    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later. Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU.",
     "platform": "linux",
     "arch": "x64",
     "node": "v24.22.1",
@@ -23,7 +23,8 @@
     "storage": "ephemeral pod disk (bind-mounted workspace)",
     "dmiProductName": null,
     "dmiSysVendor": null,
-    "kernel": "Linux version 6.12.94+"
+    "kernel": "Linux version 6.12.94+",
+    "cpuLikelyMicroarch": "Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU."
   },
   "cgroup": {
     "path": "/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g",
@@ -243,7 +244,9 @@
     "latencyGatedLastFitAgents": 77500,
     "rssKiBPerAgent": 105.303,
     "rule": "same_latency_gate_both_systems",
-    "waveStep": 2500
+    "waveStep": 2500,
+    "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity.",
+    "metric": "matched_history_memory_fit_under_8g"
   },
   "forcedReclaim": {
     "clawql": "--expose-gc + multi-pass gc() between waves; --max-old-space-size=8192",
@@ -269,5 +272,59 @@
         "p99Ms": 4.045532
       }
     }
-  }
+  },
+  "frozenCriteria": {
+    "id": "infinity-clawql-8g-history-density-v1",
+    "frozenAt": "2026-10-30T17:50:00Z",
+    "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity.",
+    "arms": {
+      "infinity": "agent_scale unique-content v2; full scripted runtime round-trip per turn",
+      "clawql": "DensityConversationRuntime matched-shape resident history; driveTurn append harness \u2014 not full ClawQL stack"
+    },
+    "criteria": [
+      {
+        "id": "byte_parity",
+        "rule": "matched Infinity-shaped 20-turn / 100-message histories (~65 KiB JSON)"
+      },
+      {
+        "id": "unique_content",
+        "rule": "unique-per-agent tags; no cross-agent string sharing"
+      },
+      {
+        "id": "history_integrity",
+        "rule": "resident slope (or offloaded disk KiB) >= serialized history KiB"
+      },
+      {
+        "id": "fit_cap_integrity",
+        "rule": "lastFitAgents * rampSlope <= memory.max"
+      },
+      {
+        "id": "harness_lastfit_crosscheck",
+        "rule": "uncapped harness floor * 8G lastFit must fit or not be jointly quoted"
+      },
+      {
+        "id": "latency_gate",
+        "rule": "headline N = highest where turn p50 AND p99 <= 2x baseline at N=2500; same rule both systems; quote within-system ratios only"
+      },
+      {
+        "id": "forced_reclaim_disclosed",
+        "rule": "primary result includes ClawQL gc() and Infinity malloc_trim(0) between waves"
+      },
+      {
+        "id": "wave_step",
+        "rule": "2500 agents; lastFit accurate to within one step"
+      },
+      {
+        "id": "headline_n",
+        "rule": "Infinity 77500 (latency-checked at ramp lastFit); ClawQL 100000 (latency-checked; not unverified 102500)"
+      }
+    ],
+    "headline": {
+      "infinityLatencyGatedLastFit": 77500,
+      "clawqlLatencyGatedLastFit": 100000,
+      "pctMoreHistories": 29.0,
+      "metric": "RSS_at_lastFit / N"
+    }
+  },
+  "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity."
 }

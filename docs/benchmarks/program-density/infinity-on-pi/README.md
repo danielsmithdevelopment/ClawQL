@@ -13,6 +13,7 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 | vCPUs            | 4 (1 thread/core × 4 cores × 1 socket)                                |
 | CPU model name   | `Intel(R) Xeon(R) Processor` (from `/proc/cpuinfo`)                   |
 | CPUID            | GenuineIntel family 6, model 207, stepping 2; 2400 MHz; cache 320 MiB |
+| Likely microarch | **Likely** 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU |
 | DMI product name | **unavailable** — `/sys/class/dmi/id` not present on this guest       |
 | Memory           | ~15.6 GiB (`MemTotal` 16 387 280 KiB)                                 |
 | Kernel           | Linux 6.12.94+ x86_64                                                 |
@@ -32,16 +33,18 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 5. **Harness×lastFit cross-check** — uncapped harness floor × 8G lastFit must also fit, or those two numbers must not be quoted together.
 6. **Fit quality** — headline N is the highest population where per-turn latency p50 **and** p99 stay within **2×** of the low-N baseline (same rule both systems).
 
-## Headline: agents that fit under 8 GiB (latency-gated)
+## Headline: history-memory fit under 8 GiB (latency-gated)
+
+**Claim scope (say this plainly):** with **matched 20-turn histories** under the same 8 GiB cap (swap disabled), ClawQL’s **resident history store** fits about **29% more agents** than Infinity’s in-memory `agent_scale` histories. This is a **memory / history-storage** result — **not** “the full ClawQL runtime runs 29% more agents.” Infinity’s arm exercises its full scripted runtime round-trip; ClawQL’s arm is the matched-shape history harness (`DensityConversationRuntime`), not the durable/MCP production stack. A fuller ClawQL arm is welcome if Infinity’s team wants that comparison.
 
 **Lead with measured fit under the cap, not open-host slope × cap.** Extrapolating ClawQL’s open-host ~100 KiB slope undercounts fit by ~25%; Infinity’s open-host slope predicts its 8 G fit well. Under the cap ClawQL collects/compacts harder (~79 KiB/agent); Infinity barely changes (~105 KiB).
 
 Same verification rule both sides: **latency-gated lastFit** = highest N where turn latency stayed within 2× of baseline N=2 500.
 
-| System          | Latency-gated lastFit | RSS/N at that N | vs Infinity                         |
-| --------------- | --------------------- | --------------- | ----------------------------------- |
-| Infinity        | **77 500**            | **~105.3 KiB**  | —                                   |
-| ClawQL resident | **100 000**           | **~78.8 KiB**   | **~29% more agents** (100k / 77.5k) |
+| System                         | Latency-gated lastFit | RSS/N at that N | vs Infinity history fit             |
+| ------------------------------ | --------------------- | --------------- | ----------------------------------- |
+| Infinity `agent_scale`         | **77 500**            | **~105.3 KiB**  | —                                   |
+| ClawQL matched-shape resident  | **100 000**           | **~78.8 KiB**   | **~29% more histories** (100k / 77.5k) |
 
 Ramp step = 2 500, so both counts are accurate to within one wave. ClawQL’s RSS ramp recorded a further sample at **102 500** before the next wave OOM’d; that point is **not** in the headline because latency was not verified there (probing at the edge risked a V8 heap abort — a sign that 102.5k is not a stable operating point). Infinity’s latency check is at its actual ramp lastFit (77.5k).
 

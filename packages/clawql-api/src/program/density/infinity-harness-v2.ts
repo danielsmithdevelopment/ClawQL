@@ -45,6 +45,11 @@ export type HostDisclosure = {
   /** `/sys/class/dmi/id/product_name` when present; null if DMI is absent. */
   readonly dmiProductName: string | null;
   readonly dmiSysVendor: string | null;
+  /**
+   * Best-effort microarch label from CPUID when the guest hides the SKU
+   * (e.g. family 6 / model 207 → likely Emerald Rapids). Always qualified.
+   */
+  readonly cpuLikelyMicroarch: string | null;
   readonly kernel: string;
   readonly publishable: true;
   readonly note: string;
@@ -257,6 +262,14 @@ export function hostDisclosureEffect(): Effect.Effect<HostDisclosure> {
       storage: "ephemeral pod disk (bind-mounted workspace)",
       dmiProductName,
       dmiSysVendor,
+      cpuLikelyMicroarch: yield* Effect.sync(() => {
+        // Family 6 / model 207 is commonly Emerald Rapids (5th-gen Xeon) when
+        // the guest exposes a generic "Xeon Processor" model name.
+        if (cpuFamily === "6" && cpuModelId === "207") {
+          return "Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU.";
+        }
+        return null;
+      }),
       kernel: yield* Effect.sync(() => {
         try {
           return readFileSync("/proc/version", "utf8").trim().slice(0, 120);

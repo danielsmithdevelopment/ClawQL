@@ -40,6 +40,6 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 ## Pause / next focus
 
 - **This board:** pause. Shared-host deadline campaign when convenient.
-- **Infinity harness v2 (`publishable: true`, host disclosed, `memory.swap.max=0`):** headline = **latency-gated** fit under 8 GiB — Infinity **77.5k** / ClawQL **100k** (~**29%** more), RSS/N ~105 / ~79 KiB; both within 2× turn-latency of N=2.5k baseline. Forced reclaim disclosed both sides (`gc()` / `malloc_trim`). Ramp sample ClawQL 102.5k is not headline (latency not verified at edge). Open-host slopes ≈equal (~100–103 KiB) and mis-predict ClawQL’s 8 G fit. Offloaded is a separate trade-off (~1 KiB RSS + ~66 KiB disk), paired with Infinity serverless.
+- **Infinity harness v2 (`publishable: true`, host disclosed, `memory.swap.max=0`):** headline = **latency-gated matched-history memory fit** under 8 GiB — Infinity **77.5k** / ClawQL **100k** (~**29%** more histories; not full-runtime), RSS/N ~105 / ~79 KiB; both within 2× turn-latency of N=2.5k baseline. Forced reclaim disclosed both sides (`gc()` / `malloc_trim`). Ramp sample ClawQL 102.5k is not headline (latency not verified at edge). Open-host slopes ≈equal (~100–103 KiB) and mis-predict ClawQL’s 8 G fit. Offloaded is a separate trade-off (~1 KiB RSS + ~66 KiB disk), paired with Infinity serverless.
 - Pi 5 as extra column when hardware is available.
 - No win copy on shared-host deadline arms until that campaign runs.
