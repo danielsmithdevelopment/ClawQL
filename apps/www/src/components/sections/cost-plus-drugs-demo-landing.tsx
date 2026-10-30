@@ -84,8 +84,8 @@ const steps = [
   {
     title: 'Everything lands in the audit trail',
     action:
-      'Price reads, mandate park, and resume finalize append to the MCP audit ring. Durable WORM dual-write for production is planned (demo trail is hash-chained, not a compliance WORM store).',
-    result: 'Hash-chained audit entries for execute + resume (seq 1→N)',
+      'Price reads, mandate park, and resume finalize append to the MCP audit ring. With CLAWQL_WORM_ENABLED=1 the gateway dual-writes the same events to clawql-audit’s durable WORM trail (sqlite/postgres + optional S3). Offline demo JSONL is a walkthrough stand-in of that path.',
+    result: 'MCP audit ring + clawql-audit WORM dual-write (opt-in) · hash-chained seq 1→N',
   },
 ] as const
 

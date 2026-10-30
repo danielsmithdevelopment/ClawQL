@@ -14,8 +14,12 @@
  * Env:
  *   CPD_GW_PORT          default 18770
  *   MOCK_WRITE_PORT      default 9892
+ *   CPD_WORM_HTTP_PORT   default GW_PORT+1 (clawql-audit /entries)
  *   CPD_GW_KEEP=1        leave gateway + mock MCP running after success
  *   CLAWQL_HOME          isolated home (default under os.tmpdir())
+ *
+ * Boots with CLAWQL_WORM_ENABLED=1 + sqlite local dual-write (remote=memory for
+ * the smoke). Asserts clawql-audit HTTP /entries after execute + resume.
  */
 import { spawn } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -30,10 +34,13 @@ const exampleRoot = join(__dirname, "..");
 
 const GW_PORT = Number(process.env.CPD_GW_PORT || 18770);
 const MOCK_PORT = Number(process.env.MOCK_WRITE_PORT || 9892);
+const WORM_HTTP_PORT = Number(process.env.CPD_WORM_HTTP_PORT || GW_PORT + 1);
+const WORM_API_KEY = process.env.CLAWQL_AUDIT_API_KEY?.trim() || "cpd-demo-worm-key";
 const KEEP = process.env.CPD_GW_KEEP === "1";
 const home =
   process.env.CLAWQL_HOME?.trim() ||
   join(tmpdir(), `cpd-clawql-smoke-${process.pid}`);
+const wormSqlitePath = join(home, "clawql-worm.sqlite");
 
 /** @type {import('node:child_process').ChildProcess[]} */
 const children = [];
@@ -237,6 +244,16 @@ async function startGateway() {
       CLAWQL_DECLINE_BUN: "1",
       CLAWQL_CAPABILITY_SESSION_SEED: seed,
       PORT: String(GW_PORT),
+      // Production dual-write path (clawql-audit). Remote stays memory for offline smoke.
+      CLAWQL_WORM_ENABLED: "1",
+      CLAWQL_WORM_LOCAL: "sqlite",
+      CLAWQL_WORM_SQLITE_PATH: wormSqlitePath,
+      CLAWQL_WORM_REMOTE: "memory",
+      CLAWQL_WORM_RECONCILE_MS: "0",
+      CLAWQL_WORM_HTTP_PORT: String(WORM_HTTP_PORT),
+      CLAWQL_AUDIT_API_KEY: WORM_API_KEY,
+      CLAWQL_WORM_SESSION_ID: "cpd-gateway-smoke",
+      CLAWQL_WORM_DEBUG: "1",
     },
     join(home, "gateway.log")
   );
@@ -332,6 +349,26 @@ async function main() {
   });
   const auditText = await client.tool("audit", { operation: "list", limit: 20 });
 
+  // Prove clawql-audit WORM dual-write (not just the ephemeral MCP audit ring).
+  const wormRes = await fetch(`http://127.0.0.1:${WORM_HTTP_PORT}/entries`, {
+    headers: { Authorization: `ApiKey ${WORM_API_KEY}` },
+  });
+  const wormBody = await wormRes.text();
+  if (!wormRes.ok) {
+    throw new Error(`WORM /entries HTTP ${wormRes.status}: ${wormBody.slice(0, 400)}`);
+  }
+  /** @type {{ entries?: unknown[] } | unknown[]} */
+  const wormJson = JSON.parse(wormBody);
+  const wormEntries = Array.isArray(wormJson)
+    ? wormJson
+    : Array.isArray(wormJson.entries)
+      ? wormJson.entries
+      : [];
+  if (wormEntries.length < 1) {
+    throw new Error(`expected clawql-audit WORM entries after smoke, got ${wormBody.slice(0, 400)}`);
+  }
+  log(`WORM dual-write ok (${wormEntries.length} entries, sqlite=${wormSqlitePath})`);
+
   const searchRes = await fetch(
     "https://api.costplusdrugs.com/pricelist/cpd/search?term=atorvastatin&strength=20mg"
   );
@@ -343,6 +380,12 @@ async function main() {
     notMedicalAdvice: true,
     gateway: `http://127.0.0.1:${GW_PORT}/mcp`,
     clawqlHome: home,
+    worm: {
+      enabled: true,
+      sqlitePath: wormSqlitePath,
+      http: `http://127.0.0.1:${WORM_HTTP_PORT}/entries`,
+      entryCount: wormEntries.length,
+    },
     priceChars: priceText.length,
     mandate,
     resumePreview: resumeText.slice(0, 1200),

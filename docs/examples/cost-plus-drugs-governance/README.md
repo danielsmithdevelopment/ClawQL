@@ -16,7 +16,7 @@ anyone. This example shows the **next step**: governed writes across models.
 | Writes | **Mock** `place_refill_order` — no public ordering API exists              |
 | Gate   | Digest-bound **mandate** (agent cannot self-approve)                       |
 | PHI    | BAA routing — patient fields only to providers marked `baa: true`          |
-| Trail  | Hash-chained demo audit log (stand-in for MCP `audit` + clawql-audit WORM) |
+| Trail  | Offline: hash-chained demo JSONL. Live gateway smoke: MCP `audit` ring + `CLAWQL_WORM_ENABLED=1` dual-write to clawql-audit (sqlite) |
 
 Pitch in one line: _You've built the read side. Here's how agents can safely stage
 orders across every model — patient approval bound to exact drug/qty/price, PHI
