@@ -1334,6 +1334,23 @@ async function main() {
       status: complete ? "measured" : "partial",
       scoreMode: SCORE_MODE,
       gates,
+      // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
+      // loosening of deadline / denominator / ceiling is visible against this file.
+      frozenCriteria:
+        SCORE_MODE === "correctness_availability_v2"
+          ? {
+              resumeDeadlineMs: RESUME_DEADLINE_MS,
+              resumeDeadlineMeaning:
+                "wall clock including orchestrator recovery; same for write-kill and await",
+              availabilityCeiling: AVAIL_CEILING,
+              availabilityDenominator: "overallN",
+              writeKillTrials: N,
+              awaitApprovalTrials: AWAIT_TRIALS,
+              overallTrials: N + AWAIT_TRIALS,
+              tailsHavePassFailCeiling: false,
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling.",
+            }
+          : null,
       n: N,
       trialsCompleted: trials.length,
       awaitTrialsCompleted: awaitTrials.length,
