@@ -1,17 +1,17 @@
-# MinIO with Object Lock for clawql-audit WORM tests.
-# Usage:
+# S3 Object Lock integration target for clawql-audit.
+# CI uses LocalStack (public Docker Hub). Local MinIO works the same API when available.
+#
 #   docker compose -f packages/clawql-audit/docker-compose.minio-object-lock.yml up -d
-#   export CLAWQL_WORM_MINIO_ENDPOINT=http://127.0.0.1:9000
-#   npm test -w clawql-audit -- src/storage/s3-object-lock
+#   until curl -sf http://127.0.0.1:4566/_localstack/health | grep -q '"s3"'; do sleep 1; done
+#   export CLAWQL_WORM_S3_IT_ENDPOINT=http://127.0.0.1:4566
+#   export CLAWQL_WORM_S3_IT_ACCESS_KEY=test
+#   export CLAWQL_WORM_S3_IT_SECRET_KEY=test
+#   npm test -w clawql-audit -- src/storage/s3-object-lock.integration.test.ts
 services:
-  minio:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server /data --console-address ":9001"
+  localstack:
+    image: localstack/localstack:4.3.0
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      SERVICES: s3
+      DEBUG: "0"
     ports:
-      - "9000:9000"
-      - "9001:9001"
-    # Image is minimal (no curl). Wait from the host:
-    #   until curl -sf http://127.0.0.1:9000/minio/health/live; do sleep 1; done
+      - "4566:4566"

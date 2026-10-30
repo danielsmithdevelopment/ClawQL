@@ -1,16 +1,16 @@
 /**
- * Live MinIO Object Lock integration.
+ * Live S3 Object Lock integration (LocalStack in CI; MinIO locally if available).
  *
- * Skips unless CLAWQL_WORM_MINIO_ENDPOINT is set (CI service or local compose).
+ * Skips unless CLAWQL_WORM_S3_IT_ENDPOINT (or legacy CLAWQL_WORM_MINIO_ENDPOINT) is set.
  *
  *   docker compose -f packages/clawql-audit/docker-compose.minio-object-lock.yml up -d
- *   export CLAWQL_WORM_MINIO_ENDPOINT=http://127.0.0.1:9000
- *   export CLAWQL_WORM_MINIO_ACCESS_KEY=minioadmin
- *   export CLAWQL_WORM_MINIO_SECRET_KEY=minioadmin
- *   npm test -w clawql-audit -- src/storage/s3-object-lock.minio.test.ts
+ *   export CLAWQL_WORM_S3_IT_ENDPOINT=http://127.0.0.1:4566
+ *   export CLAWQL_WORM_S3_IT_ACCESS_KEY=test
+ *   export CLAWQL_WORM_S3_IT_SECRET_KEY=test
+ *   npm test -w clawql-audit -- src/storage/s3-object-lock.integration.test.ts
  *
- * Governance: used for the full protection probe (cleanup possible with bypass).
- * Compliance: dedicated bucket, 1-day retention — only asserts version-delete refusal
+ * Governance: full protection probe (cleanup with BypassGovernanceRetention when supported).
+ * Compliance: dedicated bucket, 1-day retention — asserts version-delete refusal only
  * (objects cannot be removed until retention expires; discard the bucket).
  */
 
@@ -26,11 +26,19 @@ import { afterAll, describe, expect, it } from "vitest";
 import { WORM_GENESIS_PREV_HASH, type WORMEntry } from "../entry.js";
 import { S3Backend } from "./s3.js";
 
-const endpoint = process.env.CLAWQL_WORM_MINIO_ENDPOINT?.trim();
-const accessKeyId = process.env.CLAWQL_WORM_MINIO_ACCESS_KEY?.trim() || "minioadmin";
-const secretAccessKey = process.env.CLAWQL_WORM_MINIO_SECRET_KEY?.trim() || "minioadmin";
+const endpoint =
+  process.env.CLAWQL_WORM_S3_IT_ENDPOINT?.trim() ||
+  process.env.CLAWQL_WORM_MINIO_ENDPOINT?.trim();
+const accessKeyId =
+  process.env.CLAWQL_WORM_S3_IT_ACCESS_KEY?.trim() ||
+  process.env.CLAWQL_WORM_MINIO_ACCESS_KEY?.trim() ||
+  "test";
+const secretAccessKey =
+  process.env.CLAWQL_WORM_S3_IT_SECRET_KEY?.trim() ||
+  process.env.CLAWQL_WORM_MINIO_SECRET_KEY?.trim() ||
+  "test";
 
-const describeMinio = endpoint ? describe : describe.skip;
+const describeIt = endpoint ? describe : describe.skip;
 
 async function createLockBucket(
   client: S3Client,
@@ -69,12 +77,12 @@ function entry(id: string): WORMEntry {
     backendAcks: [],
     type: "TOOL_CALL_RESULT",
     timestamp: new Date().toISOString(),
-    sessionId: "minio-object-lock",
+    sessionId: "s3-object-lock-it",
     metadata: { note: "no PHI — hash/refs only in production healthcare trails" },
   };
 }
 
-describeMinio("S3Backend Object Lock (MinIO)", () => {
+describeIt("S3Backend Object Lock (integration)", () => {
   const client = new S3Client({
     endpoint,
     region: "us-east-1",
@@ -85,11 +93,9 @@ describeMinio("S3Backend Object Lock (MinIO)", () => {
   const buckets: string[] = [];
 
   afterAll(async () => {
-    // Best-effort: governance objects may be bypass-deleted; compliance bucket left for discard.
     for (const bucket of buckets) {
       if (bucket.includes("compliance")) continue;
       try {
-        // Leave non-compliance buckets; CI ephemeral MinIO volume is discarded with the job.
         void bucket;
       } catch {
         /* ignore */
@@ -122,7 +128,6 @@ describeMinio("S3Backend Object Lock (MinIO)", () => {
     expect(proof.originalBodyUnchangedAfterOverwriteAttempt).toBe(true);
     expect(proof.plainDeleteCreatedDeleteMarker).toBe(true);
 
-    // Cleanup locked version with governance bypass (MinIO / S3).
     try {
       await client.send(
         new DeleteObjectCommand({
@@ -133,7 +138,7 @@ describeMinio("S3Backend Object Lock (MinIO)", () => {
         })
       );
     } catch {
-      /* volume discarded in CI */
+      /* container discarded with the job */
     }
   }, 60_000);
 
@@ -159,6 +164,5 @@ describeMinio("S3Backend Object Lock (MinIO)", () => {
     expect(proof.mode).toBe("COMPLIANCE");
     expect(proof.versionDeleteRefused).toBe(true);
     expect(proof.originalBodyUnchangedAfterOverwriteAttempt).toBe(true);
-    // Do not attempt BypassGovernanceRetention — compliance cannot be bypassed.
   }, 60_000);
 });

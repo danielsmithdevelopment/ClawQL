@@ -323,33 +323,39 @@ jobs:
       - name: Enforce zero ClawQL deps except clawql-merkle
         run: npm run check:standalone -w clawql-audit
 
-      - name: Start MinIO for Object Lock integration
+      - name: Build + unit test clawql-audit (incl. Object Lock simulator)
         run: |
-          # MinIO publishes to quay.io (Docker Hub pulls are denied / stale).
-          docker run -d --name clawql-audit-minio \
-            -p 9000:9000 \
-            -e MINIO_ROOT_USER=minioadmin \
-            -e MINIO_ROOT_PASSWORD=minioadmin \
-            quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
-          for _ in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
-              echo "MinIO ready"
+          npm run build -w clawql-merkle -w clawql-audit
+          # Simulator encodes version-delete refusal; S3 Object Lock IT runs next (LocalStack).
+          npx vitest run packages/clawql-merkle packages/clawql-audit \
+            --exclude '**/s3-object-lock.integration.test.ts'
+
+      - name: Start LocalStack S3 for Object Lock integration
+        run: |
+          # Official MinIO images are not anonymously pullable here (Docker Hub gone /
+          # quay.io unauthorized). LocalStack provides S3 Object Lock on Docker Hub.
+          docker run -d --name clawql-audit-localstack \
+            -p 4566:4566 \
+            -e SERVICES=s3 \
+            -e DEBUG=0 \
+            localstack/localstack:4.3.0
+          for _ in $(seq 1 90); do
+            if curl -sf http://127.0.0.1:4566/_localstack/health | grep -E '"s3": "(available|running)"' >/dev/null; then
+              echo "LocalStack S3 ready"
               exit 0
             fi
             sleep 1
           done
-          echo "MinIO failed to become ready" >&2
-          docker logs clawql-audit-minio >&2 || true
+          echo "LocalStack failed to become ready" >&2
+          docker logs clawql-audit-localstack >&2 || true
           exit 1
 
-      - name: Build + unit + MinIO Object Lock tests
+      - name: S3 Object Lock integration tests (LocalStack)
         env:
-          CLAWQL_WORM_MINIO_ENDPOINT: http://127.0.0.1:9000
-          CLAWQL_WORM_MINIO_ACCESS_KEY: minioadmin
-          CLAWQL_WORM_MINIO_SECRET_KEY: minioadmin
-        run: |
-          npm run build -w clawql-merkle -w clawql-audit
-          npx vitest run packages/clawql-merkle packages/clawql-audit
+          CLAWQL_WORM_S3_IT_ENDPOINT: http://127.0.0.1:4566
+          CLAWQL_WORM_S3_IT_ACCESS_KEY: test
+          CLAWQL_WORM_S3_IT_SECRET_KEY: test
+        run: npx vitest run packages/clawql-audit/src/storage/s3-object-lock.integration.test.ts
 
   # Streams celld evidence / smoke / full-stack live in streams-celld.yml
   # (path-filtered — not on every PR). See .github/workflows/streams-celld.yml.

@@ -14,7 +14,7 @@ Tamper-evident audit trail for AI agent deployments, with optional **storage-lev
 
 Object Lock requires a versioned bucket created with lock enabled. A PUT to an existing key creates a **new version**; the locked version stays. Plain `DeleteObject` adds a delete marker; `DeleteObject(VersionId=…)` on a locked version is refused.
 
-**Providers:** Amazon S3 and MinIO support the S3 Object Lock API. **Cloudflare R2 does not** — use R2’s own bucket-lock controls separately, or set `CLAWQL_WORM_S3_OBJECT_LOCK=0` for R2 remotes.
+**Providers:** Amazon S3 and MinIO support the S3 Object Lock API (CI verifies against LocalStack S3). **Cloudflare R2 does not** — use R2’s own bucket-lock controls separately, or set `CLAWQL_WORM_S3_OBJECT_LOCK=0` for R2 remotes.
 
 **Privacy:** Prefer hashes / references in audit payloads (especially healthcare). Write-once retention can conflict with erasure duties if raw personal data is stored in the trail.
 
