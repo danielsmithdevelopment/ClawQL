@@ -1,0 +1,1142 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-30T20:30:18.943Z",
+  "ok": false,
+  "status": "measured",
+  "n": 750,
+  "trialsCompleted": 750,
+  "awaitTrialsCompleted": 250,
+  "awaitTrialsN": 250,
+  "overallN": 1000,
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 10000,
+  "resumeDeadlineMs": 60000,
+  "trialAccounting": {
+    "writeKillTrials": 750,
+    "awaitApprovalTrials": 250,
+    "overallTrials": 1000,
+    "filteredOut": 0,
+    "byPhase": {
+      "before_intent": {
+        "n": 186,
+        "completedClean": 183,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 183,
+        "statePreservedTrue": 183,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      },
+      "after_intent_before_call": {
+        "n": 190,
+        "completedClean": 0,
+        "outcomeUnknown": 186,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "during_call": {
+        "n": 187,
+        "completedClean": 0,
+        "outcomeUnknown": 179,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "after_call_before_journal": {
+        "n": 187,
+        "completedClean": 186,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 186,
+        "statePreservedTrue": 185,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      }
+    },
+    "completed": {
+      "denominatorAllPhases": 750,
+      "cleanCompletions": 369,
+      "denominatorOuterPhases": 373,
+      "cleanCompletionsOuter": 369,
+      "midFlightExcludedFromOuter": 377,
+      "note": "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped."
+    },
+    "statePreserved": {
+      "denominator": 369,
+      "preserved": 368,
+      "twinCaptureFailures": 1,
+      "midFlightExcluded": 377,
+      "outerIncompleteExcluded": 4,
+      "note": "Eligible = outer-phase trials that completedClean (and, when enabled, got a no-crash twin). Mid-flight kills have no clean final state to compare — excluded from this denominator, still counted in writeKillTrials. Compare is exact step+result digest equality vs the twin."
+    },
+    "waitApproval": {
+      "denominator": 250,
+      "ok": 70,
+      "note": "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator."
+    },
+    "stepsRepeated": {
+      "denominator": 750,
+      "writeStepsRerun": 0,
+      "note": "Sum of pets-ledger duplicates across all write-kill trials (target 0)."
+    }
+  },
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.004,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 365,
+      "rate": 0.4866666666666667,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 4,
+      "survivorSelfFenceRate": 0.005333333333333333,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 7,
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 369,
+      "rateAllPhases": 0.492,
+      "rateOuterPhases": 0.9892761394101877,
+      "outerPhaseN": 373,
+      "meaning": "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": true,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": true,
+      "compareMode": "digest_equality",
+      "eligibleN": 369,
+      "preservedN": 368,
+      "twinCaptureFailures": 1,
+      "rate": 0.997289972899729,
+      "meaning": "claim-path §1 — exact digest equality of step slices (index/tool/op/ok/status/error/result body) and program result after outer-phase resume vs a per-trial no-crash twin with the same plan args. Mid-flight phases excluded (see trialAccounting). Aligns with Node compareProgramStepStateEffect"
+    },
+    "waitApproval": {
+      "measured": true,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": true,
+      "n": 250,
+      "survivedRate": 0.28,
+      "completedAfterApproveRate": 0.28,
+      "okRate": 0.28,
+      "meaning": "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval)"
+    }
+  },
+  "awaitTrials": [
+    {
+      "a": 0,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14396
+    },
+    {
+      "a": 1,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14537
+    },
+    {
+      "a": 2,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11178
+    },
+    {
+      "a": 3,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14320
+    },
+    {
+      "a": 4,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11309
+    },
+    {
+      "a": 5,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11661
+    },
+    {
+      "a": 6,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14244
+    },
+    {
+      "a": 7,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11643
+    },
+    {
+      "a": 8,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14411
+    },
+    {
+      "a": 9,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14106
+    },
+    {
+      "a": 10,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11715
+    },
+    {
+      "a": 11,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14521
+    },
+    {
+      "a": 12,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11652
+    },
+    {
+      "a": 13,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15017
+    },
+    {
+      "a": 14,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14268
+    },
+    {
+      "a": 15,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14470
+    },
+    {
+      "a": 16,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14554
+    },
+    {
+      "a": 17,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14801
+    },
+    {
+      "a": 18,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 12180
+    },
+    {
+      "a": 19,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15399
+    },
+    {
+      "a": 20,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 12009
+    },
+    {
+      "a": 21,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13679
+    },
+    {
+      "a": 22,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11651
+    },
+    {
+      "a": 23,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15198
+    },
+    {
+      "a": 24,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13877
+    },
+    {
+      "a": 25,
+      "ok": false,
+      "survived": false,
+      "completedAfterApprove": false,
+      "writeCount": 0,
+      "resumeMs": 909142
+    },
+    {
+      "a": 26,
+      "ok": false,
+      "survived": false,
+      "completedAfterApprove": false,
+      "detail": "park failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "a": 27,
+      "ok": false,
+      "survived": false,
+      "completedAfterApprove": false,
+      "detail": "park failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "a": 28,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15117
+    },
+    {
+      "a": 29,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15302
+    },
+    {
+      "a": 30,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14500
+    },
+    {
+      "a": 31,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11453
+    },
+    {
+      "a": 32,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14746
+    },
+    {
+      "a": 33,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15071
+    },
+    {
+      "a": 34,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14587
+    },
+    {
+      "a": 35,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14290
+    },
+    {
+      "a": 36,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 12650
+    },
+    {
+      "a": 37,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 12554
+    },
+    {
+      "a": 38,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13320
+    },
+    {
+      "a": 39,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13652
+    },
+    {
+      "a": 40,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15155
+    },
+    {
+      "a": 41,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13884
+    },
+    {
+      "a": 42,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13624
+    },
+    {
+      "a": 43,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 17368
+    },
+    {
+      "a": 44,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15633
+    },
+    {
+      "a": 45,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14952
+    },
+    {
+      "a": 46,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15485
+    },
+    {
+      "a": 47,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13462
+    },
+    {
+      "a": 48,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13481
+    },
+    {
+      "a": 49,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15721
+    }
+  ],
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.004,
+  "totalSurvivorSelfFences": 4,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 7,
+  "claim": "Across 750 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.4%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 0.5% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
+  "resumeMs": {
+    "p50": 12372,
+    "p95": 13962,
+    "p99": 34528,
+    "p999": 2720432,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 12,
+  "lease": {
+    "celldTtlMs": 10000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "before_intent": {
+      "n": 186,
+      "ok": 183,
+      "failures": 3,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 183,
+      "completedCleanRate": 0.9838709677419355,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 1,
+      "survivorSelfFenceRate": 0.005376344086021506,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 2,
+      "resumeMs": {
+        "p50": 12621,
+        "p95": 13803,
+        "p99": 903996,
+        "p999": 907016
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_intent_before_call": {
+      "n": 190,
+      "ok": 186,
+      "failures": 4,
+      "duplicates": 0,
+      "outcomeUnknown": 186,
+      "outcomeUnknownRate": 0.9789473684210527,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 1,
+      "survivorSelfFenceRate": 0.005263157894736842,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 3,
+      "resumeMs": {
+        "p50": 12708,
+        "p95": 14237,
+        "p99": 937940,
+        "p999": 2720432
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "during_call": {
+      "n": 187,
+      "ok": 179,
+      "failures": 8,
+      "duplicates": 0,
+      "outcomeUnknown": 179,
+      "outcomeUnknownRate": 0.9572192513368984,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 1,
+      "resumeMs": {
+        "p50": 9591,
+        "p95": 11091,
+        "p99": 34528,
+        "p999": 897164
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_call_before_journal": {
+      "n": 187,
+      "ok": 186,
+      "failures": 1,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 186,
+      "completedCleanRate": 0.9946524064171123,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 2,
+      "survivorSelfFenceRate": 0.0106951871657754,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 1,
+      "resumeMs": {
+        "p50": 13086,
+        "p95": 14049,
+        "p99": 15487,
+        "p999": 892943
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    }
+  },
+  "trialFailures": [
+    {
+      "i": 81,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 586218,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 82,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 3050,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 132,
+      "phase": "before_intent",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 903996,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 133,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 134,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 2711,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 181,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 937940,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 182,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 3588,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 276,
+      "phase": "before_intent",
+      "ok": false,
+      "detail": "pause failed: {\"error\":\"fetch failed\"}"
+    },
+    {
+      "i": 325,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 2720432,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 326,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 34056,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 626,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 1,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 892943,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 627,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 3523,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 678,
+      "phase": "before_intent",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 907016,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 679,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 33702,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    },
+    {
+      "i": 727,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 897164,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "writesBefore": 0,
+      "resumeStatus": 0,
+      "resumeBodyStatus": null,
+      "resumeOk": null,
+      "resumeError": null
+    },
+    {
+      "i": 728,
+      "phase": "during_call",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 0,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "resumeMs": 34528,
+      "recoveryMs": 0,
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found"
+    }
+  ],
+  "availabilityIncidents": [
+    {
+      "i": 81,
+      "phase": "after_intent_before_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 586218,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 83,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 12922,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 132,
+      "phase": "before_intent",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 903996,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 135,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 8645,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 181,
+      "phase": "after_intent_before_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 937940,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 325,
+      "phase": "after_intent_before_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 2720432,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 626,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 892943,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 628,
+      "phase": "before_intent",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 13593,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 678,
+      "phase": "before_intent",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 907016,
+      "recoveryMs": 0,
+      "ok": false
+    },
+    {
+      "i": 680,
+      "phase": "after_intent_before_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 13088,
+      "recoveryMs": 0,
+      "ok": true
+    },
+    {
+      "i": 727,
+      "phase": "during_call",
+      "survivorSelfFence": false,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": true,
+      "resumeMs": 897164,
+      "recoveryMs": 0,
+      "ok": false
+    }
+  ]
+}
