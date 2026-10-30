@@ -194,8 +194,18 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, { "content-type": "application/json" });
       res.end(jsonRpcError(id, -32601, `Unknown tool: ${name}`));
     } catch (e) {
+      // Do not echo exception messages/stack to the client (CodeQL: stack-trace exposure).
+      console.error(
+        JSON.stringify({
+          ok: false,
+          mock: true,
+          event: "tools_call_error",
+          tool: name,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      );
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(jsonRpcError(id, -32000, e instanceof Error ? e.message : String(e)));
+      res.end(jsonRpcError(id, -32000, "Mock pharmacy write failed"));
     }
     return;
   }
