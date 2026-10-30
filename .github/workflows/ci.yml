@@ -325,12 +325,13 @@ jobs:
 
       - name: Start MinIO for Object Lock integration
         run: |
+          # MinIO publishes to quay.io (Docker Hub pulls are denied / stale).
           docker run -d --name clawql-audit-minio \
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
-          for _ in $(seq 1 40); do
+            quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+          for _ in $(seq 1 60); do
             if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
               echo "MinIO ready"
               exit 0
