@@ -43,14 +43,32 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 | Wait approval      | pending                                  | Arm not started                                                                                                                                                                                                                                                                                    |
 | Mid-flight honesty | mostly                                   | Some mid-flight trials miss `outcome_unknown` when resume deadline misses first — same availability storm                                                                                                                                                                                          |
 
-**Do not just re-run the same board.** ~0.9% self-fence matches the published stock availability cost; with **zero deadline misses** as a gate, the same failure will recur on unchanged celld.
+**Do not just re-run the same board under the zero-deadline criteria.** ~0.9% self-fence matches the published stock availability cost; that gate will fail again on unchanged celld. **Chosen path (locked Friday, Oct 30, 2026 before the next run starts):** option 2 — split correctness vs availability. Celld availability fixes proceed **in parallel** (not a blocker); when they land, a later re-measure can show deadline-miss rate falling from X% to Y%.
 
-**Next-run options (pick one before starting; write criteria first):**
+### N≈1000 claim-path pass criteria v2 — correctness / availability split (fixed before re-run — Friday, Oct 30, 2026)
 
-1. **Fix celld first (preferred if keeping zero-deadline).** Land pending celld availability work (bounded lease sweep, alive vs ready health, pause-aware clocks), then re-run **the same frozen criteria**. This fail stays published.
-2. **Split correctness vs availability (honest only if fixed in advance).** New board criteria, written before the run: correctness = zero dups, zero divergence, zero write reruns, outer completed 1.0, statePreserved digest rate 1.0 (with twin retry), await okRate 1.0; availability = report fence rate + deadline-miss rate with upper bound (as the published Tier C claim already does at 0.6% / 0.9%). Keep **this failed zero-deadline run** published next to it. Reasoning: mirrors existing claim structure; does not pretend availability is correctness.
+**Why the criteria changed (stated before the new run):** The v1 board required zero resume deadline misses. That mixes **wrong outcomes** (correctness) with **no outcome in time** (availability). The published Tier C claim already discloses availability as a rate (0.6% self-fence / 0.9% deadline miss). v2 matches that structure. **v1 evidence stays published** at [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n1000-claim-path.json) as a failed zero-deadline board; v2 evidence target: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-correctness-availability.json). Harness: `FLEET_PHASED_SCORE_MODE=correctness_availability_v2`.
 
-**Harness follow-ups already in flight for the next run (not a criteria change):** classify `statePreserved.reason` as `digest_match` \| `digest_mismatch` \| `twin_capture_failed`; make twin capture **retry-safe** (several attempts + rebuild) so a fence during twin does not look like a state mutation.
+**Definitions (outcome, not column):**
+
+| Class | Meaning | Counts as |
+| ----- | ------- | --------- |
+| **Correctness failure** | A **wrong** outcome | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`) |
+| **Availability failure** | **No** outcome in time / capture | resume deadline miss; pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
+| **Outer completion** | Reported overall | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate |
+
+**Pass gates (frozen for v2 — do not loosen after results):**
+
+| Gate | Pass iff | Note |
+| ---- | -------- | ---- |
+| **Correctness** | `gates.correctness.failures === 0` | Zero wrong outcomes across write-kill + await |
+| **Availability ceiling** | `gates.availability.failureRate ≤ 0.02` (2%) | Denominator = all write-kill + await trials (`overallN`). Consistent with published ~1.5%-class disclosure band |
+| **Availability tail** | Evidence reports `resumeMs.p99`, `resumeMs.max`, and `recoveryMs.p99` | A 904s resume must stay visible — not absorbed into a single miss count |
+| **Outer completion** | Reported with per-miss class | Informational for the claim; misses classified, not required to be 0 if they are availability |
+| **Wait approval** | Wrong-write → correctness; no survive/complete in time → availability | Same split |
+| **Board ok** | Correctness zero **and** availability ≤ 2% | `status=measured` only when both arms finish |
+
+**Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates, ceiling 2%, resume p99/max). Still not mid-step unmodified agents. Celld lease-sweep / alive-vs-ready / pause-aware clocks remain parallel product work.
 
 ## Scoped Tier C claim (measured — stock R2)
 

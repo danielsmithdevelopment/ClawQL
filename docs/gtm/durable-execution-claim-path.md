@@ -79,7 +79,7 @@ Extend the TLA+ spec from single writes to programs: a crashed program eventuall
 
 > ClawQL runs **step-level checkpointed durable execution**: after a crash or node failure, a program resumes from its last completed step and runs to completion, never repeating a write. Limits: interrupted reads and model calls may re-request once; mid-flight writes are `outcome_unknown` for a person; this is **not** mid-step resumption of unmodified agents.
 
-Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a position no one else can claim in full today. **Do not publish that sentence until the N≈1000 fleet evidence is clean against the pass criteria fixed in advance** in [durability STATUS](../benchmarks/durability-proof/STATUS.md) (“N≈1000 claim-path pass criteria”).
+Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a position no one else can claim in full today. **Do not publish that sentence until the N≈1000 fleet evidence is clean against the v2 pass criteria fixed in advance** in [durability STATUS](../benchmarks/durability-proof/STATUS.md) (“N≈1000 claim-path pass criteria v2 — correctness / availability split”). v1 (zero-deadline) failed and stays published; v2 separates wrong outcomes from no-outcome-in-time.
 
 ---
 

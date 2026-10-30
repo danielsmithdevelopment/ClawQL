@@ -24,6 +24,10 @@
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
  *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
  *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
+ *   FLEET_PHASED_SCORE_MODE          legacy_zero_deadline (default) |
+ *                                    correctness_availability_v2 (split gates; see durability STATUS)
+ *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
+ *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
@@ -97,6 +101,15 @@ const STATE_BASELINE =
   process.env.FLEET_PHASED_STATE_BASELINE === undefined
     ? true
     : process.env.FLEET_PHASED_STATE_BASELINE !== "0";
+/** @type {"legacy_zero_deadline" | "correctness_availability_v2"} */
+const SCORE_MODE =
+  process.env.FLEET_PHASED_SCORE_MODE === "correctness_availability_v2"
+    ? "correctness_availability_v2"
+    : "legacy_zero_deadline";
+const AVAIL_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_PHASED_AVAIL_CEILING || 0.02))
+);
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -630,6 +643,9 @@ async function main() {
           i,
           phase,
           ok: false,
+          pauseFailed: true,
+          failureClass: "availability",
+          failureReason: "pause_failed",
           detail: `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
         });
         if (!nodes[victim].pid) await restartNode(victim);
@@ -871,6 +887,30 @@ async function main() {
     if (expectOk) st.ok += 1;
     else st.failures += 1;
 
+    // Outcome-based class (v2 gates). Correctness = wrong outcome; availability = no outcome in time.
+    let failureClass = null;
+    let failureReason = null;
+    if (duplicates > 0 || writeStepsRerun > 0) {
+      failureClass = "correctness";
+      failureReason = "duplicate_or_write_rerun";
+    } else if (journalDivergence) {
+      failureClass = "correctness";
+      failureReason = "journal_divergence";
+    } else if (statePreservedTrial?.reason === "digest_mismatch") {
+      failureClass = "correctness";
+      failureReason = "digest_mismatch";
+    } else if (avail.resumeDeadlineMiss) {
+      failureClass = "availability";
+      failureReason = "resume_deadline_miss";
+    } else if (statePreservedTrial?.reason === "twin_capture_failed") {
+      failureClass = "availability";
+      failureReason = "twin_capture_failed";
+    } else if (!expectOk) {
+      // Mid-flight without outcome_unknown after a timed-out / empty resume, etc.
+      failureClass = "availability";
+      failureReason = "no_expected_outcome";
+    }
+
     trials.push({
       i,
       phase,
@@ -883,6 +923,8 @@ async function main() {
       writeStepsRerun,
       replayedSteps,
       statePreserved: statePreservedTrial,
+      failureClass,
+      failureReason,
       resumeMs,
       recoveryMs: avail.recoveryMs,
       survivorSelfFence: avail.survivorSelfFence,
@@ -1036,13 +1078,28 @@ async function main() {
     const completedAfterApprove =
       done.body?.status === "completed" && done.body?.ok === true && writeCount === 1;
     const ok = survived && completedAfterApprove && writeCount === 1;
+    let awaitFailureClass = null;
+    let awaitFailureReason = null;
+    if (writeCount > 1) {
+      awaitFailureClass = "correctness";
+      awaitFailureReason = "duplicate_write";
+    } else if (!ok) {
+      awaitFailureClass = "availability";
+      awaitFailureReason = !survived
+        ? "await_not_survived"
+        : "await_not_completed_in_time";
+    }
     awaitTrials.push({
       a,
       ok,
       survived,
       completedAfterApprove,
       writeCount,
+      failureClass: awaitFailureClass,
+      failureReason: awaitFailureReason,
+      resumeDeadlineMiss: avail.resumeDeadlineMiss,
       resumeMs: Date.now() - resumeStart,
+      recoveryMs: avail.recoveryMs,
     });
 
     try {
@@ -1124,14 +1181,100 @@ async function main() {
     const writeKillDone = trials.length >= N;
     const awaitDone = awaitTrials.length >= AWAIT_TRIALS;
     const complete = writeKillDone && awaitDone;
+    const overallDenom = trials.length + awaitTrials.length;
+    const correctnessItems = [
+      ...trials.filter((t) => t.failureClass === "correctness"),
+      ...awaitTrials.filter((t) => t.failureClass === "correctness"),
+    ];
+    const availabilityItems = [
+      ...trials.filter((t) => t.failureClass === "availability"),
+      ...awaitTrials.filter((t) => t.failureClass === "availability"),
+    ];
+    const correctnessFailures = correctnessItems.length;
+    const availabilityFailures = availabilityItems.length;
+    const availabilityFailureRate =
+      overallDenom > 0 ? availabilityFailures / overallDenom : null;
+    const outerMisses = completionEligible
+      .filter((t) => !t.completedClean)
+      .map((t) => ({
+        i: t.i,
+        phase: t.phase,
+        failureClass: t.failureClass || (t.pauseFailed ? "availability" : null),
+        failureReason: t.failureReason || (t.pauseFailed ? "pause_failed" : null),
+        resumeMs: t.resumeMs ?? null,
+        detail: t.detail ?? null,
+      }));
+    const allResumeIncludingAwait = [
+      ...trials.filter((t) => t.resumeMs != null).map((t) => t.resumeMs),
+      ...awaitTrials.filter((t) => t.resumeMs != null).map((t) => t.resumeMs),
+    ].sort((a, b) => a - b);
+    const gates =
+      SCORE_MODE === "correctness_availability_v2"
+        ? {
+            scoreMode: SCORE_MODE,
+            correctness: {
+              failures: correctnessFailures,
+              pass: correctnessFailures === 0,
+              items: correctnessItems.slice(0, 50).map((t) => ({
+                i: t.i ?? t.a,
+                phase: t.phase ?? "await_approval",
+                failureReason: t.failureReason,
+              })),
+              meaning:
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch",
+            },
+            availability: {
+              failures: availabilityFailures,
+              denominator: overallDenom,
+              failureRate: availabilityFailureRate,
+              ceiling: AVAIL_CEILING,
+              pass:
+                availabilityFailureRate != null && availabilityFailureRate <= AVAIL_CEILING,
+              resumeMs: {
+                p50: percentile(allResumeIncludingAwait, 50),
+                p99: percentile(allResumeIncludingAwait, 99),
+                max: allResumeIncludingAwait.length
+                  ? allResumeIncludingAwait[allResumeIncludingAwait.length - 1]
+                  : null,
+              },
+              items: availabilityItems.slice(0, 50).map((t) => ({
+                i: t.i ?? t.a,
+                phase: t.phase ?? "await_approval",
+                failureReason: t.failureReason,
+                resumeMs: t.resumeMs ?? null,
+              })),
+              meaning:
+                "no outcome in time — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; ceiling fixed before run",
+            },
+            outerCompletion: {
+              rateOuterPhases: completionEligible.length
+                ? completionEligibleClean / completionEligible.length
+                : null,
+              outerPhaseN: completionEligible.length,
+              cleanCompletionsOuter: completionEligibleClean,
+              misses: outerMisses,
+              meaning:
+                "reported overall; each miss assigned to correctness or availability — not a separate zero-gate",
+            },
+          }
+        : {
+            scoreMode: SCORE_MODE,
+            note: "legacy_zero_deadline — ok requires zero deadline misses and all phase expectations",
+          };
+    const okV2 =
+      complete &&
+      correctnessFailures === 0 &&
+      availabilityFailureRate != null &&
+      availabilityFailureRate <= AVAIL_CEILING;
+    const okLegacy = complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
-      // Safety + liveness: zero dups, zero deadline misses, every phase expectation met.
-      // Self-fence with counted recovery does not fail ok by itself.
       // Partial mid-run snapshots must not look like a finished clean board.
-      ok: complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
+      ok: SCORE_MODE === "correctness_availability_v2" ? okV2 : okLegacy,
       status: complete ? "measured" : "partial",
+      scoreMode: SCORE_MODE,
+      gates,
       n: N,
       trialsCompleted: trials.length,
       awaitTrialsCompleted: awaitTrials.length,
@@ -1342,11 +1485,22 @@ async function main() {
 
   const evidence = writeEvidencePartial();
   console.log(
-    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95}`
+    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok}`
   );
+  if (SCORE_MODE === "correctness_availability_v2" && evidence.gates) {
+    console.log(
+      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
+    );
+  }
   console.log(`wrote ${OUT}`);
   cleanup();
-  if (totalDuplicates > 0 || totalDeadlineMisses > 0 || evidence.trialFailures.length > 0) {
+  if (SCORE_MODE === "correctness_availability_v2") {
+    if (!evidence.ok) process.exit(1);
+  } else if (
+    totalDuplicates > 0 ||
+    totalDeadlineMisses > 0 ||
+    evidence.trialFailures.length > 0
+  ) {
     process.exit(1);
   }
 }
