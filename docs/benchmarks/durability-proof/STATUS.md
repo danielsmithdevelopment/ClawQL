@@ -40,9 +40,24 @@ Evidence: [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n10
 | Resume deadline    | **FAIL** 7 / 750 (0.93%)        | Wall-clock misses after survivor `SELF-FENCE` (4 fences, 0.53%) / rebuild inside resume clock. Long tails stay visible: trial **132** ≈904s; trial **325** ≈2720s (p999). Aligns with stock **0.9%** deadline / **0.6%** fence — not a fluke |
 | Completed (outer)  | **FAIL** 369 / 373 (98.9%)      | 4 outer incompletes — availability/harness (deadline / pause), not wrong program outcomes. Mid-flight unknown remains expected                                                                                                               |
 | State preserved    | **FAIL** 368 / 369              | **`twin_capture_failed` ×1**, not digest mismatch (`compareMode=digest_equality`). Twin shares the fleet; fences can kill the capture                                                                                                        |
-| Wait approval      | **FAIL** 70 / 250 (okRate 0.28) | Separate await arm: most trials did not survive peer kill + complete after approve under the same availability storm. Correctness still shows 0 dups / 0 divergence on the write-kill arm                                                    |
+| Wait approval      | **FAIL** 70 ok / 180 failed / 250 ran | **Arm finished** (not “70 of 250 run”). See breakdown below.                                                                                                                                                                                   |
 | Mid-flight honesty | mostly                          | Some mid-flight trials miss expected `outcome_unknown` when resume deadline misses first                                                                                                                                                     |
 | Board ok           | **FAIL**                        | Zero-deadline + outer-complete + state + await gates not all met                                                                                                                                                                             |
+
+#### Wait approval 70/250 — what the 180 failures were
+
+`okRate=0.28` is **not** an incomplete arm and **not** mostly correctness. The await loop ran all **250** trials (`status=measured`, `awaitTrialsCompleted=250`). Log output stopped at `await 74/250` then printed `done` because the **park-fail path** pushed `ok=false` and `continue`d **without `console.log`** — trials 75–250 left no log lines.
+
+| Class | Count | Notes |
+| ----- | ----- | ----- |
+| **ok** | **70** | Survived peer kill + completed after approve |
+| **Availability — `await_park_failed`** | **178** | `/program/run` never parked (`fetch failed` / node down). Includes silent trials 27–28 and **75–250** |
+| **Availability — not survived / deadline** | **2** | Logged: await 26 (`resumeMs≈909s`), await 74 |
+| **Correctness (dup / wrong write)** | **0** | No `writeCount>1` in the retained sample |
+
+Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../program-cell-fleet-kill/phased-n1000-claim-path.json).
+
+**Harness bugs (fixed before v2 await; criteria unchanged):** (1) park-fail lacked `failureClass` — under v2 scoring those 178 would have been **invisible** to the availability gate; (2) no log line; (3) no fleet rebuild, so one dead node burned the rest of the arm; (4) evidence kept only the first 50 await trials, hiding the park-fail tail. Fix in `run-board.mjs`: classify + log + `rebuildFleet` on park fail; keep all await failures + `failureByReason`. **v2 board restarted** so the running process loads the fixed harness (write-kill progress discarded; same frozen v2 criteria, fresh R2 prefix).
 
 **Kept published** as the failed zero-deadline board next to v2. **Chosen path (locked Friday, Oct 30, 2026 before the next run):** option 2 — split correctness vs availability (see below). Celld fixes proceed in parallel; a later re-measure can show deadline-miss rate falling from X% to Y%.
 

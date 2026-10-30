@@ -1039,14 +1039,36 @@ async function main() {
     });
     const parked = parkRes.body?.status === "parked" || parkRes.body?.code === "awaiting_approval";
     if (!parked) {
+      // Harness bug in v1: this path pushed ok=false with no failureClass, no console.log,
+      // and only a best-effort victim restart — so a dead fleet silently burned the rest of
+      // the await arm (v1: 178/180 failures were park_failed; log jumped from 74/250 to done).
+      // Criteria unchanged: classify as availability, always log, rebuild before continuing.
+      const parkDetail = `park failed: ${JSON.stringify(parkRes.body).slice(0, 120)}`;
       awaitTrials.push({
         a,
         ok: false,
         survived: false,
         completedAfterApprove: false,
-        detail: `park failed: ${JSON.stringify(parkRes.body).slice(0, 120)}`,
+        detail: parkDetail,
+        failureClass: "availability",
+        failureReason: "await_park_failed",
       });
-      if (!nodes[victim].pid) await restartNode(victim);
+      console.log(
+        `fleet-phased: await ${a + 1}/${AWAIT_TRIALS} survived=false completed=false ok=false detail=park_failed`
+      );
+      try {
+        // Prefer a full rebuild: a single dead/unready node is what turned v1's remaining
+        // ~176 await trials into silent park_failed continues.
+        await rebuildFleet();
+      } catch (err) {
+        console.warn(`fleet-phased: await park-fail rebuildFleet failed (${err.message})`);
+        try {
+          if (!nodes[victim].pid) await restartNode(victim);
+        } catch (restartErr) {
+          console.warn(`fleet-phased: await park-fail victim restart failed (${restartErr.message})`);
+        }
+      }
+      if ((a + 1) % 10 === 0 || a === AWAIT_TRIALS - 1) writeEvidencePartial();
       continue;
     }
 
@@ -1169,6 +1191,7 @@ async function main() {
     console.log(
       `fleet-phased: await ${a + 1}/${AWAIT_TRIALS} survived=${survived} completed=${completedAfterApprove} ok=${ok}`
     );
+    if ((a + 1) % 10 === 0 || a === AWAIT_TRIALS - 1) writeEvidencePartial();
   }
 
   function summarize() {
@@ -1230,6 +1253,12 @@ async function main() {
       (t) => t.phase === "after_intent_before_call" || t.phase === "during_call"
     );
     const awaitOk = awaitTrials.filter((t) => t.ok).length;
+    const awaitFailed = awaitTrials.filter((t) => !t.ok);
+    const awaitFailureByReason = {};
+    for (const t of awaitFailed) {
+      const reason = t.failureReason || (t.detail?.startsWith("park failed") ? "await_park_failed" : "unknown");
+      awaitFailureByReason[reason] = (awaitFailureByReason[reason] || 0) + 1;
+    }
     const writeKillDone = trials.length >= N;
     const awaitDone = awaitTrials.length >= AWAIT_TRIALS;
     const complete = writeKillDone && awaitDone;
@@ -1484,6 +1513,9 @@ async function main() {
           densityRestartSurvival: true,
           fleetAwaitTrials: AWAIT_TRIALS > 0,
           n: AWAIT_TRIALS,
+          ran: awaitTrials.length,
+          ok: awaitOk,
+          failed: awaitFailed.length,
           survivedRate:
             AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.survived).length / AWAIT_TRIALS : null,
           completedAfterApproveRate:
@@ -1491,11 +1523,23 @@ async function main() {
               ? awaitTrials.filter((t) => t.completedAfterApprove).length / AWAIT_TRIALS
               : null,
           okRate: AWAIT_TRIALS > 0 ? awaitOk / AWAIT_TRIALS : null,
+          failureByReason: awaitFailureByReason,
           meaning:
-            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval)",
+            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous.",
         },
       },
-      awaitTrials: awaitTrials.slice(0, 50),
+      // Prefer all failures + a sample of successes (v1 only kept first 50, hiding the park_failed tail).
+      awaitTrials: [
+        ...awaitFailed,
+        ...awaitTrials.filter((t) => t.ok).slice(0, 30),
+      ].slice(0, 250),
+      awaitFailureSummary: {
+        ran: awaitTrials.length,
+        planned: AWAIT_TRIALS,
+        ok: awaitOk,
+        failed: awaitFailed.length,
+        byReason: awaitFailureByReason,
+      },
       totalDuplicates,
       zeroDuplicates: zeroDup,
       ruleOfThreeUpperBound95: upper95,
