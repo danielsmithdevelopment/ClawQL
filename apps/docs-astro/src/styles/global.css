@@ -51,7 +51,7 @@
   }
 
   .docs-chrome a {
-    @apply font-sans;
+    @apply font-sans text-inherit no-underline;
   }
 
   .docs-mobile-nav:not(.hidden) .docs-mobile-panel {
@@ -65,5 +65,21 @@
     to {
       transform: translateX(0);
     }
+  }
+
+  /* Protocol-like article typography (Tailwind Typography + brand) */
+  .docs-prose {
+    @apply prose prose-zinc dark:prose-invert max-w-none;
+    @apply prose-headings:scroll-mt-24 prose-headings:font-display prose-headings:font-semibold prose-headings:tracking-tight;
+    @apply prose-h1:text-3xl sm:prose-h1:text-4xl prose-h1:text-zinc-900 dark:prose-h1:text-white;
+    @apply prose-a:font-semibold prose-a:text-claw-terra prose-a:no-underline hover:prose-a:underline dark:prose-a:text-claw-cyan;
+    @apply prose-code:rounded prose-code:bg-zinc-900/5 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:text-zinc-800 prose-code:before:content-none prose-code:after:content-none dark:prose-code:bg-white/10 dark:prose-code:text-zinc-100;
+    @apply prose-pre:bg-zinc-900 prose-pre:text-zinc-100 dark:prose-pre:bg-black/40;
+    @apply prose-hr:border-zinc-900/10 dark:prose-hr:border-white/10;
+    @apply prose-li:marker:text-zinc-400;
+  }
+
+  .docs-nav-tag {
+    @apply shrink-0 rounded-md bg-zinc-50 px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-zinc-600 ring-1 ring-zinc-200 ring-inset dark:bg-zinc-400/10 dark:text-zinc-300 dark:ring-zinc-500/20;
   }
 }

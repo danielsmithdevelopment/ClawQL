@@ -59,14 +59,40 @@ function learnCards(src) {
   return cards
 }
 
+/** Linear scan — avoids nested regex quantifiers (CodeQL js/redos). */
 function trainingModules(src) {
   const mods = []
-  for (const m of src.matchAll(/slug:\s*'([^']+)',\s*title:\s*((?:'[^{]+?'\s*)+),/g)) {
-    const title = [...m[2].matchAll(/'([^']*)'/g)].map((x) => x[1]).join('')
-    mods.push({ slug: m[1], title })
+  let i = 0
+  while (i < src.length) {
+    const slugIdx = src.indexOf("slug: '", i)
+    if (slugIdx < 0) break
+    const slugStart = slugIdx + "slug: '".length
+    const slugEnd = src.indexOf("'", slugStart)
+    if (slugEnd < 0) break
+    const slug = src.slice(slugStart, slugEnd)
+
+    const titleKey = src.indexOf('title:', slugEnd)
+    if (titleKey < 0 || titleKey - slugEnd > 48) {
+      i = slugEnd + 1
+      continue
+    }
+
+    let pos = titleKey + 'title:'.length
+    while (pos < src.length && /\s/.test(src[pos])) pos++
+    let title = ''
+    while (pos < src.length && src[pos] === "'") {
+      pos++
+      const end = src.indexOf("'", pos)
+      if (end < 0) break
+      title += src.slice(pos, end)
+      pos = end + 1
+      while (pos < src.length && /\s/.test(src[pos])) pos++
+    }
+    if (slug && title) mods.push({ slug, title })
+    i = Math.max(pos, slugEnd + 1)
   }
-  mods.forEach((mod, i) => {
-    mod.part = i + 1
+  mods.forEach((mod, idx) => {
+    mod.part = idx + 1
   })
   return mods
 }

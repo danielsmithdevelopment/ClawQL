@@ -237,15 +237,46 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
       </div>
 
       <div class="relative flex min-h-dvh flex-col px-4 pt-14 sm:px-6 lg:px-8">
-        <main id="main-content" class="mx-auto w-full max-w-3xl flex-auto py-8 lg:max-w-4xl" tabindex="-1">
-          <article
-            class="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-display prose-a:text-claw-terra dark:prose-a:text-claw-cyan"
+        {/* Protocol-style hero wash in the content column */}
+        <div
+          class="pointer-events-none absolute inset-x-0 top-14 -z-10 h-56 overflow-hidden lg:left-0"
+          aria-hidden="true"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-claw-terra/10 via-claw-warm-white to-claw-warm-white dark:from-claw-terra/20 dark:via-claw-bg dark:to-claw-bg"
           >
+          </div>
+          <svg
+            class="absolute inset-x-0 -top-8 h-[160%] w-full -skew-y-[18deg] fill-claw-graph/5 stroke-claw-graph/15 dark:fill-claw-cyan/5 dark:stroke-claw-terra/25"
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern
+                id="docs-grid"
+                width="72"
+                height="56"
+                patternUnits="userSpaceOnUse"
+                x="50%"
+                y="-6"
+              >
+                <path d="M.5 56V.5H72" fill="none"></path>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" stroke-width="0" fill="url(#docs-grid)"></rect>
+          </svg>
+        </div>
+
+        <main
+          id="main-content"
+          class="mx-auto w-full max-w-2xl flex-auto py-10 lg:max-w-3xl"
+          tabindex="-1"
+        >
+          <article class="docs-prose">
             <slot />
           </article>
         </main>
         <footer
-          class="docs-chrome mx-auto w-full max-w-3xl border-t border-zinc-900/10 py-8 text-sm text-zinc-500 lg:max-w-4xl dark:border-claw-graph/40"
+          class="docs-chrome mx-auto w-full max-w-2xl border-t border-zinc-900/10 py-8 text-sm text-zinc-500 lg:max-w-3xl dark:border-claw-graph/40"
         >
           <p>
             © {new Date().getFullYear()} ClawQL ·

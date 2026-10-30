@@ -82,9 +82,7 @@ function groupActive(links: { href: string }[]) {
                         >
                           <span class="truncate">{link.title}</span>
                           {link.tag ? (
-                            <span class="shrink-0 rounded bg-zinc-900/5 px-1.5 py-0.5 font-sans text-[0.65rem] font-medium text-zinc-500 dark:bg-white/10 dark:text-zinc-400">
-                              {link.tag}
-                            </span>
+                            <span class="docs-nav-tag">{link.tag}</span>
                           ) : null}
                         </a>
                       </li>
