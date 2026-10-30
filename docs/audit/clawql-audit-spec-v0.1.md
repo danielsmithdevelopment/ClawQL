@@ -314,7 +314,13 @@ UNIQUE on `seq` rejects duplicate appends of the same index.
 
 Key: `{prefix}{seq padded to 12}/{id}.json`. Unique keys; never reuse `id`.
 
-Send `IfNoneMatch: '*'`. If the provider rejects the header, omit it and treat existing-object on drain as success (idempotent Put of identical bytes). If drain hits a 412 / "already exists", delete the outbox row.
+Send `IfNoneMatch: '*'` (create-once tip) and `Content-MD5` (required by Object Lock buckets; harmless elsewhere). If the provider rejects `IfNoneMatch`, omit it and treat existing-object on drain as success (idempotent Put of identical bytes). If drain hits a 412 / "already exists", delete the outbox row.
+
+**Storage WORM (optional):** when `objectLock` is configured (`CLAWQL_WORM_S3_OBJECT_LOCK=compliance|governance`), every PutObject also sets `ObjectLockMode` + `ObjectLockRetainUntilDate`. The bucket must be created with Object Lock enabled (implies versioning). Under Object Lock, a PUT to the same key creates a **new version**; the locked version cannot be deleted or altered until retention expires. Plain `DeleteObject` adds a delete marker; `DeleteObject(VersionId=locked)` is refused. Tests (`assertObjectLockProtectsVersions`, MinIO CI) verify original-version integrity and version-delete refusal — they must **not** assume that overwrite PUTs fail.
+
+**Providers:** Amazon S3 and MinIO implement the S3 Object Lock API. Cloudflare R2 does **not**; leave Object Lock off for R2 (`CLAWQL_WORM_S3_OBJECT_LOCK=0`) and use R2 bucket locks if needed.
+
+**COMPLIANCE vs GOVERNANCE:** COMPLIANCE cannot be bypassed by anyone (including root) until retention expires — use a dedicated short-retention (1 day) bucket in CI and discard it. GOVERNANCE allows privileged bypass for cleanup. Prefer GOVERNANCE for ephemeral test cleanup; claim “compliance mode” only when that mode is configured and version-delete refusal is verified.
 
 Queries throw: read path is local only. Full bucket scan is disaster recovery, not `query()`.
 

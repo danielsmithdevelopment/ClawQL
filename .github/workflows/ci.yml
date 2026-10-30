@@ -323,7 +323,29 @@ jobs:
       - name: Enforce zero ClawQL deps except clawql-merkle
         run: npm run check:standalone -w clawql-audit
 
-      - name: Build + unit test clawql-audit
+      - name: Start MinIO for Object Lock integration
+        run: |
+          docker run -d --name clawql-audit-minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              echo "MinIO ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "MinIO failed to become ready" >&2
+          docker logs clawql-audit-minio >&2 || true
+          exit 1
+
+      - name: Build + unit + MinIO Object Lock tests
+        env:
+          CLAWQL_WORM_MINIO_ENDPOINT: http://127.0.0.1:9000
+          CLAWQL_WORM_MINIO_ACCESS_KEY: minioadmin
+          CLAWQL_WORM_MINIO_SECRET_KEY: minioadmin
         run: |
           npm run build -w clawql-merkle -w clawql-audit
           npx vitest run packages/clawql-merkle packages/clawql-audit

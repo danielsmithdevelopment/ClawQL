@@ -19,7 +19,8 @@
  *   CLAWQL_HOME          isolated home (default under os.tmpdir())
  *
  * Boots with CLAWQL_WORM_ENABLED=1 + sqlite local dual-write (remote=memory for
- * the smoke). Asserts clawql-audit HTTP /entries after execute + resume.
+ * the smoke) — tamper-evident hash-chained trail, not S3 Object Lock WORM.
+ * Asserts clawql-audit HTTP /entries after execute + resume.
  */
 import { spawn } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -244,7 +245,7 @@ async function startGateway() {
       CLAWQL_DECLINE_BUN: "1",
       CLAWQL_CAPABILITY_SESSION_SEED: seed,
       PORT: String(GW_PORT),
-      // Production dual-write path (clawql-audit). Remote stays memory for offline smoke.
+      // Tamper-evident dual-write (clawql-audit). Remote=memory — not Object Lock WORM.
       CLAWQL_WORM_ENABLED: "1",
       CLAWQL_WORM_LOCAL: "sqlite",
       CLAWQL_WORM_SQLITE_PATH: wormSqlitePath,
@@ -349,13 +350,13 @@ async function main() {
   });
   const auditText = await client.tool("audit", { operation: "list", limit: 20 });
 
-  // Prove clawql-audit WORM dual-write (not just the ephemeral MCP audit ring).
+  // Prove clawql-audit tamper-evident dual-write (not just the ephemeral MCP audit ring).
   const wormRes = await fetch(`http://127.0.0.1:${WORM_HTTP_PORT}/entries`, {
     headers: { Authorization: `ApiKey ${WORM_API_KEY}` },
   });
   const wormBody = await wormRes.text();
   if (!wormRes.ok) {
-    throw new Error(`WORM /entries HTTP ${wormRes.status}: ${wormBody.slice(0, 400)}`);
+    throw new Error(`audit /entries HTTP ${wormRes.status}: ${wormBody.slice(0, 400)}`);
   }
   /** @type {{ entries?: unknown[] } | unknown[]} */
   const wormJson = JSON.parse(wormBody);
@@ -365,9 +366,9 @@ async function main() {
       ? wormJson.entries
       : [];
   if (wormEntries.length < 1) {
-    throw new Error(`expected clawql-audit WORM entries after smoke, got ${wormBody.slice(0, 400)}`);
+    throw new Error(`expected clawql-audit entries after smoke, got ${wormBody.slice(0, 400)}`);
   }
-  log(`WORM dual-write ok (${wormEntries.length} entries, sqlite=${wormSqlitePath})`);
+  log(`tamper-evident dual-write ok (${wormEntries.length} entries, sqlite=${wormSqlitePath})`);
 
   const searchRes = await fetch(
     "https://api.costplusdrugs.com/pricelist/cpd/search?term=atorvastatin&strength=20mg"

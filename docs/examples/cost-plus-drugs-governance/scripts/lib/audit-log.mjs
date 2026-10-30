@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Ephemeral demo audit ring — analogous to MCP `audit` (in-process) plus
- * a durable JSONL file for walkthrough evidence. Not a compliance WORM store;
- * production uses clawql-audit / Merkle batch roots.
+ * a durable JSONL file for walkthrough evidence. Tamper-evident hash chain only;
+ * not storage WORM. Production: clawql-audit dual-write (+ optional S3 Object Lock).
  */
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";

@@ -84,8 +84,9 @@ const steps = [
   {
     title: 'Everything lands in the audit trail',
     action:
-      'Price reads, mandate park, and resume finalize append to the MCP audit ring. With CLAWQL_WORM_ENABLED=1 the gateway dual-writes the same events to clawql-audit’s durable WORM trail (sqlite/postgres + optional S3). Offline demo JSONL is a walkthrough stand-in of that path.',
-    result: 'MCP audit ring + clawql-audit WORM dual-write (opt-in) · hash-chained seq 1→N',
+      'Price reads, mandate park, and resume finalize append to the MCP audit ring. With CLAWQL_WORM_ENABLED=1 the gateway dual-writes a hash-chained, tamper-evident trail to durable storage (sqlite/postgres + optional S3). Storage-level WORM retention is separate: enable S3/MinIO Object Lock in compliance mode (verified by tests that refuse deletion of locked versions). Offline demo JSONL is a walkthrough stand-in. Audit payloads use hashes/refs — not raw patient fields.',
+    result:
+      'Tamper-evident dual-write (opt-in) · WORM via S3 Object Lock when configured · hash-chained seq 1→N',
   },
 ] as const
 
