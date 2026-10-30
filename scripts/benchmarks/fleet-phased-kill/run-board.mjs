@@ -34,6 +34,7 @@
  */
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
+import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareDigestStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
@@ -168,6 +169,21 @@ async function waitUrl(url, pred, attempts = 120, delayMs = 250) {
     await sleep(delayMs);
   }
   throw new Error(`timeout waiting for ${url}`);
+}
+
+/** True when nothing accepts TCP on host:port (used after SIGKILL / self-fence). */
+async function waitPortFree(port, attempts = 40, delayMs = 100) {
+  for (let i = 0; i < attempts; i++) {
+    const free = await new Promise((resolve) => {
+      const s = createServer();
+      s.once("error", () => resolve(false));
+      s.listen(port, "127.0.0.1", () => {
+        s.close(() => resolve(true));
+      });
+    });
+    if (free) return;
+    await sleep(delayMs);
+  }
 }
 
 function percentile(sorted, p) {
@@ -377,7 +393,7 @@ async function main() {
     },
   };
 
-  function startNode(name) {
+  async function startNode(name) {
     const n = nodes[name];
     if (n.pid) {
       try {
@@ -387,6 +403,16 @@ async function main() {
       }
       n.pid = null;
     }
+    // After SELF-FENCE / SIGKILL the old listener can hold the port briefly;
+    // binding into a half-dead socket is a common /health timeout cause.
+    await waitPortFree(n.port);
+    await waitPortFree(n.internal);
+    // Fresh node-session id per start so a fenced identity cannot renew against
+    // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
+    const nodeEnv = {
+      ...process.env,
+      CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    };
     const child = spawnLogged(
       "celld",
       [
@@ -403,7 +429,7 @@ async function main() {
         `127.0.0.1:${n.internal}`,
       ],
       n.log,
-      process.env
+      nodeEnv
     );
     n.pid = child.pid;
     child.on("exit", (code, signal) => {
@@ -447,12 +473,12 @@ async function main() {
   }
 
   async function restartNode(name) {
-    startNode(name);
+    await startNode(name);
     try {
       await waitNode(name, { requireProgram: true, programAttempts: 80 });
     } catch (err) {
       console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
-      startNode(name);
+      await startNode(name);
       await sleep(1500);
       await waitNode(name, { requireProgram: true, programAttempts: 120 });
     }
@@ -460,8 +486,8 @@ async function main() {
 
   async function rebuildFleet() {
     console.warn("fleet-phased: rebuilding both nodes after ownership/ready stall");
-    startNode("A");
-    startNode("B");
+    await startNode("A");
+    await startNode("B");
     await sleep(2000);
     // Bound each wait — an unbounded ready_gate stall previously hung the N=1000 lab
     // after a survivor SELF-FENCE. Prefer a shorter dual restart over never finishing.
@@ -470,8 +496,8 @@ async function main() {
       await waitNode("B", { requireProgram: true, programAttempts: 120 });
     } catch (err) {
       console.warn(`fleet-phased: rebuildFleet wait failed (${err.message}); hard restart once`);
-      startNode("A");
-      startNode("B");
+      await startNode("A");
+      await startNode("B");
       await sleep(3000);
       await waitNode("A", { requireProgram: true, programAttempts: 120 });
       await waitNode("B", { requireProgram: true, programAttempts: 120 });
@@ -532,8 +558,8 @@ async function main() {
 
   // Start both nodes before waiting — a solo node with fleet durability may
   // never open ready_gate /program/health until a peer exists.
-  startNode("A");
-  startNode("B");
+  await startNode("A");
+  await startNode("B");
   await sleep(2000);
   await waitNode("A", { requireProgram: true, programAttempts: 180 });
   await waitNode("B", { requireProgram: true, programAttempts: 180 });
@@ -823,10 +849,16 @@ async function main() {
           console.warn(
             `fleet-phased: twin capture attempt ${twinAttempt}/${twinAttemptsMax} failed (${twinLastErr})`
           );
+          // Prefer survivor ensure over full rebuild — twin rebuild storms were
+          // folding multi-minute orchestrator work into availability tails.
           try {
-            await rebuildFleet();
+            await ensureSurvivor(survivor, avail);
           } catch {
-            /* next attempt */
+            try {
+              await rebuildFleet();
+            } catch {
+              /* next attempt */
+            }
           }
         }
       }
@@ -940,7 +972,7 @@ async function main() {
     // Victim only needs /health before the next flip; program routing is checked
     // on the survivor path above for the following trial.
     try {
-      startNode(victim);
+      await startNode(victim);
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: victim ${victim} restart failed (${err.message}); rebuild fleet`);
@@ -1103,7 +1135,7 @@ async function main() {
     });
 
     try {
-      startNode(victim);
+      await startNode(victim);
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: await victim restart failed (${err.message}); rebuild`);
@@ -1124,10 +1156,10 @@ async function main() {
       .filter((t) => t.resumeMs != null)
       .map((t) => t.resumeMs)
       .sort((a, b) => a - b);
-    const allRecovery = trials
-      .filter((t) => t.recoveryMs > 0)
-      .map((t) => t.recoveryMs)
-      .sort((a, b) => a - b);
+    const allRecovery = [
+      ...trials.filter((t) => t.recoveryMs > 0).map((t) => t.recoveryMs),
+      ...awaitTrials.filter((t) => t.recoveryMs > 0).map((t) => t.recoveryMs),
+    ].sort((a, b) => a - b);
     const byPhase = {};
     for (const p of PHASES) {
       const s = phaseStats[p];
@@ -1237,14 +1269,21 @@ async function main() {
                   ? allResumeIncludingAwait[allResumeIncludingAwait.length - 1]
                   : null,
               },
+              recoveryMs: {
+                n: allRecovery.length,
+                p50: percentile(allRecovery, 50),
+                p99: percentile(allRecovery, 99),
+                max: allRecovery.length ? allRecovery[allRecovery.length - 1] : null,
+              },
               items: availabilityItems.slice(0, 50).map((t) => ({
                 i: t.i ?? t.a,
                 phase: t.phase ?? "await_approval",
                 failureReason: t.failureReason,
                 resumeMs: t.resumeMs ?? null,
+                recoveryMs: t.recoveryMs ?? null,
               })),
               meaning:
-                "no outcome in time — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; ceiling fixed before run",
+                "no outcome in time — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; ceiling fixed before run; resume/recovery tails stay visible",
             },
             outerCompletion: {
               rateOuterPhases: completionEligible.length

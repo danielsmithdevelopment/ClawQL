@@ -22,6 +22,17 @@ So the TTL pulls two ways:
 
 **celld 0.4.0 knobs:** only `CELLD_TTL_MS` is exposed. There is no `CELLD_RENEW_*` env. Renew cadence and lease-store placement are production asks / future celld surfaces — mark **planned** until run at the same sample size as stock. Do not pretend a 30s TTL is the preferred production tune.
 
+## Parallel product work (does not block claim-path v2)
+
+Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% ceiling + resume/recovery p99/max). These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
+
+| Track | Meaning | Where |
+| ----- | ------- | ----- |
+| **Lease renew / regional store** | Cut false `SELF-FENCE` under R2 RTT (preferred levers above) | Upstream celld — no `CELLD_RENEW_*` yet |
+| **Lease-sweep** | Retire dead node-session leases so a restarted peer is not blocked by a fenced identity | Upstream (`dead_node_gc`); harness mitigates with fresh `CELLD_NODE` per start |
+| **Alive vs ready** | `/health` can answer while `ready_gate` is still closed — callers must wait `/program/health` (or ready_gate), not confuse alive with serving | Harness already probes `/program/health?cell=health`; product docs / SDK should match |
+| **Pause-aware clocks** | Orchestrator rebuild / fence recovery must stay visible in resume/recovery tails (904s stalls are real), while product pause budgets should not silently absorb multi-minute fleet rebuilds | Evidence reports `resumeMs` + `recoveryMs` p99/max; upstream lease clock during pause TBD |
+
 ## Stall forensics (stock 10s / R2)
 
 | Knob / observation                | Value                                                  |
