@@ -14,53 +14,75 @@ const CPD_MCP = 'https://mcp.costplusdrugs.com/'
 
 const accomplishments = [
   {
+    label: '01',
     title: 'Uses their real read MCP',
     body: 'ClawQL federates Cost Plus Drugs’ public pricing MCP unchanged — search, estimates, pharmacy locator. We do not re-pitch a price connector they already shipped.',
   },
   {
+    label: '02',
     title: 'Governed mock writes',
     body: 'There is no public ordering API. A local mock refill tool parks behind digest-bound human approval so agents cannot place orders themselves.',
   },
   {
+    label: '03',
     title: 'BAA-aware multi-model routing',
     body: 'Patient fields are redacted before non-BAA providers. Public cash prices still flow; PHI does not leave the gateway without policy.',
   },
   {
+    label: '04',
     title: 'Token-efficient catalog access',
     body: 'Targeted drug search is ~950× smaller than dumping the full CPD catalog — the gateway prefers compact tools for price questions.',
   },
 ] as const
 
+const measured = [
+  { metric: '~949×', detail: 'smaller than full CPD catalog dump' },
+  { metric: 'mandate', detail: 'before any mock refill write' },
+  { metric: 'digest-bound', detail: 'NDC / qty / price locked at park' },
+  { metric: 'hash chain', detail: 'execute → park → resume in audit' },
+] as const
+
 const steps = [
   {
     title: 'Discover Cost Plus tools through one gateway',
-    body: 'Agents connect to ClawQL, not a pile of point MCP servers. search ranks live CPD operations (pricing, estimates) alongside the mock write surface.',
+    action: 'Agent connects to ClawQL HTTP MCP and runs search. One gateway ranks live CPD pricing ops plus the mock write surface — not a pile of point MCP servers.',
     result: '15 federated operations indexed from CPD + mock write MCP',
   },
   {
     title: 'Read live cash prices (not medical advice)',
-    body: 'execute routes mcp__cost_plus_drugs_pricing__search to their public MCP. Example: atorvastatin 20mg cash pricing for a 30-count fill.',
-    result: 'Live price lookup succeeded (~4.5KB structured response)',
+    action:
+      'execute routes mcp__cost_plus_drugs_pricing__search to https://mcp.costplusdrugs.com/. Example: atorvastatin 20mg cash pricing for a 30-count fill.',
+    result: 'Live lookup ok · ~4.5KB structured response · $5.41 cash (fixture/live demo)',
   },
   {
     title: 'Prefer compact tools over full-catalog dumps',
-    body: 'pricelist_all / pricelist_cpd return multi-megabyte payloads. ClawQL steers agents to search / pricelist_*_search for the same answer.',
+    action:
+      'pricelist_all / pricelist_cpd return multi-megabyte payloads. ClawQL steers agents to search / pricelist_*_search for the same answer.',
     result: '~3.9KB targeted search vs ~3.7MB full CPD catalog (~949×)',
   },
   {
+    title: 'Redact PHI before non-BAA models',
+    action:
+      'Before any multi-model hop, BAA routing keeps patient fields on BAA-covered providers and strips them for others. Public cash prices still flow.',
+    result: 'Grok path: patient_name / address / rx_number redacted · Claude-BAA retains fields',
+  },
+  {
     title: 'Stage a refill — agent cannot self-approve',
-    body: 'place_refill_order is policy: mandate. The gateway parks the exact drug, NDC, quantity, and quoted price under a digest-bound execution id.',
-    result: 'status: mandate_required · agent self-approve blocked',
+    action:
+      'place_refill_order is policy: mandate. The gateway parks the exact drug, NDC, quantity, and quoted price under a digest-bound execution id.',
+    result: 'status: mandate_required · agent self-approve → agent_cannot_approve',
   },
   {
     title: 'Human resumes the exact parked order',
-    body: 'Only a human (patient/operator) may clawql resume / MCP resume. Args cannot be swapped at approval time. Labeled MOCK — never sent to Cost Plus.',
-    result: 'mock order accepted_mock · bound to NDC / qty / price',
+    action:
+      'Only a human (patient/operator) may clawql resume / MCP resume. Args cannot be swapped at approval time. Labeled MOCK — never sent to Cost Plus.',
+    result: 'accepted_mock · bound NDC 00904-6291-61 · qty 30 · $5.41',
   },
   {
     title: 'Everything lands in the audit trail',
-    body: 'Price reads, mandate park, and resume finalize append to the MCP audit ring (and can dual-write durable WORM in production).',
-    result: 'Hash-chained audit entries for execute + resume',
+    action:
+      'Price reads, mandate park, and resume finalize append to the MCP audit ring (and can dual-write durable WORM in production).',
+    result: 'Hash-chained audit entries for execute + resume (seq 1→N)',
   },
 ] as const
 
@@ -104,11 +126,22 @@ export function CostPlusDrugsDemoLanding() {
           <ul className="cpd-demo-accomplishments">
             {accomplishments.map((item) => (
               <li key={item.title} className="cpd-demo-accomplishment">
+                <p className="cpd-demo-accomplishment__label" aria-hidden="true">
+                  {item.label}
+                </p>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
               </li>
             ))}
           </ul>
+          <dl className="cpd-demo-measured">
+            {measured.map((row) => (
+              <div key={row.metric} className="cpd-demo-measured__item">
+                <dt>{row.metric}</dt>
+                <dd>{row.detail}</dd>
+              </div>
+            ))}
+          </dl>
         </Container>
       </section>
 
@@ -116,7 +149,7 @@ export function CostPlusDrugsDemoLanding() {
         id="steps"
         eyebrow="End-to-end path"
         headline="Each thing the demo does"
-        subheadline="Same sequence as the local gateway smoke: discover → price → compact → mandate → human resume → audit."
+        subheadline="Same sequence as the local gateway smoke: discover → price → compact → BAA route → mandate → human resume → audit."
       >
         <ol className="cpd-demo-steps">
           {steps.map((step) => (
@@ -124,7 +157,9 @@ export function CostPlusDrugsDemoLanding() {
               <div className="cpd-demo-step__index" aria-hidden="true" />
               <div>
                 <h3 className="cpd-demo-step__title">{step.title}</h3>
-                <p className="cpd-demo-step__body">{step.body}</p>
+                <p className="cpd-demo-step__body">
+                  <span className="cpd-demo-result__label">Action</span> {step.action}
+                </p>
                 <p className="cpd-demo-result">
                   <span className="cpd-demo-result__label">Result</span>
                   <span className="cpd-demo-result__value">{step.result}</span>

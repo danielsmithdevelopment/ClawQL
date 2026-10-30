@@ -122,6 +122,15 @@
   border-top: 1px solid var(--cpd-border);
 }
 
+.cpd-demo-accomplishment__label {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  letter-spacing: 0.06em;
+  color: var(--cpd-signal-deep);
+}
+
 .cpd-demo-accomplishment h3 {
   font-family: var(--font-display);
   font-size: 1.125rem;
@@ -129,6 +138,39 @@
   letter-spacing: -0.01em;
   color: var(--cpd-ink);
   margin: 0 0 0.4rem;
+}
+
+.cpd-demo-measured {
+  display: grid;
+  gap: 1rem 1.5rem;
+  margin: 0.5rem 0 0;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--cpd-border);
+}
+
+@media (min-width: 640px) {
+  .cpd-demo-measured {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.cpd-demo-measured__item {
+  margin: 0;
+}
+
+.cpd-demo-measured__item dt {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  color: var(--cpd-ink);
+}
+
+.cpd-demo-measured__item dd {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--cpd-muted);
 }
 
 .cpd-demo-accomplishment p {
