@@ -6,7 +6,24 @@
     "hostname": "cursor",
     "hostKind": "cloud-agent-kvm-vm",
     "publishable": true,
-    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
+    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later.",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "memTotalKiB": 16387280,
+    "cpuModel": "Intel(R) Xeon(R) Processor",
+    "cpuVendorId": "GenuineIntel",
+    "cpuFamily": "6",
+    "cpuModelId": "207",
+    "cpuStepping": "2",
+    "cpuMhz": "2400.000",
+    "vcpus": 4,
+    "hypervisor": "KVM",
+    "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
+    "storage": "ephemeral pod disk (bind-mounted workspace)",
+    "dmiProductName": null,
+    "dmiSysVendor": null,
+    "kernel": "Linux version 6.12.94+"
   },
   "cgroup": {
     "path": "/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g",
@@ -233,5 +250,24 @@
     "infinity": "malloc_trim(0) between waves (stock agent_scale)",
     "primaryIncludesForcedReclaim": true,
     "note": "Both sides force reclaim between waves; a normal deployment may fit fewer agents."
+  },
+  "latencyGate": {
+    "presentation": "within_system_ratio_only",
+    "warning": "Absolute ms measure different work across systems \u2014 do not compare Infinity vs ClawQL turn times.",
+    "baselineAgents": 2500,
+    "lastFitAgents": 77500,
+    "p50Ratio": 1.102,
+    "p99Ratio": 1.039,
+    "within2x": true,
+    "rawMsWithinSystemOnly": {
+      "baseline": {
+        "p50Ms": 2.776474,
+        "p99Ms": 3.893635
+      },
+      "lastFit": {
+        "p50Ms": 3.059452,
+        "p99Ms": 4.045532
+      }
+    }
   }
 }

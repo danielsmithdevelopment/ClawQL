@@ -14,7 +14,16 @@
     "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
     "storage": "ephemeral pod disk (bind-mounted workspace)",
     "publishable": true,
-    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
+    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later.",
+    "cpuVendorId": "GenuineIntel",
+    "cpuFamily": "6",
+    "cpuModelId": "207",
+    "cpuStepping": "2",
+    "cpuMhz": "2400.000",
+    "vcpus": 4,
+    "dmiProductName": null,
+    "dmiSysVendor": null,
+    "kernel": "Linux version 6.12.94+"
   },
   "contract": {
     "id": "infinity-agent-scale-matched-v2",

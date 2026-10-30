@@ -30,11 +30,22 @@ export type HostDisclosure = {
   readonly arch: string;
   readonly node: string;
   readonly memTotalKiB: number;
+  /** `/proc/cpuinfo` model name (often generic under KVM). */
   readonly cpuModel: string;
+  readonly cpuVendorId: string;
+  readonly cpuFamily: string;
+  readonly cpuModelId: string;
+  readonly cpuStepping: string;
+  readonly cpuMhz: string;
+  readonly vcpus: number;
   readonly hypervisor: string;
   readonly hostKind: "cloud-agent-kvm-vm";
   readonly instanceType: string;
   readonly storage: string;
+  /** `/sys/class/dmi/id/product_name` when present; null if DMI is absent. */
+  readonly dmiProductName: string | null;
+  readonly dmiSysVendor: string | null;
+  readonly kernel: string;
   readonly publishable: true;
   readonly note: string;
 };
@@ -185,10 +196,48 @@ function readCpuModelEffect(): Effect.Effect<string> {
   });
 }
 
+function readCpuinfoFieldEffect(key: string): Effect.Effect<string> {
+  return Effect.sync(() => {
+    try {
+      const raw = readFileSync("/proc/cpuinfo", "utf8");
+      const re = new RegExp(`^${key}\\s*:\\s*(.+)$`, "m");
+      const m = re.exec(raw);
+      return m?.[1]?.trim() || "unknown";
+    } catch {
+      return "unknown";
+    }
+  });
+}
+
+function readDmiFieldEffect(name: string): Effect.Effect<string | null> {
+  return Effect.sync(() => {
+    try {
+      const v = readFileSync(`/sys/class/dmi/id/${name}`, "utf8").trim();
+      return v.length > 0 ? v : null;
+    } catch {
+      return null;
+    }
+  });
+}
+
 export function hostDisclosureEffect(): Effect.Effect<HostDisclosure> {
   return Effect.gen(function* () {
     const memTotalKiB = yield* readMemTotalKiBEffect();
     const cpuModel = yield* readCpuModelEffect();
+    const cpuVendorId = yield* readCpuinfoFieldEffect("vendor_id");
+    const cpuFamily = yield* readCpuinfoFieldEffect("cpu family");
+    const cpuModelId = yield* readCpuinfoFieldEffect("model");
+    const cpuStepping = yield* readCpuinfoFieldEffect("stepping");
+    const cpuMhz = yield* readCpuinfoFieldEffect("cpu MHz");
+    const dmiProductName = yield* readDmiFieldEffect("product_name");
+    const dmiSysVendor = yield* readDmiFieldEffect("sys_vendor");
+    const vcpus = yield* Effect.sync(() => {
+      try {
+        return readFileSync("/proc/cpuinfo", "utf8").split(/^processor\s*:/m).length - 1;
+      } catch {
+        return 0;
+      }
+    });
     return {
       hostname: hostname(),
       platform: process.platform,
@@ -196,13 +245,29 @@ export function hostDisclosureEffect(): Effect.Effect<HostDisclosure> {
       node: process.version,
       memTotalKiB,
       cpuModel,
+      cpuVendorId,
+      cpuFamily,
+      cpuModelId,
+      cpuStepping,
+      cpuMhz,
+      vcpus,
       hypervisor: "KVM",
       hostKind: "cloud-agent-kvm-vm",
       instanceType: "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
       storage: "ephemeral pod disk (bind-mounted workspace)",
+      dmiProductName,
+      dmiSysVendor,
+      kernel: yield* Effect.sync(() => {
+        try {
+          return readFileSync("/proc/version", "utf8").trim().slice(0, 120);
+        } catch {
+          return process.platform;
+        }
+      }),
       publishable: true,
       note:
         "KVM cloud-agent guest, host disclosed (same standard as other ClawQL cloud boards). " +
+        "CPU model name + CPUID from /proc/cpuinfo; DMI product_name when /sys/class/dmi/id exists. " +
         "Same-host Infinity vs ClawQL comparison; Pi 5 remains an extra column later.",
     } satisfies HostDisclosure;
   });

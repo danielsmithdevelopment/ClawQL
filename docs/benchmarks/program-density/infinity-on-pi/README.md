@@ -4,22 +4,24 @@ Time-sensitive follow-up while Infinity’s public density post is discussed. **
 
 Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) · [AWS blog](https://aws.amazon.com/blogs/opensource/introducing-infinity-a-runtime-for-extreme-agent-concurrency/)
 
-**Framing:** same-host cloud lab, host disclosed (same standard as our other cloud boards). Raspberry Pi 5 remains an extra column later — not a rewrite of these numbers.
+**Framing:** same-host cloud lab, host disclosed (same standard as our other cloud boards). Raspberry Pi 5 remains an extra column later — not a rewrite of these numbers. This board is ready to send to Infinity / Shadaj Laddad’s team; under ClawQL peer-review policy, their review comes before promoting a “denser than” claim.
 
-| Field         | Value                                                           |
-| ------------- | --------------------------------------------------------------- |
-| Host kind     | KVM guest (Cursor cloud-agent pod)                              |
-| Hypervisor    | KVM                                                             |
-| vCPUs         | 4                                                               |
-| CPU model     | Intel Xeon (KVM-reported)                                       |
-| Memory        | ~15.6 GiB (`MemTotal` 16 387 280 KiB)                           |
-| Kernel        | Linux 6.12.94+ x86_64                                           |
-| Instance type | unknown (no cloud instance-metadata endpoint on this pod)       |
-| Storage       | ephemeral pod disk (bind-mounted workspace)                     |
-| `publishable` | **true** (host disclosed; same-host comparison)                 |
-| Contract      | `infinity-agent-scale-matched-v2` (unique-per-agent text)       |
-| Cgroup        | `memory.max=8G`, **`memory.swap.max=0`** (swap peak verified 0) |
-| Wave step     | **2 500** agents (both lastFit values accurate to within one step) |
+| Field            | Value                                                                 |
+| ---------------- | --------------------------------------------------------------------- |
+| Host kind        | KVM guest (Cursor cloud-agent pod)                                    |
+| Hypervisor       | KVM (`Hypervisor detected: KVM`; `lscpu` Hypervisor vendor: KVM)      |
+| vCPUs            | 4 (1 thread/core × 4 cores × 1 socket)                                |
+| CPU model name   | `Intel(R) Xeon(R) Processor` (from `/proc/cpuinfo`)                   |
+| CPUID            | GenuineIntel family 6, model 207, stepping 2; 2400 MHz; cache 320 MiB |
+| DMI product name | **unavailable** — `/sys/class/dmi/id` not present on this guest       |
+| Memory           | ~15.6 GiB (`MemTotal` 16 387 280 KiB)                                 |
+| Kernel           | Linux 6.12.94+ x86_64                                                 |
+| Instance type    | unknown (no cloud instance-metadata endpoint on this pod)             |
+| Storage          | ephemeral pod disk (bind-mounted workspace)                           |
+| `publishable`    | **true** (host disclosed; same-host comparison)                       |
+| Contract         | `infinity-agent-scale-matched-v2` (unique-per-agent text)             |
+| Cgroup           | `memory.max=8G`, **`memory.swap.max=0`** (swap peak verified 0)       |
+| Wave step        | **2 500** agents (both lastFit values accurate to within one step)   |
 
 ## Gates
 
@@ -47,16 +49,28 @@ Paired per-agent figure = **RSS at latency-gated lastFit / N**. Cgroup `memory.p
 
 Evidence: [`evidence-clawql-fit-latency.json`](./evidence-clawql-fit-latency.json) · [`evidence-infinity-fit-latency.json`](./evidence-infinity-fit-latency.json) · ramp detail [`infinity-8g-ramp.json`](./infinity-8g-ramp.json) · [`clawql-resident-8g-ramp.json`](./clawql-resident-8g-ramp.json)
 
-## Fit quality — turn latency (baseline vs lastFit)
+## Fit quality — turn latency (baseline → lastFit ratio)
 
-Probed after the population is already resident. Ceiling = **2×** baseline p50 **and** p99. Sample = 100 agents × 1 extra turn each.
+The 2× gate compares each system **only to itself** (lastFit ÷ baseline at N=2 500). Quote these ratios — not absolute ms — when discussing fit quality.
 
-| System   | N (baseline) | p50 (ms)  | p99 (ms)  | turns/s  | N (lastFit) | p50 (ms)  | p99 (ms)  | turns/s  | Within 2×? |
-| -------- | ------------ | --------- | --------- | -------- | ----------- | --------- | --------- | -------- | ---------- |
-| Infinity | **2 500**    | **2.776** | **3.894** | ~313     | **77 500**  | **3.059** | **4.046** | ~316     | **yes**    |
-| ClawQL   | **2 500**    | **0.025** | **0.051** | ~35 071  | **100 000** | **0.023** | **0.086** | ~38 149  | **yes**    |
+| System   | Baseline N | lastFit N   | p50 ratio (lastFit÷baseline) | p99 ratio | Within 2×? |
+| -------- | ---------- | ----------- | ---------------------------- | --------- | ---------- |
+| Infinity | 2 500      | **77 500**  | **1.10×**                    | **1.04×** | **yes**    |
+| ClawQL   | 2 500      | **100 000** | **0.93×**                    | **1.69×** | **yes**    |
 
-Absolute milliseconds are **not** cross-system comparable (Infinity = full runtime round-trip; ClawQL harness = matched-shape `driveTurn` append). The gate is within-system only. **highestNWithin2x** = latency-gated lastFit above for both.
+Sample = 100 agents × 1 extra turn each after the population is already resident.
+
+**Do not compare absolute turn times across systems.** Infinity’s probe exercises the full `agent_scale` runtime round-trip (queue → scripted completion → tool → follow-up). ClawQL’s probe times matched-shape `driveTurn` appends in the history harness. Different work; a side-by-side ms reading would invent a ~100× “speed” claim this board does not make.
+
+<details>
+<summary>Raw probe samples (ms) — within-system only; not cross-comparable</summary>
+
+| System   | Baseline p50 / p99 (ms) | lastFit p50 / p99 (ms) |
+| -------- | ----------------------- | ---------------------- |
+| Infinity | 2.776 / 3.894           | 3.059 / 4.046          |
+| ClawQL   | 0.025 / 0.051           | 0.023 / 0.086          |
+
+</details>
 
 ## Forced memory reclaim (both sides)
 
