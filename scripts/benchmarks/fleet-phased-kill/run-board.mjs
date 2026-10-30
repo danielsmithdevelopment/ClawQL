@@ -158,10 +158,34 @@ function spawnLogged(cmd, args, logPath, env = process.env) {
   });
 }
 
-async function waitUrl(url, pred, attempts = 120, delayMs = 250) {
+/**
+ * Poll until pred(fetchJson) is true.
+ *
+ * Important: attempt count alone is not a wall budget. With per-try timeoutMs=5000,
+ * the old defaults (health 240 tries / program 180 tries) could burn
+ * 240×5s=1200s or **180×5s=900s** when /health accepts TCP but never responds —
+ * matching the ~875–909s resume tails on v1/v2 with recoveryMs=0. Cap wallMs.
+ *
+ * @param {string} url
+ * @param {(r: any) => boolean} pred
+ * @param {{ attempts?: number, delayMs?: number, timeoutMs?: number, wallMs?: number, deadlineAt?: number }} [opts]
+ */
+async function waitUrl(url, pred, opts = {}) {
+  const attempts = opts.attempts ?? 120;
+  const delayMs = opts.delayMs ?? 250;
+  const timeoutMs = opts.timeoutMs ?? 1_500;
+  const wallMs = opts.wallMs ?? 45_000;
+  const deadlineAt = opts.deadlineAt ?? Number.POSITIVE_INFINITY;
+  const started = Date.now();
   for (let i = 0; i < attempts; i++) {
+    if (Date.now() >= deadlineAt) {
+      throw new Error(`deadline waiting for ${url}`);
+    }
+    if (Date.now() - started >= wallMs) {
+      throw new Error(`wall timeout ${wallMs}ms waiting for ${url}`);
+    }
     try {
-      const r = await fetchJson(url, {}, 5_000);
+      const r = await fetchJson(url, {}, timeoutMs);
       if (pred(r)) return r;
     } catch {
       /* retry */
@@ -349,8 +373,7 @@ async function main() {
   await waitUrl(
     `http://127.0.0.1:${PETS_PORT}/healthz`,
     (r) => r.ok === true || r.body?.ok === true,
-    40,
-    100
+    { attempts: 40, delayMs: 100, timeoutMs: 1_500, wallMs: 10_000 }
   );
   // Probe deterministic owner id (claim-path digest equality depends on this).
   const probe = await fetchJson(`http://127.0.0.1:${PETS_PORT}/owners`, {
@@ -467,34 +490,58 @@ async function main() {
 
   /**
    * @param {string} name
-   * @param {{ requireProgram?: boolean, programAttempts?: number, cell?: string }} [opts]
+   * @param {{ requireProgram?: boolean, programAttempts?: number, cell?: string, wallMs?: number, deadlineAt?: number, timeoutMs?: number }} [opts]
    */
   async function waitNode(name, opts = {}) {
     const requireProgram = opts.requireProgram !== false;
-    const programAttempts = opts.programAttempts ?? 180; // ~45s — match smoke wait_program
+    // Wall budgets (not attempt×timeout): hung /health burning 5s/try turned the old
+    // "180 attempts ≈ 45s" comment into a silent **~900s** stall (v1/v2 resume max).
+    const programWallMs = opts.wallMs ?? 45_000;
+    const healthWallMs = Math.min(30_000, programWallMs);
+    const programAttempts = opts.programAttempts ?? 180;
     // Probe a dedicated cell — never the trial DO — so readiness does not fight
     // ownership of the program under test (worker defaults cell=default otherwise).
     const cell = opts.cell || "health";
     const base = `http://127.0.0.1:${nodes[name].port}`;
-    await waitUrl(`${base}/health`, (r) => r.ok, 240, 250);
+    const poll = {
+      delayMs: 250,
+      timeoutMs: opts.timeoutMs ?? 1_500,
+      deadlineAt: opts.deadlineAt,
+    };
+    await waitUrl(`${base}/health`, (r) => r.ok, {
+      ...poll,
+      attempts: 240,
+      wallMs: healthWallMs,
+    });
     if (!requireProgram) return;
     await waitUrl(
       `${base}/program/health?cell=${encodeURIComponent(cell)}`,
       (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
-      programAttempts,
-      250
+      {
+        ...poll,
+        attempts: programAttempts,
+        wallMs: programWallMs,
+      }
     );
   }
 
-  async function restartNode(name) {
+  async function restartNode(name, opts = {}) {
     await startNode(name);
     try {
-      await waitNode(name, { requireProgram: true, programAttempts: 80 });
+      await waitNode(name, {
+        requireProgram: true,
+        programAttempts: 80,
+        deadlineAt: opts.deadlineAt,
+      });
     } catch (err) {
       console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
       await startNode(name);
       await sleep(1500);
-      await waitNode(name, { requireProgram: true, programAttempts: 120 });
+      await waitNode(name, {
+        requireProgram: true,
+        programAttempts: 120,
+        deadlineAt: opts.deadlineAt,
+      });
     }
   }
 
@@ -522,9 +569,14 @@ async function main() {
    * Ensure survivor is alive for resume. Counts self-fence / restart; time spent
    * here goes to recoveryMs and also to wall resumeMs / the resume deadline —
    * orchestrator recovery is not excluded from "no outcome in time".
+   * @param {string} name
+   * @param {any} counters
+   * @param {{ deadlineAt?: number }} [opts] — when set (resume path), waitNode/restart
+   *   must not outrun the wall resume deadline (the ~900s hang was waitNode ignoring it).
    */
-  async function ensureSurvivor(name, counters) {
+  async function ensureSurvivor(name, counters, opts = {}) {
     const n = nodes[name];
+    const waitOpts = opts.deadlineAt != null ? { deadlineAt: opts.deadlineAt } : {};
     if (n.pendingSelfFence) {
       counters.survivorSelfFence = true;
       n.pendingSelfFence = false;
@@ -534,7 +586,7 @@ async function main() {
       counters.survivorRestart = true;
       const t0 = Date.now();
       try {
-        await restartNode(name);
+        await restartNode(name, waitOpts);
       } catch (err) {
         console.warn(
           `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
@@ -548,15 +600,18 @@ async function main() {
       counters.recoveryMs += Date.now() - t0;
       return;
     }
+    const tWait = Date.now();
     try {
-      await waitNode(name);
+      await waitNode(name, waitOpts);
+      counters.recoveryMs += Date.now() - tWait;
     } catch {
+      counters.recoveryMs += Date.now() - tWait;
       if (n.lastExit?.selfFence || n.pendingSelfFence) counters.survivorSelfFence = true;
       n.pendingSelfFence = false;
       counters.survivorRestart = true;
       const t0 = Date.now();
       try {
-        await restartNode(name);
+        await restartNode(name, waitOpts);
       } catch (err) {
         console.warn(
           `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
@@ -712,16 +767,17 @@ async function main() {
     // Deadline uses the same wall clock (recovery inclusive). A multi-minute
     // orchestrator stall is an availability miss from the user's point of view.
     const resumeStart = Date.now();
+    const resumeDeadlineAt = resumeStart + RESUME_DEADLINE_MS;
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-      await ensureSurvivor(survivor, avail);
+      await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
     }
 
     // Smoke parity: wait until survivor can route ProgramCellDO before resume.
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
-      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 1_500);
       if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
       await sleep(250);
     }
@@ -729,7 +785,7 @@ async function main() {
     let resume = { ok: false, status: 0, body: null, fetchError: true };
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       resume = await fetchJson(
         `${baseS}/program/resume`,
@@ -1085,14 +1141,15 @@ async function main() {
       resumeDeadlineMiss: false,
     };
     const resumeStart = Date.now();
+    const resumeDeadlineAt = resumeStart + RESUME_DEADLINE_MS;
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-      await ensureSurvivor(survivor, avail);
+      await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
     }
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
-      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 1_500);
       if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
       await sleep(250);
     }
@@ -1100,7 +1157,7 @@ async function main() {
     let mid = { ok: false, body: null };
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       mid = await fetchJson(
         `${baseS}/program/resume`,
@@ -1128,7 +1185,7 @@ async function main() {
     let done = { ok: false, body: null };
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       done = await fetchJson(
         `${baseS}/program/resume`,
