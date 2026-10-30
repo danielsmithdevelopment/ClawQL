@@ -28,9 +28,7 @@ function parseObjectLockMode(raw: string | undefined): S3ObjectLockMode | undefi
   if (v === "0" || v === "off" || v === "false" || v === "none") return undefined;
   if (v === "1" || v === "true" || v === "compliance") return "COMPLIANCE";
   if (v === "governance") return "GOVERNANCE";
-  throw new Error(
-    `CLAWQL_WORM_S3_OBJECT_LOCK must be compliance|governance|0 (got ${raw})`
-  );
+  throw new Error(`CLAWQL_WORM_S3_OBJECT_LOCK must be compliance|governance|0 (got ${raw})`);
 }
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {

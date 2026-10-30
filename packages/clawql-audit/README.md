@@ -6,11 +6,11 @@ Tamper-evident audit trail for AI agent deployments, with optional **storage-lev
 
 ## Tamper-evident vs storage WORM
 
-| Configuration | What you get |
-| --- | --- |
-| Local sqlite/postgres (+ hash chain, dual-write) | **Tamper-evident** durable audit. An admin who controls the DB can still alter bytes; the hash chain would detect it after the fact. |
-| Remote S3/MinIO **without** Object Lock | Create-once tip via `IfNoneMatch: *` + dual-ack. Still not storage WORM. |
-| Remote S3/MinIO **with Object Lock** (`CLAWQL_WORM_S3_OBJECT_LOCK=compliance`) | **WORM retention**: locked versions cannot be deleted or altered until retention expires (verified by tests). |
+| Configuration                                                                  | What you get                                                                                                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Local sqlite/postgres (+ hash chain, dual-write)                               | **Tamper-evident** durable audit. An admin who controls the DB can still alter bytes; the hash chain would detect it after the fact. |
+| Remote S3/MinIO **without** Object Lock                                        | Create-once tip via `IfNoneMatch: *` + dual-ack. Still not storage WORM.                                                             |
+| Remote S3/MinIO **with Object Lock** (`CLAWQL_WORM_S3_OBJECT_LOCK=compliance`) | **WORM retention**: locked versions cannot be deleted or altered until retention expires (verified by tests).                        |
 
 Object Lock requires a versioned bucket created with lock enabled. A PUT to an existing key creates a **new version**; the locked version stays. Plain `DeleteObject` adds a delete marker; `DeleteObject(VersionId=…)` on a locked version is refused.
 

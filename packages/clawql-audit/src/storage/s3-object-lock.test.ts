@@ -2,12 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { WORM_GENESIS_PREV_HASH, type WORMEntry } from "../entry.js";
 import { ObjectLockS3Simulator } from "./s3-object-lock-sim.js";
-import {
-  S3Backend,
-  contentMd5Base64,
-  entryObjectKey,
-  objectLockRetainUntilDate,
-} from "./s3.js";
+import { S3Backend, contentMd5Base64, entryObjectKey, objectLockRetainUntilDate } from "./s3.js";
 
 function sampleEntry(id = "id-1", chainIndex = 0): WORMEntry {
   return {

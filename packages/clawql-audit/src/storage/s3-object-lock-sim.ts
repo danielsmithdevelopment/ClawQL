@@ -49,10 +49,7 @@ function cmdName(command: unknown): string {
 }
 
 function cmdInput(command: unknown): Record<string, unknown> {
-  return ((command as { input?: Record<string, unknown> }).input ?? {}) as Record<
-    string,
-    unknown
-  >;
+  return ((command as { input?: Record<string, unknown> }).input ?? {}) as Record<string, unknown>;
 }
 
 function bodyToBuffer(body: unknown): Buffer {
@@ -258,9 +255,7 @@ export class ObjectLockS3Simulator {
       const b = this.buckets.get(bucket);
       const versions = b?.objects.get(key) ?? [];
       const versionId = input.VersionId ? String(input.VersionId) : undefined;
-      const v = versionId
-        ? versions.find((x) => x.versionId === versionId)
-        : currentTip(versions);
+      const v = versionId ? versions.find((x) => x.versionId === versionId) : currentTip(versions);
       if (!v?.lockMode || !v.retainUntil) {
         throw err("NoSuchObjectLockConfiguration", "no retention", 404);
       }

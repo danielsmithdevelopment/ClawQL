@@ -77,7 +77,10 @@ export function objectLockRetainUntilDate(retainDays: number, now: Date = new Da
   return new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
-export function entryObjectKey(prefix: string, entry: Pick<WORMEntry, "chainIndex" | "id">): string {
+export function entryObjectKey(
+  prefix: string,
+  entry: Pick<WORMEntry, "chainIndex" | "id">
+): string {
   return `${prefix}${String(entry.chainIndex).padStart(12, "0")}/${entry.id}.json`;
 }
 
@@ -294,7 +297,9 @@ export class S3Backend implements StorageBackend {
         )) as { Body?: unknown };
         const bodyAfter = await readBodyString(afterGot.Body);
         if (sha256HexOf(bodyAfter) !== originalBodySha256) {
-          throw new Error(`Locked version ${originalVersionId} body changed after overwrite attempt`);
+          throw new Error(
+            `Locked version ${originalVersionId} body changed after overwrite attempt`
+          );
         }
 
         let ifNoneMatchBlockedDuplicateKey = false;
