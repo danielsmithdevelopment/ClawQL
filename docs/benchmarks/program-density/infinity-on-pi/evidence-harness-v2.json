@@ -1,7 +1,7 @@
 {
   "kind": "infinity-clawql-density-harness-v2",
   "measuredAt": "2026-10-29T22:41:53.839Z",
-  "publishable": false,
+  "publishable": true,
   "host": {
     "hostname": "cursor",
     "platform": "linux",
@@ -13,15 +13,15 @@
     "hostKind": "cloud-agent-kvm-vm",
     "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
     "storage": "ephemeral pod disk (bind-mounted workspace)",
-    "publishable": false,
-    "note": "Cloud-agent VM (KVM). Headline numbers from this host stay publishable:false; use for harness debugging. Publish from Pi / bare-metal when available."
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
   },
   "contract": {
     "id": "infinity-agent-scale-matched-v2",
     "turns": 20,
     "piHardware": "deferred",
     "reps": 2,
-    "note": "Infinity-matched unique-per-agent turns (v2) via DensityConversationRuntime. Slope = linear fit of process RSS vs N. Resident slope must be \u2265 history KiB. publishable:false on this KVM cloud-agent host. Pi / bare-metal columns later."
+    "note": "Infinity-matched unique-per-agent turns (v2) via DensityConversationRuntime. Slope = linear fit of process RSS vs N. Resident slope must be \u2265 history KiB. publishable:true on this KVM cloud-agent host. Pi / bare-metal columns later."
   },
   "byteParity": {
     "contract": "infinity-agent-scale-matched-v2",
@@ -40,7 +40,11 @@
     "reading": "Infinity serde_json msgs \u2248 65471 B; ClawQL matched-shape JSON \u2248 64601 B (100 msgs). fair-v2 parked bags were ~32859 B \u2014 different workload, not overhead."
   },
   "slope": {
-    "scheduleN": [10000, 25000, 50000],
+    "scheduleN": [
+      10000,
+      25000,
+      50000
+    ],
     "samples": [
       {
         "system": "infinity",

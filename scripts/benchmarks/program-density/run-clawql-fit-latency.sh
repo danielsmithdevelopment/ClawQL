@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Birth ClawQL fit-latency probe inside 8G memory.max cgroup (swap disabled).
-# publishable: false
+# publishable: true
 set -euo pipefail
 
 CGROUP_8G="${CGROUP_8G:-/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g}"

@@ -25,9 +25,10 @@
     "processor": "x86_64",
     "node": "cursor",
     "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
-    "note": "Cloud agent x86_64 host \u2014 not a Raspberry Pi 5. First step is reproduce Infinity agent_scale at pinned commit; Pi hardware run is next."
+    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison.",
+    "publishable": true
   },
   "honesty": "Reproduced Infinity agent_scale at pinned commit 341f6c2 on this host: ~103 KiB/agent idle RSS after 20 scripted turns (in-memory stores, simulated model). Matches the public ~100 KB/agent shape. Not a Raspberry Pi measurement; 75k@8GB remains their extrapolation until measured on Pi hardware. Compaction off / scripted model \u2014 history-dominated, as Infinity documents.",
-  "publishable": false,
+  "publishable": true,
   "next": "See evidence-harness-v2.json + 8g ramp JSONs. Raspberry Pi 5 as extra column when hardware is available."
 }

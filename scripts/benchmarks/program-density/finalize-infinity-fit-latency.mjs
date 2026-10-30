@@ -114,11 +114,11 @@ const peakMemKiBPerAgentAtLastFit =
 const evidence = {
   kind: "infinity-agent-scale-8g-fit-latency-v1",
   measuredAt: new Date().toISOString(),
-  publishable: false,
+  publishable: true,
   host: {
     hostname: hostname(),
     hostKind: "cloud-agent-kvm-vm",
-    publishable: false,
+    publishable: true,
   },
   cgroup: {
     path: cgroup,

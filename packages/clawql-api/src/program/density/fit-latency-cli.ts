@@ -1,5 +1,5 @@
 /**
- * CLI: ClawQL resident fit-latency under 8G (publishable:false).
+ * CLI: ClawQL resident fit-latency under 8G (publishable:true, host disclosed).
  *
  *   node --expose-gc --max-old-space-size=8192 --import tsx \
  *     packages/clawql-api/src/program/density/fit-latency-cli.ts [outPath]

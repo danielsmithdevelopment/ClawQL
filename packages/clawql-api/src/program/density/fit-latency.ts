@@ -5,7 +5,7 @@
  * Quality gate: per-turn latency within `ceilingMultiple`× of the low-N baseline;
  * report the highest N that still qualifies for both systems.
  *
- * publishable: false on this KVM cloud-agent host.
+ * publishable: true with host disclosed (same standard as other ClawQL cloud boards).
  */
 
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
@@ -35,7 +35,7 @@ export type FitLatencyCheckpoint = {
 export type FitLatencyEvidence = {
   readonly kind: "clawql-resident-8g-fit-latency-v1";
   readonly measuredAt: string;
-  readonly publishable: false;
+  readonly publishable: true;
   readonly host: HostDisclosure;
   readonly contract: {
     readonly id: typeof INFINITY_MATCHED_CONTRACT_ID;
@@ -209,7 +209,7 @@ export function runClawqlFitLatencyEffect(opts?: {
           const peakRaw = readCgroupField(cgroupPath, "memory.peak");
           yield* writeFitLatencyPartialEffect(outPath, {
             measuredAt: new Date().toISOString(),
-            publishable: false,
+            publishable: true,
             status: "running",
             baseline,
             atLastFit: note.includes("lastFit") ? cp : atLastFit,
@@ -344,7 +344,7 @@ export function runClawqlFitLatencyEffect(opts?: {
     return {
       kind: "clawql-resident-8g-fit-latency-v1",
       measuredAt: new Date().toISOString(),
-      publishable: false,
+      publishable: true,
       host,
       contract: {
         id: INFINITY_MATCHED_CONTRACT_ID,

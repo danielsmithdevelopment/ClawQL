@@ -1,7 +1,7 @@
 {
   "kind": "infinity-clawql-offloaded-tradeoff-v1",
   "measuredAt": "2026-10-30T12:43:09.407Z",
-  "publishable": false,
+  "publishable": true,
   "host": {
     "hostname": "cursor",
     "platform": "linux",
@@ -13,13 +13,13 @@
     "hostKind": "cloud-agent-kvm-vm",
     "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
     "storage": "ephemeral pod disk (bind-mounted workspace)",
-    "publishable": false,
-    "note": "Cloud-agent VM (KVM). Headline numbers from this host stay publishable:false; use for harness debugging. Publish from Pi / bare-metal when available."
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
   },
   "contract": {
     "id": "infinity-agent-scale-matched-v2",
     "turns": 20,
-    "note": "Offloaded dens_*.json bags after Infinity-matched unique-content turns. Wake = read + parse + restore into DensityConversationRuntime, then re-park. Cold = posix_fadvise DONTNEED on the timed sample before wake. publishable:false on this KVM cloud-agent host."
+    "note": "Offloaded dens_*.json bags after Infinity-matched unique-content turns. Wake = read + parse + restore into DensityConversationRuntime, then re-park. Cold = posix_fadvise DONTNEED on the timed sample before wake. publishable:true on this KVM cloud-agent host."
   },
   "population": {
     "agentsParked": 500,
@@ -144,5 +144,5 @@
     "afterParkKiB": 203228,
     "idsOnlySlopeKiBPerAgent": 135.368
   },
-  "reading": "Offloaded trade-off: ~67482 B disk/agent; page cache ≈ 68 KiB/agent after park; warm wake p50=0.095727 ms p99=0.267995 ms; cold wake p50=0.200496 ms p99=0.963629 ms. Pair with Infinity serverless/external-store, not in-memory agent_scale. No win copy."
+  "reading": "Offloaded trade-off: ~67482 B disk/agent; page cache \u2248 68 KiB/agent after park; warm wake p50=0.095727 ms p99=0.267995 ms; cold wake p50=0.200496 ms p99=0.963629 ms. Pair with Infinity serverless/external-store, not in-memory agent_scale. No win copy."
 }

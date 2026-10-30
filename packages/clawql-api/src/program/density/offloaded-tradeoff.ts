@@ -7,7 +7,7 @@
  *   - Cold wake (after posix_fadvise DONTNEED): same path from disk
  *
  * Present beside Infinity serverless / external-store — not against in-memory
- * agent_scale. Always publishable:false on this KVM cloud-agent host.
+ * agent_scale. publishable:true with host disclosed.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -33,7 +33,7 @@ export type WakeLatencyPair = {
 export type OffloadedTradeoffEvidence = {
   readonly kind: "infinity-clawql-offloaded-tradeoff-v1";
   readonly measuredAt: string;
-  readonly publishable: false;
+  readonly publishable: true;
   readonly host: HostDisclosure;
   readonly contract: {
     readonly id: typeof INFINITY_MATCHED_CONTRACT_ID;
@@ -220,7 +220,7 @@ export function runOffloadedTradeoffEffect(opts?: {
     return {
       kind: "infinity-clawql-offloaded-tradeoff-v1",
       measuredAt: new Date().toISOString(),
-      publishable: false,
+      publishable: true,
       host,
       contract: {
         id: INFINITY_MATCHED_CONTRACT_ID,
@@ -229,7 +229,7 @@ export function runOffloadedTradeoffEffect(opts?: {
           "Offloaded dens_*.json bags after Infinity-matched unique-content turns. " +
           "Wake = read + parse + restore into DensityConversationRuntime, then re-park. " +
           "Cold = posix_fadvise DONTNEED on the timed sample before wake. " +
-          "publishable:false on this KVM cloud-agent host.",
+          "publishable:true with host disclosed.",
       },
       population: {
         agentsParked: agentCount,

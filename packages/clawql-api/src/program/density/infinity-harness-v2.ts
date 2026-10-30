@@ -7,8 +7,8 @@
  *   3. Slope (ΔRSS / ΔN) across several N — not RSS/N alone
  *   4. Resident-mode ClawQL arm next to offloaded trade-off arm
  *
- * Always publishable: false on this cloud-agent KVM host. 8 GB cgroup ramp is
- * a separate evidence file produced by the CLI wrapper.
+ * publishable: true with host disclosed (same standard as other ClawQL cloud
+ * boards). 8 GB cgroup ramp is a separate evidence file from the CLI wrapper.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -35,7 +35,7 @@ export type HostDisclosure = {
   readonly hostKind: "cloud-agent-kvm-vm";
   readonly instanceType: string;
   readonly storage: string;
-  readonly publishable: false;
+  readonly publishable: true;
   readonly note: string;
 };
 
@@ -86,7 +86,7 @@ export type SlopeSample = {
 export type HarnessV2Evidence = {
   readonly kind: "infinity-clawql-density-harness-v2";
   readonly measuredAt: string;
-  readonly publishable: false;
+  readonly publishable: true;
   readonly host: HostDisclosure;
   readonly contract: {
     readonly id: typeof INFINITY_MATCHED_CONTRACT_ID;
@@ -200,10 +200,10 @@ export function hostDisclosureEffect(): Effect.Effect<HostDisclosure> {
       hostKind: "cloud-agent-kvm-vm",
       instanceType: "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
       storage: "ephemeral pod disk (bind-mounted workspace)",
-      publishable: false,
+      publishable: true,
       note:
-        "Cloud-agent VM (KVM). Headline numbers from this host stay publishable:false; " +
-        "use for harness debugging. Publish from Pi / bare-metal when available.",
+        "KVM cloud-agent guest, host disclosed (same standard as other ClawQL cloud boards). " +
+        "Same-host Infinity vs ClawQL comparison; Pi 5 remains an extra column later.",
     } satisfies HostDisclosure;
   });
 }
@@ -446,7 +446,7 @@ export function runHarnessV2ClawqlEffect(opts?: {
     return {
       kind: "infinity-clawql-density-harness-v2",
       measuredAt: new Date().toISOString(),
-      publishable: false,
+      publishable: true,
       host,
       contract: {
         id: INFINITY_MATCHED_CONTRACT_ID,
@@ -456,7 +456,7 @@ export function runHarnessV2ClawqlEffect(opts?: {
         note:
           "Infinity-matched unique-per-agent turns (v2) via DensityConversationRuntime. " +
           "Slope = linear fit of process RSS vs N. Resident slope must be ≥ history KiB. " +
-          "publishable:false on this KVM cloud-agent host. Pi / bare-metal columns later.",
+          "publishable:true with host disclosed. Pi column later.",
       },
       byteParity,
       slope: {

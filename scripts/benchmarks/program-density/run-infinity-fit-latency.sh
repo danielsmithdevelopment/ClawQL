@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Birth Infinity agent_scale latency probe inside 8G cgroup (swap disabled).
-# publishable: false
+# publishable: true
 set -euo pipefail
 
 INFINITY_ROOT="${INFINITY_ROOT:-/workspace/.tools/infinity}"

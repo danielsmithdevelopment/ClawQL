@@ -3,7 +3,7 @@
  * Birth-inside-cgroup: invoke this script already moved into the cgroup
  * (see run-clawql-8g-ramp.sh). Requires --expose-gc.
  *
- * publishable: false
+ * publishable: true
  */
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -114,7 +114,7 @@ async function writeEvidence(partial) {
   const swap = readSwap();
   const evidence = {
     kind: "clawql-resident-8g-ramp",
-    publishable: false,
+    publishable: true,
     measuredAt: new Date().toISOString(),
     label: "8 GB memory limit on cloud-agent-kvm-vm (not Raspberry Pi)",
     memoryMaxBytes,

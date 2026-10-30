@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run Infinity agent_scale slope CSV (+ optional 8G cgroup ramp).
-# publishable:false — cloud-agent KVM harness debugging only.
+# publishable:true — cloud-agent KVM harness debugging only.
 #
 # Cgroup note: the process must be *born* inside the memory cgroup (charges do
 # not reliably migrate for pages allocated before the move).

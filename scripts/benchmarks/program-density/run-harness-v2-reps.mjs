@@ -123,7 +123,7 @@ const floor = (sys) => {
 const combined = {
   ...base,
   measuredAt: new Date().toISOString(),
-  publishable: false,
+  publishable: true,
   contract: { ...base.contract, reps },
   slope: {
     ...base.slope,
@@ -137,7 +137,7 @@ const combined = {
     reading:
       "3-rep floor of slopes (fresh Node process per ClawQL rep; unique-content v2). " +
       "Compare Infinity vs clawql-resident. Offloaded is a different trade-off. " +
-      "integrityOk ⇒ per-agent cost ≥ history bytes. publishable:false.",
+      "integrityOk ⇒ per-agent cost ≥ history bytes. publishable:true.",
   },
 };
 
@@ -147,7 +147,7 @@ console.log(
   JSON.stringify(
     {
       outPath,
-      publishable: false,
+      publishable: true,
       floors: combined.slope.floors,
       byteParity: {
         infinityBytes: combined.byteParity.infinity.serdeJsonMsgsBytes,

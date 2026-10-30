@@ -1,5 +1,5 @@
 /**
- * CLI: Infinity × ClawQL density harness v2 (publishable:false).
+ * CLI: Infinity × ClawQL density harness v2 (publishable:true, host disclosed).
  *
  *   node --expose-gc --import tsx \
  *     packages/clawql-api/src/program/density/infinity-harness-v2-cli.ts [outPath]

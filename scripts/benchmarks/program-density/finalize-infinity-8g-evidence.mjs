@@ -81,7 +81,7 @@ const fitCapIntegrity =
 
 const evidence = {
   kind: "infinity-agent-scale-8g-ramp",
-  publishable: false,
+  publishable: true,
   measuredAt: new Date().toISOString(),
   label: "8 GB memory limit on cloud-agent-kvm-vm (not Raspberry Pi)",
   memoryMaxBytes,

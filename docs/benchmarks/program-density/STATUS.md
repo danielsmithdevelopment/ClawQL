@@ -1,6 +1,6 @@
 # Durable-agent density — cross-system comparison
 
-**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). ClawQL-only density/deadline numbers are **publishable as single-host lab** (mark “cross-system comparison pending”; parked-state caveat) — see [publish-readiness](../../gtm/publish-readiness.md). Ontologiql numbers stay private. Shared-host deadline campaign can wait. Infinity harness v2 (byte parity, runtime turns, slope, resident+offloaded, 8 G cgroup) is in ([infinity-on-pi/](./infinity-on-pi/)) marked **`publishable: false`** on this KVM cloud-agent VM; **Pi 5 deferred**.
+**Status:** **Paused (ClawQL side done on this host).** Sustained equals drain within measurement error (~312k/s). ClawQL-only density/deadline numbers are **publishable as single-host lab** (mark “cross-system comparison pending”; parked-state caveat) — see [publish-readiness](../../gtm/publish-readiness.md). Ontologiql numbers stay private. Shared-host deadline campaign can wait. Infinity harness v2 (byte parity, runtime turns, slope, resident+offloaded, 8 G cgroup, latency gate) is in ([infinity-on-pi/](./infinity-on-pi/)) marked **`publishable: true`** with host disclosed; **Pi 5 deferred** as an extra column.
 
 Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](https://github.com/danielsmithdevelopment/ClawQL/pull/1433).
 
@@ -40,6 +40,6 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 ## Pause / next focus
 
 - **This board:** pause. Shared-host deadline campaign when convenient.
-- **Infinity harness v2 (`publishable: false`, KVM VM, `memory.swap.max=0`):** resident slopes Infinity **102.9** / ClawQL **100.2** KiB/agent (≈equal overhead); history integrity + fit-cap guards. 8 G lastFit Infinity **77.5k** / ClawQL **102.5k** — ClawQL harness floor×lastFit fails cross-check (quote ramp RSS/N ~79 KiB for fit, not 100 KiB×102.5k). Offloaded is a separate trade-off (~1 KiB RSS + ~66 KiB disk), paired with Infinity serverless — not a same-terms win. Not Pi.
+- **Infinity harness v2 (`publishable: true`, host disclosed, `memory.swap.max=0`):** headline = **latency-gated** fit under 8 GiB — Infinity **77.5k** / ClawQL **100k** (~**29%** more), RSS/N ~105 / ~79 KiB; both within 2× turn-latency of N=2.5k baseline. Forced reclaim disclosed both sides (`gc()` / `malloc_trim`). Ramp sample ClawQL 102.5k is not headline (latency not verified at edge). Open-host slopes ≈equal (~100–103 KiB) and mis-predict ClawQL’s 8 G fit. Offloaded is a separate trade-off (~1 KiB RSS + ~66 KiB disk), paired with Infinity serverless.
 - Pi 5 as extra column when hardware is available.
 - No win copy on shared-host deadline arms until that campaign runs.

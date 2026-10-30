@@ -1,5 +1,5 @@
 /**
- * CLI: measure ClawQL offloaded page-cache + warm/cold wake (publishable:false).
+ * CLI: measure ClawQL offloaded page-cache + warm/cold wake (publishable:true, host disclosed).
  *
  *   node --expose-gc --import tsx \
  *     packages/clawql-api/src/program/density/offloaded-tradeoff-cli.ts [outPath]

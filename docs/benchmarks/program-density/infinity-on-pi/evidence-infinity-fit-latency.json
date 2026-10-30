@@ -1,11 +1,12 @@
 {
   "kind": "infinity-agent-scale-8g-fit-latency-v1",
   "measuredAt": "2026-10-30T16:45:58.855Z",
-  "publishable": false,
+  "publishable": true,
   "host": {
     "hostname": "cursor",
     "hostKind": "cloud-agent-kvm-vm",
-    "publishable": false
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
   },
   "cgroup": {
     "path": "/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g",
@@ -220,5 +221,17 @@
       "rssKiB": 8161016
     }
   ],
-  "reading": "Infinity lastFit latency under 8G (swap.max=0). exit=0. Baseline N=2500: p50=2.776474 ms p99=3.893635 ms. At N=77500: p50=3.059452 ms p99=4.045532 ms; within2x=true. highestNWithin2x=77500. peak_mem/N ≈ 108.24 KiB/agent. Tuning: glibc malloc + malloc_trim(0); no extra allocator env."
+  "reading": "Infinity lastFit latency under 8G (swap.max=0). exit=0. Baseline N=2500: p50=2.776474 ms p99=3.893635 ms. At N=77500: p50=3.059452 ms p99=4.045532 ms; within2x=true. highestNWithin2x=77500. peak_mem/N \u2248 108.24 KiB/agent. Tuning: glibc malloc + malloc_trim(0); no extra allocator env.",
+  "headline": {
+    "latencyGatedLastFitAgents": 77500,
+    "rssKiBPerAgent": 105.303,
+    "rule": "same_latency_gate_both_systems",
+    "waveStep": 2500
+  },
+  "forcedReclaim": {
+    "clawql": "--expose-gc + multi-pass gc() between waves; --max-old-space-size=8192",
+    "infinity": "malloc_trim(0) between waves (stock agent_scale)",
+    "primaryIncludesForcedReclaim": true,
+    "note": "Both sides force reclaim between waves; a normal deployment may fit fewer agents."
+  }
 }
