@@ -237,32 +237,32 @@ export class S3Backend implements StorageBackend {
   assertObjectLockProtectsVersions = (
     entry: Pick<WORMEntry, "chainIndex" | "id">
   ): Effect.Effect<ObjectLockProtectionResult, AuditError> => {
-    const self = this;
+    const { objectLock, prefix, bucket, client } = this;
     return Effect.tryPromise({
       try: async () => {
-        if (!self.objectLock) {
+        if (!objectLock) {
           throw new Error("assertObjectLockProtectsVersions requires objectLock config");
         }
-        const lock = self.objectLock;
-        const key = entryObjectKey(self.prefix, entry);
+        const lock = objectLock;
+        const key = entryObjectKey(prefix, entry);
 
-        const listed = (await self.client.send(
-          new ListObjectVersionsCommand({ Bucket: self.bucket, Prefix: key })
+        const listed = (await client.send(
+          new ListObjectVersionsCommand({ Bucket: bucket, Prefix: key })
         )) as {
           Versions?: Array<{ Key?: string; VersionId?: string; IsLatest?: boolean }>;
         };
         const versions = (listed.Versions ?? []).filter((v) => v.Key === key && v.VersionId);
         if (versions.length < 1) {
           throw new Error(
-            `No object versions for s3://${self.bucket}/${key} — Object Lock requires versioning`
+            `No object versions for s3://${bucket}/${key} — Object Lock requires versioning`
           );
         }
         const original = versions.find((v) => v.IsLatest) ?? versions[0]!;
         const originalVersionId = original.VersionId!;
 
-        const originalGot = (await self.client.send(
+        const originalGot = (await client.send(
           new GetObjectCommand({
-            Bucket: self.bucket,
+            Bucket: bucket,
             Key: key,
             VersionId: originalVersionId,
           })
@@ -273,9 +273,9 @@ export class S3Backend implements StorageBackend {
         // Overwrite-style PUT (no IfNoneMatch): typically creates a new version.
         const tamper = JSON.stringify({ tamper: true, at: new Date().toISOString() });
         try {
-          await self.client.send(
+          await client.send(
             new PutObjectCommand({
-              Bucket: self.bucket,
+              Bucket: bucket,
               Key: key,
               Body: tamper,
               ContentType: "application/json",
@@ -288,9 +288,9 @@ export class S3Backend implements StorageBackend {
           if (!isObjectLockDeleteRefused(err) && !isPreconditionFailed(err)) throw err;
         }
 
-        const afterGot = (await self.client.send(
+        const afterGot = (await client.send(
           new GetObjectCommand({
-            Bucket: self.bucket,
+            Bucket: bucket,
             Key: key,
             VersionId: originalVersionId,
           })
@@ -305,9 +305,9 @@ export class S3Backend implements StorageBackend {
         let ifNoneMatchBlockedDuplicateKey = false;
         const again = JSON.stringify({ again: true });
         try {
-          await self.client.send(
+          await client.send(
             new PutObjectCommand({
-              Bucket: self.bucket,
+              Bucket: bucket,
               Key: key,
               Body: again,
               ContentType: "application/json",
@@ -323,21 +323,21 @@ export class S3Backend implements StorageBackend {
           if (!ifNoneMatchBlockedDuplicateKey) throw err;
         }
 
-        await self.client.send(
+        await client.send(
           new DeleteObjectCommand({
-            Bucket: self.bucket,
+            Bucket: bucket,
             Key: key,
           })
         );
-        const afterDelete = (await self.client.send(
-          new ListObjectVersionsCommand({ Bucket: self.bucket, Prefix: key })
+        const afterDelete = (await client.send(
+          new ListObjectVersionsCommand({ Bucket: bucket, Prefix: key })
         )) as {
           DeleteMarkers?: Array<{ Key?: string; VersionId?: string }>;
         };
         const markers = (afterDelete.DeleteMarkers ?? []).filter((d) => d.Key === key);
-        const stillGot = (await self.client.send(
+        const stillGot = (await client.send(
           new GetObjectCommand({
-            Bucket: self.bucket,
+            Bucket: bucket,
             Key: key,
             VersionId: originalVersionId,
           })
@@ -350,9 +350,9 @@ export class S3Backend implements StorageBackend {
 
         let versionDeleteRefused = false;
         try {
-          await self.client.send(
+          await client.send(
             new DeleteObjectCommand({
-              Bucket: self.bucket,
+              Bucket: bucket,
               Key: key,
               VersionId: originalVersionId,
             })
