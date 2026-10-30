@@ -6,23 +6,23 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 
 **Framing:** same-host cloud lab, host disclosed (same standard as our other cloud boards). Raspberry Pi 5 remains an extra column later — not a rewrite of these numbers. This board is ready to send to Infinity / Shadaj Laddad’s team; under ClawQL peer-review policy, their review comes before promoting a “denser than” claim.
 
-| Field            | Value                                                                 |
-| ---------------- | --------------------------------------------------------------------- |
-| Host kind        | KVM guest (Cursor cloud-agent pod)                                    |
-| Hypervisor       | KVM (`Hypervisor detected: KVM`; `lscpu` Hypervisor vendor: KVM)      |
-| vCPUs            | 4 (1 thread/core × 4 cores × 1 socket)                                |
-| CPU model name   | `Intel(R) Xeon(R) Processor` (from `/proc/cpuinfo`)                   |
-| CPUID            | GenuineIntel family 6, model 207, stepping 2; 2400 MHz; cache 320 MiB |
+| Field            | Value                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Host kind        | KVM guest (Cursor cloud-agent pod)                                                       |
+| Hypervisor       | KVM (`Hypervisor detected: KVM`; `lscpu` Hypervisor vendor: KVM)                         |
+| vCPUs            | 4 (1 thread/core × 4 cores × 1 socket)                                                   |
+| CPU model name   | `Intel(R) Xeon(R) Processor` (from `/proc/cpuinfo`)                                      |
+| CPUID            | GenuineIntel family 6, model 207, stepping 2; 2400 MHz; cache 320 MiB                    |
 | Likely microarch | **Likely** 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU |
-| DMI product name | **unavailable** — `/sys/class/dmi/id` not present on this guest       |
-| Memory           | ~15.6 GiB (`MemTotal` 16 387 280 KiB)                                 |
-| Kernel           | Linux 6.12.94+ x86_64                                                 |
-| Instance type    | unknown (no cloud instance-metadata endpoint on this pod)             |
-| Storage          | ephemeral pod disk (bind-mounted workspace)                           |
-| `publishable`    | **true** (host disclosed; same-host comparison)                       |
-| Contract         | `infinity-agent-scale-matched-v2` (unique-per-agent text)             |
-| Cgroup           | `memory.max=8G`, **`memory.swap.max=0`** (swap peak verified 0)       |
-| Wave step        | **2 500** agents (both lastFit values accurate to within one step)   |
+| DMI product name | **unavailable** — `/sys/class/dmi/id` not present on this guest                          |
+| Memory           | ~15.6 GiB (`MemTotal` 16 387 280 KiB)                                                    |
+| Kernel           | Linux 6.12.94+ x86_64                                                                    |
+| Instance type    | unknown (no cloud instance-metadata endpoint on this pod)                                |
+| Storage          | ephemeral pod disk (bind-mounted workspace)                                              |
+| `publishable`    | **true** (host disclosed; same-host comparison)                                          |
+| Contract         | `infinity-agent-scale-matched-v2` (unique-per-agent text)                                |
+| Cgroup           | `memory.max=8G`, **`memory.swap.max=0`** (swap peak verified 0)                          |
+| Wave step        | **2 500** agents (both lastFit values accurate to within one step)                       |
 
 ## Gates
 
@@ -41,10 +41,10 @@ Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) ·
 
 Same verification rule both sides: **latency-gated lastFit** = highest N where turn latency stayed within 2× of baseline N=2 500.
 
-| System                         | Latency-gated lastFit | RSS/N at that N | vs Infinity history fit             |
-| ------------------------------ | --------------------- | --------------- | ----------------------------------- |
-| Infinity `agent_scale`         | **77 500**            | **~105.3 KiB**  | —                                   |
-| ClawQL matched-shape resident  | **100 000**           | **~78.8 KiB**   | **~29% more histories** (100k / 77.5k) |
+| System                        | Latency-gated lastFit | RSS/N at that N | vs Infinity history fit                |
+| ----------------------------- | --------------------- | --------------- | -------------------------------------- |
+| Infinity `agent_scale`        | **77 500**            | **~105.3 KiB**  | —                                      |
+| ClawQL matched-shape resident | **100 000**           | **~78.8 KiB**   | **~29% more histories** (100k / 77.5k) |
 
 Ramp step = 2 500, so both counts are accurate to within one wave. ClawQL’s RSS ramp recorded a further sample at **102 500** before the next wave OOM’d; that point is **not** in the headline because latency was not verified there (probing at the edge risked a V8 heap abort — a sign that 102.5k is not a stable operating point). Infinity’s latency check is at its actual ramp lastFit (77.5k).
 
@@ -79,10 +79,10 @@ Sample = 100 agents × 1 extra turn each after the population is already residen
 
 Both ramps call an explicit reclaim between waves. A normal deployment may not. State it up front:
 
-| System   | Forced reclaim between waves                                   | Also                                                                                         |
-| -------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| ClawQL   | `--expose-gc` + multi-pass `gc()` before RSS / after each wave | `--max-old-space-size=8192` (required so V8 old-space can use the 8 GiB cgroup)              |
-| Infinity | `malloc_trim(0)` after each wave (stock `agent_scale`)         | glibc malloc; no jemalloc/mimalloc / `MALLOC_*` env                                          |
+| System   | Forced reclaim between waves                                   | Also                                                                            |
+| -------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| ClawQL   | `--expose-gc` + multi-pass `gc()` before RSS / after each wave | `--max-old-space-size=8192` (required so V8 old-space can use the 8 GiB cgroup) |
+| Infinity | `malloc_trim(0)` after each wave (stock `agent_scale`)         | glibc malloc; no jemalloc/mimalloc / `MALLOC_*` env                             |
 
 **Primary result includes forced reclaim on both sides** (symmetric). Without it, either system may fit fewer agents in real use. A no-reclaim arm is future work, not this headline.
 

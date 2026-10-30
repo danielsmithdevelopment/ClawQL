@@ -14,10 +14,10 @@ Your [AWS Open Source post](https://aws.amazon.com/blogs/opensource/introducing-
 
 Under `memory.max=8G` and `memory.swap.max=0`, with the same unique-per-agent 20-turn history shape:
 
-| Arm | Latency-gated lastFit | RSS/N |
-| --- | --- | --- |
-| Infinity `agent_scale` (full scripted runtime round-trip) | 77 500 | ~105.3 KiB |
-| ClawQL matched-shape resident history store | 100 000 | ~78.8 KiB |
+| Arm                                                       | Latency-gated lastFit | RSS/N      |
+| --------------------------------------------------------- | --------------------- | ---------- |
+| Infinity `agent_scale` (full scripted runtime round-trip) | 77 500                | ~105.3 KiB |
+| ClawQL matched-shape resident history store               | 100 000               | ~78.8 KiB  |
 
 That is about **29% more agents** on the ClawQL side **for storing matched histories under the cap**. We are **not** claiming “the ClawQL runtime runs 29% more agents”: our ClawQL arm is a history harness (`DensityConversationRuntime` append path), not the full durable/MCP stack. Infinity’s arm runs the real `agent_scale` loop. If you want a fuller ClawQL arm for a fairer runtime comparison, we would welcome that design from you.
 
