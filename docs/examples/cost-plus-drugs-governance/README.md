@@ -52,12 +52,12 @@ Or via the offline smoke wrapper: `CPD_GATEWAY_SMOKE=1 ./scripts/smoke.sh`.
 
 **Operator notes learned while wiring this:**
 
-| Knob                                   | Why                                                                                                                                                                                             |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAWQL_CATALOG_SQLITE=0`              | Default SQLite `LOAD=db` indexes custom MCP ops but does **not** keep live MCP client bindings; writes fail with “MCP source not connected” after resume.                                       |
-| `CLAWQL_CAPABILITY_SESSION_SEED`       | Capability lifecycle checks the **inner** `operationId` (`mcp__…`), not just `execute`. Seed federated ops or calls are intercepted.                                                            |
+| Knob                                       | Why                                                                                                                                                                                                                                     |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_CATALOG_SQLITE=0`                  | Default SQLite `LOAD=db` indexes custom MCP ops but does **not** keep live MCP client bindings; writes fail with “MCP source not connected” after resume.                                                                               |
+| `CLAWQL_CAPABILITY_SESSION_SEED`           | Capability lifecycle checks the **inner** `operationId` (`mcp__…`), not just `execute`. Seed federated ops or calls are intercepted.                                                                                                    |
 | `CLAWQL_ENABLE_SESSION_IFC=0` (smoke only) | Default IFC labels a session after a CPD price read and **blocks** writes to `cpd-mock-writes` — a real healthcare-relevant gate. The smoke disables IFC to isolate the mandate path; show IFC separately if you want the harder story. |
-| `addedAt` on sources                   | Hand-written `sources.json` entries without `addedAt` are ignored — prefer `clawql sources add`.                                                                                                |
+| `addedAt` on sources                       | Hand-written `sources.json` entries without `addedAt` are ignored — prefer `clawql sources add`.                                                                                                                                        |
 
 Operation ids use underscores: `mcp__cost_plus_drugs_pricing__search`, `mcp__cpd_mock_writes__place_refill_order` (see `operation-risk.example.json`).
 
@@ -70,20 +70,20 @@ Draft reply + 90s video narration: [`REPLY.md`](REPLY.md).
 
 ## Layout
 
-| Path                                  | Role                                                              |
-| ------------------------------------- | ----------------------------------------------------------------- |
-| `scripts/governance-demo.mjs`         | End-to-end offline story (price → BAA → mandate → audit)          |
-| `scripts/gateway-smoke.mjs`           | Live ClawQL HTTP gateway + CPD MCP + mock write mandate           |
-| `scripts/token-compaction-demo.mjs`   | Full catalog vs targeted search payload size                      |
-| `scripts/mock-pharmacy-write-mcp.mjs` | Streamable HTTP MCP stub for writes                               |
-| `scripts/lib/*`                       | Digest, pending store, BAA gate, audit helpers                    |
-| `fixtures/atorvastatin-search.json`   | Public price snapshot for CI / airplanes                          |
-| `sources.example.json`                | CPD read MCP + local mock write MCP                               |
-| `operation-risk.example.json`         | `allow` reads / `mandate` writes (underscore op ids)              |
-| `baa-routing.example.yaml`            | Illustrative multi-model PHI routing                              |
-| `REPLY.md`                            | Cuban-thread reply + video narration                              |
-| `TERMS.md`                            | Third-party API caution (no LICENSE on their docs repo)           |
-| `tests/governance-demo.test.mjs`      | Digest / BAA / mandate / audit unit checks                        |
+| Path                                  | Role                                                     |
+| ------------------------------------- | -------------------------------------------------------- |
+| `scripts/governance-demo.mjs`         | End-to-end offline story (price → BAA → mandate → audit) |
+| `scripts/gateway-smoke.mjs`           | Live ClawQL HTTP gateway + CPD MCP + mock write mandate  |
+| `scripts/token-compaction-demo.mjs`   | Full catalog vs targeted search payload size             |
+| `scripts/mock-pharmacy-write-mcp.mjs` | Streamable HTTP MCP stub for writes                      |
+| `scripts/lib/*`                       | Digest, pending store, BAA gate, audit helpers           |
+| `fixtures/atorvastatin-search.json`   | Public price snapshot for CI / airplanes                 |
+| `sources.example.json`                | CPD read MCP + local mock write MCP                      |
+| `operation-risk.example.json`         | `allow` reads / `mandate` writes (underscore op ids)     |
+| `baa-routing.example.yaml`            | Illustrative multi-model PHI routing                     |
+| `REPLY.md`                            | Cuban-thread reply + video narration                     |
+| `TERMS.md`                            | Third-party API caution (no LICENSE on their docs repo)  |
+| `tests/governance-demo.test.mjs`      | Digest / BAA / mandate / audit unit checks               |
 
 ## Safety checklist (before any public reply / video)
 
