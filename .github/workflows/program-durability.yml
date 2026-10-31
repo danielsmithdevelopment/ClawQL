@@ -73,7 +73,7 @@ jobs:
 
       - name: Durability comparison board (dual columns, N=20)
         env:
-          DURABILITY_COMPARISON_N: "20"
+          DURABILITY_COMPARISON_N: "50"
         run: npm run benchmark:durability-comparison
 
       - name: Evidence must not contain credentials

@@ -27,9 +27,9 @@ Unpack for longer copy:
 
 ### How writes are protected (product facts)
 
-True by design and covered by tests — safe as product description:
+True by design and covered by tests — safe as product description, **except the intent-before-send durability caveat below**:
 
-- Write **intent is journaled before** the call goes out.
+- Write **intent is journaled in the runner before** it *attempts* the call (host file-journal fsyncs; ProgramCellDO `await`s `storage.put`). **Caveat (2026-10-31):** on our pinned **celld 0.4.0** R2 fleets, five `during_call` trials showed the upstream hang open while intent was **not** in durable DO storage ([R2 settle](../benchmarks/program-cell-fleet-kill/during-call-404-r2-settle.json)) — ClawQL’s interleaving plus that pin could lose a pretends-journaled intent under node wedges. Stock **celld 0.6.3** (always-on gate) closed that path on wedged + stale-owner tip boards; **do not** restore the mechanism sentence until **v3 N=1000 on stock 0.6.3** finishes green. Credit upstream for the gate; own the 0.4.0 interleaving gap. Zero-duplicate boards remain a real measurement. Social correction: [cost-plus-thread-correction.md](./cost-plus-thread-correction.md).
 - Approvals are **single-use**, bound to the approver’s key and the exact arguments, consumed before send; requester cannot approve their own request.
 - A write interrupted mid-flight is **never retried blindly** — resolved by the API’s own mechanism where one exists, or marked **outcome unknown** for a person.
 - Automatic resolution by API type:
@@ -64,9 +64,9 @@ Evidence: [`evidence-fair.json`](../benchmarks/program-density/evidence-fair.jso
 
 ## 2. Publish after maintainers review
 
-50-trial mid-write comparison (ClawQL / Pi Durable / Golem) — **hold** until John and Earendil answer “is this how you’d configure it?” Even then: call it a **pilot** (n=50 → true rate <~6% @95%, not 0.3%). Real-model Pi arm and thousand-trial runs after feedback.
+Tip **schema v2** comparison package (stock celld **0.6.3**, new columns: runtime/version · intentPresentOnResume · callVerifiedSent) — ClawQL arms remasured; 0.4.0 rows superseded. Expansion pilots (peer four phases, wedge, stale-owner, lost-ack, neither-API, real-model Pi) at **N=50**, then maintainer config review, then **N=1000**. Hold named peer publish until John and Earendil answer “is this how you’d configure it?”
 
-Until then, publicly: **a comparison is underway; configurations sent to both teams for review.**
+Until then, publicly: **a comparison package on tip 0.6.3 is underway; peer configs pending review.**
 
 ---
 

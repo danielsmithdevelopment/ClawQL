@@ -1,7 +1,7 @@
 {
   "kind": "file-journal-sigkill-standin",
-  "measuredAt": "2026-10-21T02:16:18.170Z",
-  "honesty": "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md.",
+  "measuredAt": "2026-10-29T17:59:25.408Z",
+  "honesty": "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md. statePreserved is Node unit/SIGKILL golden vs no-crash baseline — not a fleet Tier C rate.",
   "arms": [
     {
       "arm": "read_sigkill_resume",
@@ -15,7 +15,8 @@
       "hostCallsAfterResume": [
         "owners.list"
       ],
-      "detail": "SIGKILL mid-read; resume replayed 2 journaled calls and re-ran interrupted read once"
+      "statePreserved": true,
+      "detail": "SIGKILL mid-read; resume replayed 2 journaled calls, re-ran interrupted read once, state preserved vs no-crash baseline"
     },
     {
       "arm": "write_sigkill_outcome_unknown",
@@ -33,7 +34,12 @@
   "pin": {
     "isolateReady": false,
     "isolateKillNodeEligible": false,
-    "honesty": "file-journal program cell stand-in; pin v0.4.0; env=unset; binary=v0.4.0; isolateFlag=off; set CELLD_VERSION=v0.4.0, CLAWQL_PROGRAM_CELLD_ISOLATE=1, and install celld v0.4.0 on PATH when the isolate host is wired"
+    "honesty": "file-journal program cell stand-in; pin v0.4.0; env=unset; binary=missing; isolateFlag=off; set CELLD_VERSION=v0.4.0, CLAWQL_PROGRAM_CELLD_ISOLATE=1, and install celld v0.4.0 on PATH when the isolate host is wired"
+  },
+  "statePreserved": {
+    "measured": true,
+    "preserved": true,
+    "meaning": "claim-path §1 — read SIGKILL arm step outcomes match no-crash baseline (compareProgramStepStateEffect); fleet board still needs paired baselines before quoting a rate"
   },
   "ok": true
 }

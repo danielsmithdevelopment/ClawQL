@@ -6,6 +6,7 @@ export * from "./celld-program-cell.js";
 export * from "./core-celld-proxy.js";
 export * from "./runtime-preference-ladder.js";
 export * from "./durable-runner.js";
+export * from "./program-step-state.js";
 export * from "./density/bag-store.js";
 export * from "./density/fair-agent.js";
 export * from "./density/fair-board.js";

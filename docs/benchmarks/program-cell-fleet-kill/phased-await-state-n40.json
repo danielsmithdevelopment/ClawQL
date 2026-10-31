@@ -1,0 +1,286 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-29T21:40:41.546Z",
+  "ok": true,
+  "status": "measured",
+  "n": 40,
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 10000,
+  "resumeDeadlineMs": 60000,
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.075,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 20,
+      "rate": 0.5,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 20,
+      "rateAllPhases": 0.5,
+      "rateOuterPhases": 1,
+      "outerPhaseN": 20,
+      "meaning": "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": true,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": true,
+      "eligibleN": 20,
+      "preservedN": 20,
+      "rate": 1,
+      "meaning": "claim-path §1 — structural step outcomes (index/tool/op/ok/status) after outer-phase resume match a no-crash baseline. Node compareProgramStepStateEffect remains the strict unit golden; fleet omits volatile result bodies"
+    },
+    "waitApproval": {
+      "measured": true,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": true,
+      "n": 8,
+      "survivedRate": 1,
+      "completedAfterApproveRate": 1,
+      "okRate": 1,
+      "meaning": "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases"
+    }
+  },
+  "awaitTrials": [
+    {
+      "a": 0,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13963
+    },
+    {
+      "a": 1,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 15054
+    },
+    {
+      "a": 2,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13993
+    },
+    {
+      "a": 3,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 11888
+    },
+    {
+      "a": 4,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14694
+    },
+    {
+      "a": 5,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 13611
+    },
+    {
+      "a": 6,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14313
+    },
+    {
+      "a": 7,
+      "ok": true,
+      "survived": true,
+      "completedAfterApprove": true,
+      "writeCount": 1,
+      "resumeMs": 14355
+    }
+  ],
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.075,
+  "totalSurvivorSelfFences": 0,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 0,
+  "claim": "Across 40 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 7.5%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 0.0% of surviving nodes paused themselves for safety, and 0.0% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (structural baseline pairing on outer phases) and waitApproval (FLEET_PHASED_AWAIT_TRIALS arm). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+  "resumeMs": {
+    "p50": 12314,
+    "p95": 13516,
+    "p99": 14021,
+    "p999": 14021,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 12,
+  "lease": {
+    "celldTtlMs": 10000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "before_intent": {
+      "n": 8,
+      "ok": 8,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 8,
+      "completedCleanRate": 1,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 12367,
+        "p95": 13213,
+        "p99": 13213,
+        "p999": 13213
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_intent_before_call": {
+      "n": 9,
+      "ok": 9,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 9,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 12197,
+        "p95": 13027,
+        "p99": 13027,
+        "p999": 13027
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "during_call": {
+      "n": 11,
+      "ok": 11,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 11,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 9600,
+        "p95": 10159,
+        "p99": 10159,
+        "p999": 10159
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_call_before_journal": {
+      "n": 12,
+      "ok": 12,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 12,
+      "completedCleanRate": 1,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 13178,
+        "p95": 14021,
+        "p99": 14021,
+        "p999": 14021
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    }
+  },
+  "trialFailures": [],
+  "availabilityIncidents": []
+}

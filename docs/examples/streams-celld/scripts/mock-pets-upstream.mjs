@@ -43,6 +43,9 @@ function sleepBounded(ms) {
 
 /** @type {{ id: string, key: string, at: string, name: string, generation: number }[]} */
 const writes = [];
+/** Observe-only mandate statuses for plan await_approval (fleet / CellDO). */
+/** @type {Map<string, string>} */
+const pending = new Map();
 let inFlight = 0;
 /** Bumped on /__reset so late hang completions from prior trials are ignored. */
 let generation = 1;
@@ -101,9 +104,44 @@ const server = createServer(async (req, res) => {
   if (req.method === "POST" && url.pathname === "/__reset") {
     writes.length = 0;
     inFlight = 0;
+    pending.clear();
     generation += 1;
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ ok: true, generation }));
+    return;
+  }
+  // Observe-only pending mandate store for ProgramCellDO await_approval (never consumes).
+  if (req.method === "GET" && url.pathname.startsWith("/__pending/")) {
+    const executionId = decodeURIComponent(url.pathname.slice("/__pending/".length));
+    if (!executionId || !pending.has(executionId)) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, status: null, error: "not_found" }));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, executionId, status: pending.get(executionId) }));
+    return;
+  }
+  if (
+    (req.method === "PUT" || req.method === "POST") &&
+    (url.pathname === "/__pending" || url.pathname === "/__pending/")
+  ) {
+    const body = await readBody(req);
+    const executionId = typeof body.executionId === "string" ? body.executionId.trim() : "";
+    const status = typeof body.status === "string" ? body.status.trim() : "";
+    if (!executionId.startsWith("pex_") || !status) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          ok: false,
+          error: 'body must be { "executionId": "pex_…", "status": "pending"|"approved"|… }',
+        })
+      );
+      return;
+    }
+    pending.set(executionId, status);
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, executionId, status }));
     return;
   }
 
@@ -113,10 +151,7 @@ const server = createServer(async (req, res) => {
     res.end(JSON.stringify({ pets: [{ id: 1, name: "celld-core" }] }));
     return;
   }
-  if (
-    (req.method === "GET" || req.method === "POST") &&
-    url.pathname === "/streams/session/noop"
-  ) {
+  if ((req.method === "GET" || req.method === "POST") && url.pathname === "/streams/session/noop") {
     let body = {};
     if (req.method === "POST") body = await readBody(req);
     else body = Object.fromEntries(url.searchParams.entries());
@@ -150,17 +185,37 @@ const server = createServer(async (req, res) => {
       }
       return;
     }
-    const id = `owner_${Date.now()}_${writes.length}`;
+    // Deterministic id from idempotency key so a no-crash twin with the same
+    // plan args yields an identical result digest after resume (claim-path
+    // statePreserved). Still one ledger row per unique key (duplicate detection).
+    const keyStr = String(key);
+    const existing = writes.find((w) => w.key === keyStr && w.generation === genAtStart);
+    if (existing) {
+      inFlight = Math.max(0, inFlight - 1);
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          id: existing.id,
+          name: existing.name,
+          host: "mock-pets-upstream",
+          key: keyStr,
+        })
+      );
+      return;
+    }
+    const id = `owner_${keyStr.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 96)}`;
     writes.push({
       id,
-      key: String(key),
+      key: keyStr,
       at: new Date().toISOString(),
       name: body.name || "lab",
       generation: genAtStart,
     });
     inFlight = Math.max(0, inFlight - 1);
     res.writeHead(201, { "content-type": "application/json" });
-    res.end(JSON.stringify({ id, name: body.name || "lab", host: "mock-pets-upstream", key }));
+    res.end(
+      JSON.stringify({ id, name: body.name || "lab", host: "mock-pets-upstream", key: keyStr })
+    );
     return;
   }
   if (req.method === "GET" && url.pathname === "/healthz") {

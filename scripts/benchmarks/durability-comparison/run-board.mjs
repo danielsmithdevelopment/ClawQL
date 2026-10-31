@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Durability comparison board (dual columns × upstream modes).
- * Env: DURABILITY_COMPARISON_N (default 20), DURABILITY_COMPARISON_EVIDENCE_PATH
+ * Env: DURABILITY_COMPARISON_N (default 50), DURABILITY_COMPARISON_EVIDENCE_PATH
  */
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";

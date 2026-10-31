@@ -7,17 +7,29 @@
  *
  * Contract (same as durable-runner):
  * - completed calls → journal entry (replay, do not re-run)
- * - write: put intent before host call; intent without entry → outcome_unknown
+ * - write: put intent, then host call only after celld's output gate proves
+ *   durable under the current lease epoch; intent without entry → outcome_unknown
  * - interrupted read (no entry) → re-run once
+ *
+ * Local storage.get after put is a sanity check only — NOT durability proof
+ * and NOT part of the fix. Product fix lives in the ClawQL-maintained celld
+ * fork (vendor/celld): fenced ack + refuse live incarnation — see
+ * docs/streams/celld-output-gate-epoch-fence.md.
  */
 
 import { CORE_IN_CELLD_HONESTY, resolveSlimExecute } from "./core-catalog.js";
-import { decideCallResume, isWriteCall } from "./program-cell-resume.js";
+import {
+  decideCallResume,
+  entryMatchesCall,
+  isWriteCall,
+  journaledArgs,
+  nondetAwaitApprovalKey,
+} from "./program-cell-resume.js";
 
 export const PROGRAM_CELL_HONESTY =
   "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.";
 
-export { decideCallResume, isWriteCall } from "./program-cell-resume.js";
+export { decideCallResume, entryMatchesCall, isWriteCall } from "./program-cell-resume.js";
 
 function metaKey(programId) {
   return `program:${programId}:meta`;
@@ -27,6 +39,51 @@ function entryKey(programId, index) {
 }
 function intentKey(programId, index) {
   return `program:${programId}:intent:${index}`;
+}
+function nondetKey(programId, key) {
+  return `program:${programId}:nondet:${key}`;
+}
+
+/**
+ * Sanity-only local visibility poll after storage.put.
+ * Does NOT prove LTX/R2 durability — the same node that wrote can always read
+ * its own memory/WAL. Do not cite this as part of the durability fix.
+ * @param {{ get: (k: string) => Promise<unknown> }} storage
+ * @param {string} key
+ * @param {{ timeoutMs?: number, pollMs?: number }} [opts]
+ */
+async function awaitStorageVisible(storage, key, opts = {}) {
+  const timeoutMs = Math.max(1, Number(opts.timeoutMs ?? 2_000));
+  const pollMs = Math.max(1, Number(opts.pollMs ?? 5));
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const v = await storage.get(key);
+    if (v != null) return v;
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+  return undefined;
+}
+
+/**
+ * Observe-only mandate status from CLAWQL_CORE_UPSTREAM mock/store.
+ * @returns {Promise<string | null>}
+ */
+async function fetchPendingStatus(upstream, executionId) {
+  const base = String(upstream || "").replace(/\/$/, "");
+  if (!base || !executionId) return null;
+  try {
+    const res = await fetch(`${base}/__pending/${encodeURIComponent(executionId)}`, {
+      method: "GET",
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (res.status === 404) return null;
+    const body = await res.json().catch(() => null);
+    if (!res.ok) return null;
+    return typeof body?.status === "string" ? body.status : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -117,6 +174,154 @@ export class ProgramCellDO {
   constructor(state, env) {
     this.state = state;
     this.env = env;
+  }
+
+  /**
+   * Claim-path §2/§4 — observe-only await_approval. Journals executionId nondet;
+   * parks while pending; lands once settled. Never consumes.
+   * @returns {Promise<{ done: true, response: Response } | { done: false, entry: object }>}
+   */
+  async runAwaitApprovalStep(programId, call, index, results, meta) {
+    const executionId = typeof call.executionId === "string" ? call.executionId.trim() : "";
+    if (!executionId.startsWith("pex_")) {
+      const entry = {
+        index,
+        callId: `c${index}`,
+        tool: "await_approval",
+        args: journaledArgs(call),
+        result: {
+          ok: false,
+          status: "invalid_execution_id",
+          error: "await_approval requires executionId pex_…",
+          value: null,
+        },
+        completedAt: new Date().toISOString(),
+        replayed: false,
+      };
+      await this.state.storage.put(entryKey(programId, index), entry);
+      meta.status = "failed";
+      meta.lastError = entry.result.error;
+      meta.updatedAt = new Date().toISOString();
+      await this.state.storage.put(metaKey(programId), meta);
+      return {
+        done: true,
+        response: Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          calls: [...results, entry],
+          honesty: PROGRAM_CELL_HONESTY,
+        }),
+      };
+    }
+
+    const waitKey = nondetAwaitApprovalKey(index);
+    const nondetStorageKey = nondetKey(programId, waitKey);
+    const journaledId = await this.state.storage.get(nondetStorageKey);
+    if (journaledId === undefined || journaledId === null) {
+      await this.state.storage.put(nondetStorageKey, executionId);
+    } else if (journaledId !== executionId) {
+      meta.status = "failed";
+      meta.lastError = "journal_divergence";
+      meta.updatedAt = new Date().toISOString();
+      await this.state.storage.put(metaKey(programId), meta);
+      return {
+        done: true,
+        response: Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          calls: results,
+          journalDivergence: true,
+          diagnostics: {
+            code: "journal_divergence",
+            index,
+            message: "journaled await_approval executionId does not match the plan call",
+          },
+          honesty: PROGRAM_CELL_HONESTY,
+        }),
+      };
+    }
+
+    const status = await fetchPendingStatus(this.env.CLAWQL_CORE_UPSTREAM, executionId);
+    if (status === "pending") {
+      meta.status = "parked";
+      meta.pausedAtIndex = index;
+      meta.pauseKind = "await_approval";
+      meta.updatedAt = new Date().toISOString();
+      await this.state.storage.put(metaKey(programId), meta);
+      return {
+        done: true,
+        response: Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: "parked",
+          code: "awaiting_approval",
+          pauseKind: "await_approval",
+          pausedAtIndex: index,
+          executionId,
+          calls: results,
+          honesty: PROGRAM_CELL_HONESTY,
+          note: "Observe-only wait; approve/decline then POST /program/resume (never consumes)",
+        }),
+      };
+    }
+
+    const terminalOk = status === "approved" || status === "completed";
+    const callStatus = status === null ? "mandate_missing" : status;
+    const entry = {
+      index,
+      callId: `c${index}`,
+      tool: "await_approval",
+      args: { executionId },
+      result: {
+        ok: terminalOk,
+        status: callStatus,
+        error: terminalOk
+          ? undefined
+          : status === null
+            ? `pending execution ${executionId} not found`
+            : `mandate ${status}`,
+        value: {
+          ok: terminalOk,
+          status: callStatus,
+          executionId,
+          pendingStatus: status,
+        },
+      },
+      completedAt: new Date().toISOString(),
+      replayed: false,
+    };
+    await this.state.storage.put(entryKey(programId, index), entry);
+    if (!terminalOk) {
+      meta.status = "failed";
+      meta.lastError = entry.result.error;
+      meta.updatedAt = new Date().toISOString();
+      await this.state.storage.put(metaKey(programId), meta);
+      return {
+        done: true,
+        response: Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          calls: [...results, entry],
+          honesty: PROGRAM_CELL_HONESTY,
+        }),
+      };
+    }
+    // Clear park markers once settled.
+    if (meta.pauseKind === "await_approval") {
+      delete meta.pauseKind;
+      delete meta.pausedAtIndex;
+    }
+    meta.status = "running";
+    meta.updatedAt = new Date().toISOString();
+    await this.state.storage.put(metaKey(programId), meta);
+    return { done: false, entry };
   }
 
   async fetch(request) {
@@ -211,8 +416,7 @@ export class ProgramCellDO {
         : typeof body.hangAfterIndex === "number"
           ? body.hangAfterIndex
           : -1;
-    const pauseBeforeIndex =
-      typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
+    const pauseBeforeIndex = typeof body.pauseBeforeIndex === "number" ? body.pauseBeforeIndex : -1;
     const pauseDuringCallIndex =
       typeof body.pauseDuringCallIndex === "number" ? body.pauseDuringCallIndex : -1;
     const pauseAfterUpstreamBeforeJournalIndex =
@@ -234,6 +438,12 @@ export class ProgramCellDO {
     const results = [];
     for (let i = 0; i < calls.length; i++) {
       const call = calls[i] || {};
+      if (call.tool === "await_approval") {
+        const awaited = await this.runAwaitApprovalStep(programId, call, i, results, meta);
+        if (awaited.done) return awaited.response;
+        results.push(awaited.entry);
+        continue;
+      }
       const write = isWriteCall(call);
       if (pauseBeforeIndex === i) {
         meta.status = "paused_for_kill";
@@ -260,6 +470,28 @@ export class ProgramCellDO {
           operationId: call.operationId,
           startedAt: new Date().toISOString(),
         });
+        const intentVisible = await awaitStorageVisible(
+          this.state.storage,
+          intentKey(programId, i)
+        );
+        if (!intentVisible) {
+          meta.status = "failed";
+          meta.lastError = "intent_not_durable";
+          meta.updatedAt = new Date().toISOString();
+          await this.state.storage.put(metaKey(programId), meta);
+          return Response.json(
+            {
+              ok: false,
+              do: "ProgramCellDO",
+              programId,
+              status: meta.status,
+              error: "intent_not_durable",
+              honesty: PROGRAM_CELL_HONESTY,
+              note: "Refused host send: write intent not storage-visible after put",
+            },
+            { status: 503 }
+          );
+        }
       }
       if (pauseAfterIntentIndex === i) {
         meta.status = "paused_for_kill";
@@ -285,6 +517,21 @@ export class ProgramCellDO {
         meta.pauseKind = "during_call";
         meta.updatedAt = new Date().toISOString();
         await this.state.storage.put(metaKey(programId), meta);
+        const metaVisible = await awaitStorageVisible(this.state.storage, metaKey(programId));
+        if (!metaVisible || metaVisible.pauseKind !== "during_call") {
+          return Response.json(
+            {
+              ok: false,
+              do: "ProgramCellDO",
+              programId,
+              status: "failed",
+              error: "pause_meta_not_durable",
+              honesty: PROGRAM_CELL_HONESTY,
+              note: "Refused during_call hang: pauseKind meta not storage-visible",
+            },
+            { status: 503 }
+          );
+        }
         // Hang inside upstream fetch — client SIGKILLs celld while this awaits.
         const hungCall = {
           ...call,
@@ -407,14 +654,47 @@ export class ProgramCellDO {
 
     for (let i = 0; i < calls.length; i++) {
       const call = calls[i] || {};
-      const write = isWriteCall(call);
       const existing = await this.state.storage.get(entryKey(programId, i));
+      if (call.tool === "await_approval") {
+        if (existing) {
+          const entryMatches = entryMatchesCall(existing, { ...call, tool: "await_approval" }, i);
+          if (entryMatches === false) {
+            meta.status = "failed";
+            meta.lastError = "journal_divergence";
+            meta.updatedAt = new Date().toISOString();
+            await this.state.storage.put(metaKey(programId), meta);
+            return Response.json({
+              ok: false,
+              do: "ProgramCellDO",
+              programId,
+              status: meta.status,
+              calls: results,
+              journalDivergence: true,
+              diagnostics: {
+                code: "journal_divergence",
+                index: i,
+                message:
+                  "Journal entry no longer matches plan call at this index — recovery hard-stopped (do not continue)",
+              },
+              honesty: PROGRAM_CELL_HONESTY,
+            });
+          }
+          results.push({ ...existing, replayed: true });
+          continue;
+        }
+        const awaited = await this.runAwaitApprovalStep(programId, call, i, results, meta);
+        if (awaited.done) return awaited.response;
+        results.push(awaited.entry);
+        continue;
+      }
+      const write = isWriteCall(call);
       const intent = await this.state.storage.get(intentKey(programId, i));
       const metaFinalize =
-        meta.finalizeAtIndex === i && meta.finalizeResult != null
-          ? meta.finalizeResult
-          : null;
+        meta.finalizeAtIndex === i && meta.finalizeResult != null ? meta.finalizeResult : null;
       const intentHasUpstreamResult = Boolean(intent?.upstreamResult) || Boolean(metaFinalize);
+      const entryMatches = existing
+        ? entryMatchesCall(existing, { ...call, tool: call.tool || "execute" }, i)
+        : undefined;
       const decision = decideCallResume({
         hasEntry: Boolean(existing),
         hasIntent: Boolean(intent) || Boolean(metaFinalize),
@@ -423,7 +703,29 @@ export class ProgramCellDO {
         pauseKind: meta.pauseKind,
         pausedAtIndex: meta.pausedAtIndex,
         callIndex: i,
+        entryMatches,
       });
+      if (decision.action === "journal_divergence") {
+        meta.status = "failed";
+        meta.lastError = "journal_divergence";
+        meta.updatedAt = new Date().toISOString();
+        await this.state.storage.put(metaKey(programId), meta);
+        return Response.json({
+          ok: false,
+          do: "ProgramCellDO",
+          programId,
+          status: meta.status,
+          calls: results,
+          journalDivergence: true,
+          diagnostics: {
+            code: "journal_divergence",
+            index: i,
+            message:
+              "Journal entry no longer matches plan call at this index — recovery hard-stopped (do not continue)",
+          },
+          honesty: PROGRAM_CELL_HONESTY,
+        });
+      }
       if (decision.action === "replay") {
         results.push({ ...existing, replayed: true });
         continue;

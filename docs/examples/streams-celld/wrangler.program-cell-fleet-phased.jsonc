@@ -1,0 +1,64 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clawql-streams-celld-skeleton",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "INFERENCE_URL": "",
+    "CLAWQL_MCP_URL": "",
+    "CLAWQL_MCP_ADAPTER_URL": "",
+    "CLAWQL_AUDIT_WORM_URL": "",
+    "CLAWQL_AUDIT_API_KEY": "",
+    "CLAWQL_CORE_IN_CELLD": "1",
+    "CLAWQL_CORE_UPSTREAM": "http://127.0.0.1:9885"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GATEWAY",
+        "class_name": "GatewayDO"
+      },
+      {
+        "name": "SUBSCRIPTION",
+        "class_name": "SubscriptionDO"
+      },
+      {
+        "name": "AGENT_SESSION",
+        "class_name": "AgentSessionDO"
+      },
+      {
+        "name": "CORE_TOOLS",
+        "class_name": "CoreToolsDO"
+      },
+      {
+        "name": "PROGRAM_CELL",
+        "class_name": "ProgramCellDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "GatewayDO",
+        "SubscriptionDO",
+        "AgentSessionDO"
+      ]
+    },
+    {
+      "tag": "v2-core-tools",
+      "new_sqlite_classes": [
+        "CoreToolsDO"
+      ]
+    },
+    {
+      "tag": "v3-program-cell",
+      "new_sqlite_classes": [
+        "ProgramCellDO"
+      ]
+    }
+  ]
+}

@@ -13,8 +13,8 @@ import { Context, Effect, Layer } from "effect";
 
 const execFileAsync = promisify(execFile);
 
-/** Streams / program-mode pin — keep in sync with docs/streams/clawql-celld.md §0. */
-export const CELLD_PINNED_VERSION = "v0.4.0" as const;
+/** Streams / program-mode pin — keep in sync with docs/streams/clawql-celld.md §0 + vendor/celld/UPSTREAM_PIN. */
+export const CELLD_PINNED_VERSION = "v0.6.3" as const;
 
 export type CelldBinaryProbeResult = {
   readonly present: boolean;

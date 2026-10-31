@@ -1,113 +1,150 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** ClawQL arms measured (see [`comparison/evidence.json`](./comparison/evidence.json)); peer arms pending invite  
+**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Real peer adapters still `pending_adapter`; **model-faithful** `golem-at-least-once-sim` / `pi-interrupt-sim` measured as placeholders (like `naive-retry`). ClawQL **lost-ack** expansion pilot at N=50 included.  
+**Package:** [`comparison/manifest.json`](./comparison/manifest.json) · board [`comparison/evidence.json`](./comparison/evidence.json)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
 This board measures **effect** outcomes under crashes (duplicates + `outcome_unknown`), not whether a runtime’s in-process execution is durable. See [two kinds of durable](../../gtm/golem-overlap-and-durability-honesty.md#two-kinds-of-durable-do-not-conflate).
 
 ---
 
-## What is being compared (and what is not)
+## Tip package (what changed on the existing table)
 
-| Arm                       | Role                               | Notes                                                                       |
-| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
-| **celld / ProgramCellDO** | ClawQL’s **own** journal substrate | Not a rival. Tiers **B** and **C** already measure program mode on celld.   |
-| **Pi Durable**            | Durable **agent harness**          | Peer comparison — resume-after-crash shape differs from ClawQL.             |
-| **Golem**                 | Durable **execution runtime**      | Peer comparison — mid-function resume; outbound retries + idempotency keys. |
+| Change | Why |
+| ------ | --- |
+| Rerun ClawQL arms on stock **celld 0.6.3** at **N=50**; mark **0.4.0** / N=20 rows superseded | Package must match shipped runtime; N=20 only bounds ~14% vs peers’ ~6% at N=50 |
+| Add **runtime / runtimeVersion** (+ **harnessCommit**) for every arm | Results only meaningful per version / same tip commit |
+| Add **intentPresentOnResume** for every arm | After the mid-flight bug: does the system still know a call was in flight? |
+| Add **callVerifiedSent** for every arm | Crash landed after send, not before |
+| **Wedged-owner** (and stale-owner) are **separate rows** | Hung-health-then-kill ≠ crash during outside write |
+| Regenerate **manifest** in one commit | Whole tip package is one artifact — peers share `harnessCommit` |
 
-Do **not** score celld as a third competitor next to Pi Durable and Golem. Score **ClawQL program mode on celld** vs those two runtimes/harnesses.
+**Cells that stay as they are:** duplicates · outcome unknown · completed exactly once.
+
+### Column set (schema v2)
+
+| Column | Meaning |
+| ------ | ------- |
+| `runtime` / `runtimeVersion` | Exact binary or harness identity |
+| `crashPhase` | Where the kill/scenario landed |
+| `duplicates` | Same side effect twice |
+| `outcomeUnknown` | In-flight write unresolved |
+| `intentPresentOnResume` | Journal/status still shows the in-flight call after resume |
+| `callVerifiedSent` | Upstream saw the call (or host applied) before the kill |
+| upstream mode | `idempotent` · `non_idempotent` · (+ planned `lookup_by_reference`) |
 
 ---
 
-## Metric: side effects under crashes (two columns)
+## What is being compared (and what is not)
 
-All arms resume after a crash. They differ on the **in-flight write**. Count both — never collapse to a single winner:
+| Arm | Role | Notes |
+| --- | ---- | ----- |
+| **celld / ProgramCellDO** | ClawQL’s **own** journal substrate | Not a rival. Tiers **B** and **C** measure program mode on celld. |
+| **Pi Durable** | Durable **agent harness** | Peer — resume-after-crash shape differs. |
+| **Golem** | Durable **execution runtime** | Peer — mid-function resume; outbound retries + keys. |
 
-| Column                       | Meaning                                                            |
-| ---------------------------- | ------------------------------------------------------------------ |
-| **Duplicates**               | Same side effect applied twice (e.g. payment charged twice).       |
-| **Lost / `outcome_unknown`** | Write never applied, or nobody can tell — human/operator resolves. |
+Do **not** score celld as a third competitor next to Pi Durable and Golem. Score **ClawQL program mode on celld** vs those two.
+
+---
+
+## Metric: side effects under crashes (two columns + tip honesty)
+
+All arms resume after a crash. Count **both** effect columns — never collapse to a single winner — and the two tip honesty columns:
+
+| Column | Meaning |
+| ------ | ------- |
+| **Duplicates** | Same side effect applied twice |
+| **Lost / `outcome_unknown`** | Write never applied, or nobody can tell |
+| **intentPresentOnResume** | System still knows a call was in flight |
+| **callVerifiedSent** | Crash after send, not a no-op kill before egress |
 
 **Trade-off (honest framing — matches De Goes / Golem 1.6):**
 
-| System     | Favors                                | Interrupted third-party POST without keys   |
-| ---------- | ------------------------------------- | ------------------------------------------- |
-| **Golem**  | Completing the work                   | At least once → possible **duplicate**      |
+| System | Favors | Interrupted third-party POST without keys |
+| ------ | ------ | ----------------------------------------- |
+| **Golem** | Completing the work | At least once → possible **duplicate** |
 | **ClawQL** | Never repeating a consequential write | **At most once** → may be `outcome_unknown` |
 
-ClawQL consumes the approval **before** the write → duplicates stay at zero; an interrupted write can land in `outcome_unknown`. That unknown is explicit and limited to the in-flight window — it does not mean ClawQL “gave up”; see [why outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability) (check-then-decide and keys are the planned auto-resolve path). Golem retries and adds idempotency keys; when the callee honors them, effect is once. Neither is wrong — they pick opposite sides of the same distributed-systems limit.
-
-Publish **both** columns on every arm.
+Publish **all** columns on every arm.
 
 ---
 
-## Upstream modes (required for Golem’s claim)
+## Upstream modes
 
-Run every arm against **two** mock upstreams — the same split he named:
-
-1. **Idempotency-honoring** — Stripe-class: same key → one effect.
-2. **No idempotency** — retries can multiply effects.
-
-Golem’s public model: retries take effect once **if** the service honors keys; otherwise at least once. ClawQL’s single-use mandate does **not** depend on that. Both modes show where each guarantee comes from. **Planned product:** mandate-derived keys **and** spec-driven check-then-decide ([honesty](../../gtm/golem-overlap-and-durability-honesty.md#product-improvement-resolve-in-flight-unknowns-automatically-planned)) so lookup-capable / Stripe-class APIs auto-resolve instead of leaving `outcome_unknown` — still at-most-once when neither exists.
+1. **Idempotency-honoring** — Stripe-class: same key → one effect.  
+2. **No idempotency** — retries can multiply effects.  
+3. **Lookup by reference** — planned (lost-ack + neither-API expansion).  
+4. **Neither keys nor lookup** — planned row (still pending).
 
 ---
 
-## Arms to run (same kill-mid-write harness)
+## Arms
 
-| Arm id                 | Stack                                                               |
-| ---------------------- | ------------------------------------------------------------------- |
-| `clawql-file-journal`  | Tier D today (mandate / file journal)                               |
-| `clawql-program-celld` | ProgramCellDO on celld (needs Tier **C** before any “wild” publish) |
-| `pi-durable`           | Pi Durable alone (maintainer invite before named public board)      |
-| `golem`                | Golem alone (same invite rule)                                      |
-| `pi-durable+clawql`    | Pi Durable agent → ClawQL MCP tools                                 |
-| `golem+clawql`         | Golem agent → ClawQL MCP tools                                      |
-
-**Story for combinations:** Golem (or Pi Durable) keeps the agent and its tools durable; ClawQL as the tool layer keeps approved writes at most once. On APIs **without** idempotency keys, a Golem retry becomes a ClawQL **refusal** instead of a duplicate — closing the non-idempotent case in his model. On APIs **with** keys, both can converge on one effect (ClawQL keys still planned).
-
----
-
-## Publish timing
-
-| Artifact                                                  | When                                                                                                                                                                                                     |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kill-mid-write **gateway / mandate** numbers (Tier **D**) | Ready now (CI N=50); can share privately as ClawQL-only                                                                                                                                                  |
-| Program-mode durability vs Pi Durable / Golem             | Tier **C** fleet peer kill measured on R2 — peer **named** boards still need maintainer invite                                                                                                           |
-| Named public board with “Pi Durable” / “Golem”            | After maintainer invitation (same rule as other peer boards)                                                                                                                                             |
-| De Goes / CEO outreach with numbers                       | **Ready for private contact now** (stock N=1000 claim + evidence) — [outreach order](../../gtm/golem-overlap-and-durability-honesty.md#outreach-timing-ceo--de-goes); do not wait for preferred TTL tune |
+| Arm id | Stack |
+| ------ | ----- |
+| `clawql-file-journal` | Tier D / host file journal (remeasured every package; also `lost_ack` row) |
+| `clawql-program-celld` | ProgramCellDO on **stock celld 0.6.3** (fleet tip imported) |
+| `naive-retry` | Reference: blind re-send after kill |
+| `golem-at-least-once-sim` | **Model sim** (not real Golem): at-least-once retry; keys → one unique effect |
+| `pi-interrupt-sim` | **Model sim** (not real Pi): interrupt re-enters tool → at-least-once effects |
+| `pi-durable` | Pi Durable alone — `pending_adapter` until real adapter |
+| `golem` | Golem alone — `pending_adapter` until real adapter |
+| `pi-durable+clawql` | Pi → ClawQL MCP |
+| `golem+clawql` | Golem → ClawQL MCP |
 
 ---
 
-## Public numbers vs Golem today (not a shared board)
+## Expansion scenarios (new tests)
 
-Golem’s published figures and ClawQL’s Tier C crash board measure different things. Until both arms run the kill-mid-write harness against idempotent and non-idempotent mocks, do not declare a winner on duplicates or failover.
+Pilot each at **N=50** across applicable arms, then maintainer config review, then **N=1000**.
 
-| What's measured               | Golem (public claims)   | ClawQL (measured)              |
-| ----------------------------- | ----------------------- | ------------------------------ |
-| Cold start                    | 2 ms                    | Not yet measured (celld cells) |
-| Memory per unit               | 1 MB min                | ~471 KB / celld cell (earlier) |
-| Density                       | 10,000+ agents / node   | Not yet measured               |
-| Duplicated writes after crash | No published crash test | 0 / 1000 phased kills          |
-| Failover after node crash     | No published figure     | ~12 s median (lease TTL)       |
+| # | Scenario | Arms | Notes |
+| - | -------- | ---- | ----- |
+| 1 | Remaining four crash points for peers | Pi, Golem, ClawQL celld | before_intent · after_intent_before_call · after_call_before_journal · idle (peers today: during_call only) |
+| 2 | Wedged owner | all three | Hang health, then kill. ClawQL tip N=100 already measured |
+| 3 | Stale owner (split-brain) | ClawQL, Golem; Pi likely N/A | Ownership moves; old owner still writes/sends. ClawQL tip N=40 measured |
+| 4 | Lost acknowledgment | all; once per API type | Server processed; response never arrives — keys / lookup / neither |
+| 5 | Neither keys nor lookup API row | all | Still pending from before |
+| 6 | Real-model Pi arm | Pi | Replaces faux model; needs API key |
 
-See [STATUS — How do our numbers compare to Golem?](./STATUS.md#how-do-our-numbers-compare-to-golem).
+---
+
+## Order of work (locked)
+
+1. Rerun the **existing** table on stock **0.6.3** at **N=50** with new columns; separate wedge/stale rows.  
+2. Regenerate the **manifest** (one tip package commit; peers on same `harnessCommit`).  
+3. Run **N=50 expansion pilots** on this tip (include peer adapters when ready) **before / with** the config-review send — maintainers react to real results, not only a plan.  
+4. Send package + pilot results for **configuration review**.  
+5. Final **N=1,000** after review.
+
+Do **not** publish named Pi/Golem boards before review. Prefer pilots **in** the review package (as with the original table), not only after invite.
+
+---
+
+## Superseded (0.4.0 / fork-era)
+
+Listed in [`manifest.json`](./comparison/manifest.json) `superseded[]`. Keep files for history; tip package claims must cite **celld 0.6.3** evidence only.
 
 ---
 
 ## Implementation status
 
-| Piece                                           | Status                                                                                   |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Dual columns + both upstream modes              | **Shipped** — `npm run benchmark:durability-comparison`                                  |
-| `clawql-file-journal` + `naive-retry` reference | **Measured** in CI                                                                       |
-| `clawql-program-celld`                          | Tier B/C harnesses (isolate + fleet scripts); skipped inside Node board                  |
-| Pi Durable / Golem (+ combinations)             | `pending_invite` stubs                                                                   |
-| Evidence                                        | [`comparison/evidence.json`](./comparison/evidence.json) — does **not** overwrite Tier D |
+| Piece | Status |
+| ----- | ------ |
+| Schema v2 columns + N=50 default | **Shipped** |
+| File-journal + naive-retry remasure N=50 | **Shipped** |
+| ProgramCellDO during_call (non-wedge) | **Partial** (v3 tip import) |
+| ProgramCellDO wedged_owner / stale_owner | **Shipped** as **own rows** |
+| Peer model sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) | **Shipped** N=50 (labeled simulators) |
+| Real peer adapter rows | **pending_adapter** (null metrics) |
+| ClawQL lost-ack / neither pilot | **Shipped** N=50 on file-journal |
+| Package manifest | **Shipped** |
+| Final N=1000 package | After review + green v3 |
 
 ### Commands
 
 ```bash
-DURABILITY_COMPARISON_N=20 npm run benchmark:durability-comparison
-# Tier C when you have a conforming bucket:
-CELLD_BUCKET=s3://… STREAMS_CELLD_FLEET_REQUIRED=1 npm run smoke:program-cell-fleet-kill
+# default N=50
+npm run benchmark:durability-comparison
+# writes comparison/evidence.json + comparison/manifest.json
 ```

@@ -1,0 +1,515 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-31T14:11:04.854Z",
+  "ok": true,
+  "status": "measured",
+  "scoreMode": "correctness_availability_v2",
+  "gates": {
+    "scoreMode": "correctness_availability_v2",
+    "correctness": {
+      "failures": 0,
+      "pass": true,
+      "items": [],
+      "meaning": "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill)"
+    },
+    "availability": {
+      "failures": 0,
+      "denominator": 100,
+      "failureRate": 0,
+      "ceiling": 0.05,
+      "pass": true,
+      "resumeMs": {
+        "p50": 6016,
+        "p99": 6400,
+        "max": 6505
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p99": null,
+        "max": null
+      },
+      "items": [],
+      "meaning": "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling"
+    },
+    "outerCompletion": {
+      "rateOuterPhases": null,
+      "outerPhaseN": 0,
+      "cleanCompletionsOuter": 0,
+      "misses": [],
+      "meaning": "reported overall; each miss assigned to correctness or availability — not a separate zero-gate"
+    }
+  },
+  "frozenCriteria": {
+    "resumeDeadlineMs": 60000,
+    "resumeDeadlineMeaning": "wall clock including orchestrator recovery; same for write-kill and await",
+    "availabilityCeiling": 0.05,
+    "availabilityDenominator": "overallN",
+    "writeKillTrials": 100,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 100,
+    "tailsHavePassFailCeiling": false,
+    "note": "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling."
+  },
+  "n": 100,
+  "trialsCompleted": 100,
+  "awaitTrialsCompleted": 0,
+  "awaitTrialsN": 0,
+  "overallN": 100,
+  "phases": [
+    "during_call"
+  ],
+  "wedgeHealth": true,
+  "wedgeHoldMs": 7000,
+  "celldBinaryVersion": "0.6.3",
+  "fenceMode": "upstream_0.6.3_always_gate_wedged",
+  "outputGate": true,
+  "fencedAck": false,
+  "allowUnfenced": false,
+  "rustLog": "timing=debug",
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 3000,
+  "resumeDeadlineMs": 60000,
+  "resumeLatencyNote": {
+    "celldTtlMs": 3000,
+    "stockTtlMs": 10000,
+    "resumeMsP50": 6016,
+    "meaning": "CELLD_TTL_MS=3000 (not stock 10000). Resume p50≈6016ms is lease-dominated under this TTL; do not compare to stock ~12–14s boards."
+  },
+  "callSent": {
+    "duringCallTrials": 100,
+    "sawInFlight": 100,
+    "neverSent": 0,
+    "sawInFlightRate": 1,
+    "outcomeUnknownWithIntentVisible": 100,
+    "outcomeUnknownWithIntentVisibleRate": 1,
+    "meaning": "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+    "sample": [
+      {
+        "i": 0,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1216,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 1,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 2,
+        "sawInFlight": true,
+        "inFlightWaitMs": 705,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 3,
+        "sawInFlight": true,
+        "inFlightWaitMs": 811,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 4,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 5,
+        "sawInFlight": true,
+        "inFlightWaitMs": 609,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 6,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 7,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 8,
+        "sawInFlight": true,
+        "inFlightWaitMs": 607,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 9,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 10,
+        "sawInFlight": true,
+        "inFlightWaitMs": 810,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 11,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 12,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 13,
+        "sawInFlight": true,
+        "inFlightWaitMs": 710,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 14,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 15,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 16,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 17,
+        "sawInFlight": true,
+        "inFlightWaitMs": 607,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 18,
+        "sawInFlight": true,
+        "inFlightWaitMs": 708,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 19,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      }
+    ]
+  },
+  "trialAccounting": {
+    "writeKillTrials": 100,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 100,
+    "filteredOut": 0,
+    "byPhase": {
+      "during_call": {
+        "n": 100,
+        "completedClean": 0,
+        "outcomeUnknown": 100,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      }
+    },
+    "completed": {
+      "denominatorAllPhases": 100,
+      "cleanCompletions": 0,
+      "denominatorOuterPhases": 0,
+      "cleanCompletionsOuter": 0,
+      "midFlightExcludedFromOuter": 100,
+      "note": "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped."
+    },
+    "statePreserved": {
+      "denominator": 0,
+      "preserved": 0,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "midFlightExcluded": 100,
+      "outerIncompleteExcluded": 0,
+      "note": "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed — often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition."
+    },
+    "waitApproval": {
+      "denominator": 0,
+      "ok": 0,
+      "note": "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator."
+    },
+    "stepsRepeated": {
+      "denominator": 100,
+      "writeStepsRerun": 0,
+      "note": "Sum of pets-ledger duplicates across all write-kill trials (target 0)."
+    }
+  },
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.03,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 100,
+      "rate": 1,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 0,
+      "rateAllPhases": 0,
+      "rateOuterPhases": 0,
+      "outerPhaseN": 0,
+      "meaning": "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": false,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": true,
+      "compareMode": "digest_equality",
+      "eligibleN": 0,
+      "preservedN": 0,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "rate": null,
+      "meaning": "claim-path §1 — exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting)."
+    },
+    "waitApproval": {
+      "measured": false,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": false,
+      "n": 0,
+      "ran": 0,
+      "ok": 0,
+      "failed": 0,
+      "survivedRate": null,
+      "completedAfterApproveRate": null,
+      "okRate": null,
+      "failureByReason": {},
+      "meaning": "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous."
+    }
+  },
+  "awaitTrials": [],
+  "awaitFailureSummary": {
+    "ran": 0,
+    "planned": 0,
+    "ok": 0,
+    "failed": 0,
+    "byReason": {}
+  },
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.03,
+  "totalSurvivorSelfFences": 0,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 0,
+  "claim": "Across 100 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 3.0%). The median resume took about 6 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 0.0% of surviving nodes paused themselves for safety, and 0.0% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
+  "resumeMs": {
+    "p50": 6016,
+    "p95": 6305,
+    "p99": 6400,
+    "p999": 6505,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 6,
+  "lease": {
+    "celldTtlMs": 3000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "during_call": {
+      "n": 100,
+      "ok": 100,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 100,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 6016,
+        "p95": 6305,
+        "p99": 6400,
+        "p999": 6505
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    }
+  },
+  "trialFailures": [],
+  "availabilityIncidents": []
+}

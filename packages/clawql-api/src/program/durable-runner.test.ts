@@ -6,12 +6,17 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Clock, Deferred, Duration, Effect, Exit, Layer, Result } from "effect";
 import { describe, expect, it } from "vitest";
+import { canonicalizeForHash } from "../pending/args-hash.js";
+import type { PendingExecutionStatus } from "../pending/pending-execution-types.js";
 import {
   DURABLE_PROGRAM_HONESTY,
   DurableProgramRunnerLive,
   DurableProgramRunnerService,
   executeDurableProgramEffect,
   NONDET_STARTED_AT,
+  nondetAwaitApprovalKey,
+  nondetModelCallRequestDigestKey,
+  nondetSleepWakeAtKey,
   ProgramCrashSimulated,
   resumeProgramEffect,
   runDurableProgramEffect,
@@ -19,11 +24,13 @@ import {
 } from "./durable-runner.js";
 import { hostLogOperationIds } from "./host-log.js";
 import {
+  hashProgramSourceEffect,
   makeFileProgramJournalEffect,
   programJournalFileLayer,
   type ProgramJournal,
   type ProgramJournalService,
 } from "./program-journal.js";
+import { parseProgramPlanEffect } from "./program-plan.js";
 import {
   durableProgramsEnabled,
   programsEnabled,
@@ -33,10 +40,10 @@ import {
 import {
   runProgramEffect,
   type ExecuteProgramResult,
-  type ProgramCallRecord,
   type ProgramHost,
   type ProgramReplayedCall,
 } from "./program-runner.js";
+import { compareProgramStepStateEffect } from "./program-step-state.js";
 
 const ID = "prog_durabletest01";
 const OPS = ["pets.get", "pets.list", "owners.list"] as const;
@@ -63,17 +70,25 @@ type HostOptions = {
   readonly failReplayed?: boolean;
   /** Runs inside the host call, before it returns. */
   readonly onExecute?: (operationId: string) => Effect.Effect<void>;
+  /** Observe-only mandate statuses for await_approval (mutated by tests). */
+  readonly pending?: Map<string, PendingExecutionStatus | null>;
+  /** Delay inside modelCall (ms) for crash-mid-call tests. */
+  readonly modelDelayMs?: number;
+  /** Text for each model_call (default: echo prompt). */
+  readonly modelText?: (prompt: string) => string;
 };
 
 type RecordingHost = {
   readonly host: ProgramHost;
   readonly executed: string[];
+  readonly modelCalls: string[];
   readonly replayed: ProgramReplayedCall[];
 };
 
 /** Same response shape as durable-runner-kill-worker.ts, so results compare across processes. */
 function recordingHost(options: HostOptions = {}): RecordingHost {
   const executed: string[] = [];
+  const modelCalls: string[] = [];
   const replayed: ProgramReplayedCall[] = [];
   const writes = new Set(options.writes ?? []);
   const host: ProgramHost = {
@@ -88,6 +103,15 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
       }),
     search: (input) =>
       Effect.succeed({ formattedText: JSON.stringify({ ok: true, query: input.query }) }),
+    modelCall: (input) =>
+      Effect.gen(function* () {
+        modelCalls.push(input.prompt);
+        if (options.modelDelayMs !== undefined) {
+          yield* Effect.sleep(Duration.millis(options.modelDelayMs));
+        }
+        const text = options.modelText?.(input.prompt) ?? `echo:${input.prompt}`;
+        return { text, ...(input.model !== undefined ? { model: input.model } : {}) };
+      }),
     resolveRisk: (operationId) =>
       Effect.succeed({
         found: true,
@@ -106,8 +130,16 @@ function recordingHost(options: HostOptions = {}): RecordingHost {
         : Effect.sync(() => {
             replayed.push(call);
           }),
+    ...(options.pending
+      ? {
+          pendingStatus: (executionId: string) =>
+            Effect.succeed(
+              options.pending!.has(executionId) ? (options.pending!.get(executionId) ?? null) : null
+            ),
+        }
+      : {}),
   };
-  return { host, executed, replayed };
+  return { host, executed, modelCalls, replayed };
 }
 
 const tempDir = () => mkdtemp(join(tmpdir(), "clawql-durable-"));
@@ -159,19 +191,6 @@ function baseline(source = SOURCE): Promise<ExecuteProgramResult> {
   return Effect.runPromise(runProgramEffect({ source }, recordingHost().host, {}));
 }
 
-/** Call records minus per-run fields (programId) and replay markers. */
-function comparable(calls: readonly ProgramCallRecord[]) {
-  return calls.map((c) => ({
-    index: c.index,
-    tool: c.tool,
-    operationId: c.operationId,
-    ok: c.ok,
-    status: c.status,
-    error: c.error,
-    resultPreview: c.resultPreview,
-  }));
-}
-
 /** Pin wall-clock reads to `iso`; sleeps and timeouts still use the real clock. */
 const atTime =
   (iso: string) =>
@@ -212,8 +231,15 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     ]);
     expect(resumed.ok).toBe(true);
     expect(resumed.programId).toBe(ID);
-    expect(resumed.result).toEqual(expected.result);
-    expect(comparable(resumed.calls)).toEqual(comparable(expected.calls));
+    const state = await Effect.runPromise(
+      compareProgramStepStateEffect({
+        baselineCalls: expected.calls,
+        observedCalls: resumed.calls,
+        baselineResult: expected.result,
+        observedResult: resumed.result,
+      })
+    );
+    expect(state.preserved, `mismatches=${state.mismatchIndexes.join(",")}`).toBe(true);
     expect(resumed.calls.map((c) => c.replayed)).toEqual([true, true, undefined]);
     expect(resumed.diagnostics.honesty).toBe(DURABLE_PROGRAM_HONESTY);
     expect(resumed.diagnostics.durable).toMatchObject({
@@ -343,6 +369,233 @@ describe("durable programs: crash and resume (ADR 0015 step 2)", () => {
     expect(again.executed).toHaveLength(OPS.length - landed);
     expect(resumed.ok).toBe(true);
     expect(resumed.result).toEqual((await baseline(source)).result);
+  });
+
+  it("await_approval parks while pending and resumes after approve without consuming", async () => {
+    const dir = await tempDir();
+    const pending = new Map<string, PendingExecutionStatus | null>([["pex_wait1", "pending"]]);
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "await_approval", executionId: "pex_wait1" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost({ pending });
+    const parked = await run(dir, { source, programId: ID }, first.host);
+    expect(parked.ok).toBe(false);
+    expect(parked.diagnostics.code).toBe("awaiting_approval");
+    expect(parked.diagnostics.durable?.status).toBe("parked");
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.status).toBe("parked");
+    expect(mid?.entries).toEqual([]);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetAwaitApprovalKey(0));
+
+    const still = recordingHost({ pending });
+    const again = await resume(dir, still.host);
+    expect(again.diagnostics.code).toBe("awaiting_approval");
+    expect(again.diagnostics.durable?.status).toBe("parked");
+    expect(still.executed).toEqual([]);
+    expect(
+      (await loadJournal(dir))?.nondet.filter((n) => n.key === nondetAwaitApprovalKey(0))
+    ).toHaveLength(1);
+
+    pending.set("pex_wait1", "approved");
+    const doneHost = recordingHost({ pending });
+    const resumed = await resume(dir, doneHost.host);
+    expect(resumed.ok).toBe(true);
+    expect(doneHost.executed).toEqual(["pets.get"]);
+    expect(resumed.calls[0]).toMatchObject({
+      tool: "await_approval",
+      ok: true,
+      status: "approved",
+    });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      status: "completed",
+      replayedCalls: 0,
+      executedCalls: 2,
+    });
+  });
+
+  it("await_approval fails closed when the mandate is missing", async () => {
+    const dir = await tempDir();
+    const pending = new Map<string, PendingExecutionStatus | null>();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [{ tool: "await_approval", executionId: "pex_missing" }],
+    });
+    const host = recordingHost({ pending });
+    const out = await run(dir, { source, programId: ID }, host.host);
+    expect(out.ok).toBe(false);
+    expect(out.calls[0]).toMatchObject({
+      tool: "await_approval",
+      ok: false,
+      status: "mandate_missing",
+    });
+    expect(out.diagnostics.durable?.status).toBe("completed");
+    expect(host.executed).toEqual([]);
+  });
+
+  it("journals sleep wakeAt once; resume replays completed sleep without waiting again", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "sleep", durationMs: 30 },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost();
+    await crashAfter(dir, first.host, 1, { source, programId: ID });
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetSleepWakeAtKey(0));
+    expect(mid?.entries.map((e) => e.tool)).toEqual(["sleep"]);
+
+    const again = recordingHost();
+    const t0 = Date.now();
+    const resumed = await resume(dir, again.host);
+    const elapsed = Date.now() - t0;
+    expect(again.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "sleep", ok: true, replayed: true });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 1,
+      executedCalls: 1,
+      status: "completed",
+    });
+    // Replayed sleep must not re-wait the full duration.
+    expect(elapsed).toBeLessThan(25);
+  });
+
+  it("journals model_call response; resume replays without a second host call", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "model_call", prompt: "summarize pets", model: "test-model" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const first = recordingHost({ modelText: () => "three pets found" });
+    await crashAfter(dir, first.host, 1, { source, programId: ID });
+    expect(first.modelCalls).toEqual(["summarize pets"]);
+    expect(first.executed).toEqual([]);
+    const mid = await loadJournal(dir);
+    expect(mid?.nondet.map((n) => n.key)).toContain(nondetModelCallRequestDigestKey(0));
+    expect(mid?.entries.map((e) => e.tool)).toEqual(["model_call"]);
+    expect(mid?.entries[0]?.result.value).toMatchObject({
+      ok: true,
+      text: "three pets found",
+      model: "test-model",
+    });
+
+    const again = recordingHost({ modelText: () => "SHOULD_NOT_RUN" });
+    const resumed = await resume(dir, again.host);
+    expect(again.modelCalls).toEqual([]);
+    expect(again.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({
+      tool: "model_call",
+      ok: true,
+      status: "modelled",
+      replayed: true,
+    });
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 1,
+      executedCalls: 1,
+      status: "completed",
+    });
+  });
+
+  it("re-requests model_call once when crashed mid-call (digest journaled, no entry)", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "model_call", prompt: "hello" },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const parsed = await Effect.runPromise(parseProgramPlanEffect(source));
+    if ("ok" in parsed && parsed.ok === false) throw new Error(parsed.error);
+    const plan = parsed as Exclude<typeof parsed, { ok: false }>;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const journal = yield* makeFileProgramJournalEffect(dir);
+        const sourceHash = yield* hashProgramSourceEffect(source);
+        yield* journal.create({
+          programId: ID,
+          sourceHash,
+          owner: "default",
+          plan,
+        });
+        // Simulate crash after requestDigest but before landing the entry.
+        yield* journal.appendNondet(ID, {
+          key: nondetModelCallRequestDigestKey(0),
+          value: canonicalizeForHash({ prompt: "hello" }),
+        });
+      })
+    );
+
+    const host = recordingHost({ modelText: (p) => `reply:${p}` });
+    const resumed = await resume(dir, host.host);
+    expect(host.modelCalls).toEqual(["hello"]);
+    expect(host.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "model_call", ok: true, status: "modelled" });
+    expect(resumed.calls[0]?.replayed).toBeUndefined();
+    expect(resumed.diagnostics.durable).toMatchObject({
+      replayedCalls: 0,
+      executedCalls: 2,
+      status: "completed",
+    });
+  });
+
+  it("re-arms an interrupted sleep from the journaled wakeAt (remaining may be zero)", async () => {
+    const dir = await tempDir();
+    const source = JSON.stringify({
+      v: 1,
+      mode: "sequential",
+      calls: [
+        { tool: "sleep", durationMs: 60_000 },
+        { tool: "execute", operationId: "pets.get", args: { page: 1 } },
+      ],
+    });
+    const parsed = await Effect.runPromise(parseProgramPlanEffect(source));
+    if ("ok" in parsed && parsed.ok === false) throw new Error(parsed.error);
+    const plan = parsed as Exclude<typeof parsed, { ok: false }>;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const journal = yield* makeFileProgramJournalEffect(dir);
+        const sourceHash = yield* hashProgramSourceEffect(source);
+        yield* journal.create({
+          programId: ID,
+          sourceHash,
+          owner: "default",
+          plan,
+        });
+        yield* journal.appendNondet(ID, {
+          key: nondetSleepWakeAtKey(0),
+          value: new Date(Date.now() - 5_000).toISOString(),
+        });
+      })
+    );
+
+    const host = recordingHost();
+    const t0 = Date.now();
+    const resumed = await resume(dir, host.host);
+    expect(Date.now() - t0).toBeLessThan(500);
+    expect(host.executed).toEqual(["pets.get"]);
+    expect(resumed.ok).toBe(true);
+    expect(resumed.calls[0]).toMatchObject({ tool: "sleep", ok: true, status: "slept" });
+    expect(resumed.calls[0]?.replayed).toBeUndefined();
   });
 
   it("journals clock.startedAt once and replays it on every attempt", async () => {

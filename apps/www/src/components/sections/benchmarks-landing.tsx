@@ -741,13 +741,16 @@ export function BenchmarksLanding() {
         </ComparisonTable>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Dual-column comparison (ClawQL arms)
+          Dual-column comparison (tip package · celld 0.6.3)
         </h3>
-        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
-          <caption className="sr-only">Kill-mid-write duplicates and outcome_unknown by upstream mode</caption>
+        <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
+          <caption className="sr-only">
+            Kill-mid-write duplicates, outcome_unknown, intent-on-resume, and call-sent by upstream mode
+          </caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Runtime</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Idempotent upstream</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Non-idempotent upstream</ComparisonTh>
@@ -759,6 +762,9 @@ export function BenchmarksLanding() {
                 <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
                   {row.arm}
                 </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.runtime}
+                </ComparisonTd>
                 <ComparisonTd className={clsx('text-left')}>{row.status}</ComparisonTd>
                 <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
                   {row.idempotent}

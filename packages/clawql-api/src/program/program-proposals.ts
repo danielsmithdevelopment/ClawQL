@@ -83,7 +83,7 @@ export type ProposalOperationLookup = (
 /** A read call as the program observed it; `<id>.result` refs read `value`. */
 export type ProgramCallView = {
   readonly id: string;
-  readonly tool: "execute" | "search";
+  readonly tool: "execute" | "search" | "sleep" | "await_approval" | "model_call";
   readonly operationId?: string;
   readonly ok: boolean;
   readonly value: unknown;

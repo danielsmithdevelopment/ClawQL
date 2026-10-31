@@ -25,10 +25,13 @@ describe("kill-node stand-in demo", () => {
     }
     expect(evidence.ok).toBe(true);
     expect(evidence.pin.isolateKillNodeEligible).toBe(false);
+    expect(evidence.statePreserved).toMatchObject({ measured: true, preserved: true });
+    expect(evidence.arms[0]?.statePreserved).toBe(true);
 
     const dir = await mkdtemp(join(tmpdir(), "kill-standin-ev-"));
     const path = writeKillNodeStandinEvidence(evidence, join(dir, "evidence.json"));
     const loaded = JSON.parse(await readFile(path, "utf8"));
     expect(loaded.ok).toBe(true);
+    expect(loaded.statePreserved.preserved).toBe(true);
   }, 60_000);
 });

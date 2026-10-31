@@ -9,7 +9,7 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects on the published Tier C board. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Caveat: intent durability before the outbound call under peer kill is under active hardening (celld lacks Cloudflare-style output gates); see durability STATUS. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
 /** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). */
 export const durabilityBenchmarkClaim =
@@ -101,7 +101,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived — unknown is honesty, not a durability failure. In real operation that window is milliseconds, so unknowns are far rarer than this targeted test shows. Prefer check-by-reference or idempotency keys before involving a person (planned).'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. A mid-flight kill with no durable intent is a durability defect (under hardening). Prefer check-by-reference or idempotency keys before involving a person (planned).'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -145,7 +145,8 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     name: 'Dual-column comparison',
     status: 'measured',
     statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peers pending invite.',
+    detail:
+      'Schema v2 tip package (celld 0.6.3, N=50): +runtime/version, intent-on-resume, call-sent; wedge is its own row. Peer adapters pending on tip harness; pilots with review package.',
   },
   {
     tier: 'F',
@@ -203,6 +204,7 @@ export const durabilityTtlRows: readonly DurabilityTtlRow[] = [
 export type DurabilityComparisonArm = {
   arm: string
   status: string
+  runtime: string
   idempotent: string
   nonIdempotent: string
 }
@@ -211,20 +213,58 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'clawql-file-journal',
     status: 'measured',
-    idempotent: '0 dups / 20 unknown (n=20)',
-    nonIdempotent: '0 dups / 20 unknown (n=20)',
+    runtime: 'host-file-journal',
+    idempotent: '0 dups · intent+sent (n=50)',
+    nonIdempotent: '0 dups · intent+sent (n=50)',
+  },
+  {
+    arm: 'clawql-program-celld @ during_call',
+    status: 'partial (tip v3)',
+    runtime: 'celld 0.6.3',
+    idempotent: '—',
+    nonIdempotent: 'fleet during_call · see package',
+  },
+  {
+    arm: 'clawql-program-celld @ wedged_owner',
+    status: 'measured (tip)',
+    runtime: 'celld 0.6.3',
+    idempotent: '—',
+    nonIdempotent: '100/100 call-sent+intent (own row)',
   },
   {
     arm: 'naive-retry (reference)',
     status: 'measured',
+    runtime: 'host-file-journal',
     idempotent: 'Retries; unique effects masked by keys',
     nonIdempotent: 'Duplicates when upstream ignores keys',
   },
   {
+    arm: 'golem-at-least-once-sim',
+    status: 'measured (model sim)',
+    runtime: 'golem-model-sim',
+    idempotent: 'At-least-once; 1 unique effect/trial (n=50)',
+    nonIdempotent: 'At-least-once; duplicates (n=50)',
+  },
+  {
+    arm: 'pi-interrupt-sim',
+    status: 'measured (model sim)',
+    runtime: 'pi-interrupt-model-sim',
+    idempotent: 'Tool re-entry; 1 unique effect/trial (n=50)',
+    nonIdempotent: 'Tool re-entry; duplicates (n=50)',
+  },
+  {
+    arm: 'clawql-file-journal @ lost_ack',
+    status: 'measured (pilot)',
+    runtime: 'host-file-journal',
+    idempotent: '0 dups · unknown (no blind resend)',
+    nonIdempotent: 'neither: 0 dups · unknown; lookup resolves',
+  },
+  {
     arm: 'golem / pi-durable (+ combos)',
-    status: 'pending invite',
+    status: 'pending_adapter',
+    runtime: '—',
     idempotent: '—',
-    nonIdempotent: '—',
+    nonIdempotent: 'Real adapters not wired; sims are placeholders',
   },
 ] as const
 
@@ -238,8 +278,8 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
     body: 'A runtime can make the program survive a crash. Remote POSTs still need upstream idempotency — or at-most-once governance. ClawQL chooses at most once for consequential writes.',
   },
   {
-    title: 'Outcome unknown does not undermine durability',
-    body: 'When a cell dies mid-call, success and “never arrived” look the same from ClawQL’s side. We never blind-retry and never drop silently — the unknown is recorded. Recovery is not only “retry / do nothing / ask a person”: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+    title: 'Outcome unknown vs lost intent',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry that intent. If durable intent is missing, resume can re-run the write (double-charge risk); that gap is under active hardening (celld output-gate / lease-epoch fencing) and is not claimed fixed. Recovery when intent is durable: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
   },
   {
     title: 'No “exactly once” over HTTP (yet)',

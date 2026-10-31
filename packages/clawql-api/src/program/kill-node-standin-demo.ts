@@ -19,7 +19,8 @@ import { Effect } from "effect";
 import { resumeProgramEffect } from "./durable-runner.js";
 import { hostLogOperationIds } from "./host-log.js";
 import { programJournalFileLayer } from "./program-journal.js";
-import type { ProgramHost } from "./program-runner.js";
+import { runProgramEffect, type ProgramHost } from "./program-runner.js";
+import { compareProgramStepStateEffect } from "./program-step-state.js";
 import { celldPinStatusEffect } from "./celld-pin.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -35,6 +36,8 @@ export type KillNodeStandinArmResult = {
   readonly hostCallsBeforeKill: readonly string[];
   readonly hostCallsAfterResume: readonly string[];
   readonly detail: string;
+  /** Set on read arm when baseline-vs-resume step state was checked. */
+  readonly statePreserved?: boolean;
 };
 
 export type KillNodeStandinEvidence = {
@@ -46,6 +49,12 @@ export type KillNodeStandinEvidence = {
     readonly isolateReady: boolean;
     readonly isolateKillNodeEligible: boolean;
     readonly honesty: string;
+  };
+  /** Claim-path §1 scaffolding — Node SIGKILL read arm vs no-crash baseline. */
+  readonly statePreserved: {
+    readonly measured: boolean;
+    readonly preserved: boolean;
+    readonly meaning: string;
   };
   readonly ok: boolean;
 };
@@ -118,12 +127,14 @@ function runKillWorker(env: Readonly<Record<string, string>>): Promise<{
 async function armReadSigkill(): Promise<KillNodeStandinArmResult> {
   const dir = await mkdtemp(join(tmpdir(), "clawql-kill-standin-read-"));
   const hostLog = join(dir, "host.log");
+  const source = planSource(READ_OPS);
+  const baseline = await Effect.runPromise(runProgramEffect({ source }, recordingHost().host, {}));
   const child = await runKillWorker({
     JOURNAL_DIR: dir,
     HOST_LOG: hostLog,
     PROGRAM_ID,
     SESSION_ID: "kill-standin-read",
-    SOURCE: planSource(READ_OPS),
+    SOURCE: source,
     KILL_AT_OPERATION: "owners.list",
   });
   const before = [
@@ -135,21 +146,31 @@ async function armReadSigkill(): Promise<KillNodeStandinArmResult> {
       Effect.provide(programJournalFileLayer(dir))
     )
   );
+  const state = await Effect.runPromise(
+    compareProgramStepStateEffect({
+      baselineCalls: baseline.calls,
+      observedCalls: resumed.calls,
+      baselineResult: baseline.result,
+      observedResult: resumed.result,
+    })
+  );
   const ok =
     child.signal === "SIGKILL" &&
     before.join(",") === READ_OPS.join(",") &&
     parent.executed.join(",") === "owners.list" &&
     resumed.ok === true &&
-    resumed.calls.slice(0, 2).every((c) => c.replayed === true);
+    resumed.calls.slice(0, 2).every((c) => c.replayed === true) &&
+    state.preserved;
   return {
     arm: "read_sigkill_resume",
     ok,
     childSignal: child.signal,
     hostCallsBeforeKill: before,
     hostCallsAfterResume: parent.executed,
+    statePreserved: state.preserved,
     detail: ok
-      ? "SIGKILL mid-read; resume replayed 2 journaled calls and re-ran interrupted read once"
-      : `fail signal=${child.signal} before=${before.join("|")} after=${parent.executed.join("|")} resumed.ok=${resumed.ok} stderr=${child.stderr.slice(0, 200)}`,
+      ? "SIGKILL mid-read; resume replayed 2 journaled calls, re-ran interrupted read once, state preserved vs no-crash baseline"
+      : `fail signal=${child.signal} before=${before.join("|")} after=${parent.executed.join("|")} resumed.ok=${resumed.ok} statePreserved=${state.preserved} mismatches=${state.mismatchIndexes.join(",")} stderr=${child.stderr.slice(0, 200)}`,
   };
 }
 
@@ -207,16 +228,23 @@ export function runKillNodeStandinDemoEffect(
     }).pipe(Effect.orDie);
     const arms = [readArm, writeArm] as const;
     const ok = arms.every((a) => a.ok);
+    const readPreserved = readArm.statePreserved === true;
     return {
       kind: "file-journal-sigkill-standin" as const,
       measuredAt: new Date().toISOString(),
       honesty:
-        "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md.",
+        "File-journal SIGKILL stand-in for ADR 0015 (Tier A). Not ProgramCellDO isolate kill (Tier B) or fleet LTX (Tier C) — see docs/benchmarks/durability-proof/STATUS.md. statePreserved is Node unit/SIGKILL golden vs no-crash baseline — not a fleet Tier C rate.",
       arms,
       pin: {
         isolateReady: pin.isolateReady,
         isolateKillNodeEligible: pin.isolateReady,
         honesty: pin.honesty,
+      },
+      statePreserved: {
+        measured: true,
+        preserved: readPreserved,
+        meaning:
+          "claim-path §1 — read SIGKILL arm step outcomes match no-crash baseline (compareProgramStepStateEffect); fleet board still needs paired baselines before quoting a rate",
       },
       ok,
     };
