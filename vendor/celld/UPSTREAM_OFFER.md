@@ -1,42 +1,28 @@
 # Upstream offer — denoland/celld
 
-**Base checked:** [denoland/celld](https://github.com/denoland/celld) `v0.6.3` (wedged board in flight) and vendored `v0.4.0` → ClawQL `0.4.0-clawql.3`  
-**License:** Apache-2.0 (same as upstream)  
-**Submission path:** upstream **disables pull requests**. Send a short bug report first, then optional small `git format-patch` attachments, to **ry@deno.com**. Emailing a patch assigns rights in it to Deno Land under their contribution terms. Keep the report private until they respond.
+**Tip checked:** [denoland/celld](https://github.com/denoland/celld) **v0.6.3** wedged `during_call` N=100 on R2 — **0/100** `lost_midflight_intent`, **100/100** `callSent.sawInFlight` (always-on gate).  
+**Negative control:** vendored `v0.4.0` with `CELLD_OUTPUT_GATE=0` — **100/100** lost on the same board.  
+**ClawQL fork:** `0.4.0-clawql.3` (fence + alive/ready) still used for ClawQL fleets until unpin.  
+**License:** Apache-2.0  
+**Submission path:** upstream **disables pull requests**. Short bug report first → optional small `git format-patch` to **ry@deno.com**. Emailing a patch assigns rights to Deno Land. Keep private until they respond.
 
-Draft: [`upstream-report/BUG_REPORT_DRAFT.md`](upstream-report/BUG_REPORT_DRAFT.md)
+Draft (ready for human send): [`upstream-report/BUG_REPORT_DRAFT.md`](upstream-report/BUG_REPORT_DRAFT.md)  
+Evidence: `docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json`
 
-## Why
+## Verdict for filing
 
-ClawQL’s Tier C fleet kill board (R2 settle) observed mid-flight kills where an outbound call left without a survivor-readable write intent. Framing per celld’s own docs: silent DO compatibility gaps are defects; output-gate hold-until-durable is not listed among known gaps; alpha gaps are expected.
+The DO-compat hole was **real on 0.4.0 with the gate off**. **Stock v0.6.3’s always-on durability wait held** under the same wedged mid-flight kill board. File as a confirmed historical gap + tip confirmation, not as “tip still loses intents on this path.”
 
-Two failure modes fit the pre-fence data:
+Optional residual (not required by the N=100 result): Fleet proofs still skip `VerifyOwnership` in `durable_reached`; epoch-at-confirm remains a hardening offer.
 
-1. **H1 — unfenced ack:** the output gate released after a local/WAL position advance (or a PUT that survivors could not restore).
-2. **H2 — stale incarnation:** a wedged node completed PUT/GET (and sometimes fleet ship) after ownership moved.
+## Proposed patches (minimal, separate — only if upstream wants them)
 
-**Check tip before filing:** re-run the wedged `during_call` board on stock **v0.6.3** (always-on gate). If tip already holds, say so and only offer optional hardening; if it still loses, the report is stronger.
-
-## Proposed patches (minimal, separate)
-
-Offer as **separate** format-patches (not one large agent PR):
-
-1. **Output gate VerifyOwnership for Fleet proofs too:** a wedged member is not sealed; fleet arbitration alone does not close the stale-writer path (`crates/logic/output_gate.rs`).
-2. **Epoch-current at confirm:** before advancing `synced_seq` / returning from `await_durable`, re-read `cells/<cell>/own.json` and require it still name this node at the resident epoch.
-3. **Fenced bucket ack** (optional / measurement-dependent): after each LTX object PUT, confirm the object is readable before advancing `synced_seq`.
-4. **Refuse live incarnation steal** when a foreign live process generation still holds `CELLD_NODE` (default on).
-5. **Refuse node-log bundle PUT** when the shipper’s epoch is not Open.
-
-Optional (chaos only, can stay ClawQL-side): `CELLD_WEDGE_HEALTH_FLAG` to hang readiness while a flag file exists.
-
-Also offered for availability (separate from H1/H2):
-
-6. **Alive vs ready:** `GET /.well-known/celld/alive` always returns quickly; readiness `/.well-known/celld/health` times out the actor Health RPC (`CELLD_HEALTH_TIMEOUT_MS`) and returns 503 instead of hanging.
-7. **Bounded maintenance:** abort stuck maintain / dead-leader sweep / bundle GC after `CELLD_MAINTENANCE_PHASE_BUDGET_SECS` (default 180).
-
-## Open measurement question
-
-The confirm GET adds ~median half-second on R2 boards. Prefer whichever of PUT-only vs PUT+GET holds under the same kill board once measured.
+1. **Output gate VerifyOwnership for Fleet proofs too** (`crates/logic/output_gate.rs`).
+2. **Epoch-current at confirm** before advancing `synced_seq` / returning from `await_durable`.
+3. **Fenced bucket ack** (optional / measurement-dependent PUT vs PUT+GET).
+4. **Refuse live incarnation steal** / refuse node-log bundle PUT when epoch not Open.
+5. Chaos-only (can stay ClawQL-side): `CELLD_WEDGE_HEALTH_FLAG`.
+6. Availability (separate): alive vs ready + bounded maintenance (`0.4.0-clawql.3`).
 
 ## Contact
 
