@@ -1,0 +1,330 @@
+{
+  "kind": "infinity-agent-scale-8g-fit-latency-v1",
+  "measuredAt": "2026-10-30T16:45:58.855Z",
+  "publishable": true,
+  "host": {
+    "hostname": "cursor",
+    "hostKind": "cloud-agent-kvm-vm",
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later. Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU.",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "memTotalKiB": 16387280,
+    "cpuModel": "Intel(R) Xeon(R) Processor",
+    "cpuVendorId": "GenuineIntel",
+    "cpuFamily": "6",
+    "cpuModelId": "207",
+    "cpuStepping": "2",
+    "cpuMhz": "2400.000",
+    "vcpus": 4,
+    "hypervisor": "KVM",
+    "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
+    "storage": "ephemeral pod disk (bind-mounted workspace)",
+    "dmiProductName": null,
+    "dmiSysVendor": null,
+    "kernel": "Linux version 6.12.94+",
+    "cpuLikelyMicroarch": "Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU."
+  },
+  "cgroup": {
+    "path": "/sys/fs/cgroup/system.slice/pod-mhqbokhclzf6nm5eskz7yy4chu-3054d5f8/cursor-agent/bench8g",
+    "memoryMaxBytes": 8589934592,
+    "memorySwapMax": "0",
+    "memoryPeakBytes": 8589934592,
+    "memorySwapPeak": "0"
+  },
+  "tuning": {
+    "allocator": "glibc malloc + malloc_trim(0)",
+    "env": "none (no jemalloc/mimalloc/MALLOC_* overrides observed)",
+    "note": "Fair-compare question for Infinity/Shadaj team: should a density operator set an allocator or heap analog to ClawQL's required --max-old-space-size=8192 under an 8 GiB cap?"
+  },
+  "protocol": {
+    "agentsTarget": 77500,
+    "turns": 20,
+    "wave": 2500,
+    "probeSample": 100,
+    "probeAt": [
+      2500,
+      77500
+    ],
+    "ceilingMultiple": 2,
+    "exitCode": 0
+  },
+  "baseline": {
+    "agents": 2500,
+    "rssKiB": 439056,
+    "turn": {
+      "p50Ms": 2.776474,
+      "p99Ms": 3.893635,
+      "meanMs": 3.194715,
+      "n": 100,
+      "turnsPerSec": 313.02
+    },
+    "within2xOfBaseline": true,
+    "note": "baseline"
+  },
+  "atLastFit": {
+    "agents": 77500,
+    "rssKiB": 8161016,
+    "turn": {
+      "p50Ms": 3.059452,
+      "p99Ms": 4.045532,
+      "meanMs": 3.162417,
+      "n": 100,
+      "turnsPerSec": 316.21
+    },
+    "within2xOfBaseline": true,
+    "note": "probe"
+  },
+  "checkpoints": [
+    {
+      "agents": 2500,
+      "rssKiB": 439056,
+      "turn": {
+        "p50Ms": 2.776474,
+        "p99Ms": 3.893635,
+        "meanMs": 3.194715,
+        "n": 100,
+        "turnsPerSec": 313.02
+      },
+      "within2xOfBaseline": true,
+      "note": "baseline"
+    },
+    {
+      "agents": 77500,
+      "rssKiB": 8161016,
+      "turn": {
+        "p50Ms": 3.059452,
+        "p99Ms": 4.045532,
+        "meanMs": 3.162417,
+        "n": 100,
+        "turnsPerSec": 316.21
+      },
+      "within2xOfBaseline": true,
+      "note": "probe"
+    }
+  ],
+  "highestNWithin2x": 77500,
+  "highestContiguousNWithin2x": 77500,
+  "peakMemKiBPerAgentAtLastFit": 108.24,
+  "rssKiBPerAgentAtLastFit": 105.303,
+  "lastFitAgents": 77500,
+  "rssPoints": [
+    {
+      "agents": 0,
+      "rssKiB": 5704
+    },
+    {
+      "agents": 2500,
+      "rssKiB": 439056
+    },
+    {
+      "agents": 5000,
+      "rssKiB": 696788
+    },
+    {
+      "agents": 7500,
+      "rssKiB": 955600
+    },
+    {
+      "agents": 10000,
+      "rssKiB": 1212012
+    },
+    {
+      "agents": 12500,
+      "rssKiB": 1468548
+    },
+    {
+      "agents": 15000,
+      "rssKiB": 1728488
+    },
+    {
+      "agents": 17500,
+      "rssKiB": 1985464
+    },
+    {
+      "agents": 20000,
+      "rssKiB": 2241216
+    },
+    {
+      "agents": 22500,
+      "rssKiB": 2497960
+    },
+    {
+      "agents": 25000,
+      "rssKiB": 2754164
+    },
+    {
+      "agents": 27500,
+      "rssKiB": 3010616
+    },
+    {
+      "agents": 30000,
+      "rssKiB": 3274896
+    },
+    {
+      "agents": 32500,
+      "rssKiB": 3531036
+    },
+    {
+      "agents": 35000,
+      "rssKiB": 3787076
+    },
+    {
+      "agents": 37500,
+      "rssKiB": 4043868
+    },
+    {
+      "agents": 40000,
+      "rssKiB": 4300044
+    },
+    {
+      "agents": 42500,
+      "rssKiB": 4556232
+    },
+    {
+      "agents": 45000,
+      "rssKiB": 4812664
+    },
+    {
+      "agents": 47500,
+      "rssKiB": 5069064
+    },
+    {
+      "agents": 50000,
+      "rssKiB": 5325692
+    },
+    {
+      "agents": 52500,
+      "rssKiB": 5582044
+    },
+    {
+      "agents": 55000,
+      "rssKiB": 5838352
+    },
+    {
+      "agents": 57500,
+      "rssKiB": 6109932
+    },
+    {
+      "agents": 60000,
+      "rssKiB": 6366572
+    },
+    {
+      "agents": 62500,
+      "rssKiB": 6622612
+    },
+    {
+      "agents": 65000,
+      "rssKiB": 6879304
+    },
+    {
+      "agents": 67500,
+      "rssKiB": 7135656
+    },
+    {
+      "agents": 70000,
+      "rssKiB": 7391760
+    },
+    {
+      "agents": 72500,
+      "rssKiB": 7648512
+    },
+    {
+      "agents": 75000,
+      "rssKiB": 7905012
+    },
+    {
+      "agents": 77500,
+      "rssKiB": 8161016
+    }
+  ],
+  "reading": "Infinity lastFit latency under 8G (swap.max=0). exit=0. Baseline N=2500: p50=2.776474 ms p99=3.893635 ms. At N=77500: p50=3.059452 ms p99=4.045532 ms; within2x=true. highestNWithin2x=77500. peak_mem/N \u2248 108.24 KiB/agent. Tuning: glibc malloc + malloc_trim(0); no extra allocator env.",
+  "headline": {
+    "latencyGatedLastFitAgents": 77500,
+    "rssKiBPerAgent": 105.303,
+    "rule": "same_latency_gate_both_systems",
+    "waveStep": 2500,
+    "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity.",
+    "metric": "matched_history_memory_fit_under_8g"
+  },
+  "forcedReclaim": {
+    "clawql": "--expose-gc + multi-pass gc() between waves; --max-old-space-size=8192",
+    "infinity": "malloc_trim(0) between waves (stock agent_scale)",
+    "primaryIncludesForcedReclaim": true,
+    "note": "Both sides force reclaim between waves; a normal deployment may fit fewer agents."
+  },
+  "latencyGate": {
+    "presentation": "within_system_ratio_only",
+    "warning": "Absolute ms measure different work across systems \u2014 do not compare Infinity vs ClawQL turn times.",
+    "baselineAgents": 2500,
+    "lastFitAgents": 77500,
+    "p50Ratio": 1.102,
+    "p99Ratio": 1.039,
+    "within2x": true,
+    "rawMsWithinSystemOnly": {
+      "baseline": {
+        "p50Ms": 2.776474,
+        "p99Ms": 3.893635
+      },
+      "lastFit": {
+        "p50Ms": 3.059452,
+        "p99Ms": 4.045532
+      }
+    }
+  },
+  "frozenCriteria": {
+    "id": "infinity-clawql-8g-history-density-v1",
+    "frozenAt": "2026-10-30T17:50:00Z",
+    "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity.",
+    "arms": {
+      "infinity": "agent_scale unique-content v2; full scripted runtime round-trip per turn",
+      "clawql": "DensityConversationRuntime matched-shape resident history; driveTurn append harness \u2014 not full ClawQL stack"
+    },
+    "criteria": [
+      {
+        "id": "byte_parity",
+        "rule": "matched Infinity-shaped 20-turn / 100-message histories (~65 KiB JSON)"
+      },
+      {
+        "id": "unique_content",
+        "rule": "unique-per-agent tags; no cross-agent string sharing"
+      },
+      {
+        "id": "history_integrity",
+        "rule": "resident slope (or offloaded disk KiB) >= serialized history KiB"
+      },
+      {
+        "id": "fit_cap_integrity",
+        "rule": "lastFitAgents * rampSlope <= memory.max"
+      },
+      {
+        "id": "harness_lastfit_crosscheck",
+        "rule": "uncapped harness floor * 8G lastFit must fit or not be jointly quoted"
+      },
+      {
+        "id": "latency_gate",
+        "rule": "headline N = highest where turn p50 AND p99 <= 2x baseline at N=2500; same rule both systems; quote within-system ratios only"
+      },
+      {
+        "id": "forced_reclaim_disclosed",
+        "rule": "primary result includes ClawQL gc() and Infinity malloc_trim(0) between waves"
+      },
+      {
+        "id": "wave_step",
+        "rule": "2500 agents; lastFit accurate to within one step"
+      },
+      {
+        "id": "headline_n",
+        "rule": "Infinity 77500 (latency-checked at ramp lastFit); ClawQL 100000 (latency-checked; not unverified 102500)"
+      }
+    ],
+    "headline": {
+      "infinityLatencyGatedLastFit": 77500,
+      "clawqlLatencyGatedLastFit": 100000,
+      "pctMoreHistories": 29.0,
+      "metric": "RSS_at_lastFit / N"
+    }
+  },
+  "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity."
+}

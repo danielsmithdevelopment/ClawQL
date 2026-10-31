@@ -1,0 +1,67 @@
+{
+  "kind": "infinity-clawql-same-host-density",
+  "measuredAt": "2026-10-29T20:19:08.127Z",
+  "host": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "hostname": "cursor",
+    "memTotalKiB": 16387280,
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed (4 vCPU Xeon, ~15.6 GiB, Linux 6.12.94+, ephemeral pod disk; instance type unknown \u2014 no metadata endpoint). publishable:true \u2014 same standard as other ClawQL cloud boards; same-host comparison."
+  },
+  "contract": {
+    "turns": 20,
+    "note": "Shared conversation depth \u224820 turns. Infinity: in-memory idle after scripted tool turns. ClawQL: fair-v2 parked (20 turn-pairs + pending tool) on disk bags with ids-only resident. Pi 5 hardware deferred until available \u2014 same-host cloud x86_64 first (like other density peers).",
+    "piHardware": "deferred"
+  },
+  "infinity": {
+    "pinnedCommit": "341f6c2",
+    "command": "AGENTS=10000 TURNS=20 WAVE=500 cargo run --release -p infinity-agent-core --example agent_scale",
+    "agents": 10000,
+    "turns": 20,
+    "kibPerAgent": 103.1,
+    "rssMiB": 1007.2,
+    "storage": "in-memory",
+    "sourceEvidence": "docs/benchmarks/program-density/infinity-on-pi/evidence-agent-scale.json",
+    "honesty": "Their agent_scale: scripted model, in-memory stores, RSS after agents idle. Reproduced on this host at pinned commit \u2014 not Pi hardware."
+  },
+  "clawql": {
+    "samples": [
+      {
+        "agents": 1000,
+        "processRssKiB": 218424,
+        "residentKiBPerAgent": 218.424,
+        "rssDeltaKiBPerAgent": 84.904,
+        "diskBytesPerAgent": 32857.9,
+        "diskBytesTotal": 32857890,
+        "detail": "rssBefore=133520 rssAfter=218424 rssDeltaKiBPerAgent=84.904 idsKept=1000 bagDir=/tmp/clawql-infinity-same-host/n-1000-1793305142784"
+      },
+      {
+        "agents": 5000,
+        "processRssKiB": 313968,
+        "residentKiBPerAgent": 62.794,
+        "rssDeltaKiBPerAgent": 19.083,
+        "diskBytesPerAgent": 32858.8,
+        "diskBytesTotal": 164293890,
+        "detail": "rssBefore=218552 rssAfter=313968 rssDeltaKiBPerAgent=19.083 idsKept=5000 bagDir=/tmp/clawql-infinity-same-host/n-5000-1793305143251"
+      },
+      {
+        "agents": 10000,
+        "processRssKiB": 316280,
+        "residentKiBPerAgent": 31.628,
+        "rssDeltaKiBPerAgent": 0.193,
+        "diskBytesPerAgent": 32858.9,
+        "diskBytesTotal": 328588890,
+        "detail": "rssBefore=314348 rssAfter=316280 rssDeltaKiBPerAgent=0.193 idsKept=10000 bagDir=/tmp/clawql-infinity-same-host/n-10000-1793305144970"
+      }
+    ],
+    "storage": "disk-bags-json",
+    "agentShape": "fair-v2-20-turns-plus-pending-tool",
+    "honesty": "Parked fair agents via ParkedBagApi (JSON bags). Process keeps agent ids only after park; residentKiBPerAgent = total process VmRSS / N (same board definition as fair-v2). diskBytesPerAgent = sum(bag file sizes) / N. History lives on disk, not in RSS."
+  },
+  "reading": "At N=10000: Infinity idle RSS \u2248 103.1 KiB/agent (history in RAM). ClawQL fair-v2 parked: total RSS/N \u2248 31.628 KiB/agent (rss\u0394/N \u2248 0.193 KiB \u2014 ids-only after park) and \u224832.1 KiB/agent on disk for the same 20-turn+tool shape. Adjacent columns, not a single-number contest. Pi 5 hardware deferred.",
+  "supersededBy": "docs/benchmarks/program-density/infinity-on-pi/evidence-harness-v2.json",
+  "publishable": true,
+  "note": "Superseded by harness v2 (byte parity + runtime-driven turns + slope + resident arm). Kept for history."
+}

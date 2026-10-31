@@ -37,6 +37,22 @@ import {
   durabilityTtlRows,
 } from '@/lib/durability-benchmarks'
 import {
+  programDensityBenchmarkLinks,
+  programDensityChips,
+  programDensityClaim,
+  programDensityFitRows,
+  programDensityHeadline,
+  programDensityHonestyNotes,
+  programDensityLatencyNote,
+  programDensityLatencyRows,
+  programDensityMeta,
+  programDensityOffloadRows,
+  programDensityReclaimRows,
+  programDensitySlopeNote,
+  programDensitySlopeRows,
+  programDensitySummary,
+} from '@/lib/program-density-benchmarks'
+import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -193,6 +209,18 @@ export function BenchmarksLanding() {
                 — N=1000 fleet kill · 0 duplicates · ~12s failover · outcome unknown
               </span>
             </p>
+            <p className="text-sm/6 text-mist-800 dark:text-mist-200">
+              <a
+                href="#program-density"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                History density
+              </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                {' '}
+                — 100k vs Infinity 77.5k · ~29% more matched histories under 8 GiB
+              </span>
+            </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
               <a
@@ -214,6 +242,13 @@ export function BenchmarksLanding() {
                 className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
               >
                 durability N=1000
+              </a>
+              {' · '}
+              <a
+                href="#program-density"
+                className="underline decoration-mist-400/60 underline-offset-2 hover:text-mist-950 dark:hover:text-white"
+              >
+                history density ~29%
               </a>
               {' · '}
               <a
@@ -796,6 +831,240 @@ export function BenchmarksLanding() {
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactKillMid} ·{' '}
           {durabilityBenchmarkMeta.artifactComparison} · {durabilityBenchmarkMeta.statusDoc}
+        </p>
+      </Section>
+
+      <Section
+        id="program-density"
+        className="pt-10 sm:pt-14"
+        eyebrow="Program density · Infinity × ClawQL history memory"
+        headline={programDensityHeadline}
+        subheadline={<p>{programDensitySummary}</p>}
+        cta={
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
+              {programDensityMeta.measuredLabel}{' '}
+              <span className="font-normal text-mist-600 dark:text-mist-400">
+                · {programDensityMeta.measuredAt} · {programDensityMeta.boardLabel}
+              </span>
+            </p>
+            <p className="max-w-3xl text-sm/6 text-mist-800 dark:text-mist-200">
+              <span className="font-medium text-mist-950 dark:text-white">Claim: </span>
+              {programDensityClaim}
+            </p>
+            <p className="max-w-3xl text-xs/6 text-mist-600 dark:text-mist-400">
+              Host: {programDensityMeta.hostKind} · {programDensityMeta.cpuLikely} · contract{' '}
+              {programDensityMeta.contract}
+            </p>
+          </div>
+        }
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          {programDensityChips.map((chip) => (
+            <div
+              key={chip.id}
+              className="rounded-lg bg-mist-950/[0.03] px-4 py-3 ring-1 ring-mist-950/8 dark:bg-white/[0.03] dark:ring-white/10"
+            >
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                {chip.title}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-mist-950 dark:text-white">{chip.value}</p>
+              <p className="mt-1 text-xs/5 text-mist-600 dark:text-mist-400">{chip.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Latency-gated lastFit under 8 GiB
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">
+            Infinity vs ClawQL latency-gated history-memory fit under an 8 GiB cgroup with swap disabled
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>System</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Latency-gated lastFit</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>RSS/N</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>vs Infinity</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {programDensityFitRows.map((row) => (
+              <tr
+                key={row.id}
+                className={clsx(
+                  'border-t border-mist-950/10 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.system}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right')}>{row.lastFit}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.rssPerAgent}</ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.vsInfinity}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Fit quality — within-system latency ratios
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">{programDensityLatencyNote}</p>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">
+            Within-system turn-latency ratios from baseline N=2500 to latency-gated lastFit
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>System</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Baseline N</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>lastFit N</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>p50 ratio</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>p99 ratio</ComparisonTh>
+              <ComparisonTh className={clsx('text-center')}>Within 2×?</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {programDensityLatencyRows.map((row) => (
+              <tr
+                key={row.id}
+                className={clsx(
+                  'border-t border-mist-950/10 dark:border-white/10',
+                  row.highlight && 'bg-mist-950/[0.03] dark:bg-white/[0.03]',
+                )}
+              >
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.system}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right')}>{row.baselineN}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.lastFitN}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.p50Ratio}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.p99Ratio}</ComparisonTd>
+                <ComparisonTd className={clsx('text-center')}>{row.within2x}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Forced memory reclaim (both sides)
+        </h3>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">Forced reclaim and allocator knobs disclosed for both density arms</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>System</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Reclaim between waves</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Also</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {programDensityReclaimRows.map((row) => (
+              <tr key={row.id} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.system}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.reclaim}
+                </ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>{row.also}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Open-host resident slopes (forced GC)
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">{programDensitySlopeNote}</p>
+        <ComparisonTable minWidthClass="min-w-[720px]" className="mt-4">
+          <caption className="sr-only">Open-host resident RSS slope floors versus serialized history size</caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>System</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Slope floor</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>History</ComparisonTh>
+              <ComparisonTh className={clsx('text-right')}>Overhead</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {programDensitySlopeRows.map((row) => (
+              <tr key={row.id} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.system}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-right')}>{row.slopeFloor}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.history}</ComparisonTd>
+                <ComparisonTd className={clsx('text-right')}>{row.overhead}</ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
+          Offloaded trade-off (separate row)
+        </h3>
+        <p className="mt-2 max-w-3xl text-sm/6 text-mist-700 dark:text-mist-400">
+          Pair with Infinity serverless / external-store — not against in-memory agent_scale. No win copy on the
+          resident column.
+        </p>
+        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
+          <caption className="sr-only">
+            ClawQL offloaded disk history trade-off paired with Infinity serverless analogue
+          </caption>
+          <thead>
+            <tr>
+              <ComparisonTh className={clsx('text-left')}>Cost / property</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>ClawQL offloaded</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Closest Infinity analogue</ComparisonTh>
+            </tr>
+          </thead>
+          <tbody>
+            {programDensityOffloadRows.map((row) => (
+              <tr key={row.id} className="border-t border-mist-950/10 dark:border-white/10">
+                <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
+                  {row.property}
+                </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>{row.clawql}</ComparisonTd>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.infinityAnalogue}
+                </ComparisonTd>
+              </tr>
+            ))}
+          </tbody>
+        </ComparisonTable>
+
+        <div className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {programDensityHonestyNotes.map((note) => (
+            <div key={note.title} className="flex flex-col gap-2 rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
+              <h3 className="text-base font-semibold text-mist-950 dark:text-white">{note.title}</h3>
+              <p className="text-sm/7 text-mist-700 dark:text-mist-400">{note.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          {programDensityBenchmarkLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                {link.label}
+              </a>
+              <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">{link.detail}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
+          Artifacts: {programDensityMeta.artifactClawqlFit} · {programDensityMeta.artifactInfinityFit} ·{' '}
+          {programDensityMeta.artifactHarness} · {programDensityMeta.artifactOffload} ·{' '}
+          {programDensityMeta.boardReadme}
         </p>
       </Section>
 

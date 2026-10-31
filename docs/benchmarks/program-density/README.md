@@ -12,4 +12,6 @@ CLAWQL_DENSITY_REPS=3 CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-
 
 Writes [`evidence-fair.json`](./evidence-fair.json). Headlines use the **3-rep floor** after **binary-refined** ramp (±resolution in evidence).
 
+**Infinity harness v2 (Pi deferred, `publishable: true` with host disclosed):** [`infinity-on-pi/`](./infinity-on-pi/) · `npm run benchmark:infinity-harness-v2`
+
 **Not this board:** Bun/Node Ready RSS and `_streamMapping` plateau — [memory-plateau.md](../cloudflare-multiturn/memory-plateau.md).

@@ -460,6 +460,11 @@ export const gatewayBenchmarkLinks = [
     detail: 'N=1000 fleet kill · 0 duplicates · outcome unknown · ~12s failover',
   },
   {
+    label: 'History density · Infinity',
+    href: '/benchmarks/#program-density',
+    detail: '100k vs 77.5k · ~29% more matched histories under 8 GiB',
+  },
+  {
     label: 'Dominance roadmap',
     href: '/benchmarks/#dominance',
     detail: 'Peers not yet on the board + minimum criteria for a category claim',
