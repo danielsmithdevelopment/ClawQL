@@ -1,0 +1,7 @@
+{
+  "name": "echo",
+  "main": "index.js",
+  "compatibility_date": "2026-01-01",
+  "durable_objects": { "bindings": [{ "name": "ECHO", "class_name": "Echo" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Echo"] }]
+}

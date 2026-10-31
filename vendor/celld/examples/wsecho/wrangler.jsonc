@@ -1,0 +1,7 @@
+{
+  "name": "wsecho",
+  "main": "index.js",
+  "compatibility_date": "2026-01-01",
+  "durable_objects": { "bindings": [{ "name": "W", "class_name": "W" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["W"] }]
+}
