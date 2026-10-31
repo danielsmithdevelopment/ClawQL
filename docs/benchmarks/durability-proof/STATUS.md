@@ -213,17 +213,30 @@ Sequence on every trial: durable ack → pets hang in flight → wedge/kill → 
 
 **Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
 
-### N≈1000 v3 — restarted on stock 0.6.3 (binary alignment)
+### N≈1000 v3 — FAILED availability (stopped early; stock 0.6.3)
 
-Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json). Shape: 750 write-kill + 250 await; `correctness_availability_v2` with mid-flight intent check; **`CELLD_TTL_MS=10000` (stock)**; binary **stock `0.6.3`** (always-on gate; `FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1`); wedge off.
+Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json) · `status=failed` · stopped once availability failures were certain under frozen criteria.
 
-**Why restarted (not based on results):** an earlier clawql.3 arm was clean through ~110/750, but a restored claim must rest on the binary we ship. Tip **0.6.3** already held the wedged N=100 board (0/100 lost; that wedge board used **`CELLD_TTL_MS=3000`**, not stock 10s — keep disclosed). Partial clawql.3 abort saved at `/opt/cursor/artifacts/phased-n1000-v3-clawql3-aborted-for-063-align.json` (not authoritative). Frozen v2 criteria unchanged. **Skip** retired PUT vs PUT+GET; on green v3 refresh `durable_wait` and restore the mechanism claim.
+| Gate | Result |
+| ---- | ------ |
+| Correctness | **0** failures on **500/750** write-kill trials completed (pass so far; await arm not run) |
+| Availability | **FAIL** — **44** failures / 500 completed (rate 8.8%; ceiling 2% → absolute budget **20/1000** already exceeded) |
+| callSent / intent | **104/125** during_call sawInFlight with intent visible; **21** `call_never_sent` |
+| Safety | **0** duplicates |
+
+**Stop rationale:** failures accelerated late (fleet degrading). Remaining write-kill + await would not recover under frozen criteria and would run on a degraded fleet. Same frozen criteria apply to **v4**.
+
+**Degradation evidence (bucket `tier-c-v3-063-20261031141921`):** **712** unique `nodes/fleet_{A,B}_*.json` registrations accumulated over the run (356 per side) — new node identity on each rebuild, not swept. Board log: **68** rebuild events, self-fences, health timeouts. Matches zombie-lease / missing lease-sweep pattern (alive-vs-ready + bounded maintenance lived on clawql.3 fork, not stock 0.6.3 tip).
+
+**`call_never_sent` cause:** not gate-blocked for 8s. Celld `durable_wait` on this run: max ≈1.4–2.1s; **0** waits ≥5s. None of the 21 never-sent `programId`s appear in celld logs — the program **never reached send/gate**. Stall is earlier (rebuild / ownership / unhealthy node path).
+
+**Before v4:** land lease-sweep + alive-vs-ready (or equivalent) on the runtime under test; run a multi-hour soak with stable node-id count and no self-fence accumulation; then rerun N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board.
 
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 
 **Upstream contact:** short **regression-test offer** (not a bug report / not a VerifyOwnership question) — tip held wedged N=100 **and** stale-owner N=40. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
 
-**Gate latency (stock 0.6.3):** measure `durable_wait` on v3 — not PUT vs PUT+GET fork A/B. Partial: [`durable-wait-stock-0.6.3-v3-partial.json`](../program-cell-fleet-kill/durable-wait-stock-0.6.3-v3-partial.json) (n≈2350; p50≈0.37 s / p99≈0.94 s). Refresh + claim restore only after green v3.
+**Gate latency (stock 0.6.3):** [`durable-wait-stock-0.6.3-v3-partial.json`](../program-cell-fleet-kill/durable-wait-stock-0.6.3-v3-partial.json) (n≈2350; p50≈0.37 s / p99≈0.94 s). Full-log max on v3 ≈1.4–2.1s — far below the 8s never-sent wait. Claim restore only after a **green v4** (not this failed v3).
 
 ### Stale-owner tip probe — stock 0.6.3 N=40 (PASS)
 
@@ -294,7 +307,7 @@ Send the claim above, the evidence JSON, the per-phase table, the harness, the h
 | **D**  | Kill-mid-write board (N trials)       | **Yes** (lab harness; CI N=50)                   | [`security-suite/kill-mid-write/`](../security-suite/kill-mid-write/) · `npm run benchmark:kill-mid-write`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **D+** | Comparison board (dual columns)       | **Yes** (schema v2 tip package; N=50)            | [`comparison/`](./comparison/) · `manifest.json` — ClawQL arms + wedge/stale **own rows** on **celld 0.6.3**; live Golem/Pi N=50 on PR #1432 ([archive](./comparison/archive/evidence-pr1432-live-peers-n50.json)) — tip `pending_adapter` until schema-v2 rewire of [`reference-pr1432`](../../../scripts/benchmarks/durability-comparison/peers/reference-pr1432/) (no sims as peers); ClawQL **lost-ack** N=50 (keys → keyed resend); named peer publish waits on maintainer review                                                                                                                                                                                          |
 | **E**  | MCP `execute_program` → ProgramCellDO | **Open**                                         | Today `CLAWQL_PROGRAM_CELLD_ISOLATE` is pin/readiness only; Lab HTTP `/program/*` is separate from Core MCP                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **F**  | Resume vs journal length              | **Yes** (file-journal; ≤500 steps)               | [`resume-vs-journal/evidence.json`](./resume-vs-journal/evidence.json) · `npm run benchmark:resume-vs-journal` — resume ~1.6–5.3 ms at 10–500 steps; snapshots not needed up to 500 steps. Not fleet failover.                                                                                                                                                                                                                                                                                                                                                                                  |
+| **F**  | Resume vs journal length              | **Yes** (file-journal; ≤500 steps)               | [`resume-vs-journal/evidence.json`](./resume-vs-journal/evidence.json) · `npm run benchmark:resume-vs-journal` — resume ~1.2–5.9 ms at 10–500 steps; snapshots not needed up to 500 steps. Not fleet failover.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -318,16 +331,16 @@ We cannot say yet on a shared board — Golem has not published the kind of cras
 
 **Where unmeasured / planned:** celld cold start; **active** agents-per-node (fair parked density is separate — [program-density](../program-density/STATUS.md)); wiring keyed / lookup auto-resolve into the program durable-runner (file-journal lost-ack pilot + REST mandate redrive already measured); schema-v2 rewire of live Golem/Pi adapters from PR #1432 onto this tip.
 
-### v3 mid-run note — `call_never_sent` (do not reclassify mid-board)
+### v3 final — `call_never_sent` diagnosis
 
-Harness kill for `during_call` is **not** a fixed “kill after T ms” timer. It polls mock pets `__writes.inFlight` for up to **80 × 100 ms ≈ 8 s**; only then SIGKILLs. If `inFlight` stays 0, the trial is scored `call_never_sent` (availability) and **no kill** is issued.
+Harness polls mock `inFlight` up to ≈8 s before scoring `call_never_sent` (no kill if never seen).
 
-| Class | `inFlightWaitMs` (observed) | Gate wait (`durable_wait` partial) |
-| ----- | --------------------------- | ---------------------------------- |
-| Sent (sample) | ~505–806 ms (median ~609) | p50 ≈ 367 ms · p99 ≈ 941 ms · max ≈ 1.35 s |
-| Never-sent | ~8080–8096 ms (full 8 s budget) | Gate max ≪ 8 s — **gate alone does not explain never-sent** |
+| Class | `inFlightWaitMs` | Gate `durable_wait` | Celld log for `programId` |
+| ----- | ---------------- | ------------------- | ------------------------- |
+| Sent (sample) | ~505–806 ms | p50≈0.37 s · max≈1.4–2.1 s | present |
+| Never-sent (21) | ~8080 ms (budget exhausted) | **no** wait_us ≥5 s on this run | **absent** — never reached send/gate |
 
-So the rise in never-sent is **not** “0.6.3 gate (~0.4–0.9 s) made a short kill timer land before send.” The 8 s wait already dwarfs gate latency. Never-sent trials exhaust the wait with zero egress — correlated with rebuild/health stalls, `pause_failed` timeouts, and node self-fence (alive-vs-ready / lease-sweep work). Frozen criteria still count them as availability failures; let v3 finish honestly. If a later board needs a longer inFlight wait or gate-aware arming, document it as a harness change for the **next** run — do not loosen this board’s ceiling.
+Conclusion: never-sent is a **pre-send / rebuild-path stall** on a degrading fleet (712 accumulated node registrations), not always-on gate fail-closed for 8 s. Top fix before v4: lease sweep + alive-vs-ready health (clawql.3 had a start; stock 0.6.3 tip still needs the equivalent).
 
 **Overall for his critique:** yes — a published crash test with real sample size, a statistical bound, and availability costs stated openly is exactly what he demands. Collaboration angle: Golem + ClawQL covers both sides of _his_ model. Head-to-head waits for a Golem arm on [`COMPARISON.md`](./COMPARISON.md), ideally with his input on configuration.
 
