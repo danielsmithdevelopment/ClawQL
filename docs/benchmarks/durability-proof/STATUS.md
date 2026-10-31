@@ -183,11 +183,15 @@ Evidence: [`phased-n100-wedge-during-call-fenced.json`](../program-cell-fleet-ki
 | Unfenced control | GATE=0, FENCED_ACK=0 | **100/100** | **100%** |
 | Fenced clawql.2 | GATE=1, FENCED_ACK=1, confirm GET on | **0/100** | **0%** |
 
-Correctness + availability gates **PASS** on the fenced arm (`ok=true`). One survivor self-fence/restart counted, zero deadline misses. ResumeMs p50≈4.1s / p99≈4.8s (not the gate wait).
+Correctness + availability gates **PASS** on the fenced arm (`ok=true`). One survivor self-fence/restart counted, zero deadline misses.
 
-**Durable-ack latency:** node logs are opened write-truncate on each `startNode`, so only **one** `durable_wait` sample survived (`wait_us=1_057_000`, bucket proof ≈1.06s). **Not** a p50/p99. PUT-only vs PUT+GET A/B still open — needs append-mode logs or harness-side `wait_us` capture before publishing a number. See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
+**Resume latency (do not compare to stock):** this board set **`CELLD_TTL_MS=3000`** (fast wedge cycles; `wedgeHoldMs=7000` ≈ 2× TTL). Resume p50≈**4.1s** / p99≈4.8s is the lease floor under that TTL. Stock boards use TTL=10000 and see ~12–14s resume p50 — different lease floor, not a gate improvement.
 
-**Efficacy read:** with a 100% unfenced baseline on this harness, 0/100 fenced is strong evidence the epoch-at-confirm / output-gate fence closes the wedged-fleet lost-intent hole — not a weak “below 3%” bound from an uncalibrated board.
+**Call-sent check (required before calling the result settled):** a gate that blocks egress forever can also produce 0 lost intents (availability failure disguised as a durability win). The first fenced N=100 evidence file did **not** record per-trial mock-pets `inFlight>0` before SIGKILL. Harness now requires `callSent.sawInFlight` on every `during_call` trial (else `failureReason=call_never_sent`) and emits `callSent` accounting in evidence. **Re-measure on clawql.2 with that field is the settlement check** — every trial must show durable path → pets `inFlight>0` → kill → `outcome_unknown` with intent/`pauseKind` visible on the survivor.
+
+**Durable-ack latency:** first run kept only **one** `durable_wait` sample (`wait_us=1_057_000`) because node logs were truncated on restart. Harness now appends when `RUST_LOG` contains `timing`. PUT-only vs PUT+GET A/B still open. See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
+
+**Efficacy / residual-rate wording:** with a 100% unfenced baseline on this harness, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
 
 
 ### Outcome unknown ~48% — read the per-phase table

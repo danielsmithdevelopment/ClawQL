@@ -33,7 +33,15 @@
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
 import { spawn, execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  writeSync,
+  readFileSync,
+  openSync,
+  unlinkSync,
+  existsSync,
+} from "node:fs";
 import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -229,7 +237,6 @@ function spawnLogged(cmd, args, logPath, env = process.env) {
   const appendTiming = /timing/i.test(rustLog);
   const fd = openSync(logPath, appendTiming ? "a" : "w");
   if (appendTiming) {
-    const { writeSync } = require("node:fs");
     writeSync(
       fd,
       `\n----- celld restart ${new Date().toISOString()} ${cmd} ${args.join(" ")} -----\n`
@@ -799,6 +806,10 @@ async function main() {
     const body = phasePlan(phase, programId);
     let runRes;
 
+    // during_call: prove the outbound hang reached mock pets before kill.
+    // A gate that blocks send forever can also yield 0 lost intents — that is
+    // an availability failure (call_never_sent), not a durability win.
+    let callSent = null;
     if (phase === "during_call") {
       const ac = new AbortController();
       const runPromise = fetch(`${baseV}/program/run`, {
@@ -807,10 +818,50 @@ async function main() {
         body: JSON.stringify(body),
         signal: ac.signal,
       }).catch(() => null);
-      for (let w = 0; w < 40; w++) {
+      const inFlightWaitStart = Date.now();
+      let sawInFlight = false;
+      let inFlightPolls = 0;
+      let inFlightAtKill = 0;
+      for (let w = 0; w < 80; w++) {
+        inFlightPolls += 1;
         const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
-        if ((ledger.body?.inFlight || 0) > 0) break;
+        inFlightAtKill = Number(ledger.body?.inFlight || 0);
+        if (inFlightAtKill > 0) {
+          sawInFlight = true;
+          break;
+        }
         await sleep(100);
+      }
+      callSent = {
+        sawInFlight,
+        inFlightPolls,
+        inFlightWaitMs: Date.now() - inFlightWaitStart,
+        inFlightAtKill,
+      };
+      if (!sawInFlight) {
+        // Do not wedge/kill a trial that never reached the upstream — that
+        // would confuse durability scoring with a blocked-before-send gate.
+        ac.abort();
+        await runPromise;
+        phaseStats[phase].failures += 1;
+        phaseStats[phase].n += 1;
+        trials.push({
+          i,
+          phase,
+          programId,
+          ok: false,
+          pauseFailed: false,
+          failureClass: "availability",
+          failureReason: "call_never_sent",
+          callSent,
+          detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
+        });
+        console.warn(
+          `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
+        );
+        writeEvidencePartial();
+        if (!nodes[victim].pid) await restartNode(victim);
+        continue;
       }
       await sleep(200);
       // Hang node health so peers see a wedged member; hold ~2× TTL so the
@@ -840,6 +891,7 @@ async function main() {
           status: "paused_for_kill",
           pauseKind: "during_call",
           wedgedHealth: WEDGE_HEALTH,
+          callSent,
         },
       };
     } else {
@@ -1204,6 +1256,7 @@ async function main() {
       failureClass,
       failureReason,
       midFlightStorage,
+      callSent,
       resumeMs,
       resumeActiveMs,
       recoveryMs: avail.recoveryMs,
@@ -1242,8 +1295,10 @@ async function main() {
       const rate = (i + 1) / Math.max(1, elapsedSec);
       const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
       const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
+      const callSentFlag =
+        phase === "during_call" ? (callSent?.sawInFlight ? 1 : 0) : "-";
       console.log(
-        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
+        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} callSent=${callSentFlag} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
       );
       writeEvidencePartial();
     }
@@ -1566,8 +1621,8 @@ async function main() {
                 resumeMs: t.resumeMs ?? null,
                 recoveryMs: t.recoveryMs ?? null,
               })),
-              meaning:
-                "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling",
+          meaning:
+            "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling",
             },
             outerCompletion: {
               rateOuterPhases: completionEligible.length
@@ -1635,6 +1690,61 @@ async function main() {
       diagnoseConditionalWrite: "ok",
       celldTtlMs: CELLD_TTL_MS,
       resumeDeadlineMs: RESUME_DEADLINE_MS,
+      /**
+       * Resume p50 here tracks CELLD_TTL_MS (lease floor), not the durable-ack
+       * gate wait. Stock boards use 10000 → ~12–14s; wedge boards often use 3000
+       * for faster cycles → ~4s. Do not compare across TTL settings.
+       */
+      resumeLatencyNote: {
+        celldTtlMs: CELLD_TTL_MS,
+        stockTtlMs: 10_000,
+        resumeMsP50: percentile(allResume, 50),
+        meaning:
+          CELLD_TTL_MS === 10_000
+            ? "Stock lease TTL (10s) — resume p50 is the usual ~12–14s lease floor."
+            : `CELLD_TTL_MS=${CELLD_TTL_MS} (not stock 10000). Resume p50≈${percentile(allResume, 50)}ms is lease-dominated under this TTL; do not compare to stock ~12–14s boards.`,
+      },
+      /**
+       * during_call must observe mock-pets inFlight>0 before SIGKILL. Otherwise a
+       * gate that never releases egress can fake 0 lost intents (availability hole).
+       */
+      callSent: (() => {
+        const during = trials.filter((t) => t.phase === "during_call");
+        const saw = during.filter((t) => t.callSent?.sawInFlight === true);
+        const never = during.filter(
+          (t) => t.failureReason === "call_never_sent" || t.callSent?.sawInFlight === false
+        );
+        const outcomeUnknownWithIntent = during.filter(
+          (t) =>
+            t.callSent?.sawInFlight === true &&
+            t.outcomeUnknown === true &&
+            t.midFlightStorage?.present === true
+        );
+        return {
+          duringCallTrials: during.length,
+          sawInFlight: saw.length,
+          neverSent: never.length,
+          sawInFlightRate: during.length ? saw.length / during.length : null,
+          outcomeUnknownWithIntentVisible: outcomeUnknownWithIntent.length,
+          outcomeUnknownWithIntentVisibleRate: during.length
+            ? outcomeUnknownWithIntent.length / during.length
+            : null,
+          meaning:
+            "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+          sample: during.slice(0, 20).map((t) => ({
+            i: t.i,
+            sawInFlight: t.callSent?.sawInFlight ?? null,
+            inFlightWaitMs: t.callSent?.inFlightWaitMs ?? null,
+            inFlightAtKill: t.callSent?.inFlightAtKill ?? null,
+            outcomeUnknown: t.outcomeUnknown ?? null,
+            intentPresent: t.midFlightStorage?.present ?? null,
+            pauseKind: t.midFlightStorage?.pauseKind ?? null,
+            writeCount: t.writeCount ?? null,
+            ok: t.ok,
+            failureReason: t.failureReason ?? null,
+          })),
+        };
+      })(),
       /**
        * Every write-kill and await trial is counted. Column rates use property-specific
        * denominators (not a filtered subset of “good” trials). See each note.
