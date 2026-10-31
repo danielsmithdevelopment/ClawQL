@@ -143,6 +143,16 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+/** Astro static pages live at /path/ — keep hash fragments intact. */
+function hrefForResult(url: string): string {
+  const hashIdx = url.indexOf('#')
+  const path = hashIdx === -1 ? url : url.slice(0, hashIdx)
+  const hash = hashIdx === -1 ? '' : url.slice(hashIdx)
+  if (path === '/' || path === '') return `/${hash}`
+  const withSlash = path.endsWith('/') ? path : `${path}/`
+  return `${withSlash}${hash}`
+}
+
 export function initDocsSearch() {
   const dialog = document.getElementById('docs-search-dialog')
   const input = document.getElementById('docs-search-input') as HTMLInputElement | null
@@ -173,6 +183,15 @@ export function initDocsSearch() {
     document.body.classList.remove('overflow-hidden')
   }
 
+  function syncActiveStyles() {
+    resultsEl!.querySelectorAll<HTMLElement>('[data-index]').forEach((el) => {
+      const selected = Number(el.dataset.index) === active
+      el.setAttribute('aria-selected', selected ? 'true' : 'false')
+      el.classList.toggle('bg-zinc-50', selected)
+      el.classList.toggle('dark:bg-zinc-800/50', selected)
+    })
+  }
+
   function render() {
     if (!query) {
       resultsEl!.innerHTML =
@@ -183,30 +202,26 @@ export function initDocsSearch() {
       resultsEl!.innerHTML = `<div class="p-6 text-center text-sm text-zinc-600 dark:text-zinc-400">Nothing found for <strong class="text-zinc-900 dark:text-white">‘${escapeHtml(query)}’</strong>.</div>`
       return
     }
+    // Real <a href> so clicks navigate even if JS handlers fail; no re-render on hover.
     resultsEl!.innerHTML = `<ul role="listbox" id="docs-search-listbox" class="max-h-[min(24rem,calc(100dvh-8rem))] overflow-y-auto">${items
       .map((item, i) => {
         const selected = i === active
         const crumb = [item.pageTitle].filter(Boolean).join(' / ')
-        return `<li role="option" aria-selected="${selected}" data-index="${i}" class="cursor-pointer border-t border-zinc-100 px-4 py-3 first:border-t-0 dark:border-zinc-800 ${selected ? 'bg-zinc-50 dark:bg-zinc-800/50' : ''}">
-          <div class="text-sm font-medium text-zinc-900 dark:text-white">${highlight(item.title, query)}</div>
-          ${crumb ? `<div class="mt-1 truncate text-xs text-zinc-500">${highlight(crumb, query)}</div>` : ''}
+        const href = escapeHtml(hrefForResult(item.url))
+        return `<li role="option" aria-selected="${selected}" class="border-t border-zinc-100 first:border-t-0 dark:border-zinc-800">
+          <a data-index="${i}" href="${href}" class="block cursor-pointer px-4 py-3 no-underline ${selected ? 'bg-zinc-50 dark:bg-zinc-800/50' : ''}">
+            <div class="text-sm font-medium text-zinc-900 dark:text-white">${highlight(item.title, query)}</div>
+            ${crumb ? `<div class="mt-1 truncate text-xs text-zinc-500">${highlight(crumb, query)}</div>` : ''}
+          </a>
         </li>`
       })
       .join('')}</ul>`
-
-    resultsEl!.querySelectorAll('[data-index]').forEach((el) => {
-      el.addEventListener('mouseenter', () => {
-        active = Number((el as HTMLElement).dataset.index)
-        render()
-      })
-      el.addEventListener('click', () => navigate(items[Number((el as HTMLElement).dataset.index)]))
-    })
   }
 
   function navigate(item: SearchResult | undefined) {
     if (!item) return
     close()
-    window.location.assign(item.url)
+    window.location.assign(hrefForResult(item.url))
   }
 
   async function runSearch(q: string) {
@@ -222,6 +237,30 @@ export function initDocsSearch() {
     active = 0
     render()
   }
+
+  // Event delegation — avoid re-binding after each render / hover.
+  resultsEl.addEventListener('mouseover', (e) => {
+    const target = (e.target as HTMLElement | null)?.closest?.('[data-index]')
+    if (!target || !resultsEl.contains(target)) return
+    const next = Number((target as HTMLElement).dataset.index)
+    if (Number.isNaN(next) || next === active) return
+    active = next
+    syncActiveStyles()
+  })
+
+  resultsEl.addEventListener('click', (e) => {
+    const target = (e.target as HTMLElement | null)?.closest?.('a[data-index]')
+    if (!target || !resultsEl.contains(target)) return
+    // Allow modified clicks (new tab) to use the native href.
+    const mouse = e as MouseEvent
+    if (mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey || mouse.button !== 0) {
+      close()
+      return
+    }
+    e.preventDefault()
+    const idx = Number((target as HTMLElement).dataset.index)
+    navigate(items[idx])
+  })
 
   openers.forEach((el) => el.addEventListener('click', open))
   dialog.querySelectorAll('[data-docs-search-close]').forEach((el) => {
@@ -248,14 +287,20 @@ export function initDocsSearch() {
       e.preventDefault()
       if (!items.length) return
       active = (active + 1) % items.length
-      render()
+      syncActiveStyles()
+      resultsEl!
+        .querySelector(`[data-index="${active}"]`)
+        ?.scrollIntoView({ block: 'nearest' })
       return
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault()
       if (!items.length) return
       active = (active - 1 + items.length) % items.length
-      render()
+      syncActiveStyles()
+      resultsEl!
+        .querySelector(`[data-index="${active}"]`)
+        ?.scrollIntoView({ block: 'nearest' })
       return
     }
     if (e.key === 'Enter') {
@@ -274,9 +319,9 @@ export function initDocsSearch() {
 
   // Idle preload so first ⌘K is snappy
   if ('requestIdleCallback' in window) {
-    ;(window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(
-      () => preloadSearchIndex(),
-    )
+    ;(
+      window as Window & { requestIdleCallback: (cb: () => void) => void }
+    ).requestIdleCallback(() => preloadSearchIndex())
   } else {
     setTimeout(() => preloadSearchIndex(), 1500)
   }
