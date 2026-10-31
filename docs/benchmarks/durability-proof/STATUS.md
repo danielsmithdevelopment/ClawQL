@@ -119,7 +119,7 @@ Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-k
 | Fix                                            | Layer               | What it does                                                                                                          | What it does _not_ do                                                                    |
 | ---------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Cap `waitNode` wall time / resume `deadlineAt` | **Harness**         | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics)                                      | Does **not** make `/health` answer; availability may improve less than the tail suggests |
-| Bounded lease-sweep + alive vs ready           | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | Still on the parallel celld list — this is the real availability fix                     |
+| Bounded lease-sweep + alive vs ready           | **celld (historical fork)** | Stops the **node hang** where `/health` accepts TCP but never responds | Was in retired `0.4.0-clawql.3` (`/alive` + timed readiness). **Not** in product pin — stock **0.6.3** has no separate `/alive`; Helm liveness uses `/health`. Durability claim rests on tip gate, not this fork. |
 
 **`during_call` 404 ×5 — R2 settle (read-only on live prefix `tier-c-phased-20261030212001`):**
 
@@ -138,7 +138,18 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 **Root cause (celld already has an output gate — it failed under kill):** denoland/celld `crates/logic/output_gate.rs` holds `Channel::Fetch` until LTX proves a write position under the resident lease epoch (`CELLD_OUTPUT_GATE` default on; `=0` disables). Settled gaps still happened → either proof/ownership race, stale writer accepted into a discarded generation (bucket “cannot refuse a stale writer”), or local SQLite `synchronous=NORMAL` position ahead of what survivors can restore. **One fix closes both holes:** fenced acknowledgment — every storage write returns a sequence; egress held until durable **under the current lease epoch**; incarnation in lease + every write; R2 conditional reject of stale incarnation; refuse start if a live incarnation already holds the node ID. Spec: [celld-output-gate-epoch-fence.md](../../streams/celld-output-gate-epoch-fence.md). Local `storage.get` after `put` is **not** part of the fix (sanity only).
 
-**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight R2 intent check in the harness; restore mechanism claim only after correctness passes with that check. Parallel: lease-sweep + alive-vs-ready for the `/health` hang.
+**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight intent check in the harness, on **stock celld `0.6.3` at stock `CELLD_TTL_MS=10000`** (claim evidence must match the binary we ship — not the clawql.3 fork of 0.4.0). Alive-vs-ready + bounded maintenance remain in clawql.3 for availability (tip 0.6.3 has no `/alive` yet; see AVAILABILITY.md).
+
+### celld `0.4.0-clawql.3` — alive vs ready + bounded maintenance
+
+| Surface | Behavior |
+| ------- | -------- |
+| `GET /.well-known/celld/alive` | Always answers quickly (`alive:true`); ignores WEDGE; does not await actor Health |
+| `GET /.well-known/celld/health` | Readiness: `fleet_ready` + timed actor Health (`CELLD_HEALTH_TIMEOUT_MS`, default 1500) → **503** on timeout instead of hanging |
+| Maintenance ticker | Abort stuck maintain / dead-leader sweep / bundle GC after `CELLD_MAINTENANCE_PHASE_BUDGET_SECS` (default 180) |
+| Helm | Liveness → `alivePath`; readiness → `healthPath` |
+
+Smoke: alive returned 200 in &lt;2ms while a concurrent readiness request was held by `CELLD_WEDGE_HEALTH_FLAG`.
 
 ### N=40 forked celld fence board (clawql.1 — weak sample)
 
@@ -201,6 +212,32 @@ Sequence on every trial: durable ack → pets hang in flight → wedge/kill → 
 **Durable-ack latency:** append-mode timing logs yielded **300** `durable_wait` samples (p50≈0.72s / p99≈1.06s; diagnostic — multiple events can fire per trial). PUT-only vs PUT+GET A/B still open (`CELLD_FENCED_ACK_CONFIRM_GET`). See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
 
 **Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
+
+### N≈1000 v3 — restarted on stock 0.6.3 (binary alignment)
+
+Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json). Shape: 750 write-kill + 250 await; `correctness_availability_v2` with mid-flight intent check; **`CELLD_TTL_MS=10000` (stock)**; binary **stock `0.6.3`** (always-on gate; `FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1`); wedge off.
+
+**Why restarted (not based on results):** an earlier clawql.3 arm was clean through ~110/750, but a restored claim must rest on the binary we ship. Tip **0.6.3** already held the wedged N=100 board (0/100 lost; that wedge board used **`CELLD_TTL_MS=3000`**, not stock 10s — keep disclosed). Partial clawql.3 abort saved at `/opt/cursor/artifacts/phased-n1000-v3-clawql3-aborted-for-063-align.json` (not authoritative). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3 on 0.6.3.
+
+**Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
+
+**Upstream contact:** short **regression-test offer** (not a bug report / not a VerifyOwnership question) — tip held wedged N=100 **and** stale-owner N=40. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
+
+**Gate latency (stock 0.6.3):** measure `durable_wait` on v3 — not PUT vs PUT+GET fork A/B. Partial: [`durable-wait-stock-0.6.3-v3-partial.json`](../program-cell-fleet-kill/durable-wait-stock-0.6.3-v3-partial.json) (p50≈0.33 s / p99≈0.70 s).
+
+### Stale-owner tip probe — stock 0.6.3 N=40 (PASS)
+
+Evidence: [`phased-n40-stale-owner-upstream-0.6.3.json`](../program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json) · measured **2026-10-31 08:07 PDT** · design [`STALE_OWNER_PROBE.md`](../../../vendor/celld/upstream-report/STALE_OWNER_PROBE.md). Method: SIGSTOP → lazy `own.json` flip (survivor poke) → SIGCONT; fail on late `inFlight` after move+thaw.
+
+| Metric | Result |
+| ------ | ------ |
+| `ownershipMoved` | **40/40** |
+| `staleSend` | **0/40** |
+| `lost_midflight_intent` | **0** |
+| `callSent.sawInFlight` | **40/40** |
+| Correctness / availability | **PASS** (`ok=true`) |
+
+TTL disclosure: `CELLD_TTL_MS=2000` (not stock 10s). Tip closes this path; fork not required. Claim restore still waits on green **v3 N=1000** at stock TTL.
 
 
 ### Outcome unknown ~48% — read the per-phase table

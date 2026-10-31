@@ -38,7 +38,7 @@ describe("celld pin readiness", () => {
 
   it("requires env pin, isolate flag, and matching binary", async () => {
     const env = {
-      CELLD_VERSION: "v0.4.0",
+      CELLD_VERSION: CELLD_PINNED_VERSION,
       CLAWQL_PROGRAM_CELLD_ISOLATE: "1",
     };
 
@@ -58,7 +58,7 @@ describe("celld pin readiness", () => {
     expect(wrongBinary.isolateReady).toBe(false);
 
     const ready = await Effect.runPromise(
-      celldPinStatusEffect(env, probeOf({ present: true, version: "v0.4.0" }))
+      celldPinStatusEffect(env, probeOf({ present: true, version: CELLD_PINNED_VERSION }))
     );
     expect(ready.isolateReady).toBe(true);
     expect(ready.honesty).toContain("kill-node");
@@ -70,11 +70,11 @@ describe("celld pin readiness", () => {
       celldPinStatusEffect({
         CELLD_VERSION: CELLD_PINNED_VERSION,
         CLAWQL_PROGRAM_CELLD_ISOLATE: "1",
-        CLAWQL_CELLD_PROBE_VERSION: "0.4.0",
+        CLAWQL_CELLD_PROBE_VERSION: "0.6.3",
       })
     );
     expect(status.binaryPresent).toBe(true);
-    expect(status.binaryVersion).toBe("v0.4.0");
+    expect(status.binaryVersion).toBe("v0.6.3");
     expect(status.isolateReady).toBe(true);
   });
 

@@ -1,5 +1,5 @@
 /**
- * `clawql streams celld` — celld v0.4.0 fleet helpers for ClawQL Streams.
+ * `clawql streams celld` — celld v0.6.3 fleet helpers for ClawQL Streams.
  */
 
 import { spawnSync } from "node:child_process";
@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const CELLD_DEFAULT_VERSION = "v0.4.0";
+export const CELLD_DEFAULT_VERSION = "v0.6.3";
 export const CELLD_WORKER_LIMIT_BYTES = 64 * 1024 * 1024;
 
 export type StreamsCelldCliOptions = {
@@ -54,7 +54,7 @@ function requireCelld(): string {
   const which = spawnSync("celld", ["--version"], { encoding: "utf8" });
   if (which.status !== 0) {
     console.error(
-      "celld not found. Run: clawql streams celld install (or CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh)"
+      "celld not found. Run: clawql streams celld install (or CELLD_VERSION=v0.6.3 curl -fsSL https://celld.dev/install.sh | sh)"
     );
     process.exitCode = 1;
     throw new Error("celld missing");

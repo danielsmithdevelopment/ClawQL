@@ -1,18 +1,18 @@
 # ClawQL Celld Integration — Spec v0.1
 
-**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§3** celld reading order; **Lab 5** for celld **v0.4.0** local smoke; Labs 1–3 for schedule + NATS today.
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§3** celld reading order; **Lab 5** for celld local smoke; Labs 1–3 for schedule + NATS today.
 
-**Status:** Draft · September 2026 · v0.1  
-**celld baseline:** **[v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)** (2026-08-28) — pin with `CELLD_VERSION=v0.4.0` on install; do not mix v0.3.x and v0.4.x in one fleet  
+**Status:** Draft · updated October 2026  
+**celld baseline:** **[v0.6.3](https://github.com/denoland/celld/releases/tag/v0.6.3)** — pin with `CELLD_VERSION=v0.6.3` / `CELLD_PINNED_VERSION` ([`vendor/celld/UPSTREAM_PIN`](../../vendor/celld/UPSTREAM_PIN)); do not mix pins in one fleet. No ClawQL fork.  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-inference`](../inference/clawql-inference.md) · `clawql-core` · `mcp-api-adapter`  
 **Related:** [`clawql-cellrt.md`](./clawql-cellrt.md) (ClawQL-owned Rust runtime) · [`aws-celld-burst.md`](./aws-celld-burst.md) (AWS burst / Karpenter / Istio ambient — draft) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
 
 ---
 
-## 0. Version baseline — celld v0.4.0
+## 0. Version baseline — celld v0.6.3
 
-ClawQL Streams docs and labs assume **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)** unless a page pins an older tag for a migration note.
+ClawQL Streams docs and labs assume **[celld v0.6.3](https://github.com/denoland/celld/releases/tag/v0.6.3)** unless a page pins an older tag for a migration note. Install + provenance: `CELLD_PINNED_VERSION=v0.6.3 bash scripts/ci/install-celld-pinned.sh` (`gh attestation verify` on the release `*.gz`).
 
 | v0.4.0 change                                                                                                  | ClawQL impact                                                                                                                        |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -293,9 +293,9 @@ Do not reuse fleet-bucket credentials for vault sync or public dataset upload. S
 ### 7.1 Install (pin v0.4.0)
 
 ```bash
-CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
-celld --version   # expect v0.4.0
-gh attestation verify --repo denoland/celld   # build attestation
+CELLD_PINNED_VERSION=v0.6.3 bash scripts/ci/install-celld-pinned.sh
+celld --version   # expect 0.6.3
+# (script already ran: gh attestation verify <release-asset.gz> --repo denoland/celld)
 ```
 
 Binary ~58 MB; replication is in-process (no external Litestream sidecar).
@@ -395,7 +395,7 @@ CLI wrappers: `clawql streams celld install|deploy|start|diagnose|bundle-check` 
 | Public ingress    | Terminate **TLS** at reverse proxy / mesh gateway; do not expose peer port                |
 | Bucket creds      | One fleet bucket scope; rotate on suspicion; root of authority                            |
 | Alpha caveat      | **Not safe for hostile multi-tenant**; fixes on latest release only                       |
-| Build attestation | `gh attestation verify --repo denoland/celld` on install                                  |
+| Build attestation | `gh attestation verify <release-asset.gz> --repo denoland/celld` (CI: `scripts/ci/install-celld-pinned.sh`) |
 | App auth          | celld does not authenticate end users — ClawQL ATR / OIDC / virtual keys remain mandatory |
 | Cell state / LTX  | Operator bucket; `sqlite3` for DO SQLite — **compliance WORM is host `clawql-audit`**     |
 
@@ -432,7 +432,7 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 | Fleet           | `celld diagnose` · `celld cell list`                                               | Lease + peer health; enumerate cells after traffic               |
 | Smoke           | `STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh` | Webhook → spawn → slim + MCP + adapter + LTX keys                |
 | Helm            | `make helm-celld-template-tests`                                                   | StatefulSet / probes / env injection (CI)                        |
-| Security        | Attestation verify in CI                                                           | Supply chain; pin `CELLD_VERSION=v0.4.0`                         |
+| Security        | Attestation verify in CI                                                           | Supply chain; pin `CELLD_VERSION=v0.6.3`                         |
 
 **Evidence matrix (commands + honesty about gaps):** [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
@@ -447,7 +447,7 @@ Track against upstream celld alpha:
 1. **TCP stub** — `cloudflare:sockets` `connect()` is a silent inert stub; Streams must not depend on raw TCP.
 2. **WebSocket cross-node** — thinner test coverage for close codes/reconnect across nodes; prefer owner-node ingress; always persist reconnect intent.
 3. **Pressure shedding** — off until safe defaults; tune `CELLD_MAX_RESIDENT_CELLS` / RSS manually.
-4. **Manual updates** — installer immutable releases + `current` pointer; no auto-update agent; pin **`CELLD_VERSION=v0.4.0`** until the next qualified release.
+4. **Manual updates** — installer immutable releases + `current` pointer; no auto-update agent; pin **`CELLD_VERSION=v0.6.3`** until the next qualified release.
 5. **v0.3 → v0.4 fleet cutover** — full stop required; no mixed-version fleet ([§0](#0-version-baseline--celld-v040)).
 6. **One application per fleet** — no multi-tenant scheduler; isolate ClawQL orgs with separate fleets/buckets.
 7. **Crypto gaps** — no `deriveKey`; design around digest/HMAC/AES-GCM/sign.

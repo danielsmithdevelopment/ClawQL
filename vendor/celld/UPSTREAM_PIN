@@ -1,4 +1,8 @@
 upstream: https://github.com/denoland/celld
-tag: v0.4.0
-commit: a52f9905425bc41134d817694bdc2c50bcc5e856
+tag: v0.6.3
+# Release commit for tag v0.6.3 (denoland/celld):
+commit: 8702f6d186c77698dbfb30cf29e3b1922a88f008
 license: Apache-2.0
+install: CELLD_PINNED_VERSION=v0.6.3 bash scripts/ci/install-celld-pinned.sh
+attestation: gh attestation verify <release-asset.gz> --repo denoland/celld
+note: No ClawQL fork. Product pin is stock tip; claim evidence must use this binary.

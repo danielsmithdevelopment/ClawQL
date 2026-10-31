@@ -131,7 +131,7 @@ spec:
             failureThreshold: {{ .Values.streams.celld.probes.readiness.failureThreshold | int }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.streams.celld.healthPath | default "/.well-known/celld/health" }}
+              path: {{ .Values.streams.celld.alivePath | default "/.well-known/celld/alive" }}
               port: worker
             initialDelaySeconds: {{ .Values.streams.celld.probes.liveness.initialDelaySeconds | int }}
             periodSeconds: {{ .Values.streams.celld.probes.liveness.periodSeconds | int }}
