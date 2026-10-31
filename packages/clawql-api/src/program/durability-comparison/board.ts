@@ -121,7 +121,7 @@ export function runDurabilityComparisonBoardEffect(
       metric:
         "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes" as const,
       honesty:
-        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Real golem/pi-durable rows stay pending_adapter until live adapters run (never measured in-repo yet — no prior live N=50 peer evidence). Peer model-sims are opt-in via DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1 for internal harness only — not published as peer measurements. ClawQL lost-ack pilot included (keys → keyed resend). Config-review package; named peers unpublished until maintainers review.",
+        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Live Golem/Pi Durable N=50 already measured on PR #1432 (DURABILITY_COMPARISON_LIVE_PEERS=1) — archive comparison/archive/evidence-pr1432-live-peers-n50.json; adapters in scripts/.../peers/reference-pr1432/. Tip rows stay pending_adapter until those drivers are rewired to schema v2 (do not substitute sims). Peer model-sims opt-in via DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1 for internal harness only. ClawQL lost-ack pilot included (keys → keyed resend). Named peers unpublished on /benchmarks until maintainers review.",
       tipRuntime: TIP_RUNTIME,
       tipRuntimeVersion: TIP_RUNTIME_VERSION,
       arms: results,

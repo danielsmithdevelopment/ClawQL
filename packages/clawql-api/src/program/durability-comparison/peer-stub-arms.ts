@@ -55,22 +55,22 @@ function peerArm(id: ArmId, honesty: string): DurabilityArm {
 
 export const piDurableArm = peerArm(
   "pi-durable",
-  "Pi Durable peer arm — adapter not wired on tip. Include N=50 pilot results in the config-review package (not after invite)."
+  "Pi Durable peer arm — live N=50 already measured on PR #1432 (`DURABILITY_COMPARISON_LIVE_PEERS=1`, @earendil-works/pi-durable). Drivers live under scripts/.../peers/reference-pr1432/; rewire to schema v2 on this tip (do not substitute sims). Archive: comparison/archive/evidence-pr1432-live-peers-n50.json."
 );
 
 export const golemArm = peerArm(
   "golem",
-  "Golem peer arm — adapter not wired on tip. Include N=50 pilot results in the config-review package (not after invite)."
+  "Golem peer arm — live N=50 already measured on PR #1432 (`DURABILITY_COMPARISON_LIVE_PEERS=1`, local golem WriteAgent). Drivers + golem-write-pilot fixture under scripts/.../peers/; rewire to schema v2 on this tip (do not substitute sims). Archive: comparison/archive/evidence-pr1432-live-peers-n50.json."
 );
 
 export const piDurableClawqlArm = peerArm(
   "pi-durable+clawql",
-  "Combination arm (Pi Durable → ClawQL MCP) — adapter not wired on tip."
+  "Combination arm — live N=50 on PR #1432; rewire schema v2 from reference-pr1432 adapters."
 );
 
 export const golemClawqlArm = peerArm(
   "golem+clawql",
-  "Combination arm (Golem → ClawQL MCP) — adapter not wired on tip."
+  "Combination arm — live N=50 on PR #1432; rewire schema v2 from reference-pr1432 adapters."
 );
 
 type FleetTipSnippet = {

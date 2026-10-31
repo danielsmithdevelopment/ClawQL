@@ -138,7 +138,7 @@ export function buildComparisonPackageManifest(
         status: "planned",
         arms: ["golem-at-least-once-sim", "pi-interrupt-sim"],
         nPilot: 50,
-        note: "Internal harness only (DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1). Never publish as peer rows next to measured results. Prefer rewiring live golem/pi-durable adapters — no prior in-repo live peer N=50 evidence found.",
+        note: "Internal harness only (DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1). Never publish as peer rows. Live Golem/Pi N=50 exists on PR #1432 — rewire reference-pr1432 adapters to schema v2; archive evidence-pr1432-live-peers-n50.json.",
       },
       {
         id: "pi-real-model",

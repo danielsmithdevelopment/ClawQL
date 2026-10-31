@@ -165,9 +165,9 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
   {
     tier: 'F',
     name: 'Resume vs journal length',
-    status: 'planned',
-    statusLabel: 'Planned',
-    detail: 'Measure resume wall time at short vs long journals; snapshots if needed.',
+    status: 'measured',
+    statusLabel: '≤500 steps',
+    detail: 'File-journal: resume ~1–6 ms at 10–500 steps; snapshots not needed up to 500. Not fleet failover.',
   },
 ] as const
 
@@ -271,7 +271,7 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
 
 /** Shown under the table — peer package is not public yet. */
 export const durabilityPeerReviewNote =
-  'Named Pi Durable / Golem comparison (including combination arms) is in maintainer configuration review and is not published on this page. Model simulations of peer behavior are internal harness references only — never shown as peer measurements.'
+  'Named Pi Durable / Golem comparison is in maintainer configuration review and is not published here. Live N=50 peer runs already exist (PR #1432 / DURABILITY_COMPARISON_LIVE_PEERS=1) and are being rewired to the schema-v2 tip package — model simulations are not substitutes and are never shown as peer measurements.'
 
 export const durabilityHonestyNotes: readonly { title: string; body: string }[] = [
   {

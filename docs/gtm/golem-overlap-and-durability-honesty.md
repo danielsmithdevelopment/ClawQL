@@ -146,16 +146,18 @@ Program durable-runner still hard-stops at `outcome_unknown` (never re-sends) un
 
 ---
 
-## Measure resume vs journal length (planned — find it yourself)
+## Measure resume vs journal length (measured up to 500 steps)
 
-Replay-based recovery can slow down as history grows; state-first / snapshot systems exist for that reason (same pattern as long-session cost elsewhere). Program mode should measure **before** someone else points it out in a thread:
+Replay-based recovery can slow down as history grows; state-first / snapshot systems exist for that reason (same pattern as long-session cost elsewhere).
+
+**Measured (file-journal stand-in):** [`docs/benchmarks/durability-proof/resume-vs-journal/evidence.json`](../benchmarks/durability-proof/resume-vs-journal/evidence.json) · `npm run benchmark:resume-vs-journal`. Resume ~1.2–5.9 ms at 10–500 steps (~0.01 ms/record); `snapshotRecommended=false` up to 500 steps. **Not** fleet lease failover (Tier C ~12 s). Do not extrapolate past 500 steps.
 
 | Board         | What to measure                                                                 |
 | ------------- | ------------------------------------------------------------------------------- |
 | Short program | Resume wall time after SIGKILL / peer failover (already in Tier C `resumeMs`)   |
 | Long program  | Same resume clock vs journal record count / bytes (fan-out of N steps, large N) |
 
-If resume time grows with journal length, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail). Until measured, do not claim linear or constant resume cost. Status: **planned** — not a Tier C gate for John outreach.
+If resume time grows materially past the measured range, add **periodic snapshots** so resume replays only from the last snapshot (plus the short tail).
 
 ---
 
@@ -163,7 +165,7 @@ If resume time grows with journal length, add **periodic snapshots** so resume r
 
 1. **Durability, shipped** — Tier C fleet phased kill on R2 is measured (N=1000, 0 dups); preferred renew/lease tune still planned. Head-to-head Golem arm still open.
 2. **Check-then-decide lookup** — pair write ops with lookup-by-reference from the spec (above); keys already on the REST wire.
-3. **Resume vs journal length** — measure; snapshot if growth is material (above).
+3. **Resume vs journal length** — measured ≤500 steps (above); snapshot only if growth past that range is material.
 4. **Delegated permissions that narrow and cascade** — time-limited sub-agent slices; revoke parent → revoke children.
 5. **Read-only result caching** — specs already mark reads; gateway cache until next write.
 6. **Awaitable approvals in SDKs** — same strength as today, easier to code against.
@@ -223,5 +225,5 @@ He is publicly pressure-testing frameworks that overclaim durability. Use his fr
 - [ ] Prefer “at most once” for approved writes; “at least once + stable id” for events.
 - [ ] When quoting Golem 1.6, keep his three conditions intact; never imply ClawQL is a durable execution engine. REST mandate keys are shipped; do not claim program-runner keyed resume or lookup reconciliation until measured.
 - [ ] Do not frame in-flight recovery as only “retry / silent / person” — lead with check-by-reference (exact match; not-found ≠ failed yet), then keys, then person.
-- [ ] Do not claim constant resume cost until journal-length board exists.
+- [x] Resume vs journal length measured ≤500 steps (snapshots not needed in range); do not extrapolate past measured N.
 - [ ] Streams “Durable Objects” always means Cloudflare/celld DO substrate, not Golem.

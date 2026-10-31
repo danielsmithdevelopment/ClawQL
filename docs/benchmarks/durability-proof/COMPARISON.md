@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Real peer adapters `pending_adapter` (no in-repo live Golem/Pi N=50 evidence yet — wire adapters, do not publish sims as peers). ClawQL **lost-ack** pilot at N=50 (keys → keyed resend). **Do not publish named peer rows on /benchmarks until maintainers review.**  
+**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Live Golem / Pi Durable **N=50 already measured** on PR [#1432](https://github.com/danielsmithdevelopment/ClawQL/pull/1432) (`DURABILITY_COMPARISON_LIVE_PEERS=1`) — archive [`comparison/archive/evidence-pr1432-live-peers-n50.json`](./comparison/archive/evidence-pr1432-live-peers-n50.json); adapters under [`scripts/benchmarks/durability-comparison/peers/reference-pr1432/`](../../scripts/benchmarks/durability-comparison/peers/reference-pr1432/). Tip rows stay `pending_adapter` until those drivers are **rewired to schema v2** (do not substitute sims). ClawQL **lost-ack** pilot at N=50 (keys → keyed resend). **Do not publish named peer rows on /benchmarks until maintainers review.**  
 **Package:** [`comparison/manifest.json`](./comparison/manifest.json) · board [`comparison/evidence.json`](./comparison/evidence.json)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
@@ -87,8 +87,8 @@ Publish **all** columns on every arm.
 | `naive-retry` | ClawQL reference: blind re-send after kill |
 | `golem-at-least-once-sim` | **Internal harness only** (opt-in env) — never a public peer row |
 | `pi-interrupt-sim` | **Internal harness only** (opt-in env) — never a public peer row |
-| `pi-durable` | Pi Durable alone — `pending_adapter` until live adapter (rewire; do not substitute sims) |
-| `golem` | Golem alone — `pending_adapter` until live adapter |
+| `pi-durable` | Pi Durable alone — live N=50 on PR #1432; tip `pending_adapter` until schema-v2 rewire |
+| `golem` | Golem alone — live N=50 on PR #1432 (e.g. non_idempotent 50 dups / always retries); tip `pending_adapter` until schema-v2 rewire |
 | `pi-durable+clawql` | Pi → ClawQL MCP |
 | `golem+clawql` | Golem → ClawQL MCP |
 
