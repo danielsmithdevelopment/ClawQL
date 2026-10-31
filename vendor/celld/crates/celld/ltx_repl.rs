@@ -582,6 +582,14 @@ struct HandoffSnapshot {
 /// and, because a sync credits only tickets whose writes committed before it
 /// started (which the sync's `db.sync` captures), never one it did not upload.
 struct Cell {
+    /// Cell id + resident epoch — needed so fenced ack can refuse to advance
+    /// `synced_seq` when ownership no longer names this node at this epoch.
+    cell_id: String,
+    epoch: u64,
+    /// Shared with [`LtxRepl::ownership`] so a late [`LtxRepl::bind_ownership`]
+    /// still applies to cells that activated earlier. Absent binding (unit
+    /// tests) skips the confirm-time check.
+    ownership: Arc<Mutex<Option<Arc<crate::ownership_store::BucketOwnership>>>>,
     replica: Mutex<Option<Replica<ObjectStoreClient>>>,
     /// The same epoch-prefix client the replica holds, for uploads that run
     /// off the replica mutex.
@@ -713,6 +721,10 @@ pub struct LtxRepl {
     /// because each truncate boundary emits a full image of their unbounded
     /// backlog.
     truncate_pages: Option<u32>,
+    /// Bucket ownership adapter for confirm-time epoch checks (ClawQL fence).
+    /// Installed after construction via [`Self::bind_ownership`]. Shared with
+    /// every [`Cell`] so a bind after activation still takes effect.
+    ownership: Arc<Mutex<Option<Arc<crate::ownership_store::BucketOwnership>>>>,
 }
 
 impl LtxRepl {
@@ -976,6 +988,7 @@ impl LtxRepl {
             #[cfg(celld_internal_tests)]
             panic_next_release_close: AtomicBool::new(false),
             durability_timeout_ms,
+            ownership: Arc::new(Mutex::new(None)),
             truncate_pages: Some(
                 crate::env_vars::optional::<u32>("CELLD_LTX_TRUNCATE_PAGES")
                     .ok()
@@ -1028,6 +1041,17 @@ impl LtxRepl {
                 close_replica_or_warn(&handle, &cell, epoch);
             }
         }))
+    }
+
+    /// Bind the bucket ownership adapter so fenced LTX confirms can refuse to
+    /// advance `synced_seq` when this node's epoch is no longer current.
+    /// Call once after constructing [`crate::ownership_store::BucketOwnership`].
+    pub fn bind_ownership(&self, ownership: Arc<crate::ownership_store::BucketOwnership>) {
+        *self.ownership.lock().unwrap() = Some(ownership);
+    }
+
+    fn ownership_handle(&self) -> Arc<Mutex<Option<Arc<crate::ownership_store::BucketOwnership>>>> {
+        self.ownership.clone()
     }
 
     /// Install one fleet shipper and its optional bundle sink as one unit.
@@ -1441,6 +1465,9 @@ impl LtxRepl {
             replica.seed_pos(pos);
         }
         let handle = Arc::new(Cell {
+            cell_id: cell.to_string(),
+            epoch,
+            ownership: self.ownership_handle(),
             replica: Mutex::new(Some(replica)),
             client: self.client_for(cell, epoch),
             req_seq: AtomicU64::new(0),
@@ -1562,10 +1589,18 @@ impl LtxRepl {
             // releases the gate: the bucket upload, or every ensemble
             // member's fsync — whichever lands first.
             let ready = handle.ready.notified();
-            // Prefer the fleet proof when both hold: it is the arbitrated
-            // one, and it spares the caller an ownership read.
+            // Prefer the fleet proof when both hold. Ownership is still
+            // re-checked at confirm (below) and again by VerifyOwnership in
+            // the output gate — fleet no longer skips the epoch fence.
             let shipped = handle.shipped_seq.load(Ordering::SeqCst) >= ticket;
             if handle.synced_seq.load(Ordering::SeqCst) >= ticket || shipped {
+                // ClawQL H2: refuse to report durable if ownership moved
+                // between the sync/ship credit and this waiter waking.
+                if fenced_ack_enabled() && !ownership_still_current(&handle).await {
+                    anyhow::bail!(
+                        "ltx durability refused for {cell} epoch {epoch}: ownership no longer current at confirm"
+                    );
+                }
                 let source = if shipped {
                     celld_logic::ProofSource::Fleet
                 } else {
@@ -2225,6 +2260,51 @@ fn fenced_ack_enabled() -> bool {
     crate::env_vars::flag("CELLD_FENCED_ACK", true).unwrap_or(true)
 }
 
+/// Confirm GET after PUT. Default on whenever fenced ack is on. Set
+/// `CELLD_FENCED_ACK_CONFIRM_GET=0` to measure PUT-return-only + epoch check
+/// (if R2/S3 PUT success already means durable store, the GET may be pure
+/// cost). Epoch-at-confirm still runs when fenced ack is on.
+fn fenced_ack_confirm_get_enabled() -> bool {
+    fenced_ack_enabled()
+        && crate::env_vars::flag("CELLD_FENCED_ACK_CONFIRM_GET", true).unwrap_or(true)
+}
+
+/// ClawQL H2: at confirm time the ownership record must still name this node
+/// at this cell's resident epoch. A stale incarnation can PUT+GET its own
+/// orphaned prefix successfully; refusing here keeps `synced_seq` from
+/// advancing so the output gate never releases a fetch on an orphaned write.
+async fn ownership_still_current(handle: &CellHandle) -> bool {
+    let Some(ownership) = handle.ownership.lock().unwrap().clone() else {
+        return true;
+    };
+    match ownership.read_owner(&handle.cell_id).await {
+        Ok(Some(record))
+            if record.node.as_deref() == Some(ownership.node_id())
+                && record.epoch == handle.epoch =>
+        {
+            true
+        }
+        Ok(record) => {
+            warn!(
+                cell = %handle.cell_id,
+                epoch = handle.epoch,
+                ?record,
+                "ltx fenced-ack: ownership no longer ours at confirm; refusing synced_seq advance"
+            );
+            false
+        }
+        Err(error) => {
+            warn!(
+                %error,
+                cell = %handle.cell_id,
+                epoch = handle.epoch,
+                "ltx fenced-ack: ownership read failed at confirm; refusing synced_seq advance"
+            );
+            false
+        }
+    }
+}
+
 /// One capture+upload for a cell: advance its durable position on success and
 /// wake its waiters. Everything committed before the capture is durable once
 /// uploaded, so the target is read before `db.sync`.
@@ -2313,12 +2393,11 @@ async fn sync_cell(handle: CellHandle) -> Option<bool> {
             handle.ready.notify_waiters();
             return Some(false);
         }
-        // ClawQL fork (H1 fenced ack): PUT success is not enough. Confirm the
-        // object is readable from the bucket before advancing synced_seq —
-        // otherwise the output gate can release a fetch whose LTX survivors
-        // cannot restore (during_call R2 settle). Disable with
-        // CELLD_FENCED_ACK=0.
-        if fenced_ack_enabled() {
+        // ClawQL fork (H1 fenced ack): PUT success alone was not enough under
+        // the measured during_call losses. Confirm the object is readable
+        // before advancing synced_seq. Toggle with CELLD_FENCED_ACK_CONFIRM_GET
+        // for PUT-only vs PUT+GET latency A/B (epoch check still applies).
+        if fenced_ack_confirm_get_enabled() {
             match handle
                 .client
                 .open_ltx_file(0, TXID(*min_txid), TXID(*max_txid))
@@ -2346,6 +2425,17 @@ async fn sync_cell(handle: CellHandle) -> Option<bool> {
                 }
             }
         }
+    }
+    // ClawQL fork (H2): committed object is not enough — this node's epoch
+    // must still be current at confirmation time. Otherwise a wedged stale
+    // incarnation credits synced_seq, the gate releases, and the fetch leaves
+    // on an orphaned lineage (4/5 measured losses were stall cascades).
+    if fenced_ack_enabled() && !ownership_still_current(&handle).await {
+        handle
+            .last_sync_ms
+            .store(asyncrt::wall_ms().max(0) as u64, Ordering::SeqCst);
+        handle.ready.notify_waiters();
+        return Some(false);
     }
     if let Some(last) = last {
         // Advance the replica's uploaded watermark; `syncing` serializes
@@ -2856,6 +2946,12 @@ async fn bundle_loop(
                 );
             }
             for (handle, tickets, position) in credits {
+                // Same H2 fence as sync_cell: do not credit a wedged stale
+                // incarnation's bundle upload once ownership has moved.
+                if fenced_ack_enabled() && !ownership_still_current(&handle).await {
+                    handle.ready.notify_waiters();
+                    continue;
+                }
                 handle.durable_txid.fetch_max(position, Ordering::SeqCst);
                 handle.synced_seq.fetch_max(tickets, Ordering::SeqCst);
                 handle

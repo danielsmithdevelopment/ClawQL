@@ -9,10 +9,10 @@
 | Piece | Location | Behavior |
 | ----- | -------- | -------- |
 | Output gate | `crates/logic/output_gate.rs` | Every egress `Channel` (including `Fetch`) held until write position is proven durable under the **resident epoch** |
-| Disable | `CELLD_OUTPUT_GATE=0` | Shell skips `Event::Output` — **never set this on fleet boards** |
+| Disable | `CELLD_OUTPUT_GATE=0` | Shell skips `Event::Output` — **opt-out only**; default is on. Never set `=0` on fleet boards |
 | Fetch path | `crates/celld/js.rs` `op_fetch` → `await_egress_gate` | “Whatever this request can reveal must be durable before it leaves” |
-| Bucket proof + ownership | `durable_reached` → `VerifyOwnership` | Bucket proof alone is not enough; ownership must still name this node at this epoch |
-| Known gap (upstream comment) | same | “the bucket cannot refuse a stale writer” |
+| Bucket **and Fleet** proof + ownership | `durable_reached` → `VerifyOwnership` | Any proof is not enough; ownership must still name this node at this epoch (Fleet no longer skips) |
+| Known gap (upstream comment) | same | “the bucket cannot refuse a stale writer” — closed by confirm-time epoch check |
 
 Despite the gate, ClawQL N=1000 settle found mid-flight hangs with **no durable intent** on R2/DO storage (and 494 with create meta only). So either the gate released on a proof survivors cannot restore, a stale incarnation wrote a discarded generation, or local `synchronous=NORMAL` position advanced ahead of true LTX durability.
 
@@ -21,13 +21,15 @@ Despite the gate, ClawQL N=1000 settle found mid-flight hangs with **no durable 
 1. **Fenced acknowledgment (`CELLD_FENCED_ACK`, default on)**  
    - Every storage write returns a **sequence / position**.  
    - Outgoing calls are held until storage confirms that write is **durable = committed under the current lease epoch** (not merely accepted in memory / local WAL).  
-   - ClawQL patch: after each LTX PUT, **confirm GET** before advancing `synced_seq` so the gate cannot release on a PUT survivors cannot read.  
+   - ClawQL patch: after each LTX PUT, **confirm GET** before advancing `synced_seq` so the gate cannot release on a PUT survivors cannot read (`CELLD_FENCED_ACK_CONFIRM_GET=0` for PUT-only A/B).  
+   - ClawQL patch: **ownership/epoch still current at confirm** before `synced_seq` advances and before `await_durable` returns; output gate always runs `VerifyOwnership` (Fleet + Bucket).  
    - If confirmation does not arrive in time, **never send** (safe).
 
 2. **Incarnation in lease + refuse live steal (`CELLD_REFUSE_LIVE_INCARNATION`, default on)**  
    - Process generation already lives on the node lease (`ownership_index_generation`).  
    - ClawQL patch: **refuse to start** if a still-live foreign generation holds that node ID (duplicate-identity guard for pinned IDs).  
-   - ClawQL patch: **refuse node-log bundle PUT** when the record is not Open at the shipper epoch (stale writer never lands orphan objects → never gets ack → never sends).
+   - ClawQL patch: **refuse node-log bundle PUT** when the record is not Open at the shipper epoch (stale writer never lands orphan objects → never gets ack → never sends).  
+   - Chaos: `CELLD_WEDGE_HEALTH_FLAG` hangs `/.well-known/celld/health` while the flag file exists (board: hang health → kill).
 
 3. **Enforce in celld’s runtime fetch path** (`op_fetch` / `gated_channel_send`), not in each Worker — no program can skip it.
 
@@ -48,11 +50,12 @@ Despite the gate, ClawQL N=1000 settle found mid-flight hangs with **no durable 
 
 ## Restore claim only when
 
-1. Forked celld binary (`0.4.0-clawql.1`+) is pinned on CI / boards.  
+1. Forked celld binary (`0.4.0-clawql.2`+) is pinned on CI / boards (vendor build + SBOM + cosign).  
 2. Kill-after-fetch + stale-incarnation tests **pass** (required).  
-3. Trace checker + TLA weak configs still fail the weak cases.  
-4. v3 board: frozen option-2 criteria **and** every mid-flight trial verifies intent in R2; correctness includes lost-intent as failure.  
-5. Latency of durable-ack published beside the claim.
+3. Focused wedged during_call board (hundreds of kills, hang `/health` then kill) is green.  
+4. Trace checker + TLA weak configs still fail the weak cases.  
+5. v3 board: frozen option-2 criteria **and** every mid-flight trial verifies intent in R2; correctness includes lost-intent as failure.  
+6. Latency of durable-ack published beside the claim (PUT-only vs PUT+GET decided by board, not guesswork).
 
 ## Non-fixes
 

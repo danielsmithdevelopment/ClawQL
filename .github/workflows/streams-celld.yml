@@ -12,7 +12,9 @@ on:
       - "packages/clawql-core/src/**/streams*"
       - "manifests/charts/clawql-celld/**"
       - "manifests/charts/**/celld*"
+      - "vendor/celld/**"
       - ".github/workflows/streams-celld.yml"
+      - ".github/workflows/celld-vendor-release.yml"
   push:
     branches: [main]
     paths:
@@ -21,7 +23,9 @@ on:
       - "packages/clawql-core/src/**/streams*"
       - "manifests/charts/clawql-celld/**"
       - "manifests/charts/**/celld*"
+      - "vendor/celld/**"
       - ".github/workflows/streams-celld.yml"
+      - ".github/workflows/celld-vendor-release.yml"
   workflow_dispatch:
 
 concurrency:

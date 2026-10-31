@@ -181,13 +181,15 @@ impl State {
             return;
         };
         let proven = matches!(result, Ok(durable) if durable >= gate.position);
-        // A bucket proof reveals nothing until an ownership read confirms the
-        // record still names this node at this epoch: "durable in `e<epoch>/`" is not
-        // durable if the prefix was orphaned, and the bucket cannot refuse a
-        // stale writer. A fleet proof needs no read — the ensemble
-        // arbitrated it: a takeover seals a member before restoring, so a
-        // stale owner's ack-all fails closed.
-        if proven && source == ProofSource::Bucket {
+        // "Durable in `e<epoch>/`" (bucket) or "fsync'd by peers" (fleet) is
+        // still not durable if this process's epoch was orphaned: a wedged
+        // stale incarnation can finish PUT/GET and even ship fragments after
+        // ownership moved. Always confirm the ownership record still names
+        // this node at this epoch before acknowledging — fleet arbitration
+        // does not close that path when the member is wedged rather than
+        // sealed. `source` is retained for telemetry; both proofs verify.
+        let _ = source;
+        if proven {
             let (cell, epoch) = (gate.cell.clone(), gate.epoch);
             effects.push(Effect::VerifyOwnership { op, cell, epoch });
             return;
@@ -195,7 +197,7 @@ impl State {
         self.settle_gate(op, proven, effects);
     }
 
-    /// Ownership verification for a bucket-proof gate. A record that no longer
+    /// Ownership verification after a durability proof. A record that no longer
     /// names this node at this epoch fails the write exactly like an unproven
     /// durability result: refuse and reset, never acknowledge into an
     /// orphaned lineage.

@@ -2602,6 +2602,18 @@ async fn handle_public(
     {
         return Ok(handle_websocket(request, app).await);
     }
+    // ClawQL chaos: when CELLD_WEDGE_HEALTH_FLAG names an existing path, hang
+    // the node health probe so boards can exercise the stale-incarnation
+    // path (hang /health → lease moves → kill) without freezing the whole
+    // process. Other routes (program/run, LTX sync) keep running.
+    if path == "/.well-known/celld/health" {
+        if let Ok(flag) = std::env::var("CELLD_WEDGE_HEALTH_FLAG") {
+            let flag_path = std::path::Path::new(&flag);
+            while flag_path.exists() {
+                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            }
+        }
+    }
     let mut result = match path.as_str() {
         "/.well-known/celld/health"
             if !app.is_draining() && app.fleet_ready() && app.healthy().await =>
@@ -3665,6 +3677,14 @@ async fn async_main(telemetry_config: Option<celld::telemetry::Config>) -> anyho
         .as_ref()
         .map(|ownership| ownership.bucket_client());
     let explorer_replication = runtime.as_ref().and_then(RuntimeManager::replication);
+    // Bind as soon as both handles exist so any early activation sees the
+    // ownership adapter at fenced-ack confirm time (idempotent with the
+    // later bind in the durability-install block).
+    if let (Some(replication), Some(ownership)) =
+        (explorer_replication.as_ref(), ready_ownership.as_ref())
+    {
+        replication.ltx().bind_ownership(ownership.clone());
+    }
     let local_cache_replication = explorer_replication.clone();
     let (websocket_tx, mut websocket_rx) = mpsc::unbounded_channel();
     // The log tier's follower store (crate::node_log): fragments other
@@ -3734,6 +3754,10 @@ async fn async_main(telemetry_config: Option<celld::telemetry::Config>) -> anyho
             let _ = spec;
             let log_bucket = Arc::new(bucket_ownership.bucket_client());
             let ltx = replication.ltx();
+            // ClawQL fence: LTX confirm (and await_durable) re-read ownership
+            // so a wedged stale incarnation cannot advance synced_seq / ack
+            // after the lease epoch moved.
+            ltx.bind_ownership(bucket_ownership.clone());
             // Bundle the paced tiering: one PUT per node-flush instead of
             // one per cell-transaction — the Class A collapse, measured at
             // 208x against per-transaction PUTs. On by default; 0 is the

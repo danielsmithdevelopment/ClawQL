@@ -285,6 +285,11 @@ impl BucketOwnership {
         (!self.probe_public_key.is_empty()).then_some(self.probe_public_key.as_str())
     }
 
+    /// This node's session id (`CELLD_NODE`), for confirm-time ownership checks.
+    pub fn node_id(&self) -> &str {
+        self.node.as_str()
+    }
+
     pub async fn read_owner(&self, cell: &str) -> anyhow::Result<Option<OwnerRecord>> {
         let key = format!("cells/{cell}/own.json");
         let Some((owner, etag)) = load_json::<OwnerWireOwned>(&self.bucket, &key).await? else {

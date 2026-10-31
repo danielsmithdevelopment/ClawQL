@@ -42,12 +42,21 @@ import { compareDigestStepState } from "../../../docs/examples/streams-celld/src
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
 const STREAMS = join(REPO, "docs/examples/streams-celld");
-const PHASES = [
+const ALL_PHASES = [
   "before_intent",
   "after_intent_before_call",
   "during_call",
   "after_call_before_journal",
 ];
+/** Restrict phases (comma list). Focused H2 board: `during_call` only. */
+const PHASES = (process.env.FLEET_PHASED_PHASES || ALL_PHASES.join(","))
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => ALL_PHASES.includes(s));
+if (PHASES.length === 0) {
+  console.error("fleet-phased: FLEET_PHASED_PHASES empty or invalid");
+  process.exit(1);
+}
 
 function autoWireR2() {
   if (process.env.CELLD_BUCKET) return;
@@ -94,13 +103,29 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
-// Never disable the output gate on fleet boards. (=0 skips durable wait on writes.)
+/**
+ * When set, during_call trials hang `/.well-known/celld/health` via
+ * CELLD_WEDGE_HEALTH_FLAG for ~2× lease TTL before SIGKILL — exercises the
+ * stale-incarnation path (ownership may move while the victim still runs).
+ */
+const WEDGE_HEALTH = process.env.FLEET_PHASED_WEDGE_HEALTH === "1";
+const WEDGE_HOLD_MS = Math.max(
+  CELLD_TTL_MS * 2,
+  Number(process.env.FLEET_PHASED_WEDGE_HOLD_MS || CELLD_TTL_MS * 2)
+);
+// Gate is default-on in celld; force =1 so a stray =0 in the environment
+// cannot silently disable the durability wait on this board.
 if (process.env.CELLD_OUTPUT_GATE === "0") {
   console.warn(
     "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1"
   );
 }
 process.env.CELLD_OUTPUT_GATE = "1";
+// Fenced ack + epoch-at-confirm are default-on in the ClawQL fork; force on.
+process.env.CELLD_FENCED_ACK = process.env.CELLD_FENCED_ACK === "0" ? "0" : "1";
+if (process.env.CELLD_FENCED_ACK === "0") {
+  console.warn("fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled for this run");
+}
 const AWAIT_TRIALS = Math.max(
   0,
   Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
@@ -426,6 +451,7 @@ async function main() {
       log: "/tmp/fleet-phased-a.log",
       lastExit: null,
       pendingSelfFence: false,
+      wedgeFlag: "/tmp/fleet-phased-wedge-A.flag",
     },
     B: {
       port: PORT_B,
@@ -434,6 +460,7 @@ async function main() {
       log: "/tmp/fleet-phased-b.log",
       lastExit: null,
       pendingSelfFence: false,
+      wedgeFlag: "/tmp/fleet-phased-wedge-B.flag",
     },
   };
 
@@ -447,6 +474,12 @@ async function main() {
       }
       n.pid = null;
     }
+    // Clear any leftover wedge flag so a restarted node answers health.
+    try {
+      unlinkSync(n.wedgeFlag);
+    } catch {
+      /* */
+    }
     // After SELF-FENCE / SIGKILL the old listener can hold the port briefly;
     // binding into a half-dead socket is a common /health timeout cause.
     await waitPortFree(n.port);
@@ -456,6 +489,8 @@ async function main() {
     const nodeEnv = {
       ...process.env,
       CELLD_OUTPUT_GATE: "1",
+      CELLD_FENCED_ACK: process.env.CELLD_FENCED_ACK || "1",
+      CELLD_WEDGE_HEALTH_FLAG: n.wedgeFlag,
       CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     };
     const child = spawnLogged(
@@ -722,9 +757,20 @@ async function main() {
         await sleep(100);
       }
       await sleep(200);
+      // Hang node health so peers see a wedged member; hold ~2× TTL so the
+      // lease can move while the victim still runs the mid-flight call.
+      if (WEDGE_HEALTH) {
+        writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
+        await sleep(WEDGE_HOLD_MS);
+      }
       if (nodes[victim].pid) {
         process.kill(nodes[victim].pid, "SIGKILL");
         nodes[victim].pid = null;
+      }
+      try {
+        unlinkSync(nodes[victim].wedgeFlag);
+      } catch {
+        /* */
       }
       ac.abort();
       await runPromise;
@@ -733,7 +779,13 @@ async function main() {
         if ((ledger.body?.inFlight || 0) === 0) break;
         await sleep(100);
       }
-      runRes = { body: { status: "paused_for_kill", pauseKind: "during_call" } };
+      runRes = {
+        body: {
+          status: "paused_for_kill",
+          pauseKind: "during_call",
+          wedgedHealth: WEDGE_HEALTH,
+        },
+      };
     } else {
       runRes = await fetchJson(`${baseV}/program/run`, {
         method: "POST",
@@ -1508,6 +1560,10 @@ async function main() {
       awaitTrialsCompleted: awaitTrials.length,
       awaitTrialsN: AWAIT_TRIALS,
       overallN: N + AWAIT_TRIALS,
+      phases: PHASES,
+      wedgeHealth: WEDGE_HEALTH,
+      wedgeHoldMs: WEDGE_HEALTH ? WEDGE_HOLD_MS : 0,
+      celldBinaryVersion: "0.4.0-clawql.2",
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
       bucketRedacted: true,
