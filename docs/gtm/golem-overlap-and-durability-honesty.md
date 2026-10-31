@@ -120,7 +120,7 @@ Skip Scala / MoonBit-style breadth unless a customer asks.
 
 When a program sends a charge and the cell dies before the reply arrives, two cases look identical from ClawQL’s side: the API processed the charge and the reply was lost, or the request never arrived. The answer lives on the API’s side. That is a distributed-systems fact, not a ClawQL limitation.
 
-**Durability claim (what the board proves today):** the program survives, the write is **never repeated**, and the in-flight case is **never lost silently** — it is recorded as `outcome_unknown`. That is the honest version of a limit every system faces. Blind retry (“at least once”) is the other side of the same trade-off (Golem when the API has no keys).
+**Durability claim (what the published Tier C board measured):** the program survives and **duplicate side effects were 0** under that board’s settings. **Caveat (2026-10-31):** a later N=1000 settle found mid-flight kills where durable write intent was **absent** from R2/DO storage while the upstream call was in flight — resume without intent/`pauseKind` can **re-run** the write (double-charge risk). Until celld output-gate + lease-epoch fencing is proven on a v3 board with an automatic R2 intent check, do **not** claim “never repeated” / “never lost silently” as an absolute mechanism guarantee. When intent **is** durable, the in-flight case is recorded as `outcome_unknown` and is not blindly retried. Blind retry (“at least once”) is the other side of the same trade-off (Golem when the API has no keys).
 
 **Do not frame recovery as only three options** (retry / stay silent / mark unknown). **Check, then decide** is the preferred strategy when the API allows it — and it must be careful, not a guess:
 
@@ -134,7 +134,7 @@ When a program sends a charge and the cell dies before the reply arrives, two ca
 
 ## Product improvement: resolve in-flight unknowns
 
-Default: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out.
+Default when durable intent exists: **never guess, never silent-drop, never blind-retry**. When the catalog shows a way to find out, find out. Missing durable intent after an in-flight write is a **bug**, not an allowed default — see [publish-readiness](./publish-readiness.md) caveat and [R2 settle](../benchmarks/program-cell-fleet-kill/during-call-404-r2-settle.json).
 
 | Capability                                  | Status             | Behavior                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

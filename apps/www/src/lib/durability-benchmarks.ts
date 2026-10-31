@@ -101,7 +101,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived — unknown is honesty, not a durability failure. In real operation that window is milliseconds, so unknowns are far rarer than this targeted test shows. Prefer check-by-reference or idempotency keys before involving a person (planned).'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. A mid-flight kill with no durable intent is a durability defect (under hardening). Prefer check-by-reference or idempotency keys before involving a person (planned).'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -238,8 +238,8 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
     body: 'A runtime can make the program survive a crash. Remote POSTs still need upstream idempotency — or at-most-once governance. ClawQL chooses at most once for consequential writes.',
   },
   {
-    title: 'Outcome unknown does not undermine durability',
-    body: 'When a cell dies mid-call, success and “never arrived” look the same from ClawQL’s side. We never blind-retry and never drop silently — the unknown is recorded. Recovery is not only “retry / do nothing / ask a person”: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+    title: 'Outcome unknown vs lost intent',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry that intent. If durable intent is missing, resume can re-run the write (double-charge risk); that gap is under active hardening (celld output-gate / lease-epoch fencing) and is not claimed fixed. Recovery when intent is durable: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
   },
   {
     title: 'No “exactly once” over HTTP (yet)',

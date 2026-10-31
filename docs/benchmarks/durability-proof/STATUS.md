@@ -78,7 +78,7 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 | Class                    | Meaning                                         | Counts as                                                                                                                                                                          |
 | ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Correctness failure**  | A **wrong** outcome                             | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`); **lost pretends-journaled mid-flight meta/intent** (R2/DO absent after journal-before-hang — not a visibility-timeout 404) |
+| **Correctness failure**  | A **wrong** outcome                             | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch**; **`lost_midflight_intent`** (survivor `/program/status` lacks intent/`pauseKind` after mid-flight kill — harness checks this automatically from v3) |
 | **Availability failure** | **No** outcome in **wall-clock** time / capture | resume wall-clock > **60 000 ms** (recovery inclusive); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
 | **Outer completion**     | Reported overall                                | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                                                       |
 
@@ -95,19 +95,24 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 **Sampling honesty (not a criteria change):** With a true availability-miss rate near the published ~1.5%, a 1000-trial binomial draw sits above 2% by chance roughly **1 time in 12**. If that happens, it is an **honest fail** like v1 — fix celld / re-measure; do **not** loosen the ceiling or the 60 s deadline after seeing results.
 
-### N≈1000 v2 — interim (write-kill in progress; do not stop early)
+### N≈1000 v2 — finished (honest fail)
 
-Snapshot ~620/750 write-kill (await not started). Harness still reports **correctness failures = 0** / availability **15** — but the read-only R2 settle below **reclassifies the five `during_call` 404s as durability/correctness**, so this board must **not** be published with correctness = 0. Availability alone was already on course to miss the frozen 2% ceiling of 20/1000. **Let the board finish** for full write-kill + await evidence; stop early only if harness availability failures reach 21 (certain avail fail). Honest closeout: non-zero correctness (lost mid-flight journal) **and** availability above ceiling unless the tail is improbably clean — celld / harness fixes next; do **not** call the board a pass.
+Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-correctness-availability.json) · measured **2026-10-30 21:40 PDT** (`2026-10-31T04:40:40.919Z`). Prefix `tier-c-phased-20261030212001`.
 
-**Report as clusters (trials are not independent):** **15 classified failures ≈ 5 stall-seeded incidents** (covering 13 fails) **+ 1 twin + 1 lone `during_call` 404**. Fixing the underlying `/health` hang addresses most failures at once.
+| Gate | Result | Detail |
+| ---- | ------ | ------ |
+| **Availability** | **FAIL** | 34/1000 = **3.4%** > frozen ceiling 2%; resumeMs p50≈12.5s / p99≈217.6s / max≈920.8s |
+| **Correctness (harness)** | reports 0 | Running process **predated** mid-flight storage check + R2 settle reclassification |
+| **Correctness (settle)** | **non-zero** | Five `during_call` trials lost mid-flight journal (below) — do **not** publish corr=0 |
+| Duplicates | 0 | Zero-dup measurement stands; mechanism claim remains paused |
+
+**Report as clusters (trials are not independent):** stall-seeded `/health` hangs dominate availability; mid-flight lost-intent is a separate durability defect. Fixing lease-sweep / alive-vs-ready addresses most avail failures; fenced-ack + incarnation fencing (vendored celld) addresses lost intent.
 
 | Underlying incident | Trials | Surface classes |
 | ------------------- | ------ | --------------- |
 | Stall cluster | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
 | Twin | 335 | `twin_capture_failed` |
 | Lone mid-flight | 494 | `no_expected_outcome` (404) |
-
-**Per-class counts (same 15):** deadline miss ×5 · pause_failed ×4 · no_expected_outcome ×5 · twin ×1.
 
 **Two fixes — label what each does:**
 
@@ -129,7 +134,37 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 **Next harness (either way):** retry mid-flight 404s until the wall deadline; retain `programId`; later `/status` check. Product path remains lease-sweep + alive-vs-ready so the wedged `/health` stall stops seeding these gaps.
 
-**Mechanism claim impact (beyond this board):** the write protocol’s public fact “intent is journaled before the call” is **not reliably true on celld/R2** under these kills — the call can be in flight while intent is absent from durable storage. Zero duplicates here only because the mock upstream hung. A completing upstream would be a lost-order / possible double-charge on resume (`decideCallResume` → `rerun` when intent+`pauseKind` are both missing). **Publish readiness qualified** ([publish-readiness.md](../../gtm/publish-readiness.md)). Root-cause hypotheses: (1) **no CF-style output gate** — celld NodeFences some put/fetch orderings but `await storage.put` ≠ LTX durable ack before fetch; ProgramCellDO interleaves read fetches with later intent puts; (2) **wrong incarnation** — four of five gaps sat in stall cascades where a stale pinned node may have accepted writes into a discarded generation. Conformance: TLA+ `IntentDurablyAckedBeforeSend` + `scripts/formal/check-intent-durable-before-send.mjs`; regression `docs/examples/streams-celld/scripts/intent-durable-before-send.test.mjs`; ProgramCellDO now re-gets intent/meta before send (best-effort until celld grows a real sync/ack).
+**Mechanism claim impact (beyond this board):** the write protocol’s public fact “intent is journaled before the call” is **not reliably true on celld/R2** under these kills — the call can be in flight while intent is absent from durable storage. Zero duplicates here only because the mock upstream hung. A completing upstream would be a lost-order / possible double-charge on resume (`decideCallResume` → `rerun` when intent+`pauseKind` are both missing). **Publish readiness qualified** ([publish-readiness.md](../../gtm/publish-readiness.md)); Cost Plus / social correction: [cost-plus-thread-correction.md](../../gtm/cost-plus-thread-correction.md).
+
+**Root cause (celld already has an output gate — it failed under kill):** denoland/celld `crates/logic/output_gate.rs` holds `Channel::Fetch` until LTX proves a write position under the resident lease epoch (`CELLD_OUTPUT_GATE` default on; `=0` disables). Settled gaps still happened → either proof/ownership race, stale writer accepted into a discarded generation (bucket “cannot refuse a stale writer”), or local SQLite `synchronous=NORMAL` position ahead of what survivors can restore. **One fix closes both holes:** fenced acknowledgment — every storage write returns a sequence; egress held until durable **under the current lease epoch**; incarnation in lease + every write; R2 conditional reject of stale incarnation; refuse start if a live incarnation already holds the node ID. Spec: [celld-output-gate-epoch-fence.md](../../streams/celld-output-gate-epoch-fence.md). Local `storage.get` after `put` is **not** part of the fix (sanity only).
+
+**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight R2 intent check in the harness; restore mechanism claim only after correctness passes with that check. Parallel: lease-sweep + alive-vs-ready for the `/health` hang.
+
+### N=40 forked celld fence board (clawql.1 — weak sample)
+
+Evidence: [`phased-n40-fork-fence.json`](../program-cell-fleet-kill/phased-n40-fork-fence.json) · measured **2026-10-30 22:40 PDT** (`2026-10-31T05:40:45.747Z`) · **`celldBinaryVersion=0.4.0-clawql.1`** / `fenceMode=fenced_clawql1_confirm_get_live_incarnation` (confirm GET + live-incarnation refuse; **before** clawql.2 epoch-at-confirm — do not cite as clawql.2 efficacy).
+
+| Gate | Result | Detail |
+| ---- | ------ | ------ |
+| Correctness (incl. `lost_midflight_intent`) | **PASS** 0 failures | Mid-flight 20/20 ended `outcome_unknown` as expected; harness saw intent/`pauseKind` on survivor status for every mid-flight kill |
+| Availability | **PASS** 0/40 | resumeMs p50≈12.6s / p99≈13.8s (lease-floor) |
+| Outer completion / state preserved | **PASS** 20/20 | — |
+| Duplicates | **PASS** 0 | rule-of-three upper 95% = 7.5% |
+
+**Vs v2 settle:** v2 had **5** `during_call` durability failures (4 missing journal + 1 create-meta-without-intent). This N=40 sample had **0** `lost_midflight_intent`. That is encouraging on the same kill shape, but **not efficacy proof** — with 0 events in 40 trials the 95% rule-of-three only bounds a loss rate below ~7.5% on the board’s duplicate metric, and a zero-loss claim for mid-flight intent needs the focused wedged `during_call` board (hundreds of kills, hang `/health` then kill) on **clawql.2**. Durable-ack `wait_us` was not collected on this run (`RUST_LOG=timing` unset); resumeMs is lease-dominated, not the ~0.6s gate wait.
+
+### N=100 wedged unfenced negative control (reproduces the bug)
+
+Evidence: [`phased-n100-wedge-during-call-unfenced-control.json`](../program-cell-fleet-kill/phased-n100-wedge-during-call-unfenced-control.json) · clawql.2 with **`CELLD_OUTPUT_GATE=0` + `CELLD_FENCED_ACK=0`** (`fenceMode=unfenced_negative_control`) · same hang-`/health`-then-kill `during_call` board · `RUST_LOG=timing=debug`.
+
+| Metric | Result |
+| ------ | ------ |
+| Trials | 100/100 measured |
+| `lost_midflight_intent` | **100/100 (100%)** — every trial |
+| Duplicates | 0 |
+| Meaning | This harness **does** trigger the durability hole when the fence is off. A clean fenced board on the same shape is therefore informative (not a no-op test). |
+
+
 
 **Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest **and** no lost pretends-journaled mid-flight meta/intent), with **availability disclosed** (fence + deadline + pause/twin-capture rates ≤2% of 1000; resume/recovery p99/max reported, no separate tail ceiling). Still not mid-step unmodified agents. Parallel celld product work (not a v2 gate): lease renew / lease-sweep / alive-vs-ready / **pause-aware clocks** (host pause/suspend — wall time jumps while the machine was not running; distinct from orchestrator recovery). Do **not** freeze the resume deadline during `ensureSurvivor`/rebuild — that would quietly loosen the availability criterion.
 
@@ -138,6 +173,35 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 > Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.
 
 Every number is measured. Availability costs are stated rather than left for the reader to discover. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
+
+### N=100 wedged fenced clawql.2 (paired with unfenced control)
+
+Evidence: [`phased-n100-wedge-during-call-fenced.json`](../program-cell-fleet-kill/phased-n100-wedge-during-call-fenced.json) · `0.4.0-clawql.2` · `CELLD_OUTPUT_GATE=1` + `CELLD_FENCED_ACK=1` + `CELLD_FENCED_ACK_CONFIRM_GET=1` · `RUST_LOG=timing=debug` · same hang-`/health`-then-kill `during_call` board as the unfenced control.
+
+| Arm | Fence | `lost_midflight_intent` | Rate |
+| --- | ----- | ------------------------ | ---- |
+| Unfenced control | GATE=0, FENCED_ACK=0 | **100/100** | **100%** |
+| Fenced clawql.2 | GATE=1, FENCED_ACK=1, confirm GET on | **0/100** | **0%** |
+
+Correctness + availability gates **PASS** on the fenced arm (`ok=true`). Zero survivor self-fences / deadline misses on the call-sent remeasure.
+
+**Resume latency (do not compare to stock):** this board set **`CELLD_TTL_MS=3000`** (fast wedge cycles; `wedgeHoldMs=7000` ≈ 2× TTL). Resume p50≈**3.8s** / p99≈4.6s is the lease floor under that TTL. Stock boards use TTL=10000 and see ~12–14s resume p50 — different lease floor, not a gate improvement. Evidence carries `resumeLatencyNote`.
+
+**Call-sent check — settled:** a gate that blocks egress forever can also produce 0 lost intents (availability failure disguised as a durability win). Remeasure with harness `callSent.sawInFlight` (else `call_never_sent`):
+
+| Check | Result |
+| ----- | ------ |
+| Mock pets `inFlight>0` before SIGKILL | **100/100** |
+| `call_never_sent` | **0** |
+| `outcome_unknown` + intent/`pauseKind` visible on survivor | **100/100** |
+| `lost_midflight_intent` | **0/100** |
+
+Sequence on every trial: durable ack → pets hang in flight → wedge/kill → resume `outcome_unknown` with intent visible. The zero-loss result is **not** “never sent.”
+
+**Durable-ack latency:** append-mode timing logs yielded **300** `durable_wait` samples (p50≈0.72s / p99≈1.06s; diagnostic — multiple events can fire per trial). PUT-only vs PUT+GET A/B still open (`CELLD_FENCED_ACK_CONFIRM_GET`). See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
+
+**Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
+
 
 ### Outcome unknown ~48% — read the per-phase table
 

@@ -1,0 +1,4 @@
+upstream: https://github.com/denoland/celld
+tag: v0.4.0
+commit: a52f9905425bc41134d817694bdc2c50bcc5e856
+license: Apache-2.0

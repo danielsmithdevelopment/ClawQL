@@ -1,0 +1,93 @@
+[package]
+name = "celld"
+version = "0.4.0-clawql.2"
+edition = "2021"
+rust-version = "1.94.1"
+license = "Apache-2.0"
+
+
+[lib]
+path = "lib.rs"
+
+[[bin]]
+name = "celld"
+path = "main.rs"
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ["cfg(celld_internal_tests)", "cfg(celld_proxy_internals)"]
+
+[lints.clippy]
+disallowed_macros = "forbid"
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+aes.workspace = true
+aes-gcm.workspace = true
+cbc.workspace = true
+ctr.workspace = true
+anyhow.workspace = true
+axum.workspace = true
+base64.workspace = true
+bytes.workspace = true
+celld-logic.workspace = true
+celld-ltx = { workspace = true, features = ["s3"] }
+encoding_rs.workspace = true
+ed25519-dalek.workspace = true
+fastwebsockets.workspace = true
+flate2.workspace = true
+futures-util.workspace = true
+getrandom.workspace = true
+hkdf.workspace = true
+hmac.workspace = true
+http-body-util.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+md-5.workspace = true
+notify.workspace = true
+nu-ansi-term.workspace = true
+object_store = { workspace = true, features = ["aws", "azure", "gcp"] }
+parquet.workspace = true
+pbkdf2.workspace = true
+percent-encoding.workspace = true
+p256.workspace = true
+p384.workspace = true
+p521.workspace = true
+pkcs8.workspace = true
+crc.workspace = true
+dsa.workspace = true
+x25519-dalek.workspace = true
+rand.workspace = true
+regex.workspace = true
+reqwest = { workspace = true, features = ["rustls-tls", "stream", "json"] }
+rusqlite = { workspace = true, features = ["backup", "bundled", "hooks"] }
+sqlite-vec.workspace = true
+rustls.workspace = true
+rsa.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha1.workspace = true
+sha2.workspace = true
+subtle.workspace = true
+tempfile.workspace = true
+tikv-jemalloc-ctl.workspace = true
+tikv-jemallocator.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tokio-rustls.workspace = true
+tokio-stream.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
+url.workspace = true
+urlpattern.workspace = true
+v8.workspace = true
+webpki-roots.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+nix.workspace = true
+
+[dev-dependencies]
+lz4_flex.workspace = true

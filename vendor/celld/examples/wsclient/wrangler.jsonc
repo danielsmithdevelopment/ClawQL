@@ -1,0 +1,13 @@
+{
+  "name": "wsclient",
+  "main": "index.js",
+  "compatibility_date": "2026-08-02",
+  "durable_objects": {
+    "bindings": [
+      { "name": "CLIENT", "class_name": "Client" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Client"] }
+  ]
+}

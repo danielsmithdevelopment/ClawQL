@@ -32,8 +32,16 @@
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
-import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
+import { spawn, execFileSync } from "node:child_process";
+import {
+  mkdirSync,
+  writeFileSync,
+  writeSync,
+  readFileSync,
+  openSync,
+  unlinkSync,
+  existsSync,
+} from "node:fs";
 import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,12 +50,21 @@ import { compareDigestStepState } from "../../../docs/examples/streams-celld/src
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
 const STREAMS = join(REPO, "docs/examples/streams-celld");
-const PHASES = [
+const ALL_PHASES = [
   "before_intent",
   "after_intent_before_call",
   "during_call",
   "after_call_before_journal",
 ];
+/** Restrict phases (comma list). Focused H2 board: `during_call` only. */
+const PHASES = (process.env.FLEET_PHASED_PHASES || ALL_PHASES.join(","))
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => ALL_PHASES.includes(s));
+if (PHASES.length === 0) {
+  console.error("fleet-phased: FLEET_PHASED_PHASES empty or invalid");
+  process.exit(1);
+}
 
 function autoWireR2() {
   if (process.env.CELLD_BUCKET) return;
@@ -79,8 +96,16 @@ autoWireR2();
 
 const N = Math.max(1, Math.min(100_000, Number(process.env.FLEET_PHASED_N || 100)));
 const OUT =
+  process.env.FLEET_PHASED_OUT ||
   process.env.FLEET_PHASED_EVIDENCE ||
   join(REPO, "docs/benchmarks/program-cell-fleet-kill/phased-evidence.json");
+if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
+    process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
+  console.warn(
+    `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
+  );
+}
+console.log(`fleet-phased: evidence → ${OUT}`);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
 const PORT_B = Number(process.env.PROGRAM_CELL_FLEET_PORT_B || 9882);
 const INTERNAL_A = Number(process.env.PROGRAM_CELL_FLEET_INTERNAL_A || 9883);
@@ -94,6 +119,70 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+/**
+ * When set, during_call trials hang `/.well-known/celld/health` via
+ * CELLD_WEDGE_HEALTH_FLAG for ~2× lease TTL before SIGKILL — exercises the
+ * stale-incarnation path (ownership may move while the victim still runs).
+ */
+const WEDGE_HEALTH = process.env.FLEET_PHASED_WEDGE_HEALTH === "1";
+const WEDGE_HOLD_MS = Math.max(
+  CELLD_TTL_MS * 2,
+  Number(process.env.FLEET_PHASED_WEDGE_HOLD_MS || CELLD_TTL_MS * 2)
+);
+/**
+ * Negative-control escape hatch: allow CELLD_OUTPUT_GATE=0 and/or
+ * CELLD_FENCED_ACK=0 so the same wedged board can prove the bug still fires
+ * on an unfenced binary before a clean clawql.2 result means anything.
+ * Default remains force-on for durability boards.
+ */
+const ALLOW_UNFENCED = process.env.FLEET_PHASED_ALLOW_UNFENCED === "1";
+if (process.env.CELLD_OUTPUT_GATE === "0" && !ALLOW_UNFENCED) {
+  console.warn(
+    "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1 (set FLEET_PHASED_ALLOW_UNFENCED=1 for negative control)"
+  );
+  process.env.CELLD_OUTPUT_GATE = "1";
+} else if (process.env.CELLD_OUTPUT_GATE !== "0") {
+  process.env.CELLD_OUTPUT_GATE = "1";
+}
+if (process.env.CELLD_FENCED_ACK === "0") {
+  if (!ALLOW_UNFENCED && process.env.CELLD_OUTPUT_GATE !== "0") {
+    console.warn(
+      "fleet-phased: CELLD_FENCED_ACK=0 without ALLOW_UNFENCED — keeping =0 only if you meant it; prefer FLEET_PHASED_ALLOW_UNFENCED=1"
+    );
+  } else {
+    console.warn(
+      "fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled (negative control)"
+    );
+  }
+} else {
+  process.env.CELLD_FENCED_ACK = "1";
+}
+const OUTPUT_GATE_ON = process.env.CELLD_OUTPUT_GATE !== "0";
+const FENCED_ACK_ON = process.env.CELLD_FENCED_ACK !== "0";
+const FENCE_MODE =
+  process.env.FLEET_PHASED_FENCE_MODE ||
+  (OUTPUT_GATE_ON && FENCED_ACK_ON
+    ? "fenced"
+    : "unfenced_negative_control");
+function detectCelldVersion() {
+  if (process.env.FLEET_PHASED_CELLD_VERSION) {
+    return process.env.FLEET_PHASED_CELLD_VERSION;
+  }
+  try {
+    const out = execFileSync("celld", ["--version"], {
+      encoding: "utf8",
+      timeout: 5_000,
+    }).trim();
+    const m = out.match(/(\d+\.\d+\.\d+(?:-clawql\.\d+)?)/);
+    return m ? m[1] : out.slice(0, 80);
+  } catch {
+    return "unknown";
+  }
+}
+const CELLD_BINARY_VERSION = detectCelldVersion();
+console.log(
+  `fleet-phased: celld ${CELLD_BINARY_VERSION} fenceMode=${FENCE_MODE} gate=${OUTPUT_GATE_ON ? 1 : 0} fencedAck=${FENCED_ACK_ON ? 1 : 0} wedge=${WEDGE_HEALTH ? 1 : 0}`
+);
 const AWAIT_TRIALS = Math.max(
   0,
   Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
@@ -150,7 +239,17 @@ async function fetchJson(url, init = {}, timeoutMs = 15_000) {
 
 function spawnLogged(cmd, args, logPath, env = process.env) {
   mkdirSync(dirname(logPath), { recursive: true });
-  const fd = openSync(logPath, "w");
+  // Append when collecting timing (RUST_LOG=timing*) so durable_wait wait_us
+  // survives startNode restarts; truncate otherwise to keep board logs small.
+  const rustLog = String(env.RUST_LOG || env.CELLD_RUST_LOG || "");
+  const appendTiming = /timing/i.test(rustLog);
+  const fd = openSync(logPath, appendTiming ? "a" : "w");
+  if (appendTiming) {
+    writeSync(
+      fd,
+      `\n----- celld restart ${new Date().toISOString()} ${cmd} ${args.join(" ")} -----\n`
+    );
+  }
   return spawn(cmd, args, {
     cwd: STREAMS,
     env,
@@ -419,6 +518,7 @@ async function main() {
       log: "/tmp/fleet-phased-a.log",
       lastExit: null,
       pendingSelfFence: false,
+      wedgeFlag: "/tmp/fleet-phased-wedge-A.flag",
     },
     B: {
       port: PORT_B,
@@ -427,6 +527,7 @@ async function main() {
       log: "/tmp/fleet-phased-b.log",
       lastExit: null,
       pendingSelfFence: false,
+      wedgeFlag: "/tmp/fleet-phased-wedge-B.flag",
     },
   };
 
@@ -440,6 +541,12 @@ async function main() {
       }
       n.pid = null;
     }
+    // Clear any leftover wedge flag so a restarted node answers health.
+    try {
+      unlinkSync(n.wedgeFlag);
+    } catch {
+      /* */
+    }
     // After SELF-FENCE / SIGKILL the old listener can hold the port briefly;
     // binding into a half-dead socket is a common /health timeout cause.
     await waitPortFree(n.port);
@@ -448,8 +555,15 @@ async function main() {
     // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
     const nodeEnv = {
       ...process.env,
+      CELLD_OUTPUT_GATE: OUTPUT_GATE_ON ? "1" : "0",
+      CELLD_FENCED_ACK: FENCED_ACK_ON ? "1" : "0",
+      CELLD_WEDGE_HEALTH_FLAG: n.wedgeFlag,
+      // Durable-ack latency (wait_us on durable_wait); set RUST_LOG=timing=debug
+      // on the board env to populate node logs for PUT vs PUT+GET A/B.
+      RUST_LOG: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || "",
       CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     };
+    if (!nodeEnv.RUST_LOG) delete nodeEnv.RUST_LOG;
     const child = spawnLogged(
       "celld",
       [
@@ -700,6 +814,10 @@ async function main() {
     const body = phasePlan(phase, programId);
     let runRes;
 
+    // during_call: prove the outbound hang reached mock pets before kill.
+    // A gate that blocks send forever can also yield 0 lost intents — that is
+    // an availability failure (call_never_sent), not a durability win.
+    let callSent = null;
     if (phase === "during_call") {
       const ac = new AbortController();
       const runPromise = fetch(`${baseV}/program/run`, {
@@ -708,15 +826,66 @@ async function main() {
         body: JSON.stringify(body),
         signal: ac.signal,
       }).catch(() => null);
-      for (let w = 0; w < 40; w++) {
+      const inFlightWaitStart = Date.now();
+      let sawInFlight = false;
+      let inFlightPolls = 0;
+      let inFlightAtKill = 0;
+      for (let w = 0; w < 80; w++) {
+        inFlightPolls += 1;
         const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
-        if ((ledger.body?.inFlight || 0) > 0) break;
+        inFlightAtKill = Number(ledger.body?.inFlight || 0);
+        if (inFlightAtKill > 0) {
+          sawInFlight = true;
+          break;
+        }
         await sleep(100);
       }
+      callSent = {
+        sawInFlight,
+        inFlightPolls,
+        inFlightWaitMs: Date.now() - inFlightWaitStart,
+        inFlightAtKill,
+      };
+      if (!sawInFlight) {
+        // Do not wedge/kill a trial that never reached the upstream — that
+        // would confuse durability scoring with a blocked-before-send gate.
+        ac.abort();
+        await runPromise;
+        phaseStats[phase].failures += 1;
+        phaseStats[phase].n += 1;
+        trials.push({
+          i,
+          phase,
+          programId,
+          ok: false,
+          pauseFailed: false,
+          failureClass: "availability",
+          failureReason: "call_never_sent",
+          callSent,
+          detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
+        });
+        console.warn(
+          `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
+        );
+        writeEvidencePartial();
+        if (!nodes[victim].pid) await restartNode(victim);
+        continue;
+      }
       await sleep(200);
+      // Hang node health so peers see a wedged member; hold ~2× TTL so the
+      // lease can move while the victim still runs the mid-flight call.
+      if (WEDGE_HEALTH) {
+        writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
+        await sleep(WEDGE_HOLD_MS);
+      }
       if (nodes[victim].pid) {
         process.kill(nodes[victim].pid, "SIGKILL");
         nodes[victim].pid = null;
+      }
+      try {
+        unlinkSync(nodes[victim].wedgeFlag);
+      } catch {
+        /* */
       }
       ac.abort();
       await runPromise;
@@ -725,7 +894,14 @@ async function main() {
         if ((ledger.body?.inFlight || 0) === 0) break;
         await sleep(100);
       }
-      runRes = { body: { status: "paused_for_kill", pauseKind: "during_call" } };
+      runRes = {
+        body: {
+          status: "paused_for_kill",
+          pauseKind: "during_call",
+          wedgedHealth: WEDGE_HEALTH,
+          callSent,
+        },
+      };
     } else {
       runRes = await fetchJson(`${baseV}/program/run`, {
         method: "POST",
@@ -1010,6 +1186,38 @@ async function main() {
     if (journalDivergence) st.journalDivergence = (st.journalDivergence || 0) + 1;
     st.writeStepsRerun = (st.writeStepsRerun || 0) + writeStepsRerun;
     st.replayedSteps = (st.replayedSteps || 0) + replayedSteps;
+
+    // Mid-flight storage check (v3): intent or pauseKind must be visible on the
+    // survivor after journal-before-hang. Missing = durability/correctness.
+    // Does not use local re-get-as-proof — queries survivor /program/status.
+    let midFlightStorage = null;
+    if (midFlight) {
+      const statusRes = await fetchJson(
+        `${baseS}/program/status?programId=${encodeURIComponent(programId)}`,
+        {},
+        8_000
+      );
+      const meta = statusRes.body?.meta || null;
+      const intents = Array.isArray(statusRes.body?.intents) ? statusRes.body.intents : [];
+      const hasIntent = intents.length > 0;
+      const pauseKind = meta?.pauseKind || null;
+      const present =
+        Boolean(meta) &&
+        (hasIntent ||
+          pauseKind === "during_call" ||
+          pauseKind === "after_intent_before_call");
+      midFlightStorage = {
+        statusOk: Boolean(statusRes.ok && statusRes.body?.ok),
+        hasMeta: Boolean(meta),
+        hasIntent,
+        pauseKind,
+        present,
+      };
+      if (!present) {
+        expectOk = false;
+      }
+    }
+
     if (expectOk) st.ok += 1;
     else st.failures += 1;
 
@@ -1025,6 +1233,9 @@ async function main() {
     } else if (statePreservedTrial?.reason === "digest_mismatch") {
       failureClass = "correctness";
       failureReason = "digest_mismatch";
+    } else if (midFlightStorage && midFlightStorage.present === false) {
+      failureClass = "correctness";
+      failureReason = "lost_midflight_intent";
     } else if (avail.resumeDeadlineMiss) {
       failureClass = "availability";
       failureReason = "resume_deadline_miss";
@@ -1052,6 +1263,8 @@ async function main() {
       statePreserved: statePreservedTrial,
       failureClass,
       failureReason,
+      midFlightStorage,
+      callSent,
       resumeMs,
       resumeActiveMs,
       recoveryMs: avail.recoveryMs,
@@ -1082,12 +1295,18 @@ async function main() {
     }
     primary = survivor;
 
-    if ((i + 1) % 10 === 0 || i === N - 1) {
+    // Wedge / negative-control boards are slow and sparse — log every trial so
+    // lost-intent rate is visible before the 10-trial evidence watermark.
+    const progressEvery = WEDGE_HEALTH || ALLOW_UNFENCED ? 1 : 10;
+    if ((i + 1) % progressEvery === 0 || i === N - 1) {
       const elapsedSec = (Date.now() - boardStarted) / 1000;
       const rate = (i + 1) / Math.max(1, elapsedSec);
       const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
+      const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
+      const callSentFlag =
+        phase === "during_call" ? (callSent?.sawInFlight ? 1 : 0) : "-";
       console.log(
-        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} last=${phase} ok=${expectOk} resumeMs=${resumeMs} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
+        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} callSent=${callSentFlag} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
       );
       writeEvidencePartial();
     }
@@ -1381,7 +1600,7 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch",
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill)",
             },
             availability: {
               failures: availabilityFailures,
@@ -1410,8 +1629,8 @@ async function main() {
                 resumeMs: t.resumeMs ?? null,
                 recoveryMs: t.recoveryMs ?? null,
               })),
-              meaning:
-                "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling",
+          meaning:
+            "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling",
             },
             outerCompletion: {
               rateOuterPhases: completionEligible.length
@@ -1464,12 +1683,76 @@ async function main() {
       awaitTrialsCompleted: awaitTrials.length,
       awaitTrialsN: AWAIT_TRIALS,
       overallN: N + AWAIT_TRIALS,
+      phases: PHASES,
+      wedgeHealth: WEDGE_HEALTH,
+      wedgeHoldMs: WEDGE_HEALTH ? WEDGE_HOLD_MS : 0,
+      celldBinaryVersion: CELLD_BINARY_VERSION,
+      fenceMode: FENCE_MODE,
+      outputGate: OUTPUT_GATE_ON,
+      fencedAck: FENCED_ACK_ON,
+      allowUnfenced: ALLOW_UNFENCED,
+      rustLog: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || null,
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
       bucketRedacted: true,
       diagnoseConditionalWrite: "ok",
       celldTtlMs: CELLD_TTL_MS,
       resumeDeadlineMs: RESUME_DEADLINE_MS,
+      /**
+       * Resume p50 here tracks CELLD_TTL_MS (lease floor), not the durable-ack
+       * gate wait. Stock boards use 10000 → ~12–14s; wedge boards often use 3000
+       * for faster cycles → ~4s. Do not compare across TTL settings.
+       */
+      resumeLatencyNote: {
+        celldTtlMs: CELLD_TTL_MS,
+        stockTtlMs: 10_000,
+        resumeMsP50: percentile(allResume, 50),
+        meaning:
+          CELLD_TTL_MS === 10_000
+            ? "Stock lease TTL (10s) — resume p50 is the usual ~12–14s lease floor."
+            : `CELLD_TTL_MS=${CELLD_TTL_MS} (not stock 10000). Resume p50≈${percentile(allResume, 50)}ms is lease-dominated under this TTL; do not compare to stock ~12–14s boards.`,
+      },
+      /**
+       * during_call must observe mock-pets inFlight>0 before SIGKILL. Otherwise a
+       * gate that never releases egress can fake 0 lost intents (availability hole).
+       */
+      callSent: (() => {
+        const during = trials.filter((t) => t.phase === "during_call");
+        const saw = during.filter((t) => t.callSent?.sawInFlight === true);
+        const never = during.filter(
+          (t) => t.failureReason === "call_never_sent" || t.callSent?.sawInFlight === false
+        );
+        const outcomeUnknownWithIntent = during.filter(
+          (t) =>
+            t.callSent?.sawInFlight === true &&
+            t.outcomeUnknown === true &&
+            t.midFlightStorage?.present === true
+        );
+        return {
+          duringCallTrials: during.length,
+          sawInFlight: saw.length,
+          neverSent: never.length,
+          sawInFlightRate: during.length ? saw.length / during.length : null,
+          outcomeUnknownWithIntentVisible: outcomeUnknownWithIntent.length,
+          outcomeUnknownWithIntentVisibleRate: during.length
+            ? outcomeUnknownWithIntent.length / during.length
+            : null,
+          meaning:
+            "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+          sample: during.slice(0, 20).map((t) => ({
+            i: t.i,
+            sawInFlight: t.callSent?.sawInFlight ?? null,
+            inFlightWaitMs: t.callSent?.inFlightWaitMs ?? null,
+            inFlightAtKill: t.callSent?.inFlightAtKill ?? null,
+            outcomeUnknown: t.outcomeUnknown ?? null,
+            intentPresent: t.midFlightStorage?.present ?? null,
+            pauseKind: t.midFlightStorage?.pauseKind ?? null,
+            writeCount: t.writeCount ?? null,
+            ok: t.ok,
+            failureReason: t.failureReason ?? null,
+          })),
+        };
+      })(),
       /**
        * Every write-kill and await trial is counted. Column rates use property-specific
        * denominators (not a filtered subset of “good” trials). See each note.

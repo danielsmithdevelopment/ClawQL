@@ -1,0 +1,12 @@
+{
+  "name": "workflow",
+  "main": "index.js",
+  "compatibility_date": "2026-08-18",
+  "workflows": [
+    {
+      "binding": "REPORTS",
+      "name": "report-builder",
+      "class_name": "ReportBuilder"
+    }
+  ]
+}

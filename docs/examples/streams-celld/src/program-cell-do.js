@@ -7,15 +7,14 @@
  *
  * Contract (same as durable-runner):
  * - completed calls → journal entry (replay, do not re-run)
- * - write: put intent, confirm storage-visible, then host call; intent without
- *   entry → outcome_unknown
+ * - write: put intent, then host call only after celld's output gate proves
+ *   durable under the current lease epoch; intent without entry → outcome_unknown
  * - interrupted read (no entry) → re-run once
  *
- * celld note: unlike Cloudflare DO output gates (hold network until storage is
- * durable), celld NodeFences some put-then-fetch orderings but does not expose
- * an LTX durable-ack API. Awaited storage.put can resolve before peer-visible
- * durability (N=1000 during_call R2 settle). We re-get intent/meta before send
- * as a best-effort barrier; product fix is a real sync/ack in celld.
+ * Local storage.get after put is a sanity check only — NOT durability proof
+ * and NOT part of the fix. Product fix lives in the ClawQL-maintained celld
+ * fork (vendor/celld): fenced ack + refuse live incarnation — see
+ * docs/streams/celld-output-gate-epoch-fence.md.
  */
 
 import { CORE_IN_CELLD_HONESTY, resolveSlimExecute } from "./core-catalog.js";
@@ -46,9 +45,9 @@ function nondetKey(programId, key) {
 }
 
 /**
- * Best-effort durable visibility barrier after storage.put.
- * Cloudflare DOs gate outbound fetch until storage is confirmed; celld does not
- * expose an equivalent ack — re-get until visible or timeout.
+ * Sanity-only local visibility poll after storage.put.
+ * Does NOT prove LTX/R2 durability — the same node that wrote can always read
+ * its own memory/WAL. Do not cite this as part of the durability fix.
  * @param {{ get: (k: string) => Promise<unknown> }} storage
  * @param {string} key
  * @param {{ timeoutMs?: number, pollMs?: number }} [opts]

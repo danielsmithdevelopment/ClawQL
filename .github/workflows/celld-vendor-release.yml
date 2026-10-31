@@ -1,0 +1,109 @@
+# Build the ClawQL-vendored celld fork from source, attach SBOM, and cosign-sign
+# the binary artifact. Boards and smokes should consume this artifact rather
+# than a hand-installed celld.dev binary.
+#
+# Triggers on vendor/celld changes and manual dispatch. Does not replace the
+# Streams celld smoke workflow (which still installs stock celld until the
+# fork is proven and CLAWQL_REQUIRE_OUTPUT_GATE=1).
+
+name: celld vendor release
+
+on:
+  pull_request:
+    paths:
+      - "vendor/celld/**"
+      - ".github/workflows/celld-vendor-release.yml"
+  push:
+    branches: [main]
+    paths:
+      - "vendor/celld/**"
+      - ".github/workflows/celld-vendor-release.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: celld-vendor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+env:
+  CELLD_VENDOR_VERSION: "0.4.0-clawql.2"
+
+jobs:
+  build-sign:
+    name: Build + SBOM + cosign celld
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vendor/celld
+
+      - name: Build release celld from vendor/
+        working-directory: vendor/celld
+        run: |
+          cargo build --release -p celld
+          ./target/release/celld --version | tee /tmp/celld-version.txt
+          grep -F "${CELLD_VENDOR_VERSION}" /tmp/celld-version.txt
+
+      - name: Stage artifact
+        run: |
+          mkdir -p dist/celld
+          install -m 755 vendor/celld/target/release/celld \
+            "dist/celld/celld-linux-amd64-${CELLD_VENDOR_VERSION}"
+          cp /tmp/celld-version.txt dist/celld/VERSION.txt
+          cp vendor/celld/FORK.md dist/celld/FORK.md
+          cp vendor/celld/UPSTREAM_PIN dist/celld/UPSTREAM_PIN
+          sha256sum "dist/celld/celld-linux-amd64-${CELLD_VENDOR_VERSION}" \
+            | tee "dist/celld/celld-linux-amd64-${CELLD_VENDOR_VERSION}.sha256"
+
+      - name: SBOM (Syft CycloneDX)
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
+            scan "dist/celld/celld-linux-amd64-${CELLD_VENDOR_VERSION}" \
+            -o "cyclonedx-json=dist/celld/celld-${CELLD_VENDOR_VERSION}.cdx.json"
+
+      - name: Upload unsigned artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: celld-vendor-${{ env.CELLD_VENDOR_VERSION }}
+          path: dist/celld/
+          if-no-files-found: error
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6
+        with:
+          cosign-release: v2.4.3
+
+      - name: Cosign sign-blob (keyless)
+        if: github.event_name != 'pull_request'
+        run: |
+          BIN="dist/celld/celld-linux-amd64-${CELLD_VENDOR_VERSION}"
+          cosign sign-blob --yes \
+            --bundle "${BIN}.cosign-bundle.json" \
+            "${BIN}"
+          cosign verify-blob \
+            --bundle "${BIN}.cosign-bundle.json" \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.*" \
+            --certificate-oidc-issuer-regexp "https://token.actions.githubusercontent.com.*" \
+            "${BIN}"
+
+      - name: Upload signature bundle
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: celld-vendor-${{ env.CELLD_VENDOR_VERSION }}-cosign
+          path: |
+            dist/celld/*.cosign-bundle.json
+            dist/celld/*.sha256
+            dist/celld/*.cdx.json
+          if-no-files-found: error

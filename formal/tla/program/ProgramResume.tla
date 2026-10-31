@@ -86,7 +86,9 @@ JournalWriteIntent(s) ==
   /\ UNCHANGED <<pc, completed, durableAcked, unknown, runCount, postCompleteRuns,
                  sideEffects, status, crashes, midFlight>>
 
-\* Durable storage ack for a journaled intent (LTX / fsync / DO gate).
+\* Durable storage ack for a journaled intent.
+\* "Acknowledged" means committed under the current lease epoch (LTX fenced
+\* ack / host fsync) — NOT a same-node storage.get after put.
 AckDurableIntent(s) ==
   /\ status = "running"
   /\ s \in intent

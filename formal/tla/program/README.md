@@ -47,9 +47,9 @@ Every `host_send` / `upstream_fetch_start` must be preceded by `intent_durable_a
 | Spec                   | Code                                                                 |
 | ---------------------- | -------------------------------------------------------------------- |
 | `intent`               | `ProgramJournal.intents` / DO `program:…:intent:N` (put issued)      |
-| `durableAcked`         | fsync / LTX ack / storage-visible re-get before send                 |
+| `durableAcked`         | fsync / LTX **fenced** ack (committed under current lease epoch) — local re-get is NOT an ack |
 | `JournalWriteIntent`   | `appendIntent` / `storage.put(intent)`                               |
-| `AckDurableIntent`     | host `fh.sync()`; celld: re-get barrier until real sync exists       |
+| `AckDurableIntent`     | host `fh.sync()`; celld: output-gate AwaitDurable + ownership under epoch (vendor/celld) |
 | `BeginWriteSend`       | host execute / `executeCall` / upstream `fetch`                      |
 | `CrashLoseUnacked`     | kill after put returns but before durable — intent lost (R2 settle)  |
 | `CrashMid`             | SIGKILL after durable intent, mid-call                               |
