@@ -1,19 +1,19 @@
-# Deploy the Next.js + OpenNext docs app (Worker `clawql-docs` → https://docs.clawql.com).
-# Manual procedure and history: https://github.com/danielsmithdevelopment/ClawQL/issues/87
+# Deploy the Astro docs site (Worker Assets `clawql-docs-astro` → https://docs.clawql.com).
+# ADR 0018 cutover: replaces OpenNext Worker `clawql-docs` (no RSC / _rsc surface).
+# Manual procedure: scripts/deploy/deploy-docs-to-cloudflare.sh
 name: Deploy docs (Cloudflare)
 
 on:
   push:
     branches: [main]
     paths:
-      - "apps/docs/**"
-      - "packages/clawql-analytics/**"
-      - "packages/clawql-auth/**"
-      - "packages/clawql-audit/**"
-      - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
-      - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
-      - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
+      - "apps/docs-astro/**"
+      - "apps/docs/src/app/**"
+      - "apps/docs/src/generated/**"
+      - "apps/docs/content/**"
       - ".github/workflows/deploy-docs.yml"
+      - "scripts/deploy/deploy-docs-to-cloudflare.sh"
+      - "scripts/deploy/ensure-cloudflare-pages-project.sh"
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -36,48 +36,80 @@ jobs:
           node-version: "25"
           cache: npm
           cache-dependency-path: |
-            package-lock.json
-            apps/docs/package-lock.json
+            apps/docs-astro/package-lock.json
 
-      - name: Build clawql-analytics (docs API route dependency)
-        run: |
-          npm ci
-          npm run build -w clawql-merkle
-          npm run build -w clawql-gdp
-          npm run build -w clawql-audit
-          npm run build -w clawql-auth
-          npm run build -w clawql-analytics
+      - name: Install docs-astro dependencies
+        run: npm ci --prefix apps/docs-astro
 
-      - name: Install website dependencies
-        run: npm ci --prefix apps/docs
-
-      - name: Verify analytics deploy config
-        working-directory: apps/docs
+      - name: Astro build
+        working-directory: apps/docs-astro
         env:
-          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
-          CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
-          CLAWQL_ANALYTICS_POSTHOG_API_KEY: ${{ secrets.CLAWQL_ANALYTICS_POSTHOG_API_KEY }}
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
-        run: node scripts/verify-analytics-deploy-config.mjs
+          PUBLIC_SITE_URL: https://docs.clawql.com
+        run: npm run build
 
-      - name: OpenNext build
-        working-directory: apps/docs
-        env:
-          NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
-          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
-        run: npx opennextjs-cloudflare build
-
-      - name: Fail if Worker gzip ≥ 3 MiB (free-plan limit)
-        working-directory: apps/docs
-        run: node scripts/check-worker-gzip-limit.mjs
-
-      - name: wrangler deploy
-        working-directory: apps/docs
+      - name: wrangler deploy (Worker Assets)
+        working-directory: apps/docs-astro
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
-          CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
-          CLAWQL_ANALYTICS_POSTHOG_API_KEY: ${{ secrets.CLAWQL_ANALYTICS_POSTHOG_API_KEY }}
-          CLAWQL_ANALYTICS_POSTHOG_HOST: ${{ vars.CLAWQL_ANALYTICS_POSTHOG_HOST }}
         run: npx wrangler deploy
+
+      - name: Attach docs.clawql.com custom domain + route
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLAWQL_DOCS_DEPLOY_PAGES_PREVIEW: "0"
+        # Re-uses script attach logic; skip rebuild by pointing at already-built dist.
+        # Script rebuilds when invoked fully — for CI we only need domain/route ensure after wrangler deploy.
+        run: |
+          set -euo pipefail
+          API=https://api.cloudflare.com/client/v4
+          TOKEN="${CLOUDFLARE_API_TOKEN}"
+          ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID}"
+          APEX=clawql.com
+          HOSTNAME=docs.clawql.com
+          WORKER_NAME=clawql-docs-astro
+          cf() { curl -sS -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" "$@"; }
+          ZONE_ID="$(cf "${API}/zones?name=${APEX}" | jq -r '.result[0].id')"
+          EXISTING_ID="$(cf "${API}/accounts/${ACCOUNT_ID}/workers/domains?per_page=100" \
+            | jq -r --arg h "$HOSTNAME" '.result[]? | select(.hostname==$h) | .id // empty')"
+          EXISTING_SVC="$(cf "${API}/accounts/${ACCOUNT_ID}/workers/domains?per_page=100" \
+            | jq -r --arg h "$HOSTNAME" '.result[]? | select(.hostname==$h) | .service // empty')"
+          if [[ -n "$EXISTING_ID" && "$EXISTING_SVC" != "$WORKER_NAME" ]]; then
+            cf -X DELETE "${API}/accounts/${ACCOUNT_ID}/workers/domains/${EXISTING_ID}" >/dev/null || true
+          fi
+          BODY="$(jq -n --arg h "$HOSTNAME" --arg s "$WORKER_NAME" --arg zid "$ZONE_ID" --arg zn "$APEX" \
+            '{hostname:$h,service:$s,environment:"production",zone_id:$zid,zone_name:$zn}')"
+          ATTACH="$(curl -sS -X PUT "${API}/accounts/${ACCOUNT_ID}/workers/domains" \
+            -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d "$BODY")"
+          echo "$ATTACH" | jq .
+          test "$(echo "$ATTACH" | jq -r '.success')" = "true"
+          ROUTE_ID="$(cf "${API}/zones/${ZONE_ID}/workers/routes" \
+            | jq -r --arg p "${HOSTNAME}/*" '.result[]? | select(.pattern==$p) | .id // empty')"
+          if [[ -n "$ROUTE_ID" ]]; then
+            CUR="$(cf "${API}/zones/${ZONE_ID}/workers/routes" \
+              | jq -r --arg p "${HOSTNAME}/*" --arg s "$WORKER_NAME" \
+                '.result[]? | select(.pattern==$p) | .script')"
+            if [[ "$CUR" != "$WORKER_NAME" ]]; then
+              cf -X DELETE "${API}/zones/${ZONE_ID}/workers/routes/${ROUTE_ID}" >/dev/null || true
+              curl -sS -X POST "${API}/zones/${ZONE_ID}/workers/routes" \
+                -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+                -d "$(jq -n --arg p "${HOSTNAME}/*" --arg s "$WORKER_NAME" '{pattern:$p,script:$s}')" | jq .
+            fi
+          else
+            curl -sS -X POST "${API}/zones/${ZONE_ID}/workers/routes" \
+              -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" \
+              -d "$(jq -n --arg p "${HOSTNAME}/*" --arg s "$WORKER_NAME" '{pattern:$p,script:$s}')" | jq .
+          fi
+
+      - name: Smoke https://docs.clawql.com
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/docs-home.html -w "%{http_code}" -L --max-time 30 -A "Mozilla/5.0" https://docs.clawql.com/)
+          echo "HTTP $code"
+          test "$code" = "200"
+          grep -q '_astro/' /tmp/docs-home.html
+          grep -q 'ClawQL' /tmp/docs-home.html
+          rsc=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 20 https://docs.clawql.com/_rsc || true)
+          echo "_rsc HTTP $rsc (expect 404)"
+          test "$rsc" = "404"
