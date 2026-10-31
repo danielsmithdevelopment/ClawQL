@@ -119,7 +119,7 @@ Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-k
 | Fix                                            | Layer               | What it does                                                                                                          | What it does _not_ do                                                                    |
 | ---------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Cap `waitNode` wall time / resume `deadlineAt` | **Harness**         | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics)                                      | Does **not** make `/health` answer; availability may improve less than the tail suggests |
-| Bounded lease-sweep + alive vs ready           | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | **Shipped in `0.4.0-clawql.3`:** `/.well-known/celld/alive` + timed readiness (`CELLD_HEALTH_TIMEOUT_MS`); maintenance phase hard-budget (`CELLD_MAINTENANCE_PHASE_BUDGET_SECS`). Re-measure on v3 at stock TTL. |
+| Bounded lease-sweep + alive vs ready           | **celld (historical fork)** | Stops the **node hang** where `/health` accepts TCP but never responds | Was in retired `0.4.0-clawql.3` (`/alive` + timed readiness). **Not** in product pin — stock **0.6.3** has no separate `/alive`; Helm liveness uses `/health`. Durability claim rests on tip gate, not this fork. |
 
 **`during_call` 404 ×5 — R2 settle (read-only on live prefix `tier-c-phased-20261030212001`):**
 
@@ -219,7 +219,11 @@ Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-ce
 
 **Why restarted (not based on results):** an earlier clawql.3 arm was clean through ~110/750, but a restored claim must rest on the binary we ship. Tip **0.6.3** already held the wedged N=100 board (0/100 lost; that wedge board used **`CELLD_TTL_MS=3000`**, not stock 10s — keep disclosed). Partial clawql.3 abort saved at `/opt/cursor/artifacts/phased-n1000-v3-clawql3-aborted-for-063-align.json` (not authoritative). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3 on 0.6.3.
 
-**Upstream contact:** short question (not a bug report) — tip held wedged N=100 **and** stale-owner N=40; ask whether Fleet proofs intentionally skip `VerifyOwnership`. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
+**Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
+
+**Upstream contact:** short **regression-test offer** (not a bug report / not a VerifyOwnership question) — tip held wedged N=100 **and** stale-owner N=40. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
+
+**Gate latency (stock 0.6.3):** measure `durable_wait` on v3 — not PUT vs PUT+GET fork A/B. Partial: [`durable-wait-stock-0.6.3-v3-partial.json`](../program-cell-fleet-kill/durable-wait-stock-0.6.3-v3-partial.json) (p50≈0.33 s / p99≈0.70 s).
 
 ### Stale-owner tip probe — stock 0.6.3 N=40 (PASS)
 
@@ -233,7 +237,7 @@ Evidence: [`phased-n40-stale-owner-upstream-0.6.3.json`](../program-cell-fleet-k
 | `callSent.sawInFlight` | **40/40** |
 | Correctness / availability | **PASS** (`ok=true`) |
 
-TTL disclosure: `CELLD_TTL_MS=2000` (not stock 10s). Tip closes this path on the sample; do not upgrade Ry email to a bug report. Claim restore still waits on green **v3 N=1000** at stock TTL.
+TTL disclosure: `CELLD_TTL_MS=2000` (not stock 10s). Tip closes this path; fork not required. Claim restore still waits on green **v3 N=1000** at stock TTL.
 
 
 ### Outcome unknown ~48% — read the per-phase table

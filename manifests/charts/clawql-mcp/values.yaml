@@ -1068,11 +1068,11 @@ streams:
   scalingBackend: kubernetes
   celld:
     enabled: false
-    # Pin celld v0.4.0 — do not mix v0.3.x and v0.4.x in one fleet.
-    version: v0.4.0
+    # Pin stock celld v0.6.3 — do not mix major/minor pins in one fleet.
+    version: v0.6.3
     image:
       repository: ghcr.io/denoland/celld
-      tag: v0.4.0
+      tag: v0.6.3
       pullPolicy: IfNotPresent
     # Fleet bucket (required when enabled). Example: s3://clawql-streams-state
     bucket: ""
@@ -1082,10 +1082,10 @@ streams:
     # Defaults to envFromSecret when empty.
     credentialsSecret: ""
     replicaCount: 1
-    # Readiness: serving (fleet_ready + timed actor healthy). Not /__celld/health.
+    # Readiness: serving. Not /__celld/health.
     healthPath: /.well-known/celld/health
-    # Liveness: process accepting connections. Never hangs on actor Health / WEDGE.
-    alivePath: /.well-known/celld/alive
+    # Liveness: stock tip has no separate /alive; use the same health path.
+    alivePath: /.well-known/celld/health
     # Worker INFERENCE_URL for deployed bundle — auto when inference.enabled and empty.
     inferenceUrl: ""
     # Worker CLAWQL_MCP_URL for search/execute (Streamable HTTP). Empty → in-cluster MCP

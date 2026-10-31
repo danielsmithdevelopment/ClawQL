@@ -13,8 +13,8 @@ on:
       - "manifests/charts/clawql-celld/**"
       - "manifests/charts/**/celld*"
       - "vendor/celld/**"
+      - "scripts/ci/install-celld-pinned.sh"
       - ".github/workflows/streams-celld.yml"
-      - ".github/workflows/celld-vendor-release.yml"
   push:
     branches: [main]
     paths:
@@ -24,8 +24,8 @@ on:
       - "manifests/charts/clawql-celld/**"
       - "manifests/charts/**/celld*"
       - "vendor/celld/**"
+      - "scripts/ci/install-celld-pinned.sh"
       - ".github/workflows/streams-celld.yml"
-      - ".github/workflows/celld-vendor-release.yml"
   workflow_dispatch:
 
 concurrency:
@@ -67,14 +67,13 @@ jobs:
           node docs/examples/streams-celld/scripts/openapi-pack.test.mjs
           node docs/examples/streams-celld/scripts/program-cell-resume.test.mjs
 
-      - name: Intent durable before send (expected fail until celld gate)
-        # REQUIRED assertion: intent present after kill-after-fetch + slow storage.
-        # Currently expected-fail until vendor/celld fenced-ack + incarnation fencing
-        # is the board binary. Then set CLAWQL_REQUIRE_OUTPUT_GATE=1 and remove continue-on-error.
+      - name: Intent durable before send (expected fail until CLAWQL_REQUIRE_OUTPUT_GATE)
+        # Unit/sim assertions for the host contract. Fleet proof is on stock celld 0.6.3
+        # boards; flip CLAWQL_REQUIRE_OUTPUT_GATE=1 when these scripts are wired to tip.
         continue-on-error: true
         run: node docs/examples/streams-celld/scripts/intent-durable-before-send.test.mjs
 
-      - name: Stale incarnation blocked from send (expected fail until celld gate)
+      - name: Stale incarnation blocked from send (expected fail until CLAWQL_REQUIRE_OUTPUT_GATE)
         continue-on-error: true
         run: node docs/examples/streams-celld/scripts/stale-incarnation-send.test.mjs
 
@@ -106,16 +105,17 @@ jobs:
       - name: Build clawql-merkle + clawql-core
         run: npm run build -w clawql-merkle -w clawql-core
 
-      - name: Install esbuild + celld v0.4.0
+      - name: Install esbuild + celld v0.6.3 (attested)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CELLD_PINNED_VERSION: v0.6.3
         run: |
           npm install -g esbuild
-          curl -fsSL https://celld.dev/install.sh | CELLD_VERSION=v0.4.0 sh
+          bash scripts/ci/install-celld-pinned.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
           command -v esbuild
           command -v celld
-          celld --version | tee /dev/stderr | grep -E '0\.4\.0'
+          celld --version | tee /dev/stderr | grep -E '0\.6\.3'
 
       - name: Fail-closed local E2E smoke
         env:
@@ -166,16 +166,17 @@ jobs:
           npm run build
           npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter -w clawql-audit
 
-      - name: Install esbuild + celld v0.4.0
+      - name: Install esbuild + celld v0.6.3 (attested)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CELLD_PINNED_VERSION: v0.6.3
         run: |
           npm install -g esbuild
-          curl -fsSL https://celld.dev/install.sh | CELLD_VERSION=v0.4.0 sh
+          bash scripts/ci/install-celld-pinned.sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          echo "$HOME/bin" >> "$GITHUB_PATH"
-          export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
           command -v esbuild
           command -v celld
-          celld --version | tee /dev/stderr | grep -E '0\.4\.0'
+          celld --version | tee /dev/stderr | grep -E '0\.6\.3'
 
       - name: Fail-closed full-stack smoke (real MCP + adapter)
         env:

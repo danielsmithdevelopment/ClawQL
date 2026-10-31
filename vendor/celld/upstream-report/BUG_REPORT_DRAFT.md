@@ -1,28 +1,25 @@
-# Draft — private email to ry@deno.com (short question; not a bug report)
+# Draft — private email to ry@deno.com (regression-test offer)
 
-**Status:** READY FOR HUMAN REVIEW — tip wedged board held; no tip failure to report. Keep private until Deno responds.  
+**Status:** READY FOR HUMAN REVIEW — tip held wedged + stale-owner; no bug to file. Keep private until Deno responds.  
 **To:** ry@deno.com  
-**Subject:** celld durability under node wedges — always-on gate on 0.6.3 + one code question  
-**How:** short question, not a bug report / not a large agent PR. PRs are disabled upstream. Optional tiny format-patch only if you say a change would be welcome. Emailing a patch assigns rights in it to Deno Land under your contribution terms.
+**Subject:** celld 0.6.3 durability boards — wedged-fleet + stale-owner tests if useful  
+**How:** short offer, not a bug report / not a large agent PR. PRs are disabled upstream. Emailing a patch assigns rights in it to Deno Land under your contribution terms.
 
 ---
 
 Hi Ry —
 
-We've been testing celld durability under node wedges on a two-node Cloudflare R2 fleet (hang readiness so the lease can move while the victim still runs an outbound hang, then SIGKILL mid-call). We require the mock upstream to see `inFlight` before the kill so the trial actually sent after durable ack.
+We've been exercising celld durability on a two-node Cloudflare R2 fleet while merging celld into our Streams path. Two boards that match the failure modes the always-on gate (and ownership checks) exist to prevent:
 
-**Stock celld v0.6.3** held in **all 100** trials of that wedged-fleet board (`lost_midflight_intent` 0/100, call sent 100/100). Nice work on the always-on durability wait. (Disclosure: that board used `CELLD_TTL_MS=3000` for faster lease move under wedge — not stock 10s.)
+1. **Wedged mid-flight** — hang readiness so the lease can move while the victim still has an outbound hang, require mock upstream `inFlight` before SIGKILL. Stock **v0.6.3** held **100/100** (`lost_midflight_intent` 0, call sent 100/100; board used `CELLD_TTL_MS=3000`, disclosed).
+2. **Stale owner after takeover** — SIGSTOP victim → lazy `own.json` move → SIGCONT, watch for late egress. Stock **v0.6.3** held **40/40** (`staleSend` 0, ownership moved 40/40; board used `CELLD_TTL_MS=2000`, disclosed).
 
-We also ran a dedicated **stale-owner** probe on tip (SIGSTOP victim → lazy `own.json` move → SIGCONT, watching for late egress after takeover): **0/40** `staleSend`, **40/40** ownership moved, **0** lost intents (TTL disclosure: `CELLD_TTL_MS=2000` on that board). So we are **not** filing a tip bug on that path either — just curious about the code shape.
-
-Reading `crates/logic/output_gate.rs` `durable_reached`, the **Fleet** proof path still settles without the `VerifyOwnership` read that **Bucket** proofs get. Is that intentional (fleet arbitration is enough even when a member is wedged rather than sealed), or would a small patch that also verifies ownership on Fleet proofs be welcome?
-
-Happy to share the board recipe or a minimal patch if useful. We'll keep this private until you've responded.
+We're pinning ClawQL to stock 0.6.3 and dropping our temporary fork. If either recipe would be useful as a regression test while you merge celld into workerd, happy to share the harness (Node board + mock pets) or trim it to whatever shape you prefer. We'll keep this private until you've responded.
 
 — ClawQL / Streams durability board
 
 ## Operator notes (not part of email)
 
-- Do **not** lead with 0.4.0 `CELLD_OUTPUT_GATE=0` negative control — that is an old release with the safety feature deliberately disabled.
-- Stale-owner N=40 on tip **held** (`phased-n40-stale-owner-upstream-0.6.3.json`) — keep this as a short question, not a bug report.
+- Do **not** lead with 0.4.0 `CELLD_OUTPUT_GATE=0` negative control.
+- Do **not** ask about Fleet `VerifyOwnership` as an open bug — tip held; this is an offer of tests.
 - Agents do not email; human sends when ready.
