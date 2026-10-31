@@ -29,6 +29,12 @@
  *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
  *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
+ *   FLEET_PHASED_FRESH_NODE_IDS      1=mint a new CELLD_NODE every start (legacy;
+ *                                    caused 712 node registrations on v3). Default 0:
+ *                                    stable fleet_A / fleet_B for the board run so
+ *                                    stock 0.6.3 (no lease-sweep) does not accumulate
+ *                                    zombie node sessions. After SELF-FENCE, wait ≥TTL
+ *                                    before reuse so the old lease can expire.
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
@@ -119,6 +125,15 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+/**
+ * Default stable node ids (v3 lesson): fresh ids every start fill R2 `nodes/`
+ * without upstream lease-sweep. Opt into legacy minting with FRESH_NODE_IDS=1.
+ */
+const FRESH_NODE_IDS = process.env.FLEET_PHASED_FRESH_NODE_IDS === "1";
+const STABLE_NODE_IDS = {
+  A: process.env.FLEET_PHASED_NODE_A?.trim() || "fleet_A",
+  B: process.env.FLEET_PHASED_NODE_B?.trim() || "fleet_B",
+};
 /**
  * When set, during_call trials hang `/.well-known/celld/health` via
  * CELLD_WEDGE_HEALTH_FLAG for ~2× lease TTL before SIGKILL — exercises the
@@ -640,9 +655,20 @@ async function main() {
     // binding into a half-dead socket is a common /health timeout cause.
     await waitPortFree(n.port);
     await waitPortFree(n.internal);
-    // Fresh node-session id per start so a fenced identity cannot renew against
-    // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
-    const celldNodeId = `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    // Stable CELLD_NODE by default (see FLEET_PHASED_FRESH_NODE_IDS). Stock tip
+    // 0.6.3 has no lease-sweep — minting a new id every restart was the v3
+    // 712-registration death spiral. After a self-fence, wait out the lease TTL
+    // before reusing the stable id so the fenced session cannot renew.
+    if (n.lastExit?.selfFence && !FRESH_NODE_IDS) {
+      const waitMs = CELLD_TTL_MS + 500;
+      console.warn(
+        `fleet-phased: node ${name} self-fenced; waiting ${waitMs}ms before reuse of stable CELLD_NODE=${STABLE_NODE_IDS[name]}`
+      );
+      await sleep(waitMs);
+    }
+    const celldNodeId = FRESH_NODE_IDS
+      ? `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+      : STABLE_NODE_IDS[name];
     n.nodeId = celldNodeId;
     const nodeEnv = {
       ...process.env,
@@ -853,6 +879,11 @@ async function main() {
 
   // Start both nodes before waiting — a solo node with fleet durability may
   // never open ready_gate /program/health until a peer exists.
+  console.log(
+    FRESH_NODE_IDS
+      ? "fleet-phased: CELLD_NODE=fresh-every-start (FLEET_PHASED_FRESH_NODE_IDS=1; expect node-object growth without upstream lease-sweep)"
+      : `fleet-phased: CELLD_NODE=stable (${STABLE_NODE_IDS.A}, ${STABLE_NODE_IDS.B}); post-fence wait ≥TTL before reuse`
+  );
   await startNode("A");
   await startNode("B");
   await sleep(2000);
@@ -1983,6 +2014,8 @@ async function main() {
       staleOwnerProbe: STALE_OWNER,
       staleOwnerCell: STALE_OWNER ? STALE_OWNER_CELL : null,
       celldBinaryVersion: CELLD_BINARY_VERSION,
+      freshNodeIds: FRESH_NODE_IDS,
+      stableNodeIds: FRESH_NODE_IDS ? null : { ...STABLE_NODE_IDS },
       fenceMode: FENCE_MODE,
       outputGate: OUTPUT_GATE_ON,
       fencedAck: FENCED_ACK_ON,

@@ -232,6 +232,8 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Before v4:** land lease-sweep + alive-vs-ready (or equivalent) on the runtime under test; run a multi-hour soak with stable node-id count and no self-fence accumulation; then rerun N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board.
 
+**Harness mitigation (pre-soak):** `run-board.mjs` defaults to stable `CELLD_NODE=fleet_A|fleet_B` (opt out with `FLEET_PHASED_FRESH_NODE_IDS=1`); after SELF-FENCE wait ≥TTL before reuse. Smoke soak: `npm run benchmark:fleet-node-soak` (`scripts/benchmarks/fleet-phased-kill/run-node-soak.mjs`) — deploy + mock-pets + rebuild cycles; pass when unique `nodes/*` ≤2. This is **not** upstream GC; multi-hour soak + product alive/sweep still gate v4.
+
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 
 **Upstream contact:** short **regression-test offer** (not a bug report / not a VerifyOwnership question) — tip held wedged N=100 **and** stale-owner N=40. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
