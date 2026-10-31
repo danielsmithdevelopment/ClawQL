@@ -239,11 +239,32 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     nonIdempotent: 'Duplicates when upstream ignores keys',
   },
   {
+    arm: 'golem-at-least-once-sim',
+    status: 'measured (model sim)',
+    runtime: 'golem-model-sim',
+    idempotent: 'At-least-once; 1 unique effect/trial (n=50)',
+    nonIdempotent: 'At-least-once; duplicates (n=50)',
+  },
+  {
+    arm: 'pi-interrupt-sim',
+    status: 'measured (model sim)',
+    runtime: 'pi-interrupt-model-sim',
+    idempotent: 'Tool re-entry; 1 unique effect/trial (n=50)',
+    nonIdempotent: 'Tool re-entry; duplicates (n=50)',
+  },
+  {
+    arm: 'clawql-file-journal @ lost_ack',
+    status: 'measured (pilot)',
+    runtime: 'host-file-journal',
+    idempotent: '0 dups · unknown (no blind resend)',
+    nonIdempotent: 'neither: 0 dups · unknown; lookup resolves',
+  },
+  {
     arm: 'golem / pi-durable (+ combos)',
-    status: 'pending invite',
+    status: 'pending_adapter',
     runtime: '—',
     idempotent: '—',
-    nonIdempotent: '—',
+    nonIdempotent: 'Real adapters not wired; sims are placeholders',
   },
 ] as const
 

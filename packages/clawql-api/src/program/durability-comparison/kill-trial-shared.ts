@@ -75,7 +75,7 @@ export function recordingHost(opts: {
   const uniqueEffects = new Set(opts.priorEffects);
   let onceCounter = priorEffectsSize(opts.priorEffects);
   const host: ProgramHost = {
-    execute: (input) =>
+    execute: (input, _ctx) =>
       Effect.sync(() => {
         if (input.operationId === WRITE_OP) {
           executedWrites.push(input.operationId);
@@ -109,7 +109,7 @@ export function recordingHost(opts: {
           ],
         };
       }),
-    search: () => Effect.fail(new Error("search is not part of this plan")),
+    search: (_input, _ctx) => Effect.fail(new Error("search is not part of this plan")),
     resolveRisk: (operationId) =>
       Effect.succeed({
         found: true,
@@ -207,12 +207,15 @@ export async function oneKillMidWriteTrial(input: {
 
     if (retries) {
       await Effect.runPromise(
-        parent.host.execute({
-          operationId: WRITE_OP,
-          args: includeKey
-            ? { page: 3, idempotencyKey: "kill-mid-write-key" }
-            : { page: 3 },
-        })
+        parent.host.execute(
+          {
+            operationId: WRITE_OP,
+            args: includeKey
+              ? { page: 3, idempotencyKey: "kill-mid-write-key" }
+              : { page: 3 },
+          },
+          { programId }
+        )
       );
     }
 

@@ -66,7 +66,8 @@ export function detectHarnessCommit(env: NodeJS.ProcessEnv = process.env): strin
 }
 
 function flattenArmResults(raw: ArmResult | readonly ArmResult[]): ArmResult[] {
-  return Array.isArray(raw) ? [...raw] : [raw];
+  if (Array.isArray(raw)) return [...(raw as readonly ArmResult[])];
+  return [raw as ArmResult];
 }
 
 export function runDurabilityComparisonBoardEffect(

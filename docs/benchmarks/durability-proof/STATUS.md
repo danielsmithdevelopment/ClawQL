@@ -209,7 +209,7 @@ Correctness + availability gates **PASS** on the fenced arm (`ok=true`). Zero su
 
 Sequence on every trial: durable ack → pets hang in flight → wedge/kill → resume `outcome_unknown` with intent visible. The zero-loss result is **not** “never sent.”
 
-**Durable-ack latency:** append-mode timing logs yielded **300** `durable_wait` samples (p50≈0.72s / p99≈1.06s; diagnostic — multiple events can fire per trial). PUT-only vs PUT+GET A/B still open (`CELLD_FENCED_ACK_CONFIRM_GET`). See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
+**Durable-ack latency (wedged N=100, diagnostic):** append-mode timing logs yielded **300** `durable_wait` samples (p50≈0.72s / p99≈1.06s; multiple events can fire per trial). Stock-tip gate wait is tracked on the v3 board — see [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md). PUT vs PUT+GET A/B is **retired**.
 
 **Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
 
