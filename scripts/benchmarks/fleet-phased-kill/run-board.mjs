@@ -136,7 +136,20 @@ const WEDGE_HOLD_MS = Math.max(
  * Default remains force-on for durability boards.
  */
 const ALLOW_UNFENCED = process.env.FLEET_PHASED_ALLOW_UNFENCED === "1";
-if (process.env.CELLD_OUTPUT_GATE === "0" && !ALLOW_UNFENCED) {
+/**
+ * Upstream celld ≥0.6.3 removed CELLD_OUTPUT_GATE (always waits for durability)
+ * and rejects the env var. Set FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1 so the
+ * board does not inject CELLD_OUTPUT_GATE / CELLD_FENCED_ACK into child env.
+ */
+const OMIT_REMOVED_CELLD_ENVS = process.env.FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS === "1";
+if (OMIT_REMOVED_CELLD_ENVS) {
+  delete process.env.CELLD_OUTPUT_GATE;
+  delete process.env.CELLD_FENCED_ACK;
+  delete process.env.CELLD_FENCED_ACK_CONFIRM_GET;
+  console.warn(
+    "fleet-phased: OMIT_REMOVED_CELLD_ENVS=1 — not injecting CELLD_OUTPUT_GATE/FENCED_ACK (upstream always-gate)"
+  );
+} else if (process.env.CELLD_OUTPUT_GATE === "0" && !ALLOW_UNFENCED) {
   console.warn(
     "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1 (set FLEET_PHASED_ALLOW_UNFENCED=1 for negative control)"
   );
@@ -144,26 +157,34 @@ if (process.env.CELLD_OUTPUT_GATE === "0" && !ALLOW_UNFENCED) {
 } else if (process.env.CELLD_OUTPUT_GATE !== "0") {
   process.env.CELLD_OUTPUT_GATE = "1";
 }
-if (process.env.CELLD_FENCED_ACK === "0") {
-  if (!ALLOW_UNFENCED && process.env.CELLD_OUTPUT_GATE !== "0") {
-    console.warn(
-      "fleet-phased: CELLD_FENCED_ACK=0 without ALLOW_UNFENCED — keeping =0 only if you meant it; prefer FLEET_PHASED_ALLOW_UNFENCED=1"
-    );
+if (!OMIT_REMOVED_CELLD_ENVS) {
+  if (process.env.CELLD_FENCED_ACK === "0") {
+    if (!ALLOW_UNFENCED && process.env.CELLD_OUTPUT_GATE !== "0") {
+      console.warn(
+        "fleet-phased: CELLD_FENCED_ACK=0 without ALLOW_UNFENCED — keeping =0 only if you meant it; prefer FLEET_PHASED_ALLOW_UNFENCED=1"
+      );
+    } else {
+      console.warn(
+        "fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled (negative control)"
+      );
+    }
   } else {
-    console.warn(
-      "fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled (negative control)"
-    );
+    process.env.CELLD_FENCED_ACK = "1";
   }
-} else {
-  process.env.CELLD_FENCED_ACK = "1";
 }
-const OUTPUT_GATE_ON = process.env.CELLD_OUTPUT_GATE !== "0";
-const FENCED_ACK_ON = process.env.CELLD_FENCED_ACK !== "0";
+const OUTPUT_GATE_ON = OMIT_REMOVED_CELLD_ENVS
+  ? true
+  : process.env.CELLD_OUTPUT_GATE !== "0";
+const FENCED_ACK_ON = OMIT_REMOVED_CELLD_ENVS
+  ? false
+  : process.env.CELLD_FENCED_ACK !== "0";
 const FENCE_MODE =
   process.env.FLEET_PHASED_FENCE_MODE ||
-  (OUTPUT_GATE_ON && FENCED_ACK_ON
-    ? "fenced"
-    : "unfenced_negative_control");
+  (OMIT_REMOVED_CELLD_ENVS
+    ? "upstream_always_gate"
+    : OUTPUT_GATE_ON && FENCED_ACK_ON
+      ? "fenced"
+      : "unfenced_negative_control");
 function detectCelldVersion() {
   if (process.env.FLEET_PHASED_CELLD_VERSION) {
     return process.env.FLEET_PHASED_CELLD_VERSION;
@@ -555,14 +576,20 @@ async function main() {
     // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
     const nodeEnv = {
       ...process.env,
-      CELLD_OUTPUT_GATE: OUTPUT_GATE_ON ? "1" : "0",
-      CELLD_FENCED_ACK: FENCED_ACK_ON ? "1" : "0",
       CELLD_WEDGE_HEALTH_FLAG: n.wedgeFlag,
       // Durable-ack latency (wait_us on durable_wait); set RUST_LOG=timing=debug
       // on the board env to populate node logs for PUT vs PUT+GET A/B.
       RUST_LOG: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || "",
       CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     };
+    if (OMIT_REMOVED_CELLD_ENVS) {
+      delete nodeEnv.CELLD_OUTPUT_GATE;
+      delete nodeEnv.CELLD_FENCED_ACK;
+      delete nodeEnv.CELLD_FENCED_ACK_CONFIRM_GET;
+    } else {
+      nodeEnv.CELLD_OUTPUT_GATE = OUTPUT_GATE_ON ? "1" : "0";
+      nodeEnv.CELLD_FENCED_ACK = FENCED_ACK_ON ? "1" : "0";
+    }
     if (!nodeEnv.RUST_LOG) delete nodeEnv.RUST_LOG;
     const child = spawnLogged(
       "celld",
