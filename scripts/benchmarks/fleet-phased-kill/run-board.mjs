@@ -956,9 +956,37 @@ async function main() {
         let inFlightPolls = 0;
         let frozeAt = null;
         let thawedAt = null;
+        // Wait until the victim has journaled mid-flight intent (or sent) so
+        // freeze is not a pre-durable interrupt. Wedge+freeze only after that.
+        const intentReadyDeadline = t0 + 8_000;
+        let intentSeenBeforeFreeze = false;
+        while (Date.now() < intentReadyDeadline) {
+          inFlightPolls += 1;
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          inFlightAtKill = Number(ledger.body?.inFlight || 0);
+          if (inFlightAtKill > 0 && !sawInFlight) {
+            sawInFlight = true;
+            inFlightFirstAt = Date.now();
+          }
+          const st = await fetchJson(
+            `${baseV}/program/status?programId=${encodeURIComponent(programId)}`,
+            {},
+            2_000
+          );
+          const intents = Array.isArray(st.body?.intents) ? st.body.intents : [];
+          const pauseKind = st.body?.meta?.pauseKind || null;
+          if (
+            intents.length > 0 ||
+            pauseKind === "during_call" ||
+            pauseKind === "after_intent_before_call" ||
+            sawInFlight
+          ) {
+            intentSeenBeforeFreeze = true;
+            break;
+          }
+          await sleep(100);
+        }
         writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
-        // Brief head-start so the write can enter the output gate before freeze.
-        await sleep(300);
         if (nodes[victim].pid) {
           try {
             process.kill(nodes[victim].pid, "SIGSTOP");
@@ -1053,8 +1081,9 @@ async function main() {
           wedgeHoldMs: WEDGE_HOLD_MS,
           staleSendWatchMs: STALE_SEND_WATCH_MS,
           method: "SIGSTOP_lease_expire_SIGCONT",
+          intentSeenBeforeFreeze,
           meaning:
-            "Freeze victim (no lease renew) → wait own.json flip → SIGCONT. staleSend=true if inFlight first appears after both ownership move and thaw — live stale writer acked/sent.",
+            "Wait for intent/send on victim → freeze (no lease renew) → poke survivor for lazy own.json flip → SIGCONT. staleSend=true if inFlight first appears after both ownership move and thaw.",
         };
         if (nodes[victim].pid) {
           process.kill(nodes[victim].pid, "SIGKILL");
