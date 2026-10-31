@@ -22,6 +22,17 @@ So the TTL pulls two ways:
 
 **celld 0.4.0 knobs:** only `CELLD_TTL_MS` is exposed. There is no `CELLD_RENEW_*` env. Renew cadence and lease-store placement are production asks / future celld surfaces — mark **planned** until run at the same sample size as stock. Do not pretend a 30s TTL is the preferred production tune.
 
+## Parallel product work (does not block claim-path v2)
+
+Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% failure-rate ceiling on **all 1000** trials = 750 write-kill + 250 await; resume/recovery tails **reported without a ceiling**). “In time” = wall clock **`FLEET_PHASED_RESUME_DEADLINE_MS=60000`**, including orchestrator recovery. These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
+
+| Track                            | Meaning                                                                                                                                                                                                | Where                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lease renew / regional store** | Cut false `SELF-FENCE` under R2 RTT (preferred levers above)                                                                                                                                           | Upstream celld — no `CELLD_RENEW_*` yet                                                                                                       |
+| **Lease-sweep**                  | Retire dead node-session leases so a restarted peer is not blocked by a fenced identity                                                                                                                | Upstream (`dead_node_gc`); harness mitigates with fresh `CELLD_NODE` per start                                                                |
+| **Alive vs ready**               | `/health` can answer while `ready_gate` is still closed — callers must wait `/program/health` (or ready_gate), not confuse alive with serving                                                          | Harness already probes `/program/health?cell=health`; product docs / SDK should match                                                         |
+| **Pause-aware clocks**           | Timers that handle the **host** being paused/suspended (wall time jumps while the machine was not running) — behind pause-fetch failures; **not** freezing the resume deadline during harness recovery | Still open on the celld / product list. Harness reports diagnostic `resumeActiveMs` + `recoveryMs` but scores availability on wall `resumeMs` |
+
 ## Stall forensics (stock 10s / R2)
 
 | Knob / observation                | Value                                                  |
@@ -30,6 +41,19 @@ So the TTL pulls two ways:
 | Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ TTL consumed) |
 | Observed renew RTT (`elapsed_ms`) | typically **270–560ms** under peer-down load           |
 | Fence                             | Watchdog if lease not renewed within TTL               |
+
+### ~900s resume tails — harness wait vs product hang
+
+Stalls land at **~875–921s**. Grep found no celld/R2 **15-minute** lease TTL. The arithmetic is harness-side; the _reason_ the harness waited is product-side.
+
+| Layer                                   | Finding                                                                                                                                                            | Fix does                                                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Harness (explains the 15 minutes)**   | `waitNode` used `programAttempts=180` × `fetchJson` **5s** when `/health` accepts TCP but never responds → **180×5s=900s**. Also bypassed the 60s resume deadline. | **Wall-cap + `deadlineAt`** → faster **classified failure**, better p99 optics. Does **not** make the node healthy.                        |
+| **celld (explains why `/health` hung)** | Same pattern as the N=1000 dead-leader-sweep spiral: process accepts connections, does not become ready.                                                           | **Bounded lease-sweep** + **alive vs ready** (still on the parallel product list). This is what removes the _incident_, not just the wait. |
+
+**v2 mid-run (~500 write-kill):** five ~900s stalls seed cascades; **15 failures ≈ 5 stall incidents + twin + 1 lone mid-flight 404**. **p95≈14s / p99≈870s** = discrete stall class (1% of trials), not rising typical recovery. Running v2 process still has the pre-wall-cap harness.
+
+**`during_call` resume 404 (correctness check):** intent+meta are journaled before the hanging upstream call; all five no_expected trials had **writeCount=0** (no committed outside write) and no journal divergence. Four sit in stall cascades. Harness stops on first 404, so visibility lag vs permanent meta loss is not separable from this evidence — **not reclassified as correctness**; residual noted for harness retry-on-404 + retain `programId`.
 
 ## Three columns
 

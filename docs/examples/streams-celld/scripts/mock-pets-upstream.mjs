@@ -185,17 +185,37 @@ const server = createServer(async (req, res) => {
       }
       return;
     }
-    const id = `owner_${Date.now()}_${writes.length}`;
+    // Deterministic id from idempotency key so a no-crash twin with the same
+    // plan args yields an identical result digest after resume (claim-path
+    // statePreserved). Still one ledger row per unique key (duplicate detection).
+    const keyStr = String(key);
+    const existing = writes.find((w) => w.key === keyStr && w.generation === genAtStart);
+    if (existing) {
+      inFlight = Math.max(0, inFlight - 1);
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          id: existing.id,
+          name: existing.name,
+          host: "mock-pets-upstream",
+          key: keyStr,
+        })
+      );
+      return;
+    }
+    const id = `owner_${keyStr.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 96)}`;
     writes.push({
       id,
-      key: String(key),
+      key: keyStr,
       at: new Date().toISOString(),
       name: body.name || "lab",
       generation: genAtStart,
     });
     inFlight = Math.max(0, inFlight - 1);
     res.writeHead(201, { "content-type": "application/json" });
-    res.end(JSON.stringify({ id, name: body.name || "lab", host: "mock-pets-upstream", key }));
+    res.end(
+      JSON.stringify({ id, name: body.name || "lab", host: "mock-pets-upstream", key: keyStr })
+    );
     return;
   }
   if (req.method === "GET" && url.pathname === "/healthz") {

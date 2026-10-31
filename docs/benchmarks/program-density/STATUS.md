@@ -42,3 +42,18 @@ Loose ends closed on ack + double-buffer (drain 156→320k; ack ~2.2 µs; conc 2
 - **This board:** pause. Shared-host deadline campaign when convenient.
 - **Time-sensitive:** Infinity comparison on the Pi while people are still talking about it.
 - No win copy until shared-host (or Pi Infinity) evidence.
+
+## HOLD — swap + live-heap before any further density climb
+
+Open from the density thread: a ClawQL resident reading on the order of **~8 GB @ ~102,500 agents** does **not** fit under the **512 MiB** fair-board cap at that slope (~80 KiB/agent). Before this board runs further climb / publish arms, check swap and live heap — RSS alone can hide page-cache, allocator headroom, or swap-backed anon.
+
+**Checked on this cloud-agent host (Thursday, Oct 29, 2026, America/Los_Angeles):**
+
+| Check                                   | Result                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Swap**                                | **None configured** (`Swap: 0B`; `/proc/swaps` empty). RSS pressure cannot spill to disk — OOM/kill risk instead of silent swap bloat.                                                                                                                                                                                 |
+| **Live heap (published fair evidence)** | [`evidence-fair.json`](./evidence-fair.json) `clawqlRun`: at limit (past 2.5e6 schedule) `heapUsedKiB` **381210** (~372 MiB) vs `rssKiB` **550664** (~538 MiB) → heap/RSS ≈ **0.69**. After-GC slope `heapUsedKiBPerAgentAfterGc` **0.1504** vs total-RSS `residentKiBPerAgent` **0.2065**.                            |
+| **Current fair slope vs 512 MiB**       | At **0.2065 KiB/agent**, ~2.5e6 agents fit near the cap (matches measured limit). At an **~80 KiB/agent** slope, **102,500 agents ≈ 8 GiB** and max under 512 MiB is only ~6.5k agents — that slope is **not** the typed-array deadline-schedule arm in evidence-fair; identify which arm produced it before climbing. |
+| **Balloon**                             | Hypervisor balloon present (`balloon_inflate − balloon_deflate`); `free` under-reports usable RAM — do not use `MemAvailable` alone to clear a density gate.                                                                                                                                                           |
+
+**Gate:** do not resume density climb or publish a new resident row until (1) the ~8 GB @ ~102.5k arm is identified (config + commit), (2) that arm reports `heapUsed` after GC alongside RSS, and (3) swap remains absent or is explicitly measured if enabled. Current paused writer-bound numbers stay valid as single-host lab; this HOLD is about not extending them.

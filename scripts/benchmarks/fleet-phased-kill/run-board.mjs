@@ -14,24 +14,30 @@
  *   resumeDeadlineMiss  — resume not completed within deadline
  *   completed           — claim-path §1: clean program completions after resume
  *   stepsRepeated       — claim-path §1: completed write steps that re-ran on host (target 0)
- *   statePreserved      — claim-path §1: structural match vs no-crash baseline (outer phases)
+ *   statePreserved      — claim-path §1: exact digest equality vs no-crash twin (outer phases)
  *   waitApproval        — claim-path §4: await_approval park survives peer kill + approve resume
  *
  * Env:
- *   FLEET_PHASED_N                   total trials (default 100; lab target 1000)
+ *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
+ *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
  *   FLEET_PHASED_EVIDENCE            output path
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
- *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0)
- *   FLEET_PHASED_STATE_BASELINE      1=pair no-crash baseline for statePreserved (default 1)
+ *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
+ *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
+ *   FLEET_PHASED_SCORE_MODE          legacy_zero_deadline (default) |
+ *                                    correctness_availability_v2 (split gates; see durability STATUS)
+ *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
+ *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
+import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareStructuralStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
+import { compareDigestStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -90,12 +96,21 @@ const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000))
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
 const AWAIT_TRIALS = Math.max(
   0,
-  Math.min(1_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
+  Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
 );
 const STATE_BASELINE =
   process.env.FLEET_PHASED_STATE_BASELINE === undefined
     ? true
     : process.env.FLEET_PHASED_STATE_BASELINE !== "0";
+/** @type {"legacy_zero_deadline" | "correctness_availability_v2"} */
+const SCORE_MODE =
+  process.env.FLEET_PHASED_SCORE_MODE === "correctness_availability_v2"
+    ? "correctness_availability_v2"
+    : "legacy_zero_deadline";
+const AVAIL_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_PHASED_AVAIL_CEILING || 0.02))
+);
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -143,10 +158,34 @@ function spawnLogged(cmd, args, logPath, env = process.env) {
   });
 }
 
-async function waitUrl(url, pred, attempts = 120, delayMs = 250) {
+/**
+ * Poll until pred(fetchJson) is true.
+ *
+ * Important: attempt count alone is not a wall budget. With per-try timeoutMs=5000,
+ * the old defaults (health 240 tries / program 180 tries) could burn
+ * 240×5s=1200s or **180×5s=900s** when /health accepts TCP but never responds —
+ * matching the ~875–909s resume tails on v1/v2 with recoveryMs=0. Cap wallMs.
+ *
+ * @param {string} url
+ * @param {(r: any) => boolean} pred
+ * @param {{ attempts?: number, delayMs?: number, timeoutMs?: number, wallMs?: number, deadlineAt?: number }} [opts]
+ */
+async function waitUrl(url, pred, opts = {}) {
+  const attempts = opts.attempts ?? 120;
+  const delayMs = opts.delayMs ?? 250;
+  const timeoutMs = opts.timeoutMs ?? 1_500;
+  const wallMs = opts.wallMs ?? 45_000;
+  const deadlineAt = opts.deadlineAt ?? Number.POSITIVE_INFINITY;
+  const started = Date.now();
   for (let i = 0; i < attempts; i++) {
+    if (Date.now() >= deadlineAt) {
+      throw new Error(`deadline waiting for ${url}`);
+    }
+    if (Date.now() - started >= wallMs) {
+      throw new Error(`wall timeout ${wallMs}ms waiting for ${url}`);
+    }
     try {
-      const r = await fetchJson(url, {}, 5_000);
+      const r = await fetchJson(url, {}, timeoutMs);
       if (pred(r)) return r;
     } catch {
       /* retry */
@@ -154,6 +193,35 @@ async function waitUrl(url, pred, attempts = 120, delayMs = 250) {
     await sleep(delayMs);
   }
   throw new Error(`timeout waiting for ${url}`);
+}
+
+/** True when nothing accepts TCP on host:port (used after SIGKILL / self-fence). */
+async function waitPortFree(port, attempts = 40, delayMs = 100) {
+  for (let i = 0; i < attempts; i++) {
+    const free = await new Promise((resolve) => {
+      const s = createServer();
+      s.once("error", () => resolve(false));
+      s.listen(port, "127.0.0.1", () => {
+        s.close(() => resolve(true));
+      });
+    });
+    if (free) return;
+    await sleep(delayMs);
+  }
+}
+
+/**
+ * Diagnostic split: wall resume includes orchestrator recovery; active is the
+ * non-recovery portion. Availability scoring uses wall clock only — a 15-minute
+ * stall is a miss from the user's point of view regardless of what the harness
+ * was doing. resumeActiveMs / recoveryMs are reported without a pass/fail ceiling.
+ */
+function resumeActiveMsFrom(wallMs, recoveryMs = 0) {
+  return Math.max(0, wallMs - Math.max(0, recoveryMs));
+}
+
+function withinResumeDeadline(resumeStart) {
+  return Date.now() - resumeStart < RESUME_DEADLINE_MS;
 }
 
 function percentile(sorted, p) {
@@ -281,11 +349,47 @@ function scrapeLeaseRenewals(logPaths) {
 
 async function main() {
   const petsLog = "/tmp/fleet-phased-pets.log";
+  // Fail closed if a stale mock still owns the port (old Date.now() ids break
+  // digest-equal statePreserved). Free the port, then require a healthy start.
+  try {
+    const { execFileSync } = await import("node:child_process");
+    execFileSync("bash", ["-lc", `fuser -k ${PETS_PORT}/tcp 2>/dev/null || true`], {
+      stdio: "ignore",
+    });
+  } catch {
+    /* best-effort */
+  }
+  await sleep(300);
   const pets = spawnLogged(
     process.execPath,
     [join(STREAMS, "scripts/mock-pets-upstream.mjs"), String(PETS_PORT)],
     petsLog
   );
+  pets.on("exit", (code, signal) => {
+    if (code && code !== 0) {
+      console.error(`fleet-phased: mock-pets exited early code=${code} signal=${signal}`);
+    }
+  });
+  await waitUrl(
+    `http://127.0.0.1:${PETS_PORT}/healthz`,
+    (r) => r.ok === true || r.body?.ok === true,
+    { attempts: 40, delayMs: 100, timeoutMs: 1_500, wallMs: 10_000 }
+  );
+  // Probe deterministic owner id (claim-path digest equality depends on this).
+  const probe = await fetchJson(`http://127.0.0.1:${PETS_PORT}/owners`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": "fleet_probe_key",
+    },
+    body: JSON.stringify({ name: "probe", idempotencyKey: "fleet_probe_key" }),
+  });
+  if (probe.body?.id !== "owner_fleet_probe_key") {
+    throw new Error(
+      `mock-pets not serving deterministic owner ids (got ${JSON.stringify(probe.body)}); refuse to measure statePreserved`
+    );
+  }
+  await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
 
   const cfg = join(STREAMS, "wrangler.program-cell-fleet-phased.jsonc");
   const src = readFileSync(join(STREAMS, "wrangler.jsonc"), "utf8")
@@ -326,7 +430,7 @@ async function main() {
     },
   };
 
-  function startNode(name) {
+  async function startNode(name) {
     const n = nodes[name];
     if (n.pid) {
       try {
@@ -336,6 +440,16 @@ async function main() {
       }
       n.pid = null;
     }
+    // After SELF-FENCE / SIGKILL the old listener can hold the port briefly;
+    // binding into a half-dead socket is a common /health timeout cause.
+    await waitPortFree(n.port);
+    await waitPortFree(n.internal);
+    // Fresh node-session id per start so a fenced identity cannot renew against
+    // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
+    const nodeEnv = {
+      ...process.env,
+      CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    };
     const child = spawnLogged(
       "celld",
       [
@@ -352,7 +466,7 @@ async function main() {
         `127.0.0.1:${n.internal}`,
       ],
       n.log,
-      process.env
+      nodeEnv
     );
     n.pid = child.pid;
     child.on("exit", (code, signal) => {
@@ -376,52 +490,93 @@ async function main() {
 
   /**
    * @param {string} name
-   * @param {{ requireProgram?: boolean, programAttempts?: number, cell?: string }} [opts]
+   * @param {{ requireProgram?: boolean, programAttempts?: number, cell?: string, wallMs?: number, deadlineAt?: number, timeoutMs?: number }} [opts]
    */
   async function waitNode(name, opts = {}) {
     const requireProgram = opts.requireProgram !== false;
-    const programAttempts = opts.programAttempts ?? 180; // ~45s — match smoke wait_program
+    // Wall budgets (not attempt×timeout): hung /health burning 5s/try turned the old
+    // "180 attempts ≈ 45s" comment into a silent **~900s** stall (v1/v2 resume max).
+    const programWallMs = opts.wallMs ?? 45_000;
+    const healthWallMs = Math.min(30_000, programWallMs);
+    const programAttempts = opts.programAttempts ?? 180;
     // Probe a dedicated cell — never the trial DO — so readiness does not fight
     // ownership of the program under test (worker defaults cell=default otherwise).
     const cell = opts.cell || "health";
     const base = `http://127.0.0.1:${nodes[name].port}`;
-    await waitUrl(`${base}/health`, (r) => r.ok, 240, 250);
+    const poll = {
+      delayMs: 250,
+      timeoutMs: opts.timeoutMs ?? 1_500,
+      deadlineAt: opts.deadlineAt,
+    };
+    await waitUrl(`${base}/health`, (r) => r.ok, {
+      ...poll,
+      attempts: 240,
+      wallMs: healthWallMs,
+    });
     if (!requireProgram) return;
     await waitUrl(
       `${base}/program/health?cell=${encodeURIComponent(cell)}`,
       (r) => r.ok && /ProgramCellDO/.test(JSON.stringify(r.body)),
-      programAttempts,
-      250
+      {
+        ...poll,
+        attempts: programAttempts,
+        wallMs: programWallMs,
+      }
     );
   }
 
-  async function restartNode(name) {
-    startNode(name);
+  async function restartNode(name, opts = {}) {
+    await startNode(name);
     try {
-      await waitNode(name, { requireProgram: true, programAttempts: 120 });
+      await waitNode(name, {
+        requireProgram: true,
+        programAttempts: 80,
+        deadlineAt: opts.deadlineAt,
+      });
     } catch (err) {
       console.warn(`fleet-phased: waitNode(${name}) failed (${err.message}); retry once`);
-      startNode(name);
+      await startNode(name);
       await sleep(1500);
-      await waitNode(name, { requireProgram: true, programAttempts: 180 });
+      await waitNode(name, {
+        requireProgram: true,
+        programAttempts: 120,
+        deadlineAt: opts.deadlineAt,
+      });
     }
   }
 
   async function rebuildFleet() {
     console.warn("fleet-phased: rebuilding both nodes after ownership/ready stall");
-    startNode("A");
-    startNode("B");
+    await startNode("A");
+    await startNode("B");
     await sleep(2000);
-    await waitNode("A", { requireProgram: true, programAttempts: 180 });
-    await waitNode("B", { requireProgram: true, programAttempts: 180 });
+    // Bound each wait — an unbounded ready_gate stall previously hung the N=1000 lab
+    // after a survivor SELF-FENCE. Prefer a shorter dual restart over never finishing.
+    try {
+      await waitNode("A", { requireProgram: true, programAttempts: 120 });
+      await waitNode("B", { requireProgram: true, programAttempts: 120 });
+    } catch (err) {
+      console.warn(`fleet-phased: rebuildFleet wait failed (${err.message}); hard restart once`);
+      await startNode("A");
+      await startNode("B");
+      await sleep(3000);
+      await waitNode("A", { requireProgram: true, programAttempts: 120 });
+      await waitNode("B", { requireProgram: true, programAttempts: 120 });
+    }
   }
 
   /**
    * Ensure survivor is alive for resume. Counts self-fence / restart; time spent
-   * here is charged to the caller's resume clock (recovery ⊆ resumeMs).
+   * here goes to recoveryMs and also to wall resumeMs / the resume deadline —
+   * orchestrator recovery is not excluded from "no outcome in time".
+   * @param {string} name
+   * @param {any} counters
+   * @param {{ deadlineAt?: number }} [opts] — when set (resume path), waitNode/restart
+   *   must not outrun the wall resume deadline (the ~900s hang was waitNode ignoring it).
    */
-  async function ensureSurvivor(name, counters) {
+  async function ensureSurvivor(name, counters, opts = {}) {
     const n = nodes[name];
+    const waitOpts = opts.deadlineAt != null ? { deadlineAt: opts.deadlineAt } : {};
     if (n.pendingSelfFence) {
       counters.survivorSelfFence = true;
       n.pendingSelfFence = false;
@@ -430,26 +585,51 @@ async function main() {
       if (n.lastExit?.selfFence) counters.survivorSelfFence = true;
       counters.survivorRestart = true;
       const t0 = Date.now();
-      await restartNode(name);
+      try {
+        await restartNode(name, waitOpts);
+      } catch (err) {
+        console.warn(
+          `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
+        );
+        try {
+          await rebuildFleet();
+        } catch (rebuildErr) {
+          console.warn(`fleet-phased: ensureSurvivor rebuildFleet failed (${rebuildErr.message})`);
+        }
+      }
       counters.recoveryMs += Date.now() - t0;
       return;
     }
+    const tWait = Date.now();
     try {
-      await waitNode(name);
+      await waitNode(name, waitOpts);
+      counters.recoveryMs += Date.now() - tWait;
     } catch {
+      counters.recoveryMs += Date.now() - tWait;
       if (n.lastExit?.selfFence || n.pendingSelfFence) counters.survivorSelfFence = true;
       n.pendingSelfFence = false;
       counters.survivorRestart = true;
       const t0 = Date.now();
-      await restartNode(name);
+      try {
+        await restartNode(name, waitOpts);
+      } catch (err) {
+        console.warn(
+          `fleet-phased: ensureSurvivor(${name}) restart failed (${err.message}); rebuildFleet`
+        );
+        try {
+          await rebuildFleet();
+        } catch (rebuildErr) {
+          console.warn(`fleet-phased: ensureSurvivor rebuildFleet failed (${rebuildErr.message})`);
+        }
+      }
       counters.recoveryMs += Date.now() - t0;
     }
   }
 
   // Start both nodes before waiting — a solo node with fleet durability may
   // never open ready_gate /program/health until a peer exists.
-  startNode("A");
-  startNode("B");
+  await startNode("A");
+  await startNode("B");
   await sleep(2000);
   await waitNode("A", { requireProgram: true, programAttempts: 180 });
   await waitNode("B", { requireProgram: true, programAttempts: 180 });
@@ -464,34 +644,14 @@ async function main() {
   let totalDeadlineMisses = 0;
   let stateEligible = 0;
   let statePreserved = 0;
-  /** @type {unknown[] | null} */
-  let noCrashBaselineCalls = null;
+  let stateTwinFailures = 0;
   let primary = "A";
   const boardStarted = Date.now();
   // Trials use the worker default DO (program:default) — same as the proven
   // smoke + N=8 PASS. After SIGKILL, wait for survivor /program/health before
   // resume (ownership transfer); that wait is inside resumeMs.
-
-  if (STATE_BASELINE) {
-    await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
-    const baseId = `baseline_${Date.now()}`;
-    const basePort = nodes[primary].port;
-    const baseRes = await fetchJson(`http://127.0.0.1:${basePort}/program/run`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(baselinePlan(baseId)),
-    });
-    if (baseRes.body?.status === "completed" && Array.isArray(baseRes.body?.calls)) {
-      noCrashBaselineCalls = baseRes.body.calls;
-      console.log(
-        `fleet-phased: no-crash baseline captured (${noCrashBaselineCalls.length} steps)`
-      );
-    } else {
-      console.warn(
-        `fleet-phased: baseline capture failed: ${JSON.stringify(baseRes.body).slice(0, 160)}`
-      );
-    }
-  }
+  // statePreserved uses a per-outer-trial no-crash twin with the same plan args
+  // (exact digest equality), not a once-per-board structural baseline.
 
   const cleanup = () => {
     for (const n of Object.values(nodes)) {
@@ -579,6 +739,9 @@ async function main() {
           i,
           phase,
           ok: false,
+          pauseFailed: true,
+          failureClass: "availability",
+          failureReason: "pause_failed",
           detail: `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
         });
         if (!nodes[victim].pid) await restartNode(victim);
@@ -600,27 +763,34 @@ async function main() {
     const postKillMs = Math.max(0, Number(process.env.FLEET_PHASED_POST_KILL_MS || 600));
     await sleep(postKillMs);
 
-    // Resume clock includes ownership transfer (/program/health) + any survivor
-    // restart + the resume HTTP call (availability cost visible in p99/p999).
+    // Wall resume clock = ownership transfer + survivor restart/rebuild + resume HTTP.
+    // Deadline uses the same wall clock (recovery inclusive). A multi-minute
+    // orchestrator stall is an availability miss from the user's point of view.
     const resumeStart = Date.now();
+    const resumeDeadlineAt = resumeStart + RESUME_DEADLINE_MS;
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-      await ensureSurvivor(survivor, avail);
+      await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
     }
 
     // Smoke parity: wait until survivor can route ProgramCellDO before resume.
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
-      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 1_500);
       if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
       await sleep(250);
     }
 
+    // Mid-flight kills journal intent before the hang. A resume 404 can mean "not
+    // visible yet" (availability) or "meta gone" (correctness). Never treat the
+    // first 404 as terminal for mid-flight — keep waiting until the wall deadline.
+    const midFlight =
+      phase === "after_intent_before_call" || phase === "during_call";
     let resume = { ok: false, status: 0, body: null, fetchError: true };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       resume = await fetchJson(
         `${baseS}/program/resume`,
@@ -640,20 +810,32 @@ async function main() {
         await sleep(250);
         continue;
       }
+      if (midFlight && resume.status === 404 && resume.body?.error === "not_found") {
+        await sleep(250);
+        continue;
+      }
       if (resume.ok || resume.status === 404 || (resume.status && resume.status !== 0)) break;
       await sleep(100);
     }
     if (!(
       resume.ok ||
-      (resume.status === 404 && resume.body?.error === "not_found") ||
-      (resume.status && resume.status !== 500 && !resume.fetchError)
+      (!midFlight && resume.status === 404 && resume.body?.error === "not_found") ||
+      (resume.status && resume.status !== 500 && resume.status !== 404 && !resume.fetchError)
     )) {
-      // Deadline miss if we never got a definitive program response.
-      if (!resume.ok && (resume.fetchError || resume.status === 500 || resume.status === 0)) {
+      // Deadline miss if we never got a definitive program response in wall time.
+      // Mid-flight 404-through-deadline is also a miss (visibility), not a clean not_found.
+      if (
+        !resume.ok &&
+        (resume.fetchError ||
+          resume.status === 500 ||
+          resume.status === 0 ||
+          (midFlight && resume.status === 404))
+      ) {
         avail.resumeDeadlineMiss = true;
       }
     }
     const resumeMs = Date.now() - resumeStart;
+    const resumeActiveMs = resumeActiveMsFrom(resumeMs, avail.recoveryMs);
 
     const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
     const writeCount = ledger.body?.count || 0;
@@ -675,19 +857,112 @@ async function main() {
     // duplicate write on the pets ledger (writes) — target 0 for completed steps.
     const writeStepsRerun = duplicates;
 
+    /** @type {null | { preserved: boolean, reason: string, attempts?: number }} */
     let statePreservedTrial = null;
     const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
-    if (
-      STATE_BASELINE &&
-      noCrashBaselineCalls &&
-      outerPhase &&
-      completedClean &&
-      resumeCalls.length
-    ) {
+    if (STATE_BASELINE && outerPhase && completedClean && resumeCalls.length) {
       stateEligible += 1;
-      const cmp = compareStructuralStepState(noCrashBaselineCalls, resumeCalls);
-      statePreservedTrial = cmp.preserved;
-      if (cmp.preserved) statePreserved += 1;
+      // Score writeCount before twin; twin resets the pets ledger.
+      const twinId = `twin_${programId}`;
+      // Same plan args (name + idempotencyKey = programId) as the crash trial so
+      // mock owners.create returns an identical deterministic body.
+      const twinBody = baselinePlan(twinId);
+      twinBody.plan.calls = stockCalls(programId);
+      // Twin runs on the same fleet as resume — a SELF-FENCE can kill the capture.
+      // Retry a few times; classify twin_capture_failed vs digest_mismatch (both fail
+      // the frozen rate gate, but they are not the same cause).
+      const twinAttemptsMax = Math.max(
+        1,
+        Math.min(5, Number(process.env.FLEET_PHASED_TWIN_ATTEMPTS || 3))
+      );
+      let twinAttempt = 0;
+      let twinLastErr = null;
+      while (twinAttempt < twinAttemptsMax) {
+        twinAttempt += 1;
+        try {
+          await fetchJson(`http://127.0.0.1:${PETS_PORT}/__reset`, { method: "POST" });
+          if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
+            await ensureSurvivor(survivor, avail);
+          }
+          const twinPort = nodes[survivor].port;
+          const twinRes = await fetchJson(
+            `http://127.0.0.1:${twinPort}/program/run`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(twinBody),
+            },
+            30_000
+          );
+          if (twinRes.body?.status === "completed" && Array.isArray(twinRes.body?.calls)) {
+            const cmp = compareDigestStepState(
+              twinRes.body.calls,
+              resumeCalls,
+              twinRes.body?.result,
+              resume.body?.result
+            );
+            if (cmp.preserved) {
+              statePreserved += 1;
+              statePreservedTrial = {
+                preserved: true,
+                reason: "digest_match",
+                attempts: twinAttempt,
+              };
+              twinLastErr = null;
+              break;
+            }
+            statePreservedTrial = {
+              preserved: false,
+              reason: "digest_mismatch",
+              attempts: twinAttempt,
+              mismatchIndexes: cmp.mismatchIndexes,
+            };
+            if (process.env.FLEET_PHASED_DEBUG_STATE === "1") {
+              const mi = cmp.mismatchIndexes?.[0];
+              console.warn(
+                "fleet-phased: statePreserved digest_mismatch",
+                JSON.stringify({
+                  mismatchIndexes: cmp.mismatchIndexes,
+                  twinStep: cmp.baseline?.[mi],
+                  resumeStep: cmp.observed?.[mi],
+                }).slice(0, 2000)
+              );
+            }
+            // Digest mismatch will not improve on retry with the same journaled resume.
+            twinLastErr = null;
+            break;
+          }
+          twinLastErr = `twin status=${twinRes.body?.status || twinRes.status}`;
+        } catch (twinErr) {
+          twinLastErr = twinErr instanceof Error ? twinErr.message : String(twinErr);
+          console.warn(
+            `fleet-phased: twin capture attempt ${twinAttempt}/${twinAttemptsMax} failed (${twinLastErr})`
+          );
+          // Prefer survivor ensure over full rebuild — twin rebuild storms were
+          // folding multi-minute orchestrator work into availability tails.
+          try {
+            await ensureSurvivor(survivor, avail);
+          } catch {
+            try {
+              await rebuildFleet();
+            } catch {
+              /* next attempt */
+            }
+          }
+        }
+      }
+      if (statePreservedTrial == null) {
+        stateTwinFailures += 1;
+        statePreservedTrial = {
+          preserved: false,
+          reason: "twin_capture_failed",
+          attempts: twinAttempt,
+          detail: twinLastErr,
+        };
+      } else if (statePreservedTrial.preserved === false) {
+        if (statePreservedTrial.reason === "twin_capture_failed") stateTwinFailures += 1;
+        // digest_mismatch still fails the rate (preservedN) without counting as twinCaptureFailures
+      }
     }
 
     let expectOk = false;
@@ -701,6 +976,11 @@ async function main() {
       } else if (phase === "after_call_before_journal") {
         expectOk = completedClean && writeCount === 1 && duplicates === 0 && !outcomeUnknown;
       }
+    }
+    // Twin capture is part of the availability outcome for outer phases — a
+    // digest match with twin_capture_failed must not look like a clean trial.ok.
+    if (statePreservedTrial?.reason === "twin_capture_failed") {
+      expectOk = false;
     }
     // Self-fence + successful orchestrated recovery still counts as phase-ok for safety,
     // but availability columns record the incident. Deadline miss fails the trial.
@@ -733,9 +1013,34 @@ async function main() {
     if (expectOk) st.ok += 1;
     else st.failures += 1;
 
+    // Outcome-based class (v2 gates). Correctness = wrong outcome; availability = no outcome in time.
+    let failureClass = null;
+    let failureReason = null;
+    if (duplicates > 0 || writeStepsRerun > 0) {
+      failureClass = "correctness";
+      failureReason = "duplicate_or_write_rerun";
+    } else if (journalDivergence) {
+      failureClass = "correctness";
+      failureReason = "journal_divergence";
+    } else if (statePreservedTrial?.reason === "digest_mismatch") {
+      failureClass = "correctness";
+      failureReason = "digest_mismatch";
+    } else if (avail.resumeDeadlineMiss) {
+      failureClass = "availability";
+      failureReason = "resume_deadline_miss";
+    } else if (statePreservedTrial?.reason === "twin_capture_failed") {
+      failureClass = "availability";
+      failureReason = "twin_capture_failed";
+    } else if (!expectOk) {
+      // Mid-flight without outcome_unknown after a timed-out / empty resume, etc.
+      failureClass = "availability";
+      failureReason = "no_expected_outcome";
+    }
+
     trials.push({
       i,
       phase,
+      programId,
       ok: expectOk,
       duplicates,
       writeCount,
@@ -745,7 +1050,10 @@ async function main() {
       writeStepsRerun,
       replayedSteps,
       statePreserved: statePreservedTrial,
+      failureClass,
+      failureReason,
       resumeMs,
+      resumeActiveMs,
       recoveryMs: avail.recoveryMs,
       survivorSelfFence: avail.survivorSelfFence,
       survivorRestart: avail.survivorRestart,
@@ -760,11 +1068,17 @@ async function main() {
     // Victim only needs /health before the next flip; program routing is checked
     // on the survivor path above for the following trial.
     try {
-      startNode(victim);
+      await startNode(victim);
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: victim ${victim} restart failed (${err.message}); rebuild fleet`);
-      await rebuildFleet();
+      try {
+        await rebuildFleet();
+      } catch (rebuildErr) {
+        console.warn(
+          `fleet-phased: rebuildFleet after victim failed (${rebuildErr.message}); continuing with survivor only next loop will rebuild`
+        );
+      }
     }
     primary = survivor;
 
@@ -803,14 +1117,36 @@ async function main() {
     });
     const parked = parkRes.body?.status === "parked" || parkRes.body?.code === "awaiting_approval";
     if (!parked) {
+      // Harness bug in v1: this path pushed ok=false with no failureClass, no console.log,
+      // and only a best-effort victim restart — so a dead fleet silently burned the rest of
+      // the await arm (v1: 178/180 failures were park_failed; log jumped from 74/250 to done).
+      // Criteria unchanged: classify as availability, always log, rebuild before continuing.
+      const parkDetail = `park failed: ${JSON.stringify(parkRes.body).slice(0, 120)}`;
       awaitTrials.push({
         a,
         ok: false,
         survived: false,
         completedAfterApprove: false,
-        detail: `park failed: ${JSON.stringify(parkRes.body).slice(0, 120)}`,
+        detail: parkDetail,
+        failureClass: "availability",
+        failureReason: "await_park_failed",
       });
-      if (!nodes[victim].pid) await restartNode(victim);
+      console.log(
+        `fleet-phased: await ${a + 1}/${AWAIT_TRIALS} survived=false completed=false ok=false detail=park_failed`
+      );
+      try {
+        // Prefer a full rebuild: a single dead/unready node is what turned v1's remaining
+        // ~176 await trials into silent park_failed continues.
+        await rebuildFleet();
+      } catch (err) {
+        console.warn(`fleet-phased: await park-fail rebuildFleet failed (${err.message})`);
+        try {
+          if (!nodes[victim].pid) await restartNode(victim);
+        } catch (restartErr) {
+          console.warn(`fleet-phased: await park-fail victim restart failed (${restartErr.message})`);
+        }
+      }
+      if ((a + 1) % 10 === 0 || a === AWAIT_TRIALS - 1) writeEvidencePartial();
       continue;
     }
 
@@ -827,22 +1163,23 @@ async function main() {
       resumeDeadlineMiss: false,
     };
     const resumeStart = Date.now();
+    const resumeDeadlineAt = resumeStart + RESUME_DEADLINE_MS;
     if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-      await ensureSurvivor(survivor, avail);
+      await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
     }
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
-      const ph = await fetchJson(`${baseS}/program/health`, {}, 5_000);
+      const ph = await fetchJson(`${baseS}/program/health`, {}, 1_500);
       if (ph.ok && /ProgramCellDO/.test(JSON.stringify(ph.body))) break;
       await sleep(250);
     }
 
     let mid = { ok: false, body: null };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       mid = await fetchJson(
         `${baseS}/program/resume`,
@@ -868,9 +1205,9 @@ async function main() {
     });
 
     let done = { ok: false, body: null };
-    while (Date.now() - resumeStart < RESUME_DEADLINE_MS) {
+    while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
-        await ensureSurvivor(survivor, avail);
+        await ensureSurvivor(survivor, avail, { deadlineAt: resumeDeadlineAt });
       }
       done = await fetchJson(
         `${baseS}/program/resume`,
@@ -892,26 +1229,48 @@ async function main() {
     const completedAfterApprove =
       done.body?.status === "completed" && done.body?.ok === true && writeCount === 1;
     const ok = survived && completedAfterApprove && writeCount === 1;
+    let awaitFailureClass = null;
+    let awaitFailureReason = null;
+    if (writeCount > 1) {
+      awaitFailureClass = "correctness";
+      awaitFailureReason = "duplicate_write";
+    } else if (!ok) {
+      awaitFailureClass = "availability";
+      awaitFailureReason = !survived
+        ? "await_not_survived"
+        : "await_not_completed_in_time";
+    }
+    const awaitResumeMs = Date.now() - resumeStart;
     awaitTrials.push({
       a,
       ok,
       survived,
       completedAfterApprove,
       writeCount,
-      resumeMs: Date.now() - resumeStart,
+      failureClass: awaitFailureClass,
+      failureReason: awaitFailureReason,
+      resumeDeadlineMiss: avail.resumeDeadlineMiss,
+      resumeMs: awaitResumeMs,
+      resumeActiveMs: resumeActiveMsFrom(awaitResumeMs, avail.recoveryMs),
+      recoveryMs: avail.recoveryMs,
     });
 
     try {
-      startNode(victim);
+      await startNode(victim);
       await waitNode(victim, { requireProgram: false });
     } catch (err) {
       console.warn(`fleet-phased: await victim restart failed (${err.message}); rebuild`);
-      await rebuildFleet();
+      try {
+        await rebuildFleet();
+      } catch (rebuildErr) {
+        console.warn(`fleet-phased: await rebuildFleet failed (${rebuildErr.message})`);
+      }
     }
     primary = survivor;
     console.log(
       `fleet-phased: await ${a + 1}/${AWAIT_TRIALS} survived=${survived} completed=${completedAfterApprove} ok=${ok}`
     );
+    if ((a + 1) % 10 === 0 || a === AWAIT_TRIALS - 1) writeEvidencePartial();
   }
 
   function summarize() {
@@ -919,10 +1278,10 @@ async function main() {
       .filter((t) => t.resumeMs != null)
       .map((t) => t.resumeMs)
       .sort((a, b) => a - b);
-    const allRecovery = trials
-      .filter((t) => t.recoveryMs > 0)
-      .map((t) => t.recoveryMs)
-      .sort((a, b) => a - b);
+    const allRecovery = [
+      ...trials.filter((t) => t.recoveryMs > 0).map((t) => t.recoveryMs),
+      ...awaitTrials.filter((t) => t.recoveryMs > 0).map((t) => t.recoveryMs),
+    ].sort((a, b) => a - b);
     const byPhase = {};
     for (const p of PHASES) {
       const s = phaseStats[p];
@@ -969,20 +1328,207 @@ async function main() {
     const completionEligibleClean = completionEligible.filter((t) => t.completedClean).length;
     const totalWriteStepsRerun = trials.reduce((acc, t) => acc + (t.writeStepsRerun || 0), 0);
     const totalJournalDivergence = trials.filter((t) => t.journalDivergence).length;
+    const midFlight = trials.filter(
+      (t) => t.phase === "after_intent_before_call" || t.phase === "during_call"
+    );
+    const awaitOk = awaitTrials.filter((t) => t.ok).length;
+    const awaitFailed = awaitTrials.filter((t) => !t.ok);
+    const awaitFailureByReason = {};
+    for (const t of awaitFailed) {
+      const reason = t.failureReason || (t.detail?.startsWith("park failed") ? "await_park_failed" : "unknown");
+      awaitFailureByReason[reason] = (awaitFailureByReason[reason] || 0) + 1;
+    }
+    const writeKillDone = trials.length >= N;
+    const awaitDone = awaitTrials.length >= AWAIT_TRIALS;
+    const complete = writeKillDone && awaitDone;
+    const overallDenom = trials.length + awaitTrials.length;
+    const correctnessItems = [
+      ...trials.filter((t) => t.failureClass === "correctness"),
+      ...awaitTrials.filter((t) => t.failureClass === "correctness"),
+    ];
+    const availabilityItems = [
+      ...trials.filter((t) => t.failureClass === "availability"),
+      ...awaitTrials.filter((t) => t.failureClass === "availability"),
+    ];
+    const correctnessFailures = correctnessItems.length;
+    const availabilityFailures = availabilityItems.length;
+    const availabilityFailureRate =
+      overallDenom > 0 ? availabilityFailures / overallDenom : null;
+    const outerMisses = completionEligible
+      .filter((t) => !t.completedClean)
+      .map((t) => ({
+        i: t.i,
+        phase: t.phase,
+        failureClass: t.failureClass || (t.pauseFailed ? "availability" : null),
+        failureReason: t.failureReason || (t.pauseFailed ? "pause_failed" : null),
+        resumeMs: t.resumeMs ?? null,
+        detail: t.detail ?? null,
+      }));
+    const allResumeIncludingAwait = [
+      ...trials.filter((t) => t.resumeMs != null).map((t) => t.resumeMs),
+      ...awaitTrials.filter((t) => t.resumeMs != null).map((t) => t.resumeMs),
+    ].sort((a, b) => a - b);
+    const gates =
+      SCORE_MODE === "correctness_availability_v2"
+        ? {
+            scoreMode: SCORE_MODE,
+            correctness: {
+              failures: correctnessFailures,
+              pass: correctnessFailures === 0,
+              items: correctnessItems.slice(0, 50).map((t) => ({
+                i: t.i ?? t.a,
+                phase: t.phase ?? "await_approval",
+                failureReason: t.failureReason,
+              })),
+              meaning:
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch",
+            },
+            availability: {
+              failures: availabilityFailures,
+              denominator: overallDenom,
+              failureRate: availabilityFailureRate,
+              ceiling: AVAIL_CEILING,
+              pass:
+                availabilityFailureRate != null && availabilityFailureRate <= AVAIL_CEILING,
+              resumeMs: {
+                p50: percentile(allResumeIncludingAwait, 50),
+                p99: percentile(allResumeIncludingAwait, 99),
+                max: allResumeIncludingAwait.length
+                  ? allResumeIncludingAwait[allResumeIncludingAwait.length - 1]
+                  : null,
+              },
+              recoveryMs: {
+                n: allRecovery.length,
+                p50: percentile(allRecovery, 50),
+                p99: percentile(allRecovery, 99),
+                max: allRecovery.length ? allRecovery[allRecovery.length - 1] : null,
+              },
+              items: availabilityItems.slice(0, 50).map((t) => ({
+                i: t.i ?? t.a,
+                phase: t.phase ?? "await_approval",
+                failureReason: t.failureReason,
+                resumeMs: t.resumeMs ?? null,
+                recoveryMs: t.recoveryMs ?? null,
+              })),
+              meaning:
+                "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling",
+            },
+            outerCompletion: {
+              rateOuterPhases: completionEligible.length
+                ? completionEligibleClean / completionEligible.length
+                : null,
+              outerPhaseN: completionEligible.length,
+              cleanCompletionsOuter: completionEligibleClean,
+              misses: outerMisses,
+              meaning:
+                "reported overall; each miss assigned to correctness or availability — not a separate zero-gate",
+            },
+          }
+        : {
+            scoreMode: SCORE_MODE,
+            note: "legacy_zero_deadline — ok requires zero deadline misses and all phase expectations",
+          };
+    const okV2 =
+      complete &&
+      correctnessFailures === 0 &&
+      availabilityFailureRate != null &&
+      availabilityFailureRate <= AVAIL_CEILING;
+    const okLegacy = complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
-      // Safety + liveness: zero dups, zero deadline misses, every phase expectation met.
-      // Self-fence with counted recovery does not fail ok by itself.
-      ok: zeroDup && totalDeadlineMisses === 0 && allPhaseOk,
-      status: "measured",
+      // Partial mid-run snapshots must not look like a finished clean board.
+      ok: SCORE_MODE === "correctness_availability_v2" ? okV2 : okLegacy,
+      status: complete ? "measured" : "partial",
+      scoreMode: SCORE_MODE,
+      gates,
+      // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
+      // loosening of deadline / denominator / ceiling is visible against this file.
+      frozenCriteria:
+        SCORE_MODE === "correctness_availability_v2"
+          ? {
+              resumeDeadlineMs: RESUME_DEADLINE_MS,
+              resumeDeadlineMeaning:
+                "wall clock including orchestrator recovery; same for write-kill and await",
+              availabilityCeiling: AVAIL_CEILING,
+              availabilityDenominator: "overallN",
+              writeKillTrials: N,
+              awaitApprovalTrials: AWAIT_TRIALS,
+              overallTrials: N + AWAIT_TRIALS,
+              tailsHavePassFailCeiling: false,
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling.",
+            }
+          : null,
       n: N,
+      trialsCompleted: trials.length,
+      awaitTrialsCompleted: awaitTrials.length,
+      awaitTrialsN: AWAIT_TRIALS,
+      overallN: N + AWAIT_TRIALS,
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
       bucketRedacted: true,
       diagnoseConditionalWrite: "ok",
       celldTtlMs: CELLD_TTL_MS,
       resumeDeadlineMs: RESUME_DEADLINE_MS,
+      /**
+       * Every write-kill and await trial is counted. Column rates use property-specific
+       * denominators (not a filtered subset of “good” trials). See each note.
+       */
+      trialAccounting: {
+        writeKillTrials: N,
+        awaitApprovalTrials: AWAIT_TRIALS,
+        overallTrials: N + AWAIT_TRIALS,
+        filteredOut: 0,
+        byPhase: Object.fromEntries(
+          PHASES.map((p) => {
+            const pt = trials.filter((t) => t.phase === p);
+            return [
+              p,
+              {
+                n: pt.length,
+                completedClean: pt.filter((t) => t.completedClean).length,
+                outcomeUnknown: pt.filter((t) => t.outcomeUnknown).length,
+                statePreservedEligible: pt.filter((t) => t.statePreserved != null).length,
+                statePreservedTrue: pt.filter(
+                  (t) => t.statePreserved === true || t.statePreserved?.preserved === true
+                ).length,
+                expectOutcomeUnknown:
+                  p === "after_intent_before_call" || p === "during_call",
+                inCompletedOuterDenominator:
+                  p === "before_intent" || p === "after_call_before_journal",
+              },
+            ];
+          })
+        ),
+        completed: {
+          denominatorAllPhases: trials.length,
+          cleanCompletions: totalCompletedClean,
+          denominatorOuterPhases: completionEligible.length,
+          cleanCompletionsOuter: completionEligibleClean,
+          midFlightExcludedFromOuter: midFlight.length,
+          note: "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped.",
+        },
+        statePreserved: {
+          denominator: stateEligible,
+          preserved: statePreserved,
+          twinCaptureFailures: stateTwinFailures,
+          digestMismatches: trials.filter((t) => t.statePreserved?.reason === "digest_mismatch")
+            .length,
+          midFlightExcluded: midFlight.length,
+          outerIncompleteExcluded: completionEligible.length - stateEligible,
+          note: "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed — often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition.",
+        },
+        waitApproval: {
+          denominator: AWAIT_TRIALS,
+          ok: awaitOk,
+          note: "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator.",
+        },
+        stepsRepeated: {
+          denominator: trials.length,
+          writeStepsRerun: totalWriteStepsRerun,
+          note: "Sum of pets-ledger duplicates across all write-kill trials (target 0).",
+        },
+      },
       columns: {
         duplicates: {
           total: totalDuplicates,
@@ -1027,14 +1573,18 @@ async function main() {
             "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)",
         },
         statePreserved: {
-          measured: STATE_BASELINE && noCrashBaselineCalls != null && stateEligible > 0,
+          measured: STATE_BASELINE && stateEligible > 0,
           nodeUnitGolden: true,
-          fleetBaselinePaired: STATE_BASELINE && noCrashBaselineCalls != null,
+          fleetBaselinePaired: STATE_BASELINE,
+          compareMode: "digest_equality",
           eligibleN: stateEligible,
           preservedN: statePreserved,
+          twinCaptureFailures: stateTwinFailures,
+          digestMismatches: trials.filter((t) => t.statePreserved?.reason === "digest_mismatch")
+            .length,
           rate: stateEligible > 0 ? statePreserved / stateEligible : null,
           meaning:
-            "claim-path §1 — structural step outcomes (index/tool/op/ok/status) after outer-phase resume match a no-crash baseline. Node compareProgramStepStateEffect remains the strict unit golden; fleet omits volatile result bodies",
+            "claim-path §1 — exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting).",
         },
         waitApproval: {
           measured: AWAIT_TRIALS > 0,
@@ -1042,18 +1592,33 @@ async function main() {
           densityRestartSurvival: true,
           fleetAwaitTrials: AWAIT_TRIALS > 0,
           n: AWAIT_TRIALS,
+          ran: awaitTrials.length,
+          ok: awaitOk,
+          failed: awaitFailed.length,
           survivedRate:
             AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.survived).length / AWAIT_TRIALS : null,
           completedAfterApproveRate:
             AWAIT_TRIALS > 0
               ? awaitTrials.filter((t) => t.completedAfterApprove).length / AWAIT_TRIALS
               : null,
-          okRate: AWAIT_TRIALS > 0 ? awaitTrials.filter((t) => t.ok).length / AWAIT_TRIALS : null,
+          okRate: AWAIT_TRIALS > 0 ? awaitOk / AWAIT_TRIALS : null,
+          failureByReason: awaitFailureByReason,
           meaning:
-            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases",
+            "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous.",
         },
       },
-      awaitTrials: awaitTrials.slice(0, 50),
+      // Prefer all failures + a sample of successes (v1 only kept first 50, hiding the park_failed tail).
+      awaitTrials: [
+        ...awaitFailed,
+        ...awaitTrials.filter((t) => t.ok).slice(0, 30),
+      ].slice(0, 250),
+      awaitFailureSummary: {
+        ran: awaitTrials.length,
+        planned: AWAIT_TRIALS,
+        ok: awaitOk,
+        failed: awaitFailed.length,
+        byReason: awaitFailureByReason,
+      },
       totalDuplicates,
       zeroDuplicates: zeroDup,
       ruleOfThreeUpperBound95: upper95,
@@ -1079,7 +1644,7 @@ async function main() {
         );
       })(),
       honesty:
-        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (structural baseline pairing on outer phases) and waitApproval (FLEET_PHASED_AWAIT_TRIALS arm). Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Real crashes mostly miss that brief window. Resume p50 ≈ lease TTL + detection (failover floor); raising TTL alone slows every crash. Preferred levers (planned, not measured): renew more often within the same TTL, regional lease store — see AVAILABILITY.md / TTL-TRADEOFF.md.",
+        "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
       resumeMs: {
         p50: percentile(allResume, 50),
         p95: percentile(allResume, 95),
@@ -1119,11 +1684,22 @@ async function main() {
 
   const evidence = writeEvidencePartial();
   console.log(
-    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95}`
+    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok}`
   );
+  if (SCORE_MODE === "correctness_availability_v2" && evidence.gates) {
+    console.log(
+      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
+    );
+  }
   console.log(`wrote ${OUT}`);
   cleanup();
-  if (totalDuplicates > 0 || totalDeadlineMisses > 0 || evidence.trialFailures.length > 0) {
+  if (SCORE_MODE === "correctness_availability_v2") {
+    if (!evidence.ok) process.exit(1);
+  } else if (
+    totalDuplicates > 0 ||
+    totalDeadlineMisses > 0 ||
+    evidence.trialFailures.length > 0
+  ) {
     process.exit(1);
   }
 }
