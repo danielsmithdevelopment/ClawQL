@@ -142,7 +142,7 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 ### N=40 forked celld fence board (clawql.1 — weak sample)
 
-Evidence: [`phased-n40-fork-fence.json`](../program-cell-fleet-kill/phased-n40-fork-fence.json) · measured **2026-10-30 22:40 PDT** (`2026-10-31T05:40:45.747Z`) · binary `0.4.0-clawql.1` (confirm GET + live-incarnation refuse; **before** clawql.2 epoch-at-confirm).
+Evidence: [`phased-n40-fork-fence.json`](../program-cell-fleet-kill/phased-n40-fork-fence.json) · measured **2026-10-30 22:40 PDT** (`2026-10-31T05:40:45.747Z`) · **`celldBinaryVersion=0.4.0-clawql.1`** / `fenceMode=fenced_clawql1_confirm_get_live_incarnation` (confirm GET + live-incarnation refuse; **before** clawql.2 epoch-at-confirm — do not cite as clawql.2 efficacy).
 
 | Gate | Result | Detail |
 | ---- | ------ | ------ |
