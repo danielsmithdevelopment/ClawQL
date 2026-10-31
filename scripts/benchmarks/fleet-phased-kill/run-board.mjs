@@ -967,7 +967,7 @@ async function main() {
             /* */
           }
         }
-        const ownDeadline = t0 + Math.max(WEDGE_HOLD_MS, CELLD_TTL_MS * 4);
+        const ownDeadline = t0 + Math.max(WEDGE_HOLD_MS, CELLD_TTL_MS * 5);
         while (Date.now() < ownDeadline && ownershipMovedAt == null) {
           inFlightPolls += 1;
           // inFlight cannot advance while frozen; still poll for pre-freeze send.
@@ -977,6 +977,14 @@ async function main() {
             sawInFlight = true;
             inFlightFirstAt = Date.now();
           }
+          // celld ownership takeover is lazy — poke the survivor so it claims
+          // the ProgramCell after the frozen victim's node lease expires.
+          await fetchJson(
+            `${baseS}/program/status?programId=${encodeURIComponent(programId)}`,
+            {},
+            2_000
+          );
+          await fetchJson(`${baseS}/program/health?cell=health`, {}, 2_000);
           const own = await readOwnJson(STALE_OWNER_CELL);
           if (own.ok && own.node && victimNodeId && own.node !== victimNodeId) {
             ownershipMovedAt = Date.now();
@@ -984,7 +992,7 @@ async function main() {
             ownershipNode = own.node;
             break;
           }
-          await sleep(150);
+          await sleep(200);
         }
         // Thaw: victim is now a live process whose epoch/lease may be stale.
         if (nodes[victim].pid) {

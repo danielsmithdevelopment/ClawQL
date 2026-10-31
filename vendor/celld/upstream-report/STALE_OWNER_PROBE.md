@@ -8,17 +8,19 @@ That does **not** exercise “old owner still settling the output gate after `ow
 
 ## Harness (`FLEET_PHASED_STALE_OWNER=1`)
 
-Requires `FLEET_PHASED_WEDGE_HEALTH=1`. For each `during_call` trial:
+Requires `FLEET_PHASED_WEDGE_HEALTH=1`. Method: **`SIGSTOP` → lease expire → `SIGCONT`** (health-wedge alone does **not** stop node-lease renewal, so `own.json` never left the victim in the first probe).
 
-1. Start the hang-on-fetch write on the victim.
-2. **Immediately** wedge victim readiness (do **not** wait for inFlight first).
-3. Poll R2 `cells/<ProgramCellDO>/own.json` until it no longer names the victim’s `CELLD_NODE` (or hold expires).
-4. Watch an extra window for late `inFlight`.
-5. **Fail correctness** (`stale_owner_send`) if inFlight first appears **after** ownership left the victim.
+For each `during_call` trial:
+
+1. Start the hang-on-fetch write on the victim; brief head-start into the output gate.
+2. **SIGSTOP** the victim (cannot renew lease); keep readiness wedge as belt-and-suspenders.
+3. Poll R2 `cells/<ProgramCellDO>/own.json` until it no longer names the victim’s `CELLD_NODE`.
+4. **SIGCONT** (live stale writer); watch for late `inFlight`.
+5. **Fail correctness** (`stale_owner_send`) if inFlight first appears **after both** ownership move and thaw.
 6. SIGKILL; resume on survivor; still require intent visible (`lost_midflight_intent` if missing).
 7. If ownership never moved → availability `ownership_never_moved`.
 
-Evidence: `docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json` (N=40 tip board in flight).
+Evidence: `docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json` (N=40 tip board).
 
 ## Pass / fail for durability claim
 
