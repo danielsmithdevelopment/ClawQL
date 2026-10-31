@@ -53,7 +53,7 @@ Stalls land at **~875–921s**. Grep found no celld/R2 **15-minute** lease TTL. 
 
 **v2 mid-run (~500 write-kill):** five ~900s stalls seed cascades; **15 failures ≈ 5 stall incidents + twin + 1 lone mid-flight 404**. **p95≈14s / p99≈870s** = discrete stall class (1% of trials), not rising typical recovery. Running v2 process still has the pre-wall-cap harness.
 
-**`during_call` resume 404 (correctness check):** intent+meta are journaled before the hanging upstream call; all five no_expected trials had **writeCount=0** (no committed outside write) and no journal divergence. Four sit in stall cascades. Harness stops on first 404, so visibility lag vs permanent meta loss is not separable from this evidence — **not reclassified as correctness**; residual noted for harness retry-on-404 + retain `programId`.
+**`during_call` resume 404 — R2 settle (correctness):** read-only check of the live v2 prefix showed trials **134/286/390/442** never had meta+intent in DO storage (neighbors present); **494** had create meta only, intent never durable. Upstream hang was in flight without a durable intent — **durability/correctness**, not availability-only. Zero outside writes (`writeCount=0`) only because the mock hung; a completing upstream would be a lost-order / double-charge risk on resume. Evidence: [`during-call-404-r2-settle.json`](./during-call-404-r2-settle.json). Harness must still retry mid-flight 404 until the wall deadline; product must enforce durable-ack-before-send (celld output-gate gap vs Cloudflare).
 
 ## Three columns
 
@@ -77,7 +77,7 @@ Read alone, “about half of crashes leave an unknown outcome” sounds alarming
 
 In real operation, crashes mostly land outside the brief in-flight window, so unknown outcomes are far rarer than this targeted test shows. If the two outer phases ever show a nonzero rate, that is a bug to fix, not a number to explain.
 
-**Does unknown undermine durability?** No. Durability here means the program survives, nothing is repeated, and nothing disappears silently. The in-flight case is the one place the callee’s truth is unavailable; marking it unknown is honesty, not weakness. Recovery is not limited to “retry / do nothing / ask a person” — **check by unique reference, then decide** (after the original can no longer land) is the preferred path when the API allows it; idempotency keys are the other. Person only when neither exists. Framing and product plan: [golem-overlap honesty § outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
+**Does unknown undermine durability?** Marking a *durable* mid-flight intent as unknown is honesty, not weakness. **Lost pretends-journaled intent** (R2 settle) *does* undermine the mechanism claim — that is a durability defect, separate from the duplicate column. Recovery is not limited to “retry / do nothing / ask a person” — **check by unique reference, then decide** (after the original can no longer land) is the preferred path when the API allows it; idempotency keys are the other. Person only when neither exists. Framing and product plan: [golem-overlap honesty § outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
 
 ## Comparison rows
 

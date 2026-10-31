@@ -9,7 +9,7 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects on the published Tier C board. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Caveat: intent durability before the outbound call under peer kill is under active hardening (celld lacks Cloudflare-style output gates); see durability STATUS. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
 /** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). */
 export const durabilityBenchmarkClaim =

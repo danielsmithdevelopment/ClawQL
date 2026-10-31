@@ -27,9 +27,9 @@ Unpack for longer copy:
 
 ### How writes are protected (product facts)
 
-True by design and covered by tests — safe as product description:
+True by design and covered by tests — safe as product description, **except the intent-before-send durability caveat below**:
 
-- Write **intent is journaled before** the call goes out.
+- Write **intent is journaled in the runner before** it *attempts* the call — host file-journal path fsyncs; ProgramCellDO `await`s `storage.put` then re-gets for visibility. **Caveat (2026-10-31):** on celld/R2 fleet kills, five `during_call` trials showed the upstream hang window open while intent (and often meta) was **not** in durable DO storage ([R2 settle](../benchmarks/program-cell-fleet-kill/during-call-404-r2-settle.json)). Until celld exposes a true durable-ack / output-gate equivalent to Cloudflare’s, **do not** claim “intent is always durably persisted before the call leaves the node” as a measured fleet guarantee. Zero-duplicate boards remain a real measurement; the *mechanism* sentence needs this qualifier.
 - Approvals are **single-use**, bound to the approver’s key and the exact arguments, consumed before send; requester cannot approve their own request.
 - A write interrupted mid-flight is **never retried blindly** — resolved by the API’s own mechanism where one exists, or marked **outcome unknown** for a person.
 - Automatic resolution by API type:
