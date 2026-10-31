@@ -1,0 +1,387 @@
+{
+  "kind": "infinity-clawql-density-harness-v2",
+  "measuredAt": "2026-10-29T22:41:53.839Z",
+  "publishable": true,
+  "host": {
+    "hostname": "cursor",
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.22.1",
+    "memTotalKiB": 16387280,
+    "cpuModel": "Intel(R) Xeon(R) Processor",
+    "hypervisor": "KVM",
+    "hostKind": "cloud-agent-kvm-vm",
+    "instanceType": "unknown-cursor-cloud-agent-pod (no cloud instance-metadata endpoint)",
+    "storage": "ephemeral pod disk (bind-mounted workspace)",
+    "publishable": true,
+    "note": "KVM cloud-agent guest, host disclosed. CPU from /proc/cpuinfo: Intel(R) Xeon(R) Processor, family 6 model 207 stepping 2 @ 2400 MHz, 4 vCPU. DMI product_name unavailable (/sys/class/dmi/id absent on this guest). Same-host Infinity vs ClawQL; Pi 5 extra column later. Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU.",
+    "cpuVendorId": "GenuineIntel",
+    "cpuFamily": "6",
+    "cpuModelId": "207",
+    "cpuStepping": "2",
+    "cpuMhz": "2400.000",
+    "vcpus": 4,
+    "dmiProductName": null,
+    "dmiSysVendor": null,
+    "kernel": "Linux version 6.12.94+",
+    "cpuLikelyMicroarch": "Likely 5th-gen Xeon / Emerald Rapids (family 6, model 207); guest cannot confirm SKU."
+  },
+  "contract": {
+    "id": "infinity-agent-scale-matched-v2",
+    "turns": 20,
+    "piHardware": "deferred",
+    "reps": 2,
+    "note": "Infinity-matched unique-per-agent turns (v2) via DensityConversationRuntime. Slope = linear fit of process RSS vs N. Resident slope must be \u2265 history KiB. publishable:true on this KVM cloud-agent host. Pi / bare-metal columns later."
+  },
+  "byteParity": {
+    "contract": "infinity-agent-scale-matched-v2",
+    "turns": 20,
+    "infinity": {
+      "source": "docs/benchmarks/program-density/infinity-on-pi/fixtures/infinity-agent-0-msgs-only.json",
+      "messageCount": 100,
+      "serdeJsonMsgsBytes": 65471,
+      "serdeJsonWithIdsBytes": 70831
+    },
+    "clawqlMatched": {
+      "messageCount": 100,
+      "serializedJsonBytes": 64601
+    },
+    "fairV2DiskBytesForContrast": 32859,
+    "reading": "Infinity serde_json msgs \u2248 65471 B; ClawQL matched-shape JSON \u2248 64601 B (100 msgs). fair-v2 parked bags were ~32859 B \u2014 different workload, not overhead."
+  },
+  "slope": {
+    "scheduleN": [
+      10000,
+      25000,
+      50000
+    ],
+    "samples": [
+      {
+        "system": "infinity",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5440
+          },
+          {
+            "agents": 2000,
+            "rssKiB": 352564
+          },
+          {
+            "agents": 4000,
+            "rssKiB": 558812
+          },
+          {
+            "agents": 6000,
+            "rssKiB": 763900
+          },
+          {
+            "agents": 8000,
+            "rssKiB": 970468
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1175604
+          },
+          {
+            "agents": 12000,
+            "rssKiB": 1381004
+          },
+          {
+            "agents": 14000,
+            "rssKiB": 1585844
+          },
+          {
+            "agents": 16000,
+            "rssKiB": 1794576
+          },
+          {
+            "agents": 18000,
+            "rssKiB": 1999756
+          },
+          {
+            "agents": 20000,
+            "rssKiB": 2204884
+          }
+        ],
+        "slopeKiBPerAgent": 102.916,
+        "diskBytesPerAgent": null,
+        "historySerializedBytes": 65471,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 65471,
+          "historyKiB": 63.937,
+          "measuredKiBPerAgent": 102.916,
+          "ok": true,
+          "detail": "resident_rss_slope: 102.916 KiB/agent \u2265 history 63.937 KiB"
+        },
+        "detail": "from agent_scale CSV agents,rss_bytes (unique-content v2)"
+      },
+      {
+        "system": "infinity",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5576
+          },
+          {
+            "agents": 2000,
+            "rssKiB": 352780
+          },
+          {
+            "agents": 4000,
+            "rssKiB": 559056
+          },
+          {
+            "agents": 6000,
+            "rssKiB": 763528
+          },
+          {
+            "agents": 8000,
+            "rssKiB": 970644
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1175852
+          },
+          {
+            "agents": 12000,
+            "rssKiB": 1380852
+          },
+          {
+            "agents": 14000,
+            "rssKiB": 1585968
+          },
+          {
+            "agents": 16000,
+            "rssKiB": 1794520
+          },
+          {
+            "agents": 18000,
+            "rssKiB": 1999340
+          },
+          {
+            "agents": 20000,
+            "rssKiB": 2204568
+          }
+        ],
+        "slopeKiBPerAgent": 102.891,
+        "diskBytesPerAgent": null,
+        "historySerializedBytes": 65471,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 65471,
+          "historyKiB": 63.937,
+          "measuredKiBPerAgent": 102.891,
+          "ok": true,
+          "detail": "resident_rss_slope: 102.891 KiB/agent \u2265 history 63.937 KiB"
+        },
+        "detail": "from agent_scale CSV agents,rss_bytes (unique-content v2)"
+      },
+      {
+        "system": "clawql-resident",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 120680
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1230460
+          },
+          {
+            "agents": 25000,
+            "rssKiB": 2878132
+          },
+          {
+            "agents": 50000,
+            "rssKiB": 5261500
+          }
+        ],
+        "slopeKiBPerAgent": 100.221,
+        "diskBytesPerAgent": null,
+        "historySerializedBytes": 64601,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 64601,
+          "historyKiB": 63.087,
+          "measuredKiBPerAgent": 100.221,
+          "ok": true,
+          "detail": "resident_rss_slope: 100.221 KiB/agent \u2265 history 63.087 KiB"
+        },
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/resident-rep1-1793313614707 launched=50000 uniqueContent=v2"
+      },
+      {
+        "system": "clawql-offloaded",
+        "rep": 1,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5259708
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 5271344
+          },
+          {
+            "agents": 25000,
+            "rssKiB": 5278984
+          },
+          {
+            "agents": 50000,
+            "rssKiB": 5281396
+          }
+        ],
+        "slopeKiBPerAgent": 0.236,
+        "diskBytesPerAgent": 67482,
+        "historySerializedBytes": 64601,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 64601,
+          "historyKiB": 63.087,
+          "measuredKiBPerAgent": 65.900390625,
+          "ok": true,
+          "detail": "offloaded_disk: 65.900390625 KiB/agent \u2265 history 63.087 KiB"
+        },
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/offloaded-rep1-1793313637171 launched=50000 uniqueContent=v2"
+      },
+      {
+        "system": "clawql-resident",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 118676
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 1196208
+          },
+          {
+            "agents": 25000,
+            "rssKiB": 2875200
+          },
+          {
+            "agents": 50000,
+            "rssKiB": 5257740
+          }
+        ],
+        "slopeKiBPerAgent": 100.902,
+        "diskBytesPerAgent": null,
+        "historySerializedBytes": 64601,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 64601,
+          "historyKiB": 63.087,
+          "measuredKiBPerAgent": 100.902,
+          "ok": true,
+          "detail": "resident_rss_slope: 100.902 KiB/agent \u2265 history 63.087 KiB"
+        },
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/resident-rep1-1793313663801 launched=50000 uniqueContent=v2"
+      },
+      {
+        "system": "clawql-offloaded",
+        "rep": 2,
+        "points": [
+          {
+            "agents": 0,
+            "rssKiB": 5255920
+          },
+          {
+            "agents": 10000,
+            "rssKiB": 5280464
+          },
+          {
+            "agents": 25000,
+            "rssKiB": 5280788
+          },
+          {
+            "agents": 50000,
+            "rssKiB": 5283032
+          }
+        ],
+        "slopeKiBPerAgent": 0.067,
+        "diskBytesPerAgent": 67482,
+        "historySerializedBytes": 64601,
+        "integrity": {
+          "rule": "per_agent_cost_ge_history_bytes",
+          "historySerializedBytes": 64601,
+          "historyKiB": 63.087,
+          "measuredKiBPerAgent": 65.900390625,
+          "ok": true,
+          "detail": "offloaded_disk: 65.900390625 KiB/agent \u2265 history 63.087 KiB"
+        },
+        "detail": "bagDir=/tmp/clawql-infinity-harness-v2/offloaded-rep1-1793313686308 launched=50000 uniqueContent=v2"
+      }
+    ],
+    "floors": {
+      "infinitySlopeKiBPerAgent": 102.891,
+      "clawqlResidentSlopeKiBPerAgent": 100.221,
+      "clawqlOffloadedSlopeKiBPerAgent": 0.067
+    },
+    "integrityOk": true,
+    "reading": "Resident slopes (Infinity vs clawql-resident) after unique-content + forced full GC. Roughly equal overhead (~37\u201339 KiB above history). Offloaded is a different trade-off (ids-only RSS + disk history) \u2014 pair with Infinity serverless, not agent_scale. Do not multiply ClawQL harness floor by 8G lastFit (cross-check fails); use 8G ramp RSS/N."
+  },
+  "eightGigNote": {
+    "clawqlHarnessFloorTimesLastFitOk": false,
+    "useForFitClaims": "ramp slope / implied RSS/N from clawql-resident-8g-ramp.json",
+    "swapMax": 0
+  },
+  "frozenCriteria": {
+    "id": "infinity-clawql-8g-history-density-v1",
+    "frozenAt": "2026-10-30T17:50:00Z",
+    "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity.",
+    "arms": {
+      "infinity": "agent_scale unique-content v2; full scripted runtime round-trip per turn",
+      "clawql": "DensityConversationRuntime matched-shape resident history; driveTurn append harness \u2014 not full ClawQL stack"
+    },
+    "criteria": [
+      {
+        "id": "byte_parity",
+        "rule": "matched Infinity-shaped 20-turn / 100-message histories (~65 KiB JSON)"
+      },
+      {
+        "id": "unique_content",
+        "rule": "unique-per-agent tags; no cross-agent string sharing"
+      },
+      {
+        "id": "history_integrity",
+        "rule": "resident slope (or offloaded disk KiB) >= serialized history KiB"
+      },
+      {
+        "id": "fit_cap_integrity",
+        "rule": "lastFitAgents * rampSlope <= memory.max"
+      },
+      {
+        "id": "harness_lastfit_crosscheck",
+        "rule": "uncapped harness floor * 8G lastFit must fit or not be jointly quoted"
+      },
+      {
+        "id": "latency_gate",
+        "rule": "headline N = highest where turn p50 AND p99 <= 2x baseline at N=2500; same rule both systems; quote within-system ratios only"
+      },
+      {
+        "id": "forced_reclaim_disclosed",
+        "rule": "primary result includes ClawQL gc() and Infinity malloc_trim(0) between waves"
+      },
+      {
+        "id": "wave_step",
+        "rule": "2500 agents; lastFit accurate to within one step"
+      },
+      {
+        "id": "headline_n",
+        "rule": "Infinity 77500 (latency-checked at ramp lastFit); ClawQL 100000 (latency-checked; not unverified 102500)"
+      }
+    ],
+    "headline": {
+      "infinityLatencyGatedLastFit": 77500,
+      "clawqlLatencyGatedLastFit": 100000,
+      "pctMoreHistories": 29.0,
+      "metric": "RSS_at_lastFit / N"
+    }
+  },
+  "claimScope": "Memory / matched-history storage under memory.max=8G with swap.max=0. Not a claim that the full ClawQL durable/MCP runtime runs more agents than Infinity."
+}

@@ -79,7 +79,7 @@
     "wrangler": "^4.83.0"
   },
   "overrides": {
-    "follow-redirects": "1.16.1",
+    "follow-redirects": "1.16.2",
     "@node-minify/core": {
       "minimatch": {
         "brace-expansion": "2.1.7"
@@ -111,6 +111,8 @@
     "dompurify": "3.4.17",
     "proxy-addr": "2.0.8",
     "source-map-js": "1.2.2",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "minimatch": "11.0.3",
+    "glob": "14.0.3"
   }
 }

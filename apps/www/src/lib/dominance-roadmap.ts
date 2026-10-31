@@ -146,12 +146,27 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     nextStep:
       'Public: /benchmarks#durability (N=1000, 0 dups, ~12s). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution.',
   },
+  {
+    id: 'infinity-density',
+    name: 'Infinity (Hydro) — agent_scale density',
+    whyItMatters:
+      'Public extreme-concurrency density story (AWS OSS blog; ~75k agents @ 8 GB). Closest peer for matched-history memory fit.',
+    criteriaToBeat:
+      'Same-host 8 GiB swap-disabled latency-gated lastFit on matched 20-turn histories; disclose reclaim + allocator knobs; peer review before “denser than.”',
+    howToProve:
+      'Publish /benchmarks#program-density + infinity-on-pi evidence; invite Shadaj/Infinity config fixes; Pi 5 extra column later.',
+    status: 'partial',
+    statusLabel: 'History fit measured · peer review',
+    nextStep:
+      'Public: /benchmarks#program-density — 100k vs 77.5k (~29% more histories); claim = history memory, not full runtime. Peer review before category “denser than.”',
+  },
 ] as const
 
 export const dominancePriorityOrder = [
   'bifrost',
   'cloudflare-code-mode',
   'celld-durability',
+  'infinity-density',
   'truefoundry',
   'uber-mcp-gateway',
   'executor',
