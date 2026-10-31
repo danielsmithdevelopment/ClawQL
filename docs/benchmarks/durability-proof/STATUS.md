@@ -101,12 +101,12 @@ Snapshot ~500/750 write-kill (await not started). **Correctness failures = 0.** 
 
 **Availability failure classes (15 at ~500 trials):**
 
-| Class | Count | Notes |
-| ----- | ----- | ----- |
-| `resume_deadline_miss` | **5** | All ~870–921s; `recoveryMs=0`, `resumeStatus=0` (resume loop never entered) |
-| `pause_failed` | **4** | Cascade after stalls (`fetch failed` / `DurableObjectRoutingError` owner unreachable) |
-| `no_expected_outcome` | **5** | Mostly `during_call` with resume 404 — mid-flight without expected `outcome_unknown` |
-| `twin_capture_failed` | **1** | Trial 335; fleet shared with twin |
+| Class                  | Count | Notes                                                                                 |
+| ---------------------- | ----- | ------------------------------------------------------------------------------------- |
+| `resume_deadline_miss` | **5** | All ~870–921s; `recoveryMs=0`, `resumeStatus=0` (resume loop never entered)           |
+| `pause_failed`         | **4** | Cascade after stalls (`fetch failed` / `DurableObjectRoutingError` owner unreachable) |
+| `no_expected_outcome`  | **5** | Mostly `during_call` with resume 404 — mid-flight without expected `outcome_unknown`  |
+| `twin_capture_failed`  | **1** | Trial 335; fleet shared with twin                                                     |
 
 **~900s / p99:** Not a rising typical recovery. Evidence **p95 ≈ 14s**; **p99 ≈ 870s** because **5/500 (1%)** trials are the discrete ~900s class — so p99 lands inside that class. Each ~900s miss is usually followed by 1–3 cascade fails (pause / no_expected). Root cause: harness `waitNode` **180 × 5s fetch timeout** when `/health` accepts but does not respond (not a celld 15-minute lease). Wall-cap fix is on the branch; **this v2 process still runs the pre-fix script** — stalls can continue until the next board start.
 
