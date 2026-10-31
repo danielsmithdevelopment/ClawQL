@@ -22,14 +22,29 @@ For each `during_call` trial:
 
 Evidence: `docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json` (N=40 tip board).
 
+## Result — stock 0.6.3 N=40 (PASS)
+
+Measured **2026-10-31 08:07 PDT** (`2026-10-31T15:07:10.047Z`) · `fenceMode=upstream_0.6.3_stale_owner_sigstop` · `ok=true`.
+
+| Metric | Result |
+| ------ | ------ |
+| Trials | **40/40** |
+| `ownershipMoved` | **40/40** (lazy `own.json` flip after survivor poke) |
+| `staleSend` | **0/40** |
+| `lost_midflight_intent` | **0/40** |
+| `callSent.sawInFlight` | **40/40** (egress after durable ack, before freeze) |
+| Correctness / availability | **0** failures |
+
+**Meaning:** tip closes the stale-writer-after-takeover path on this board. Do **not** upgrade the Ry draft to a bug report for this mode. Broader mechanism claim still waits on green **v3 N=1000** at stock TTL=10s. N=40 alone only bounds residual staleSend below ~7.5% (rule-of-three).
+
 ## Pass / fail for durability claim
 
 | Result | Meaning for claim |
 | ------ | ----------------- |
-| 0 staleSend, ownership usually moved, 0 lost intent | Tip closes this path — claim can rest on stock 0.6.3 |
+| 0 staleSend, ownership usually moved, 0 lost intent | Tip closes this path — claim can rest on stock 0.6.3 *(this board)* |
 | staleSend > 0 on tip | Tip bug — upgrade email to bug report; land Fleet VerifyOwnership (+ epoch) on a clawql binary and re-prove |
 | ownership rarely moves | Raise hold / lower TTL; do not claim either way |
 
 ## TTL disclosure
 
-Stale-owner tip board uses a short lease (`CELLD_TTL_MS=2000`, hold 6s) so ownership can flip during the durable wait. Not stock 10s — disclosed in evidence `resumeLatencyNote` / `celldTtlMs`.
+Stale-owner tip board uses a short lease (`CELLD_TTL_MS=2000`, hold 6s) so ownership can flip during the durable wait. Not stock 10s — disclosed in evidence `resumeLatencyNote` / `celldTtlMs`. Resume p50≈10.6s on this board is hold/ownership-poll dominated, not a stock-TTL lease floor.

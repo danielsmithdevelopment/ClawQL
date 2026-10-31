@@ -219,7 +219,21 @@ Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-ce
 
 **Why restarted (not based on results):** an earlier clawql.3 arm was clean through ~110/750, but a restored claim must rest on the binary we ship. Tip **0.6.3** already held the wedged N=100 board (0/100 lost; that wedge board used **`CELLD_TTL_MS=3000`**, not stock 10s — keep disclosed). Partial clawql.3 abort saved at `/opt/cursor/artifacts/phased-n1000-v3-clawql3-aborted-for-063-align.json` (not authoritative). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3 on 0.6.3.
 
-**Upstream contact:** short question (not a bug report) — tip held; ask whether Fleet proofs intentionally skip `VerifyOwnership`. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md). Dedicated stale-owner probe still open before any tip-bug filing.
+**Upstream contact:** short question (not a bug report) — tip held wedged N=100 **and** stale-owner N=40; ask whether Fleet proofs intentionally skip `VerifyOwnership`. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md).
+
+### Stale-owner tip probe — stock 0.6.3 N=40 (PASS)
+
+Evidence: [`phased-n40-stale-owner-upstream-0.6.3.json`](../program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json) · measured **2026-10-31 08:07 PDT** · design [`STALE_OWNER_PROBE.md`](../../../vendor/celld/upstream-report/STALE_OWNER_PROBE.md). Method: SIGSTOP → lazy `own.json` flip (survivor poke) → SIGCONT; fail on late `inFlight` after move+thaw.
+
+| Metric | Result |
+| ------ | ------ |
+| `ownershipMoved` | **40/40** |
+| `staleSend` | **0/40** |
+| `lost_midflight_intent` | **0** |
+| `callSent.sawInFlight` | **40/40** |
+| Correctness / availability | **PASS** (`ok=true`) |
+
+TTL disclosure: `CELLD_TTL_MS=2000` (not stock 10s). Tip closes this path on the sample; do not upgrade Ry email to a bug report. Claim restore still waits on green **v3 N=1000** at stock TTL.
 
 
 ### Outcome unknown ~48% — read the per-phase table

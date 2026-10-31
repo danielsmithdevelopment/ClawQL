@@ -13,6 +13,8 @@ We've been testing celld durability under node wedges on a two-node Cloudflare R
 
 **Stock celld v0.6.3** held in **all 100** trials of that wedged-fleet board (`lost_midflight_intent` 0/100, call sent 100/100). Nice work on the always-on durability wait. (Disclosure: that board used `CELLD_TTL_MS=3000` for faster lease move under wedge — not stock 10s.)
 
+We also ran a dedicated **stale-owner** probe on tip (SIGSTOP victim → lazy `own.json` move → SIGCONT, watching for late egress after takeover): **0/40** `staleSend`, **40/40** ownership moved, **0** lost intents (TTL disclosure: `CELLD_TTL_MS=2000` on that board). So we are **not** filing a tip bug on that path either — just curious about the code shape.
+
 Reading `crates/logic/output_gate.rs` `durable_reached`, the **Fleet** proof path still settles without the `VerifyOwnership` read that **Bucket** proofs get. Is that intentional (fleet arbitration is enough even when a member is wedged rather than sealed), or would a small patch that also verifies ownership on Fleet proofs be welcome?
 
 Happy to share the board recipe or a minimal patch if useful. We'll keep this private until you've responded.
@@ -22,5 +24,5 @@ Happy to share the board recipe or a minimal patch if useful. We'll keep this pr
 ## Operator notes (not part of email)
 
 - Do **not** lead with 0.4.0 `CELLD_OUTPUT_GATE=0` negative control — that is an old release with the safety feature deliberately disabled.
-- Dedicated **stale-owner** probe (old owner still writing after takeover, aimed at the Fleet skip) is still outstanding; if it loses intents on tip, upgrade this to a real bug report with stock reproduction before sending — or send a follow-up.
+- Stale-owner N=40 on tip **held** (`phased-n40-stale-owner-upstream-0.6.3.json`) — keep this as a short question, not a bug report.
 - Agents do not email; human sends when ready.
