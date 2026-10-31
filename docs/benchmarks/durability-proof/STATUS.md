@@ -140,6 +140,19 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 **Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight R2 intent check in the harness; restore mechanism claim only after correctness passes with that check. Parallel: lease-sweep + alive-vs-ready for the `/health` hang.
 
+### N=40 forked celld fence board (clawql.1 — weak sample)
+
+Evidence: [`phased-n40-fork-fence.json`](../program-cell-fleet-kill/phased-n40-fork-fence.json) · measured **2026-10-30 22:40 PDT** (`2026-10-31T05:40:45.747Z`) · binary `0.4.0-clawql.1` (confirm GET + live-incarnation refuse; **before** clawql.2 epoch-at-confirm).
+
+| Gate | Result | Detail |
+| ---- | ------ | ------ |
+| Correctness (incl. `lost_midflight_intent`) | **PASS** 0 failures | Mid-flight 20/20 ended `outcome_unknown` as expected; harness saw intent/`pauseKind` on survivor status for every mid-flight kill |
+| Availability | **PASS** 0/40 | resumeMs p50≈12.6s / p99≈13.8s (lease-floor) |
+| Outer completion / state preserved | **PASS** 20/20 | — |
+| Duplicates | **PASS** 0 | rule-of-three upper 95% = 7.5% |
+
+**Vs v2 settle:** v2 had **5** `during_call` durability failures (4 missing journal + 1 create-meta-without-intent). This N=40 sample had **0** `lost_midflight_intent`. That is encouraging on the same kill shape, but **not efficacy proof** — with 0 events in 40 trials the 95% rule-of-three only bounds a loss rate below ~7.5% on the board’s duplicate metric, and a zero-loss claim for mid-flight intent needs the focused wedged `during_call` board (hundreds of kills, hang `/health` then kill) on **clawql.2**. Durable-ack `wait_us` was not collected on this run (`RUST_LOG=timing` unset); resumeMs is lease-dominated, not the ~0.6s gate wait.
+
 **Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest **and** no lost pretends-journaled mid-flight meta/intent), with **availability disclosed** (fence + deadline + pause/twin-capture rates ≤2% of 1000; resume/recovery p99/max reported, no separate tail ceiling). Still not mid-step unmodified agents. Parallel celld product work (not a v2 gate): lease renew / lease-sweep / alive-vs-ready / **pause-aware clocks** (host pause/suspend — wall time jumps while the machine was not running; distinct from orchestrator recovery). Do **not** freeze the resume deadline during `ensureSurvivor`/rebuild — that would quietly loosen the availability criterion.
 
 ## Scoped Tier C claim (measured — stock R2)
