@@ -1670,6 +1670,16 @@ impl AppHandle {
         receive.await.unwrap_or(false)
     }
 
+    /// Like [`Self::healthy`], but never hangs the caller: if the actor does
+    /// not answer within `timeout`, returns `None` so readiness can 503 instead
+    /// of accepting TCP forever (alive-vs-ready / stall forensics).
+    pub async fn healthy_within(&self, timeout: std::time::Duration) -> Option<bool> {
+        match crate::asyncrt::timeout(timeout, self.healthy()).await {
+            Ok(ready) => Some(ready),
+            Err(_) => None,
+        }
+    }
+
     pub async fn presence(&self) -> Option<celld_logic::PresenceSnapshot> {
         let (reply, receive) = oneshot::channel();
         self.tx.send(Message::Presence { reply }).ok()?;

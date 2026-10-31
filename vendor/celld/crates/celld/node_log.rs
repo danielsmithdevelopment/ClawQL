@@ -4590,24 +4590,44 @@ fn spawn_maintenance(
                 break;
             };
             // The watchdog for #490: on the 2026-08-28 fleet this loop's
-            // heartbeat stopped mid-pass and never returned — no error, no
-            // panic, no recovery line — and the silence cost the diagnosis.
-            // Every phase must end; a phase that outlives the warning
-            // budget names itself while it is still stuck, so the next
-            // occurrence is a one-line diagnosis plus a stack, not an
-            // archaeology session. The pass still runs to completion —
-            // this observes, it does not cancel: an aborted maintenance
-            // phase could orphan a half-installed ensemble.
+            // heartbeat stopped mid-pass and never returned. Warn every 60s
+            // while stuck; ClawQL hard-aborts after CELLD_MAINTENANCE_PHASE_BUDGET_SECS
+            // (default 180) so a wedged LIST/recover cannot block the ticker
+            // forever (alive-vs-ready stall class). Abort drops the future —
+            // prefer a skipped pass + loud warn over an unbounded hang that
+            // seeds ~900s resume tails on fleet boards.
+            let phase_budget_secs: u64 = std::env::var("CELLD_MAINTENANCE_PHASE_BUDGET_SECS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .filter(|&n| n >= 60)
+                .unwrap_or(180);
             for (phase, work) in [
                 ("maintain", manager.maintain().boxed()),
                 ("dead-leader sweep", manager.sweep_dead_leaders().boxed()),
                 ("bundle GC", manager.gc_bundles().boxed()),
             ] {
                 let started = mono_ms();
+                let budget_ms = phase_budget_secs.saturating_mul(1_000);
                 let mut work = work;
                 loop {
-                    match crate::asyncrt::timeout(std::time::Duration::from_secs(60), &mut work)
-                        .await
+                    let elapsed = mono_ms().saturating_sub(started);
+                    let remaining = budget_ms.saturating_sub(elapsed);
+                    if remaining == 0 {
+                        warn!(
+                            phase,
+                            stuck_ms = elapsed,
+                            budget_secs = phase_budget_secs,
+                            "log maintenance phase aborted after budget; \
+                             dropping future so the ticker can continue (#490 / ClawQL bound)"
+                        );
+                        break;
+                    }
+                    let slice_ms = remaining.min(60_000);
+                    match crate::asyncrt::timeout(
+                        std::time::Duration::from_millis(slice_ms),
+                        &mut work,
+                    )
+                    .await
                     {
                         Ok(Ok(())) => break,
                         Ok(Err(error)) => {
@@ -4615,9 +4635,21 @@ fn spawn_maintenance(
                             break;
                         }
                         Err(_) => {
+                            let stuck_ms = mono_ms().saturating_sub(started);
+                            if stuck_ms >= budget_ms {
+                                warn!(
+                                    phase,
+                                    stuck_ms,
+                                    budget_secs = phase_budget_secs,
+                                    "log maintenance phase aborted after budget; \
+                                     dropping future so the ticker can continue (#490 / ClawQL bound)"
+                                );
+                                break;
+                            }
                             warn!(
                                 phase,
-                                stuck_ms = mono_ms().saturating_sub(started),
+                                stuck_ms,
+                                budget_secs = phase_budget_secs,
                                 "log maintenance phase has not returned; \
                                  the ticker is blocked behind it (#490)"
                             );

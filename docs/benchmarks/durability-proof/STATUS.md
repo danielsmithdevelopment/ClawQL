@@ -119,7 +119,7 @@ Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-k
 | Fix                                            | Layer               | What it does                                                                                                          | What it does _not_ do                                                                    |
 | ---------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Cap `waitNode` wall time / resume `deadlineAt` | **Harness**         | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics)                                      | Does **not** make `/health` answer; availability may improve less than the tail suggests |
-| Bounded lease-sweep + alive vs ready           | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | Still on the parallel celld list — this is the real availability fix                     |
+| Bounded lease-sweep + alive vs ready           | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | **Shipped in `0.4.0-clawql.3`:** `/.well-known/celld/alive` + timed readiness (`CELLD_HEALTH_TIMEOUT_MS`); maintenance phase hard-budget (`CELLD_MAINTENANCE_PHASE_BUDGET_SECS`). Re-measure on v3 at stock TTL. |
 
 **`during_call` 404 ×5 — R2 settle (read-only on live prefix `tier-c-phased-20261030212001`):**
 
@@ -138,7 +138,18 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 **Root cause (celld already has an output gate — it failed under kill):** denoland/celld `crates/logic/output_gate.rs` holds `Channel::Fetch` until LTX proves a write position under the resident lease epoch (`CELLD_OUTPUT_GATE` default on; `=0` disables). Settled gaps still happened → either proof/ownership race, stale writer accepted into a discarded generation (bucket “cannot refuse a stale writer”), or local SQLite `synchronous=NORMAL` position ahead of what survivors can restore. **One fix closes both holes:** fenced acknowledgment — every storage write returns a sequence; egress held until durable **under the current lease epoch**; incarnation in lease + every write; R2 conditional reject of stale incarnation; refuse start if a live incarnation already holds the node ID. Spec: [celld-output-gate-epoch-fence.md](../../streams/celld-output-gate-epoch-fence.md). Local `storage.get` after `put` is **not** part of the fix (sanity only).
 
-**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight R2 intent check in the harness; restore mechanism claim only after correctness passes with that check. Parallel: lease-sweep + alive-vs-ready for the `/health` hang.
+**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight intent check in the harness, on **`0.4.0-clawql.3` at stock `CELLD_TTL_MS=10000`** (not the 3s wedge board); restore mechanism claim only after correctness passes with that check. Alive-vs-ready + bounded maintenance shipped in clawql.3 (see AVAILABILITY.md).
+
+### celld `0.4.0-clawql.3` — alive vs ready + bounded maintenance
+
+| Surface | Behavior |
+| ------- | -------- |
+| `GET /.well-known/celld/alive` | Always answers quickly (`alive:true`); ignores WEDGE; does not await actor Health |
+| `GET /.well-known/celld/health` | Readiness: `fleet_ready` + timed actor Health (`CELLD_HEALTH_TIMEOUT_MS`, default 1500) → **503** on timeout instead of hanging |
+| Maintenance ticker | Abort stuck maintain / dead-leader sweep / bundle GC after `CELLD_MAINTENANCE_PHASE_BUDGET_SECS` (default 180) |
+| Helm | Liveness → `alivePath`; readiness → `healthPath` |
+
+Smoke: alive returned 200 in &lt;2ms while a concurrent readiness request was held by `CELLD_WEDGE_HEALTH_FLAG`.
 
 ### N=40 forked celld fence board (clawql.1 — weak sample)
 

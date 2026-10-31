@@ -1,7 +1,7 @@
 # Upstream offer — denoland/celld
 
 **Base:** [denoland/celld](https://github.com/denoland/celld) `v0.4.0` (see `UPSTREAM_PIN`)  
-**ClawQL revision:** `0.4.0-clawql.2` in this vendor tree  
+**ClawQL revision:** `0.4.0-clawql.3` in this vendor tree  
 **License:** Apache-2.0 (same as upstream)
 
 ## Why
@@ -22,6 +22,11 @@ Offer these as one or more PRs against denoland/celld:
 5. **Refuse node-log bundle PUT** when the shipper’s epoch is not Open.
 
 Optional (chaos only, can stay ClawQL-side): `CELLD_WEDGE_HEALTH_FLAG` to hang `/.well-known/celld/health` while a flag file exists.
+
+Also offered for availability (separate from H1/H2):
+
+6. **Alive vs ready:** `GET /.well-known/celld/alive` always returns quickly; readiness `/.well-known/celld/health` times out the actor Health RPC (`CELLD_HEALTH_TIMEOUT_MS`) and returns 503 instead of hanging.
+7. **Bounded maintenance:** abort stuck maintain / dead-leader sweep / bundle GC after `CELLD_MAINTENANCE_PHASE_BUDGET_SECS` (default 180) so the #490 warn-only watchdog cannot block the ticker forever.
 
 ## Open measurement question for upstream
 

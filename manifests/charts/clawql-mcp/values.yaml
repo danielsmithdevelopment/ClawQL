@@ -1082,8 +1082,10 @@ streams:
     # Defaults to envFromSecret when empty.
     credentialsSecret: ""
     replicaCount: 1
-    # v0.4.0 health probe path (not /__celld/health).
+    # Readiness: serving (fleet_ready + timed actor healthy). Not /__celld/health.
     healthPath: /.well-known/celld/health
+    # Liveness: process accepting connections. Never hangs on actor Health / WEDGE.
+    alivePath: /.well-known/celld/alive
     # Worker INFERENCE_URL for deployed bundle — auto when inference.enabled and empty.
     inferenceUrl: ""
     # Worker CLAWQL_MCP_URL for search/execute (Streamable HTTP). Empty → in-cluster MCP

@@ -2,7 +2,7 @@
 
 **Upstream:** [denoland/celld](https://github.com/denoland/celld) Apache-2.0  
 **Pinned base:** see [`UPSTREAM_PIN`](./UPSTREAM_PIN) (`v0.4.0`)  
-**ClawQL binary:** `0.4.0-clawql.2`  
+**ClawQL binary:** `0.4.0-clawql.3`  
 **Why:** ClawQL N=1000 R2 settle showed mid-flight kills where an upstream call left without a durable write intent. celld’s output gate existed but did not hold under those kills. GitHub integration here cannot create `danielsmithdevelopment/celld`, so this tree is vendored under ClawQL until a standalone fork repo is published.
 
 ## ClawQL patches (vs upstream v0.4.0)
@@ -14,6 +14,8 @@
 | Refuse start when a **live** foreign process generation holds `CELLD_NODE` | `CELLD_REFUSE_LIVE_INCARNATION` default **on** | H2 — duplicate-identity / stale incarnation |
 | Refuse node-log bundle PUT when record is not Open at shipper epoch | (always) | H2 — stale writer must not land orphan bundles |
 | Chaos: hang `/.well-known/celld/health` while flag file exists | `CELLD_WEDGE_HEALTH_FLAG=<path>` | Board: hang health → kill exercises stale path |
+| Alive vs ready: `/.well-known/celld/alive` always answers; readiness `/health` uses timed actor Health (`CELLD_HEALTH_TIMEOUT_MS`, default 1500) → 503 instead of hang | (always on) | Availability — TCP-accept / never-respond stall class |
+| Bounded maintenance: abort stuck maintain / dead-leader sweep / bundle GC after `CELLD_MAINTENANCE_PHASE_BUDGET_SECS` (default 180) | env optional | Availability — #490 ticker blocked forever |
 
 “Durable” for the output gate means: **committed under the current lease epoch**, with ownership still naming this node **at confirmation time** — not merely accepted in memory / local WAL, and not merely “object exists in the orphaned prefix.”
 
@@ -27,8 +29,8 @@
 cd vendor/celld
 cargo build --release -p celld
 # install:
-install -m 755 target/release/celld ~/.local/lib/celld/releases/v0.4.0-clawql.2/celld
-ln -sfn ../lib/celld/releases/v0.4.0-clawql.2/celld ~/.local/bin/celld
+install -m 755 target/release/celld ~/.local/lib/celld/releases/v0.4.0-clawql.3/celld
+ln -sfn ../lib/celld/releases/v0.4.0-clawql.3/celld ~/.local/bin/celld
 ```
 
 CI builds this binary from vendored source (SBOM + cosign) — see `.github/workflows/celld-vendor-release.yml`. Prefer the CI artifact over a hand-installed binary.

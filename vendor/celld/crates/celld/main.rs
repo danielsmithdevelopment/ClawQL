@@ -2602,10 +2602,15 @@ async fn handle_public(
     {
         return Ok(handle_websocket(request, app).await);
     }
-    // ClawQL chaos: when CELLD_WEDGE_HEALTH_FLAG names an existing path, hang
-    // the node health probe so boards can exercise the stale-incarnation
-    // path (hang /health → lease moves → kill) without freezing the whole
-    // process. Other routes (program/run, LTX sync) keep running.
+    // Alive vs ready (ClawQL):
+    // - `/.well-known/celld/alive` always answers quickly (process up). Never
+    //   awaits the actor Health RPC, never honors WEDGE_HEALTH_FLAG. Use for
+    //   liveness / "is the process accepting connections?".
+    // - `/.well-known/celld/health` is readiness: fleet_ready + timed actor
+    //   healthy(). A stuck actor returns 503 after CELLD_HEALTH_TIMEOUT_MS
+    //   instead of accepting TCP and never responding (N=1000 stall class).
+    // Chaos: CELLD_WEDGE_HEALTH_FLAG hangs *readiness only* so boards can
+    // still exercise hang-/health/-then-kill without freezing /alive.
     if path == "/.well-known/celld/health" {
         if let Ok(flag) = std::env::var("CELLD_WEDGE_HEALTH_FLAG") {
             let flag_path = std::path::Path::new(&flag);
@@ -2614,13 +2619,49 @@ async fn handle_public(
             }
         }
     }
+    let health_timeout_ms: u64 =
+        celld::env_vars::with_default("CELLD_HEALTH_TIMEOUT_MS", 1_500).unwrap_or(1_500);
     let mut result = match path.as_str() {
-        "/.well-known/celld/health"
-            if !app.is_draining() && app.fleet_ready() && app.healthy().await =>
-        {
-            response(StatusCode::OK, "{\"ok\":true}")
+        "/.well-known/celld/alive" => {
+            let ready_hint = !app.is_draining() && app.fleet_ready();
+            response(
+                StatusCode::OK,
+                format!(
+                    "{{\"ok\":true,\"alive\":true,\"ready\":{ready_hint},\"draining\":{}}}",
+                    app.is_draining()
+                ),
+            )
         }
-        "/.well-known/celld/health" => response(StatusCode::SERVICE_UNAVAILABLE, "{\"ok\":false}"),
+        "/.well-known/celld/health" if app.is_draining() => response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "{\"ok\":false,\"ready\":false,\"reason\":\"draining\"}",
+        ),
+        "/.well-known/celld/health" if !app.fleet_ready() => response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "{\"ok\":false,\"ready\":false,\"reason\":\"fleet_not_ready\"}",
+        ),
+        "/.well-known/celld/health" => {
+            match app
+                .healthy_within(std::time::Duration::from_millis(health_timeout_ms))
+                .await
+            {
+                Some(true) => response(StatusCode::OK, "{\"ok\":true,\"ready\":true}"),
+                Some(false) => response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "{\"ok\":false,\"ready\":false,\"reason\":\"not_ready_to_serve\"}",
+                ),
+                None => {
+                    tracing::warn!(
+                        timeout_ms = health_timeout_ms,
+                        "celld readiness: actor Health did not answer; returning 503 instead of hanging"
+                    );
+                    response(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "{\"ok\":false,\"ready\":false,\"reason\":\"health_timeout\"}",
+                    )
+                }
+            }
+        }
         _ if app.runtime.is_some() => handle_ingress(request, app, connection).await,
         _ => response(StatusCode::NOT_FOUND, "{\"error\":\"not_found\"}"),
     };

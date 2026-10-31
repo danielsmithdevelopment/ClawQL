@@ -622,11 +622,25 @@ async function main() {
       timeoutMs: opts.timeoutMs ?? 1_500,
       deadlineAt: opts.deadlineAt,
     };
-    await waitUrl(`${base}/health`, (r) => r.ok, {
-      ...poll,
-      attempts: 240,
-      wallMs: healthWallMs,
-    });
+    // Prefer celld /alive (clawql.3+): always answers; never hangs on actor Health
+    // or WEDGE. Fall back to Worker /health for older binaries.
+    try {
+      await waitUrl(
+        `${base}/.well-known/celld/alive`,
+        (r) => r.ok && (r.body?.alive === true || r.body?.ok === true),
+        {
+          ...poll,
+          attempts: 60,
+          wallMs: Math.min(10_000, healthWallMs),
+        }
+      );
+    } catch {
+      await waitUrl(`${base}/health`, (r) => r.ok, {
+        ...poll,
+        attempts: 240,
+        wallMs: healthWallMs,
+      });
+    }
     if (!requireProgram) return;
     await waitUrl(
       `${base}/program/health?cell=${encodeURIComponent(cell)}`,
