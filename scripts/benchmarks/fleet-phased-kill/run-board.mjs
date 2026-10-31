@@ -468,7 +468,7 @@ function scrapeLeaseRenewals(logPaths) {
 }
 
 async function main() {
-  const petsLog = "/tmp/fleet-phased-pets.log";
+  const petsLog = `/tmp/fleet-phased-pets-${PETS_PORT}.log`;
   // Fail closed if a stale mock still owns the port (old Date.now() ids break
   // digest-equal statePreserved). Free the port, then require a healthy start.
   try {
@@ -531,24 +531,30 @@ async function main() {
     deploy.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`deploy ${code}`))));
   });
 
+  // Namespace logs + wedge flags by listen port so two boards can run on one
+  // host without cross-wedging each other's CELLD_WEDGE_HEALTH_FLAG paths
+  // (hardcoded /tmp/fleet-phased-wedge-A.flag previously made a wedge board
+  // hang a parallel stock board's readiness, and startNode unlinkSync cleared
+  // the active wedge mid-hold).
+  const logNs = process.env.FLEET_PHASED_LOG_NS || String(PORT_A);
   const nodes = {
     A: {
       port: PORT_A,
       internal: INTERNAL_A,
       pid: null,
-      log: "/tmp/fleet-phased-a.log",
+      log: `/tmp/fleet-phased-${logNs}-a.log`,
       lastExit: null,
       pendingSelfFence: false,
-      wedgeFlag: "/tmp/fleet-phased-wedge-A.flag",
+      wedgeFlag: `/tmp/fleet-phased-wedge-${logNs}-A.flag`,
     },
     B: {
       port: PORT_B,
       internal: INTERNAL_B,
       pid: null,
-      log: "/tmp/fleet-phased-b.log",
+      log: `/tmp/fleet-phased-${logNs}-b.log`,
       lastExit: null,
       pendingSelfFence: false,
-      wedgeFlag: "/tmp/fleet-phased-wedge-B.flag",
+      wedgeFlag: `/tmp/fleet-phased-wedge-${logNs}-B.flag`,
     },
   };
 
