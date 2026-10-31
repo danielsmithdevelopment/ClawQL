@@ -213,6 +213,10 @@ Sequence on every trial: durable ack → pets hang in flight → wedge/kill → 
 
 **Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
 
+### N≈1000 v3 — in progress (stock TTL, clawql.3)
+
+Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json). Shape: 750 write-kill + 250 await; `correctness_availability_v2` with mid-flight intent check; **`CELLD_TTL_MS=10000` (stock)**; binary **`0.4.0-clawql.3`**; fence on; wedge off. Do not compare resumeMs to the TTL=3000 wedge board (~3.8s). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3.
+
 
 ### Outcome unknown ~48% — read the per-phase table
 
