@@ -21,6 +21,10 @@ New (required on every arm):
 
 ## Tip runtime
 
-Package pin: **stock celld 0.6.3**. Pre-tip / 0.4.0 / clawql-fork fleet boards are listed under `superseded` in the manifest — do not cite them as the package claim.
+Package pin: **stock celld 0.6.3**. Default board **N=50**. Pre-tip / 0.4.0 / clawql-fork / N=20 remasures are `superseded` in the manifest.
+
+**Row identity:** `(armId, crashPhase)`. Wedged-owner and stale-owner are never folded into `during_call`.
+
+**Peers:** every peer arm is present on the tip `harnessCommit` with the new columns; metrics are `null` and status `pending_adapter` until the peer adapter runs on this commit. Prefer N=50 pilots in the config-review package.
 
 See [COMPARISON.md](../COMPARISON.md). Do not overwrite Tier D `security-suite/kill-mid-write/evidence.json`.

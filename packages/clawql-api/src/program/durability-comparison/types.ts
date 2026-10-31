@@ -1,6 +1,7 @@
 /**
  * Durability comparison board types (dual columns × upstream modes × arms).
  * Schema v2: runtime/version + intent-on-resume + call-verified-sent.
+ * Evidence `arms` is a list of rows keyed by (armId, crashPhase) — not unique armId.
  * See docs/benchmarks/durability-proof/COMPARISON.md.
  */
 
@@ -30,10 +31,16 @@ export type ArmId =
 
 export type ArmRunStatus =
   | "measured"
+  | "partial"
+  | "pending_adapter"
   | "pending_invite"
   | "skipped"
   | "failed"
-  | "superseded";
+  | "superseded"
+  | "na";
+
+/** Metric count — null when the arm has no adapter run on this tip commit yet. */
+export type MetricCount = number | null;
 
 export type ComparisonTrial = {
   readonly i: number;
@@ -42,9 +49,7 @@ export type ComparisonTrial = {
   readonly outcomeUnknown: number;
   readonly lost: number;
   readonly uniqueWriteEffects: number;
-  /** Journal/intent still visible after resume (new metric from mid-flight bug). */
   readonly intentPresentOnResume: number;
-  /** Mock upstream saw the call in flight before the kill. */
   readonly callVerifiedSent: number;
   readonly childSignal: string | null;
   readonly detail: string;
@@ -53,14 +58,14 @@ export type ComparisonTrial = {
 export type ArmModeResult = {
   readonly upstreamMode: UpstreamMode;
   readonly n: number;
-  readonly duplicates: number;
-  readonly outcomeUnknown: number;
-  readonly lost: number;
-  readonly uniqueWriteEffects: number;
-  readonly intentPresentOnResume: number;
-  readonly callVerifiedSent: number;
-  readonly trialsOk: number;
-  readonly trialsFailed: number;
+  readonly duplicates: MetricCount;
+  readonly outcomeUnknown: MetricCount;
+  readonly lost: MetricCount;
+  readonly uniqueWriteEffects: MetricCount;
+  readonly intentPresentOnResume: MetricCount;
+  readonly callVerifiedSent: MetricCount;
+  readonly trialsOk: MetricCount;
+  readonly trialsFailed: MetricCount;
   readonly boardPass: boolean;
   readonly trials: readonly ComparisonTrial[];
 };
@@ -68,13 +73,14 @@ export type ArmModeResult = {
 export type ArmResult = {
   readonly armId: ArmId;
   readonly status: ArmRunStatus;
-  /** Runtime that produced the numbers — required for every measured arm. */
+  /** Runtime that produced the numbers — required whenever status is measured/partial. */
   readonly runtime: string | null;
   readonly runtimeVersion: string | null;
+  /** Package git tip identity so peer rows share the same harness commit. */
+  readonly harnessCommit: string | null;
   readonly crashPhase: CrashPhase | null;
   readonly honesty: string;
   readonly modes: readonly ArmModeResult[];
-  /** When status=superseded, points at the tip package row that replaces this arm. */
   readonly supersededBy?: string | null;
 };
 
@@ -83,26 +89,33 @@ export type ComparisonEvidence = {
   readonly schemaVersion: 2;
   readonly packageId: string;
   readonly measuredAt: string;
+  readonly harnessCommit: string;
+  readonly defaultN: number;
   readonly metric: "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes";
   readonly honesty: string;
   readonly tipRuntime: string;
   readonly tipRuntimeVersion: string;
+  /** Rows: one entry per (armId, crashPhase). Wedged-owner is never folded into during_call. */
   readonly arms: readonly ArmResult[];
   readonly clawqlBoardPass: boolean;
 };
 
 export type DurabilityArm = {
   readonly id: ArmId;
-  readonly run: (input: { readonly n: number }) => Effect.Effect<ArmResult>;
+  readonly run: (input: {
+    readonly n: number;
+    readonly harnessCommit: string;
+  }) => Effect.Effect<ArmResult | readonly ArmResult[]>;
 };
 
-/** Regenerable package manifest (one commit for the whole tip package). */
 export type ComparisonPackageManifest = {
   readonly kind: "durability-comparison-package";
   readonly schemaVersion: 2;
   readonly packageId: string;
   readonly tipRuntime: string;
   readonly tipRuntimeVersion: string;
+  readonly harnessCommit: string;
+  readonly defaultN: number;
   readonly generatedAt: string;
   readonly order: readonly string[];
   readonly columns: readonly string[];
@@ -119,7 +132,7 @@ export type ComparisonPackageManifest = {
   }[];
   readonly expansionPilots: readonly {
     readonly id: string;
-    readonly status: "planned" | "pilot_n50" | "measured" | "na";
+    readonly status: "planned" | "pilot_n50" | "measured" | "na" | "partial";
     readonly arms: readonly string[];
     readonly nPilot: number;
     readonly note: string;

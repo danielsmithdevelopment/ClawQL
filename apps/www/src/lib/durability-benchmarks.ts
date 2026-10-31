@@ -146,7 +146,7 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     status: 'measured',
     statusLabel: 'ClawQL arms',
     detail:
-      'Schema v2 tip package (celld 0.6.3): +runtime/version, intent-on-resume, call-sent. Peers pending invite; N=50 pilots then review.',
+      'Schema v2 tip package (celld 0.6.3, N=50): +runtime/version, intent-on-resume, call-sent; wedge is its own row. Peer adapters pending on tip harness; pilots with review package.',
   },
   {
     tier: 'F',
@@ -214,15 +214,22 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     arm: 'clawql-file-journal',
     status: 'measured',
     runtime: 'host-file-journal',
-    idempotent: '0 dups · intent+sent (n=20)',
-    nonIdempotent: '0 dups · intent+sent (n=20)',
+    idempotent: '0 dups · intent+sent (n=50)',
+    nonIdempotent: '0 dups · intent+sent (n=50)',
   },
   {
-    arm: 'clawql-program-celld',
+    arm: 'clawql-program-celld @ during_call',
+    status: 'partial (tip v3)',
+    runtime: 'celld 0.6.3',
+    idempotent: '—',
+    nonIdempotent: 'fleet during_call · see package',
+  },
+  {
+    arm: 'clawql-program-celld @ wedged_owner',
     status: 'measured (tip)',
     runtime: 'celld 0.6.3',
-    idempotent: 'fleet tip · see package',
-    nonIdempotent: 'wedge 100/100 call-sent+intent',
+    idempotent: '—',
+    nonIdempotent: '100/100 call-sent+intent (own row)',
   },
   {
     arm: 'naive-retry (reference)',

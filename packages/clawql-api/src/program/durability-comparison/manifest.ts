@@ -13,6 +13,7 @@ const COLUMNS = [
   "arm",
   "runtime",
   "runtimeVersion",
+  "harnessCommit",
   "crashPhase",
   "upstreamMode",
   "duplicates",
@@ -25,11 +26,11 @@ const COLUMNS = [
 ] as const;
 
 const ORDER = [
-  "1. Rerun ClawQL arms on stock celld 0.6.3; mark 0.4.0 rows superseded",
-  "2. Add runtime/version, intentPresentOnResume, callVerifiedSent columns",
-  "3. Regenerate package manifest (one commit)",
-  "4. Pilot each expansion scenario at N=50 across arms",
-  "5. Send package to maintainers for configuration review",
+  "1. Rerun ClawQL arms on stock celld 0.6.3 at N=50; mark 0.4.0 rows superseded",
+  "2. Add runtime/version, intentPresentOnResume, callVerifiedSent; every arm has column values (peers: null until adapter)",
+  "3. Keep wedged-owner (and stale-owner) as separate rows from during_call",
+  "4. Run N=50 expansion pilots on this tip harness commit (include peers when adapters exist)",
+  "5. Send package + pilot results for maintainer configuration review",
   "6. Final N=1000 after review",
 ] as const;
 
@@ -42,32 +43,34 @@ export function buildComparisonPackageManifest(
     packageId: evidence.packageId || COMPARISON_PACKAGE_ID,
     tipRuntime: evidence.tipRuntime || TIP_RUNTIME,
     tipRuntimeVersion: evidence.tipRuntimeVersion || TIP_RUNTIME_VERSION,
+    harnessCommit: evidence.harnessCommit,
+    defaultN: evidence.defaultN,
     generatedAt: new Date().toISOString(),
     order: [...ORDER],
     columns: [...COLUMNS],
     boardEvidence: "docs/benchmarks/durability-proof/comparison/evidence.json",
     fleetTipEvidence: [
       {
+        path: "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json",
+        role: "during_call outside-write tip (v3; partial until measured) — NOT wedge",
+        celldBinaryVersion: "0.6.3",
+        status: "partial",
+      },
+      {
         path: "docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json",
-        role: "wedged_owner during_call tip N=100",
+        role: "wedged_owner tip N=100 (own row)",
         celldBinaryVersion: "0.6.3",
         status: "measured",
       },
       {
         path: "docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json",
-        role: "stale_owner tip N=40",
+        role: "stale_owner tip N=40 (own row)",
         celldBinaryVersion: "0.6.3",
         status: "measured",
       },
       {
-        path: "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json",
-        role: "v3 N=1000 stock TTL four-phase (in progress → authoritative when measured)",
-        celldBinaryVersion: "0.6.3",
-        status: "partial",
-      },
-      {
         path: "docs/benchmarks/program-cell-fleet-kill/phased-evidence.json",
-        role: "published Tier C N=1000 (pre-tip pin era — superseded for package claims)",
+        role: "published Tier C N=1000 (pre-tip pin era — superseded)",
         celldBinaryVersion: null,
         status: "superseded",
       },
@@ -89,6 +92,10 @@ export function buildComparisonPackageManifest(
         path: "docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-during-call-fenced.json",
         reason: "clawql.2 fork fence board; tip stock 0.6.3 closes the path without fork",
       },
+      {
+        path: "docs/benchmarks/durability-proof/comparison/evidence.json@N=20",
+        reason: "Prior tip remasure used N=20; not comparable to peer N=50 pilots — superseded by N=50 remasure",
+      },
     ],
     expansionPilots: [
       {
@@ -96,21 +103,21 @@ export function buildComparisonPackageManifest(
         status: "planned",
         arms: ["pi-durable", "golem", "clawql-program-celld"],
         nPilot: 50,
-        note: "Peers measured only during_call so far. Add before_intent, after_intent_before_call, after_call_before_journal, idle.",
+        note: "Peers measured only during_call so far. Add before_intent, after_intent_before_call, after_call_before_journal, idle. Run pilots before/with config review.",
       },
       {
         id: "wedged-owner",
-        status: "pilot_n50",
+        status: "partial",
         arms: ["clawql-program-celld", "pi-durable", "golem"],
         nPilot: 50,
-        note: "Hang health then kill. ClawQL tip N=100 already measured; peers need N=50 pilot.",
+        note: "Own row (not folded into during_call). ClawQL tip N=100 measured; peer adapters still pending_adapter on tip harness — pilot N=50 when wired, send with review package.",
       },
       {
         id: "stale-owner",
-        status: "pilot_n50",
+        status: "partial",
         arms: ["clawql-program-celld", "golem"],
         nPilot: 50,
-        note: "Ownership moves while old owner keeps running. Pi Durable likely N/A (single process). ClawQL tip N=40 measured.",
+        note: "Own row. ClawQL tip N=40 measured; Pi Durable N/A. Golem pilot N=50 on tip harness.",
       },
       {
         id: "lost-ack",
@@ -124,14 +131,14 @@ export function buildComparisonPackageManifest(
         status: "planned",
         arms: ["clawql-file-journal", "clawql-program-celld", "pi-durable", "golem"],
         nPilot: 50,
-        note: "Pending upstream mode row from before — API with neither keys nor lookup.",
+        note: "Pending upstream mode row — API with neither keys nor lookup.",
       },
       {
         id: "pi-real-model",
         status: "planned",
         arms: ["pi-durable"],
         nPilot: 50,
-        note: "Replaces faux model; needs API key. Hold until maintainer config review.",
+        note: "Replaces faux model; needs API key. Prefer running before config review when key available.",
       },
     ],
   };

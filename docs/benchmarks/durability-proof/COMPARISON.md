@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** Schema **v2** tip package on stock **celld 0.6.3**. ClawQL arms remeasured with new columns; peer arms pending invite.  
+**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50** (ClawQL rows match peer pilot denominators). Peer adapters still `pending_adapter` on the tip harness commit — column shells present.  
 **Package:** [`comparison/manifest.json`](./comparison/manifest.json) · board [`comparison/evidence.json`](./comparison/evidence.json)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
@@ -12,11 +12,12 @@ This board measures **effect** outcomes under crashes (duplicates + `outcome_unk
 
 | Change | Why |
 | ------ | --- |
-| Rerun ClawQL arms on stock **celld 0.6.3**; mark **0.4.0** rows superseded | Package must match the shipped runtime |
-| Add **runtime / runtimeVersion** for every arm | Results are only meaningful per version |
+| Rerun ClawQL arms on stock **celld 0.6.3** at **N=50**; mark **0.4.0** / N=20 rows superseded | Package must match shipped runtime; N=20 only bounds ~14% vs peers’ ~6% at N=50 |
+| Add **runtime / runtimeVersion** (+ **harnessCommit**) for every arm | Results only meaningful per version / same tip commit |
 | Add **intentPresentOnResume** for every arm | After the mid-flight bug: does the system still know a call was in flight? |
-| Add **callVerifiedSent** for every arm | Crash landed after send (`inFlight` / host applied), not before |
-| Regenerate **manifest** in one commit | Whole tip package is one artifact |
+| Add **callVerifiedSent** for every arm | Crash landed after send, not before |
+| **Wedged-owner** (and stale-owner) are **separate rows** | Hung-health-then-kill ≠ crash during outside write |
+| Regenerate **manifest** in one commit | Whole tip package is one artifact — peers share `harnessCommit` |
 
 **Cells that stay as they are:** duplicates · outcome unknown · completed exactly once.
 
@@ -107,13 +108,13 @@ Pilot each at **N=50** across applicable arms, then maintainer config review, th
 
 ## Order of work (locked)
 
-1. Rerun the **existing** table on stock **0.6.3** and add the new columns.  
-2. Regenerate the **manifest** (one tip package commit).  
-3. Pilot each expansion scenario at **N=50** across arms.  
-4. Send the package to maintainers for **configuration review**.  
-5. Run the final **N=1,000**.
+1. Rerun the **existing** table on stock **0.6.3** at **N=50** with new columns; separate wedge/stale rows.  
+2. Regenerate the **manifest** (one tip package commit; peers on same `harnessCommit`).  
+3. Run **N=50 expansion pilots** on this tip (include peer adapters when ready) **before / with** the config-review send — maintainers react to real results, not only a plan.  
+4. Send package + pilot results for **configuration review**.  
+5. Final **N=1,000** after review.
 
-Do **not** publish named Pi/Golem boards before invite + review.
+Do **not** publish named Pi/Golem boards before review. Prefer pilots **in** the review package (as with the original table), not only after invite.
 
 ---
 
@@ -127,16 +128,19 @@ Listed in [`manifest.json`](./comparison/manifest.json) `superseded[]`. Keep fil
 
 | Piece | Status |
 | ----- | ------ |
-| Schema v2 columns | **Shipped** |
-| File-journal + naive-retry remasure | **Shipped** (`npm run benchmark:durability-comparison`) |
-| ProgramCellDO tip import (wedge) | **Shipped** (fleet JSON) |
+| Schema v2 columns + N=50 default | **Shipped** |
+| File-journal + naive-retry remasure N=50 | **Shipped** |
+| ProgramCellDO during_call (non-wedge) | **Partial** (v3 tip import) |
+| ProgramCellDO wedged_owner / stale_owner | **Shipped** as **own rows** |
+| Peer rows on tip `harnessCommit` | **pending_adapter** (columns present, metrics null) |
 | Package manifest | **Shipped** |
-| Peer adapters + N=50 pilots | **Planned** / stubs |
+| N=50 expansion pilots in review package | **Next** |
 | Final N=1000 package | After review |
 
 ### Commands
 
 ```bash
-DURABILITY_COMPARISON_N=20 npm run benchmark:durability-comparison
+# default N=50
+npm run benchmark:durability-comparison
 # writes comparison/evidence.json + comparison/manifest.json
 ```
