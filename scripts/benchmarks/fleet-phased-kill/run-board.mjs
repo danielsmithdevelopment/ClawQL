@@ -96,8 +96,16 @@ autoWireR2();
 
 const N = Math.max(1, Math.min(100_000, Number(process.env.FLEET_PHASED_N || 100)));
 const OUT =
+  process.env.FLEET_PHASED_OUT ||
   process.env.FLEET_PHASED_EVIDENCE ||
   join(REPO, "docs/benchmarks/program-cell-fleet-kill/phased-evidence.json");
+if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
+    process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
+  console.warn(
+    `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
+  );
+}
+console.log(`fleet-phased: evidence → ${OUT}`);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
 const PORT_B = Number(process.env.PROGRAM_CELL_FLEET_PORT_B || 9882);
 const INTERNAL_A = Number(process.env.PROGRAM_CELL_FLEET_INTERNAL_A || 9883);
