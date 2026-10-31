@@ -4,7 +4,7 @@ Time-sensitive follow-up while Infinity’s public density post is discussed. **
 
 Infinity: [hydro-project/infinity](https://github.com/hydro-project/infinity) · [AWS blog](https://aws.amazon.com/blogs/opensource/introducing-infinity-a-runtime-for-extreme-agent-concurrency/)
 
-**Framing:** same-host cloud lab, host disclosed (same standard as our other cloud boards). Raspberry Pi 5 remains an extra column later — not a rewrite of these numbers. This board is ready to send to Infinity / Shadaj Laddad’s team; under ClawQL peer-review policy, their review comes before promoting a “denser than” claim.
+**Framing:** same-host cloud lab, host disclosed (same standard as our other cloud boards). Live marketing board: [clawql.com/benchmarks#program-density](https://clawql.com/benchmarks/#program-density). Raspberry Pi 5 remains an extra column later — not a rewrite of these numbers. This board is ready to send to Infinity / Shadaj Laddad’s team; under ClawQL peer-review policy, their review comes before promoting a “denser than” claim.
 
 | Field            | Value                                                                                    |
 | ---------------- | ---------------------------------------------------------------------------------------- |

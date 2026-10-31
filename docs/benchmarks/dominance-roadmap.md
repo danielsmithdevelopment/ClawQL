@@ -29,6 +29,7 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 | **Obot**                                  | OSS enterprise registry + per-tool policy; curated catalogs; K8s-native                                                                                                                                | Token surface of curated tools; policy enforcement overhead                                                   | Definitions + discovery with their catalog model; audit/policy on same workflow                                            | **Tokens + governance measured** — classic 3.95× @N=12; policy-depth CI [39181888666](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39181888666): ClawQL **5/5** vs Obot **2/5** (default allow-ingest) |
 | **Executor (v1/v2)**                      | Closest prior peer; sandbox code execution; **per-tool approvals** + MCP proxy (Gmail wrappers)                                                                                                        | Token lead + governance: risky-write / untrusted-read / model-resume                                          | Tokens: re-pin latest. Governance: `ci-executor-peer.sh` on [governance-policy-depth](./governance-policy-depth/README.md) | **Tokens + cells** — pause cells tie **5/5**; **resume_auto_approve** ClawQL **5/5** vs Executor **2/5** (model resume accept contaminates)                                                                             |
 | **celld program journal (ProgramCellDO)** | Journaled program resume ([/benchmarks#durability](https://clawql.com/benchmarks#durability); [STATUS](./durability-proof/STATUS.md); [golem honesty](../gtm/golem-overlap-and-durability-honesty.md)) | Lab isolate SIGKILL + kill-mid-write CI + fleet peer kill + phased R2 board (never repeated a write)          | Dual-column comparison; named Pi/Golem boards after invite                                                                 | **Lab Yes · fleet Yes (R2)** — public on /benchmarks#durability (N=1000, 0 dups); peers pending invite; hot-path A/B 10k PASS (+2.7% p50)                                                                               |
+| **Infinity (Hydro) — agent_scale density** | Public extreme-concurrency density story (AWS OSS blog; ~75k @ 8 GB). Closest peer for matched-history memory fit. Live: [/benchmarks#program-density](https://clawql.com/benchmarks/#program-density). | Same-host 8 GiB swap-disabled latency-gated lastFit on matched 20-turn histories; reclaim + allocator knobs disclosed; peer review before “denser than” | Publish board + [infinity-on-pi](./program-density/infinity-on-pi/) evidence; invite Shadaj/Infinity config fixes; Pi 5 extra column later | **History fit measured · peer review** — 100k vs 77.5k (~29% more histories); claim = history memory, not full runtime |
 
 ## Priority order (next proofs)
 
@@ -37,6 +38,7 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 3. **Bifrost / Obot tokens + p99** — governance defaults already tied; concurrency still open for category claim.
 4. **Cloudflare Code Mode** — finish blind small/dual fan-out under frozen rules.
 5. **celld program journal (durability ladder)** — [durability-proof/STATUS.md](./durability-proof/STATUS.md); then Executor re-pin / Uber·ContextForge·TrueFoundry.
+6. **Infinity history-density peer review** — [/benchmarks#program-density](https://clawql.com/benchmarks/#program-density); [infinity-on-pi](./program-density/infinity-on-pi/); no category “denser than” until peer review.
 
 ## Related boards
 
@@ -44,6 +46,7 @@ Live table: [clawql.com/benchmarks#dominance](https://clawql.com/benchmarks/#dom
 - Peer install recipes: [dominance-peers-wiring](./dominance-peers-wiring.md)
 - celld env vs Core hot path: [celld-hotpath-ab](./celld-hotpath-ab/README.md)
 - Cloudflare zone-audit + fan-out: [cloudflare-multiturn](./cloudflare-multiturn/README.md)
-- Marketing surface: `apps/www/src/lib/dominance-roadmap.ts`
+- Infinity × ClawQL history-memory density: [program-density/infinity-on-pi](./program-density/infinity-on-pi/) · live [/benchmarks#program-density](https://clawql.com/benchmarks/#program-density)
+- Marketing surface: `apps/www/src/lib/dominance-roadmap.ts` · `apps/www/src/lib/program-density-benchmarks.ts`
 - Celld pin + injection drills: `clawql security celld` / `clawql security inject`
 - Governance / policy-depth equal-arm: [governance-policy-depth](./governance-policy-depth/README.md) (`npm run benchmark:governance-policy-depth`)
