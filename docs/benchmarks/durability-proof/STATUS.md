@@ -102,28 +102,30 @@ Snapshot ~500/750 write-kill (await not started). **Correctness failures = 0.** 
 **Report as clusters (trials are not independent):** **15 classified failures ≈ 5 stall-seeded incidents** (covering 13 fails) **+ 1 twin + 1 lone `during_call` 404**. Fixing the underlying `/health` hang addresses most failures at once.
 
 <<<<<<< HEAD
-| Class                  | Count | Notes                                                                                 |
-| ---------------------- | ----- | ------------------------------------------------------------------------------------- |
-| `resume_deadline_miss` | **5** | All ~870–921s; `recoveryMs=0`, `resumeStatus=0` (resume loop never entered)           |
-| `pause_failed`         | **4** | Cascade after stalls (`fetch failed` / `DurableObjectRoutingError` owner unreachable) |
-| `no_expected_outcome`  | **5** | Mostly `during_call` with resume 404 — mid-flight without expected `outcome_unknown`  |
-| `twin_capture_failed`  | **1** | Trial 335; fleet shared with twin                                                     |
-=======
-| Underlying incident | Trials | Surface classes |
-| ------------------- | ------ | --------------- |
-| Stall cluster | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
-| Twin | 335 | `twin_capture_failed` |
-| Lone mid-flight | 494 | `no_expected_outcome` (404) |
->>>>>>> b2e228266 (docs+bench: cluster avail fails; settle during_call 404; label two fixes)
+
+| Class                  | Count                                     | Notes                                                                                 |
+| ---------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| `resume_deadline_miss` | **5**                                     | All ~870–921s; `recoveryMs=0`, `resumeStatus=0` (resume loop never entered)           |
+| `pause_failed`         | **4**                                     | Cascade after stalls (`fetch failed` / `DurableObjectRoutingError` owner unreachable) |
+| `no_expected_outcome`  | **5**                                     | Mostly `during_call` with resume 404 — mid-flight without expected `outcome_unknown`  |
+| `twin_capture_failed`  | **1**                                     | Trial 335; fleet shared with twin                                                     |
+| =======                |
+| Underlying incident    | Trials                                    | Surface classes                                                                       |
+| -------------------    | ------                                    | ---------------                                                                       |
+| Stall cluster          | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade               |
+| Twin                   | 335                                       | `twin_capture_failed`                                                                 |
+| Lone mid-flight        | 494                                       | `no_expected_outcome` (404)                                                           |
+
+> > > > > > > b2e228266 (docs+bench: cluster avail fails; settle during_call 404; label two fixes)
 
 **Per-class counts (same 15):** deadline miss ×5 · pause_failed ×4 · no_expected_outcome ×5 · twin ×1.
 
 **Two fixes — label what each does:**
 
-| Fix | Layer | What it does | What it does *not* do |
-| --- | ----- | ------------ | --------------------- |
-| Cap `waitNode` wall time / resume `deadlineAt` | **Harness** | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics) | Does **not** make `/health` answer; availability may improve less than the tail suggests |
-| Bounded lease-sweep + alive vs ready | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | Still on the parallel celld list — this is the real availability fix |
+| Fix                                            | Layer               | What it does                                                                                                          | What it does _not_ do                                                                    |
+| ---------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Cap `waitNode` wall time / resume `deadlineAt` | **Harness**         | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics)                                      | Does **not** make `/health` answer; availability may improve less than the tail suggests |
+| Bounded lease-sweep + alive vs ready           | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | Still on the parallel celld list — this is the real availability fix                     |
 
 **`during_call` 404 ×5 — settled for correctness (not lost committed state):**
 

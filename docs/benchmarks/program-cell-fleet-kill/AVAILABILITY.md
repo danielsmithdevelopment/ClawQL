@@ -44,12 +44,12 @@ Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately f
 
 ### ~900s resume tails — harness wait vs product hang
 
-Stalls land at **~875–921s**. Grep found no celld/R2 **15-minute** lease TTL. The arithmetic is harness-side; the *reason* the harness waited is product-side.
+Stalls land at **~875–921s**. Grep found no celld/R2 **15-minute** lease TTL. The arithmetic is harness-side; the _reason_ the harness waited is product-side.
 
-| Layer | Finding | Fix does |
-| ----- | ------- | -------- |
-| **Harness (explains the 15 minutes)** | `waitNode` used `programAttempts=180` × `fetchJson` **5s** when `/health` accepts TCP but never responds → **180×5s=900s**. Also bypassed the 60s resume deadline. | **Wall-cap + `deadlineAt`** → faster **classified failure**, better p99 optics. Does **not** make the node healthy. |
-| **celld (explains why `/health` hung)** | Same pattern as the N=1000 dead-leader-sweep spiral: process accepts connections, does not become ready. | **Bounded lease-sweep** + **alive vs ready** (still on the parallel product list). This is what removes the *incident*, not just the wait. |
+| Layer                                   | Finding                                                                                                                                                            | Fix does                                                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Harness (explains the 15 minutes)**   | `waitNode` used `programAttempts=180` × `fetchJson` **5s** when `/health` accepts TCP but never responds → **180×5s=900s**. Also bypassed the 60s resume deadline. | **Wall-cap + `deadlineAt`** → faster **classified failure**, better p99 optics. Does **not** make the node healthy.                        |
+| **celld (explains why `/health` hung)** | Same pattern as the N=1000 dead-leader-sweep spiral: process accepts connections, does not become ready.                                                           | **Bounded lease-sweep** + **alive vs ready** (still on the parallel product list). This is what removes the _incident_, not just the wait. |
 
 **v2 mid-run (~500 write-kill):** five ~900s stalls seed cascades; **15 failures ≈ 5 stall incidents + twin + 1 lone mid-flight 404**. **p95≈14s / p99≈870s** = discrete stall class (1% of trials), not rising typical recovery. Running v2 process still has the pre-wall-cap harness.
 
