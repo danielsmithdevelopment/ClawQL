@@ -62,6 +62,7 @@ jobs:
           node docs/examples/streams-celld/scripts/core-catalog.test.mjs
           node docs/examples/streams-celld/scripts/openapi-pack.test.mjs
           node docs/examples/streams-celld/scripts/program-cell-resume.test.mjs
+          node docs/examples/streams-celld/scripts/intent-durable-before-send.test.mjs
 
       - name: Bundle size gate (≤64 MiB)
         run: node docs/examples/streams-celld/scripts/bundle-check.mjs

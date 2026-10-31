@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# TLC dual configs for ProgramResume.tla (claim-path §5).
+# TLC configs for ProgramResume.tla (claim-path §5).
+# Target must PASS; weak completed-rerun and weak send-without-ack must COUNTEREXAMPLE.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -18,22 +19,39 @@ if [[ -z "$JAR" ]]; then
     "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
 fi
 
-cp "$DIR/ProgramResume.tla" "$DIR/ProgramResume.cfg" "$DIR/ProgramResumeWeak.cfg" "$WORKDIR/"
+cp "$DIR"/ProgramResume.tla \
+  "$DIR"/ProgramResume.cfg \
+  "$DIR"/ProgramResumeWeak.cfg \
+  "$DIR"/ProgramResumeWeakSend.cfg \
+  "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== ProgramResume target (must PASS) ==="
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramResume.cfg ProgramResume
+run_tlc() {
+  local cfg="$1"
+  java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config "$cfg" ProgramResume
+}
 
-echo "=== ProgramResume weak (must COUNTEREXAMPLE) ==="
+echo "=== ProgramResume target (must PASS) ==="
+run_tlc ProgramResume.cfg
+
+echo "=== ProgramResume weak completed-rerun (must COUNTEREXAMPLE) ==="
 set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramResumeWeak.cfg ProgramResume
+run_tlc ProgramResumeWeak.cfg
 WEAK=$?
 set -e
 if [[ "$WEAK" -eq 0 ]]; then
-  echo "FAIL: weak ProgramResume config (WeakAllowCompletedRerun) must counterexample" >&2
+  echo "FAIL: weak completed-rerun config must counterexample" >&2
   exit 1
 fi
 
-echo "OK: ProgramResume Safety holds; weak counterexample (exit=$WEAK)"
+echo "=== ProgramResume weak send-without-durable-ack (must COUNTEREXAMPLE) ==="
+set +e
+run_tlc ProgramResumeWeakSend.cfg
+WEAK_SEND=$?
+set -e
+if [[ "$WEAK_SEND" -eq 0 ]]; then
+  echo "FAIL: weak send-without-durable-ack config must counterexample IntentDurablyAckedBeforeSend" >&2
+  exit 1
+fi
+
+echo "OK: ProgramResume Safety holds; weak counterexamples (rerun exit=$WEAK, send exit=$WEAK_SEND)"

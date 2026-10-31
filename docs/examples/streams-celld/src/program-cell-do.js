@@ -7,8 +7,15 @@
  *
  * Contract (same as durable-runner):
  * - completed calls → journal entry (replay, do not re-run)
- * - write: put intent before host call; intent without entry → outcome_unknown
+ * - write: put intent, confirm storage-visible, then host call; intent without
+ *   entry → outcome_unknown
  * - interrupted read (no entry) → re-run once
+ *
+ * celld note: unlike Cloudflare DO output gates (hold network until storage is
+ * durable), celld NodeFences some put-then-fetch orderings but does not expose
+ * an LTX durable-ack API. Awaited storage.put can resolve before peer-visible
+ * durability (N=1000 during_call R2 settle). We re-get intent/meta before send
+ * as a best-effort barrier; product fix is a real sync/ack in celld.
  */
 
 import { CORE_IN_CELLD_HONESTY, resolveSlimExecute } from "./core-catalog.js";
@@ -36,6 +43,26 @@ function intentKey(programId, index) {
 }
 function nondetKey(programId, key) {
   return `program:${programId}:nondet:${key}`;
+}
+
+/**
+ * Best-effort durable visibility barrier after storage.put.
+ * Cloudflare DOs gate outbound fetch until storage is confirmed; celld does not
+ * expose an equivalent ack — re-get until visible or timeout.
+ * @param {{ get: (k: string) => Promise<unknown> }} storage
+ * @param {string} key
+ * @param {{ timeoutMs?: number, pollMs?: number }} [opts]
+ */
+async function awaitStorageVisible(storage, key, opts = {}) {
+  const timeoutMs = Math.max(1, Number(opts.timeoutMs ?? 2_000));
+  const pollMs = Math.max(1, Number(opts.pollMs ?? 5));
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const v = await storage.get(key);
+    if (v != null) return v;
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+  return undefined;
 }
 
 /**
@@ -444,6 +471,28 @@ export class ProgramCellDO {
           operationId: call.operationId,
           startedAt: new Date().toISOString(),
         });
+        const intentVisible = await awaitStorageVisible(
+          this.state.storage,
+          intentKey(programId, i)
+        );
+        if (!intentVisible) {
+          meta.status = "failed";
+          meta.lastError = "intent_not_durable";
+          meta.updatedAt = new Date().toISOString();
+          await this.state.storage.put(metaKey(programId), meta);
+          return Response.json(
+            {
+              ok: false,
+              do: "ProgramCellDO",
+              programId,
+              status: meta.status,
+              error: "intent_not_durable",
+              honesty: PROGRAM_CELL_HONESTY,
+              note: "Refused host send: write intent not storage-visible after put",
+            },
+            { status: 503 }
+          );
+        }
       }
       if (pauseAfterIntentIndex === i) {
         meta.status = "paused_for_kill";
@@ -469,6 +518,21 @@ export class ProgramCellDO {
         meta.pauseKind = "during_call";
         meta.updatedAt = new Date().toISOString();
         await this.state.storage.put(metaKey(programId), meta);
+        const metaVisible = await awaitStorageVisible(this.state.storage, metaKey(programId));
+        if (!metaVisible || metaVisible.pauseKind !== "during_call") {
+          return Response.json(
+            {
+              ok: false,
+              do: "ProgramCellDO",
+              programId,
+              status: "failed",
+              error: "pause_meta_not_durable",
+              honesty: PROGRAM_CELL_HONESTY,
+              note: "Refused during_call hang: pauseKind meta not storage-visible",
+            },
+            { status: 503 }
+          );
+        }
         // Hang inside upstream fetch — client SIGKILLs celld while this awaits.
         const hungCall = {
           ...call,
