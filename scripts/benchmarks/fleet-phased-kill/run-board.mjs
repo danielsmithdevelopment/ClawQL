@@ -961,6 +961,11 @@ async function main() {
         expectOk = completedClean && writeCount === 1 && duplicates === 0 && !outcomeUnknown;
       }
     }
+    // Twin capture is part of the availability outcome for outer phases — a
+    // digest match with twin_capture_failed must not look like a clean trial.ok.
+    if (statePreservedTrial?.reason === "twin_capture_failed") {
+      expectOk = false;
+    }
     // Self-fence + successful orchestrated recovery still counts as phase-ok for safety,
     // but availability columns record the incident. Deadline miss fails the trial.
 

@@ -55,6 +55,8 @@ Three stalls clustered at **~875–909s** (~15 min) across different surface cau
 
 **Harness fix (criteria unchanged; takes effect on the next board process):** `waitUrl`/`waitNode` take a **wallMs** budget (default 45s program / 30s health) and shorter per-try timeouts (1.5s); resume-path `ensureSurvivor` gets `deadlineAt = resumeStart + RESUME_DEADLINE_MS` and always attributes wait time to `recoveryMs`. Does not change the frozen 60s availability deadline or 2% ceiling.
 
+**v2 mid-run confirmation (~500 write-kill):** five stalls at 875626 / 908491 / 902307 / 870413 / 920802 ms — all `resumeStatus=0`, `recoveryMs=0`, no self-fence. **p95≈14s, p99≈870s**: the p99 rise is those discrete stalls (5/500 = 1%), not a steady climb of typical recovery. Each stall usually seeds a short cascade (`pause_failed` / `no_expected_outcome` on the next 1–3 trials) via `DurableObjectRoutingError` / fetch failed while the fleet is wedged. The running v2 Node process still has the pre-wall-cap harness; expect more ~900s events until this board exits and a new process loads the fix.
+
 ## Three columns
 
 | Column                                                             | Property                                                |
