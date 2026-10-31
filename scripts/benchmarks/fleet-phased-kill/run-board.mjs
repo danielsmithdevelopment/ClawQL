@@ -1223,12 +1223,16 @@ async function main() {
     }
     primary = survivor;
 
-    if ((i + 1) % 10 === 0 || i === N - 1) {
+    // Wedge / negative-control boards are slow and sparse — log every trial so
+    // lost-intent rate is visible before the 10-trial evidence watermark.
+    const progressEvery = WEDGE_HEALTH || ALLOW_UNFENCED ? 1 : 10;
+    if ((i + 1) % progressEvery === 0 || i === N - 1) {
       const elapsedSec = (Date.now() - boardStarted) / 1000;
       const rate = (i + 1) / Math.max(1, elapsedSec);
       const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
+      const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
       console.log(
-        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} last=${phase} ok=${expectOk} resumeMs=${resumeMs} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
+        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
       );
       writeEvidencePartial();
     }
