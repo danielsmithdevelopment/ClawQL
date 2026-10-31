@@ -32,7 +32,7 @@
  *   CELLD_BUCKET / S3_ENDPOINT / AWS_* or CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID
  *   STREAMS_CELLD_FLEET_REQUIRED=1 to fail closed without bucket
  */
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, openSync, unlinkSync, existsSync } from "node:fs";
 import { createServer } from "node:net";
 import { dirname, join } from "node:path";
@@ -113,19 +113,60 @@ const WEDGE_HOLD_MS = Math.max(
   CELLD_TTL_MS * 2,
   Number(process.env.FLEET_PHASED_WEDGE_HOLD_MS || CELLD_TTL_MS * 2)
 );
-// Gate is default-on in celld; force =1 so a stray =0 in the environment
-// cannot silently disable the durability wait on this board.
-if (process.env.CELLD_OUTPUT_GATE === "0") {
+/**
+ * Negative-control escape hatch: allow CELLD_OUTPUT_GATE=0 and/or
+ * CELLD_FENCED_ACK=0 so the same wedged board can prove the bug still fires
+ * on an unfenced binary before a clean clawql.2 result means anything.
+ * Default remains force-on for durability boards.
+ */
+const ALLOW_UNFENCED = process.env.FLEET_PHASED_ALLOW_UNFENCED === "1";
+if (process.env.CELLD_OUTPUT_GATE === "0" && !ALLOW_UNFENCED) {
   console.warn(
-    "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1"
+    "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1 (set FLEET_PHASED_ALLOW_UNFENCED=1 for negative control)"
   );
+  process.env.CELLD_OUTPUT_GATE = "1";
+} else if (process.env.CELLD_OUTPUT_GATE !== "0") {
+  process.env.CELLD_OUTPUT_GATE = "1";
 }
-process.env.CELLD_OUTPUT_GATE = "1";
-// Fenced ack + epoch-at-confirm are default-on in the ClawQL fork; force on.
-process.env.CELLD_FENCED_ACK = process.env.CELLD_FENCED_ACK === "0" ? "0" : "1";
 if (process.env.CELLD_FENCED_ACK === "0") {
-  console.warn("fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled for this run");
+  if (!ALLOW_UNFENCED && process.env.CELLD_OUTPUT_GATE !== "0") {
+    console.warn(
+      "fleet-phased: CELLD_FENCED_ACK=0 without ALLOW_UNFENCED — keeping =0 only if you meant it; prefer FLEET_PHASED_ALLOW_UNFENCED=1"
+    );
+  } else {
+    console.warn(
+      "fleet-phased: CELLD_FENCED_ACK=0 — H1/H2 fence disabled (negative control)"
+    );
+  }
+} else {
+  process.env.CELLD_FENCED_ACK = "1";
 }
+const OUTPUT_GATE_ON = process.env.CELLD_OUTPUT_GATE !== "0";
+const FENCED_ACK_ON = process.env.CELLD_FENCED_ACK !== "0";
+const FENCE_MODE =
+  process.env.FLEET_PHASED_FENCE_MODE ||
+  (OUTPUT_GATE_ON && FENCED_ACK_ON
+    ? "fenced"
+    : "unfenced_negative_control");
+function detectCelldVersion() {
+  if (process.env.FLEET_PHASED_CELLD_VERSION) {
+    return process.env.FLEET_PHASED_CELLD_VERSION;
+  }
+  try {
+    const out = execFileSync("celld", ["--version"], {
+      encoding: "utf8",
+      timeout: 5_000,
+    }).trim();
+    const m = out.match(/(\d+\.\d+\.\d+(?:-clawql\.\d+)?)/);
+    return m ? m[1] : out.slice(0, 80);
+  } catch {
+    return "unknown";
+  }
+}
+const CELLD_BINARY_VERSION = detectCelldVersion();
+console.log(
+  `fleet-phased: celld ${CELLD_BINARY_VERSION} fenceMode=${FENCE_MODE} gate=${OUTPUT_GATE_ON ? 1 : 0} fencedAck=${FENCED_ACK_ON ? 1 : 0} wedge=${WEDGE_HEALTH ? 1 : 0}`
+);
 const AWAIT_TRIALS = Math.max(
   0,
   Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
@@ -488,11 +529,15 @@ async function main() {
     // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
     const nodeEnv = {
       ...process.env,
-      CELLD_OUTPUT_GATE: "1",
-      CELLD_FENCED_ACK: process.env.CELLD_FENCED_ACK || "1",
+      CELLD_OUTPUT_GATE: OUTPUT_GATE_ON ? "1" : "0",
+      CELLD_FENCED_ACK: FENCED_ACK_ON ? "1" : "0",
       CELLD_WEDGE_HEALTH_FLAG: n.wedgeFlag,
+      // Durable-ack latency (wait_us on durable_wait); set RUST_LOG=timing=debug
+      // on the board env to populate node logs for PUT vs PUT+GET A/B.
+      RUST_LOG: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || "",
       CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     };
+    if (!nodeEnv.RUST_LOG) delete nodeEnv.RUST_LOG;
     const child = spawnLogged(
       "celld",
       [
@@ -1563,7 +1608,12 @@ async function main() {
       phases: PHASES,
       wedgeHealth: WEDGE_HEALTH,
       wedgeHoldMs: WEDGE_HEALTH ? WEDGE_HOLD_MS : 0,
-      celldBinaryVersion: "0.4.0-clawql.2",
+      celldBinaryVersion: CELLD_BINARY_VERSION,
+      fenceMode: FENCE_MODE,
+      outputGate: OUTPUT_GATE_ON,
+      fencedAck: FENCED_ACK_ON,
+      allowUnfenced: ALLOW_UNFENCED,
+      rustLog: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || null,
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
       bucketRedacted: true,
