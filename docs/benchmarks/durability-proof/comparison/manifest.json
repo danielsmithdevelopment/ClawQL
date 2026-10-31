@@ -4,9 +4,9 @@
   "packageId": "clawql-durability-comparison-celld-0.6.3",
   "tipRuntime": "celld",
   "tipRuntimeVersion": "0.6.3",
-  "harnessCommit": "b08ba5117ef4ee9cc1a1b4f74d0e91755ba5189b",
+  "harnessCommit": "e2854ab5eb7a99e6b01891a418f2d15b558a6beb",
   "defaultN": 50,
-  "generatedAt": "2026-10-31T17:53:33.687Z",
+  "generatedAt": "2026-10-31T18:17:44.829Z",
   "order": [
     "1. Rerun ClawQL arms on stock celld 0.6.3 at N=50; mark 0.4.0 rows superseded",
     "2. Add runtime/version, intentPresentOnResume, callVerifiedSent; every arm has column values (peers: null until adapter)",
@@ -89,7 +89,7 @@
         "clawql-program-celld"
       ],
       "nPilot": 50,
-      "note": "Peers measured only during_call so far. Add before_intent, after_intent_before_call, after_call_before_journal, idle. Run pilots before/with config review."
+      "note": "Real peer adapters still during_call-only when wired. Model sims cover during_call today. Add before_intent, after_intent_before_call, after_call_before_journal, idle on real adapters."
     },
     {
       "id": "wedged-owner",
@@ -100,7 +100,7 @@
         "golem"
       ],
       "nPilot": 50,
-      "note": "Own row (not folded into during_call). ClawQL tip N=100 measured; peer adapters still pending_adapter on tip harness — pilot N=50 when wired, send with review package."
+      "note": "Own row (not folded into during_call). ClawQL tip N=100 measured; peer adapters still pending_adapter — pilot N=50 when wired."
     },
     {
       "id": "stale-owner",
@@ -110,11 +110,11 @@
         "golem"
       ],
       "nPilot": 50,
-      "note": "Own row. ClawQL tip N=40 measured; Pi Durable N/A. Golem pilot N=50 on tip harness."
+      "note": "Own row. ClawQL tip N=40 measured; Pi Durable N/A. Golem pilot N=50 on tip harness when adapter lands."
     },
     {
       "id": "lost-ack",
-      "status": "planned",
+      "status": "pilot_n50",
       "arms": [
         "clawql-file-journal",
         "clawql-program-celld",
@@ -122,11 +122,11 @@
         "golem"
       ],
       "nPilot": 50,
-      "note": "Server processes call; response never arrives. Once per API type: idempotency keys, lookup by reference, neither."
+      "note": "ClawQL file-journal lost_ack row measured at N=50 (idempotent / lookup_by_reference / neither). Program-celld + real peers still planned."
     },
     {
       "id": "neither-keys-nor-lookup",
-      "status": "planned",
+      "status": "pilot_n50",
       "arms": [
         "clawql-file-journal",
         "clawql-program-celld",
@@ -134,7 +134,17 @@
         "golem"
       ],
       "nPilot": 50,
-      "note": "Pending upstream mode row — API with neither keys nor lookup."
+      "note": "Covered as non_idempotent mode on clawql-file-journal lost_ack row (no idempotency key). Peer/program-celld pending."
+    },
+    {
+      "id": "peer-model-sims",
+      "status": "pilot_n50",
+      "arms": [
+        "golem-at-least-once-sim",
+        "pi-interrupt-sim"
+      ],
+      "nPilot": 50,
+      "note": "Model-faithful local sims (like naive-retry). Not real Pi/Golem runtimes — real golem/pi-durable rows remain pending_adapter."
     },
     {
       "id": "pi-real-model",
@@ -143,7 +153,7 @@
         "pi-durable"
       ],
       "nPilot": 50,
-      "note": "Replaces faux model; needs API key. Prefer running before config review when key available."
+      "note": "Replaces pi-interrupt-sim faux model; needs API key. Prefer running before config review when key available."
     }
   ]
 }

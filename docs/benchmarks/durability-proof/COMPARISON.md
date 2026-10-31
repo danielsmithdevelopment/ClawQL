@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50** (ClawQL rows match peer pilot denominators). Peer adapters still `pending_adapter` on the tip harness commit — column shells present.  
+**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Real peer adapters still `pending_adapter`; **model-faithful** `golem-at-least-once-sim` / `pi-interrupt-sim` measured as placeholders (like `naive-retry`). ClawQL **lost-ack** expansion pilot at N=50 included.  
 **Package:** [`comparison/manifest.json`](./comparison/manifest.json) · board [`comparison/evidence.json`](./comparison/evidence.json)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
@@ -82,10 +82,13 @@ Publish **all** columns on every arm.
 
 | Arm id | Stack |
 | ------ | ----- |
-| `clawql-file-journal` | Tier D / host file journal (remeasured every package) |
+| `clawql-file-journal` | Tier D / host file journal (remeasured every package; also `lost_ack` row) |
 | `clawql-program-celld` | ProgramCellDO on **stock celld 0.6.3** (fleet tip imported) |
-| `pi-durable` | Pi Durable alone (invite + config review) |
-| `golem` | Golem alone (same) |
+| `naive-retry` | Reference: blind re-send after kill |
+| `golem-at-least-once-sim` | **Model sim** (not real Golem): at-least-once retry; keys → one unique effect |
+| `pi-interrupt-sim` | **Model sim** (not real Pi): interrupt re-enters tool → at-least-once effects |
+| `pi-durable` | Pi Durable alone — `pending_adapter` until real adapter |
+| `golem` | Golem alone — `pending_adapter` until real adapter |
 | `pi-durable+clawql` | Pi → ClawQL MCP |
 | `golem+clawql` | Golem → ClawQL MCP |
 
@@ -132,10 +135,11 @@ Listed in [`manifest.json`](./comparison/manifest.json) `superseded[]`. Keep fil
 | File-journal + naive-retry remasure N=50 | **Shipped** |
 | ProgramCellDO during_call (non-wedge) | **Partial** (v3 tip import) |
 | ProgramCellDO wedged_owner / stale_owner | **Shipped** as **own rows** |
-| Peer rows on tip `harnessCommit` | **pending_adapter** (columns present, metrics null) |
+| Peer model sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) | **Shipped** N=50 (labeled simulators) |
+| Real peer adapter rows | **pending_adapter** (null metrics) |
+| ClawQL lost-ack / neither pilot | **Shipped** N=50 on file-journal |
 | Package manifest | **Shipped** |
-| N=50 expansion pilots in review package | **Next** |
-| Final N=1000 package | After review |
+| Final N=1000 package | After review + green v3 |
 
 ### Commands
 

@@ -12,7 +12,9 @@ import {
   TIP_RUNTIME_VERSION,
 } from "./constants.js";
 import { clawqlFileJournalArm, naiveRetryArm } from "./file-journal-arm.js";
+import { clawqlLostAckArm } from "./lost-ack-arm.js";
 import { buildComparisonPackageManifest } from "./manifest.js";
+import { golemAtLeastOnceSimArm, piInterruptSimArm } from "./peer-model-arms.js";
 import {
   golemArm,
   golemClawqlArm,
@@ -28,6 +30,9 @@ export { COMPARISON_PACKAGE_ID, TIP_RUNTIME, TIP_RUNTIME_VERSION };
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
   naiveRetryArm,
+  golemAtLeastOnceSimArm,
+  piInterruptSimArm,
+  clawqlLostAckArm,
   programCelldArm,
   programCelldStaleOwnerArm,
   piDurableArm,
@@ -103,7 +108,7 @@ export function runDurabilityComparisonBoardEffect(
       metric:
         "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes" as const,
       honesty:
-        "Schema v2 tip package on stock celld 0.6.3. Default N=50 (ClawQL rows match peer pilot denominators). Wedged-owner and stale-owner are separate rows from during_call. Peer arms share harnessCommit with null metrics until adapters run on this tip — include N=50 pilots in the config-review package.",
+        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Model-faithful golem-at-least-once-sim + pi-interrupt-sim are measured placeholders (not real peer runtimes); real golem/pi-durable rows stay pending_adapter. ClawQL lost-ack expansion pilot included. Include this package in config review.",
       tipRuntime: TIP_RUNTIME,
       tipRuntimeVersion: TIP_RUNTIME_VERSION,
       arms: results,

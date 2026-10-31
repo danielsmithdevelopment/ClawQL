@@ -25,6 +25,6 @@ Package pin: **stock celld 0.6.3**. Default board **N=50**. Pre-tip / 0.4.0 / cl
 
 **Row identity:** `(armId, crashPhase)`. Wedged-owner and stale-owner are never folded into `during_call`.
 
-**Peers:** every peer arm is present on the tip `harnessCommit` with the new columns; metrics are `null` and status `pending_adapter` until the peer adapter runs on this commit. Prefer N=50 pilots in the config-review package.
+**Peers:** real `golem` / `pi-durable` rows stay `pending_adapter` (null metrics) until adapters run. Tip package also ships **model-faithful** measured sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) plus ClawQL `lost_ack` expansion — labeled simulators, not named peer boards.
 
 See [COMPARISON.md](../COMPARISON.md). Do not overwrite Tier D `security-suite/kill-mid-write/evidence.json`.

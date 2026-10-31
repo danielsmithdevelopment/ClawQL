@@ -24,6 +24,8 @@ export type ArmId =
   | "clawql-file-journal"
   | "clawql-program-celld"
   | "naive-retry"
+  | "golem-at-least-once-sim"
+  | "pi-interrupt-sim"
   | "pi-durable"
   | "golem"
   | "pi-durable+clawql"

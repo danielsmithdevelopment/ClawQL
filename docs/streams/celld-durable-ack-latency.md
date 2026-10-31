@@ -16,9 +16,8 @@ Partial sample from live node logs on prefix `tier-c-v3-063-*` while write-kill 
 
 | Metric | Value | Note |
 | ------ | ----- | ---- |
-| `durable_wait` samples | **425** | Append-mode across restarts; multiple events can fire per trial |
-| `wait_us` p50 / p99 / max | **~0.33 s / ~0.70 s / ~0.78 s** | Stock always-on gate on R2 |
-| Proof mix | fleet 178 · bucket 247 | Both proof paths appear under fleet ownership |
+| `durable_wait` samples | **2350** | Append-mode across restarts; multiple events can fire per trial |
+| `wait_us` p50 / p99 / max | **~0.37 s / ~0.94 s / ~1.36 s** | Stock always-on gate on R2 (live v3 board) |
 | ResumeMs | lease floor (~12–14 s at TTL=10000) | **Not** the gate price |
 
 Re-publish the table from the finished v3 evidence file once the board completes (same extraction).
