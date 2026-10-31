@@ -301,6 +301,8 @@
     "zod": "4.6.7",
     "@kubernetes/client-node": {
       "undici": "8.12.3"
-    }
+    },
+    "minimatch": "11.0.3",
+    "glob": "14.0.3"
   }
 }

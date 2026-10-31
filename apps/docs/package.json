@@ -111,6 +111,8 @@
     "dompurify": "3.4.17",
     "proxy-addr": "2.0.8",
     "source-map-js": "1.2.2",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "minimatch": "11.0.3",
+    "glob": "14.0.3"
   }
 }
