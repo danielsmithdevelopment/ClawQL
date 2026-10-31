@@ -1,4 +1,4 @@
-# Example: ClawQL Streams on celld v0.4.0 (self-hosted Durable Objects).
+# Example: ClawQL Streams on stock celld v0.6.3 (self-hosted Durable Objects).
 #
 # Prerequisite — deploy the Worker bundle to the fleet bucket (once per app version):
 #
