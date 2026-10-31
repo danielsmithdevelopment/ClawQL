@@ -76,11 +76,11 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 **Definitions (outcome, not column):**
 
-| Class                    | Meaning                                         | Counts as                                                                                                                                                                          |
-| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Class                    | Meaning                                         | Counts as                                                                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Correctness failure**  | A **wrong** outcome                             | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch**; **`lost_midflight_intent`** (survivor `/program/status` lacks intent/`pauseKind` after mid-flight kill — harness checks this automatically from v3) |
-| **Availability failure** | **No** outcome in **wall-clock** time / capture | resume wall-clock > **60 000 ms** (recovery inclusive); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
-| **Outer completion**     | Reported overall                                | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                                                       |
+| **Availability failure** | **No** outcome in **wall-clock** time / capture | resume wall-clock > **60 000 ms** (recovery inclusive); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write                                                |
+| **Outer completion**     | Reported overall                                | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                                                                                                      |
 
 **Pass gates (frozen for v2 — do not loosen after results):**
 
@@ -99,20 +99,20 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-correctness-availability.json) · measured **2026-10-30 21:40 PDT** (`2026-10-31T04:40:40.919Z`). Prefix `tier-c-phased-20261030212001`.
 
-| Gate | Result | Detail |
-| ---- | ------ | ------ |
-| **Availability** | **FAIL** | 34/1000 = **3.4%** > frozen ceiling 2%; resumeMs p50≈12.5s / p99≈217.6s / max≈920.8s |
-| **Correctness (harness)** | reports 0 | Running process **predated** mid-flight storage check + R2 settle reclassification |
-| **Correctness (settle)** | **non-zero** | Five `during_call` trials lost mid-flight journal (below) — do **not** publish corr=0 |
-| Duplicates | 0 | Zero-dup measurement stands; mechanism claim remains paused |
+| Gate                      | Result       | Detail                                                                                |
+| ------------------------- | ------------ | ------------------------------------------------------------------------------------- |
+| **Availability**          | **FAIL**     | 34/1000 = **3.4%** > frozen ceiling 2%; resumeMs p50≈12.5s / p99≈217.6s / max≈920.8s  |
+| **Correctness (harness)** | reports 0    | Running process **predated** mid-flight storage check + R2 settle reclassification    |
+| **Correctness (settle)**  | **non-zero** | Five `during_call` trials lost mid-flight journal (below) — do **not** publish corr=0 |
+| Duplicates                | 0            | Zero-dup measurement stands; mechanism claim remains paused                           |
 
 **Report as clusters (trials are not independent):** stall-seeded `/health` hangs dominate availability; mid-flight lost-intent is a separate durability defect. Fixing lease-sweep / alive-vs-ready addresses most avail failures; fenced-ack + incarnation fencing ([PR #1453](https://github.com/danielsmithdevelopment/ClawQL/pull/1453)) addresses lost intent.
 
-| Underlying incident | Trials | Surface classes |
-| ------------------- | ------ | --------------- |
-| Stall cluster | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
-| Twin | 335 | `twin_capture_failed` |
-| Lone mid-flight | 494 | `no_expected_outcome` (404) |
+| Underlying incident | Trials                                    | Surface classes                                                         |
+| ------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| Stall cluster       | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
+| Twin                | 335                                       | `twin_capture_failed`                                                   |
+| Lone mid-flight     | 494                                       | `no_expected_outcome` (404)                                             |
 
 **Two fixes — label what each does:**
 
@@ -125,10 +125,10 @@ Evidence: [`phased-n1000-correctness-availability.json`](../program-cell-fleet-k
 
 Evidence: [`during-call-404-r2-settle.json`](../program-cell-fleet-kill/during-call-404-r2-settle.json). Method: live ProgramCellDO `_cf_KV` + 1879 local generation SQLite copies + `GET /program/status` for the one present id. No writes to the prefix.
 
-| Trial | Journal/meta in current-run storage | Intent | Verdict |
-| ----- | ----------------------------------- | ------ | ------- |
-| **134, 286, 390, 442** | **Missing** — never present in-window (neighbors ±4 present with full journals; e130–e144 never contained 134) | never | **Durability failure** — not “wedged node slow to see them” |
-| **494** | Create `meta` **present** (`phased_during_call_494_1793409345554`); live `/status` ok | **never** durable (`intents:[]`, no `pauseKind`) | **Durability failure** for the mid-flight intent contract; create meta alone ≠ journal-before-hang |
+| Trial                  | Journal/meta in current-run storage                                                                            | Intent                                           | Verdict                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **134, 286, 390, 442** | **Missing** — never present in-window (neighbors ±4 present with full journals; e130–e144 never contained 134) | never                                            | **Durability failure** — not “wedged node slow to see them”                                        |
+| **494**                | Create `meta` **present** (`phased_during_call_494_1793409345554`); live `/status` ok                          | **never** durable (`intents:[]`, no `pauseKind`) | **Durability failure** for the mid-flight intent contract; create meta alone ≠ journal-before-hang |
 
 Harness still scored these as `failureClass=availability` (`no_expected_outcome` / first-404 terminal; running process predates mid-flight 404 retry). **Do not publish correctness = 0** for this board: four programs’ pretends-journaled state are absent from R2-backed DO storage, and 494 never got a durable write intent. That also fails the state-preserved reading of “journaled mid-flight state survives.” Outside writes still `writeCount=0` / no duplicates — the wrongness is **lost journal**, not a repeated write.
 

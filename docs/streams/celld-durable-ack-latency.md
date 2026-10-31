@@ -4,10 +4,10 @@ Every consequential outbound call waits for a durable commit under the current l
 
 ## What to publish
 
-| Metric | Source |
-| ------ | ------ |
+| Metric              | Source                                            |
+| ------------------- | ------------------------------------------------- |
 | p50 / p99 gate wait | celld `timing` / `durable_wait` spans (`wait_us`) |
-| Board overlay | fleet harness: time from intent put → fetch start |
+| Board overlay       | fleet harness: time from intent put → fetch start |
 
 ## How to measure (local / board)
 

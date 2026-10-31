@@ -19,6 +19,6 @@
 
 ## Related
 
-- [publish-readiness](./publish-readiness.md) §1 caveat  
-- [during-call R2 settle](../benchmarks/program-cell-fleet-kill/during-call-404-r2-settle.json)  
-- [STATUS](../benchmarks/durability-proof/STATUS.md) mechanism note  
+- [publish-readiness](./publish-readiness.md) §1 caveat
+- [during-call R2 settle](../benchmarks/program-cell-fleet-kill/during-call-404-r2-settle.json)
+- [STATUS](../benchmarks/durability-proof/STATUS.md) mechanism note
