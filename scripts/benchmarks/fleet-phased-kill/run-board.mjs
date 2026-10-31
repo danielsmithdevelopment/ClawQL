@@ -94,6 +94,13 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+// Never disable the output gate on fleet boards. (=0 skips durable wait on writes.)
+if (process.env.CELLD_OUTPUT_GATE === "0") {
+  console.warn(
+    "fleet-phased: refusing CELLD_OUTPUT_GATE=0 — durability boards require the gate; forcing =1"
+  );
+}
+process.env.CELLD_OUTPUT_GATE = "1";
 const AWAIT_TRIALS = Math.max(
   0,
   Math.min(10_000, Number(process.env.FLEET_PHASED_AWAIT_TRIALS || 0))
@@ -448,6 +455,7 @@ async function main() {
     // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
     const nodeEnv = {
       ...process.env,
+      CELLD_OUTPUT_GATE: "1",
       CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     };
     const child = spawnLogged(
@@ -1010,6 +1018,38 @@ async function main() {
     if (journalDivergence) st.journalDivergence = (st.journalDivergence || 0) + 1;
     st.writeStepsRerun = (st.writeStepsRerun || 0) + writeStepsRerun;
     st.replayedSteps = (st.replayedSteps || 0) + replayedSteps;
+
+    // Mid-flight storage check (v3): intent or pauseKind must be visible on the
+    // survivor after journal-before-hang. Missing = durability/correctness.
+    // Does not use local re-get-as-proof — queries survivor /program/status.
+    let midFlightStorage = null;
+    if (midFlight) {
+      const statusRes = await fetchJson(
+        `${baseS}/program/status?programId=${encodeURIComponent(programId)}`,
+        {},
+        8_000
+      );
+      const meta = statusRes.body?.meta || null;
+      const intents = Array.isArray(statusRes.body?.intents) ? statusRes.body.intents : [];
+      const hasIntent = intents.length > 0;
+      const pauseKind = meta?.pauseKind || null;
+      const present =
+        Boolean(meta) &&
+        (hasIntent ||
+          pauseKind === "during_call" ||
+          pauseKind === "after_intent_before_call");
+      midFlightStorage = {
+        statusOk: Boolean(statusRes.ok && statusRes.body?.ok),
+        hasMeta: Boolean(meta),
+        hasIntent,
+        pauseKind,
+        present,
+      };
+      if (!present) {
+        expectOk = false;
+      }
+    }
+
     if (expectOk) st.ok += 1;
     else st.failures += 1;
 
@@ -1025,6 +1065,9 @@ async function main() {
     } else if (statePreservedTrial?.reason === "digest_mismatch") {
       failureClass = "correctness";
       failureReason = "digest_mismatch";
+    } else if (midFlightStorage && midFlightStorage.present === false) {
+      failureClass = "correctness";
+      failureReason = "lost_midflight_intent";
     } else if (avail.resumeDeadlineMiss) {
       failureClass = "availability";
       failureReason = "resume_deadline_miss";
@@ -1052,6 +1095,7 @@ async function main() {
       statePreserved: statePreservedTrial,
       failureClass,
       failureReason,
+      midFlightStorage,
       resumeMs,
       resumeActiveMs,
       recoveryMs: avail.recoveryMs,
@@ -1381,7 +1425,7 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch",
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill)",
             },
             availability: {
               failures: availabilityFailures,
