@@ -130,6 +130,30 @@ const WEDGE_HOLD_MS = Math.max(
   Number(process.env.FLEET_PHASED_WEDGE_HOLD_MS || CELLD_TTL_MS * 2)
 );
 /**
+ * Stale-owner probe (H2 / Fleet VerifyOwnership gap): wedge BEFORE waiting for
+ * mock-pets inFlight, confirm own.json no longer names the victim, then watch
+ * whether egress still happens. Distinct from wedged-after-send boards.
+ * Requires FLEET_PHASED_WEDGE_HEALTH=1. Default ProgramCell DO name used by
+ * this harness: program:default → ProgramCellDO:8b3f8c… (see worker.js).
+ */
+const STALE_OWNER = process.env.FLEET_PHASED_STALE_OWNER === "1";
+const STALE_OWNER_CELL =
+  process.env.FLEET_PHASED_STALE_OWNER_CELL ||
+  "ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f";
+const STALE_SEND_WATCH_MS = Math.max(
+  2_000,
+  Number(process.env.FLEET_PHASED_STALE_SEND_WATCH_MS || 5_000)
+);
+if (STALE_OWNER && !WEDGE_HEALTH) {
+  console.error("fleet-phased: FLEET_PHASED_STALE_OWNER=1 requires FLEET_PHASED_WEDGE_HEALTH=1");
+  process.exit(1);
+}
+if (STALE_OWNER) {
+  console.warn(
+    `fleet-phased: STALE_OWNER=1 cell=${STALE_OWNER_CELL} — wedge before send; fail if inFlight after own.json flips`
+  );
+}
+/**
  * Negative-control escape hatch: allow CELLD_OUTPUT_GATE=0 and/or
  * CELLD_FENCED_ACK=0 so the same wedged board can prove the bug still fires
  * on an unfenced binary before a clean clawql.2 result means anything.
@@ -255,6 +279,44 @@ async function fetchJson(url, init = {}, timeoutMs = 15_000) {
     return { ok: false, status: 0, body: { error: msg }, fetchError: true };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/** Lazy S3 client for stale-owner own.json polls (R2). */
+let _s3OwnClient = null;
+function parseCelldBucket(raw) {
+  const m = String(raw || "").match(/^s3:\/\/([^/]+)(?:\/(.*))?$/);
+  if (!m) return null;
+  return { bucket: m[1], prefix: m[2] ? m[2].replace(/\/?$/, "/") : "" };
+}
+async function readOwnJson(cellId) {
+  const parsed = parseCelldBucket(process.env.CELLD_BUCKET);
+  if (!parsed || !process.env.S3_ENDPOINT) {
+    return { ok: false, error: "no_bucket" };
+  }
+  if (!_s3OwnClient) {
+    const { S3Client } = await import("@aws-sdk/client-s3");
+    _s3OwnClient = new S3Client({
+      region: process.env.AWS_REGION || "auto",
+      endpoint: process.env.S3_ENDPOINT,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      forcePathStyle: true,
+    });
+  }
+  try {
+    const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+    const Key = `${parsed.prefix}cells/${cellId}/own.json`;
+    const r = await _s3OwnClient.send(
+      new GetObjectCommand({ Bucket: parsed.bucket, Key })
+    );
+    const text = await r.Body.transformToString();
+    const body = JSON.parse(text);
+    return { ok: true, node: body?.node || null, epoch: body?.epoch ?? null, raw: body };
+  } catch (err) {
+    return { ok: false, error: String(err?.name || err?.message || err) };
   }
 }
 
@@ -580,13 +642,15 @@ async function main() {
     await waitPortFree(n.internal);
     // Fresh node-session id per start so a fenced identity cannot renew against
     // the same CELLD_NODE after orchestrator restart (lease-sweep is upstream).
+    const celldNodeId = `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    n.nodeId = celldNodeId;
     const nodeEnv = {
       ...process.env,
       CELLD_WEDGE_HEALTH_FLAG: n.wedgeFlag,
       // Durable-ack latency (wait_us on durable_wait); set RUST_LOG=timing=debug
       // on the board env to populate node logs for PUT vs PUT+GET A/B.
       RUST_LOG: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || "",
-      CELLD_NODE: `fleet_${name}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      CELLD_NODE: celldNodeId,
     };
     if (OMIT_REMOVED_CELLD_ENVS) {
       delete nodeEnv.CELLD_OUTPUT_GATE;
@@ -864,7 +928,10 @@ async function main() {
     // during_call: prove the outbound hang reached mock pets before kill.
     // A gate that blocks send forever can also yield 0 lost intents — that is
     // an availability failure (call_never_sent), not a durability win.
+    // STALE_OWNER flips the order: wedge first, confirm own.json moved, then
+    // watch for late inFlight (stale egress) before SIGKILL.
     let callSent = null;
+    let staleOwner = null;
     if (phase === "during_call") {
       const ac = new AbortController();
       const runPromise = fetch(`${baseV}/program/run`, {
@@ -873,82 +940,213 @@ async function main() {
         body: JSON.stringify(body),
         signal: ac.signal,
       }).catch(() => null);
-      const inFlightWaitStart = Date.now();
-      let sawInFlight = false;
-      let inFlightPolls = 0;
-      let inFlightAtKill = 0;
-      for (let w = 0; w < 80; w++) {
-        inFlightPolls += 1;
-        const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
-        inFlightAtKill = Number(ledger.body?.inFlight || 0);
-        if (inFlightAtKill > 0) {
-          sawInFlight = true;
-          break;
+      const victimNodeId = nodes[victim].nodeId || null;
+
+      if (STALE_OWNER) {
+        // Freeze the victim so it cannot renew its node lease; peers can take
+        // ownership while the process is still alive. Health-wedge alone does
+        // not stop lease renewal. Then SIGCONT and watch for stale egress.
+        const t0 = Date.now();
+        let ownershipMovedAt = null;
+        let ownershipEpoch = null;
+        let ownershipNode = null;
+        let inFlightFirstAt = null;
+        let sawInFlight = false;
+        let inFlightAtKill = 0;
+        let inFlightPolls = 0;
+        let frozeAt = null;
+        let thawedAt = null;
+        writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
+        // Brief head-start so the write can enter the output gate before freeze.
+        await sleep(300);
+        if (nodes[victim].pid) {
+          try {
+            process.kill(nodes[victim].pid, "SIGSTOP");
+            frozeAt = Date.now();
+          } catch {
+            /* */
+          }
         }
-        await sleep(100);
-      }
-      callSent = {
-        sawInFlight,
-        inFlightPolls,
-        inFlightWaitMs: Date.now() - inFlightWaitStart,
-        inFlightAtKill,
-      };
-      if (!sawInFlight) {
-        // Do not wedge/kill a trial that never reached the upstream — that
-        // would confuse durability scoring with a blocked-before-send gate.
+        const ownDeadline = t0 + Math.max(WEDGE_HOLD_MS, CELLD_TTL_MS * 4);
+        while (Date.now() < ownDeadline && ownershipMovedAt == null) {
+          inFlightPolls += 1;
+          // inFlight cannot advance while frozen; still poll for pre-freeze send.
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          inFlightAtKill = Number(ledger.body?.inFlight || 0);
+          if (inFlightAtKill > 0 && !sawInFlight) {
+            sawInFlight = true;
+            inFlightFirstAt = Date.now();
+          }
+          const own = await readOwnJson(STALE_OWNER_CELL);
+          if (own.ok && own.node && victimNodeId && own.node !== victimNodeId) {
+            ownershipMovedAt = Date.now();
+            ownershipEpoch = own.epoch;
+            ownershipNode = own.node;
+            break;
+          }
+          await sleep(150);
+        }
+        // Thaw: victim is now a live process whose epoch/lease may be stale.
+        if (nodes[victim].pid) {
+          try {
+            process.kill(nodes[victim].pid, "SIGCONT");
+            thawedAt = Date.now();
+          } catch {
+            /* */
+          }
+        }
+        try {
+          unlinkSync(nodes[victim].wedgeFlag);
+        } catch {
+          /* */
+        }
+        const watchUntil = Date.now() + STALE_SEND_WATCH_MS;
+        while (Date.now() < watchUntil) {
+          inFlightPolls += 1;
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          inFlightAtKill = Number(ledger.body?.inFlight || 0);
+          if (inFlightAtKill > 0 && !sawInFlight) {
+            sawInFlight = true;
+            inFlightFirstAt = Date.now();
+          }
+          if (ownershipMovedAt == null) {
+            const own = await readOwnJson(STALE_OWNER_CELL);
+            if (own.ok && own.node && victimNodeId && own.node !== victimNodeId) {
+              ownershipMovedAt = Date.now();
+              ownershipEpoch = own.epoch;
+              ownershipNode = own.node;
+            }
+          }
+          await sleep(100);
+        }
+        const staleSend =
+          Boolean(ownershipMovedAt) &&
+          Boolean(sawInFlight) &&
+          inFlightFirstAt != null &&
+          thawedAt != null &&
+          inFlightFirstAt >= Math.max(ownershipMovedAt, thawedAt);
+        callSent = {
+          sawInFlight,
+          inFlightPolls,
+          inFlightWaitMs: (inFlightFirstAt || Date.now()) - t0,
+          inFlightAtKill,
+          inFlightFirstAtMs: inFlightFirstAt ? inFlightFirstAt - t0 : null,
+        };
+        staleOwner = {
+          victimNodeId,
+          ownershipMoved: ownershipMovedAt != null,
+          ownershipMovedAtMs: ownershipMovedAt ? ownershipMovedAt - t0 : null,
+          ownershipNode,
+          ownershipEpoch,
+          staleSend,
+          frozeAtMs: frozeAt ? frozeAt - t0 : null,
+          thawedAtMs: thawedAt ? thawedAt - t0 : null,
+          cell: STALE_OWNER_CELL,
+          wedgeHoldMs: WEDGE_HOLD_MS,
+          staleSendWatchMs: STALE_SEND_WATCH_MS,
+          method: "SIGSTOP_lease_expire_SIGCONT",
+          meaning:
+            "Freeze victim (no lease renew) → wait own.json flip → SIGCONT. staleSend=true if inFlight first appears after both ownership move and thaw — live stale writer acked/sent.",
+        };
+        if (nodes[victim].pid) {
+          process.kill(nodes[victim].pid, "SIGKILL");
+          nodes[victim].pid = null;
+        }
         ac.abort();
         await runPromise;
-        phaseStats[phase].failures += 1;
-        phaseStats[phase].n += 1;
-        trials.push({
-          i,
-          phase,
-          programId,
-          ok: false,
-          pauseFailed: false,
-          failureClass: "availability",
-          failureReason: "call_never_sent",
-          callSent,
-          detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
-        });
-        console.warn(
-          `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
-        );
-        writeEvidencePartial();
-        if (!nodes[victim].pid) await restartNode(victim);
-        continue;
+        for (let w = 0; w < 30; w++) {
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          if ((ledger.body?.inFlight || 0) === 0) break;
+          await sleep(100);
+        }
+        runRes = {
+          body: {
+            status: "paused_for_kill",
+            pauseKind: "during_call",
+            wedgedHealth: true,
+            staleOwner: true,
+            callSent,
+            staleOwnerProbe: staleOwner,
+          },
+        };
+      } else {
+        const inFlightWaitStart = Date.now();
+        let sawInFlight = false;
+        let inFlightPolls = 0;
+        let inFlightAtKill = 0;
+        for (let w = 0; w < 80; w++) {
+          inFlightPolls += 1;
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          inFlightAtKill = Number(ledger.body?.inFlight || 0);
+          if (inFlightAtKill > 0) {
+            sawInFlight = true;
+            break;
+          }
+          await sleep(100);
+        }
+        callSent = {
+          sawInFlight,
+          inFlightPolls,
+          inFlightWaitMs: Date.now() - inFlightWaitStart,
+          inFlightAtKill,
+        };
+        if (!sawInFlight) {
+          // Do not wedge/kill a trial that never reached the upstream — that
+          // would confuse durability scoring with a blocked-before-send gate.
+          ac.abort();
+          await runPromise;
+          phaseStats[phase].failures += 1;
+          phaseStats[phase].n += 1;
+          trials.push({
+            i,
+            phase,
+            programId,
+            ok: false,
+            pauseFailed: false,
+            failureClass: "availability",
+            failureReason: "call_never_sent",
+            callSent,
+            detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
+          });
+          console.warn(
+            `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
+          );
+          writeEvidencePartial();
+          if (!nodes[victim].pid) await restartNode(victim);
+          continue;
+        }
+        await sleep(200);
+        // Hang node health so peers see a wedged member; hold ~2× TTL so the
+        // lease can move while the victim still runs the mid-flight call.
+        if (WEDGE_HEALTH) {
+          writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
+          await sleep(WEDGE_HOLD_MS);
+        }
+        if (nodes[victim].pid) {
+          process.kill(nodes[victim].pid, "SIGKILL");
+          nodes[victim].pid = null;
+        }
+        try {
+          unlinkSync(nodes[victim].wedgeFlag);
+        } catch {
+          /* */
+        }
+        ac.abort();
+        await runPromise;
+        for (let w = 0; w < 30; w++) {
+          const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          if ((ledger.body?.inFlight || 0) === 0) break;
+          await sleep(100);
+        }
+        runRes = {
+          body: {
+            status: "paused_for_kill",
+            pauseKind: "during_call",
+            wedgedHealth: WEDGE_HEALTH,
+            callSent,
+          },
+        };
       }
-      await sleep(200);
-      // Hang node health so peers see a wedged member; hold ~2× TTL so the
-      // lease can move while the victim still runs the mid-flight call.
-      if (WEDGE_HEALTH) {
-        writeFileSync(nodes[victim].wedgeFlag, `wedge ${Date.now()}\n`);
-        await sleep(WEDGE_HOLD_MS);
-      }
-      if (nodes[victim].pid) {
-        process.kill(nodes[victim].pid, "SIGKILL");
-        nodes[victim].pid = null;
-      }
-      try {
-        unlinkSync(nodes[victim].wedgeFlag);
-      } catch {
-        /* */
-      }
-      ac.abort();
-      await runPromise;
-      for (let w = 0; w < 30; w++) {
-        const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
-        if ((ledger.body?.inFlight || 0) === 0) break;
-        await sleep(100);
-      }
-      runRes = {
-        body: {
-          status: "paused_for_kill",
-          pauseKind: "during_call",
-          wedgedHealth: WEDGE_HEALTH,
-          callSent,
-        },
-      };
     } else {
       runRes = await fetchJson(`${baseV}/program/run`, {
         method: "POST",
@@ -1265,9 +1463,6 @@ async function main() {
       }
     }
 
-    if (expectOk) st.ok += 1;
-    else st.failures += 1;
-
     // Outcome-based class (v2 gates). Correctness = wrong outcome; availability = no outcome in time.
     let failureClass = null;
     let failureReason = null;
@@ -1280,9 +1475,17 @@ async function main() {
     } else if (statePreservedTrial?.reason === "digest_mismatch") {
       failureClass = "correctness";
       failureReason = "digest_mismatch";
+    } else if (staleOwner?.staleSend) {
+      failureClass = "correctness";
+      failureReason = "stale_owner_send";
+      expectOk = false;
     } else if (midFlightStorage && midFlightStorage.present === false) {
       failureClass = "correctness";
       failureReason = "lost_midflight_intent";
+    } else if (STALE_OWNER && staleOwner && !staleOwner.ownershipMoved) {
+      failureClass = "availability";
+      failureReason = "ownership_never_moved";
+      expectOk = false;
     } else if (avail.resumeDeadlineMiss) {
       failureClass = "availability";
       failureReason = "resume_deadline_miss";
@@ -1294,6 +1497,9 @@ async function main() {
       failureClass = "availability";
       failureReason = "no_expected_outcome";
     }
+
+    if (expectOk) st.ok += 1;
+    else st.failures += 1;
 
     trials.push({
       i,
@@ -1312,6 +1518,7 @@ async function main() {
       failureReason,
       midFlightStorage,
       callSent,
+      staleOwner,
       resumeMs,
       resumeActiveMs,
       recoveryMs: avail.recoveryMs,
@@ -1352,8 +1559,11 @@ async function main() {
       const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
       const callSentFlag =
         phase === "during_call" ? (callSent?.sawInFlight ? 1 : 0) : "-";
+      const staleFlag = STALE_OWNER
+        ? ` staleSend=${staleOwner?.staleSend ? 1 : 0} ownMoved=${staleOwner?.ownershipMoved ? 1 : 0}`
+        : "";
       console.log(
-        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} callSent=${callSentFlag} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
+        `fleet-phased: ${i + 1}/${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} lostIntent=${lostIntent} callSent=${callSentFlag}${staleFlag} last=${phase} ok=${expectOk} resumeMs=${resumeMs} fenceMode=${FENCE_MODE} rate=${rate.toFixed(2)}/s eta=${etaMin}m`
       );
       writeEvidencePartial();
     }
@@ -1647,7 +1857,7 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill)",
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)",
             },
             availability: {
               failures: availabilityFailures,
@@ -1733,6 +1943,8 @@ async function main() {
       phases: PHASES,
       wedgeHealth: WEDGE_HEALTH,
       wedgeHoldMs: WEDGE_HEALTH ? WEDGE_HOLD_MS : 0,
+      staleOwnerProbe: STALE_OWNER,
+      staleOwnerCell: STALE_OWNER ? STALE_OWNER_CELL : null,
       celldBinaryVersion: CELLD_BINARY_VERSION,
       fenceMode: FENCE_MODE,
       outputGate: OUTPUT_GATE_ON,
@@ -1800,6 +2012,38 @@ async function main() {
           })),
         };
       })(),
+      staleOwner: STALE_OWNER
+        ? (() => {
+            const during = trials.filter((t) => t.phase === "during_call");
+            const moved = during.filter((t) => t.staleOwner?.ownershipMoved);
+            const staleSend = during.filter((t) => t.staleOwner?.staleSend);
+            const blockedAfterMove = during.filter(
+              (t) =>
+                t.staleOwner?.ownershipMoved &&
+                t.callSent?.sawInFlight !== true &&
+                t.midFlightStorage?.present === true
+            );
+            return {
+              enabled: true,
+              trials: during.length,
+              ownershipMoved: moved.length,
+              staleSend: staleSend.length,
+              gateBlockedAfterMoveWithIntent: blockedAfterMove.length,
+              meaning:
+                "Wedge before send; poll own.json. staleSend = inFlight first after ownership left victim (tip Fleet VerifyOwnership gap). gateBlockedAfterMoveWithIntent = ownership moved, no egress, intent still on survivor (desired).",
+              sample: during.slice(0, 20).map((t) => ({
+                i: t.i,
+                ownershipMoved: t.staleOwner?.ownershipMoved ?? null,
+                ownershipMovedAtMs: t.staleOwner?.ownershipMovedAtMs ?? null,
+                staleSend: t.staleOwner?.staleSend ?? null,
+                sawInFlight: t.callSent?.sawInFlight ?? null,
+                intentPresent: t.midFlightStorage?.present ?? null,
+                ok: t.ok,
+                failureReason: t.failureReason ?? null,
+              })),
+            };
+          })()
+        : null,
       /**
        * Every write-kill and await trial is counted. Column rates use property-specific
        * denominators (not a filtered subset of “good” trials). See each note.

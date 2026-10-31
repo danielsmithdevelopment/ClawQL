@@ -1,19 +1,33 @@
-# Stale-owner probe (tip 0.6.3) — not yet measured
+# Stale-owner probe (tip 0.6.3)
 
 ## Why this is separate from wedged-health N=100
 
-The wedged `during_call` board hangs readiness so the lease can move, then SIGKILLs while the outbound call is in flight. Stock **0.6.3** held that board (**0/100** lost, **100/100** call-sent) at `CELLD_TTL_MS=3000` (disclosed — not stock 10s).
+The wedged `during_call` board waits for mock-pets `inFlight` **then** wedges and SIGKILLs. Stock **0.6.3** held that board (**0/100** lost) at `CELLD_TTL_MS=3000` (disclosed).
 
-That does **not** prove the Fleet-proof path’s skipped `VerifyOwnership` is harmless. The interesting residual is: an **old owner process still writing / settling the output gate after `own.json` already names a new owner**, without relying on kill timing.
+That does **not** exercise “old owner still settling the output gate after `own.json` names a new owner.” The Fleet proof path still skips `VerifyOwnership` on tip; this probe is aimed at that gap.
 
-## Target observation
+## Harness (`FLEET_PHASED_STALE_OWNER=1`)
 
-1. Two-node stock 0.6.3 fleet (wedge-capable binary only for chaos readiness hang).
-2. Start a write that enters the output gate (Fleet or Bucket proof).
-3. Move ownership (wedge readiness / lease expiry) while the old owner is still alive.
-4. Confirm via bucket `own.json` (or peer diagnose) that the new owner holds the cell **before** the old owner’s gate settles.
-5. Pass if the old owner **does not** ack/send after that flip (gate fails closed). Fail if it acks/sends as a stale writer (especially on a Fleet proof).
+Requires `FLEET_PHASED_WEDGE_HEALTH=1`. For each `during_call` trial:
 
-## Status
+1. Start the hang-on-fetch write on the victim.
+2. **Immediately** wedge victim readiness (do **not** wait for inFlight first).
+3. Poll R2 `cells/<ProgramCellDO>/own.json` until it no longer names the victim’s `CELLD_NODE` (or hold expires).
+4. Watch an extra window for late `inFlight`.
+5. **Fail correctness** (`stale_owner_send`) if inFlight first appears **after** ownership left the victim.
+6. SIGKILL; resume on survivor; still require intent visible (`lost_midflight_intent` if missing).
+7. If ownership never moved → availability `ownership_never_moved`.
 
-Not run yet. Until it fails on tip, upstream contact stays the **short question** in `BUG_REPORT_DRAFT.md`, not a bug report. If this probe loses intents on stock 0.6.3, upgrade the draft to a tip bug report with that reproduction before sending.
+Evidence: `docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json` (N=40 tip board in flight).
+
+## Pass / fail for durability claim
+
+| Result | Meaning for claim |
+| ------ | ----------------- |
+| 0 staleSend, ownership usually moved, 0 lost intent | Tip closes this path — claim can rest on stock 0.6.3 |
+| staleSend > 0 on tip | Tip bug — upgrade email to bug report; land Fleet VerifyOwnership (+ epoch) on a clawql binary and re-prove |
+| ownership rarely moves | Raise hold / lower TTL; do not claim either way |
+
+## TTL disclosure
+
+Stale-owner tip board uses a short lease (`CELLD_TTL_MS=2000`, hold 6s) so ownership can flip during the durable wait. Not stock 10s — disclosed in evidence `resumeLatencyNote` / `celldTtlMs`.
