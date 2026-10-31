@@ -138,7 +138,7 @@ Harness still scored these as `failureClass=availability` (`no_expected_outcome`
 
 **Root cause (celld already has an output gate — it failed under kill):** denoland/celld `crates/logic/output_gate.rs` holds `Channel::Fetch` until LTX proves a write position under the resident lease epoch (`CELLD_OUTPUT_GATE` default on; `=0` disables). Settled gaps still happened → either proof/ownership race, stale writer accepted into a discarded generation (bucket “cannot refuse a stale writer”), or local SQLite `synchronous=NORMAL` position ahead of what survivors can restore. **One fix closes both holes:** fenced acknowledgment — every storage write returns a sequence; egress held until durable **under the current lease epoch**; incarnation in lease + every write; R2 conditional reject of stale incarnation; refuse start if a live incarnation already holds the node ID. Spec: [celld-output-gate-epoch-fence.md](../../streams/celld-output-gate-epoch-fence.md). Local `storage.get` after `put` is **not** part of the fix (sanity only).
 
-**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight intent check in the harness, on **`0.4.0-clawql.3` at stock `CELLD_TTL_MS=10000`** (not the 3s wedge board); restore mechanism claim only after correctness passes with that check. Alive-vs-ready + bounded maintenance shipped in clawql.3 (see AVAILABILITY.md).
+**Conformance / next board:** TLA+ `IntentDurablyAckedBeforeSend`; trace checker; kill-after-fetch regression (**expected fail** until gate proven — then `CLAWQL_REQUIRE_OUTPUT_GATE=1`). v3: same frozen criteria + automatic mid-flight intent check in the harness, on **stock celld `0.6.3` at stock `CELLD_TTL_MS=10000`** (claim evidence must match the binary we ship — not the clawql.3 fork of 0.4.0). Alive-vs-ready + bounded maintenance remain in clawql.3 for availability (tip 0.6.3 has no `/alive` yet; see AVAILABILITY.md).
 
 ### celld `0.4.0-clawql.3` — alive vs ready + bounded maintenance
 
@@ -213,9 +213,13 @@ Sequence on every trial: durable ack → pets hang in flight → wedge/kill → 
 
 **Efficacy / residual-rate wording:** with a 100% unfenced baseline and proven call-sent on the fenced arm, 0/100 fenced proves the fence closes **this** wedged-fleet lost-intent failure mode without turning it into an availability hole. On its own, N=100 still only bounds a residual loss rate below about **3%** (rule-of-three). Restoring the broader mechanism claim (patched runtime + output gate on) waits on the **v3 board at N=1,000** with the automatic R2 intent check, which tightens that bound toward **~0.3%**.
 
-### N≈1000 v3 — in progress (stock TTL, clawql.3)
+### N≈1000 v3 — restarted on stock 0.6.3 (binary alignment)
 
-Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json). Shape: 750 write-kill + 250 await; `correctness_availability_v2` with mid-flight intent check; **`CELLD_TTL_MS=10000` (stock)**; binary **`0.4.0-clawql.3`**; fence on; wedge off. Do not compare resumeMs to the TTL=3000 wedge board (~3.8s). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3.
+Evidence target: [`phased-n1000-v3-correctness-availability.json`](../program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json). Shape: 750 write-kill + 250 await; `correctness_availability_v2` with mid-flight intent check; **`CELLD_TTL_MS=10000` (stock)**; binary **stock `0.6.3`** (always-on gate; `FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1`); wedge off.
+
+**Why restarted (not based on results):** an earlier clawql.3 arm was clean through ~110/750, but a restored claim must rest on the binary we ship. Tip **0.6.3** already held the wedged N=100 board (0/100 lost; that wedge board used **`CELLD_TTL_MS=3000`**, not stock 10s — keep disclosed). Partial clawql.3 abort saved at `/opt/cursor/artifacts/phased-n1000-v3-clawql3-aborted-for-063-align.json` (not authoritative). Frozen v2 criteria unchanged. PUT-only vs PUT+GET A/B and claim restore follow a green v3 on 0.6.3.
+
+**Upstream contact:** short question (not a bug report) — tip held; ask whether Fleet proofs intentionally skip `VerifyOwnership`. Draft: [`vendor/celld/upstream-report/BUG_REPORT_DRAFT.md`](../../../vendor/celld/upstream-report/BUG_REPORT_DRAFT.md). Dedicated stale-owner probe still open before any tip-bug filing.
 
 
 ### Outcome unknown ~48% — read the per-phase table
