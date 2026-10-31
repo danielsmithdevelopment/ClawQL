@@ -223,7 +223,18 @@ async function fetchJson(url, init = {}, timeoutMs = 15_000) {
 
 function spawnLogged(cmd, args, logPath, env = process.env) {
   mkdirSync(dirname(logPath), { recursive: true });
-  const fd = openSync(logPath, "w");
+  // Append when collecting timing (RUST_LOG=timing*) so durable_wait wait_us
+  // survives startNode restarts; truncate otherwise to keep board logs small.
+  const rustLog = String(env.RUST_LOG || env.CELLD_RUST_LOG || "");
+  const appendTiming = /timing/i.test(rustLog);
+  const fd = openSync(logPath, appendTiming ? "a" : "w");
+  if (appendTiming) {
+    const { writeSync } = require("node:fs");
+    writeSync(
+      fd,
+      `\n----- celld restart ${new Date().toISOString()} ${cmd} ${args.join(" ")} -----\n`
+    );
+  }
   return spawn(cmd, args, {
     cwd: STREAMS,
     env,

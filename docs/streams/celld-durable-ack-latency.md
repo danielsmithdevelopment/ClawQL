@@ -46,3 +46,17 @@ Until a measured table lands beside a green focused/wedged board, treat latency 
 
 - [celld-output-gate-epoch-fence.md](./celld-output-gate-epoch-fence.md)
 - [vendor/celld/FORK.md](../../vendor/celld/FORK.md)
+
+## Measured (wedged N=100 fenced, clawql.2)
+
+Board: hang-`/health`-then-kill `during_call`, `CELLD_FENCED_ACK_CONFIRM_GET=1`, `RUST_LOG=timing=debug`.
+
+| Metric | Value | Note |
+| ------ | ----- | ---- |
+| `durable_wait` samples retained | **1** | Node logs truncate on each restart |
+| That sample `wait_us` | **1 057 000** (~1.06 s) | `proof=bucket` |
+| ResumeMs p50 / p99 | **4.1 s / 4.8 s** | Lease/orchestration floor, not gate wait |
+| PUT-only vs PUT+GET | **TBD** | Run A/B with append-mode logs or harness `wait_us` export |
+
+Until a real distribution exists, do **not** quote a gate-latency p50/p99 in publish copy.
+

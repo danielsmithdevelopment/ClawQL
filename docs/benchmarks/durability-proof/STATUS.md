@@ -174,6 +174,22 @@ Evidence: [`phased-n100-wedge-during-call-unfenced-control.json`](../program-cel
 
 Every number is measured. Availability costs are stated rather than left for the reader to discover. Scope: two celld nodes, one storage provider (Cloudflare R2). Avoid “durable execution” and “exactly once.”
 
+### N=100 wedged fenced clawql.2 (paired with unfenced control)
+
+Evidence: [`phased-n100-wedge-during-call-fenced.json`](../program-cell-fleet-kill/phased-n100-wedge-during-call-fenced.json) · `0.4.0-clawql.2` · `CELLD_OUTPUT_GATE=1` + `CELLD_FENCED_ACK=1` + `CELLD_FENCED_ACK_CONFIRM_GET=1` · `RUST_LOG=timing=debug` · same hang-`/health`-then-kill `during_call` board as the unfenced control.
+
+| Arm | Fence | `lost_midflight_intent` | Rate |
+| --- | ----- | ------------------------ | ---- |
+| Unfenced control | GATE=0, FENCED_ACK=0 | **100/100** | **100%** |
+| Fenced clawql.2 | GATE=1, FENCED_ACK=1, confirm GET on | **0/100** | **0%** |
+
+Correctness + availability gates **PASS** on the fenced arm (`ok=true`). One survivor self-fence/restart counted, zero deadline misses. ResumeMs p50≈4.1s / p99≈4.8s (not the gate wait).
+
+**Durable-ack latency:** node logs are opened write-truncate on each `startNode`, so only **one** `durable_wait` sample survived (`wait_us=1_057_000`, bucket proof ≈1.06s). **Not** a p50/p99. PUT-only vs PUT+GET A/B still open — needs append-mode logs or harness-side `wait_us` capture before publishing a number. See [`celld-durable-ack-latency.md`](../../streams/celld-durable-ack-latency.md).
+
+**Efficacy read:** with a 100% unfenced baseline on this harness, 0/100 fenced is strong evidence the epoch-at-confirm / output-gate fence closes the wedged-fleet lost-intent hole — not a weak “below 3%” bound from an uncalibrated board.
+
+
 ### Outcome unknown ~48% — read the per-phase table
 
 Aggregate “about half unknown” is a targeting artifact: kills are aimed evenly at four phases; two are the in-flight window. Evidence: [`phased-evidence.json`](../program-cell-fleet-kill/phased-evidence.json) · narrative [`AVAILABILITY.md`](../program-cell-fleet-kill/AVAILABILITY.md).
