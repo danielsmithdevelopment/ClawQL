@@ -8,13 +8,13 @@
 
 Among completed `during_call` trials (`i % 4 === 2`), live KV holds meta for **146/150**. The **only** gaps are the five 404 failures' indices — except **494**, which is present as create-only meta.
 
-| Trial | Current-run keys in live KV / in-window local gens | Intent journaled? | Live `/program/status` |
-| ----- | -------------------------------------------------- | ----------------- | ---------------------- |
-| 134 | **MISSING** (never in any local gen in neighbor window; e130–e144 never had 134) | no | N/A (no programId retained; neighbors 130+138 present) |
-| 286 | **MISSING** in current-run window (prior-run ts `…057485` only) | no | N/A |
-| 390 | **MISSING** in current-run window (prior-run ts only) | no | N/A |
-| 442 | **MISSING** in current-run window (prior-run ts only) | no | N/A |
-| 494 | **PRESENT** `phased_during_call_494_1793409345554:meta` only | **never** (0 intent keys across all gens for this ts) | `ok:true`, `status:running`, `pauseKind` absent, `intents:[], entries:[]` |
+| Trial | Current-run keys in live KV / in-window local gens                               | Intent journaled?                                     | Live `/program/status`                                                    |
+| ----- | -------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------- |
+| 134   | **MISSING** (never in any local gen in neighbor window; e130–e144 never had 134) | no                                                    | N/A (no programId retained; neighbors 130+138 present)                    |
+| 286   | **MISSING** in current-run window (prior-run ts `…057485` only)                  | no                                                    | N/A                                                                       |
+| 390   | **MISSING** in current-run window (prior-run ts only)                            | no                                                    | N/A                                                                       |
+| 442   | **MISSING** in current-run window (prior-run ts only)                            | no                                                    | N/A                                                                       |
+| 494   | **PRESENT** `phased_during_call_494_1793409345554:meta` only                     | **never** (0 intent keys across all gens for this ts) | `ok:true`, `status:running`, `pauseKind` absent, `intents:[], entries:[]` |
 
 Neighbor successful `during_call` programs (e.g. 130, 490) retain `pauseKind=during_call` and post-resume entries — the shape expected after journal-before-hang.
 

@@ -76,11 +76,11 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 **Definitions (outcome, not column):**
 
-| Class                    | Meaning                                         | Counts as                                                                                                                                                                          |
-| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Class                    | Meaning                                         | Counts as                                                                                                                                                                                                                                              |
+| ------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Correctness failure**  | A **wrong** outcome                             | duplicate write; `journal_divergence`; write-step rerun; **digest mismatch** (`statePreserved.reason === digest_mismatch`); **lost pretends-journaled mid-flight meta/intent** (R2/DO absent after journal-before-hang — not a visibility-timeout 404) |
-| **Availability failure** | **No** outcome in **wall-clock** time / capture | resume wall-clock > **60 000 ms** (recovery inclusive); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write |
-| **Outer completion**     | Reported overall                                | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                                                       |
+| **Availability failure** | **No** outcome in **wall-clock** time / capture | resume wall-clock > **60 000 ms** (recovery inclusive); pause failure (`pause failed: …`); **twin_capture_failed**; await arm that does not survive+complete without a wrong write                                                                     |
+| **Outer completion**     | Reported overall                                | Each outer miss is assigned to correctness **or** availability above — not a third zero-gate                                                                                                                                                           |
 
 **Pass gates (frozen for v2 — do not loosen after results):**
 
@@ -101,11 +101,11 @@ Snapshot ~620/750 write-kill (await not started). Harness still reports **correc
 
 **Report as clusters (trials are not independent):** **15 classified failures ≈ 5 stall-seeded incidents** (covering 13 fails) **+ 1 twin + 1 lone `during_call` 404**. Fixing the underlying `/health` hang addresses most failures at once.
 
-| Underlying incident | Trials | Surface classes |
-| ------------------- | ------ | --------------- |
-| Stall cluster | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
-| Twin | 335 | `twin_capture_failed` |
-| Lone mid-flight | 494 | `no_expected_outcome` (404) |
+| Underlying incident | Trials                                    | Surface classes                                                         |
+| ------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| Stall cluster       | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
+| Twin                | 335                                       | `twin_capture_failed`                                                   |
+| Lone mid-flight     | 494                                       | `no_expected_outcome` (404)                                             |
 
 **Per-class counts (same 15):** deadline miss ×5 · pause_failed ×4 · no_expected_outcome ×5 · twin ×1.
 
@@ -120,10 +120,10 @@ Snapshot ~620/750 write-kill (await not started). Harness still reports **correc
 
 Evidence: [`during-call-404-r2-settle.json`](../program-cell-fleet-kill/during-call-404-r2-settle.json). Method: live ProgramCellDO `_cf_KV` + 1879 local generation SQLite copies + `GET /program/status` for the one present id. No writes to the prefix.
 
-| Trial | Journal/meta in current-run storage | Intent | Verdict |
-| ----- | ----------------------------------- | ------ | ------- |
-| **134, 286, 390, 442** | **Missing** — never present in-window (neighbors ±4 present with full journals; e130–e144 never contained 134) | never | **Durability failure** — not “wedged node slow to see them” |
-| **494** | Create `meta` **present** (`phased_during_call_494_1793409345554`); live `/status` ok | **never** durable (`intents:[]`, no `pauseKind`) | **Durability failure** for the mid-flight intent contract; create meta alone ≠ journal-before-hang |
+| Trial                  | Journal/meta in current-run storage                                                                            | Intent                                           | Verdict                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **134, 286, 390, 442** | **Missing** — never present in-window (neighbors ±4 present with full journals; e130–e144 never contained 134) | never                                            | **Durability failure** — not “wedged node slow to see them”                                        |
+| **494**                | Create `meta` **present** (`phased_during_call_494_1793409345554`); live `/status` ok                          | **never** durable (`intents:[]`, no `pauseKind`) | **Durability failure** for the mid-flight intent contract; create meta alone ≠ journal-before-hang |
 
 Harness still scored these as `failureClass=availability` (`no_expected_outcome` / first-404 terminal; running process predates mid-flight 404 retry). **Do not publish correctness = 0** for this board: four programs’ pretends-journaled state are absent from R2-backed DO storage, and 494 never got a durable write intent. That also fails the state-preserved reading of “journaled mid-flight state survives.” Outside writes still `writeCount=0` / no duplicates — the wrongness is **lost journal**, not a repeated write.
 
