@@ -599,7 +599,9 @@ export function BenchmarksLanding() {
             <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
               {durabilityBenchmarkMeta.measuredLabel}{' '}
               <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {durabilityBenchmarkMeta.measuredAt} · {durabilityBenchmarkMeta.boardLabel}
+                · {durabilityBenchmarkMeta.measuredAt} · {durabilityBenchmarkMeta.boardLabel} · tip{' '}
+                {durabilityBenchmarkMeta.tipRuntime} {durabilityBenchmarkMeta.tipRuntimeVersion} (
+                {durabilityBenchmarkMeta.tipPackageLabel})
               </span>
             </p>
             <p className="max-w-3xl text-sm/6 text-mist-800 dark:text-mist-200">
@@ -800,8 +802,9 @@ export function BenchmarksLanding() {
           ))}
         </ul>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactKillMid} ·{' '}
-          {durabilityBenchmarkMeta.artifactComparison} · {durabilityBenchmarkMeta.statusDoc}
+          Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactWedgeTip} ·{' '}
+          {durabilityBenchmarkMeta.artifactStaleTip} · {durabilityBenchmarkMeta.artifactComparison} ·{' '}
+          {durabilityBenchmarkMeta.artifactDurableWait} · {durabilityBenchmarkMeta.statusDoc}
         </p>
       </Section>
 
