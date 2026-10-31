@@ -27,11 +27,10 @@ import type { ArmResult, ComparisonEvidence, DurabilityArm } from "./types.js";
 
 export { COMPARISON_PACKAGE_ID, TIP_RUNTIME, TIP_RUNTIME_VERSION };
 
+/** Public / review tip package: ClawQL arms + peer stubs. Peer model-sims are opt-in only. */
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
   naiveRetryArm,
-  golemAtLeastOnceSimArm,
-  piInterruptSimArm,
   clawqlLostAckArm,
   programCelldArm,
   programCelldStaleOwnerArm,
@@ -39,6 +38,11 @@ const DEFAULT_ARMS: readonly DurabilityArm[] = [
   golemArm,
   piDurableClawqlArm,
   golemClawqlArm,
+];
+
+const PEER_MODEL_SIM_ARMS: readonly DurabilityArm[] = [
+  golemAtLeastOnceSimArm,
+  piInterruptSimArm,
 ];
 
 /** Package default N=50 so ClawQL rows match peer pilot denominators. */
@@ -77,7 +81,15 @@ export function runDurabilityComparisonBoardEffect(
   const n = parseComparisonN(env);
   const harnessCommit = detectHarnessCommit(env);
   const includeNaive = env.DURABILITY_COMPARISON_INCLUDE_NAIVE !== "0";
-  const selected = arms.filter((a) => includeNaive || a.id !== "naive-retry");
+  const includePeerSims = env.DURABILITY_COMPARISON_INCLUDE_PEER_SIMS === "1";
+  const base = arms.filter((a) => includeNaive || a.id !== "naive-retry");
+  const alreadyHasSims = base.some(
+    (a) => a.id === "golem-at-least-once-sim" || a.id === "pi-interrupt-sim"
+  );
+  const selected = [
+    ...base,
+    ...(includePeerSims && !alreadyHasSims ? PEER_MODEL_SIM_ARMS : []),
+  ];
 
   return Effect.gen(function* () {
     const results: ArmResult[] = [];
@@ -109,7 +121,7 @@ export function runDurabilityComparisonBoardEffect(
       metric:
         "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes" as const,
       honesty:
-        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Model-faithful golem-at-least-once-sim + pi-interrupt-sim are measured placeholders (not real peer runtimes); real golem/pi-durable rows stay pending_adapter. ClawQL lost-ack expansion pilot included. Include this package in config review.",
+        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Real golem/pi-durable rows stay pending_adapter until live adapters run (never measured in-repo yet — no prior live N=50 peer evidence). Peer model-sims are opt-in via DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1 for internal harness only — not published as peer measurements. ClawQL lost-ack pilot included (keys → keyed resend). Config-review package; named peers unpublished until maintainers review.",
       tipRuntime: TIP_RUNTIME,
       tipRuntimeVersion: TIP_RUNTIME_VERSION,
       arms: results,

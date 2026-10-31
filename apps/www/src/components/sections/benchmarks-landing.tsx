@@ -24,6 +24,7 @@ import {
 } from '@/lib/dominance-roadmap'
 import {
   durabilityBenchmarkClaim,
+  durabilityBenchmarkClaimCaveat,
   durabilityBenchmarkHeadline,
   durabilityBenchmarkLinks,
   durabilityBenchmarkMeta,
@@ -32,6 +33,7 @@ import {
   durabilityComparisonArms,
   durabilityHonestyNotes,
   durabilityLadderRows,
+  durabilityPeerReviewNote,
   durabilityPhaseFraming,
   durabilityPhaseRows,
   durabilityTtlRows,
@@ -608,6 +610,7 @@ export function BenchmarksLanding() {
               <span className="font-medium text-mist-950 dark:text-white">Claim: </span>
               {durabilityBenchmarkClaim}
             </p>
+            <p className="max-w-3xl text-xs/5 text-mist-600 dark:text-mist-400">{durabilityBenchmarkClaimCaveat}</p>
           </div>
         }
       >
@@ -743,11 +746,11 @@ export function BenchmarksLanding() {
         </ComparisonTable>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Dual-column comparison (tip package · celld 0.6.3)
+          Dual-column comparison (ClawQL · tip celld 0.6.3 · N=50)
         </h3>
         <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
           <caption className="sr-only">
-            Kill-mid-write duplicates, outcome_unknown, intent-on-resume, and call-sent by upstream mode
+            ClawQL kill-mid-write duplicates, outcome_unknown, intent-on-resume, and call-sent by upstream mode
           </caption>
           <thead>
             <tr>
@@ -778,6 +781,7 @@ export function BenchmarksLanding() {
             ))}
           </tbody>
         </ComparisonTable>
+        <p className="mt-3 max-w-3xl text-xs/5 text-mist-600 dark:text-mist-400">{durabilityPeerReviewNote}</p>
 
         <div className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {durabilityHonestyNotes.map((note) => (

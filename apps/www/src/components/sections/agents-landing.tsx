@@ -208,7 +208,7 @@ export function AgentsLanding() {
         headline="Built for production, not demo loops"
         subheadline={
           <p>
-            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · TEE-ready from day one
+            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · Tamper-evident audit · optional TEE
           </p>
         }
       >

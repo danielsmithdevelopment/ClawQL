@@ -1,6 +1,6 @@
 # Durability comparison board — celld · Pi Durable · Golem
 
-**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Real peer adapters still `pending_adapter`; **model-faithful** `golem-at-least-once-sim` / `pi-interrupt-sim` measured as placeholders (like `naive-retry`). ClawQL **lost-ack** expansion pilot at N=50 included.  
+**Status:** Schema **v2** tip package on stock **celld 0.6.3**. Default **N=50**. Real peer adapters `pending_adapter` (no in-repo live Golem/Pi N=50 evidence yet — wire adapters, do not publish sims as peers). ClawQL **lost-ack** pilot at N=50 (keys → keyed resend). **Do not publish named peer rows on /benchmarks until maintainers review.**  
 **Package:** [`comparison/manifest.json`](./comparison/manifest.json) · board [`comparison/evidence.json`](./comparison/evidence.json)  
 **Parent:** [STATUS.md](./STATUS.md) · [Golem honesty](../../gtm/golem-overlap-and-durability-honesty.md)
 
@@ -71,10 +71,10 @@ Publish **all** columns on every arm.
 
 ## Upstream modes
 
-1. **Idempotency-honoring** — Stripe-class: same key → one effect.  
+1. **Idempotency-honoring** — Stripe-class: same key → one effect (lost-ack → keyed resend; one unique effect).  
 2. **No idempotency** — retries can multiply effects.  
-3. **Lookup by reference** — planned (lost-ack + neither-API expansion).  
-4. **Neither keys nor lookup** — planned row (still pending).
+3. **Lookup by reference** — measured on ClawQL lost-ack row (check-then-decide; no resend).  
+4. **Neither keys nor lookup** — measured on ClawQL lost-ack non_idempotent mode (stay `outcome_unknown`).
 
 ---
 
@@ -84,11 +84,11 @@ Publish **all** columns on every arm.
 | ------ | ----- |
 | `clawql-file-journal` | Tier D / host file journal (remeasured every package; also `lost_ack` row) |
 | `clawql-program-celld` | ProgramCellDO on **stock celld 0.6.3** (fleet tip imported) |
-| `naive-retry` | Reference: blind re-send after kill |
-| `golem-at-least-once-sim` | **Model sim** (not real Golem): at-least-once retry; keys → one unique effect |
-| `pi-interrupt-sim` | **Model sim** (not real Pi): interrupt re-enters tool → at-least-once effects |
-| `pi-durable` | Pi Durable alone — `pending_adapter` until real adapter |
-| `golem` | Golem alone — `pending_adapter` until real adapter |
+| `naive-retry` | ClawQL reference: blind re-send after kill |
+| `golem-at-least-once-sim` | **Internal harness only** (opt-in env) — never a public peer row |
+| `pi-interrupt-sim` | **Internal harness only** (opt-in env) — never a public peer row |
+| `pi-durable` | Pi Durable alone — `pending_adapter` until live adapter (rewire; do not substitute sims) |
+| `golem` | Golem alone — `pending_adapter` until live adapter |
 | `pi-durable+clawql` | Pi → ClawQL MCP |
 | `golem+clawql` | Golem → ClawQL MCP |
 
@@ -135,9 +135,9 @@ Listed in [`manifest.json`](./comparison/manifest.json) `superseded[]`. Keep fil
 | File-journal + naive-retry remasure N=50 | **Shipped** |
 | ProgramCellDO during_call (non-wedge) | **Partial** (v3 tip import) |
 | ProgramCellDO wedged_owner / stale_owner | **Shipped** as **own rows** |
-| Peer model sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) | **Shipped** N=50 (labeled simulators) |
-| Real peer adapter rows | **pending_adapter** (null metrics) |
-| ClawQL lost-ack / neither pilot | **Shipped** N=50 on file-journal |
+| Peer model sims | **Internal only** (`DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1`) — not public |
+| Real peer adapter rows | **pending_adapter** — no prior live in-repo N=50; rewire adapters |
+| ClawQL lost-ack / neither pilot | **Shipped** N=50 (keys → keyed resend / one unique effect) |
 | Package manifest | **Shipped** |
 | Final N=1000 package | After review + green v3 |
 

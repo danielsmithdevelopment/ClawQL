@@ -214,7 +214,7 @@ export const homepageProofChips = [
   'Apache 2.0 core',
   'Event-driven, not prompt-driven',
   'OpenBench mini-firm proven',
-  'TEE-ready from day one',
+  'Tamper-evident audit · optional TEE',
 ] as const
 
 /**

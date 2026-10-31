@@ -2,6 +2,10 @@
  * ClawQL lost-ack expansion pilot (N=50): server processed the write; response never
  * arrived (SIGKILL after host apply). Modes: idempotent keys · lookup_by_reference ·
  * neither (non_idempotent, no key).
+ *
+ * Keys must resolve (safe resend → one unique effect) — not park unknown. That matches
+ * the REST clawql-mandate keyed-redrive product path; durable-runner still parks
+ * unknown until keyed resume is wired there.
  */
 
 import { Effect } from "effect";
@@ -10,15 +14,16 @@ import type { ArmModeResult, ArmResult, DurabilityArm, UpstreamMode } from "./ty
 
 const LOST_ACK_MODES: readonly {
   readonly upstreamMode: UpstreamMode;
-  readonly resumePolicy: "lost-ack-clawql" | "lost-ack-lookup";
+  readonly resumePolicy: "lost-ack-clawql" | "lost-ack-keyed-retry" | "lost-ack-lookup";
   readonly includeIdempotencyKey: boolean;
   readonly requireZeroDuplicates: boolean;
 }[] = [
   {
     upstreamMode: "idempotent",
-    resumePolicy: "lost-ack-clawql",
+    resumePolicy: "lost-ack-keyed-retry",
     includeIdempotencyKey: true,
-    requireZeroDuplicates: true,
+    // Keyed resend may count as a parent execute; unique effects must stay 1.
+    requireZeroDuplicates: false,
   },
   {
     upstreamMode: "lookup_by_reference",
@@ -62,7 +67,7 @@ export const clawqlLostAckArm: DurabilityArm = {
           harnessCommit,
           crashPhase: "lost_ack",
           honesty:
-            "Lost-ack pilot: host applied the write then SIGKILL before the runner saw a response. idempotent → ClawQL parks outcome_unknown (no blind resend; keyed REST retry not wired into durable-runner yet). lookup_by_reference → check-then-decide resolves without resend when the reference is in the host log. neither (non_idempotent, no key) → stay outcome_unknown, never re-send. N=50 expansion pilot for config-review package.",
+            "Lost-ack pilot: host applied the write then SIGKILL before the runner saw a response. idempotent → keyed resend with the same key (one unique effect; mirrors REST clawql-mandate redrive — durable-runner still parks unknown until keyed resume lands there). lookup_by_reference → check-then-decide resolves without resend. neither (non_idempotent, no key) → stay outcome_unknown, never re-send. N=50 expansion pilot; not a named peer row.",
           modes,
         };
       },

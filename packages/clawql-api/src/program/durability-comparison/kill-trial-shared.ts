@@ -155,6 +155,7 @@ export type ResumePolicy =
   | "golem-at-least-once-sim"
   | "pi-interrupt-sim"
   | "lost-ack-clawql"
+  | "lost-ack-keyed-retry"
   | "lost-ack-lookup";
 
 /** Map board upstream mode → kill-worker UPSTREAM_MODE (idempotent | non_idempotent). */
@@ -229,6 +230,35 @@ export async function oneKillMidWriteTrial(input: {
     const callVerifiedSent = writeAppliedBefore ? 1 : 0;
     let intentPresentOnResume = outcomeUnknown >= 1 ? 1 : 0;
 
+    // Lost-ack + idempotency keys: safe resend with the same key (server dedupes → one unique effect).
+    // Mirrors REST clawql-mandate keyed redrive. Durable-runner still parks unknown today — this
+    // pilot measures the resolution path the product claims for key-capable APIs.
+    if (
+      input.resumePolicy === "lost-ack-keyed-retry" &&
+      writeAppliedBefore &&
+      outcomeUnknown >= 1 &&
+      includeKey
+    ) {
+      await Effect.runPromise(
+        parent.host.execute(
+          {
+            operationId: WRITE_OP,
+            args: { page: 3, idempotencyKey: "kill-mid-write-key" },
+          },
+          { programId }
+        )
+      );
+      duplicates = parent.executedWrites.length;
+      uniqueWriteEffects = [...parent.uniqueEffects].filter(
+        (e) => e.startsWith("idem:") || e.startsWith("once:") || e.startsWith("ref:")
+      ).length;
+      if (uniqueWriteEffects === 1) {
+        outcomeUnknown = 0;
+        lost = 0;
+        intentPresentOnResume = 1;
+      }
+    }
+
     // Lost-ack + lookup-by-reference: server applied; check by reference; do not re-send.
     if (input.resumePolicy === "lost-ack-lookup" && writeAppliedBefore && outcomeUnknown >= 1) {
       const refHit = before.some(
@@ -296,6 +326,15 @@ function trialOk(input: {
       input.intentPresentOnResume === 1 &&
       input.callVerifiedSent === 1 &&
       input.resumedOk === false
+    );
+  }
+
+  if (input.resumePolicy === "lost-ack-keyed-retry") {
+    return (
+      input.outcomeUnknown === 0 &&
+      input.intentPresentOnResume === 1 &&
+      input.callVerifiedSent === 1 &&
+      input.uniqueWriteEffects === 1
     );
   }
 

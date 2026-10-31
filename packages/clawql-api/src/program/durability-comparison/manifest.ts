@@ -135,17 +135,17 @@ export function buildComparisonPackageManifest(
       },
       {
         id: "peer-model-sims",
-        status: "pilot_n50",
+        status: "planned",
         arms: ["golem-at-least-once-sim", "pi-interrupt-sim"],
         nPilot: 50,
-        note: "Model-faithful local sims (like naive-retry). Not real Pi/Golem runtimes — real golem/pi-durable rows remain pending_adapter.",
+        note: "Internal harness only (DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1). Never publish as peer rows next to measured results. Prefer rewiring live golem/pi-durable adapters — no prior in-repo live peer N=50 evidence found.",
       },
       {
         id: "pi-real-model",
         status: "planned",
         arms: ["pi-durable"],
         nPilot: 50,
-        note: "Replaces pi-interrupt-sim faux model; needs API key. Prefer running before config review when key available.",
+        note: "Live Pi Durable adapter + real model; needs API key and maintainer config review before any public numbers.",
       },
     ],
   };

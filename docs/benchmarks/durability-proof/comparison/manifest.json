@@ -4,9 +4,9 @@
   "packageId": "clawql-durability-comparison-celld-0.6.3",
   "tipRuntime": "celld",
   "tipRuntimeVersion": "0.6.3",
-  "harnessCommit": "e2854ab5eb7a99e6b01891a418f2d15b558a6beb",
+  "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
   "defaultN": 50,
-  "generatedAt": "2026-10-31T18:17:44.829Z",
+  "generatedAt": "2026-10-31T20:19:42.209Z",
   "order": [
     "1. Rerun ClawQL arms on stock celld 0.6.3 at N=50; mark 0.4.0 rows superseded",
     "2. Add runtime/version, intentPresentOnResume, callVerifiedSent; every arm has column values (peers: null until adapter)",
@@ -138,13 +138,13 @@
     },
     {
       "id": "peer-model-sims",
-      "status": "pilot_n50",
+      "status": "planned",
       "arms": [
         "golem-at-least-once-sim",
         "pi-interrupt-sim"
       ],
       "nPilot": 50,
-      "note": "Model-faithful local sims (like naive-retry). Not real Pi/Golem runtimes — real golem/pi-durable rows remain pending_adapter."
+      "note": "Internal harness only (DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1). Never publish as peer rows next to measured results. Prefer rewiring live golem/pi-durable adapters — no prior in-repo live peer N=50 evidence found."
     },
     {
       "id": "pi-real-model",
@@ -153,7 +153,7 @@
         "pi-durable"
       ],
       "nPilot": 50,
-      "note": "Replaces pi-interrupt-sim faux model; needs API key. Prefer running before config review when key available."
+      "note": "Live Pi Durable adapter + real model; needs API key and maintainer config review before any public numbers."
     }
   ]
 }

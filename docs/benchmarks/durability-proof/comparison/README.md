@@ -25,6 +25,6 @@ Package pin: **stock celld 0.6.3**. Default board **N=50**. Pre-tip / 0.4.0 / cl
 
 **Row identity:** `(armId, crashPhase)`. Wedged-owner and stale-owner are never folded into `during_call`.
 
-**Peers:** real `golem` / `pi-durable` rows stay `pending_adapter` (null metrics) until adapters run. Tip package also ships **model-faithful** measured sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) plus ClawQL `lost_ack` expansion — labeled simulators, not named peer boards.
+**Peers:** real `golem` / `pi-durable` rows stay `pending_adapter` (null metrics) until live adapters are rewired — never measured in-repo yet; do not substitute sims. Peer model-sims (`golem-at-least-once-sim`, `pi-interrupt-sim`) are **opt-in** via `DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1` for internal harness / reference-model sections only — never default board rows and never published as peer measurements on `/benchmarks`. ClawQL `lost_ack` expansion (keys → keyed resend; lookup → check-then-decide; neither → stay unknown) is measured on the default board.
 
-See [COMPARISON.md](../COMPARISON.md). Do not overwrite Tier D `security-suite/kill-mid-write/evidence.json`.
+See [COMPARISON.md](../COMPARISON.md). Do not overwrite Tier D `security-suite/kill-mid-write/evidence.json`. Do not publish named peer rows until maintainers review.

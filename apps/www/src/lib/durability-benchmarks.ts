@@ -2,6 +2,9 @@
  * Durability boards for clawql.com/benchmarks#durability.
  * Source: docs/benchmarks/durability-proof/ + program-cell-fleet-kill/ + security-suite/kill-mid-write/
  * Not a durable-execution claim — journaled program resume + at-most-once approved writes.
+ *
+ * Publish rule: ClawQL-only measured rows on this page. Named peer comparison (Pi Durable /
+ * Golem) stays "in review" until maintainers configure it — never publish sims as peer rows.
  */
 
 const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
@@ -15,13 +18,17 @@ export const durabilityBenchmarkSummary =
 export const durabilityBenchmarkClaim =
   'Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.'
 
+/** Dated caveat under the claim — required until stock-TTL v3 confirmation greens. */
+export const durabilityBenchmarkClaimCaveat =
+  'Caveat (2026-10-31): on the pinned celld 0.4.0 setup this Oct 21 board ran on, combined with how ClawQL interleaved reads and intent writes, a mid-flight node kill could leave the upstream call in flight without a durable write intent — so “crash won’t double-charge” was not a claim we could keep as an absolute mechanism guarantee. Upgrading to stock celld 0.6.3 (always-on durability gate) closed that path on wedged-owner N=100 and stale-owner N=40 tip boards (call-sent proven; no late stale-owner egress). A larger confirmation at the stock lease timeout (N=1000) is underway; we restore the stronger mechanism sentence — worded for stock 0.6.3, including the measured gate wait — only after that board passes with an automatic storage check. Credit upstream for the always-on gate; own the 0.4.0 interleaving gap. Zero duplicates on this published board remain a real measurement.'
+
 export const durabilityBenchmarkMeta = {
   measuredAt: '2026-10-21',
   boardLabel: 'tier-c-fleet-phased-kill',
   measuredLabel: 'N=1000 · 0 duplicates · ~12s failover · R2',
   tipRuntime: 'celld',
   tipRuntimeVersion: '0.6.3',
-  tipPackageLabel: 'schema v2 · N=50 · celld 0.6.3',
+  tipPackageLabel: 'ClawQL tip · celld 0.6.3 · N=50',
   storageProvider: 'cloudflare-r2',
   nodeCount: 2,
   celldTtlMs: 10_000,
@@ -58,7 +65,7 @@ export const durabilityColumnChips: readonly DurabilityColumnChip[] = [
     id: 'uncertainty',
     title: 'Uncertainty',
     value: '481 outcome unknown',
-    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Explicit, not silent; auto-resolve via keys/lookup is planned.',
+    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Explicit, not silent. File-journal lost-ack pilots: keys → keyed resend (one unique effect); lookup → check-then-decide; neither → stay unknown.',
   },
   {
     id: 'availability',
@@ -89,14 +96,14 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
     n: 248,
     outcomeUnknown: 240,
     rateLabel: '~96.8%',
-    note: 'In-flight window',
+    note: 'In-flight window · 8 trials failed availability/orchestration (not lost-intent)',
   },
   {
     phase: 'During the call',
     n: 251,
     outcomeUnknown: 241,
     rateLabel: '~96.0%',
-    note: 'In-flight window',
+    note: 'In-flight window · 10 trials failed availability/orchestration (not lost-intent)',
   },
   {
     phase: 'After the call, before journaling',
@@ -108,7 +115,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. A mid-flight kill with no durable intent is a durability defect (under hardening). Prefer check-by-reference or idempotency keys before involving a person (planned).'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. The ~18 in-flight trials that are not outcome_unknown on this board are availability/orchestration failures (pause failed, resume deadline miss, survivor self-fence) — not completed writes and not the lost-intent defect class. Prefer check-by-reference or idempotency keys before involving a person when the API allows it.'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -149,11 +156,11 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
   },
   {
     tier: 'D+',
-    name: 'Dual-column comparison',
+    name: 'Dual-column comparison (ClawQL)',
     status: 'measured',
-    statusLabel: 'Tip package N=50',
+    statusLabel: 'Tip N=50',
     detail:
-      'Schema v2 on celld 0.6.3: runtime/version, intent-on-resume, call-sent; wedge/stale own rows; golem/pi model sims + ClawQL lost-ack pilots measured. Real peer adapters still pending_adapter.',
+      'Schema v2 on celld 0.6.3: runtime/version, intent-on-resume, call-sent; wedge/stale own rows. Named Pi/Golem comparison in maintainer review — not published here.',
   },
   {
     tier: 'F',
@@ -216,6 +223,7 @@ export type DurabilityComparisonArm = {
   nonIdempotent: string
 }
 
+/** Public dual-column table — ClawQL-only. No peer sims, no named peer rows. */
 export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'clawql-file-journal @ during_call',
@@ -229,7 +237,7 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     status: 'partial (tip v3)',
     runtime: 'celld 0.6.3',
     idempotent: '—',
-    nonIdempotent: 'fleet tip import · call-sent+intent so far',
+    nonIdempotent: 'fleet tip import · confirmation underway',
   },
   {
     arm: 'clawql-program-celld @ wedged_owner',
@@ -246,41 +254,24 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
     nonIdempotent: '40/40 ownershipMoved · 0 staleSend',
   },
   {
-    arm: 'naive-retry (reference)',
+    arm: 'clawql-file-journal @ lost_ack',
     status: 'measured',
     runtime: 'host-file-journal',
-    idempotent: 'Retries; unique effects masked by keys',
-    nonIdempotent: 'Duplicates when upstream ignores keys',
+    idempotent: 'Keys → keyed resend · 0 unknown · 1 effect (n=50)',
+    nonIdempotent: 'Neither → stay unknown · 0 resend (n=50); lookup → check-then-decide',
   },
   {
-    arm: 'golem-at-least-once-sim',
-    status: 'measured (model sim)',
-    runtime: 'golem-model-sim',
-    idempotent: 'At-least-once; 1 unique effect/trial (n=50)',
-    nonIdempotent: 'At-least-once; duplicates (n=50)',
-  },
-  {
-    arm: 'pi-interrupt-sim',
-    status: 'measured (model sim)',
-    runtime: 'pi-interrupt-model-sim',
-    idempotent: 'Tool re-entry; 1 unique effect/trial (n=50)',
-    nonIdempotent: 'Tool re-entry; duplicates (n=50)',
-  },
-  {
-    arm: 'clawql-file-journal @ lost_ack',
-    status: 'measured (pilot)',
+    arm: 'naive-retry (ClawQL reference)',
+    status: 'measured',
     runtime: 'host-file-journal',
-    idempotent: '0 dups · unknown (no blind resend)',
-    nonIdempotent: 'neither: 0 dups · unknown; lookup resolves',
-  },
-  {
-    arm: 'golem / pi-durable (+ combos)',
-    status: 'pending_adapter',
-    runtime: '—',
-    idempotent: '—',
-    nonIdempotent: 'Real adapters not wired; sims are placeholders',
+    idempotent: 'Blind resend; unique effects masked by keys',
+    nonIdempotent: 'Blind resend multiplies effects',
   },
 ] as const
+
+/** Shown under the table — peer package is not public yet. */
+export const durabilityPeerReviewNote =
+  'Named Pi Durable / Golem comparison (including combination arms) is in maintainer configuration review and is not published on this page. Model simulations of peer behavior are internal harness references only — never shown as peer measurements.'
 
 export const durabilityHonestyNotes: readonly { title: string; body: string }[] = [
   {
@@ -293,15 +284,15 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
   },
   {
     title: 'Outcome unknown vs lost intent',
-    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry. Tip stock celld 0.6.3 always-on gate closed the pretends-journaled-intent path on wedged + stale-owner boards; the stock-TTL N=1000 confirmation must finish green before the stronger mechanism sentence is restored. Recovery when intent is durable: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry. Tip stock celld 0.6.3 always-on gate closed the pretends-journaled-intent path on wedged + stale-owner boards; the stock-TTL N=1000 confirmation must finish green before the stronger mechanism sentence is restored. When the API supports keys or lookup-by-reference, resolve automatically (keyed resend / check-then-decide); person only when neither exists.',
   },
   {
-    title: 'No “exactly once” over HTTP (yet)',
-    body: 'Prefer at-most-once approved writes today. Mandate-derived keys and spec-driven lookup are planned so Stripe-class / lookup-capable APIs auto-resolve in-flight unknowns — not claimed until shipped and measured. Lost-ack pilot on file-journal already shows lookup resolving without resend.',
+    title: 'Keys and lookup (measured on file-journal)',
+    body: 'Lost-ack pilots on the host file journal: idempotency keys → safe resend with the same key (one unique effect); lookup-by-reference → check-then-decide without resend; neither → stay outcome_unknown, never re-send. Program durable-runner still parks unknown until keyed resume is wired there — REST execute already supports clawql-mandate keyed redrive.',
   },
   {
-    title: 'Peer boards pending invite',
-    body: 'Named Golem / Pi Durable numbers wait on maintainer config. Tip package includes model-faithful sims (not real peer runtimes) so dual columns are reviewable now.',
+    title: 'Peer boards in review',
+    body: 'Named Golem / Pi Durable numbers wait on maintainer config review. ClawQL-only crash evidence is public here.',
   },
 ] as const
 
@@ -343,8 +334,8 @@ export const durabilityBenchmarkLinks: readonly { href: string; label: string; d
   },
   {
     href: `${GH}/docs/benchmarks/durability-proof/comparison/evidence.json`,
-    label: 'comparison evidence',
-    detail: 'Schema v2 tip package · N=50',
+    label: 'comparison evidence (ClawQL tip)',
+    detail: 'Schema v2 · N=50 · peers in review',
   },
   {
     href: `${GH}/docs/streams/celld-durable-ack-latency.md`,
