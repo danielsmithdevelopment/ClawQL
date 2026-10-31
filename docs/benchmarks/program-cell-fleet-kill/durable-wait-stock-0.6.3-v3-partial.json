@@ -1,0 +1,35 @@
+{
+  "status": "final_from_failed_v3",
+  "celldBinaryVersion": "0.6.3",
+  "fenceMode": "upstream_0.6.3_stock_v3",
+  "celldTtlMs": 10000,
+  "bucketPrefix": "tier-c-v3-063-20261031141921",
+  "measuredAt": "2026-10-31T21:29:34.017Z",
+  "source": "timing durable_wait lines from /tmp/fleet-phased-988*.log for failed v3 board (stopped early on availability)",
+  "durableWait": {
+    "n": 2350,
+    "note": "partial mid-run sample; full-log extrema from both nodes: max wait_us ≈1.4–2.1s; zero waits ≥5s",
+    "waitUs": {
+      "p50": 367000,
+      "p90": 725000,
+      "p99": 941000,
+      "max": 1355000,
+      "mean": 393213
+    },
+    "waitMs": {
+      "p50": 367,
+      "p99": 941,
+      "max": 1355
+    },
+    "fullLogMaxWaitUsApprox": {
+      "nodeA": 1400000,
+      "nodeB": 2083000
+    }
+  },
+  "neverSentCorrelation": {
+    "neverSentTrials": 21,
+    "programIdsInCelldLogs": 0,
+    "interpretation": "never-sent trials never reached the durable-ack gate; stall is pre-send (rebuild/unhealthy fleet), not gate waiting the full 8s inFlight poll"
+  },
+  "meaning": "Stock celld 0.6.3 always-on gate wait on failed v3 board. Not PUT vs PUT+GET. Do not restore mechanism claim from this board."
+}

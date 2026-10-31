@@ -1,0 +1,1118 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-31T15:07:10.047Z",
+  "ok": true,
+  "status": "measured",
+  "scoreMode": "correctness_availability_v2",
+  "gates": {
+    "scoreMode": "correctness_availability_v2",
+    "correctness": {
+      "failures": 0,
+      "pass": true,
+      "items": [],
+      "meaning": "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)"
+    },
+    "availability": {
+      "failures": 0,
+      "denominator": 40,
+      "failureRate": 0,
+      "ceiling": 0.25,
+      "pass": true,
+      "resumeMs": {
+        "p50": 10587,
+        "p99": 10818,
+        "max": 10818
+      },
+      "recoveryMs": {
+        "n": 39,
+        "p50": 10162,
+        "p99": 10254,
+        "max": 10254
+      },
+      "items": [],
+      "meaning": "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling"
+    },
+    "outerCompletion": {
+      "rateOuterPhases": null,
+      "outerPhaseN": 0,
+      "cleanCompletionsOuter": 0,
+      "misses": [],
+      "meaning": "reported overall; each miss assigned to correctness or availability — not a separate zero-gate"
+    }
+  },
+  "frozenCriteria": {
+    "resumeDeadlineMs": 90000,
+    "resumeDeadlineMeaning": "wall clock including orchestrator recovery; same for write-kill and await",
+    "availabilityCeiling": 0.25,
+    "availabilityDenominator": "overallN",
+    "writeKillTrials": 40,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 40,
+    "tailsHavePassFailCeiling": false,
+    "note": "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling."
+  },
+  "n": 40,
+  "trialsCompleted": 40,
+  "awaitTrialsCompleted": 0,
+  "awaitTrialsN": 0,
+  "overallN": 40,
+  "phases": [
+    "during_call"
+  ],
+  "wedgeHealth": true,
+  "wedgeHoldMs": 10000,
+  "staleOwnerProbe": true,
+  "staleOwnerCell": "ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f",
+  "celldBinaryVersion": "0.6.3",
+  "fenceMode": "upstream_0.6.3_stale_owner_sigstop",
+  "outputGate": true,
+  "fencedAck": false,
+  "allowUnfenced": false,
+  "rustLog": "timing=debug",
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 2000,
+  "resumeDeadlineMs": 90000,
+  "resumeLatencyNote": {
+    "celldTtlMs": 2000,
+    "stockTtlMs": 10000,
+    "resumeMsP50": 10587,
+    "meaning": "CELLD_TTL_MS=2000 (not stock 10000). Resume p50≈10587ms is lease-dominated under this TTL; do not compare to stock ~12–14s boards."
+  },
+  "callSent": {
+    "duringCallTrials": 40,
+    "sawInFlight": 40,
+    "neverSent": 0,
+    "sawInFlightRate": 1,
+    "outcomeUnknownWithIntentVisible": 40,
+    "outcomeUnknownWithIntentVisibleRate": 1,
+    "meaning": "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+    "sample": [
+      {
+        "i": 0,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1286,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 1,
+        "sawInFlight": true,
+        "inFlightWaitMs": 782,
+        "inFlightAtKill": 0,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 2,
+        "sawInFlight": true,
+        "inFlightWaitMs": 651,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 3,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1183,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 4,
+        "sawInFlight": true,
+        "inFlightWaitMs": 628,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 5,
+        "sawInFlight": true,
+        "inFlightWaitMs": 951,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 6,
+        "sawInFlight": true,
+        "inFlightWaitMs": 648,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 7,
+        "sawInFlight": true,
+        "inFlightWaitMs": 575,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 8,
+        "sawInFlight": true,
+        "inFlightWaitMs": 579,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 9,
+        "sawInFlight": true,
+        "inFlightWaitMs": 593,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 10,
+        "sawInFlight": true,
+        "inFlightWaitMs": 620,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 11,
+        "sawInFlight": true,
+        "inFlightWaitMs": 568,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 12,
+        "sawInFlight": true,
+        "inFlightWaitMs": 626,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 13,
+        "sawInFlight": true,
+        "inFlightWaitMs": 614,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 14,
+        "sawInFlight": true,
+        "inFlightWaitMs": 750,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 15,
+        "sawInFlight": true,
+        "inFlightWaitMs": 833,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 16,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1138,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 17,
+        "sawInFlight": true,
+        "inFlightWaitMs": 703,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 18,
+        "sawInFlight": true,
+        "inFlightWaitMs": 573,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 19,
+        "sawInFlight": true,
+        "inFlightWaitMs": 678,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      }
+    ]
+  },
+  "staleOwner": {
+    "enabled": true,
+    "trials": 40,
+    "ownershipMoved": 40,
+    "staleSend": 0,
+    "gateBlockedAfterMoveWithIntent": 0,
+    "meaning": "Wedge before send; poll own.json. staleSend = inFlight first after ownership left victim (tip Fleet VerifyOwnership gap). gateBlockedAfterMoveWithIntent = ownership moved, no egress, intent still on survivor (desired).",
+    "sample": [
+      {
+        "i": 0,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 8544,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 1,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7097,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 2,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7016,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 3,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7524,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 4,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7532,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 5,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7332,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 6,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7404,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 7,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 6958,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 8,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7013,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 9,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 6920,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 10,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7260,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 11,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7330,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 12,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 6988,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 13,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7423,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 14,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7024,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 15,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7286,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 16,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7760,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 17,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7132,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 18,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7497,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 19,
+        "ownershipMoved": true,
+        "ownershipMovedAtMs": 7087,
+        "staleSend": false,
+        "sawInFlight": true,
+        "intentPresent": true,
+        "ok": true,
+        "failureReason": null
+      }
+    ]
+  },
+  "trialAccounting": {
+    "writeKillTrials": 40,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 40,
+    "filteredOut": 0,
+    "byPhase": {
+      "during_call": {
+        "n": 40,
+        "completedClean": 0,
+        "outcomeUnknown": 40,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      }
+    },
+    "completed": {
+      "denominatorAllPhases": 40,
+      "cleanCompletions": 0,
+      "denominatorOuterPhases": 0,
+      "cleanCompletionsOuter": 0,
+      "midFlightExcludedFromOuter": 40,
+      "note": "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped."
+    },
+    "statePreserved": {
+      "denominator": 0,
+      "preserved": 0,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "midFlightExcluded": 40,
+      "outerIncompleteExcluded": 0,
+      "note": "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed — often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition."
+    },
+    "waitApproval": {
+      "denominator": 0,
+      "ok": 0,
+      "note": "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator."
+    },
+    "stepsRepeated": {
+      "denominator": 40,
+      "writeStepsRerun": 0,
+      "note": "Sum of pets-ledger duplicates across all write-kill trials (target 0)."
+    }
+  },
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.075,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 40,
+      "rate": 1,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 39,
+      "survivorSelfFenceRate": 0.975,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 39,
+        "p50": 10162,
+        "p95": 10248,
+        "p99": 10254
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 0,
+      "rateAllPhases": 0,
+      "rateOuterPhases": 0,
+      "outerPhaseN": 0,
+      "meaning": "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": false,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": false,
+      "compareMode": "digest_equality",
+      "eligibleN": 0,
+      "preservedN": 0,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "rate": null,
+      "meaning": "claim-path §1 — exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting)."
+    },
+    "waitApproval": {
+      "measured": false,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": false,
+      "n": 0,
+      "ran": 0,
+      "ok": 0,
+      "failed": 0,
+      "survivedRate": null,
+      "completedAfterApproveRate": null,
+      "okRate": null,
+      "failureByReason": {},
+      "meaning": "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous."
+    }
+  },
+  "awaitTrials": [],
+  "awaitFailureSummary": {
+    "ran": 0,
+    "planned": 0,
+    "ok": 0,
+    "failed": 0,
+    "byReason": {}
+  },
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.075,
+  "totalSurvivorSelfFences": 39,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 0,
+  "claim": "Across 40 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 7.5%). The median resume took about 11 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 97.5% of surviving nodes paused themselves for safety, and 0.0% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
+  "resumeMs": {
+    "p50": 10587,
+    "p95": 10690,
+    "p99": 10818,
+    "p999": 10818,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 11,
+  "lease": {
+    "celldTtlMs": 2000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "during_call": {
+      "n": 40,
+      "ok": 40,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 40,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 39,
+      "survivorSelfFenceRate": 0.975,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 10587,
+        "p95": 10690,
+        "p99": 10818,
+        "p999": 10818
+      },
+      "recoveryMs": {
+        "n": 39,
+        "p50": 10162,
+        "p95": 10248,
+        "p99": 10254
+      }
+    }
+  },
+  "trialFailures": [],
+  "availabilityIncidents": [
+    {
+      "i": 1,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10561,
+      "recoveryMs": 10162,
+      "ok": true
+    },
+    {
+      "i": 2,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10818,
+      "recoveryMs": 10069,
+      "ok": true
+    },
+    {
+      "i": 3,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10574,
+      "recoveryMs": 10115,
+      "ok": true
+    },
+    {
+      "i": 4,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10597,
+      "recoveryMs": 10237,
+      "ok": true
+    },
+    {
+      "i": 5,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10432,
+      "recoveryMs": 10012,
+      "ok": true
+    },
+    {
+      "i": 6,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10617,
+      "recoveryMs": 10209,
+      "ok": true
+    },
+    {
+      "i": 7,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10687,
+      "recoveryMs": 10231,
+      "ok": true
+    },
+    {
+      "i": 8,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10466,
+      "recoveryMs": 10037,
+      "ok": true
+    },
+    {
+      "i": 9,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10632,
+      "recoveryMs": 10177,
+      "ok": true
+    },
+    {
+      "i": 10,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10601,
+      "recoveryMs": 10157,
+      "ok": true
+    },
+    {
+      "i": 11,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10551,
+      "recoveryMs": 10071,
+      "ok": true
+    },
+    {
+      "i": 12,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10515,
+      "recoveryMs": 10065,
+      "ok": true
+    },
+    {
+      "i": 13,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10439,
+      "recoveryMs": 10026,
+      "ok": true
+    },
+    {
+      "i": 14,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10653,
+      "recoveryMs": 10254,
+      "ok": true
+    },
+    {
+      "i": 15,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10408,
+      "recoveryMs": 10047,
+      "ok": true
+    },
+    {
+      "i": 16,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10630,
+      "recoveryMs": 10217,
+      "ok": true
+    },
+    {
+      "i": 17,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10690,
+      "recoveryMs": 10238,
+      "ok": true
+    },
+    {
+      "i": 18,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10433,
+      "recoveryMs": 10010,
+      "ok": true
+    },
+    {
+      "i": 19,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10419,
+      "recoveryMs": 10008,
+      "ok": true
+    },
+    {
+      "i": 20,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10655,
+      "recoveryMs": 10218,
+      "ok": true
+    },
+    {
+      "i": 21,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10669,
+      "recoveryMs": 10224,
+      "ok": true
+    },
+    {
+      "i": 22,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10537,
+      "recoveryMs": 10102,
+      "ok": true
+    },
+    {
+      "i": 23,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10490,
+      "recoveryMs": 10088,
+      "ok": true
+    },
+    {
+      "i": 24,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10468,
+      "recoveryMs": 10038,
+      "ok": true
+    },
+    {
+      "i": 25,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10629,
+      "recoveryMs": 10197,
+      "ok": true
+    },
+    {
+      "i": 26,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10643,
+      "recoveryMs": 10234,
+      "ok": true
+    },
+    {
+      "i": 27,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10671,
+      "recoveryMs": 10213,
+      "ok": true
+    },
+    {
+      "i": 28,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10460,
+      "recoveryMs": 10017,
+      "ok": true
+    },
+    {
+      "i": 29,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10636,
+      "recoveryMs": 10202,
+      "ok": true
+    },
+    {
+      "i": 30,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10587,
+      "recoveryMs": 10131,
+      "ok": true
+    },
+    {
+      "i": 31,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10476,
+      "recoveryMs": 10041,
+      "ok": true
+    },
+    {
+      "i": 32,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10561,
+      "recoveryMs": 10186,
+      "ok": true
+    },
+    {
+      "i": 33,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10656,
+      "recoveryMs": 10228,
+      "ok": true
+    },
+    {
+      "i": 34,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10628,
+      "recoveryMs": 10209,
+      "ok": true
+    },
+    {
+      "i": 35,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10448,
+      "recoveryMs": 10031,
+      "ok": true
+    },
+    {
+      "i": 36,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10755,
+      "recoveryMs": 10248,
+      "ok": true
+    },
+    {
+      "i": 37,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10619,
+      "recoveryMs": 10233,
+      "ok": true
+    },
+    {
+      "i": 38,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10493,
+      "recoveryMs": 10069,
+      "ok": true
+    },
+    {
+      "i": 39,
+      "phase": "during_call",
+      "survivorSelfFence": true,
+      "survivorRestart": false,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 10647,
+      "recoveryMs": 10244,
+      "ok": true
+    }
+  ]
+}

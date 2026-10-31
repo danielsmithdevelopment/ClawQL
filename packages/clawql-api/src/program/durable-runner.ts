@@ -4,7 +4,7 @@
  * Runs a v0 plan with each host-served call journaled (fsync'd) before the program
  * moves on. A program that crashed, timed out or was interrupted resumes from its
  * journal: journaled calls replay without calling the host again, and journaled
- * nondeterministic values (`clock.startedAt`) replay unchanged.
+ * nondeterministic values (`clock.startedAt`, `sleep.<i>.wakeAt`) replay unchanged.
  *
  * At most once for writes: before a call that can reach the host as a write, an
  * intent is journaled. On resume, an intent without an entry means the write may or
@@ -17,7 +17,7 @@
  */
 
 import { appendProcessWormEffect } from "clawql-audit";
-import { Clock, Context, Data, Effect, Layer, Option, Result } from "effect";
+import { Clock, Context, Data, Duration, Effect, Layer, Option, Result } from "effect";
 import { isReadOperation } from "../ifc/session-ifc-enforce.js";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
 import { canonicalizeForHash } from "../pending/args-hash.js";
@@ -64,6 +64,21 @@ export const DURABLE_PROGRAM_HONESTY =
 /** Nondeterministic value journaled on the first attempt and replayed on every resume. */
 export const NONDET_STARTED_AT = "clock.startedAt";
 
+/** Journaled wake deadline for plan `sleep` at `index` (claim-path §2). */
+export const nondetSleepWakeAtKey = (index: number): string => `sleep.${index}.wakeAt`;
+
+/** Journaled mandate id for plan `await_approval` at `index` (claim-path §2). */
+export const nondetAwaitApprovalKey = (index: number): string =>
+  `await_approval.${index}.executionId`;
+
+/**
+ * Optional pre-call request digest for plan `model_call` at `index`.
+ * Entry args already bind prompt/model; this captures the digest before the
+ * host returns so a mid-call crash still has a bound request fingerprint.
+ */
+export const nondetModelCallRequestDigestKey = (index: number): string =>
+  `model_call.${index}.requestDigest`;
+
 const PARKED_HINT =
   "Resume with execute_program { programId }: journaled calls replay and are not re-run. Raise timeoutMs (capped) if a single call needs longer.";
 
@@ -104,7 +119,8 @@ export type DurableProgramRefusalCode =
   | "journal_unavailable"
   | "journal_corrupt"
   | "journal_divergence"
-  | "replay_label_failed";
+  | "replay_label_failed"
+  | "awaiting_approval";
 
 /** The defect {@link DurableProgramRunOptions.simulateCrashAfterCalls} dies with. */
 export class ProgramCrashSimulated extends Data.TaggedError("ProgramCrashSimulated")<{
@@ -151,9 +167,16 @@ function callIdFor(call: ProgramPlanCall, index: number): string {
 
 /** Call inputs an entry is bound to, besides its tool and operationId. */
 function journaledArgs(call: ProgramPlanCall): Record<string, unknown> {
-  return call.tool === "execute"
-    ? { ...(call.args ?? {}) }
-    : { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
+  if (call.tool === "execute") return { ...(call.args ?? {}) };
+  if (call.tool === "search") {
+    return { query: call.query, ...(call.limit !== undefined ? { limit: call.limit } : {}) };
+  }
+  if (call.tool === "sleep") return { durationMs: call.durationMs };
+  if (call.tool === "await_approval") return { executionId: call.executionId };
+  return {
+    prompt: call.prompt,
+    ...(call.model !== undefined ? { model: call.model } : {}),
+  };
 }
 
 function entryMatchesCall(entry: ProgramJournalEntry, call: ProgramPlanCall, index: number) {
@@ -189,6 +212,44 @@ function toJournalEntry(
   };
 }
 
+function recordFieldsForCall(call: ProgramPlanCall): Partial<{
+  operationId: string;
+  query: string;
+}> {
+  if (call.tool === "execute") return { operationId: call.operationId };
+  if (call.tool === "search") return { query: call.query };
+  return {};
+}
+
+function awaitApprovalOutcome(
+  programId: string,
+  call: Extract<ProgramPlanCall, { tool: "await_approval" }>,
+  index: number,
+  status: string,
+  ok: boolean,
+  error?: string
+): ProgramCallOutcome {
+  const value = {
+    ok,
+    status,
+    executionId: call.executionId,
+    pendingStatus: status === "mandate_missing" ? null : status,
+  };
+  return {
+    record: {
+      index,
+      id: call.id,
+      tool: "await_approval",
+      ok,
+      programId,
+      status,
+      ...(error !== undefined ? { error } : {}),
+      resultPreview: JSON.stringify(value).slice(0, 512),
+    },
+    value,
+  };
+}
+
 /** The call as the program first observed it, rebuilt from its journal entry. */
 function replayedOutcome(
   programId: string,
@@ -202,7 +263,7 @@ function replayedOutcome(
       index,
       id: call.id,
       tool: call.tool,
-      ...(call.tool === "execute" ? { operationId: call.operationId } : { query: call.query }),
+      ...recordFieldsForCall(call),
       ok: result.ok,
       programId,
       error: result.error,
@@ -211,6 +272,27 @@ function replayedOutcome(
       replayed: true,
     },
     value: result.value,
+  };
+}
+
+function sleepOutcome(
+  programId: string,
+  call: Extract<ProgramPlanCall, { tool: "sleep" }>,
+  index: number,
+  wakeAt: string
+): ProgramCallOutcome {
+  const value = { ok: true as const, sleptMs: call.durationMs, wakeAt };
+  return {
+    record: {
+      index,
+      id: call.id,
+      tool: "sleep",
+      ok: true,
+      programId,
+      status: "slept",
+      resultPreview: JSON.stringify(value).slice(0, 512),
+    },
+    value,
   };
 }
 
@@ -503,6 +585,145 @@ function runAttemptEffect(
             });
             return Option.some(outcome);
           }
+          if (call.tool === "sleep") {
+            // Claim-path §2: journal wake deadline before waiting; resume re-arms
+            // remaining delay. Completed sleep lands here so runOne does not re-sleep.
+            const wakeKey = nondetSleepWakeAtKey(index);
+            const journaledWake = journal.nondet.find((n) => n.key === wakeKey)?.value;
+            let wakeAt =
+              typeof journaledWake === "string" && Number.isFinite(Date.parse(journaledWake))
+                ? journaledWake
+                : undefined;
+            if (wakeAt === undefined) {
+              const now = yield* nowIsoEffect;
+              wakeAt = new Date(Date.parse(now) + call.durationMs).toISOString();
+              yield* journalEffect(api.appendNondet(programId, { key: wakeKey, value: wakeAt }));
+            }
+            const remainingMs = Math.max(0, Date.parse(wakeAt) - Date.now());
+            yield* Effect.sleep(Duration.millis(remainingMs));
+            const outcome = sleepOutcome(programId, call, index, wakeAt);
+            yield* land(index, call, outcome, "executed");
+            yield* auditResult({
+              toolName: "sleep",
+              ok: true,
+              status: "slept",
+              index,
+              wakeAt,
+            });
+            if (crashAfter !== undefined && crashAfter > 0 && executedCalls >= crashAfter) {
+              return yield* Effect.die(
+                new ProgramCrashSimulated({ programId, afterCalls: executedCalls })
+              );
+            }
+            return Option.some(outcome);
+          }
+          if (call.tool === "model_call") {
+            // Claim-path §2: journal request digest before the host call; land
+            // the response as an entry. Resume replays the entry (no re-request).
+            // Interrupted mid-call with no entry falls through to runOne → one
+            // re-request (explicit recovery rule).
+            const digestKey = nondetModelCallRequestDigestKey(index);
+            const expectedDigest = canonicalizeForHash(journaledArgs(call));
+            const journaledDigest = journal.nondet.find((n) => n.key === digestKey)?.value;
+            if (journaledDigest === undefined) {
+              yield* journalEffect(
+                api.appendNondet(programId, { key: digestKey, value: expectedDigest })
+              );
+            } else if (journaledDigest !== expectedDigest) {
+              return yield* diverged(
+                index,
+                "journaled model_call requestDigest does not match the plan call"
+              );
+            }
+            if (durableHost.modelCall === undefined) {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "invalid_plan",
+                  message: `model_call requires host.modelCall`,
+                  fixHint: "Wire ProgramHost.modelCall to the inference gateway.",
+                })
+              );
+            }
+            return Option.none();
+          }
+          if (call.tool === "await_approval") {
+            // Claim-path §2: observe-only wait on a parked mandate. Journal the
+            // executionId; park while pending; land once the mandate settles.
+            // Never consumes — Review / resume / submit_program_proposals do that.
+            const waitKey = nondetAwaitApprovalKey(index);
+            const journaledId = journal.nondet.find((n) => n.key === waitKey)?.value;
+            if (journaledId === undefined) {
+              yield* journalEffect(
+                api.appendNondet(programId, { key: waitKey, value: call.executionId })
+              );
+            } else if (journaledId !== call.executionId) {
+              return yield* diverged(
+                index,
+                "journaled await_approval executionId does not match the plan call"
+              );
+            }
+            if (durableHost.pendingStatus === undefined) {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "invalid_plan",
+                  message: `await_approval requires host.pendingStatus`,
+                  fixHint: "Wire pendingStatus to the mandate store (observe-only).",
+                })
+              );
+            }
+            const status = yield* durableHost.pendingStatus(call.executionId).pipe(
+              Effect.mapError(
+                (e) =>
+                  new DurableProgramRefusal({
+                    programId,
+                    code: "journal_unavailable",
+                    message: `await_approval status lookup failed: ${e.message}`,
+                    fixHint: "Fix mandate store access and resume the program.",
+                  })
+              )
+            );
+            if (status === "pending") {
+              return yield* Effect.fail(
+                new DurableProgramRefusal({
+                  programId,
+                  code: "awaiting_approval",
+                  message: `program ${programId} waiting on pending execution ${call.executionId}`,
+                  fixHint:
+                    "Approve or decline the mandate in Review, then resume with execute_program { programId }.",
+                })
+              );
+            }
+            const terminalOk = status === "approved" || status === "completed";
+            const callStatus = status === null ? "mandate_missing" : status;
+            const outcome = awaitApprovalOutcome(
+              programId,
+              call,
+              index,
+              callStatus,
+              terminalOk,
+              terminalOk
+                ? undefined
+                : status === null
+                  ? `pending execution ${call.executionId} not found`
+                  : `mandate ${status}`
+            );
+            yield* land(index, call, outcome, "executed");
+            yield* auditResult({
+              toolName: "await_approval",
+              ok: terminalOk,
+              status: callStatus,
+              index,
+              executionId: call.executionId,
+            });
+            if (crashAfter !== undefined && crashAfter > 0 && executedCalls >= crashAfter) {
+              return yield* Effect.die(
+                new ProgramCrashSimulated({ programId, afterCalls: executedCalls })
+              );
+            }
+            return Option.some(outcome);
+          }
           if (call.tool === "execute" && (yield* mayRunAsWriteEffect(call, durableHost))) {
             const intentAt = yield* nowIsoEffect;
             yield* journalEffect(
@@ -557,6 +778,28 @@ function runAttemptEffect(
         yield* api
           .markStatus(programId, "failed", { error: refusal.message })
           .pipe(Effect.catch(() => Effect.void));
+      }
+      if (refusal.code === "awaiting_approval") {
+        yield* api.markStatus(programId, "parked").pipe(Effect.catch(() => Effect.void));
+        const parkedProgress = progress("parked");
+        return {
+          ok: false,
+          programId,
+          result: null,
+          calls: parkedProgress.calls,
+          diagnostics: {
+            interpreter: "plan-runner-v0" as const,
+            honesty: DURABLE_PROGRAM_HONESTY,
+            programId,
+            callCount: parkedProgress.callCount,
+            elapsedMs: Date.now() - ctx.startedAtMs,
+            mode: parkedProgress.mode,
+            code: "awaiting_approval",
+            error: refusal.message,
+            fixHint: refusal.fixHint ?? PARKED_HINT,
+            durable: parkedProgress.durable,
+          },
+        };
       }
       const status = refusal.code === "journal_divergence" ? "failed" : journal.status;
       return refusalResult(refusal, Date.now() - ctx.startedAtMs, progress(status));

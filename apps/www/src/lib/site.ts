@@ -6,7 +6,7 @@ export const site = {
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:
-      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and TEE-ready audit. Self-host free on Apache 2.0, or request early access for managed hosting.',
+      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and tamper-evident audit (WORM with S3 Object Lock; optional TEE paths). Self-host free on Apache 2.0, or request early access for managed hosting.',
     pricingNote:
       'Self-host free forever on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
   },

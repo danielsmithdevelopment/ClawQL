@@ -1,0 +1,1643 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-10-31T21:29:34.017815Z",
+  "ok": false,
+  "status": "failed",
+  "scoreMode": "correctness_availability_v2",
+  "gates": {
+    "scoreMode": "correctness_availability_v2",
+    "correctness": {
+      "failures": 0,
+      "pass": true,
+      "items": [],
+      "meaning": "wrong outcome only \u2014 duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill)"
+    },
+    "availability": {
+      "failures": 44,
+      "denominator": 500,
+      "failureRate": 0.088,
+      "ceiling": 0.02,
+      "pass": false,
+      "resumeMs": {
+        "p50": 13076,
+        "p99": 13893,
+        "max": 15928
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p99": null,
+        "max": null
+      },
+      "items": [
+        {
+          "i": 414,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 418,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 422,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 426,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 429,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 432,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 434,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 436,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 438,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 440,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 442,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 444,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 446,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 448,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 450,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 452,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 454,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 456,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 458,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 460,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 462,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 463,
+          "phase": "after_call_before_journal",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 465,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 466,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 468,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 470,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 471,
+          "phase": "after_call_before_journal",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 473,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 474,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 476,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 478,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 479,
+          "phase": "after_call_before_journal",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 481,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 482,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 484,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 486,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 487,
+          "phase": "after_call_before_journal",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 489,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 490,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 492,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 494,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 495,
+          "phase": "after_call_before_journal",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 497,
+          "phase": "after_intent_before_call",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        },
+        {
+          "i": 498,
+          "phase": "during_call",
+          "failureReason": "call_never_sent",
+          "resumeMs": null,
+          "recoveryMs": null
+        }
+      ],
+      "meaning": "no outcome in wall-clock time (recovery inclusive) \u2014 deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling"
+    },
+    "outerCompletion": {
+      "rateOuterPhases": 0.932,
+      "outerPhaseN": 250,
+      "cleanCompletionsOuter": 233,
+      "misses": [
+        {
+          "i": 432,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 436,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 440,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 444,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 448,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 452,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 456,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 460,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 463,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 468,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 471,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 476,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 479,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 484,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 487,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 492,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        },
+        {
+          "i": 495,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+        }
+      ],
+      "meaning": "reported overall; each miss assigned to correctness or availability \u2014 not a separate zero-gate"
+    },
+    "boardResult": {
+      "correctness": "pass_so_far",
+      "correctnessFailures": 0,
+      "availability": "fail",
+      "availabilityFailures": 44,
+      "availabilityDenominatorCompleted": 500,
+      "stoppedEarly": true,
+      "callSentThatReachedEgress": 104,
+      "callNeverSent": 21,
+      "intentVisibleOnSentInFlight": 104
+    }
+  },
+  "frozenCriteria": {
+    "resumeDeadlineMs": 60000,
+    "resumeDeadlineMeaning": "wall clock including orchestrator recovery; same for write-kill and await",
+    "availabilityCeiling": 0.02,
+    "availabilityDenominator": "overallN",
+    "writeKillTrials": 750,
+    "awaitApprovalTrials": 250,
+    "overallTrials": 1000,
+    "tailsHavePassFailCeiling": false,
+    "note": "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling."
+  },
+  "n": 750,
+  "trialsCompleted": 500,
+  "awaitTrialsCompleted": 0,
+  "awaitTrialsN": 250,
+  "overallN": 1000,
+  "phases": [
+    "before_intent",
+    "after_intent_before_call",
+    "during_call",
+    "after_call_before_journal"
+  ],
+  "wedgeHealth": false,
+  "wedgeHoldMs": 0,
+  "celldBinaryVersion": "0.6.3",
+  "fenceMode": "upstream_0.6.3_stock_v3",
+  "outputGate": true,
+  "fencedAck": false,
+  "allowUnfenced": false,
+  "rustLog": "timing=debug",
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 10000,
+  "resumeDeadlineMs": 60000,
+  "resumeLatencyNote": {
+    "celldTtlMs": 10000,
+    "stockTtlMs": 10000,
+    "resumeMsP50": 13076,
+    "meaning": "Stock lease TTL (10s) \u2014 resume p50 is the usual ~12\u201314s lease floor."
+  },
+  "callSent": {
+    "duringCallTrials": 125,
+    "sawInFlight": 104,
+    "neverSent": 21,
+    "sawInFlightRate": 0.832,
+    "outcomeUnknownWithIntentVisible": 104,
+    "outcomeUnknownWithIntentVisibleRate": 0.832,
+    "meaning": "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+    "sample": [
+      {
+        "i": 2,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 6,
+        "sawInFlight": true,
+        "inFlightWaitMs": 607,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 10,
+        "sawInFlight": true,
+        "inFlightWaitMs": 609,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 14,
+        "sawInFlight": true,
+        "inFlightWaitMs": 607,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 18,
+        "sawInFlight": true,
+        "inFlightWaitMs": 506,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 22,
+        "sawInFlight": true,
+        "inFlightWaitMs": 711,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 26,
+        "sawInFlight": true,
+        "inFlightWaitMs": 709,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 30,
+        "sawInFlight": true,
+        "inFlightWaitMs": 711,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 34,
+        "sawInFlight": true,
+        "inFlightWaitMs": 610,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 38,
+        "sawInFlight": true,
+        "inFlightWaitMs": 707,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 42,
+        "sawInFlight": true,
+        "inFlightWaitMs": 609,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 46,
+        "sawInFlight": true,
+        "inFlightWaitMs": 609,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 50,
+        "sawInFlight": true,
+        "inFlightWaitMs": 605,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 54,
+        "sawInFlight": true,
+        "inFlightWaitMs": 707,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 58,
+        "sawInFlight": true,
+        "inFlightWaitMs": 606,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 62,
+        "sawInFlight": true,
+        "inFlightWaitMs": 707,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 66,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 70,
+        "sawInFlight": true,
+        "inFlightWaitMs": 505,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 74,
+        "sawInFlight": true,
+        "inFlightWaitMs": 806,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 78,
+        "sawInFlight": true,
+        "inFlightWaitMs": 608,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      }
+    ]
+  },
+  "trialAccounting": {
+    "writeKillTrials": 750,
+    "awaitApprovalTrials": 250,
+    "overallTrials": 1000,
+    "filteredOut": 0,
+    "byPhase": {
+      "before_intent": {
+        "n": 125,
+        "completedClean": 113,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 113,
+        "statePreservedTrue": 113,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      },
+      "after_intent_before_call": {
+        "n": 125,
+        "completedClean": 0,
+        "outcomeUnknown": 119,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "during_call": {
+        "n": 125,
+        "completedClean": 0,
+        "outcomeUnknown": 104,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "after_call_before_journal": {
+        "n": 125,
+        "completedClean": 120,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 120,
+        "statePreservedTrue": 120,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      }
+    },
+    "completed": {
+      "denominatorAllPhases": 500,
+      "cleanCompletions": 233,
+      "denominatorOuterPhases": 250,
+      "cleanCompletionsOuter": 233,
+      "midFlightExcludedFromOuter": 250,
+      "note": "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown \u2014 they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped."
+    },
+    "statePreserved": {
+      "denominator": 233,
+      "preserved": 233,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "midFlightExcluded": 250,
+      "outerIncompleteExcluded": 17,
+      "note": "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed \u2014 often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition."
+    },
+    "waitApproval": {
+      "denominator": 250,
+      "ok": 0,
+      "note": "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator."
+    },
+    "stepsRepeated": {
+      "denominator": 500,
+      "writeStepsRerun": 0,
+      "note": "Sum of pets-ledger duplicates across all write-kill trials (target 0)."
+    }
+  },
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.004,
+      "meaning": "safety \u2014 never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 223,
+      "rate": 0.446,
+      "meaning": "honest uncertainty \u2014 person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      },
+      "meaning": "availability \u2014 lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 233,
+      "rateAllPhases": 0.466,
+      "rateOuterPhases": 0.932,
+      "outerPhaseN": 250,
+      "meaning": "claim-path \u00a71 \u2014 % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path \u00a71 \u2014 completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": true,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": true,
+      "compareMode": "digest_equality",
+      "eligibleN": 233,
+      "preservedN": 233,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "rate": 1,
+      "meaning": "claim-path \u00a71 \u2014 exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting)."
+    },
+    "waitApproval": {
+      "measured": true,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": true,
+      "n": 250,
+      "ran": 0,
+      "ok": 0,
+      "failed": 0,
+      "survivedRate": 0,
+      "completedAfterApproveRate": 0,
+      "okRate": 0,
+      "failureByReason": {},
+      "meaning": "claim-path \u00a74 \u2014 await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous."
+    }
+  },
+  "awaitTrials": [],
+  "awaitFailureSummary": {
+    "ran": 0,
+    "planned": 250,
+    "ok": 0,
+    "failed": 0,
+    "byReason": {}
+  },
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.004,
+  "totalSurvivorSelfFences": 0,
+  "totalSurvivorRestarts": 0,
+  "totalResumeDeadlineMisses": 0,
+  "claim": "Across 500 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.4%). The median resume took about 13 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 0.0% of surviving nodes paused themselves for safety, and 0.0% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting \u2014 no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown \u2248 half only because kills are aimed evenly at four phases \u2014 two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 \u2248 lease TTL + detection (failover floor).",
+  "resumeMs": {
+    "p50": 13076,
+    "p95": 13639,
+    "p99": 13893,
+    "p999": 15928,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 13,
+  "lease": {
+    "celldTtlMs": 10000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 0,
+    "note": "Renewals should complete with headroom \u226b R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "before_intent": {
+      "n": 125,
+      "ok": 113,
+      "failures": 12,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 113,
+      "completedCleanRate": 0.904,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 13194,
+        "p95": 13705,
+        "p99": 13893,
+        "p999": 14458
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_intent_before_call": {
+      "n": 125,
+      "ok": 119,
+      "failures": 6,
+      "duplicates": 0,
+      "outcomeUnknown": 119,
+      "outcomeUnknownRate": 0.952,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 13179,
+        "p95": 13673,
+        "p99": 13829,
+        "p999": 15928
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "during_call": {
+      "n": 125,
+      "ok": 104,
+      "failures": 21,
+      "duplicates": 0,
+      "outcomeUnknown": 104,
+      "outcomeUnknownRate": 0.832,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 9964,
+        "p95": 10436,
+        "p99": 10643,
+        "p999": 10670
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_call_before_journal": {
+      "n": 125,
+      "ok": 120,
+      "failures": 5,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 120,
+      "completedCleanRate": 0.96,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 13198,
+        "p95": 13748,
+        "p99": 13977,
+        "p999": 14335
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    }
+  },
+  "trialFailures": [
+    {
+      "i": 414,
+      "phase": "during_call",
+      "programId": "phased_during_call_414_1793475134191",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8087,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 418,
+      "phase": "during_call",
+      "programId": "phased_during_call_418_1793475606364",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8090,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 422,
+      "phase": "during_call",
+      "programId": "phased_during_call_422_1793476084614",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8076,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 426,
+      "phase": "during_call",
+      "programId": "phased_during_call_426_1793476561671",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8081,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 429,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 432,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 434,
+      "phase": "during_call",
+      "programId": "phased_during_call_434_1793477364242",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8091,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 436,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 438,
+      "phase": "during_call",
+      "programId": "phased_during_call_438_1793477685399",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8088,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 440,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 442,
+      "phase": "during_call",
+      "programId": "phased_during_call_442_1793478009349",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8096,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 444,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 446,
+      "phase": "during_call",
+      "programId": "phased_during_call_446_1793478334627",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8088,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 448,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 450,
+      "phase": "during_call",
+      "programId": "phased_during_call_450_1793478665465",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8076,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 452,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 454,
+      "phase": "during_call",
+      "programId": "phased_during_call_454_1793479003932",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8091,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 456,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 458,
+      "phase": "during_call",
+      "programId": "phased_during_call_458_1793479335559",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8093,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 460,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 462,
+      "phase": "during_call",
+      "programId": "phased_during_call_462_1793479673781",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8103,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 463,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 465,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 466,
+      "phase": "during_call",
+      "programId": "phased_during_call_466_1793479857886",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8098,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 468,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 470,
+      "phase": "during_call",
+      "programId": "phased_during_call_470_1793480181480",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8097,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 471,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 473,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 474,
+      "phase": "during_call",
+      "programId": "phased_during_call_474_1793480368972",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8072,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 476,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 478,
+      "phase": "during_call",
+      "programId": "phased_during_call_478_1793480725215",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8074,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 479,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 481,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 482,
+      "phase": "during_call",
+      "programId": "phased_during_call_482_1793480912804",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8112,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 484,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 486,
+      "phase": "during_call",
+      "programId": "phased_during_call_486_1793481245509",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8082,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 487,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 489,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 490,
+      "phase": "during_call",
+      "programId": "phased_during_call_490_1793481434559",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8070,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 492,
+      "phase": "before_intent",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 494,
+      "phase": "during_call",
+      "programId": "phased_during_call_494_1793481770938",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8108,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    },
+    {
+      "i": 495,
+      "phase": "after_call_before_journal",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 497,
+      "phase": "after_intent_before_call",
+      "ok": false,
+      "pauseFailed": true,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"timeout 15000ms\"}"
+    },
+    {
+      "i": 498,
+      "phase": "during_call",
+      "programId": "phased_during_call_498_1793481958871",
+      "ok": false,
+      "pauseFailed": false,
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8080,
+        "inFlightAtKill": 0
+      },
+      "detail": "mock pets inFlight stayed 0 before kill \u2014 egress never left the node"
+    }
+  ],
+  "availabilityIncidents": [],
+  "stoppedEarly": {
+    "reason": "availability_failure_certain",
+    "stoppedAt": "2026-10-31T21:29:34.017815Z",
+    "writeKillCompleted": 500,
+    "writeKillPlanned": 750,
+    "awaitCompleted": 0,
+    "awaitPlanned": 250,
+    "availabilityFailures": 44,
+    "availabilityCeilingAbsolute": 20,
+    "availabilityCeilingRate": 0.02,
+    "note": "Stopped once availability failures exceeded the frozen absolute budget for overallN=1000 (20). Remaining trials (incl. await arm) would not recover under frozen criteria. Correctness stayed 0 on completed write-kill trials; callSent intent visible on trials that reached egress."
+  },
+  "stopHonesty": "Availability FAILED (certain). Correctness 0 failures on completed write-kill trials; during_call sawInFlight=104/125 with intent visible on those that sent. Await arm not run (would execute on a degrading fleet). Same frozen criteria apply to v4 after lease-sweep/alive-vs-ready soak."
+}

@@ -2,6 +2,9 @@
  * Durability boards for clawql.com/benchmarks#durability.
  * Source: docs/benchmarks/durability-proof/ + program-cell-fleet-kill/ + security-suite/kill-mid-write/
  * Not a durable-execution claim — journaled program resume + at-most-once approved writes.
+ *
+ * Publish rule: ClawQL-only measured rows on this page. Named peer comparison (Pi Durable /
+ * Golem) stays "in review" until maintainers configure it — never publish sims as peer rows.
  */
 
 const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
@@ -9,21 +12,32 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects on the published Tier C board. Tip pin is stock celld 0.6.3 (always-on durability gate): wedged-owner N=100 and stale-owner N=40 tip boards held with call-sent + intent visible. Stock-TTL N=1000 confirmation (v3) failed availability on a degrading fleet — mechanism claim stays unrestored until lease-sweep/alive-vs-ready soak and a green v4. Interrupted in-flight writes with durable intent are marked outcome unknown — never blind-retried. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
-/** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). */
+/** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). Swap to tip v3 evidence when that board is measured+ok. */
 export const durabilityBenchmarkClaim =
   'Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.'
+
+/** Dated caveat under the claim — required until stock-TTL v3 confirmation greens. */
+export const durabilityBenchmarkClaimCaveat =
+  'Caveat (2026-10-31): on the pinned celld 0.4.0 setup this Oct 21 board ran on, combined with how ClawQL interleaved reads and intent writes, a mid-flight node kill could leave the upstream call in flight without a durable write intent — so “crash won’t double-charge” was not a claim we could keep as an absolute mechanism guarantee. Upgrading to stock celld 0.6.3 (always-on durability gate) closed that path on wedged-owner N=100 and stale-owner N=40 tip boards (call-sent proven; no late stale-owner egress). Stock-TTL N=1000 (v3) was stopped as an availability failure (44/500 > 2% ceiling; 0 correctness failures on completed trials; 712 accumulated node registrations — lease-sweep / alive-vs-ready still required before v4). We restore the stronger mechanism sentence only after a green confirmation with automatic storage check. Credit upstream for the always-on gate; own the 0.4.0 interleaving gap and tip availability work. Zero duplicates on this published board remain a real measurement.'
 
 export const durabilityBenchmarkMeta = {
   measuredAt: '2026-10-21',
   boardLabel: 'tier-c-fleet-phased-kill',
   measuredLabel: 'N=1000 · 0 duplicates · ~12s failover · R2',
+  tipRuntime: 'celld',
+  tipRuntimeVersion: '0.6.3',
+  tipPackageLabel: 'ClawQL tip · celld 0.6.3 · N=50',
   storageProvider: 'cloudflare-r2',
   nodeCount: 2,
   celldTtlMs: 10_000,
   n: 1000,
   artifactPhased: 'docs/benchmarks/program-cell-fleet-kill/phased-evidence.json',
+  artifactV3Tip: 'docs/benchmarks/program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json',
+  artifactWedgeTip: 'docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json',
+  artifactStaleTip: 'docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json',
+  artifactDurableWait: 'docs/benchmarks/program-cell-fleet-kill/durable-wait-stock-0.6.3-v3-partial.json',
   artifactTtlTradeoff: 'docs/benchmarks/program-cell-fleet-kill/ttl-tradeoff-evidence.json',
   artifactKillMid: 'docs/benchmarks/security-suite/kill-mid-write/evidence.json',
   artifactComparison: 'docs/benchmarks/durability-proof/comparison/evidence.json',
@@ -51,7 +65,7 @@ export const durabilityColumnChips: readonly DurabilityColumnChip[] = [
     id: 'uncertainty',
     title: 'Uncertainty',
     value: '481 outcome unknown',
-    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Explicit, not silent; auto-resolve via keys/lookup is planned.',
+    body: 'Aggregate ~48% is a targeting artifact — see per-phase table. Explicit, not silent. File-journal lost-ack pilots: keys → keyed resend (one unique effect); lookup → check-then-decide; neither → stay unknown.',
   },
   {
     id: 'availability',
@@ -82,14 +96,14 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
     n: 248,
     outcomeUnknown: 240,
     rateLabel: '~96.8%',
-    note: 'In-flight window',
+    note: 'In-flight window · 8 trials failed availability/orchestration (not lost-intent)',
   },
   {
     phase: 'During the call',
     n: 251,
     outcomeUnknown: 241,
     rateLabel: '~96.0%',
-    note: 'In-flight window',
+    note: 'In-flight window · 10 trials failed availability/orchestration (not lost-intent)',
   },
   {
     phase: 'After the call, before journaling',
@@ -101,7 +115,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived — unknown is honesty, not a durability failure. In real operation that window is milliseconds, so unknowns are far rarer than this targeted test shows. Prefer check-by-reference or idempotency keys before involving a person (planned).'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. The ~18 in-flight trials that are not outcome_unknown on this board are availability/orchestration failures (pause failed, resume deadline miss, survivor self-fence) — not completed writes and not the lost-intent defect class. Prefer check-by-reference or idempotency keys before involving a person when the API allows it.'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -142,17 +156,18 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
   },
   {
     tier: 'D+',
-    name: 'Dual-column comparison',
+    name: 'Dual-column comparison (ClawQL)',
     status: 'measured',
-    statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peers pending invite.',
+    statusLabel: 'Tip N=50',
+    detail:
+      'Schema v2 on celld 0.6.3: runtime/version, intent-on-resume, call-sent; wedge/stale own rows. Named Pi/Golem comparison in maintainer review — not published here.',
   },
   {
     tier: 'F',
     name: 'Resume vs journal length',
-    status: 'planned',
-    statusLabel: 'Planned',
-    detail: 'Measure resume wall time at short vs long journals; snapshots if needed.',
+    status: 'measured',
+    statusLabel: '≤500 steps',
+    detail: 'File-journal: resume ~1–6 ms at 10–500 steps; snapshots not needed up to 500. Not fleet failover.',
   },
 ] as const
 
@@ -203,30 +218,60 @@ export const durabilityTtlRows: readonly DurabilityTtlRow[] = [
 export type DurabilityComparisonArm = {
   arm: string
   status: string
+  runtime: string
   idempotent: string
   nonIdempotent: string
 }
 
+/** Public dual-column table — ClawQL-only. No peer sims, no named peer rows. */
 export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
-    arm: 'clawql-file-journal',
+    arm: 'clawql-file-journal @ during_call',
     status: 'measured',
-    idempotent: '0 dups / 20 unknown (n=20)',
-    nonIdempotent: '0 dups / 20 unknown (n=20)',
+    runtime: 'host-file-journal',
+    idempotent: '0 dups · intent+sent (n=50)',
+    nonIdempotent: '0 dups · intent+sent (n=50)',
   },
   {
-    arm: 'naive-retry (reference)',
-    status: 'measured',
-    idempotent: 'Retries; unique effects masked by keys',
-    nonIdempotent: 'Duplicates when upstream ignores keys',
-  },
-  {
-    arm: 'golem / pi-durable (+ combos)',
-    status: 'pending invite',
+    arm: 'clawql-program-celld @ during_call',
+    status: 'partial (tip v3)',
+    runtime: 'celld 0.6.3',
     idempotent: '—',
-    nonIdempotent: '—',
+    nonIdempotent: 'fleet tip import · confirmation underway',
+  },
+  {
+    arm: 'clawql-program-celld @ wedged_owner',
+    status: 'measured (tip)',
+    runtime: 'celld 0.6.3',
+    idempotent: '—',
+    nonIdempotent: '100/100 call-sent+intent (own row)',
+  },
+  {
+    arm: 'clawql-program-celld @ stale_owner',
+    status: 'measured (tip)',
+    runtime: 'celld 0.6.3',
+    idempotent: '—',
+    nonIdempotent: '40/40 ownershipMoved · 0 staleSend',
+  },
+  {
+    arm: 'clawql-file-journal @ lost_ack',
+    status: 'measured',
+    runtime: 'host-file-journal',
+    idempotent: 'Keys → keyed resend · 0 unknown · 1 effect (n=50)',
+    nonIdempotent: 'Neither → stay unknown · 0 resend (n=50); lookup → check-then-decide',
+  },
+  {
+    arm: 'naive-retry (ClawQL reference)',
+    status: 'measured',
+    runtime: 'host-file-journal',
+    idempotent: 'Blind resend; unique effects masked by keys',
+    nonIdempotent: 'Blind resend multiplies effects',
   },
 ] as const
+
+/** Shown under the table — peer package is not public yet. */
+export const durabilityPeerReviewNote =
+  'Named Pi Durable / Golem comparison is in maintainer configuration review and is not published here. Live N=50 peer runs already exist (PR #1432 / DURABILITY_COMPARISON_LIVE_PEERS=1) and are being rewired to the schema-v2 tip package — model simulations are not substitutes and are never shown as peer measurements.'
 
 export const durabilityHonestyNotes: readonly { title: string; body: string }[] = [
   {
@@ -238,16 +283,16 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
     body: 'A runtime can make the program survive a crash. Remote POSTs still need upstream idempotency — or at-most-once governance. ClawQL chooses at most once for consequential writes.',
   },
   {
-    title: 'Outcome unknown does not undermine durability',
-    body: 'When a cell dies mid-call, success and “never arrived” look the same from ClawQL’s side. We never blind-retry and never drop silently — the unknown is recorded. Recovery is not only “retry / do nothing / ask a person”: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+    title: 'Outcome unknown vs lost intent',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry. Tip stock celld 0.6.3 always-on gate closed the pretends-journaled-intent path on wedged + stale-owner boards; the stock-TTL N=1000 confirmation must finish green before the stronger mechanism sentence is restored. When the API supports keys or lookup-by-reference, resolve automatically (keyed resend / check-then-decide); person only when neither exists.',
   },
   {
-    title: 'No “exactly once” over HTTP (yet)',
-    body: 'Prefer at-most-once approved writes today. Mandate-derived keys and spec-driven lookup are planned so Stripe-class / lookup-capable APIs auto-resolve in-flight unknowns — not claimed until shipped and measured.',
+    title: 'Keys and lookup (measured on file-journal)',
+    body: 'Lost-ack pilots on the host file journal: idempotency keys → safe resend with the same key (one unique effect); lookup-by-reference → check-then-decide without resend; neither → stay outcome_unknown, never re-send. Program durable-runner still parks unknown until keyed resume is wired there — REST execute already supports clawql-mandate keyed redrive.',
   },
   {
-    title: 'Peer boards pending invite',
-    body: 'Named Golem / Pi Durable numbers wait on maintainer config. ClawQL-only crash evidence is public here.',
+    title: 'Peer boards in review',
+    body: 'Named Golem / Pi Durable numbers wait on maintainer config review. ClawQL-only crash evidence is public here.',
   },
 ] as const
 
@@ -255,12 +300,22 @@ export const durabilityBenchmarkLinks: readonly { href: string; label: string; d
   {
     href: `${GH}/docs/benchmarks/durability-proof/STATUS.md`,
     label: 'STATUS — proof ladder',
-    detail: 'Tiers A–F, scoped claim, outreach framing',
+    detail: 'Tiers A–F, scoped claim, tip 0.6.3 boards',
   },
   {
     href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-evidence.json`,
     label: 'phased-evidence.json',
-    detail: 'N=1000 Tier C machine-readable board',
+    detail: 'Published Tier C N=1000 board',
+  },
+  {
+    href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json`,
+    label: 'wedged-owner tip N=100',
+    detail: 'Stock celld 0.6.3 · call-sent+intent',
+  },
+  {
+    href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json`,
+    label: 'stale-owner tip N=40',
+    detail: '0 staleSend · ownership moved',
   },
   {
     href: `${GH}/docs/benchmarks/program-cell-fleet-kill/AVAILABILITY.md`,
@@ -279,8 +334,13 @@ export const durabilityBenchmarkLinks: readonly { href: string; label: string; d
   },
   {
     href: `${GH}/docs/benchmarks/durability-proof/comparison/evidence.json`,
-    label: 'comparison evidence',
-    detail: 'Dual columns × upstream modes',
+    label: 'comparison evidence (ClawQL tip)',
+    detail: 'Schema v2 · N=50 · peers in review',
+  },
+  {
+    href: `${GH}/docs/streams/celld-durable-ack-latency.md`,
+    label: 'durable_wait (gate latency)',
+    detail: 'Stock 0.6.3 gate wait — not PUT+GET',
   },
   {
     href: `${GH}/docs/gtm/golem-overlap-and-durability-honesty.md`,

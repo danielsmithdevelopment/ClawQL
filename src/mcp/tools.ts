@@ -416,6 +416,7 @@ function resolveProgramOperationEffect(operationId: string) {
  * programId correlation recorded by the plan runner.
  */
 async function makeMcpProgramHost(): Promise<import("clawql-api/program").ProgramHost> {
+  const program = await loadProgramMod();
   return {
     execute: (input, _ctx) =>
       Effect.tryPromise({
@@ -451,6 +452,25 @@ async function makeMcpProgramHost(): Promise<import("clawql-api/program").Progra
           return yield* Effect.fail(new Error(`Unknown operationId: ${call.operationId}`));
         }
         yield* accumulateSessionIfcReadEffect({ operation: info.operation, success: true });
+      }),
+    pendingStatus: (executionId) =>
+      program.parkedMandateStatusEffect(executionId).pipe(Effect.provide(PendingExecutionLive)),
+    // Claim-path §2 model_call — journaled via durable-runner; host hits inference gateway.
+    modelCall: (input, ctx) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { getHostInferenceGateway } = await import("../http/inference-host.js");
+          const response = await getHostInferenceGateway().complete({
+            messages: [{ role: "user", content: input.prompt }],
+            ...(input.model !== undefined ? { model: input.model } : {}),
+            correlationId: ctx.programId,
+          });
+          return {
+            text: response.content,
+            model: response.model || input.model,
+          };
+        },
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
       }),
   };
 }

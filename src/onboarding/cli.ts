@@ -670,8 +670,8 @@ gateway (Managed Edge Gateway — /mcp + /v1 + memory):
   Flags: --profile process|local-docker --team NAME --port 8080 --no-start --json
   Docs: https://docs.clawql.com/getting-started/inference
 
-streams (ClawQL Streams — celld v0.4.0):
-  celld install [--version v0.4.0]   Pin-install celld (CELLD_VERSION)
+streams (ClawQL Streams — celld v0.6.3):
+  celld install [--version v0.6.3]   Pin-install celld (CELLD_VERSION)
   celld dev [--project DIR] [--port N]   Local dev (default: docs/examples/streams-celld)
   celld deploy [--project DIR] --bucket s3://… [--endpoint URL] [--region auto]
   celld start --bucket s3://… [--listen HOST:PORT] [--advertise HOST:PORT]

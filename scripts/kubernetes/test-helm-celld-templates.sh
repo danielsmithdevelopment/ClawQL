@@ -46,7 +46,7 @@ assert "streams-celld" in celld
 assert "path: /.well-known/celld/health" in celld
 assert "CLAWQL_ENABLE_STREAMS" in celld
 assert "CELLD_ADVERTISE" in celld
-assert "ghcr.io/denoland/celld:v0.4.0" in celld
+assert "ghcr.io/denoland/celld:v0.6.3" in celld
 assert "CLAWQL_MCP_URL" in celld
 assert "INFERENCE_URL" in celld
 assert "/mcp" in celld

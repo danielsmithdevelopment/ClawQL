@@ -22,6 +22,17 @@ So the TTL pulls two ways:
 
 **celld 0.4.0 knobs:** only `CELLD_TTL_MS` is exposed. There is no `CELLD_RENEW_*` env. Renew cadence and lease-store placement are production asks / future celld surfaces — mark **planned** until run at the same sample size as stock. Do not pretend a 30s TTL is the preferred production tune.
 
+## Parallel product work (does not block claim-path v2)
+
+Claim-path N≈1000 v2 scores **correctness** (zero wrong outcomes) separately from **availability** (≤2% failure-rate ceiling on **all 1000** trials = 750 write-kill + 250 await; resume/recovery tails **reported without a ceiling**). “In time” = wall clock **`FLEET_PHASED_RESUME_DEADLINE_MS=60000`**, including orchestrator recovery. These celld items run **in parallel** so a later re-measure can show deadline-miss rate falling from X% to Y%:
+
+| Track                            | Meaning                                                                                                                                                                                                | Where                                                                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lease renew / regional store** | Cut false `SELF-FENCE` under R2 RTT (preferred levers above)                                                                                                                                           | Upstream celld — no `CELLD_RENEW_*` yet                                                                                                       |
+| **Lease-sweep**                  | Retire dead node-session leases so a restarted peer is not blocked by a fenced identity; **bound** stuck maintain / dead-leader sweep / bundle GC so #490 cannot block the ticker forever                 | Vendored `0.4.0-clawql.3` had `CELLD_MAINTENANCE_PHASE_BUDGET_SECS`. **Stock tip 0.6.3 still needs the equivalent** — v3 N=1000 failed availability with **712** accumulated `nodes/fleet_*.json` registrations (356/side) across 68 rebuilds. **Blocker for v4.** |
+| **Alive vs ready**               | Process-up ≠ serving. Liveness must always answer; readiness may 503. Callers wait `/program/health` (or readiness), not confuse alive with serving                                                     | Vendored `0.4.0-clawql.3`: `/.well-known/celld/alive` + timed `/health`. **Not on stock 0.6.3 tip yet.** v3 never-sent trials never reached the gate (absent from celld logs) — rebuild/unhealthy path. **Blocker for v4** alongside lease-sweep; require multi-hour soak (stable node-id count, no self-fence pile-up) before next N=1000. |
+| **Pause-aware clocks**           | Timers that handle the **host** being paused/suspended (wall time jumps while the machine was not running) — behind pause-fetch failures; **not** freezing the resume deadline during harness recovery | Still open on the celld / product list. Harness reports diagnostic `resumeActiveMs` + `recoveryMs` but scores availability on wall `resumeMs` |
+
 ## Stall forensics (stock 10s / R2)
 
 | Knob / observation                | Value                                                  |
@@ -30,6 +41,19 @@ So the TTL pulls two ways:
 | Observed renew start              | `prior_authority_headroom_ms ≈ 6665` (~⅓ TTL consumed) |
 | Observed renew RTT (`elapsed_ms`) | typically **270–560ms** under peer-down load           |
 | Fence                             | Watchdog if lease not renewed within TTL               |
+
+### ~900s resume tails — harness wait vs product hang
+
+Stalls land at **~875–921s**. Grep found no celld/R2 **15-minute** lease TTL. The arithmetic is harness-side; the _reason_ the harness waited is product-side.
+
+| Layer                                   | Finding                                                                                                                                                            | Fix does                                                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Harness (explains the 15 minutes)**   | `waitNode` used `programAttempts=180` × `fetchJson` **5s** when `/health` accepts TCP but never responds → **180×5s=900s**. Also bypassed the 60s resume deadline. | **Wall-cap + `deadlineAt`** → faster **classified failure**, better p99 optics. Does **not** make the node healthy.                        |
+| **celld (explains why `/health` hung)** | Same pattern as the N=1000 dead-leader-sweep spiral: process accepts connections, does not become ready.                                                           | **Bounded lease-sweep** + **alive vs ready** (still on the parallel product list). This is what removes the _incident_, not just the wait. |
+
+**v2 mid-run (~500 write-kill):** five ~900s stalls seed cascades; **15 failures ≈ 5 stall incidents + twin + 1 lone mid-flight 404**. **p95≈14s / p99≈870s** = discrete stall class (1% of trials), not rising typical recovery. Running v2 process still has the pre-wall-cap harness.
+
+**`during_call` resume 404 — R2 settle (correctness):** read-only check of the live v2 prefix showed trials **134/286/390/442** never had meta+intent in DO storage (neighbors present); **494** had create meta only, intent never durable. Upstream hang was in flight without a durable intent — **durability/correctness**, not availability-only. Zero outside writes (`writeCount=0`) only because the mock hung; a completing upstream would be a lost-order / double-charge risk on resume. Evidence: [`during-call-404-r2-settle.json`](./during-call-404-r2-settle.json). Harness must still retry mid-flight 404 until the wall deadline; product must enforce durable-ack-before-send (celld output-gate gap vs Cloudflare).
 
 ## Three columns
 
@@ -53,7 +77,7 @@ Read alone, “about half of crashes leave an unknown outcome” sounds alarming
 
 In real operation, crashes mostly land outside the brief in-flight window, so unknown outcomes are far rarer than this targeted test shows. If the two outer phases ever show a nonzero rate, that is a bug to fix, not a number to explain.
 
-**Does unknown undermine durability?** No. Durability here means the program survives, nothing is repeated, and nothing disappears silently. The in-flight case is the one place the callee’s truth is unavailable; marking it unknown is honesty, not weakness. Recovery is not limited to “retry / do nothing / ask a person” — **check by unique reference, then decide** (after the original can no longer land) is the preferred path when the API allows it; idempotency keys are the other. Person only when neither exists. Framing and product plan: [golem-overlap honesty § outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
+**Does unknown undermine durability?** Marking a *durable* mid-flight intent as unknown is honesty, not weakness. **Lost pretends-journaled intent** (R2 settle) *does* undermine the mechanism claim — that is a durability defect, separate from the duplicate column. Recovery is not limited to “retry / do nothing / ask a person” — **check by unique reference, then decide** (after the original can no longer land) is the preferred path when the API allows it; idempotency keys are the other. Person only when neither exists. Framing and product plan: [golem-overlap honesty § outcome unknown](../../gtm/golem-overlap-and-durability-honesty.md#why-outcome-unknown-and-why-that-does-not-undermine-durability).
 
 ## Comparison rows
 

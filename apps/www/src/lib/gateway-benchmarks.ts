@@ -71,7 +71,8 @@ export const gatewayTokenBoardProvenance = {
   },
 } as const
 
-export const gatewayBenchmarkHeadline = 'Most efficient governed MCP gateway — measured, not marketed.'
+export const gatewayBenchmarkHeadline =
+  'Most efficient on our equal-arm board — measured among peers we actually ran.'
 
 export const gatewayBenchmarkSummary =
   'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151).'
@@ -96,8 +97,14 @@ export const gatewayFeatureRows: GatewayFeatureRow[] = [
   },
   {
     feature: 'Operation risk / policy',
-    values: { ClawQL: true, Executor: false, MCPJungle: false, agentgateway: false },
-    footnote: 'Bench runs ALLOW_NO_ENFORCEMENT; the gate is still present.',
+    values: {
+      ClawQL: 'Person-bound + digest-bound approvals',
+      Executor: 'destructiveHint pause · policies.block',
+      MCPJungle: false,
+      agentgateway: false,
+    },
+    footnote:
+      'Executor ships stock pause on destructiveHint and policies.block (credited on governance cells). ClawQL’s difference is person-bound approval and argument digests — not “Executor has no policy.”',
   },
   {
     feature: 'Ephemeral audit ring',
@@ -140,8 +147,14 @@ export const gatewayFeatureRows: GatewayFeatureRow[] = [
     values: { ClawQL: 'Onyx', Executor: false, MCPJungle: false, agentgateway: false },
   },
   {
-    feature: 'WORM / Merkle audit trail',
-    values: { ClawQL: true, Executor: 'Basic log', MCPJungle: false, agentgateway: false },
+    feature: 'Tamper-evident audit (WORM + S3 Object Lock)',
+    values: {
+      ClawQL: 'Tamper-evident; WORM with S3 Object Lock',
+      Executor: 'Basic log',
+      MCPJungle: false,
+      agentgateway: false,
+    },
+    footnote: 'Not a hardware TEE claim — optional TEE paths are separate from the default WORM trail.',
   },
   {
     feature: 'Unlimited executions (no meter)',
@@ -452,7 +465,7 @@ export const gatewayBenchmarkLinks = [
   {
     label: 'Fail-closed security (governance)',
     href: '/benchmarks/#governance',
-    detail: 'Panguard vault-write deny — ClawQL 5/5 vs Obot 2/5 on equal-arm fixture',
+    detail: 'Defaults tied at 2/5; best-config ClawQL+Panguard invited (peers expected to tie)',
   },
   {
     label: 'Durability · crash boards',

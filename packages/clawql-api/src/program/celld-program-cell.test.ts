@@ -59,7 +59,7 @@ describe("celld-shaped program cell", () => {
     const cell = await Effect.runPromise(makeProgramCellEffect(dir));
     expect(cell.honesty).toContain("celld-shaped");
     expect(cell.honesty).toContain("file-journal");
-    expect(cell.honesty).toContain("v0.4.0");
+    expect(cell.honesty).toContain("v0.6.3");
     expect(cell.journalDir).toBe(dir);
 
     const result = await Effect.runPromise(

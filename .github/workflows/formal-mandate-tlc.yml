@@ -67,3 +67,9 @@ jobs:
             exit 1
           fi
           echo "OK: event at-least-once+dedup green; weak counterexample (exit=$WEAK)"
+
+      - name: Run program-resume TLC configs (target + weak rerun + weak send)
+        run: bash scripts/formal/run-program-resume-tlc.sh
+
+      - name: Trace check intent durable before send
+        run: node scripts/formal/check-intent-durable-before-send.mjs

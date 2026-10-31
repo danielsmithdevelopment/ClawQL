@@ -3,7 +3,33 @@
  * POST /{toolName} with JSON args — no Express/gRPC/SDK in the DO bundle.
  */
 
-/** @typedef {{ url: string, bearer?: string, timeoutMs?: number }} AdapterFetchConfig */
+/** @typedef {{ url: string, bearer?: string, timeoutMs?: number, retries?: number }} AdapterFetchConfig */
+
+/**
+ * Transient upstream races (MCP briefly unavailable after vault IO / celld settle)
+ * show up as fetch throw, HTTP 502/503/504, or adapter body "fetch failed".
+ * @param {{ ok: boolean, status?: number, error?: string, parsed?: unknown }} out
+ */
+export function isTransientAdapterFailure(out) {
+  if (!out || out.ok === true) return false;
+  const status = typeof out.status === "number" ? out.status : 0;
+  if (status === 502 || status === 503 || status === 504) return true;
+  const err = String(out.error || "");
+  if (/fetch failed|ECONNRESET|ECONNREFUSED|socket hang up|upstream CallTool failed/i.test(err)) {
+    return true;
+  }
+  const parsed = out.parsed;
+  if (parsed && typeof parsed === "object") {
+    const msg = String(
+      /** @type {{ message?: unknown, text?: unknown, error?: unknown }} */ (parsed).message ||
+        /** @type {{ text?: unknown }} */ (parsed).text ||
+        /** @type {{ error?: unknown }} */ (parsed).error ||
+        ""
+    );
+    if (/fetch failed|upstream CallTool failed/i.test(msg)) return true;
+  }
+  return false;
+}
 
 /**
  * @param {AdapterFetchConfig} config
@@ -36,6 +62,32 @@ export async function callAdapterTool(config, name, args = {}) {
 
   const url = `${base}/${encodeURIComponent(name)}`;
   const timeoutMs = config.timeoutMs ?? 15_000;
+  const maxAttempts = Math.max(1, Math.min(5, (config.retries ?? 3) + 1));
+
+  /** @type {Awaited<ReturnType<typeof attemptOnce>> | null} */
+  let last = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    last = await attemptOnce({ url, base, headers, args, name, timeoutMs });
+    if (last.ok || !isTransientAdapterFailure(last) || attempt === maxAttempts) {
+      return last.ok ? last : { ...last, attempts: attempt, retried: attempt > 1 };
+    }
+    await sleep(150 * attempt);
+  }
+  return last;
+}
+
+/**
+ * @param {{
+ *   url: string,
+ *   base: string,
+ *   headers: Record<string, string>,
+ *   args: Record<string, unknown>,
+ *   name: string,
+ *   timeoutMs: number,
+ * }} opts
+ */
+async function attemptOnce(opts) {
+  const { url, base, headers, args, name, timeoutMs } = opts;
   let res;
   try {
     res = await fetch(url, {
@@ -93,13 +145,18 @@ export async function callAdapterTool(config, name, args = {}) {
     ...(isError
       ? {
           error:
-            (parsed &&
+            parsed &&
             typeof parsed === "object" &&
             "text" in parsed &&
-            typeof /** @type {{ text?: unknown }} */ (parsed).text === "string"
+            typeof (/** @type {{ text?: unknown }} */ (parsed).text) === "string"
               ? /** @type {{ text: string }} */ (parsed).text
-              : "adapter tool returned isError"),
+              : "adapter tool returned isError",
         }
       : {}),
   };
+}
+
+/** @param {number} ms */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -41,7 +41,57 @@ export type ProgramPlanSearchCall = {
   readonly id: string;
 };
 
-export type ProgramPlanCall = ProgramPlanExecuteCall | ProgramPlanSearchCall;
+/**
+ * Claim-path §2 — first-class timer step. Durable runner journals a wake deadline
+ * before waiting so resume re-arms the remaining delay instead of restarting blind.
+ */
+export type ProgramPlanSleepCall = {
+  readonly tool: "sleep";
+  /** Wall-clock delay in milliseconds (integer, ≥ 0, ≤ {@link PROGRAM_SLEEP_MAX_MS}). */
+  readonly durationMs: number;
+  /** Explicit id, or `call_<index>` when the plan omits it. */
+  readonly id: string;
+};
+
+/** Hard cap on plan `sleep.durationMs` (5 minutes). */
+export const PROGRAM_SLEEP_MAX_MS = 300_000;
+
+/**
+ * Claim-path §2 — wait on a parked mandate without consuming it. Durable runner
+ * journals the executionId and parks while status is `pending`; resume re-checks.
+ */
+export type ProgramPlanAwaitApprovalCall = {
+  readonly tool: "await_approval";
+  /** Pending execution id (`pex_…`) from a prior mandate_required response. */
+  readonly executionId: string;
+  /** Explicit id, or `call_<index>` when the plan omits it. */
+  readonly id: string;
+};
+
+/**
+ * Claim-path §2 — host model/LLM call as a journaled step. Durable runner lands
+ * the response in the journal; resume replays it (no second host call). Crash
+ * mid-call with no entry re-requests once — explicit recovery rule.
+ */
+export type ProgramPlanModelCall = {
+  readonly tool: "model_call";
+  /** Prompt text (non-empty, ≤ {@link PROGRAM_MODEL_CALL_PROMPT_MAX}). */
+  readonly prompt: string;
+  /** Optional model id passed through to the host. */
+  readonly model?: string;
+  /** Explicit id, or `call_<index>` when the plan omits it. */
+  readonly id: string;
+};
+
+/** Hard cap on plan `model_call.prompt` length (chars). */
+export const PROGRAM_MODEL_CALL_PROMPT_MAX = 32_768;
+
+export type ProgramPlanCall =
+  | ProgramPlanExecuteCall
+  | ProgramPlanSearchCall
+  | ProgramPlanSleepCall
+  | ProgramPlanAwaitApprovalCall
+  | ProgramPlanModelCall;
 
 /** A write the program proposes; never executed inside the program. */
 export type ProgramPlanProposal = {
@@ -97,7 +147,7 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
   if (!isRecord(raw)) {
     return parseError(
       `calls[${index}] must be an object`,
-      'Use { "tool": "execute", "operationId": "...", "args": {} } or { "tool": "search", "query": "..." }'
+      "Use execute, search, sleep, await_approval, or model_call call objects"
     );
   }
   const id = typeof raw.id === "string" ? raw.id : `call_${index}`;
@@ -140,9 +190,49 @@ function parseCall(raw: unknown, index: number): ParseResult<ProgramPlanCall> {
         : undefined;
     return { tool: "search", query, limit, id };
   }
+  if (tool === "sleep") {
+    const durationMs =
+      typeof raw.durationMs === "number" && Number.isFinite(raw.durationMs)
+        ? Math.trunc(raw.durationMs)
+        : NaN;
+    if (!Number.isInteger(durationMs) || durationMs < 0 || durationMs > PROGRAM_SLEEP_MAX_MS) {
+      return parseError(
+        `calls[${index}].durationMs must be an integer 0..${PROGRAM_SLEEP_MAX_MS}`,
+        'Use { "tool": "sleep", "durationMs": 1000 }.'
+      );
+    }
+    return { tool: "sleep", durationMs, id };
+  }
+  if (tool === "await_approval") {
+    const executionId = typeof raw.executionId === "string" ? raw.executionId.trim() : "";
+    if (!executionId.startsWith("pex_")) {
+      return parseError(
+        `calls[${index}].executionId must be a pending execution id (pex_…)`,
+        'Use { "tool": "await_approval", "executionId": "pex_…" } from a mandate_required response.'
+      );
+    }
+    return { tool: "await_approval", executionId, id };
+  }
+  if (tool === "model_call") {
+    const prompt = typeof raw.prompt === "string" ? raw.prompt : "";
+    if (!prompt.trim()) {
+      return parseError(
+        `calls[${index}].prompt required for tool model_call`,
+        'Use { "tool": "model_call", "prompt": "…" }.'
+      );
+    }
+    if (prompt.length > PROGRAM_MODEL_CALL_PROMPT_MAX) {
+      return parseError(
+        `calls[${index}].prompt must be ≤ ${PROGRAM_MODEL_CALL_PROMPT_MAX} characters`,
+        "Shorten the prompt or split across steps."
+      );
+    }
+    const model = typeof raw.model === "string" && raw.model.trim() ? raw.model.trim() : undefined;
+    return { tool: "model_call", prompt, ...(model !== undefined ? { model } : {}), id };
+  }
   return parseError(
-    `calls[${index}].tool must be "execute" or "search" (got ${JSON.stringify(tool)})`,
-    "v0 plan runner only allows host-injected search/execute. OpenCode-style JS programs are not supported yet."
+    `calls[${index}].tool must be "execute", "search", "sleep", "await_approval", or "model_call" (got ${JSON.stringify(tool)})`,
+    "v0 plan runner allows host-injected search/execute/model_call, journaled sleep, and await_approval waits. OpenCode-style JS programs are not supported yet."
   );
 }
 

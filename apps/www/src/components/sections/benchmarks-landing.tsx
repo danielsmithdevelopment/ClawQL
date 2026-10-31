@@ -24,6 +24,7 @@ import {
 } from '@/lib/dominance-roadmap'
 import {
   durabilityBenchmarkClaim,
+  durabilityBenchmarkClaimCaveat,
   durabilityBenchmarkHeadline,
   durabilityBenchmarkLinks,
   durabilityBenchmarkMeta,
@@ -32,6 +33,7 @@ import {
   durabilityComparisonArms,
   durabilityHonestyNotes,
   durabilityLadderRows,
+  durabilityPeerReviewNote,
   durabilityPhaseFraming,
   durabilityPhaseRows,
   durabilityTtlRows,
@@ -599,13 +601,16 @@ export function BenchmarksLanding() {
             <p className="text-sm font-medium text-mist-800 dark:text-mist-200">
               {durabilityBenchmarkMeta.measuredLabel}{' '}
               <span className="font-normal text-mist-600 dark:text-mist-400">
-                · {durabilityBenchmarkMeta.measuredAt} · {durabilityBenchmarkMeta.boardLabel}
+                · {durabilityBenchmarkMeta.measuredAt} · {durabilityBenchmarkMeta.boardLabel} · tip{' '}
+                {durabilityBenchmarkMeta.tipRuntime} {durabilityBenchmarkMeta.tipRuntimeVersion} (
+                {durabilityBenchmarkMeta.tipPackageLabel})
               </span>
             </p>
             <p className="max-w-3xl text-sm/6 text-mist-800 dark:text-mist-200">
               <span className="font-medium text-mist-950 dark:text-white">Claim: </span>
               {durabilityBenchmarkClaim}
             </p>
+            <p className="max-w-3xl text-xs/5 text-mist-600 dark:text-mist-400">{durabilityBenchmarkClaimCaveat}</p>
           </div>
         }
       >
@@ -741,13 +746,16 @@ export function BenchmarksLanding() {
         </ComparisonTable>
 
         <h3 className="mt-10 text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
-          Dual-column comparison (ClawQL arms)
+          Dual-column comparison (ClawQL · tip celld 0.6.3 · N=50)
         </h3>
-        <ComparisonTable minWidthClass="min-w-[800px]" className="mt-4">
-          <caption className="sr-only">Kill-mid-write duplicates and outcome_unknown by upstream mode</caption>
+        <ComparisonTable minWidthClass="min-w-[960px]" className="mt-4">
+          <caption className="sr-only">
+            ClawQL kill-mid-write duplicates, outcome_unknown, intent-on-resume, and call-sent by upstream mode
+          </caption>
           <thead>
             <tr>
               <ComparisonTh className={clsx('text-left')}>Arm</ComparisonTh>
+              <ComparisonTh className={clsx('text-left')}>Runtime</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Status</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Idempotent upstream</ComparisonTh>
               <ComparisonTh className={clsx('text-left')}>Non-idempotent upstream</ComparisonTh>
@@ -759,6 +767,9 @@ export function BenchmarksLanding() {
                 <ComparisonRowTh className={clsx('text-left font-medium text-mist-950 dark:text-white')}>
                   {row.arm}
                 </ComparisonRowTh>
+                <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
+                  {row.runtime}
+                </ComparisonTd>
                 <ComparisonTd className={clsx('text-left')}>{row.status}</ComparisonTd>
                 <ComparisonTd className={clsx('text-left text-mist-700 dark:text-mist-400')}>
                   {row.idempotent}
@@ -770,6 +781,7 @@ export function BenchmarksLanding() {
             ))}
           </tbody>
         </ComparisonTable>
+        <p className="mt-3 max-w-3xl text-xs/5 text-mist-600 dark:text-mist-400">{durabilityPeerReviewNote}</p>
 
         <div className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {durabilityHonestyNotes.map((note) => (
@@ -794,8 +806,9 @@ export function BenchmarksLanding() {
           ))}
         </ul>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactKillMid} ·{' '}
-          {durabilityBenchmarkMeta.artifactComparison} · {durabilityBenchmarkMeta.statusDoc}
+          Artifacts: {durabilityBenchmarkMeta.artifactPhased} · {durabilityBenchmarkMeta.artifactWedgeTip} ·{' '}
+          {durabilityBenchmarkMeta.artifactStaleTip} · {durabilityBenchmarkMeta.artifactComparison} ·{' '}
+          {durabilityBenchmarkMeta.artifactDurableWait} · {durabilityBenchmarkMeta.statusDoc}
         </p>
       </Section>
 

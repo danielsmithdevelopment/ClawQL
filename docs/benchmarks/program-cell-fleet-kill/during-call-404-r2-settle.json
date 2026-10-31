@@ -1,0 +1,76 @@
+{
+  "kind": "during-call-404-r2-settle",
+  "measuredAt": "2026-10-31T02:11:14.931Z",
+  "prefix": "tier-c-phased-20261030212001",
+  "cell": "ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f",
+  "method": [
+    "read-only copy of live DO SQLite _cf_KV",
+    "scan of 1879 local /tmp/celld-*/…/db.sqlite generation snapshots",
+    "GET /program/status on live survivor for present programId",
+    "no PutObject / kv put / mutate against the live prefix"
+  ],
+  "trials": [
+    134,
+    286,
+    390,
+    442,
+    494
+  ],
+  "results": {
+    "134": {
+      "present": false,
+      "intent": false,
+      "verdict": "durability_missing",
+      "notes": "never in any in-window generation; neighbors 130 and 138 present"
+    },
+    "286": {
+      "present": false,
+      "intent": false,
+      "verdict": "durability_missing",
+      "notes": "current-run window empty; prior-run ts 1793374057485 ignored"
+    },
+    "390": {
+      "present": false,
+      "intent": false,
+      "verdict": "durability_missing",
+      "notes": "current-run window empty; prior-run ts ignored"
+    },
+    "442": {
+      "present": false,
+      "intent": false,
+      "verdict": "durability_missing",
+      "notes": "current-run window empty; prior-run ts ignored"
+    },
+    "494": {
+      "present": true,
+      "programId": "phased_during_call_494_1793409345554",
+      "intent": false,
+      "pauseKind": null,
+      "status": "running",
+      "entries": 0,
+      "intents": 0,
+      "createdAt": "2026-10-31T01:15:45.557Z",
+      "updatedAt": "2026-10-31T01:15:45.557Z",
+      "verdict": "durability_intent_missing",
+      "notes": "create meta only; intent/pauseKind never durable across all local gens for this ts"
+    }
+  },
+  "duringCallExpectedVsPresent": {
+    "expected": 150,
+    "presentMeta": 146,
+    "missingIndices": [
+      134,
+      286,
+      390,
+      442
+    ],
+    "presentCreateOnly": [
+      494
+    ]
+  },
+  "classificationImpact": {
+    "harnessScoredAs": "availability/no_expected_outcome",
+    "afterSettle": "correctness/durability — do not publish correctness=0",
+    "harnessFollowUp": "retry mid-flight 404 until wall deadline; retain programId; later /status"
+  }
+}

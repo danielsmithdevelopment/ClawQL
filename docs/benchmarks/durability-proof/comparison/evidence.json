@@ -1,22 +1,34 @@
 {
   "kind": "durability-comparison-kill-mid-write",
-  "measuredAt": "2026-10-21T02:15:52.189Z",
-  "metric": "duplicates + outcome_unknown (+ lost); both upstream modes",
-  "honesty": "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+  "schemaVersion": 2,
+  "packageId": "clawql-durability-comparison-celld-0.6.3",
+  "measuredAt": "2026-10-31T20:19:42.206Z",
+  "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+  "defaultN": 50,
+  "metric": "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes",
+  "honesty": "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Real golem/pi-durable rows stay pending_adapter until live adapters run (never measured in-repo yet — no prior live N=50 peer evidence). Peer model-sims are opt-in via DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1 for internal harness only — not published as peer measurements. ClawQL lost-ack pilot included (keys → keyed resend). Config-review package; named peers unpublished until maintainers review.",
+  "tipRuntime": "celld",
+  "tipRuntimeVersion": "0.6.3",
   "arms": [
     {
       "armId": "clawql-file-journal",
       "status": "measured",
-      "honesty": "ClawQL file-journal: no write re-send after SIGKILL; resume uses outcome_unknown. Duplicates must be 0 in both upstream modes.",
+      "runtime": "clawql-file-journal",
+      "runtimeVersion": "host-file-journal",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "ClawQL file-journal: no write re-send after SIGKILL; resume uses outcome_unknown. Duplicates must be 0 in both upstream modes. Columns: intentPresentOnResume + callVerifiedSent. Package default N=50 to match peer pilots.",
       "modes": [
         {
           "upstreamMode": "idempotent",
-          "n": 20,
+          "n": 50,
           "duplicates": 0,
-          "outcomeUnknown": 20,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -27,8 +39,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 1,
@@ -37,8 +51,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 2,
@@ -47,8 +63,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 3,
@@ -57,8 +75,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 4,
@@ -67,8 +87,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 5,
@@ -77,8 +99,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 6,
@@ -87,8 +111,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 7,
@@ -97,8 +123,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 8,
@@ -107,8 +135,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 9,
@@ -117,8 +147,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 10,
@@ -127,8 +159,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 11,
@@ -137,8 +171,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 12,
@@ -147,8 +183,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 13,
@@ -157,8 +195,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 14,
@@ -167,8 +207,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 15,
@@ -177,8 +219,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 16,
@@ -187,8 +231,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 17,
@@ -197,8 +243,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 18,
@@ -207,8 +255,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 19,
@@ -217,19 +267,383 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             }
           ]
         },
         {
           "upstreamMode": "non_idempotent",
-          "n": 20,
+          "n": 50,
           "duplicates": 0,
-          "outcomeUnknown": 20,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -240,8 +654,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 1,
@@ -250,8 +666,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 2,
@@ -260,8 +678,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 3,
@@ -270,8 +690,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 4,
@@ -280,8 +702,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 5,
@@ -290,8 +714,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 6,
@@ -300,8 +726,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 7,
@@ -310,8 +738,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 8,
@@ -320,8 +750,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 9,
@@ -330,8 +762,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 10,
@@ -340,8 +774,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 11,
@@ -350,8 +786,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 12,
@@ -360,8 +798,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 13,
@@ -370,8 +810,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 14,
@@ -380,8 +822,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 15,
@@ -390,8 +834,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 16,
@@ -400,8 +846,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 17,
@@ -410,8 +858,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 18,
@@ -420,8 +870,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 19,
@@ -430,8 +882,370 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 effects=1"
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             }
           ]
         }
@@ -440,16 +1254,22 @@
     {
       "armId": "naive-retry",
       "status": "measured",
+      "runtime": "naive-retry-reference",
+      "runtimeVersion": "host-file-journal",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
       "honesty": "Reference arm: forces write re-send after kill. Idempotent upstream can mask duplicates; non_idempotent multiplies effects. Not ClawQL product behavior.",
       "modes": [
         {
           "upstreamMode": "idempotent",
-          "n": 20,
-          "duplicates": 20,
-          "outcomeUnknown": 20,
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 20,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -460,8 +1280,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 1,
@@ -470,8 +1292,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 2,
@@ -480,8 +1304,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 3,
@@ -490,8 +1316,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 4,
@@ -500,8 +1328,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 5,
@@ -510,8 +1340,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 6,
@@ -520,8 +1352,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 7,
@@ -530,8 +1364,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 8,
@@ -540,8 +1376,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 9,
@@ -550,8 +1388,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 10,
@@ -560,8 +1400,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 11,
@@ -570,8 +1412,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 12,
@@ -580,8 +1424,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 13,
@@ -590,8 +1436,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 14,
@@ -600,8 +1448,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 15,
@@ -610,8 +1460,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 16,
@@ -620,8 +1472,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 17,
@@ -630,8 +1484,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 18,
@@ -640,8 +1496,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             },
             {
               "i": 19,
@@ -650,19 +1508,383 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 effects=1"
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=1"
             }
           ]
         },
         {
           "upstreamMode": "non_idempotent",
-          "n": 20,
-          "duplicates": 20,
-          "outcomeUnknown": 20,
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 50,
           "lost": 0,
-          "uniqueWriteEffects": 40,
-          "trialsOk": 20,
+          "uniqueWriteEffects": 100,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
           "trialsFailed": 0,
           "boardPass": true,
           "trials": [
@@ -673,8 +1895,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 1,
@@ -683,8 +1907,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 2,
@@ -693,8 +1919,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 3,
@@ -703,8 +1931,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 4,
@@ -713,8 +1943,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 5,
@@ -723,8 +1955,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 6,
@@ -733,8 +1967,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 7,
@@ -743,8 +1979,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 8,
@@ -753,8 +1991,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 9,
@@ -763,8 +2003,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 10,
@@ -773,8 +2015,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 11,
@@ -783,8 +2027,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 12,
@@ -793,8 +2039,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 13,
@@ -803,8 +2051,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 14,
@@ -813,8 +2063,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 15,
@@ -823,8 +2075,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 16,
@@ -833,8 +2087,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 17,
@@ -843,8 +2099,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 18,
@@ -853,8 +2111,10 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
             },
             {
               "i": 19,
@@ -863,8 +2123,2226 @@
               "outcomeUnknown": 1,
               "lost": 0,
               "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
               "childSignal": "SIGKILL",
-              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 effects=2"
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 2,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "naive-retry/non_idempotent: duplicates=1 unknown=1 intent=1 sent=1 effects=2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "armId": "clawql-file-journal",
+      "status": "measured",
+      "runtime": "clawql-file-journal",
+      "runtimeVersion": "host-file-journal",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "lost_ack",
+      "honesty": "Lost-ack pilot: host applied the write then SIGKILL before the runner saw a response. idempotent → keyed resend with the same key (one unique effect; mirrors REST clawql-mandate redrive — durable-runner still parks unknown until keyed resume lands there). lookup_by_reference → check-then-decide resolves without resend. neither (non_idempotent, no key) → stay outcome_unknown, never re-send. N=50 expansion pilot; not a named peer row.",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": 50,
+          "outcomeUnknown": 0,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 1,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-keyed-retry/idempotent: duplicates=1 unknown=0 intent=1 sent=1 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "lookup_by_reference",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 0,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 0,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-lookup/lookup_by_reference: duplicates=0 unknown=0 intent=1 sent=1 effects=1"
+            }
+          ]
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": 0,
+          "outcomeUnknown": 50,
+          "lost": 0,
+          "uniqueWriteEffects": 50,
+          "intentPresentOnResume": 50,
+          "callVerifiedSent": 50,
+          "trialsOk": 50,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": [
+            {
+              "i": 0,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 1,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 2,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 3,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 4,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 5,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 6,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 7,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 8,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 9,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 10,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 11,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 12,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 13,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 14,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 15,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 16,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 17,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 18,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 19,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 20,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 21,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 22,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 23,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 24,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 25,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 26,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 27,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 28,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 29,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 30,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 31,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 32,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 33,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 34,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 35,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 36,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 37,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 38,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 39,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 40,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 41,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 42,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 43,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 44,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 45,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 46,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 47,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 48,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
+            },
+            {
+              "i": 49,
+              "ok": true,
+              "duplicates": 0,
+              "outcomeUnknown": 1,
+              "lost": 0,
+              "uniqueWriteEffects": 1,
+              "intentPresentOnResume": 1,
+              "callVerifiedSent": 1,
+              "childSignal": "SIGKILL",
+              "detail": "lost-ack-clawql/non_idempotent: duplicates=0 unknown=1 intent=1 sent=1 effects=1"
             }
           ]
         }
@@ -872,33 +4350,234 @@
     },
     {
       "armId": "clawql-program-celld",
-      "status": "skipped",
-      "honesty": "ProgramCellDO isolate kill is Tier B (`smoke-program-cell-kill.sh`). Fleet peer resume is Tier C (`smoke-program-cell-fleet-kill.sh`). Not inlined into this Node board.",
-      "modes": []
+      "status": "partial",
+      "runtime": "celld",
+      "runtimeVersion": "0.6.3",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "ProgramCellDO stock celld 0.6.3 — crash during outside write (fleet during_call, no health wedge). Source: phased-n1000-v3 (status=partial). Separate from wedged-owner row.",
+      "modes": [
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 110,
+          "duplicates": 0,
+          "outcomeUnknown": 104,
+          "lost": 0,
+          "uniqueWriteEffects": 0,
+          "intentPresentOnResume": 104,
+          "callVerifiedSent": 104,
+          "trialsOk": 110,
+          "trialsFailed": 0,
+          "boardPass": false,
+          "trials": []
+        }
+      ]
+    },
+    {
+      "armId": "clawql-program-celld",
+      "status": "measured",
+      "runtime": "celld",
+      "runtimeVersion": "0.6.3",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "wedged_owner",
+      "honesty": "Wedged-owner tip board (hang /.well-known/celld/health, then SIGKILL). N=100 on stock celld 0.6.3. Not the same experiment as during_call outside-write. Peer pilots should use the same wedged-owner scenario at N=50.",
+      "modes": [
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 100,
+          "duplicates": 0,
+          "outcomeUnknown": 100,
+          "lost": 0,
+          "uniqueWriteEffects": 0,
+          "intentPresentOnResume": 100,
+          "callVerifiedSent": 100,
+          "trialsOk": 100,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": []
+        }
+      ]
+    },
+    {
+      "armId": "clawql-program-celld",
+      "status": "measured",
+      "runtime": "celld",
+      "runtimeVersion": "0.6.3",
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "stale_owner",
+      "honesty": "Stale-owner tip (SIGSTOP→own.json→SIGCONT). N=40. Pi Durable likely N/A (single process). Peer Golem pilot N=50 on same tip harness.",
+      "modes": [
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 40,
+          "duplicates": 0,
+          "outcomeUnknown": 40,
+          "lost": 0,
+          "uniqueWriteEffects": 0,
+          "intentPresentOnResume": 40,
+          "callVerifiedSent": 40,
+          "trialsOk": 40,
+          "trialsFailed": 0,
+          "boardPass": true,
+          "trials": []
+        }
+      ]
     },
     {
       "armId": "pi-durable",
-      "status": "pending_invite",
-      "honesty": "Pi Durable peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md).",
-      "modes": []
+      "status": "pending_adapter",
+      "runtime": null,
+      "runtimeVersion": null,
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "Pi Durable peer arm — adapter not wired on tip. Include N=50 pilot results in the config-review package (not after invite). Same tip package harnessCommit=50645eede77e72818cdc72cccdfe25977901d5d9; columns present with null metrics until the peer adapter runs on this commit (N=50).",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        }
+      ]
     },
     {
       "armId": "golem",
-      "status": "pending_invite",
-      "honesty": "Golem peer arm — not run. Named public board requires maintainer invitation (COMPARISON.md).",
-      "modes": []
+      "status": "pending_adapter",
+      "runtime": null,
+      "runtimeVersion": null,
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "Golem peer arm — adapter not wired on tip. Include N=50 pilot results in the config-review package (not after invite). Same tip package harnessCommit=50645eede77e72818cdc72cccdfe25977901d5d9; columns present with null metrics until the peer adapter runs on this commit (N=50).",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        }
+      ]
     },
     {
       "armId": "pi-durable+clawql",
-      "status": "pending_invite",
-      "honesty": "Combination arm (Pi Durable agent → ClawQL MCP) — pending invite + wiring.",
-      "modes": []
+      "status": "pending_adapter",
+      "runtime": null,
+      "runtimeVersion": null,
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "Combination arm (Pi Durable → ClawQL MCP) — adapter not wired on tip. Same tip package harnessCommit=50645eede77e72818cdc72cccdfe25977901d5d9; columns present with null metrics until the peer adapter runs on this commit (N=50).",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        }
+      ]
     },
     {
       "armId": "golem+clawql",
-      "status": "pending_invite",
-      "honesty": "Combination arm (Golem agent → ClawQL MCP) — pending invite + wiring.",
-      "modes": []
+      "status": "pending_adapter",
+      "runtime": null,
+      "runtimeVersion": null,
+      "harnessCommit": "50645eede77e72818cdc72cccdfe25977901d5d9",
+      "crashPhase": "during_call",
+      "honesty": "Combination arm (Golem → ClawQL MCP) — adapter not wired on tip. Same tip package harnessCommit=50645eede77e72818cdc72cccdfe25977901d5d9; columns present with null metrics until the peer adapter runs on this commit (N=50).",
+      "modes": [
+        {
+          "upstreamMode": "idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        },
+        {
+          "upstreamMode": "non_idempotent",
+          "n": 50,
+          "duplicates": null,
+          "outcomeUnknown": null,
+          "lost": null,
+          "uniqueWriteEffects": null,
+          "intentPresentOnResume": null,
+          "callVerifiedSent": null,
+          "trialsOk": null,
+          "trialsFailed": null,
+          "boardPass": false,
+          "trials": []
+        }
+      ]
     }
   ],
   "clawqlBoardPass": true

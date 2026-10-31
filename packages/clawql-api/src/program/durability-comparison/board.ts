@@ -1,33 +1,54 @@
 /**
- * Durability comparison board — dual columns × upstream modes × arms.
+ * Durability comparison board — dual columns × upstream modes × arms (schema v2).
  */
 
+import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
+import {
+  COMPARISON_PACKAGE_ID,
+  TIP_RUNTIME,
+  TIP_RUNTIME_VERSION,
+} from "./constants.js";
 import { clawqlFileJournalArm, naiveRetryArm } from "./file-journal-arm.js";
+import { clawqlLostAckArm } from "./lost-ack-arm.js";
+import { buildComparisonPackageManifest } from "./manifest.js";
+import { golemAtLeastOnceSimArm, piInterruptSimArm } from "./peer-model-arms.js";
 import {
   golemArm,
   golemClawqlArm,
   piDurableArm,
   piDurableClawqlArm,
   programCelldArm,
+  programCelldStaleOwnerArm,
 } from "./peer-stub-arms.js";
 import type { ArmResult, ComparisonEvidence, DurabilityArm } from "./types.js";
 
+export { COMPARISON_PACKAGE_ID, TIP_RUNTIME, TIP_RUNTIME_VERSION };
+
+/** Public / review tip package: ClawQL arms + peer stubs. Peer model-sims are opt-in only. */
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
   naiveRetryArm,
+  clawqlLostAckArm,
   programCelldArm,
+  programCelldStaleOwnerArm,
   piDurableArm,
   golemArm,
   piDurableClawqlArm,
   golemClawqlArm,
 ];
 
+const PEER_MODEL_SIM_ARMS: readonly DurabilityArm[] = [
+  golemAtLeastOnceSimArm,
+  piInterruptSimArm,
+];
+
+/** Package default N=50 so ClawQL rows match peer pilot denominators. */
 export function parseComparisonN(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.DURABILITY_COMPARISON_N?.trim() || env.KILL_MID_WRITE_N?.trim();
-  if (!raw) return 20;
+  if (!raw) return 50;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 1 || n > 10_000) {
     throw new Error(`DURABILITY_COMPARISON_N must be 1..10000 (got ${raw})`);
@@ -35,31 +56,74 @@ export function parseComparisonN(env: NodeJS.ProcessEnv = process.env): number {
   return Math.floor(n);
 }
 
+export function detectHarnessCommit(env: NodeJS.ProcessEnv = process.env): string {
+  const override = env.DURABILITY_COMPARISON_HARNESS_COMMIT?.trim();
+  if (override) return override;
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+function flattenArmResults(raw: ArmResult | readonly ArmResult[]): ArmResult[] {
+  if (Array.isArray(raw)) return [...(raw as readonly ArmResult[])];
+  return [raw as ArmResult];
+}
+
 export function runDurabilityComparisonBoardEffect(
   env: NodeJS.ProcessEnv = process.env,
   arms: readonly DurabilityArm[] = DEFAULT_ARMS
 ): Effect.Effect<ComparisonEvidence> {
   const n = parseComparisonN(env);
+  const harnessCommit = detectHarnessCommit(env);
   const includeNaive = env.DURABILITY_COMPARISON_INCLUDE_NAIVE !== "0";
-  const selected = arms.filter((a) => includeNaive || a.id !== "naive-retry");
+  const includePeerSims = env.DURABILITY_COMPARISON_INCLUDE_PEER_SIMS === "1";
+  const base = arms.filter((a) => includeNaive || a.id !== "naive-retry");
+  const alreadyHasSims = base.some(
+    (a) => a.id === "golem-at-least-once-sim" || a.id === "pi-interrupt-sim"
+  );
+  const selected = [
+    ...base,
+    ...(includePeerSims && !alreadyHasSims ? PEER_MODEL_SIM_ARMS : []),
+  ];
 
   return Effect.gen(function* () {
     const results: ArmResult[] = [];
     for (const arm of selected) {
-      results.push(yield* arm.run({ n }));
+      results.push(...flattenArmResults(yield* arm.run({ n, harnessCommit })));
     }
-    const clawql = results.find((a) => a.armId === "clawql-file-journal");
+    const clawql = results.find(
+      (a) => a.armId === "clawql-file-journal" && a.crashPhase === "during_call"
+    );
     const clawqlBoardPass =
       clawql?.status === "measured" &&
       clawql.modes.length === 2 &&
-      clawql.modes.every((m) => m.boardPass && m.duplicates === 0);
+      clawql.modes.every(
+        (m) =>
+          m.boardPass &&
+          m.duplicates === 0 &&
+          m.intentPresentOnResume === m.n &&
+          m.callVerifiedSent === m.n &&
+          m.n === n
+      );
 
     return {
       kind: "durability-comparison-kill-mid-write" as const,
+      schemaVersion: 2 as const,
+      packageId: COMPARISON_PACKAGE_ID,
       measuredAt: new Date().toISOString(),
-      metric: "duplicates + outcome_unknown (+ lost); both upstream modes" as const,
+      harnessCommit,
+      defaultN: n,
+      metric:
+        "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes" as const,
       honesty:
-        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+        "Schema v2 tip package on stock celld 0.6.3. Default N=50. Wedged-owner and stale-owner are separate rows from during_call. Live Golem/Pi Durable N=50 already measured on PR #1432 (DURABILITY_COMPARISON_LIVE_PEERS=1) — archive comparison/archive/evidence-pr1432-live-peers-n50.json; adapters in scripts/.../peers/reference-pr1432/. Tip rows stay pending_adapter until those drivers are rewired to schema v2 (do not substitute sims). Peer model-sims opt-in via DURABILITY_COMPARISON_INCLUDE_PEER_SIMS=1 for internal harness only. ClawQL lost-ack pilot included (keys → keyed resend). Named peers unpublished on /benchmarks until maintainers review.",
+      tipRuntime: TIP_RUNTIME,
+      tipRuntimeVersion: TIP_RUNTIME_VERSION,
       arms: results,
       clawqlBoardPass,
     } satisfies ComparisonEvidence;
@@ -73,11 +137,28 @@ export function defaultComparisonEvidencePath(env: NodeJS.ProcessEnv = process.e
   return join(process.cwd(), "docs/benchmarks/durability-proof/comparison/evidence.json");
 }
 
+export function defaultComparisonManifestPath(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.DURABILITY_COMPARISON_MANIFEST_PATH?.trim()) {
+    return env.DURABILITY_COMPARISON_MANIFEST_PATH.trim();
+  }
+  return join(process.cwd(), "docs/benchmarks/durability-proof/comparison/manifest.json");
+}
+
 export function writeComparisonEvidence(
   evidence: ComparisonEvidence,
   path: string = defaultComparisonEvidencePath()
 ): string {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
+  return path;
+}
+
+export function writeComparisonManifest(
+  evidence: ComparisonEvidence,
+  path: string = defaultComparisonManifestPath()
+): string {
+  const manifest = buildComparisonPackageManifest(evidence);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return path;
 }
