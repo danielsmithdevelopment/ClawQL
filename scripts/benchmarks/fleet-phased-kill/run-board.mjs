@@ -782,6 +782,11 @@ async function main() {
       await sleep(250);
     }
 
+    // Mid-flight kills journal intent before the hang. A resume 404 can mean "not
+    // visible yet" (availability) or "meta gone" (correctness). Never treat the
+    // first 404 as terminal for mid-flight — keep waiting until the wall deadline.
+    const midFlight =
+      phase === "after_intent_before_call" || phase === "during_call";
     let resume = { ok: false, status: 0, body: null, fetchError: true };
     while (withinResumeDeadline(resumeStart)) {
       if (!nodes[survivor].pid || nodes[survivor].pendingSelfFence) {
@@ -805,16 +810,27 @@ async function main() {
         await sleep(250);
         continue;
       }
+      if (midFlight && resume.status === 404 && resume.body?.error === "not_found") {
+        await sleep(250);
+        continue;
+      }
       if (resume.ok || resume.status === 404 || (resume.status && resume.status !== 0)) break;
       await sleep(100);
     }
     if (!(
       resume.ok ||
-      (resume.status === 404 && resume.body?.error === "not_found") ||
-      (resume.status && resume.status !== 500 && !resume.fetchError)
+      (!midFlight && resume.status === 404 && resume.body?.error === "not_found") ||
+      (resume.status && resume.status !== 500 && resume.status !== 404 && !resume.fetchError)
     )) {
       // Deadline miss if we never got a definitive program response in wall time.
-      if (!resume.ok && (resume.fetchError || resume.status === 500 || resume.status === 0)) {
+      // Mid-flight 404-through-deadline is also a miss (visibility), not a clean not_found.
+      if (
+        !resume.ok &&
+        (resume.fetchError ||
+          resume.status === 500 ||
+          resume.status === 0 ||
+          (midFlight && resume.status === 404))
+      ) {
         avail.resumeDeadlineMiss = true;
       }
     }
@@ -1024,6 +1040,7 @@ async function main() {
     trials.push({
       i,
       phase,
+      programId,
       ok: expectOk,
       duplicates,
       writeCount,

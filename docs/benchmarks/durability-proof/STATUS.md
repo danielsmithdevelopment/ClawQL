@@ -99,16 +99,35 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 
 Snapshot ~500/750 write-kill (await not started). **Correctness failures = 0.** Availability **15 / 500 (3.0%)** — already on course to miss the frozen 2% ceiling of 20/1000 unless the remaining 500 trials (incl. await) fail at ~⅓ the current rate. **Let the board finish** for full correctness evidence across write-kill + await; stop early only if failures reach 21 (certain fail). If availability ends above 2%, report an **honest fail**: zero correctness failures measured; availability X% above the pre-locked ceiling; celld / harness fixes next — do **not** call the board a pass.
 
-**Availability failure classes (15 at ~500 trials):**
+**Report as clusters (trials are not independent):** **15 classified failures ≈ 5 stall-seeded incidents** (covering 13 fails) **+ 1 twin + 1 lone `during_call` 404**. Fixing the underlying `/health` hang addresses most failures at once.
 
+<<<<<<< HEAD
 | Class                  | Count | Notes                                                                                 |
 | ---------------------- | ----- | ------------------------------------------------------------------------------------- |
 | `resume_deadline_miss` | **5** | All ~870–921s; `recoveryMs=0`, `resumeStatus=0` (resume loop never entered)           |
 | `pause_failed`         | **4** | Cascade after stalls (`fetch failed` / `DurableObjectRoutingError` owner unreachable) |
 | `no_expected_outcome`  | **5** | Mostly `during_call` with resume 404 — mid-flight without expected `outcome_unknown`  |
 | `twin_capture_failed`  | **1** | Trial 335; fleet shared with twin                                                     |
+=======
+| Underlying incident | Trials | Surface classes |
+| ------------------- | ------ | --------------- |
+| Stall cluster | 83–84, 132–134, 285–286, 387–390, 441–442 | `resume_deadline_miss` → `pause_failed` / `no_expected_outcome` cascade |
+| Twin | 335 | `twin_capture_failed` |
+| Lone mid-flight | 494 | `no_expected_outcome` (404) |
+>>>>>>> b2e228266 (docs+bench: cluster avail fails; settle during_call 404; label two fixes)
 
-**~900s / p99:** Not a rising typical recovery. Evidence **p95 ≈ 14s**; **p99 ≈ 870s** because **5/500 (1%)** trials are the discrete ~900s class — so p99 lands inside that class. Each ~900s miss is usually followed by 1–3 cascade fails (pause / no_expected). Root cause: harness `waitNode` **180 × 5s fetch timeout** when `/health` accepts but does not respond (not a celld 15-minute lease). Wall-cap fix is on the branch; **this v2 process still runs the pre-fix script** — stalls can continue until the next board start.
+**Per-class counts (same 15):** deadline miss ×5 · pause_failed ×4 · no_expected_outcome ×5 · twin ×1.
+
+**Two fixes — label what each does:**
+
+| Fix | Layer | What it does | What it does *not* do |
+| --- | ----- | ------------ | --------------------- |
+| Cap `waitNode` wall time / resume `deadlineAt` | **Harness** | Turns a 15-minute harness wait into a **faster classified failure** (p99 optics) | Does **not** make `/health` answer; availability may improve less than the tail suggests |
+| Bounded lease-sweep + alive vs ready | **celld (product)** | Stops the **node hang** where `/health` accepts TCP but never responds (same pattern as the dead-leader-sweep spiral) | Still on the parallel celld list — this is the real availability fix |
+
+**`during_call` 404 ×5 — settled for correctness (not lost committed state):**
+
+All five (`134`, `286`, `390`, `442`, `494`): `phase=during_call`, `writeCount=0`, `writesBefore=0`, `duplicates=0`, `resumeError=not_found`, no `journalDivergence`. Code path journals **write intent + meta** before the hanging upstream call; pets `inFlight>0` before SIGKILL; **no outside write landed**. Four of five sit in stall cascades (fleet already wedged). Harness treats the **first** resume `404` as terminal (does not keep waiting for visibility). So: **no evidence of a lost committed write or wrong outcome** under frozen correctness definitions → correctness stays **0**. Residual: a 404 means meta was invisible on the survivor at query time — **not proven permanently deleted** vs routing/visibility; next harness should retry mid-flight 404 until the wall deadline and retain `programId` for later `/status` checks before ever promoting this class to correctness.
 
 **Claim if v2 clean:** step-level checkpointed durable execution on **correctness** (never a wrong write / digest), with **availability disclosed** (fence + deadline + pause/twin-capture rates ≤2% of 1000; resume/recovery p99/max reported, no separate tail ceiling). Still not mid-step unmodified agents. Parallel celld product work (not a v2 gate): lease renew / lease-sweep / alive-vs-ready / **pause-aware clocks** (host pause/suspend — wall time jumps while the machine was not running; distinct from orchestrator recovery). Do **not** freeze the resume deadline during `ensureSurvivor`/rebuild — that would quietly loosen the availability criterion.
 
