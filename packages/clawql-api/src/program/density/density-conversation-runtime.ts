@@ -75,7 +75,8 @@ function parseParkedBag(raw: string, agentId: string): ParkedBagBody {
     parsed = JSON.parse(raw);
   } catch (cause) {
     throw new Error(
-      `corrupt density bag ${agentId}: ${cause instanceof Error ? cause.message : String(cause)}`
+      `corrupt density bag ${agentId}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      { cause }
     );
   }
   if (
