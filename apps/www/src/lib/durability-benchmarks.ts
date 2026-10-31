@@ -145,7 +145,8 @@ export const durabilityLadderRows: readonly DurabilityLadderRow[] = [
     name: 'Dual-column comparison',
     status: 'measured',
     statusLabel: 'ClawQL arms',
-    detail: 'duplicates + outcome_unknown × idempotent/non_idempotent. Peers pending invite.',
+    detail:
+      'Schema v2 tip package (celld 0.6.3): +runtime/version, intent-on-resume, call-sent. Peers pending invite; N=50 pilots then review.',
   },
   {
     tier: 'F',
@@ -203,6 +204,7 @@ export const durabilityTtlRows: readonly DurabilityTtlRow[] = [
 export type DurabilityComparisonArm = {
   arm: string
   status: string
+  runtime: string
   idempotent: string
   nonIdempotent: string
 }
@@ -211,18 +213,28 @@ export const durabilityComparisonArms: readonly DurabilityComparisonArm[] = [
   {
     arm: 'clawql-file-journal',
     status: 'measured',
-    idempotent: '0 dups / 20 unknown (n=20)',
-    nonIdempotent: '0 dups / 20 unknown (n=20)',
+    runtime: 'host-file-journal',
+    idempotent: '0 dups · intent+sent (n=20)',
+    nonIdempotent: '0 dups · intent+sent (n=20)',
+  },
+  {
+    arm: 'clawql-program-celld',
+    status: 'measured (tip)',
+    runtime: 'celld 0.6.3',
+    idempotent: 'fleet tip · see package',
+    nonIdempotent: 'wedge 100/100 call-sent+intent',
   },
   {
     arm: 'naive-retry (reference)',
     status: 'measured',
+    runtime: 'host-file-journal',
     idempotent: 'Retries; unique effects masked by keys',
     nonIdempotent: 'Duplicates when upstream ignores keys',
   },
   {
     arm: 'golem / pi-durable (+ combos)',
     status: 'pending invite',
+    runtime: '—',
     idempotent: '—',
     nonIdempotent: '—',
   },

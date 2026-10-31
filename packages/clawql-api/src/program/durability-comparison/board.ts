@@ -1,11 +1,17 @@
 /**
- * Durability comparison board — dual columns × upstream modes × arms.
+ * Durability comparison board — dual columns × upstream modes × arms (schema v2).
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
+import {
+  COMPARISON_PACKAGE_ID,
+  TIP_RUNTIME,
+  TIP_RUNTIME_VERSION,
+} from "./constants.js";
 import { clawqlFileJournalArm, naiveRetryArm } from "./file-journal-arm.js";
+import { buildComparisonPackageManifest } from "./manifest.js";
 import {
   golemArm,
   golemClawqlArm,
@@ -14,6 +20,8 @@ import {
   programCelldArm,
 } from "./peer-stub-arms.js";
 import type { ArmResult, ComparisonEvidence, DurabilityArm } from "./types.js";
+
+export { COMPARISON_PACKAGE_ID, TIP_RUNTIME, TIP_RUNTIME_VERSION };
 
 const DEFAULT_ARMS: readonly DurabilityArm[] = [
   clawqlFileJournalArm,
@@ -52,14 +60,25 @@ export function runDurabilityComparisonBoardEffect(
     const clawqlBoardPass =
       clawql?.status === "measured" &&
       clawql.modes.length === 2 &&
-      clawql.modes.every((m) => m.boardPass && m.duplicates === 0);
+      clawql.modes.every(
+        (m) =>
+          m.boardPass &&
+          m.duplicates === 0 &&
+          m.intentPresentOnResume === m.n &&
+          m.callVerifiedSent === m.n
+      );
 
     return {
       kind: "durability-comparison-kill-mid-write" as const,
+      schemaVersion: 2 as const,
+      packageId: COMPARISON_PACKAGE_ID,
       measuredAt: new Date().toISOString(),
-      metric: "duplicates + outcome_unknown (+ lost); both upstream modes" as const,
+      metric:
+        "duplicates + outcome_unknown (+ lost) + intentPresentOnResume + callVerifiedSent; both upstream modes" as const,
       honesty:
-        "ClawQL arms measured in-process. celld = own substrate (Tier B/C separate). Pi Durable / Golem pending maintainer invite. Publish program-mode peer numbers only after Tier C.",
+        "Schema v2 tip package on stock celld 0.6.3. File-journal + ProgramCellDO tip fleet imported. 0.4.0 pin rows superseded. Pi Durable / Golem pending maintainer invite + N=50 pilots. Existing cells (duplicates / unknown / completed once) unchanged.",
+      tipRuntime: TIP_RUNTIME,
+      tipRuntimeVersion: TIP_RUNTIME_VERSION,
       arms: results,
       clawqlBoardPass,
     } satisfies ComparisonEvidence;
@@ -73,11 +92,28 @@ export function defaultComparisonEvidencePath(env: NodeJS.ProcessEnv = process.e
   return join(process.cwd(), "docs/benchmarks/durability-proof/comparison/evidence.json");
 }
 
+export function defaultComparisonManifestPath(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.DURABILITY_COMPARISON_MANIFEST_PATH?.trim()) {
+    return env.DURABILITY_COMPARISON_MANIFEST_PATH.trim();
+  }
+  return join(process.cwd(), "docs/benchmarks/durability-proof/comparison/manifest.json");
+}
+
 export function writeComparisonEvidence(
   evidence: ComparisonEvidence,
   path: string = defaultComparisonEvidencePath()
 ): string {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(evidence, null, 2)}\n`, "utf8");
+  return path;
+}
+
+export function writeComparisonManifest(
+  evidence: ComparisonEvidence,
+  path: string = defaultComparisonManifestPath()
+): string {
+  const manifest = buildComparisonPackageManifest(evidence);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return path;
 }

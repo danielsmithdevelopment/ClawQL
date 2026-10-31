@@ -198,6 +198,10 @@ async function oneTrial(input: {
     ).length;
     const writeAppliedBefore = before.some((l) => l.operationId === WRITE_OP && l.applied);
     const lost = !writeAppliedBefore && duplicates === 0 ? 1 : 0;
+    // File-journal: kill is after the host applied the write (call verified sent).
+    // Intent on resume = journal still knows the in-flight write (outcome_unknown).
+    const callVerifiedSent = writeAppliedBefore ? 1 : 0;
+    const intentPresentOnResume = outcomeUnknown >= 1 ? 1 : 0;
 
     const ok =
       input.resumePolicy === "clawql"
@@ -205,6 +209,8 @@ async function oneTrial(input: {
           writeAppliedBefore &&
           duplicates === 0 &&
           outcomeUnknown >= 1 &&
+          intentPresentOnResume === 1 &&
+          callVerifiedSent === 1 &&
           resumed.ok === false
         : child.signal === "SIGKILL" && writeAppliedBefore && duplicates >= 1;
 
@@ -215,9 +221,11 @@ async function oneTrial(input: {
       outcomeUnknown,
       lost,
       uniqueWriteEffects,
+      intentPresentOnResume,
+      callVerifiedSent,
       childSignal: child.signal,
       detail: ok
-        ? `${input.resumePolicy}/${input.upstreamMode}: duplicates=${duplicates} unknown=${outcomeUnknown} effects=${uniqueWriteEffects}`
+        ? `${input.resumePolicy}/${input.upstreamMode}: duplicates=${duplicates} unknown=${outcomeUnknown} intent=${intentPresentOnResume} sent=${callVerifiedSent} effects=${uniqueWriteEffects}`
         : `fail signal=${child.signal} duplicates=${duplicates} unknown=${outcomeUnknown} stderr=${child.stderr.slice(0, 80)}`,
     };
   } finally {
@@ -235,6 +243,8 @@ function summarizeMode(
   const outcomeUnknown = trials.reduce((s, t) => s + t.outcomeUnknown, 0);
   const lost = trials.reduce((s, t) => s + t.lost, 0);
   const uniqueWriteEffects = trials.reduce((s, t) => s + t.uniqueWriteEffects, 0);
+  const intentPresentOnResume = trials.reduce((s, t) => s + t.intentPresentOnResume, 0);
+  const callVerifiedSent = trials.reduce((s, t) => s + t.callVerifiedSent, 0);
   const trialsOk = trials.filter((t) => t.ok).length;
   const trialsFailed = n - trialsOk;
   const boardPass = trialsFailed === 0 && (!requireZeroDuplicates || duplicates === 0);
@@ -245,6 +255,8 @@ function summarizeMode(
     outcomeUnknown,
     lost,
     uniqueWriteEffects,
+    intentPresentOnResume,
+    callVerifiedSent,
     trialsOk,
     trialsFailed,
     boardPass,
@@ -271,14 +283,20 @@ function makeFileJournalArm(resumePolicy: "clawql" | "naive-retry"): DurabilityA
             return {
               armId: id,
               status: "measured",
+              runtime: "clawql-file-journal",
+              runtimeVersion: "host-file-journal",
+              crashPhase: "during_call",
               honesty:
-                "ClawQL file-journal: no write re-send after SIGKILL; resume uses outcome_unknown. Duplicates must be 0 in both upstream modes.",
+                "ClawQL file-journal: no write re-send after SIGKILL; resume uses outcome_unknown. Duplicates must be 0 in both upstream modes. Columns: intentPresentOnResume + callVerifiedSent.",
               modes,
             };
           }
           return {
             armId: id,
             status: "measured",
+            runtime: "naive-retry-reference",
+            runtimeVersion: "host-file-journal",
+            crashPhase: "during_call",
             honesty:
               "Reference arm: forces write re-send after kill. Idempotent upstream can mask duplicates; non_idempotent multiplies effects. Not ClawQL product behavior.",
             modes,
