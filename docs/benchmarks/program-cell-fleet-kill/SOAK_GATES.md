@@ -104,12 +104,18 @@ Compare later authorizing soak on the **fixed** build against this baseline.
 
 Evidence: [`node-soak-lab-supersede-smoke.json`](./node-soak-lab-supersede-smoke.json) · lab binary (`alive` + sweep + same-host supersede) · **12** cycles · **0** readyFails · **0** selfFences · nodes=2. Logs show `same-host supersede` fencing with thousands of ms of lease still remaining. Wilson UBs at n=12 still ≫0.5% — overnight n≥1000 still required.
 
+### Lab authorizing attempts on cloud-agent VM — blocked by host suspend
+
+Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after **correlated dual** `node_lease_watchdog_fence` following multi-minute VM pauses (keepalive and active babysit froze too — hypervisor-level). Awake windows look good: attempt 3 held **0/0 through ~304 cycles** (max restart gap 12.9s) before a ~20m suspend. Evidence: [`node-soak-lab-authorizing-suspend-aborted.json`](./node-soak-lab-authorizing-suspend-aborted.json), [`node-soak-lab-authorizing-attempt2-suspend.json`](./node-soak-lab-authorizing-attempt2-suspend.json), [`node-soak-lab-authorizing-attempt3-suspend.json`](./node-soak-lab-authorizing-attempt3-suspend.json).
+
+**Implication:** with a 10s lease TTL, any host suspend longer than TTL fails the strict 0-fence overnight gate. Authorizing soak must run on a **non-suspending** host (do not raise TTL silently to paper over this).
+
 ## Order before v4
 
 1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse) — **landed in** [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md)
 2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
 3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
-4. **Overnight soak** against these frozen gates on the **lab binary** (`cycles ≥ 1000`; **0** readyFails and **0** selfFences so Wilson UBs ≤ 0.5%; nodes ≤ 2)
+4. **Overnight soak** against these frozen gates on the **lab binary** (`cycles ≥ 1000`; **0** readyFails and **0** selfFences so Wilson UBs ≤ 0.5%; nodes ≤ 2) — **blocked on cloud-agent VM suspend; needs non-suspending host**
 5. **Only then** v4 N=1000 under unchanged frozen board criteria
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

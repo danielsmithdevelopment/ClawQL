@@ -12,7 +12,7 @@ This tree is tip **v0.6.3** plus ClawQL **availability** patches for the pre-v4 
 | Bounded maintenance / lease-sweep ticker (`CELLD_MAINTENANCE_PHASE_BUDGET_SECS`) | **Landed** |
 | Lease stamps `host_process` (`pid` + start ticks + `boot_id`) | **Landed** |
 | Same-host supersede when prior `host_process` is provably dead (claim path) | **Landed** — recovery fence + sweep + initial CAS refuse live/unknown |
-| Authorizing overnight soak on lab binary | **Next** — `CELLD_BIN=vendor/celld-lab/target/release/celld` |
+| Authorizing overnight soak on lab binary | **Blocked on cloud-agent VM suspend** — awake windows 0/0 (e.g. ~304 cycles); need non-suspending host |
 
 ## Same-host supersede (claim path)
 
