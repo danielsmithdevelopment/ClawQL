@@ -230,7 +230,25 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **`call_never_sent` cause:** not gate-blocked for 8s. Celld `durable_wait` on this run: max ≈1.4–2.1s; **0** waits ≥5s. None of the 21 never-sent `programId`s appear in celld logs — the program **never reached send/gate**. Stall is earlier (rebuild / ownership / unhealthy node path).
 
-**Before v4:** land lease-sweep + alive-vs-ready (or equivalent) on the runtime under test; run a multi-hour soak with stable node-id count and no self-fence accumulation; then rerun N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board.
+**Before v4 (order):** (1) **incarnation + same-host supersede** (lease carries `pid` + process start time + `bootId`; supersede only when that exact process is gone — **cross-host wait TTL or refuse**, do not reopen stale-owner); (2) lease-sweep; (3) alive≠ready; (4) **overnight soak on that fixed build** meeting [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md) (`cycles ≥ 1000`; **0** readyFails and **0** selfFences; **environment-valid**: BOOTTIME−MONOTONIC growth ≤2s or run is void/restarted — no partial combining); (5) **only then** N=1000 under unchanged frozen criteria. A soak only authorizes the binary it measured — stock 0.6.3 baseline cannot authorize v4. Lab tree: [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md) — product path landed. Authorizing soak: **not on cloud-agent VMs** — use non-suspending host ([`SOAK_HOST.md`](../program-cell-fleet-kill/SOAK_HOST.md)); do not raise TTL. Pause recovery after intentional suspend is a **separate** probe (`benchmark:fleet-pause-recovery`), not a soak gate.
+
+**Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
+
+**Soak gates (frozen, strict):** nodes ≤2; readyFail & selfFence **observed and Wilson 95% UB** ≤**0.5%** each; **`cycles ≥ 1000`**. At n=1000 that is effectively **0 readyFails and 0 selfFences** (1 event → UB≈0.56% fail). Deliberate headroom after v2/v3 avail fails — not relaxed to ~1% UB. See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md).
+
+**Multi-hour soak (measured — not v4-ready):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
+
+| Gate | Measured | 95% UB (Wilson) | Verdict |
+| ---- | -------- | --------------- | ------- |
+| Unique `nodes/*` | **2** / 2 | — | PASS (closes v3 accumulation) |
+| readyFail rate | **6/240 ≈ 2.5%** | **≈5.3%** | **FAIL** |
+| selfFence rate | **14/240 ≈ 5.8%** | **≈9.6%** | **FAIL** |
+| Min cycles (≥1000) | 240 | — | **FAIL** |
+| `v4SoakOk` / status | — | — | **false** / `failed_min_cycles` |
+
+Stable-id harness stopped the 712-registration spiral; sample size and rates still forbid v4.
+
+**Baseline overnight (stopped — unfixed stock):** [`node-soak-baseline-unfixed-0.6.3.json`](../program-cell-fleet-kill/node-soak-baseline-unfixed-0.6.3.json) · started **2026-10-31 10:37 PM PDT** on stock 0.6.3 · **stopped at 60/1000** (**11:16 PM PDT**) to free the host for product fixes. `readyFails=2`, `selfFences=2` (strict gate already dead). Role=`baseline_unfixed_stock_0_6_3`, **`authorizing=false`**. Compare later fixed-build soak against this.
 
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 

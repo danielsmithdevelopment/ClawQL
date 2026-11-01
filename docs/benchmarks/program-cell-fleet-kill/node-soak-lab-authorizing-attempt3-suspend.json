@@ -1,0 +1,19 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "role": "lab_fixed_aborted_host_suspend",
+  "authorizing": false,
+  "attempt": 3,
+  "honesty": "Third attempt aborted. Clean through ~304 cycles (0/0, max restart gap 12.9s) while host stayed awake \u2014 supersede holding. Then VM suspend gaps 312s + 1236s; both nodes node_lease_watchdog_fence at 09:14:06Z. Active AwaitShell babysit + keepalive did not prevent hypervisor pause. With CELLD_TTL_MS=10000 any suspend >TTL fails the strict 0-fence gate. Authorizing soak needs a non-suspending host (or a disclosed different TTL). Product supersede path itself looks good in awake windows.",
+  "cyclesCleanBeforeSuspend": 304,
+  "cyclesCompletedAtAbort": 399,
+  "selfFences": 2,
+  "readyFails": 0,
+  "suspendGapsSec": [
+    312.2,
+    1236.7
+  ],
+  "fenceEvent": "node_lease_watchdog_fence",
+  "fenceAtUtc": "2026-11-01T09:14:06Z",
+  "celldTtlMs": 10000,
+  "measuredAt": "2026-11-01T09:35:00.000Z"
+}

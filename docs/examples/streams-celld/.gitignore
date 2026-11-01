@@ -1,3 +1,4 @@
 .celld/
 wrangler.smoke.jsonc
+wrangler.program-cell-fleet-soak.jsonc
 node_modules/

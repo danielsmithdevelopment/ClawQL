@@ -1,0 +1,7 @@
+{
+  "name": "celld-opencode-example",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/sdk": "0.0.0-dev-18697"
+  }
+}
