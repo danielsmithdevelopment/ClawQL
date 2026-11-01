@@ -1,0 +1,14 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "role": "lab_fixed_aborted_host_suspend",
+  "authorizing": false,
+  "attempt": 2,
+  "honesty": "Second authorizing attempt aborted: again node_lease_watchdog_fence after ~891s host suspend gap (07:45\u219208:00Z). Keepalive tmux also froze \u2014 whole VM pause while cloud agent idle between 30m progress timers. Not supersede. Switching to active babysit (no idle timer) so VM stays awake.",
+  "cyclesCompletedAtAbort": 80,
+  "selfFences": 1,
+  "readyFails": 0,
+  "suspendGapSecApprox": 891,
+  "fenceEvent": "node_lease_watchdog_fence",
+  "fenceAtUtc": "2026-11-01T08:00:06.173Z",
+  "measuredAt": "2026-11-01T08:01:00.000Z"
+}
