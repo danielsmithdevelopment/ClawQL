@@ -12,7 +12,8 @@
  *   2. readyFails/cycles observed AND 95% Wilson UB ≤ READY_RATE_CEILING (0.5%)
  *   3. selfFences/cycles observed AND 95% Wilson UB ≤ FENCE_RATE_CEILING (0.5%)
  *   4. cyclesCompleted ≥ FLEET_SOAK_MIN_CYCLES (default 1000 overnight)
- * n=240 cannot demonstrate 0.5% (0 events → rule-of-three UB ≈1.25%).
+ * At n=1000, Wilson UB≤0.5% is effectively 0 events/gate (1 event → UB≈0.56%).
+ * Strict by design (not ~1% UB). n=240 cannot show 0.5%.
  *
  * Env:
  *   FLEET_SOAK_CYCLES              rebuild cycles (default 30; use ≥1000 for v4 gate)
