@@ -11,8 +11,14 @@ This tree is tip **v0.6.3** plus ClawQL **availability** patches for the pre-v4 
 | Alive ≠ ready (`/.well-known/celld/alive` + timed `/health` + WEDGE on readiness only) | **Landed** |
 | Bounded maintenance / lease-sweep ticker (`CELLD_MAINTENANCE_PHASE_BUDGET_SECS`) | **Landed** |
 | Lease stamps `host_process` (`pid` + start ticks + `boot_id`) | **Landed** |
-| Same-host supersede when prior `host_process` is provably dead (claim path) | **Next** — helper in `host_process.rs`; wire into node-lease CAS / boot |
-| Authorizing overnight soak on lab binary | Blocked on supersede wiring |
+| Same-host supersede when prior `host_process` is provably dead (claim path) | **Landed** — recovery fence + sweep + initial CAS refuse live/unknown |
+| Authorizing overnight soak on lab binary | **Next** — `CELLD_BIN=vendor/celld-lab/target/release/celld` |
+
+## Same-host supersede (claim path)
+
+1. Writers stamp `host_process` on every node-lease CAS.
+2. Predecessor recovery / dead-leader sweep may fence when expiry passed **or** `host_process` is provably dead on this host (`host_process.rs`).
+3. Initial lease claim replaces an *unexpired* foreign generation only with `same_host_owner_dead=Some(true)`. Live same-host duplicates and unstamped/cross-host unexpired leases wait TTL / retry (never “looks dead”).
 
 ## Build
 

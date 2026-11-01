@@ -100,12 +100,16 @@ Evidence: [`node-soak-baseline-unfixed-0.6.3.json`](./node-soak-baseline-unfixed
 
 Compare later authorizing soak on the **fixed** build against this baseline.
 
+### Lab supersede smoke (2026-10-31) — not authorizing (n≪1000)
+
+Evidence: [`node-soak-lab-supersede-smoke.json`](./node-soak-lab-supersede-smoke.json) · lab binary (`alive` + sweep + same-host supersede) · **12** cycles · **0** readyFails · **0** selfFences · nodes=2. Logs show `same-host supersede` fencing with thousands of ms of lease still remaining. Wilson UBs at n=12 still ≫0.5% — overnight n≥1000 still required.
+
 ## Order before v4
 
-1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse)
-2. **Lease-sweep / dead-node GC** (bound stuck maintain)
-3. **Alive ≠ ready** (liveness always answers; readiness may 503)
-4. **Overnight soak** against these frozen gates (`cycles ≥ 1000`; **0** readyFails and **0** selfFences so Wilson UBs ≤ 0.5%; nodes ≤ 2)
+1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse) — **landed in** [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md)
+2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
+3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
+4. **Overnight soak** against these frozen gates on the **lab binary** (`cycles ≥ 1000`; **0** readyFails and **0** selfFences so Wilson UBs ≤ 0.5%; nodes ≤ 2)
 5. **Only then** v4 N=1000 under unchanged frozen board criteria
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

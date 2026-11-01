@@ -20,6 +20,22 @@ pub struct HostProcessIdentity {
     pub boot_id: String,
 }
 
+/// Whether a node lease may be treated as dead for fencing / claim supersede.
+///
+/// - Published expiry already passed → dead (stock tip rule).
+/// - Same-host `host_process` proves the recorded PID is gone → dead (lab).
+/// - Missing stamp, live PID, or different boot → **not** dead; wait TTL / refuse.
+pub fn lease_may_be_fenced_as_dead(
+    expires_ms: u64,
+    host_process: Option<&HostProcessIdentity>,
+    now_ms: u64,
+) -> bool {
+    if expires_ms <= now_ms {
+        return true;
+    }
+    host_process.is_some_and(HostProcessIdentity::is_provably_dead_on_this_host)
+}
+
 impl HostProcessIdentity {
     /// Snapshot this process. Returns `None` if `/proc` is unavailable.
     pub fn current() -> Option<Self> {
@@ -92,5 +108,34 @@ mod tests {
         assert!(!id.boot_id.is_empty());
         assert!(!id.process_start_ticks.is_empty());
         assert!(!id.is_provably_dead_on_this_host());
+    }
+
+    #[test]
+    fn fenceable_when_expired_even_without_host_process() {
+        assert!(lease_may_be_fenced_as_dead(100, None, 100));
+        assert!(lease_may_be_fenced_as_dead(99, None, 100));
+        assert!(!lease_may_be_fenced_as_dead(101, None, 100));
+    }
+
+    #[test]
+    fn fenceable_when_same_host_process_is_gone() {
+        let Some(live) = HostProcessIdentity::current() else {
+            return;
+        };
+        assert!(!lease_may_be_fenced_as_dead(u64::MAX, Some(&live), 0));
+        let dead = HostProcessIdentity {
+            pid: 1_000_000_007, // almost certainly absent
+            process_start_ticks: "1".into(),
+            boot_id: live.boot_id.clone(),
+        };
+        assert!(dead.is_provably_dead_on_this_host());
+        assert!(lease_may_be_fenced_as_dead(u64::MAX, Some(&dead), 0));
+        let other_boot = HostProcessIdentity {
+            pid: 1_000_000_007,
+            process_start_ticks: "1".into(),
+            boot_id: "not-this-boot".into(),
+        };
+        assert!(!other_boot.is_provably_dead_on_this_host());
+        assert!(!lease_may_be_fenced_as_dead(u64::MAX, Some(&other_boot), 0));
     }
 }

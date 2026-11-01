@@ -4932,14 +4932,27 @@ impl NodeLogManager {
             // caller's verdict may be stale — an owner
             // can restart between the read that justified this call and
             // now, and the spec's RecoverLog is enabled only past expiry
-            // AT the step. A live lease is an error, not a skip: the
+            // AT the step (or same-host host_process dead proof). A live
+            // lease without that proof is an error, not a skip: the
             // caller's claim must refuse and re-resolve to routing.
             let now = crate::ownership_store::now_ms();
+            let fenceable = crate::host_process::lease_may_be_fenced_as_dead(
+                wire.expires_ms,
+                wire.host_process.as_ref(),
+                now,
+            );
             anyhow::ensure!(
-                wire.expires_ms <= now,
-                "refusing to fence {dead}: its lease is live again (expires in {}ms)",
+                fenceable,
+                "refusing to fence {dead}: its lease is live again (expires in {}ms; no same-host dead proof)",
                 wire.expires_ms.saturating_sub(now)
             );
+            if wire.expires_ms > now {
+                info!(
+                    dead,
+                    expires_in_ms = wire.expires_ms.saturating_sub(now),
+                    "same-host supersede: fencing predecessor whose host_process is provably dead"
+                );
+            }
             // No justification pin: the record is keyed by session, so a
             // revived process writes a NEW key and can never step this one.
             // The only concurrent writer is a rival recoverer, and every
@@ -6415,13 +6428,18 @@ impl NodeLogManager {
             let session = format!("{node}/{}", folded.wire.generation);
             let record = folded.record;
             // Under the fold, the lease we just read IS the record: a
-            // session is dead the moment its published expiry passed. A
+            // session is dead the moment its published expiry passed, or
+            // when same-host host_process proves the owner is gone. A
             // restarted node replaces the record (generation and all)
             // through recovery-before-install, so the sweep never
             // contends with a returning leader; an expired same-
             // generation lease is a process that self-fenced or is about
             // to, and recovery's CAS fences its remaining renewals.
-            let dead = folded.wire.expires_ms <= now;
+            let dead = crate::host_process::lease_may_be_fenced_as_dead(
+                folded.wire.expires_ms,
+                folded.wire.host_process.as_ref(),
+                now,
+            );
             if record.state == LogState::Sealed {
                 // A dead session's sealed subtree is one GC unit: recovery
                 // folded every acked row per-cell before the seal, so the

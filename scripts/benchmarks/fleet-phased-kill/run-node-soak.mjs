@@ -523,8 +523,22 @@ async function main() {
       : !readyRateOk || !fenceRateOk
         ? "failed_v4_rate_gates"
         : "measured_v4_ready";
+  const labBin =
+    typeof CELLD_BIN === "string" && /vendor\/celld-lab\//.test(CELLD_BIN);
+  const celldBuild = labBin
+    ? "lab_fixed_alive_sweep_supersede"
+    : process.env.FLEET_SOAK_CELLD_BUILD || "stock_or_unknown";
+  const authorizing = Boolean(v4SoakOk && labBin);
   const evidence = {
     kind: "celld-fleet-node-soak",
+    role: authorizing
+      ? "authorizing_fixed_lab"
+      : labBin
+        ? "lab_fixed_not_yet_authorizing"
+        : "non_lab_or_unfixed",
+    authorizing,
+    celldBuild,
+    celldBin: CELLD_BIN,
     measuredAt: new Date().toISOString(),
     ok,
     v4SoakOk,
@@ -532,9 +546,10 @@ async function main() {
     minCyclesOk,
     readyRateOk,
     fenceRateOk,
-    status,
-    honesty:
-      "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
+    status: authorizing ? "measured_v4_ready" : status,
+    honesty: labBin
+      ? "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2). A soak only covers the binary it measured."
+      : "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready on the fixed lab/build. Stock/unfixed soaks are baseline only.",
     cyclesPlanned: CYCLES,
     cyclesCompleted,
     minCycles: MIN_CYCLES,

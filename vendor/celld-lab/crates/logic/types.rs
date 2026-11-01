@@ -189,6 +189,16 @@ pub struct NodeLeaseRecord {
     pub log_state: Option<crate::log_tier::LogState>,
     /// Object version observed by the read. Empty only in synthetic events.
     pub etag: String,
+    /// Shell-computed same-host dead proof for incarnation supersede.
+    ///
+    /// - `Some(true)` — lease stamped a `host_process` that is provably gone
+    ///   on this host (PID missing or start ticks reused under the same boot).
+    /// - `Some(false)` — that process is still live here; refuse a live duplicate.
+    /// - `None` — no stamp, unreadable `/proc`, or different boot (cross-host /
+    ///   unknown); do not supersede an unexpired lease without TTL expiry.
+    ///
+    /// Desired records written by the core leave this `None`.
+    pub same_host_owner_dead: Option<bool>,
 }
 
 /// One advisory fleet-capacity observation returned by the storage shell.

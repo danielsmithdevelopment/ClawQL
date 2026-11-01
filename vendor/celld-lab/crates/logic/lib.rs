@@ -2354,6 +2354,7 @@ impl State {
             // startup order), so None is the truth, not a reset.
             log_state: None,
             etag: String::new(),
+            same_host_owner_dead: None,
         };
         let pending = PendingNodeLease {
             spec,
@@ -2704,16 +2705,27 @@ impl State {
                     self.fail_initial_node_lease(pending.spec, effects);
                     return;
                 }
-                // A configured node id is a singleton key: restarting that
-                // node replaces its prior process generation immediately. The
-                // ETag still serializes competing replacements, and a process
-                // which loses that CAS never becomes authoritative.
-                let mut pending = pending;
-                pending.resume_local = pending.prior.is_none()
+                // Clean-reload resume of the exact still-live generation.
+                let resume_local = pending.prior.is_none()
                     && !pending.readback_only
                     && record.expires_ms > now_ms
                     && pending.spec.resume_generation.as_deref()
                         == Some(record.generation.as_str());
+                // Same-host incarnation supersede: replace an unexpired
+                // foreign generation only when the shell proved the prior
+                // host_process is dead here. A live same-host duplicate is
+                // refused (retry). Cross-host / unstamped unexpired leases
+                // wait out TTL — never "looks dead" without proof.
+                if record.expires_ms > now_ms
+                    && record.generation != pending.desired.generation
+                    && !resume_local
+                    && record.same_host_owner_dead != Some(true)
+                {
+                    self.fail_initial_node_lease(pending.spec, effects);
+                    return;
+                }
+                let mut pending = pending;
+                pending.resume_local = resume_local;
                 self.begin_node_lease_write(pending, CasGuard::Match(record.etag), effects);
             }
             Ok(None) => self.begin_node_lease_write(pending, CasGuard::Absent, effects),
@@ -3073,6 +3085,7 @@ impl State {
                     // unchanged.
                     log_state: prior.record.log_state,
                     etag: String::new(),
+                    same_host_owner_dead: None,
                 };
                 let guard = CasGuard::Match(prior.record.etag.clone());
                 self.begin_node_lease_write(

@@ -1,0 +1,185 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "role": "lab_fixed_not_yet_authorizing",
+  "authorizing": false,
+  "celldBuild": "lab_fixed_alive_sweep_supersede",
+  "celldBin": "/workspace/vendor/celld-lab/target/release/celld",
+  "measuredAt": "2026-11-01T06:56:33.817Z",
+  "ok": false,
+  "v4SoakOk": false,
+  "nodeCeilingOk": true,
+  "minCyclesOk": false,
+  "readyRateOk": false,
+  "fenceRateOk": false,
+  "status": "failed_min_cycles",
+  "honesty": "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2). A soak only covers the binary it measured.",
+  "cyclesPlanned": 12,
+  "cyclesCompleted": 12,
+  "minCycles": 1000,
+  "nodeCeiling": 2,
+  "readyRateCeiling": 0.005,
+  "fenceRateCeiling": 0.005,
+  "readyRate": 0,
+  "readyRateUb95": 0.2425007574992425,
+  "readyRuleOfThreeUpper95": 0.25,
+  "fenceRate": 0,
+  "fenceRateUb95": 0.2425007574992425,
+  "fenceRuleOfThreeUpper95": 0.25,
+  "freshNodeIds": false,
+  "stableNodeIds": {
+    "A": "fleet_A",
+    "B": "fleet_B"
+  },
+  "celldTtlMs": 10000,
+  "requireProgram": true,
+  "maxUniqueNodeIds": 2,
+  "selfFences": 0,
+  "readyFails": 0,
+  "samples": [
+    {
+      "cycle": 1,
+      "at": "2026-11-01T06:54:52.963Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 2,
+      "at": "2026-11-01T06:55:02.529Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 3,
+      "at": "2026-11-01T06:55:11.437Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 4,
+      "at": "2026-11-01T06:55:20.575Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 5,
+      "at": "2026-11-01T06:55:29.969Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 6,
+      "at": "2026-11-01T06:55:38.976Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 7,
+      "at": "2026-11-01T06:55:47.935Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 8,
+      "at": "2026-11-01T06:55:57.000Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 9,
+      "at": "2026-11-01T06:56:05.429Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 10,
+      "at": "2026-11-01T06:56:14.739Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 11,
+      "at": "2026-11-01T06:56:23.746Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 12,
+      "at": "2026-11-01T06:56:32.315Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    }
+  ],
+  "bucketRedacted": true
+}

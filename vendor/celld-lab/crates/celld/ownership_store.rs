@@ -1193,14 +1193,21 @@ pub(crate) async fn load_node_lease(
     let key = format!("nodes/{owner}.json");
     Ok(load_json::<NodeLeaseWire>(bucket, &key)
         .await?
-        .map(|(lease, etag)| NodeLeaseRecord {
-            log_state: log_state_from_wire(&lease.log),
-            node: lease.node,
-            addr: lease.addr,
-            expires_ms: lease.expires_ms,
-            peer_protocol: lease.peer_protocol,
-            generation: lease.generation,
-            etag,
+        .map(|(lease, etag)| {
+            let same_host_owner_dead = lease
+                .host_process
+                .as_ref()
+                .map(|hp| hp.is_provably_dead_on_this_host());
+            NodeLeaseRecord {
+                log_state: log_state_from_wire(&lease.log),
+                node: lease.node,
+                addr: lease.addr,
+                expires_ms: lease.expires_ms,
+                peer_protocol: lease.peer_protocol,
+                generation: lease.generation,
+                etag,
+                same_host_owner_dead,
+            }
         }))
 }
 
