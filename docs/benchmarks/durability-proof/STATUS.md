@@ -230,20 +230,22 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **`call_never_sent` cause:** not gate-blocked for 8s. Celld `durable_wait` on this run: max ≈1.4–2.1s; **0** waits ≥5s. None of the 21 never-sent `programId`s appear in celld logs — the program **never reached send/gate**. Stall is earlier (rebuild / ownership / unhealthy node path).
 
-**Before v4:** land lease-sweep + alive-vs-ready (or equivalent) on the runtime under test; run a multi-hour soak with stable node-id count and no self-fence accumulation; then rerun N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board.
+**Before v4:** land **stable id + incarnation supersede-when-dead** + lease-sweep + alive≠ready on the runtime under test; run a multi-hour soak that meets [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md); then N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board. **Do not start v4** until soak `status=measured_v4_ready`.
 
-**Harness mitigation:** `run-board.mjs` defaults to stable `CELLD_NODE=fleet_A|fleet_B` (opt out with `FLEET_PHASED_FRESH_NODE_IDS=1`); after SELF-FENCE wait ≥TTL before reuse. Soak: `npm run benchmark:fleet-node-soak` — deploy + mock-pets + rebuild cycles; **primary gate** unique `nodes/*` ≤2.
+**Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** (new incarnation supersedes a *dead* prior; live duplicate refused) + sweep + alive≠ready.
 
-**Multi-hour soak (measured):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
+**Soak gates (frozen, headroom under 2% avail):** unique `nodes/*` ≤2 **and** readyFail rate ≤**0.5%** **and** selfFence rate ≤**0.5%**. See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md). `npm run benchmark:fleet-node-soak`.
 
-| Gate / diagnostic | Result |
-| ----------------- | ------ |
-| Unique `nodes/*` (primary) | **2** / ceiling 2 — **PASS** (`nodeCeilingOk`) |
-| `readyFails` (stock `/health` hangs) | **6** / 240 (~2.5%) — reported, not a node-growth fail |
-| `selfFences` (exit code 3) | **14** — recovered via ≥TTL wait before stable-id reuse |
-| Status | `measured_with_ready_flakes` |
+**Multi-hour soak (measured — not v4-ready):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
 
-Harness mitigation holds under rebuild pressure (contrast v3’s **712** registrations). This is **not** upstream GC and **does not** alone authorize v4 — product alive-vs-ready + lease-sweep still required; then N=1000 under frozen criteria.
+| Gate | Measured | Verdict |
+| ---- | -------- | ------- |
+| Unique `nodes/*` | **2** / 2 | PASS (closes v3 accumulation) |
+| readyFail rate | **6/240 ≈ 2.5%** | **FAIL** (exceeds board 2% alone) |
+| selfFence rate | **14/240 ≈ 5.8%** | **FAIL** |
+| `v4SoakOk` / status | — | **false** / `failed_v4_rate_gates` |
+
+Stable-id harness stopped the 712-registration spiral; rates still forbid v4.
 
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 

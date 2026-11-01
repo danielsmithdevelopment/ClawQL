@@ -1,25 +1,26 @@
 #!/usr/bin/env node
 /**
- * Pre-v4 fleet soak — prove node registrations stay bounded under restarts.
+ * Pre-v4 fleet soak — prove the fleet stays v4-ready under rebuild pressure.
  *
- * v3 failed availability while minting a fresh CELLD_NODE every restart
- * (712 unique nodes/fleet_*.json). This soak:
- *   1. Deploys the streams ProgramCell worker + mock-pets (same as run-board)
- *   2. Runs a 2-node stock celld fleet with **stable** CELLD_NODE ids
- *   3. Periodically SIGKILLs / rebuilds both nodes
- *   4. Counts unique R2 `nodes/` objects under the board prefix
- *   5. Fails if unique node objects grow past the ceiling (default 2)
+ * v3 diagnosis: fresh CELLD_NODE every restart → 712 unique nodes/* (accumulation).
+ * Stable ids alone stop accumulation but collide with the prior lease → self-fence
+ * / TTL waits / ready flakes. Product fix (before a passing soak / v4):
+ *   stable node id + incarnation supersede-when-dead + lease-sweep + alive≠ready.
  *
- * Does **not** replace lease-sweep /alive on stock 0.6.3 — it gates whether the
- * harness mitigation is enough for a long board. Upstream /alive + sweep remain
- * product work.
+ * Pass criteria match v4 headroom under the 2% availability ceiling (defaults):
+ *   1. unique R2 nodes/* ≤ FLEET_SOAK_NODE_CEILING (default 2)
+ *   2. readyFails / cycles ≤ FLEET_SOAK_READY_RATE_CEILING (default 0.005 = 0.5%)
+ *   3. selfFences / cycles ≤ FLEET_SOAK_FENCE_RATE_CEILING (default 0.005 = 0.5%)
+ * All three must pass. Node-ceiling-only is a diagnostic, not a v4 gate.
  *
  * Env:
- *   FLEET_SOAK_CYCLES          rebuild cycles (default 30)
- *   FLEET_SOAK_SLEEP_MS        pause between cycles (default 2000)
- *   FLEET_SOAK_NODE_CEILING    max unique nodes/* objects (default 2)
- *   FLEET_SOAK_OUT             evidence JSON path
- *   FLEET_SOAK_REQUIRE_PROGRAM 1=wait /program/health each cycle (default 1)
+ *   FLEET_SOAK_CYCLES              rebuild cycles (default 30)
+ *   FLEET_SOAK_SLEEP_MS            pause between cycles (default 2000)
+ *   FLEET_SOAK_NODE_CEILING        max unique nodes/* (default 2)
+ *   FLEET_SOAK_READY_RATE_CEILING  readyFail rate cap (default 0.005)
+ *   FLEET_SOAK_FENCE_RATE_CEILING  selfFence rate cap (default 0.005)
+ *   FLEET_SOAK_OUT                 evidence JSON path
+ *   FLEET_SOAK_REQUIRE_PROGRAM     1=wait /program/health each cycle (default 1)
  *   CELLD_TTL_MS / CELLD_BUCKET / R2 creds — same as run-board.mjs
  *   FLEET_PHASED_FRESH_NODE_IDS must stay unset/0 for a meaningful pass
  */
@@ -94,6 +95,15 @@ autoWireR2();
 const CYCLES = Math.max(1, Number(process.env.FLEET_SOAK_CYCLES || 30));
 const SLEEP_MS = Math.max(0, Number(process.env.FLEET_SOAK_SLEEP_MS || 2000));
 const NODE_CEILING = Math.max(2, Number(process.env.FLEET_SOAK_NODE_CEILING || 2));
+/** Headroom under board avail ceiling 2% — default 0.5% each. */
+const READY_RATE_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_SOAK_READY_RATE_CEILING ?? 0.005))
+);
+const FENCE_RATE_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_SOAK_FENCE_RATE_CEILING ?? 0.005))
+);
 const REQUIRE_PROGRAM = process.env.FLEET_SOAK_REQUIRE_PROGRAM !== "0";
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
@@ -384,7 +394,7 @@ async function main() {
   let readyFails = 0;
 
   console.log(
-    `fleet-soak: cycles=${CYCLES} ceiling=${NODE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} bucketPrefix=${bucketPrefix || "(root)"}`
+    `fleet-soak: cycles=${CYCLES} nodeCeiling=${NODE_CEILING} readyRateCeiling=${READY_RATE_CEILING} fenceRateCeiling=${FENCE_RATE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} bucketPrefix=${bucketPrefix || "(root)"}`
   );
   console.log(
     FRESH
@@ -460,33 +470,38 @@ async function main() {
     }
   }
 
-  // Primary gate = node-id ceiling (the v3 harness failure mode). readyFails /
-  // selfFences are reported; stock /health hangs are expected without /alive.
+  const cyclesCompleted = samples.length;
+  const readyRate = cyclesCompleted ? readyFails / cyclesCompleted : 1;
+  const fenceRate = cyclesCompleted ? selfFences / cyclesCompleted : 1;
   const nodeCeilingOk = maxUnique <= NODE_CEILING && !FRESH;
-  const readyFailCeiling = Math.max(
-    0,
-    Number(process.env.FLEET_SOAK_READY_FAIL_CEILING ?? CYCLES)
-  );
-  const readyOk = readyFails <= readyFailCeiling;
-  const ok = nodeCeilingOk;
+  const readyRateOk = readyRate <= READY_RATE_CEILING;
+  const fenceRateOk = fenceRate <= FENCE_RATE_CEILING;
+  /** All three gates — matches what v4 availability needs with headroom. */
+  const v4SoakOk = nodeCeilingOk && readyRateOk && fenceRateOk;
+  const ok = v4SoakOk;
   const status = !nodeCeilingOk
-    ? "failed"
-    : readyFails === 0
-      ? "measured"
-      : "measured_with_ready_flakes";
+    ? "failed_node_ceiling"
+    : !readyRateOk || !fenceRateOk
+      ? "failed_v4_rate_gates"
+      : "measured_v4_ready";
   const evidence = {
     kind: "celld-fleet-node-soak",
     measuredAt: new Date().toISOString(),
     ok,
+    v4SoakOk,
     nodeCeilingOk,
-    readyOk,
+    readyRateOk,
+    fenceRateOk,
     status,
     honesty:
-      "Harness mitigation soak for stock celld 0.6.3 (no /alive, no lease-sweep). Primary gate: stable CELLD_NODE keeps unique nodes/* ≤ ceiling under rebuild pressure. readyFails/selfFences are diagnostics (stock /health can hang). Does not prove upstream GC; product still needs alive-vs-ready + lease-sweep before claiming stock tip availability.",
+      "Pre-v4 soak for stock celld. Pass requires (1) unique nodes/* ≤ ceiling, (2) readyFail rate ≤ readyRateCeiling, (3) selfFence rate ≤ fenceRateCeiling — defaults 0.5% each for headroom under the board's 2% availability ceiling. Node-ceiling-only is not enough: stable ids stop v3's 712-registration spiral but lease collisions still self-fence. Product path: stable id + incarnation supersede-when-dead + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
     cyclesPlanned: CYCLES,
-    cyclesCompleted: samples.length,
+    cyclesCompleted,
     nodeCeiling: NODE_CEILING,
-    readyFailCeiling,
+    readyRateCeiling: READY_RATE_CEILING,
+    fenceRateCeiling: FENCE_RATE_CEILING,
+    readyRate,
+    fenceRate,
     freshNodeIds: FRESH,
     stableNodeIds: FRESH ? null : STABLE,
     celldTtlMs: CELLD_TTL_MS,
@@ -499,7 +514,7 @@ async function main() {
   };
   writeFileSync(OUT, `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(
-    `fleet-soak: wrote ${OUT} ok=${ok} nodeCeilingOk=${nodeCeilingOk} maxUnique=${maxUnique} ceiling=${NODE_CEILING} readyFails=${readyFails} selfFences=${selfFences}`
+    `fleet-soak: wrote ${OUT} ok=${ok} status=${status} nodeCeilingOk=${nodeCeilingOk} readyRate=${readyRate.toFixed(4)}/${READY_RATE_CEILING} fenceRate=${fenceRate.toFixed(4)}/${FENCE_RATE_CEILING} maxUnique=${maxUnique}`
   );
   process.exit(ok ? 0 : 1);
 }
