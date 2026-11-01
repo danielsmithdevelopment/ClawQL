@@ -2,8 +2,8 @@
   "kind": "celld-fleet-node-soak",
   "measuredAt": "2026-11-01T04:09:51.031Z",
   "ok": false,
-  "status": "failed_v4_rate_gates",
-  "honesty": "Pre-v4 soak for stock celld. Pass requires unique nodes/* \u2264 ceiling AND readyFail rate \u2264 0.5% AND selfFence rate \u2264 0.5% (headroom under board 2% avail). This run: nodeCeiling PASS (2) but ready\u22482.5% and fence\u22485.8% FAIL \u2014 do not start v4. Product path: stable id + incarnation supersede-when-dead + lease-sweep + alive\u2260ready.",
+  "status": "failed_min_cycles",
+  "honesty": "Pre-v4 soak. Pass needs nodes\u22642, cycles\u22651000, ready/fence observed+Wilson95 UB \u22640.5%. This run n=240: ready=0.0250 ub=0.0535, fence=0.0583 ub=0.0955. Do not start v4. Product: same-host incarnation supersede (pid+startTime+bootId); cross-host wait/refuse.",
   "cyclesPlanned": 240,
   "cyclesCompleted": 240,
   "nodeCeiling": 2,
@@ -2913,6 +2913,12 @@
   "fenceRate": 0.058333333333333334,
   "readyRateCeiling": 0.005,
   "fenceRateCeiling": 0.005,
-  "rescoredAt": "2026-11-01T04:40:00Z",
-  "rescoredNote": "Re-scored under SOAK_GATES.md v4 rate thresholds; measured counts unchanged."
+  "rescoredAt": "2026-11-01T05:05:00Z",
+  "rescoredNote": "minCycles=1000 + Wilson UBs per SOAK_GATES.md; measured counts unchanged.",
+  "minCyclesOk": false,
+  "minCycles": 1000,
+  "readyRateUb95": 0.053459957800453296,
+  "readyRuleOfThreeUpper95": null,
+  "fenceRateUb95": 0.09552102023698665,
+  "fenceRuleOfThreeUpper95": null
 }

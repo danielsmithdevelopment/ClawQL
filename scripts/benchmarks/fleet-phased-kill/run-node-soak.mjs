@@ -7,14 +7,16 @@
  * / TTL waits / ready flakes. Product fix (before a passing soak / v4):
  *   stable node id + incarnation supersede-when-dead + lease-sweep + alive≠ready.
  *
- * Pass criteria match v4 headroom under the 2% availability ceiling (defaults):
+ * Pass criteria (defaults) — see docs/.../SOAK_GATES.md:
  *   1. unique R2 nodes/* ≤ FLEET_SOAK_NODE_CEILING (default 2)
- *   2. readyFails / cycles ≤ FLEET_SOAK_READY_RATE_CEILING (default 0.005 = 0.5%)
- *   3. selfFences / cycles ≤ FLEET_SOAK_FENCE_RATE_CEILING (default 0.005 = 0.5%)
- * All three must pass. Node-ceiling-only is a diagnostic, not a v4 gate.
+ *   2. readyFails/cycles observed AND 95% Wilson UB ≤ READY_RATE_CEILING (0.5%)
+ *   3. selfFences/cycles observed AND 95% Wilson UB ≤ FENCE_RATE_CEILING (0.5%)
+ *   4. cyclesCompleted ≥ FLEET_SOAK_MIN_CYCLES (default 1000 overnight)
+ * n=240 cannot demonstrate 0.5% (0 events → rule-of-three UB ≈1.25%).
  *
  * Env:
- *   FLEET_SOAK_CYCLES              rebuild cycles (default 30)
+ *   FLEET_SOAK_CYCLES              rebuild cycles (default 30; use ≥1000 for v4 gate)
+ *   FLEET_SOAK_MIN_CYCLES          floor for measured_v4_ready (default 1000)
  *   FLEET_SOAK_SLEEP_MS            pause between cycles (default 2000)
  *   FLEET_SOAK_NODE_CEILING        max unique nodes/* (default 2)
  *   FLEET_SOAK_READY_RATE_CEILING  readyFail rate cap (default 0.005)
@@ -43,6 +45,29 @@ const STREAMS = join(REPO, "docs/examples/streams-celld");
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Wilson score 95% upper bound for k events in n Bernoulli trials.
+ * With k=0 this is slightly tighter than rule-of-three 3/n; both require n≳600
+ * before a zero-event UB sits at or below 0.5%.
+ */
+function wilsonUpper95(k, n) {
+  if (!n || n <= 0) return 1;
+  const z = 1.96;
+  const phat = Math.max(0, Math.min(1, k / n));
+  const z2 = z * z;
+  const denom = 1 + z2 / n;
+  const center = phat + z2 / (2 * n);
+  const margin = z * Math.sqrt((phat * (1 - phat) + z2 / (4 * n)) / n);
+  return Math.min(1, (center + margin) / denom);
+}
+
+/** Rule-of-three 95% UB when k=0 (documented companion to Wilson). */
+function ruleOfThreeUpper95(k, n) {
+  if (!n || n <= 0) return 1;
+  if (k === 0) return Math.min(1, 3 / n);
+  return null;
 }
 
 async function waitPortFree(port, wallMs = 15_000) {
@@ -93,6 +118,8 @@ function autoWireR2() {
 autoWireR2();
 
 const CYCLES = Math.max(1, Number(process.env.FLEET_SOAK_CYCLES || 30));
+/** Floor for a v4-authorizing soak (prefer 1000; rule-of-three zero-event floor is 600). */
+const MIN_CYCLES = Math.max(1, Number(process.env.FLEET_SOAK_MIN_CYCLES || 1000));
 const SLEEP_MS = Math.max(0, Number(process.env.FLEET_SOAK_SLEEP_MS || 2000));
 const NODE_CEILING = Math.max(2, Number(process.env.FLEET_SOAK_NODE_CEILING || 2));
 /** Headroom under board avail ceiling 2% — default 0.5% each. */
@@ -394,7 +421,7 @@ async function main() {
   let readyFails = 0;
 
   console.log(
-    `fleet-soak: cycles=${CYCLES} nodeCeiling=${NODE_CEILING} readyRateCeiling=${READY_RATE_CEILING} fenceRateCeiling=${FENCE_RATE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} bucketPrefix=${bucketPrefix || "(root)"}`
+    `fleet-soak: cycles=${CYCLES} minCycles=${MIN_CYCLES} nodeCeiling=${NODE_CEILING} readyRateCeiling=${READY_RATE_CEILING} fenceRateCeiling=${FENCE_RATE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} bucketPrefix=${bucketPrefix || "(root)"}`
   );
   console.log(
     FRESH
@@ -473,35 +500,52 @@ async function main() {
   const cyclesCompleted = samples.length;
   const readyRate = cyclesCompleted ? readyFails / cyclesCompleted : 1;
   const fenceRate = cyclesCompleted ? selfFences / cyclesCompleted : 1;
+  const readyRateUb95 = wilsonUpper95(readyFails, cyclesCompleted);
+  const fenceRateUb95 = wilsonUpper95(selfFences, cyclesCompleted);
+  const readyRuleOfThree =
+    readyFails === 0 ? ruleOfThreeUpper95(0, cyclesCompleted) : null;
+  const fenceRuleOfThree =
+    selfFences === 0 ? ruleOfThreeUpper95(0, cyclesCompleted) : null;
   const nodeCeilingOk = maxUnique <= NODE_CEILING && !FRESH;
-  const readyRateOk = readyRate <= READY_RATE_CEILING;
-  const fenceRateOk = fenceRate <= FENCE_RATE_CEILING;
-  /** All three gates — matches what v4 availability needs with headroom. */
-  const v4SoakOk = nodeCeilingOk && readyRateOk && fenceRateOk;
+  const minCyclesOk = cyclesCompleted >= MIN_CYCLES;
+  const readyRateOk =
+    readyRate <= READY_RATE_CEILING && readyRateUb95 <= READY_RATE_CEILING;
+  const fenceRateOk =
+    fenceRate <= FENCE_RATE_CEILING && fenceRateUb95 <= FENCE_RATE_CEILING;
+  /** All gates — sample size + rates with UBs under v4 headroom. */
+  const v4SoakOk = nodeCeilingOk && minCyclesOk && readyRateOk && fenceRateOk;
   const ok = v4SoakOk;
   const status = !nodeCeilingOk
     ? "failed_node_ceiling"
-    : !readyRateOk || !fenceRateOk
-      ? "failed_v4_rate_gates"
-      : "measured_v4_ready";
+    : !minCyclesOk
+      ? "failed_min_cycles"
+      : !readyRateOk || !fenceRateOk
+        ? "failed_v4_rate_gates"
+        : "measured_v4_ready";
   const evidence = {
     kind: "celld-fleet-node-soak",
     measuredAt: new Date().toISOString(),
     ok,
     v4SoakOk,
     nodeCeilingOk,
+    minCyclesOk,
     readyRateOk,
     fenceRateOk,
     status,
     honesty:
-      "Pre-v4 soak for stock celld. Pass requires (1) unique nodes/* ≤ ceiling, (2) readyFail rate ≤ readyRateCeiling, (3) selfFence rate ≤ fenceRateCeiling — defaults 0.5% each for headroom under the board's 2% availability ceiling. Node-ceiling-only is not enough: stable ids stop v3's 712-registration spiral but lease collisions still self-fence. Product path: stable id + incarnation supersede-when-dead + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
+      "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% upper bound ≤0.5% (headroom under board 2% avail). n=240 cannot show 0.5% (0 events → rule-of-three ≈1.25%). Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
     cyclesPlanned: CYCLES,
     cyclesCompleted,
+    minCycles: MIN_CYCLES,
     nodeCeiling: NODE_CEILING,
     readyRateCeiling: READY_RATE_CEILING,
     fenceRateCeiling: FENCE_RATE_CEILING,
     readyRate,
+    readyRateUb95,
+    readyRuleOfThreeUpper95: readyRuleOfThree,
     fenceRate,
+    fenceRateUb95,
+    fenceRuleOfThreeUpper95: fenceRuleOfThree,
     freshNodeIds: FRESH,
     stableNodeIds: FRESH ? null : STABLE,
     celldTtlMs: CELLD_TTL_MS,
@@ -514,7 +558,7 @@ async function main() {
   };
   writeFileSync(OUT, `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(
-    `fleet-soak: wrote ${OUT} ok=${ok} status=${status} nodeCeilingOk=${nodeCeilingOk} readyRate=${readyRate.toFixed(4)}/${READY_RATE_CEILING} fenceRate=${fenceRate.toFixed(4)}/${FENCE_RATE_CEILING} maxUnique=${maxUnique}`
+    `fleet-soak: wrote ${OUT} ok=${ok} status=${status} nodeCeilingOk=${nodeCeilingOk} minCyclesOk=${minCyclesOk} ready=${readyRate.toFixed(4)} ub95=${readyRateUb95.toFixed(4)} fence=${fenceRate.toFixed(4)} ub95=${fenceRateUb95.toFixed(4)} maxUnique=${maxUnique}`
   );
   process.exit(ok ? 0 : 1);
 }

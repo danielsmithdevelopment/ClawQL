@@ -230,22 +230,23 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **`call_never_sent` cause:** not gate-blocked for 8s. Celld `durable_wait` on this run: max ≈1.4–2.1s; **0** waits ≥5s. None of the 21 never-sent `programId`s appear in celld logs — the program **never reached send/gate**. Stall is earlier (rebuild / ownership / unhealthy node path).
 
-**Before v4:** land **stable id + incarnation supersede-when-dead** + lease-sweep + alive≠ready on the runtime under test; run a multi-hour soak that meets [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md); then N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board. **Do not start v4** until soak `status=measured_v4_ready`.
+**Before v4 (order):** (1) **incarnation + same-host supersede** (lease carries `pid` + process start time + `bootId`; supersede only when that exact process is gone — **cross-host wait TTL or refuse**, do not reopen stale-owner); (2) lease-sweep; (3) alive≠ready; (4) **overnight soak** meeting [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md) (`cycles ≥ 1000`; observed **and** Wilson 95% UB ≤0.5% each); (5) **only then** N=1000 under unchanged frozen criteria. Do **not** restore the mechanism claim. **Do not start v4** until soak `status=measured_v4_ready`.
 
-**Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** (new incarnation supersedes a *dead* prior; live duplicate refused) + sweep + alive≠ready.
+**Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
 
-**Soak gates (frozen, headroom under 2% avail):** unique `nodes/*` ≤2 **and** readyFail rate ≤**0.5%** **and** selfFence rate ≤**0.5%**. See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md). `npm run benchmark:fleet-node-soak`.
+**Soak gates (frozen):** nodes ≤2; readyFail & selfFence **observed and Wilson 95% UB** ≤**0.5%**; **`cycles ≥ 1000`** (rule-of-three zero-event floor 600; n=240 cannot show 0.5%: 0 events → ≈1.25%). See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md).
 
 **Multi-hour soak (measured — not v4-ready):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
 
-| Gate | Measured | Verdict |
-| ---- | -------- | ------- |
-| Unique `nodes/*` | **2** / 2 | PASS (closes v3 accumulation) |
-| readyFail rate | **6/240 ≈ 2.5%** | **FAIL** (exceeds board 2% alone) |
-| selfFence rate | **14/240 ≈ 5.8%** | **FAIL** |
-| `v4SoakOk` / status | — | **false** / `failed_v4_rate_gates` |
+| Gate | Measured | 95% UB (Wilson) | Verdict |
+| ---- | -------- | --------------- | ------- |
+| Unique `nodes/*` | **2** / 2 | — | PASS (closes v3 accumulation) |
+| readyFail rate | **6/240 ≈ 2.5%** | **≈5.3%** | **FAIL** |
+| selfFence rate | **14/240 ≈ 5.8%** | **≈9.6%** | **FAIL** |
+| Min cycles (≥1000) | 240 | — | **FAIL** |
+| `v4SoakOk` / status | — | — | **false** / `failed_min_cycles` |
 
-Stable-id harness stopped the 712-registration spiral; rates still forbid v4.
+Stable-id harness stopped the 712-registration spiral; sample size and rates still forbid v4.
 
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 
