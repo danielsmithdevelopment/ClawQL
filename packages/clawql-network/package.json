@@ -45,6 +45,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "tailcat/bin",
     "README.md"
   ],

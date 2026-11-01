@@ -150,6 +150,9 @@ jobs:
             --ignorefile /repo/.trivyignore \
             --input /work/oci
 
+      - name: OCI artifact secret scan (Trivy secrets)
+        run: bash scripts/security/scan-oci-artifact-secrets.sh "${{ runner.temp }}/clawql-mcp-oci"
+
       - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
         id: oci_push
         env:
@@ -280,6 +283,9 @@ jobs:
             --ignorefile /repo/.trivyignore \
             --input /work/oci
 
+      - name: OCI artifact secret scan (Trivy secrets)
+        run: bash scripts/security/scan-oci-artifact-secrets.sh "${{ runner.temp }}/clawql-dashboard-oci"
+
       - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
         id: oci_push
         env:
@@ -394,6 +400,9 @@ jobs:
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
+
+      - name: OCI artifact secret scan (Trivy secrets)
+        run: bash scripts/security/scan-oci-artifact-secrets.sh "${{ runner.temp }}/clawql-panguard-bridge-oci"
 
       - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
         id: oci_push
@@ -521,6 +530,9 @@ jobs:
             --exit-code 1 \
             --ignorefile /repo/.trivyignore \
             --input /work/oci
+
+      - name: OCI artifact secret scan (Trivy secrets)
+        run: bash scripts/security/scan-oci-artifact-secrets.sh "${{ runner.temp }}/clawql-website-oci"
 
       - name: Push OCI layout to GHCR (skopeo — same bytes Trivy scanned)
         id: oci_push
