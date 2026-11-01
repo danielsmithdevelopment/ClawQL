@@ -232,7 +232,18 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Before v4:** land lease-sweep + alive-vs-ready (or equivalent) on the runtime under test; run a multi-hour soak with stable node-id count and no self-fence accumulation; then rerun N=1000 with **unchanged** frozen criteria. Do **not** restore the mechanism claim from this failed board.
 
-**Harness mitigation (pre-soak):** `run-board.mjs` defaults to stable `CELLD_NODE=fleet_A|fleet_B` (opt out with `FLEET_PHASED_FRESH_NODE_IDS=1`); after SELF-FENCE wait ≥TTL before reuse. Smoke soak: `npm run benchmark:fleet-node-soak` (`scripts/benchmarks/fleet-phased-kill/run-node-soak.mjs`) — deploy + mock-pets + rebuild cycles; pass when unique `nodes/*` ≤2. This is **not** upstream GC; multi-hour soak + product alive/sweep still gate v4.
+**Harness mitigation:** `run-board.mjs` defaults to stable `CELLD_NODE=fleet_A|fleet_B` (opt out with `FLEET_PHASED_FRESH_NODE_IDS=1`); after SELF-FENCE wait ≥TTL before reuse. Soak: `npm run benchmark:fleet-node-soak` — deploy + mock-pets + rebuild cycles; **primary gate** unique `nodes/*` ≤2.
+
+**Multi-hour soak (measured):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
+
+| Gate / diagnostic | Result |
+| ----------------- | ------ |
+| Unique `nodes/*` (primary) | **2** / ceiling 2 — **PASS** (`nodeCeilingOk`) |
+| `readyFails` (stock `/health` hangs) | **6** / 240 (~2.5%) — reported, not a node-growth fail |
+| `selfFences` (exit code 3) | **14** — recovered via ≥TTL wait before stable-id reuse |
+| Status | `measured_with_ready_flakes` |
+
+Harness mitigation holds under rebuild pressure (contrast v3’s **712** registrations). This is **not** upstream GC and **does not** alone authorize v4 — product alive-vs-ready + lease-sweep still required; then N=1000 under frozen criteria.
 
 **Product pin:** stock **celld v0.6.3** ([`UPSTREAM_PIN`](../../../vendor/celld/UPSTREAM_PIN)); ClawQL fork retired. CI installs via `scripts/ci/install-celld-pinned.sh` + `gh attestation verify` on the release `*.gz`.
 
