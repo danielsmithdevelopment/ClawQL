@@ -56,6 +56,37 @@ Headroom under the board availability ceiling (2% of trials):
 
 **Practical overnight bar:** `readyFails === 0` **and** `selfFences === 0` at n≥1000 (plus nodes≤2). All must pass. Exit non-zero otherwise. Status `measured_v4_ready` only when `v4SoakOk=true`.
 
+## Environment validity (host suspend) — frozen before the next authorizing run
+
+A host suspend / hypervisor pause is an **infrastructure** event, not a software result. The rule is fixed **before** the run (not applied afterward).
+
+### Detection
+
+On Linux, `CLOCK_BOOTTIME − CLOCK_MONOTONIC` grows **only** while the machine is suspended (or equivalently paused). The soak harness (`run-node-soak.mjs` + `host-env.mjs`) samples that gap at start and every cycle.
+
+### Rule
+
+| Condition | Outcome |
+| --------- | ------- |
+| Gap growth ≤ **2.0 s** for the whole run (`FLEET_SOAK_SUSPEND_GAP_SECS`, default 2) | Environment valid — software gates apply |
+| Gap growth **> 2.0 s** at any sample | Run is **void**: recorded (`status=void_host_suspend`), **not counted**, never a pass; harness restarts from cycle **0** (`FLEET_SOAK_VOID_RESTART=1` default) |
+
+Void does **not** loosen software gates: a void run can never become `measured_v4_ready`. It only stops infrastructure from being scored as celld.
+
+### No partial combining
+
+Authorizing requires **≥ 1000 consecutive cycles in one non-void run**. Do **not** stitch attempt-3’s ~304 clean cycles (or any voided prefix) onto a later attempt.
+
+### Host requirements
+
+- Run on a machine that **does not pause** for the soak duration (workstation / bare metal with suspend & sleep **disabled** for the authorizing run). Cloud agent VMs that the hypervisor can freeze are invalid for authorizing soaks.
+- Evidence must record **host identity** and **power/sleep settings** (`host` object from `captureHostPowerSettings()`). See [`SOAK_HOST.md`](./SOAK_HOST.md).
+- **Do not raise `CELLD_TTL_MS`** to hide suspends.
+
+### Related (not a soak gate)
+
+Host suspend is still a real production case. Dual fence on resume after pause > TTL is **correct safety**. Fleet recovery time after resume is a **separate** board: [`run-pause-recovery.mjs`](../../../scripts/benchmarks/fleet-phased-kill/run-pause-recovery.mjs) / pause-aware clocks — never feeds `measured_v4_ready`.
+
 ## “Provably dead” (same-host supersede only)
 
 Incarnation supersede is **not** “TTL expired” and **not** “identity matches.” It is safe only when the old process **cannot still be running**.
@@ -108,14 +139,14 @@ Evidence: [`node-soak-lab-supersede-smoke.json`](./node-soak-lab-supersede-smoke
 
 Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after **correlated dual** `node_lease_watchdog_fence` following multi-minute VM pauses (keepalive and active babysit froze too — hypervisor-level). Awake windows look good: attempt 3 held **0/0 through ~304 cycles** (max restart gap 12.9s) before a ~20m suspend. Evidence: [`node-soak-lab-authorizing-suspend-aborted.json`](./node-soak-lab-authorizing-suspend-aborted.json), [`node-soak-lab-authorizing-attempt2-suspend.json`](./node-soak-lab-authorizing-attempt2-suspend.json), [`node-soak-lab-authorizing-attempt3-suspend.json`](./node-soak-lab-authorizing-attempt3-suspend.json).
 
-**Implication:** with a 10s lease TTL, any host suspend longer than TTL fails the strict 0-fence overnight gate. Authorizing soak must run on a **non-suspending** host (do not raise TTL silently to paper over this).
+**Implication (superseded by the environment-validity rule above):** those attempts would now be **voided and restarted** instead of scored as software self-fences. Authorizing soak still must run on a **non-suspending** host ([`SOAK_HOST.md`](./SOAK_HOST.md)); do not raise TTL.
 
 ## Order before v4
 
 1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse) — **landed in** [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md)
 2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
 3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
-4. **Overnight soak** against these frozen gates on the **lab binary** (`cycles ≥ 1000`; **0** readyFails and **0** selfFences so Wilson UBs ≤ 0.5%; nodes ≤ 2) — **blocked on cloud-agent VM suspend; needs non-suspending host**
+4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (BOOTTIME−MONOTONIC), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences
 5. **Only then** v4 N=1000 under unchanged frozen board criteria
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

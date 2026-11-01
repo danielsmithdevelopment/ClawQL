@@ -24,8 +24,16 @@
  *   FLEET_SOAK_FENCE_RATE_CEILING  selfFence rate cap (default 0.005)
  *   FLEET_SOAK_OUT                 evidence JSON path
  *   FLEET_SOAK_REQUIRE_PROGRAM     1=wait /program/health each cycle (default 1)
+ *   FLEET_SOAK_SUSPEND_GAP_SECS    void if BOOTTIME−MONOTONIC growth > this (default 2)
+ *   FLEET_SOAK_VOID_RESTART        1=on void, discard run and restart from cycle 0 (default 1)
+ *   FLEET_SOAK_HOST_LABEL          human host name recorded in evidence
  *   CELLD_TTL_MS / CELLD_BUCKET / R2 creds — same as run-board.mjs
  *   FLEET_PHASED_FRESH_NODE_IDS must stay unset/0 for a meaningful pass
+ *
+ * Environment validity (SOAK_GATES.md): if CLOCK_BOOTTIME−CLOCK_MONOTONIC grows
+ * by more than FLEET_SOAK_SUSPEND_GAP_SECS during a run, that run is **void** —
+ * recorded, not counted, never a pass. Partial voided cycles are never combined
+ * with a later attempt; authorizing needs ≥1000 consecutive cycles in one run.
  */
 import { spawn, execFileSync } from "node:child_process";
 import {
@@ -39,6 +47,11 @@ import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  captureHostPowerSettings,
+  makeSuspendMonitor,
+  DEFAULT_SUSPEND_GAP_GROWTH_SECS,
+} from "./host-env.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -133,6 +146,12 @@ const FENCE_RATE_CEILING = Math.min(
   Math.max(0, Number(process.env.FLEET_SOAK_FENCE_RATE_CEILING ?? 0.005))
 );
 const REQUIRE_PROGRAM = process.env.FLEET_SOAK_REQUIRE_PROGRAM !== "0";
+const SUSPEND_GAP_SECS = Math.max(
+  0.1,
+  Number(process.env.FLEET_SOAK_SUSPEND_GAP_SECS ?? DEFAULT_SUSPEND_GAP_GROWTH_SECS)
+);
+/** On void (host suspend detected), restart a full run from cycle 0 by default. */
+const VOID_RESTART = process.env.FLEET_SOAK_VOID_RESTART !== "0";
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
@@ -408,15 +427,60 @@ async function deployFleetWorker() {
   return pets;
 }
 
-async function main() {
+function stopFleet(pets) {
+  for (const name of ["A", "B"]) {
+    if (nodes[name].pid) {
+      try {
+        process.kill(nodes[name].pid, "SIGKILL");
+      } catch {
+        /* */
+      }
+      nodes[name].pid = null;
+    }
+  }
+  if (pets?.pid) {
+    try {
+      process.kill(pets.pid, "SIGKILL");
+    } catch {
+      /* */
+    }
+  }
+}
+
+function writeEvidence(evidence) {
   mkdirSync(dirname(OUT), { recursive: true });
+  writeFileSync(OUT, `${JSON.stringify(evidence, null, 2)}\n`);
+  console.log(
+    `fleet-soak: wrote ${OUT} ok=${evidence.ok} status=${evidence.status} voided=${Boolean(evidence.voided)} cycles=${evidence.cyclesCompleted}`
+  );
+}
+
+/**
+ * One full soak attempt. Never combines with prior partials.
+ * @returns {{ voided: boolean, ok: boolean, evidence: object }}
+ */
+async function runOnce({ attempt = 1 } = {}) {
   writeFileSync(nodes.A.log, "");
   writeFileSync(nodes.B.log, "");
+  nodes.A.lastExit = null;
+  nodes.B.lastExit = null;
 
   for (const p of [PORT_A, PORT_B, INTERNAL_A, INTERNAL_B, PETS_PORT]) {
     freePortHard(p);
   }
   await sleep(400);
+
+  const host = captureHostPowerSettings();
+  const suspendMon = makeSuspendMonitor({ thresholdSec: SUSPEND_GAP_SECS });
+  if (!suspendMon.available) {
+    console.warn(
+      "fleet-soak: CLOCK_BOOTTIME/MONOTONIC unavailable — cannot enforce host-suspend void rule on this OS"
+    );
+  } else {
+    console.log(
+      `fleet-soak: suspend monitor on (void if BOOTTIME−MONOTONIC growth > ${SUSPEND_GAP_SECS}s; baselineGap=${suspendMon.baseline.gapSec.toFixed(3)}s)`
+    );
+  }
 
   const pets = await deployFleetWorker();
 
@@ -424,9 +488,10 @@ async function main() {
   let selfFences = 0;
   let maxUnique = 0;
   let readyFails = 0;
+  let voidInfo = null;
 
   console.log(
-    `fleet-soak: cycles=${CYCLES} minCycles=${MIN_CYCLES} nodeCeiling=${NODE_CEILING} readyRateCeiling=${READY_RATE_CEILING} fenceRateCeiling=${FENCE_RATE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} bucketPrefix=${bucketPrefix || "(root)"}`
+    `fleet-soak: attempt=${attempt} cycles=${CYCLES} minCycles=${MIN_CYCLES} nodeCeiling=${NODE_CEILING} readyRateCeiling=${READY_RATE_CEILING} fenceRateCeiling=${FENCE_RATE_CEILING} fresh=${FRESH} requireProgram=${REQUIRE_PROGRAM} ttl=${CELLD_TTL_MS} bin=${CELLD_BIN} host=${host.hostLabel || host.hostname} bucketPrefix=${bucketPrefix || "(root)"}`
   );
   console.log(
     FRESH
@@ -441,7 +506,21 @@ async function main() {
   await waitReady("B", { requireProgram: REQUIRE_PROGRAM, wallMs: 60_000 });
   console.log("fleet-soak: initial fleet ready");
 
+  const checkSuspend = (where) => {
+    const s = suspendMon.sample();
+    if (s.voided) {
+      voidInfo = { ...s, where, atCycle: samples.length };
+      console.error(
+        `fleet-soak: VOID host suspend detected at ${where} (growthSec=${s.growthSec?.toFixed?.(3)} > ${SUSPEND_GAP_SECS}); run discarded — not a software fail`
+      );
+      return true;
+    }
+    return false;
+  };
+
   for (let c = 0; c < CYCLES; c++) {
+    if (checkSuspend(`pre_cycle_${c + 1}`)) break;
+
     const victim = c % 2 === 0 ? "A" : "B";
     if (nodes[victim].pid) {
       try {
@@ -484,30 +563,66 @@ async function main() {
     console.log(
       `fleet-soak: ${c + 1}/${CYCLES} uniqueNodes=${snap.uniqueCount} objects=${snap.objectCount} selfFences=${selfFences} readyFails=${readyFails} ids=${snap.uniqueNodeIds.join(",")}`
     );
+
+    if (checkSuspend(`post_cycle_${c + 1}`)) break;
+
     if (snap.uniqueCount > NODE_CEILING) {
       break;
     }
     await sleep(SLEEP_MS);
   }
 
-  for (const name of ["A", "B"]) {
-    if (nodes[name].pid) {
-      try {
-        process.kill(nodes[name].pid, "SIGKILL");
-      } catch {
-        /* */
-      }
-    }
-  }
-  if (pets?.pid) {
-    try {
-      process.kill(pets.pid, "SIGKILL");
-    } catch {
-      /* */
-    }
-  }
+  stopFleet(pets);
 
   const cyclesCompleted = samples.length;
+  const labBin =
+    typeof CELLD_BIN === "string" && /vendor\/celld-lab\//.test(CELLD_BIN);
+  const celldBuild = labBin
+    ? "lab_fixed_alive_sweep_supersede"
+    : process.env.FLEET_SOAK_CELLD_BUILD || "stock_or_unknown";
+
+  if (voidInfo) {
+    const voidPath = OUT.replace(/\.json$/i, "") + `-void-attempt${attempt}.json`;
+    const evidence = {
+      kind: "celld-fleet-node-soak",
+      role: "void_host_suspend",
+      authorizing: false,
+      voided: true,
+      ok: false,
+      v4SoakOk: false,
+      status: "void_host_suspend",
+      honesty:
+        "VOID — host suspend/pause detected via CLOCK_BOOTTIME−CLOCK_MONOTONIC gap growth. Infrastructure event, not a software result. This run is recorded but not counted; partial cycles are never combined with a later attempt. Authorizing soak requires ≥minCycles consecutive cycles in one non-void run.",
+      attempt,
+      celldBuild,
+      celldBin: CELLD_BIN,
+      host,
+      suspendMonitor: {
+        thresholdSec: SUSPEND_GAP_SECS,
+        baseline: suspendMon.baseline,
+        void: voidInfo,
+      },
+      measuredAt: new Date().toISOString(),
+      cyclesPlanned: CYCLES,
+      cyclesCompleted,
+      cyclesBeforeVoid: voidInfo.atCycle,
+      minCycles: MIN_CYCLES,
+      selfFences,
+      readyFails,
+      maxUniqueNodeIds: maxUnique,
+      celldTtlMs: CELLD_TTL_MS,
+      samples,
+      bucketRedacted: true,
+    };
+    writeEvidence(evidence);
+    // Also keep a durable void artifact beside the main OUT path.
+    if (voidPath !== OUT) {
+      writeFileSync(voidPath, `${JSON.stringify(evidence, null, 2)}\n`);
+      console.log(`fleet-soak: void artifact ${voidPath}`);
+    }
+    return { voided: true, ok: false, evidence };
+  }
+
   const readyRate = cyclesCompleted ? readyFails / cyclesCompleted : 1;
   const fenceRate = cyclesCompleted ? selfFences / cyclesCompleted : 1;
   const readyRateUb95 = wilsonUpper95(readyFails, cyclesCompleted);
@@ -532,11 +647,6 @@ async function main() {
       : !readyRateOk || !fenceRateOk
         ? "failed_v4_rate_gates"
         : "measured_v4_ready";
-  const labBin =
-    typeof CELLD_BIN === "string" && /vendor\/celld-lab\//.test(CELLD_BIN);
-  const celldBuild = labBin
-    ? "lab_fixed_alive_sweep_supersede"
-    : process.env.FLEET_SOAK_CELLD_BUILD || "stock_or_unknown";
   const authorizing = Boolean(v4SoakOk && labBin);
   const evidence = {
     kind: "celld-fleet-node-soak",
@@ -546,8 +656,15 @@ async function main() {
         ? "lab_fixed_not_yet_authorizing"
         : "non_lab_or_unfixed",
     authorizing,
+    voided: false,
     celldBuild,
     celldBin: CELLD_BIN,
+    host,
+    suspendMonitor: {
+      thresholdSec: SUSPEND_GAP_SECS,
+      baseline: suspendMon.baseline,
+      final: suspendMon.sample(),
+    },
     measuredAt: new Date().toISOString(),
     ok,
     v4SoakOk,
@@ -557,8 +674,9 @@ async function main() {
     fenceRateOk,
     status: authorizing ? "measured_v4_ready" : status,
     honesty: labBin
-      ? "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2). A soak only covers the binary it measured."
-      : "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready on the fixed lab/build. Stock/unfixed soaks are baseline only.",
+      ? "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2) on a non-void run. A soak only covers the binary it measured. Host suspend voids the run (BOOTTIME−MONOTONIC)."
+      : "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Host suspend voids the run. Do not start v4 until status=measured_v4_ready on the fixed lab/build. Stock/unfixed soaks are baseline only.",
+    attempt,
     cyclesPlanned: CYCLES,
     cyclesCompleted,
     minCycles: MIN_CYCLES,
@@ -581,11 +699,28 @@ async function main() {
     samples,
     bucketRedacted: true,
   };
-  writeFileSync(OUT, `${JSON.stringify(evidence, null, 2)}\n`);
-  console.log(
-    `fleet-soak: wrote ${OUT} ok=${ok} status=${status} nodeCeilingOk=${nodeCeilingOk} minCyclesOk=${minCyclesOk} ready=${readyRate.toFixed(4)} ub95=${readyRateUb95.toFixed(4)} fence=${fenceRate.toFixed(4)} ub95=${fenceRateUb95.toFixed(4)} maxUnique=${maxUnique}`
-  );
-  process.exit(ok ? 0 : 1);
+  writeEvidence(evidence);
+  return { voided: false, ok, evidence };
+}
+
+async function main() {
+  mkdirSync(dirname(OUT), { recursive: true });
+  let attempt = 0;
+  for (;;) {
+    attempt += 1;
+    const result = await runOnce({ attempt });
+    if (!result.voided) {
+      process.exit(result.ok ? 0 : 1);
+    }
+    if (!VOID_RESTART) {
+      console.error("fleet-soak: voided; FLEET_SOAK_VOID_RESTART=0 so exiting 75");
+      process.exit(75);
+    }
+    console.warn(
+      `fleet-soak: voided attempt ${attempt}; restarting from cycle 0 (partial cycles discarded, never combined)`
+    );
+    await sleep(2_000);
+  }
 }
 
 main().catch((err) => {
