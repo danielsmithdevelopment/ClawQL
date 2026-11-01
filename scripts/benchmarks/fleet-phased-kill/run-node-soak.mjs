@@ -24,16 +24,19 @@
  *   FLEET_SOAK_FENCE_RATE_CEILING  selfFence rate cap (default 0.005)
  *   FLEET_SOAK_OUT                 evidence JSON path
  *   FLEET_SOAK_REQUIRE_PROGRAM     1=wait /program/health each cycle (default 1)
- *   FLEET_SOAK_SUSPEND_GAP_SECS    void if BOOTTIME−MONOTONIC growth > this (default 2)
+ *   FLEET_SOAK_SUSPEND_GAP_SECS    void if suspend-gap growth > this (default 2)
  *   FLEET_SOAK_VOID_RESTART        1=on void, discard run and restart from cycle 0 (default 1)
+ *   FLEET_SOAK_REQUIRE_SUSPEND_MONITOR  1=abort if suspend clocks unavailable (default 1)
  *   FLEET_SOAK_HOST_LABEL          human host name recorded in evidence
  *   CELLD_TTL_MS / CELLD_BUCKET / R2 creds — same as run-board.mjs
  *   FLEET_PHASED_FRESH_NODE_IDS must stay unset/0 for a meaningful pass
  *
- * Environment validity (SOAK_GATES.md): if CLOCK_BOOTTIME−CLOCK_MONOTONIC grows
- * by more than FLEET_SOAK_SUSPEND_GAP_SECS during a run, that run is **void** —
- * recorded, not counted, never a pass. Partial voided cycles are never combined
- * with a later attempt; authorizing needs ≥1000 consecutive cycles in one run.
+ * Environment validity (SOAK_GATES.md): if the suspend gap grows by more than
+ * FLEET_SOAK_SUSPEND_GAP_SECS during a run (Linux: BOOTTIME−MONOTONIC; Darwin:
+ * wall−MONOTONIC), that run is **void** — recorded, not counted, never a pass.
+ * Partial voided cycles are never combined with a later attempt; authorizing
+ * needs ≥1000 consecutive cycles in one run. Lab celld still needs Linux /proc
+ * for same-host supersede — see MAC_MINI_AGENT.md (Colima Linux guest).
  */
 import { spawn, execFileSync } from "node:child_process";
 import {
@@ -152,6 +155,8 @@ const SUSPEND_GAP_SECS = Math.max(
 );
 /** On void (host suspend detected), restart a full run from cycle 0 by default. */
 const VOID_RESTART = process.env.FLEET_SOAK_VOID_RESTART !== "0";
+/** Authorizing soaks must be able to void on suspend; default refuse blind runs. */
+const REQUIRE_SUSPEND_MONITOR = process.env.FLEET_SOAK_REQUIRE_SUSPEND_MONITOR !== "0";
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
@@ -473,12 +478,16 @@ async function runOnce({ attempt = 1 } = {}) {
   const host = captureHostPowerSettings();
   const suspendMon = makeSuspendMonitor({ thresholdSec: SUSPEND_GAP_SECS });
   if (!suspendMon.available) {
-    console.warn(
-      "fleet-soak: CLOCK_BOOTTIME/MONOTONIC unavailable — cannot enforce host-suspend void rule on this OS"
-    );
+    const msg =
+      "fleet-soak: suspend-gap clocks unavailable — cannot enforce host-suspend void rule";
+    if (REQUIRE_SUSPEND_MONITOR) {
+      console.error(`${msg} (FLEET_SOAK_REQUIRE_SUSPEND_MONITOR=1); exiting 76`);
+      process.exit(76);
+    }
+    console.warn(`${msg} (continuing with FLEET_SOAK_REQUIRE_SUSPEND_MONITOR=0)`);
   } else {
     console.log(
-      `fleet-soak: suspend monitor on (void if BOOTTIME−MONOTONIC growth > ${SUSPEND_GAP_SECS}s; baselineGap=${suspendMon.baseline.gapSec.toFixed(3)}s)`
+      `fleet-soak: suspend monitor on method=${suspendMon.method} platform=${suspendMon.platform} (void if gap growth > ${SUSPEND_GAP_SECS}s; baselineGap=${suspendMon.baseline.gapSec.toFixed(3)}s)`
     );
   }
 
@@ -592,13 +601,15 @@ async function runOnce({ attempt = 1 } = {}) {
       v4SoakOk: false,
       status: "void_host_suspend",
       honesty:
-        "VOID — host suspend/pause detected via CLOCK_BOOTTIME−CLOCK_MONOTONIC gap growth. Infrastructure event, not a software result. This run is recorded but not counted; partial cycles are never combined with a later attempt. Authorizing soak requires ≥minCycles consecutive cycles in one non-void run.",
+        "VOID — host suspend/pause detected via suspend-gap growth (Linux BOOTTIME−MONOTONIC or Darwin wall−MONOTONIC). Infrastructure event, not a software result. This run is recorded but not counted; partial cycles are never combined with a later attempt. Authorizing soak requires ≥minCycles consecutive cycles in one non-void run.",
       attempt,
       celldBuild,
       celldBin: CELLD_BIN,
       host,
       suspendMonitor: {
         thresholdSec: SUSPEND_GAP_SECS,
+        method: suspendMon.method,
+        platform: suspendMon.platform,
         baseline: suspendMon.baseline,
         void: voidInfo,
       },
@@ -662,6 +673,8 @@ async function runOnce({ attempt = 1 } = {}) {
     host,
     suspendMonitor: {
       thresholdSec: SUSPEND_GAP_SECS,
+      method: suspendMon.method,
+      platform: suspendMon.platform,
       baseline: suspendMon.baseline,
       final: suspendMon.sample(),
     },
@@ -674,7 +687,7 @@ async function runOnce({ attempt = 1 } = {}) {
     fenceRateOk,
     status: authorizing ? "measured_v4_ready" : status,
     honesty: labBin
-      ? "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2) on a non-void run. A soak only covers the binary it measured. Host suspend voids the run (BOOTTIME−MONOTONIC)."
+      ? "Lab binary soak (alive≠ready + lease-sweep + same-host supersede). Authorizes v4 only when status=measured_v4_ready (cycles≥minCycles, 0 readyFails, 0 selfFences, nodes≤2) on a non-void run. A soak only covers the binary it measured. Host suspend voids the run (Linux BOOTTIME−MONOTONIC / Darwin wall−MONOTONIC). Lab same-host supersede needs Linux /proc."
       : "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Host suspend voids the run. Do not start v4 until status=measured_v4_ready on the fixed lab/build. Stock/unfixed soaks are baseline only.",
     attempt,
     cyclesPlanned: CYCLES,
