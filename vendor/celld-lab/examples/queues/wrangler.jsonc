@@ -1,0 +1,18 @@
+{
+  "name": "queues",
+  "main": "index.js",
+  "compatibility_date": "2026-01-01",
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "example-jobs" }],
+    "consumers": [
+      {
+        "queue": "example-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 2,
+        "dead_letter_queue": "example-jobs-dead-letter"
+      },
+      { "queue": "example-jobs-dead-letter" }
+    ]
+  }
+}

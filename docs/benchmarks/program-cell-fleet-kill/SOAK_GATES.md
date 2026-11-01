@@ -1,6 +1,6 @@
 # Pre-v4 fleet soak gates
 
-Frozen **before** the next soak. v4 N=1000 starts only when a soak reports `status=measured_v4_ready` (`ok=true`).
+Frozen **before** the next **authorizing** soak. v4 N=1000 starts only when a soak reports `status=measured_v4_ready` (`ok=true`) on the **fixed** build (incarnation + same-host supersede + lease-sweep + alive≠ready). A soak only authorizes the binary it measured.
 
 ## Why node-ceiling-alone is not enough
 
@@ -72,17 +72,33 @@ Supersede only when **all** of those say the recorded process is gone. Otherwise
 
 **Cross-host — do not supersede on “looks dead.”** A duplicate `CELLD_NODE` on a **different** machine cannot prove the other host’s process is gone. Policy: **wait out the lease timeout** or **refuse** the duplicate. That keeps same-host fence recovery from reopening the **stale-owner** hole the tip already closed (N=40 stale-owner probe).
 
-## Multi-hour soak vs these gates (2026-10-31)
+## Measured soaks (not authorizing)
 
-Evidence: [`node-soak-evidence.json`](./node-soak-evidence.json) · **240** cycles · ~3.75 h · stock 0.6.3 · stable `fleet_A`/`fleet_B`.
+### Multi-hour stable-id (2026-10-31) — diagnostic
+
+Evidence: [`node-soak-evidence.json`](./node-soak-evidence.json) · **240** cycles · ~3.75 h · stock 0.6.3 · stable ids.
 
 | Gate | Measured | 95% UB (Wilson) | Verdict |
 | ---- | -------- | --------------- | ------- |
 | Unique nodes | **2** / 2 | — | PASS (v3 mode closed) |
-| readyFail rate | **6/240 ≈ 2.5%** | **≈5.3%** Wilson | **FAIL** (exceeds board 2% alone; n≪600) |
-| selfFence rate | **14/240 ≈ 5.8%** | **≈9.6%** Wilson | **FAIL** |
+| readyFail rate | **6/240 ≈ 2.5%** | **≈5.3%** | **FAIL** |
+| selfFence rate | **14/240 ≈ 5.8%** | **≈9.6%** | **FAIL** |
 | Min cycles (≥1000) | 240 | — | **FAIL** |
-| `v4SoakOk` | — | — | **false** — do **not** start v4 |
+
+### Overnight attempt stopped (2026-10-31) — **baseline unfixed**
+
+Evidence: [`node-soak-baseline-unfixed-0.6.3.json`](./node-soak-baseline-unfixed-0.6.3.json) · stock **0.6.3 unfixed** · started overnight at 1000 cycles · **stopped at 60** to free the host for product fixes.
+
+| | |
+| --- | --- |
+| Role | **`baseline_unfixed_stock_0_6_3`** — not authorizing |
+| Cycles | **60**/1000 (~39 min) |
+| Unique nodes | **2** |
+| readyFails | **2** (~3.3%; Wilson UB ≈11%) — strict gate already dead |
+| selfFences | **2** (~3.3%; Wilson UB ≈11%) |
+| Why stopped | Soak on unfixed build cannot authorize v4; host needed for incarnation/sweep/alive |
+
+Compare later authorizing soak on the **fixed** build against this baseline.
 
 ## Order before v4
 

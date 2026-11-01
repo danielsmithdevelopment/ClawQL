@@ -1,0 +1,703 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "role": "baseline_unfixed_stock_0_6_3",
+  "authorizing": false,
+  "honesty": "BASELINE only \u2014 stock celld 0.6.3 WITHOUT incarnation/same-host supersede, lease-sweep, or alive\u2260ready. Cannot authorize v4: a soak only covers the build it measured; v4 runs on the fixed build. Stopped early to free the host for product fixes. Useful to compare failure rates before vs after fixes. Stopped at 60/1000 with readyFails=2 selfFences=2 (strict SOAK_GATES already failed: any event at n\u21921000 fails Wilson\u22640.5%).",
+  "measuredAt": "2026-11-01T06:16:23.000Z",
+  "startedAt": "2026-11-01T05:37:40Z",
+  "stoppedAt": "2026-11-01T06:16:23Z",
+  "startedAtPdt": "2026-10-31 10:37 PM PDT",
+  "stoppedAtPdt": "2026-10-31 11:16 PM PDT",
+  "ok": false,
+  "v4SoakOk": false,
+  "status": "baseline_stopped_unfixed",
+  "cyclesPlanned": 1000,
+  "cyclesCompleted": 60,
+  "minCycles": 1000,
+  "minCyclesOk": false,
+  "nodeCeiling": 2,
+  "nodeCeilingOk": true,
+  "maxUniqueNodeIds": 2,
+  "readyFails": 2,
+  "selfFences": 2,
+  "readyRate": 0.03333333333333333,
+  "readyRateUb95": 0.11363987528925378,
+  "fenceRate": 0.03333333333333333,
+  "fenceRateUb95": 0.11363987528925378,
+  "readyRateCeiling": 0.005,
+  "fenceRateCeiling": 0.005,
+  "readyRateOk": false,
+  "fenceRateOk": false,
+  "freshNodeIds": false,
+  "stableNodeIds": {
+    "A": "fleet_A",
+    "B": "fleet_B"
+  },
+  "celldTtlMs": 10000,
+  "celldBinaryVersion": "0.6.3",
+  "celldBuild": "stock_unfixed",
+  "stopReason": "host_needed_for_product_fixes; soak cannot authorize unfixed build",
+  "samples": [
+    {
+      "cycle": 1,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 2,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 3,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 4,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 5,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 6,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 7,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 8,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 9,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 10,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 11,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 12,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 13,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 14,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 15,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 16,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 17,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 18,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 19,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 20,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 21,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 22,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 23,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 24,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 25,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 26,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 27,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 28,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 29,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 30,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 31,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 32,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 33,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 34,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 35,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 36,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 37,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 38,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 39,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 40,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 41,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 42,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 43,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 44,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 45,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 46,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 47,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 48,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 49,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 50,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 51,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 52,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 53,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 54,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 55,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 56,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 57,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 58,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 59,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    },
+    {
+      "cycle": 60,
+      "uniqueCount": 2,
+      "objectCount": 2,
+      "selfFencesSoFar": 2,
+      "readyFailsSoFar": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ]
+    }
+  ],
+  "bucketRedacted": true
+}

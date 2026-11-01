@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 454" role="img" aria-labelledby="workersFlowTitle workersFlowDesc">
+  <title id="workersFlowTitle">Where a Worker request runs on a celld fleet</title>
+  <desc id="workersFlowDesc">An ingress terminates TLS and can send a request to any node of the fleet. The node that accepts the request runs the Worker deployment in a V8 isolate and calls fetch with the request, env, and ctx. The handler returns a Response. The env object holds the bindings, and a binding call leaves the isolate: a KV namespace, a D1 database, a queue, and a Durable Object are each a cell with one owner node, and an R2 binding reads the shared fleet bucket instead.</desc>
+  <style>
+    /* GitHub renders this file as an image, so the diagram carries literal
+       colours here. The site rules in landing/src/style.css are more specific,
+       so the documentation theme tokens win there. SVG paints text black by
+       default, and a class that sets only `color` never reaches the fill, so
+       every label sets fill="currentColor" as well. */
+    svg { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    text { font-size: 12px; fill: currentColor; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .d-ink { color: #121212; }
+    .d-soft { color: #3d3b37; }
+    .d-faint { color: #6e6a62; }
+    .d-acc { color: #10803f; }
+    .d-panel { color: #ffffff; }
+    .d-sunk { color: #f0eee8; }
+    .d-tint { color: #d6efdf; }
+    @media (prefers-color-scheme: dark) {
+      .d-ink { color: #efede7; }
+      .d-soft { color: #c9c6be; }
+      .d-faint { color: #928e85; }
+      .d-acc { color: #3fc472; }
+      .d-panel { color: #1a1a19; }
+      .d-sunk { color: #232321; }
+      .d-tint { color: #10301d; }
+    }
+  </style>
+  <defs>
+    <marker id="wf-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="10"
+      markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path class="d-acc" fill="none" stroke="currentColor" stroke-width="1" d="M1 1 L5 5 L1 9" />
+    </marker>
+    <marker id="wf-arrow-acc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="10"
+      markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path class="d-acc" fill="none" stroke="currentColor" stroke-width="1" d="M1 1 L5 5 L1 9" />
+    </marker>
+  </defs>
+
+  <!-- client and ingress: TLS ends outside celld -->
+  <rect class="d-panel" x="110" y="8" width="180" height="34" fill="currentColor"/>
+  <rect class="d-ink" x="110" y="8" width="180" height="34" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="200" y="29.5" fill="currentColor" text-anchor="middle">HTTP client</text>
+  <path class="d-acc" d="M200,42 V61" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+
+  <rect class="d-panel" x="70" y="62" width="260" height="46" fill="currentColor"/>
+  <rect class="d-ink" x="70" y="62" width="260" height="46" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="200" y="82.5" fill="currentColor" text-anchor="middle">Ingress or load balancer</text>
+  <text class="d-soft" x="200" y="96.5" fill="currentColor" text-anchor="middle">terminates TLS</text>
+
+  <!-- any node of the fleet can accept the request -->
+  <path class="d-acc" d="M200 108 V120 H66 V131" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+  <path class="d-acc" d="M200,108 V131" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+  <path class="d-acc" d="M200 108 V120 H334 V131" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+
+  <rect class="d-ink" x="8" y="132" width="116" height="32" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="66" y="152.5" fill="currentColor" text-anchor="middle">celld node</text>
+  <rect class="d-acc" x="142" y="132" width="116" height="32" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="200" y="152.5" fill="currentColor" text-anchor="middle">celld node</text>
+  <rect class="d-ink" x="276" y="132" width="116" height="32" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="334" y="152.5" fill="currentColor" text-anchor="middle">celld node</text>
+
+  <path class="d-acc" d="M200,164 V187" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+  <text class="d-faint" x="208" y="180" fill="currentColor">any node</text>
+
+  <!-- the isolate of the accepting node -->
+  <rect class="d-sunk" x="20" y="188" width="360" height="124" fill="currentColor"/>
+  <rect class="d-ink" x="20" y="188" width="360" height="124" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-soft" x="200" y="211" fill="currentColor" text-anchor="middle">Worker deployment in a V8 isolate</text>
+
+  <rect class="d-tint" x="60" y="220" width="280" height="32" fill="currentColor"/>
+  <rect class="d-acc" x="60" y="220" width="280" height="32" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink mono" x="200" y="240" fill="currentColor" text-anchor="middle">fetch(request, env, ctx)</text>
+
+  <path class="d-acc" d="M150 252 V262 H110 V271" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow)"/>
+  <path class="d-acc" d="M250 252 V262 H290 V271" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow-acc)"/>
+
+  <rect class="d-panel" x="40" y="272" width="140" height="30" fill="currentColor"/>
+  <rect class="d-ink" x="40" y="272" width="140" height="30" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="110" y="291.5" fill="currentColor" text-anchor="middle">Response</text>
+
+  <rect class="d-panel" x="228" y="272" width="124" height="30" fill="currentColor"/>
+  <rect class="d-acc" x="228" y="272" width="124" height="30" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink mono" x="290" y="291" fill="currentColor" text-anchor="middle">env</text>
+
+  <!-- a binding call leaves the isolate, and its target decides where it goes -->
+  <path class="d-acc" d="M290,302 V330" fill="none" stroke="currentColor" stroke-width="1"/>
+  <path class="d-acc" d="M142,330 H338" fill="none" stroke="currentColor" stroke-width="1"/>
+  <path class="d-acc" d="M142,330 V351" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow-acc)"/>
+  <path class="d-acc" d="M338,330 V351" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#wf-arrow-acc)"/>
+  <text class="d-faint" x="96" y="326" fill="currentColor" text-anchor="middle">to the owner</text>
+  <text class="d-faint" x="366" y="326" fill="currentColor" text-anchor="middle">direct</text>
+
+  <rect class="d-soft" x="8" y="352" width="268" height="92" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="142" y="370" fill="currentColor" text-anchor="middle">cells</text>
+  <text class="d-faint" x="142" y="384" fill="currentColor" text-anchor="middle">one owner node each</text>
+  <rect class="d-soft" x="14" y="394" width="58" height="40" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="43" y="418.5" fill="currentColor" text-anchor="middle">KV</text>
+  <rect class="d-soft" x="78" y="394" width="58" height="40" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="107" y="418.5" fill="currentColor" text-anchor="middle">D1</text>
+  <rect class="d-soft" x="142" y="394" width="58" height="40" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="171" y="418.5" fill="currentColor" text-anchor="middle">Queues</text>
+  <rect class="d-soft" x="206" y="394" width="58" height="40" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="235" y="411.5" fill="currentColor" text-anchor="middle">Durable</text>
+  <text class="d-ink" x="235" y="425.5" fill="currentColor" text-anchor="middle">Objects</text>
+
+  <rect class="d-soft" x="284" y="352" width="108" height="92" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="338" y="370" fill="currentColor" text-anchor="middle">fleet bucket</text>
+  <text class="d-faint" x="338" y="384" fill="currentColor" text-anchor="middle">no owner</text>
+  <rect class="d-soft" x="292" y="394" width="92" height="40" fill="none" stroke="currentColor" stroke-width="1"/>
+  <text class="d-ink" x="338" y="418.5" fill="currentColor" text-anchor="middle">R2</text>
+</svg>

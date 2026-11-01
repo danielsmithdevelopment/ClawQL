@@ -1,0 +1,318 @@
+name: Release
+
+# One release pipeline, two phases.
+#
+# A push to the candidate ref builds every native target, attests
+# provenance, uploads everything to a DRAFT GitHub release, and
+# smoke-builds the container image. Publishing the draft is a separate,
+# human-approved step after the candidate binaries pass verification; a
+# failed candidate is deleted and main never moves.
+#
+# Publishing the release (release: published) triggers the container
+# phase: architecture images are built from the tagged commit, pushed to
+# GHCR, and stitched into a multi-architecture manifest with the same
+# provenance attestation as the binaries.
+on:
+  push:
+    branches:
+      - candidate
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_VERSION: 1.98.1
+  IMAGE: ghcr.io/denoland/celld
+
+jobs:
+  build-celld:
+    name: Build celld ${{ matrix.target }}
+    if: github.event_name != 'release'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+          - runner: macos-14
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+          cargo build --release --locked
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/celld/Cargo.toml | head -1)
+          target/release/celld --version | grep -F "$version"
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          # -n omits name and timestamp so the envelope is reproducible
+          # whenever the binary is.
+          gzip -9 -n -c target/release/celld \
+            > "out/celld-${{ matrix.target }}.gz"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: celld-${{ matrix.target }}
+          path: out/celld-${{ matrix.target }}.gz
+          if-no-files-found: error
+
+  # The Dockerfile must build and its test stage pass before anything can
+  # be published; nothing is pushed at candidate time.
+  container-check:
+    name: Container smoke build
+    if: github.event_name != 'release'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" |
+            docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and test the image
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/celld/Cargo.toml | head -1)
+          docker buildx build \
+            --platform linux/amd64 \
+            --build-arg "CELLD_COMMIT=$GITHUB_SHA" \
+            --build-arg "CELLD_VERSION=$version" \
+            --cache-from "type=registry,ref=$IMAGE:buildcache-amd64" \
+            .
+
+  draft-release:
+    name: Attest and draft the release
+    if: github.event_name != 'release'
+    needs:
+      - build-celld
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      # Assets are minimal: the binaries plus LICENSE and NOTICE, which
+      # the third-party licenses require to travel with them. Integrity is
+      # the attestation plus GitHub's own immutable per-asset digests;
+      # gzip's CRC catches corruption in transit.
+      - name: Check assets
+        run: |
+          set -euo pipefail
+          cp LICENSE NOTICE assets/
+          cd assets
+          for target in \
+            x86_64-unknown-linux-gnu \
+            aarch64-unknown-linux-gnu \
+            aarch64-apple-darwin; do
+            test -f "celld-$target.gz"
+          done
+
+      # Attestations require a public repository. Other repository visibilities
+      # skip this step and retain the release asset digests.
+      - name: Attest build provenance
+        if: github.event.repository.visibility == 'public'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: assets/*.gz
+
+      - name: Create or refresh the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/celld/Cargo.toml | head -1)
+          tag="v$version"
+          existing=$(gh release view "$tag" --json isDraft \
+            --jq .isDraft 2>/dev/null || echo "absent")
+          if [ "$existing" = "false" ]; then
+            echo "release $tag is already published; bump the version" >&2
+            exit 1
+          fi
+          if [ "$existing" = "true" ]; then
+            gh release delete "$tag" --yes
+          fi
+          # The release body is the release commit's message: subject
+          # dropped (it is the title), trailers stripped, hard wraps
+          # unfolded so paragraphs and bullets render without awkward
+          # line breaks.
+          git log -1 --format=%b "$GITHUB_SHA" |
+            sed '/^[A-Za-z-]*-by:/d' |
+            awk '
+              /^$/  { if (buf != "") print buf; buf = ""; print; next }
+              /^- / { if (buf != "") print buf; buf = $0; next }
+                    { sub(/^[ \t]+/, "")
+                      buf = (buf == "" ? $0 : buf " " $0) }
+              END   { if (buf != "") print buf }
+            ' | cat -s > /tmp/notes.md
+          gh release create "$tag" \
+            --draft \
+            --target "$GITHUB_SHA" \
+            --title "$tag" \
+            --notes-file /tmp/notes.md \
+            assets/*
+
+  build-container:
+    # Static name so a skipped run shows "Build container" instead of the
+    # unexpanded matrix expression; GitHub still appends the platform when
+    # the job actually runs.
+    name: Build container
+    if: github.event_name == 'release'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            platform: linux/amd64
+            suffix: amd64
+          - runner: ubuntu-22.04-arm
+            platform: linux/arm64
+            suffix: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Resolve and validate the release tag
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/celld/Cargo.toml | head -1)
+          test "${{ github.event.release.tag_name }}" = "v$version"
+          echo "TAG_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "CELLD_VERSION=$version" >> "$GITHUB_ENV"
+
+      # Registry cache export (--cache-to type=registry) needs the
+      # docker-container driver; the default docker driver cannot export.
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" |
+            docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Test, build, and push architecture image
+        run: |
+          set -euo pipefail
+          tag="$IMAGE:$TAG_SHA-${{ matrix.suffix }}"
+          cache="$IMAGE:buildcache-${{ matrix.suffix }}"
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --build-arg "CELLD_COMMIT=$TAG_SHA" \
+            --build-arg "CELLD_VERSION=$CELLD_VERSION" \
+            --cache-from "type=registry,ref=$cache" \
+            --cache-to "type=registry,ref=$cache,mode=max" \
+            --provenance=mode=max \
+            --sbom=true \
+            --tag "$tag" \
+            --push \
+            .
+
+  publish-container:
+    name: Publish multi-architecture image
+    if: github.event_name == 'release'
+    needs: build-container
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Resolve and validate the release tag
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/celld/Cargo.toml | head -1)
+          test "${{ github.event.release.tag_name }}" = "v$version"
+          echo "TAG_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "CELLD_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" |
+            docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Publish immutable and release tags
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            --tag "$IMAGE:sha-$TAG_SHA" \
+            --tag "$IMAGE:${{ github.event.release.tag_name }}" \
+            --tag "$IMAGE:$CELLD_VERSION" \
+            --tag "$IMAGE:latest" \
+            "$IMAGE:$TAG_SHA-amd64" \
+            "$IMAGE:$TAG_SHA-arm64"
+
+      - name: Resolve manifest digest
+        id: digest
+        run: |
+          set -euo pipefail
+          digest=$(docker buildx imagetools inspect "$IMAGE:sha-$TAG_SHA" \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      # Attestations require a public repository.
+      - name: Attest image provenance
+        if: github.event.repository.visibility == 'public'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/denoland/celld
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      # Meaningful only once the package is public; while the repository is
+      # internal an anonymous pull can only 401, and a red-by-design run
+      # teaches people to ignore red. Enforced automatically at launch.
+      - name: Verify anonymous manifest access
+        if: github.event.repository.visibility == 'public'
+        run: |
+          set -euo pipefail
+          docker logout ghcr.io
+          docker buildx imagetools inspect "$IMAGE:sha-$TAG_SHA"

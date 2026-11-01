@@ -1,0 +1,28 @@
+celld
+Copyright 2026 Deno Land Inc.
+
+celld is licensed under the Apache License 2.0; see LICENSE. Code adapted
+from Tokio is under the MIT License; see the header of
+crates/celld/tokio_select.rs.
+
+Third-party software
+--------------------
+
+celld uses lol_html, Cloudflare's HTML rewriting library (BSD-3-Clause,
+https://github.com/cloudflare/lol-html), to implement the HTMLRewriter
+API. lol_html depends on the following crates from the Servo project,
+which are licensed under the Mozilla Public License 2.0
+(https://mozilla.org/MPL/2.0/). celld binaries include them unmodified;
+cssparser-macros runs only at build time. Their source code is available
+at:
+
+  cssparser          https://crates.io/crates/cssparser
+  cssparser-macros   https://crates.io/crates/cssparser-macros
+  dtoa-short         https://crates.io/crates/dtoa-short
+  selectors          https://crates.io/crates/selectors
+
+The exact versions are recorded in Cargo.lock.
+
+All other dependencies are under permissive licenses (Apache-2.0, MIT,
+BSD-3-Clause, ISC, Unicode-3.0, Zlib, BSL-1.0, CC0-1.0,
+CDLA-Permissive-2.0); Cargo.lock lists them.

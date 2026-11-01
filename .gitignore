@@ -95,3 +95,4 @@ docs/examples/managed-gateway/data/
 *.unsuppressed.tmp.ts
 .local/
 vendor/celld/target/
+vendor/celld-lab/target/

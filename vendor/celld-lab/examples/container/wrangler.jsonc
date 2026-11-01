@@ -1,0 +1,17 @@
+{
+  "name": "container",
+  "main": "index.js",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "containers": [
+    {
+      "class_name": "MyContainer",
+      "image": "./Dockerfile",
+      "instance_type": "basic"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "MY_CONTAINER", "class_name": "MyContainer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MyContainer"] }]
+}
