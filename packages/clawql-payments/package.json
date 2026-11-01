@@ -124,7 +124,7 @@
     "clawql-supabase": "0.1.0"
   },
   "optionalDependencies": {
-    "mppx": "^0.8.14",
+    "mppx": "^0.15.0",
     "viem": "^2.57.2"
   },
   "devDependencies": {
