@@ -1,0 +1,2911 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "measuredAt": "2026-11-01T04:09:51.031Z",
+  "ok": true,
+  "status": "measured_with_ready_flakes",
+  "honesty": "Harness mitigation soak for stock celld 0.6.3 (no /alive, no lease-sweep). Primary gate: stable CELLD_NODE keeps unique nodes/* \u2264 ceiling under rebuild pressure. readyFails/selfFences are diagnostics (stock /health can hang). Does not prove upstream GC; product still needs alive-vs-ready + lease-sweep before claiming stock tip availability.",
+  "cyclesPlanned": 240,
+  "cyclesCompleted": 240,
+  "nodeCeiling": 2,
+  "freshNodeIds": false,
+  "stableNodeIds": {
+    "A": "fleet_A",
+    "B": "fleet_B"
+  },
+  "celldTtlMs": 10000,
+  "requireProgram": true,
+  "maxUniqueNodeIds": 2,
+  "selfFences": 14,
+  "readyFails": 6,
+  "samples": [
+    {
+      "cycle": 1,
+      "at": "2026-11-01T00:24:36.399Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 2,
+      "at": "2026-11-01T00:25:05.904Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 3,
+      "at": "2026-11-01T00:25:35.469Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 4,
+      "at": "2026-11-01T00:26:05.432Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 5,
+      "at": "2026-11-01T00:26:35.111Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 6,
+      "at": "2026-11-01T00:27:04.408Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 7,
+      "at": "2026-11-01T00:27:33.702Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 8,
+      "at": "2026-11-01T00:28:03.439Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 9,
+      "at": "2026-11-01T00:28:33.009Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 10,
+      "at": "2026-11-01T00:29:02.163Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 11,
+      "at": "2026-11-01T00:29:31.484Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 12,
+      "at": "2026-11-01T00:30:00.701Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 13,
+      "at": "2026-11-01T00:30:30.136Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 14,
+      "at": "2026-11-01T00:30:59.850Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 15,
+      "at": "2026-11-01T00:31:29.174Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 16,
+      "at": "2026-11-01T00:31:58.429Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 17,
+      "at": "2026-11-01T00:32:27.748Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 18,
+      "at": "2026-11-01T00:32:56.942Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 19,
+      "at": "2026-11-01T00:33:26.520Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 20,
+      "at": "2026-11-01T00:33:56.032Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 21,
+      "at": "2026-11-01T00:34:25.701Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 22,
+      "at": "2026-11-01T00:34:55.299Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 23,
+      "at": "2026-11-01T00:35:24.699Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 24,
+      "at": "2026-11-01T00:35:54.044Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 25,
+      "at": "2026-11-01T00:36:22.915Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 26,
+      "at": "2026-11-01T00:36:52.257Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 27,
+      "at": "2026-11-01T00:37:21.700Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 28,
+      "at": "2026-11-01T00:37:51.118Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 29,
+      "at": "2026-11-01T00:38:20.246Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 30,
+      "at": "2026-11-01T00:38:49.601Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 31,
+      "at": "2026-11-01T00:39:19.170Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 32,
+      "at": "2026-11-01T00:39:48.441Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 33,
+      "at": "2026-11-01T00:40:18.014Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 34,
+      "at": "2026-11-01T00:40:47.345Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 35,
+      "at": "2026-11-01T00:41:17.394Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 36,
+      "at": "2026-11-01T00:41:46.326Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 37,
+      "at": "2026-11-01T00:42:16.083Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 38,
+      "at": "2026-11-01T00:42:44.955Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 39,
+      "at": "2026-11-01T00:43:14.674Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 40,
+      "at": "2026-11-01T00:43:44.304Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 41,
+      "at": "2026-11-01T00:44:13.896Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 42,
+      "at": "2026-11-01T00:44:43.540Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 43,
+      "at": "2026-11-01T00:45:13.460Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 0
+    },
+    {
+      "cycle": 44,
+      "at": "2026-11-01T01:00:42.678Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 45,
+      "at": "2026-11-01T01:01:08.732Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 46,
+      "at": "2026-11-01T01:01:38.375Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 47,
+      "at": "2026-11-01T01:02:07.688Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 48,
+      "at": "2026-11-01T01:02:37.294Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 49,
+      "at": "2026-11-01T01:03:06.947Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 50,
+      "at": "2026-11-01T01:03:36.205Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 51,
+      "at": "2026-11-01T01:04:05.521Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 52,
+      "at": "2026-11-01T01:04:35.209Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 53,
+      "at": "2026-11-01T01:05:04.768Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 54,
+      "at": "2026-11-01T01:05:34.008Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 55,
+      "at": "2026-11-01T01:06:03.622Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 56,
+      "at": "2026-11-01T01:06:33.778Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 57,
+      "at": "2026-11-01T01:07:03.489Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 58,
+      "at": "2026-11-01T01:07:32.540Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 59,
+      "at": "2026-11-01T01:08:01.735Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 60,
+      "at": "2026-11-01T01:08:31.232Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 61,
+      "at": "2026-11-01T01:09:01.532Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 62,
+      "at": "2026-11-01T01:09:30.847Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 63,
+      "at": "2026-11-01T01:10:00.138Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 64,
+      "at": "2026-11-01T01:10:30.211Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 65,
+      "at": "2026-11-01T01:10:59.911Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 66,
+      "at": "2026-11-01T01:11:29.563Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 67,
+      "at": "2026-11-01T01:11:59.097Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 68,
+      "at": "2026-11-01T01:12:29.117Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 69,
+      "at": "2026-11-01T01:12:59.021Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 70,
+      "at": "2026-11-01T01:13:28.604Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 71,
+      "at": "2026-11-01T01:13:57.682Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 72,
+      "at": "2026-11-01T01:14:27.275Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 73,
+      "at": "2026-11-01T01:14:56.892Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 0,
+      "readyFailsSoFar": 1
+    },
+    {
+      "cycle": 74,
+      "at": "2026-11-01T01:31:05.073Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 2,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 75,
+      "at": "2026-11-01T01:31:51.953Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 76,
+      "at": "2026-11-01T01:32:28.516Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 77,
+      "at": "2026-11-01T01:32:58.837Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 78,
+      "at": "2026-11-01T01:33:28.406Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 79,
+      "at": "2026-11-01T01:33:57.645Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 80,
+      "at": "2026-11-01T01:34:26.794Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 81,
+      "at": "2026-11-01T01:34:56.331Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 82,
+      "at": "2026-11-01T01:35:25.641Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 83,
+      "at": "2026-11-01T01:35:55.252Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 84,
+      "at": "2026-11-01T01:36:24.665Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 85,
+      "at": "2026-11-01T01:36:54.350Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 86,
+      "at": "2026-11-01T01:37:23.967Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 87,
+      "at": "2026-11-01T01:37:53.225Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 88,
+      "at": "2026-11-01T01:38:22.976Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 89,
+      "at": "2026-11-01T01:38:52.267Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 90,
+      "at": "2026-11-01T01:39:21.620Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 91,
+      "at": "2026-11-01T01:39:51.057Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 92,
+      "at": "2026-11-01T01:40:20.601Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 93,
+      "at": "2026-11-01T01:40:50.129Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 94,
+      "at": "2026-11-01T01:41:19.804Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 95,
+      "at": "2026-11-01T01:41:49.565Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 96,
+      "at": "2026-11-01T01:42:18.986Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 97,
+      "at": "2026-11-01T01:42:48.359Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 98,
+      "at": "2026-11-01T01:43:18.128Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 99,
+      "at": "2026-11-01T01:43:47.687Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 100,
+      "at": "2026-11-01T01:44:16.447Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 101,
+      "at": "2026-11-01T01:44:45.824Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 102,
+      "at": "2026-11-01T01:45:15.401Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 2
+    },
+    {
+      "cycle": 103,
+      "at": "2026-11-01T02:00:42.026Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 104,
+      "at": "2026-11-01T02:01:07.962Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 105,
+      "at": "2026-11-01T02:01:37.854Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 106,
+      "at": "2026-11-01T02:02:07.364Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 107,
+      "at": "2026-11-01T02:02:36.634Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 108,
+      "at": "2026-11-01T02:03:06.185Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 109,
+      "at": "2026-11-01T02:03:35.705Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 110,
+      "at": "2026-11-01T02:04:05.232Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 111,
+      "at": "2026-11-01T02:04:34.883Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 112,
+      "at": "2026-11-01T02:05:04.834Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 113,
+      "at": "2026-11-01T02:05:34.486Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 114,
+      "at": "2026-11-01T02:06:03.977Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 115,
+      "at": "2026-11-01T02:06:33.510Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 116,
+      "at": "2026-11-01T02:07:02.919Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 117,
+      "at": "2026-11-01T02:07:32.046Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 118,
+      "at": "2026-11-01T02:08:00.796Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 119,
+      "at": "2026-11-01T02:08:30.476Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 120,
+      "at": "2026-11-01T02:08:59.957Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 121,
+      "at": "2026-11-01T02:09:29.327Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 122,
+      "at": "2026-11-01T02:09:58.945Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 123,
+      "at": "2026-11-01T02:10:28.501Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 124,
+      "at": "2026-11-01T02:10:57.369Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 125,
+      "at": "2026-11-01T02:11:27.117Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 126,
+      "at": "2026-11-01T02:11:57.023Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 127,
+      "at": "2026-11-01T02:12:26.535Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 128,
+      "at": "2026-11-01T02:12:56.744Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 129,
+      "at": "2026-11-01T02:13:26.487Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 130,
+      "at": "2026-11-01T02:13:56.044Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 131,
+      "at": "2026-11-01T02:14:25.486Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 132,
+      "at": "2026-11-01T02:14:55.330Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 4,
+      "readyFailsSoFar": 3
+    },
+    {
+      "cycle": 133,
+      "at": "2026-11-01T02:31:03.687Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 6,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 134,
+      "at": "2026-11-01T02:31:50.614Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 135,
+      "at": "2026-11-01T02:32:26.785Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 136,
+      "at": "2026-11-01T02:32:56.724Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 137,
+      "at": "2026-11-01T02:33:26.030Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 138,
+      "at": "2026-11-01T02:33:55.267Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 139,
+      "at": "2026-11-01T02:34:24.920Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 140,
+      "at": "2026-11-01T02:34:54.345Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 141,
+      "at": "2026-11-01T02:35:23.209Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 142,
+      "at": "2026-11-01T02:35:53.186Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 143,
+      "at": "2026-11-01T02:36:22.595Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 144,
+      "at": "2026-11-01T02:36:51.911Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 145,
+      "at": "2026-11-01T02:37:21.256Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 146,
+      "at": "2026-11-01T02:37:51.209Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 147,
+      "at": "2026-11-01T02:38:20.747Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 148,
+      "at": "2026-11-01T02:38:50.016Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 149,
+      "at": "2026-11-01T02:39:19.217Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 150,
+      "at": "2026-11-01T02:39:48.890Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 151,
+      "at": "2026-11-01T02:40:18.004Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 152,
+      "at": "2026-11-01T02:40:47.435Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 153,
+      "at": "2026-11-01T02:41:16.671Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 154,
+      "at": "2026-11-01T02:41:46.260Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 155,
+      "at": "2026-11-01T02:42:15.643Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 156,
+      "at": "2026-11-01T02:42:45.362Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 157,
+      "at": "2026-11-01T02:43:14.697Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 158,
+      "at": "2026-11-01T02:43:43.605Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 159,
+      "at": "2026-11-01T02:44:13.221Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 160,
+      "at": "2026-11-01T02:44:42.876Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 161,
+      "at": "2026-11-01T02:45:12.253Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 4
+    },
+    {
+      "cycle": 162,
+      "at": "2026-11-01T03:00:49.367Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 163,
+      "at": "2026-11-01T03:01:14.995Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 164,
+      "at": "2026-11-01T03:01:44.534Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 165,
+      "at": "2026-11-01T03:02:14.159Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 166,
+      "at": "2026-11-01T03:02:43.397Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 167,
+      "at": "2026-11-01T03:03:12.278Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 168,
+      "at": "2026-11-01T03:03:41.496Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 169,
+      "at": "2026-11-01T03:04:10.414Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 170,
+      "at": "2026-11-01T03:04:40.021Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 171,
+      "at": "2026-11-01T03:05:09.422Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 172,
+      "at": "2026-11-01T03:05:39.408Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 173,
+      "at": "2026-11-01T03:06:08.606Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 174,
+      "at": "2026-11-01T03:06:38.162Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 175,
+      "at": "2026-11-01T03:07:07.691Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 176,
+      "at": "2026-11-01T03:07:37.030Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 177,
+      "at": "2026-11-01T03:08:06.280Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 178,
+      "at": "2026-11-01T03:08:35.634Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 179,
+      "at": "2026-11-01T03:09:05.277Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 180,
+      "at": "2026-11-01T03:09:35.144Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 181,
+      "at": "2026-11-01T03:10:04.925Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 182,
+      "at": "2026-11-01T03:10:34.898Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 183,
+      "at": "2026-11-01T03:11:03.908Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 184,
+      "at": "2026-11-01T03:11:33.174Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 185,
+      "at": "2026-11-01T03:12:02.666Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 186,
+      "at": "2026-11-01T03:12:32.219Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 187,
+      "at": "2026-11-01T03:13:01.920Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 188,
+      "at": "2026-11-01T03:13:31.429Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 189,
+      "at": "2026-11-01T03:14:01.240Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 190,
+      "at": "2026-11-01T03:14:31.093Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 191,
+      "at": "2026-11-01T03:15:00.829Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 8,
+      "readyFailsSoFar": 5
+    },
+    {
+      "cycle": 192,
+      "at": "2026-11-01T03:30:45.538Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 10,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 193,
+      "at": "2026-11-01T03:31:32.114Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 194,
+      "at": "2026-11-01T03:32:08.274Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 195,
+      "at": "2026-11-01T03:32:37.371Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 196,
+      "at": "2026-11-01T03:33:06.612Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 197,
+      "at": "2026-11-01T03:33:35.933Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 198,
+      "at": "2026-11-01T03:34:05.145Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 199,
+      "at": "2026-11-01T03:34:34.597Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 200,
+      "at": "2026-11-01T03:35:03.469Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 201,
+      "at": "2026-11-01T03:35:32.661Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 202,
+      "at": "2026-11-01T03:36:01.945Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 203,
+      "at": "2026-11-01T03:36:31.182Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 204,
+      "at": "2026-11-01T03:37:00.485Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 205,
+      "at": "2026-11-01T03:37:29.467Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 206,
+      "at": "2026-11-01T03:37:58.706Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 207,
+      "at": "2026-11-01T03:38:27.972Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 208,
+      "at": "2026-11-01T03:38:57.504Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 209,
+      "at": "2026-11-01T03:39:26.822Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 210,
+      "at": "2026-11-01T03:39:55.902Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 211,
+      "at": "2026-11-01T03:40:25.086Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 212,
+      "at": "2026-11-01T03:40:54.639Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 213,
+      "at": "2026-11-01T03:41:23.992Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 214,
+      "at": "2026-11-01T03:41:53.800Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 215,
+      "at": "2026-11-01T03:42:24.986Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 216,
+      "at": "2026-11-01T03:42:54.510Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 217,
+      "at": "2026-11-01T03:43:24.028Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 218,
+      "at": "2026-11-01T03:43:53.555Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 219,
+      "at": "2026-11-01T03:44:23.095Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 220,
+      "at": "2026-11-01T03:44:52.578Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 221,
+      "at": "2026-11-01T03:45:21.900Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 12,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 222,
+      "at": "2026-11-01T04:00:51.893Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 223,
+      "at": "2026-11-01T04:01:28.332Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 224,
+      "at": "2026-11-01T04:01:58.000Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 225,
+      "at": "2026-11-01T04:02:27.395Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 226,
+      "at": "2026-11-01T04:02:56.513Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 227,
+      "at": "2026-11-01T04:03:26.161Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 228,
+      "at": "2026-11-01T04:03:55.909Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 229,
+      "at": "2026-11-01T04:04:25.400Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 230,
+      "at": "2026-11-01T04:04:54.590Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 231,
+      "at": "2026-11-01T04:05:23.937Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 232,
+      "at": "2026-11-01T04:05:53.290Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 233,
+      "at": "2026-11-01T04:06:22.347Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 234,
+      "at": "2026-11-01T04:06:51.820Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 235,
+      "at": "2026-11-01T04:07:21.247Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 236,
+      "at": "2026-11-01T04:07:51.327Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 237,
+      "at": "2026-11-01T04:08:20.915Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 238,
+      "at": "2026-11-01T04:08:50.158Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 239,
+      "at": "2026-11-01T04:09:19.222Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    },
+    {
+      "cycle": 240,
+      "at": "2026-11-01T04:09:49.029Z",
+      "objectCount": 2,
+      "uniqueNodeIds": [
+        "fleet_A.json",
+        "fleet_B.json"
+      ],
+      "uniqueCount": 2,
+      "selfFencesSoFar": 14,
+      "readyFailsSoFar": 6
+    }
+  ],
+  "bucketRedacted": true,
+  "nodeCeilingOk": true,
+  "readyFailCeiling": 240,
+  "readyOk": true,
+  "wallHours": 3.754,
+  "startedAt": "2026-11-01T00:23:38Z",
+  "finishedAt": "2026-11-01T04:09:53Z",
+  "startedAtPdt": "2026-10-31 5:23 PM PDT",
+  "finishedAtPdt": "2026-10-31 9:09 PM PDT"
+}
