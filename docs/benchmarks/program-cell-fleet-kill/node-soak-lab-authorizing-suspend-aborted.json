@@ -1,0 +1,16 @@
+{
+  "kind": "celld-fleet-node-soak",
+  "role": "lab_fixed_aborted_host_suspend",
+  "authorizing": false,
+  "celldBuild": "lab_fixed_alive_sweep_supersede",
+  "honesty": "Aborted after correlated dual-node node_lease_watchdog_fence following a ~1059s gap with no process restarts (host suspend/pause). Not a same-host supersede failure \u2014 both nodes last renewed ~07:12:53Z UTC and fenced together at ~07:30:17Z UTC. Strict SOAK_GATES already failed (2 selfFences). Restarting authorizing soak with harness fence-count fix.",
+  "cyclesCompletedAtAbort": 100,
+  "selfFences": 2,
+  "readyFails": 0,
+  "maxUniqueNodeIds": 2,
+  "suspendGapSecApprox": 1059,
+  "fenceEvent": "node_lease_watchdog_fence",
+  "fenceAtUtc": "2026-11-01T07:30:17.146Z",
+  "lastRenewAtUtcApprox": "2026-11-01T07:12:53.683Z",
+  "measuredAt": "2026-11-01T07:32:00.000Z"
+}

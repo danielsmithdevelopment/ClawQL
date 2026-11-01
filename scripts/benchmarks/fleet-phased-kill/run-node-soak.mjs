@@ -274,12 +274,16 @@ async function startNode(name) {
   } catch {
     /* */
   }
-  if (n.lastExit?.selfFence && !FRESH) {
+  // Wait once per fence exit. Clear the sticky flag after waiting so later
+  // startNode calls (every cycle restarts both nodes) do not re-wait TTL, and
+  // so cycle scoring does not re-count the same fence forever.
+  if (n.lastExit?.selfFence && !n.lastExit?.reuseWaitDone && !FRESH) {
     const waitMs = CELLD_TTL_MS + 500;
     console.warn(
       `fleet-soak: node ${name} self-fenced; waiting ${waitMs}ms before reuse of stable CELLD_NODE=${STABLE[name]}`
     );
     await sleep(waitMs);
+    n.lastExit = { ...n.lastExit, reuseWaitDone: true };
   }
   freePortHard(n.port);
   freePortHard(n.internal);
@@ -461,7 +465,12 @@ async function main() {
       console.warn(`fleet-soak: cycle ${c + 1} waitReady failed (${err.message}); continue`);
     }
     for (const name of ["A", "B"]) {
-      if (nodes[name].lastExit?.selfFence) selfFences += 1;
+      const ex = nodes[name].lastExit;
+      // Count each fence exit once (not every subsequent cycle while lastExit sticks).
+      if (ex?.selfFence && !ex?.counted) {
+        selfFences += 1;
+        nodes[name].lastExit = { ...ex, counted: true };
+      }
     }
     const snap = await countNodeObjects();
     maxUnique = Math.max(maxUnique, snap.uniqueCount);
