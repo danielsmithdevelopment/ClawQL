@@ -20,12 +20,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NFCReaderUsageDescription:
         "ClawQL reads your security key over NFC to approve exact-change requests.",
       NSFaceIDUsageDescription:
-        "ClawQL uses Face ID to unlock the app, confirm purchases, and for the App Store reviewer demo approve path.",
+        "ClawQL uses Face ID to unlock the app and for the App Store reviewer demo approve path.",
       NSCameraUsageDescription:
         "ClawQL uses the camera to scan documents and attach evidence to approval requests.",
       NSPhotoLibraryUsageDescription:
         "ClawQL attaches photos from your library as evidence on approval requests.",
       UIBackgroundModes: ["remote-notification"],
+      /**
+       * Export compliance: the app uses encryption (TLS + AES-GCM for the offline
+       * review cache). That use is limited to protecting the app's own data /
+       * transport and qualifies for the standard exemption — set false so Connect
+       * does not re-ask on every build. Do NOT answer the Connect prompt as
+       * "no encryption"; the exemption answers "uses encryption, exempt."
+       * @see store/export-compliance.md
+       */
+      ITSAppUsesNonExemptEncryption: false,
     },
     privacyManifests: {
       NSPrivacyAccessedAPITypes: [
@@ -86,7 +95,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-local-authentication",
       {
         faceIDPermission:
-          "Allow ClawQL to use Face ID to unlock the app, confirm purchases, and approve as the reviewer demo org.",
+          "Allow ClawQL to use Face ID to unlock the app and approve as the reviewer demo org.",
       },
     ],
     [

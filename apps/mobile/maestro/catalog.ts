@@ -248,8 +248,8 @@ export const MOBILE_SCENARIOS: readonly MobileScenario[] = [
   {
     id: "MOB-34",
     run: "Maestro",
-    title: "Billing portal CTA fixture honesty",
-    passWhen: "Spend and Profile portal buttons show fixture honesty notes",
+    title: "Plan read-only / no in-app commerce honesty",
+    passWhen: "Spend and Profile show plan read-only (or sandbox-only) honesty for App Store 3.1",
     flow: "maestro/flows/mob-34-billing-portal.yaml",
   },
   {

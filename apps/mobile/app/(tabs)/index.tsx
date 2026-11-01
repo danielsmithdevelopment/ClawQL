@@ -216,7 +216,8 @@ export default function HomeScreen() {
           {dataSource === "cache" ? (
             <SurfaceCard testID="home-offline-banner" tint="soft">
               <Meta color={brand.warn} testID="home-offline-meta">
-                Showing offline cache — pull to refresh when you are back online.
+                Showing offline cache — browse only. Approving needs a live connection
+                (digest binding rejects stale screens). Pull to refresh when online.
               </Meta>
             </SurfaceCard>
           ) : null}
