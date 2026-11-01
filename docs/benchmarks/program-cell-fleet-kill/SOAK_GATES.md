@@ -62,14 +62,21 @@ A host suspend / hypervisor pause is an **infrastructure** event, not a software
 
 ### Detection
 
-On Linux, `CLOCK_BOOTTIME − CLOCK_MONOTONIC` grows **only** while the machine is suspended (or equivalently paused). The soak harness (`run-node-soak.mjs` + `host-env.mjs`) samples that gap at start and every cycle.
+The soak harness (`run-node-soak.mjs` + `host-env.mjs`) samples a **suspend gap** at start and every cycle:
+
+| OS | Gap | Notes |
+| -- | --- | ----- |
+| **Linux** | `CLOCK_BOOTTIME − CLOCK_MONOTONIC` | Grows only while suspended / equivalently paused |
+| **Darwin** | wall `time.time()` − `CLOCK_MONOTONIC` | Grows across sleep (also large NTP steps); same growth threshold |
+
+Authorizing soaks still need the **lab** binary on **Linux** (same-host supersede reads `/proc`). On a Mac mini, run inside Colima with the Mac awake — [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md). `FLEET_SOAK_REQUIRE_SUSPEND_MONITOR=1` (default) aborts if clocks are unavailable.
 
 ### Rule
 
 | Condition | Outcome |
 | --------- | ------- |
-| Gap growth ≤ **2.0 s** for the whole run (`FLEET_SOAK_SUSPEND_GAP_SECS`, default 2) | Environment valid — software gates apply |
-| Gap growth **> 2.0 s** at any sample | Run is **void**: recorded (`status=void_host_suspend`), **not counted**, never a pass; harness restarts from cycle **0** (`FLEET_SOAK_VOID_RESTART=1` default) |
+| Suspend-gap growth ≤ **2.0 s** for the whole run (`FLEET_SOAK_SUSPEND_GAP_SECS`, default 2) | Environment valid — software gates apply |
+| Suspend-gap growth **> 2.0 s** at any sample | Run is **void**: recorded (`status=void_host_suspend`), **not counted**, never a pass; harness restarts from cycle **0** (`FLEET_SOAK_VOID_RESTART=1` default) |
 
 Void does **not** loosen software gates: a void run can never become `measured_v4_ready`. It only stops infrastructure from being scored as celld.
 
@@ -146,7 +153,7 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse) — **landed in** [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md)
 2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
 3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
-4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (BOOTTIME−MONOTONIC), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences
+4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (suspend-gap ≤2s), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences — Mac mini: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)
 5. **Only then** v4 N=1000 under unchanged frozen board criteria
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

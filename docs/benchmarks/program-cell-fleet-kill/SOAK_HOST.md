@@ -2,6 +2,10 @@
 
 Authorizing overnight soak (`status=measured_v4_ready`) must run on a host that **does not suspend or sleep** for the duration. Cloud-agent VMs that the hypervisor can freeze are **invalid** for that gate (see void rule in [`SOAK_GATES.md`](./SOAK_GATES.md)).
 
+## Mac mini (local agent)
+
+Preferred path when using a Mac mini: **Linux guest via Colima** (lab `host_process` needs `/proc`) with **Mac sleep disabled** so the guest is not paused. Full copy/paste agent prompt + steps: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md) on branch `cursor/soak-mac-mini-agent-2725`.
+
 ## Recommended: workstation / bare metal
 
 Example: RTX 5090 workstation (or any always-on bare metal) with suspend/sleep disabled for the run.
@@ -39,7 +43,7 @@ export FLEET_SOAK_OUT=$PWD/docs/benchmarks/program-cell-fleet-kill/node-soak-lab
 npm run benchmark:fleet-node-soak
 ```
 
-5. Confirm evidence: `voided=false`, `status=measured_v4_ready`, `host.systemd.suspend.enabled=masked` (or equivalent), `suspendMonitor.final.growthSec ≤ 2`.
+5. Confirm evidence: `voided=false`, `status=measured_v4_ready`, `host.systemd.suspend.enabled=masked` (or Darwin `host.darwin.pmset` sleep-off), `suspendMonitor.final.growthSec ≤ 2`, suspend monitor method present (`boottime_minus_monotonic` on Linux).
 
 ### After the run
 
