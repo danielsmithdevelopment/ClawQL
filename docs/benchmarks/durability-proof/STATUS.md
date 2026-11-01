@@ -234,7 +234,7 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
 
-**Soak gates (frozen):** nodes ≤2; readyFail & selfFence **observed and Wilson 95% UB** ≤**0.5%**; **`cycles ≥ 1000`** (rule-of-three zero-event floor 600; n=240 cannot show 0.5%: 0 events → ≈1.25%). See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md).
+**Soak gates (frozen, strict):** nodes ≤2; readyFail & selfFence **observed and Wilson 95% UB** ≤**0.5%** each; **`cycles ≥ 1000`**. At n=1000 that is effectively **0 readyFails and 0 selfFences** (1 event → UB≈0.56% fail). Deliberate headroom after v2/v3 avail fails — not relaxed to ~1% UB. See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md).
 
 **Multi-hour soak (measured — not v4-ready):** [`node-soak-evidence.json`](../program-cell-fleet-kill/node-soak-evidence.json) · **2026-10-31 5:23–9:09 PM PDT** · **240** cycles · ~**3.75 h** · stock celld **0.6.3** · TTL 10s · stable ids.
 

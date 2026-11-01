@@ -534,7 +534,7 @@ async function main() {
     fenceRateOk,
     status,
     honesty:
-      "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% upper bound ≤0.5% (headroom under board 2% avail). n=240 cannot show 0.5% (0 events → rule-of-three ≈1.25%). Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
+      "Pre-v4 soak. Pass requires nodes≤ceiling, cycles≥minCycles (default 1000), and for readyFails/selfFences both observed rate and Wilson 95% UB ≤0.5% (strict — at n=1000 that means 0 events/gate; 1 event ≈0.56% fails). Not relaxed to ~1% UB. Product: stable id + same-host incarnation supersede (pid+startTime+bootId; cross-host wait/refuse) + lease-sweep + alive≠ready. Do not start v4 until status=measured_v4_ready.",
     cyclesPlanned: CYCLES,
     cyclesCompleted,
     minCycles: MIN_CYCLES,
