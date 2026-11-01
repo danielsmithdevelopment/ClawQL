@@ -5,6 +5,7 @@
  * Sources: page.mdx routes, generated *-body.mdx, plugin + security-training bodies.
  * JSX/imports are stripped so static Astro MDX builds without Next components.
  */
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -340,65 +341,12 @@ function main() {
     if (writeRoute(route, md)) written++
   }
 
-  const nav = buildNav(
-    new Map(
-      [...routeBodies.entries()].map(([route, md]) => {
-        // strip frontmatter for title extract
-        let body = md
-        if (body.startsWith('---')) {
-          const end = body.indexOf('\n---', 3)
-          if (end !== -1) body = body.slice(end + 4)
-        }
-        return [route, body]
-      }),
-    ),
-  )
-  // Prefer shorter sidebar: cap deep training/plugin lists under group with “see index”
-  const compactNav = nav.map((g) => {
-    if (g.title === 'Security') {
-      const top = g.links.filter((l) => !l.href.includes('/best-practices/') || l.href === '/security/best-practices')
-      const modules = g.links.filter((l) => l.href.includes('/best-practices/') && l.href !== '/security/best-practices')
-      return {
-        title: g.title,
-        links: [
-          ...top,
-          ...modules.slice(0, 8),
-          ...(modules.length > 8
-            ? [{ title: `All ${modules.length} modules…`, href: '/security/best-practices' }]
-            : []),
-        ],
-      }
-    }
-    if (g.title === 'Plugins') {
-      const top = g.links.filter((l) => l.href === '/plugins')
-      const plugins = g.links.filter((l) => l.href !== '/plugins')
-      return {
-        title: g.title,
-        links: [
-          ...top,
-          ...plugins.slice(0, 12),
-          ...(plugins.length > 12
-            ? [{ title: `All ${plugins.length} plugins…`, href: '/plugins' }]
-            : []),
-        ],
-      }
-    }
-    return g
-  })
-
-  // Pages implemented as Astro routes (not content collection)
-  const inject = (groupTitle, link) => {
-    const g = compactNav.find((x) => x.title === groupTitle)
-    if (!g) return
-    if (!g.links.some((l) => l.href === link.href)) g.links.splice(1, 0, link)
-  }
-  inject('Security', { title: 'Security status', href: '/security/status' })
-  inject('More', { title: 'Legacy URLs', href: '/archive' })
-  inject('Getting started', { title: 'Migration status', href: '/migration-status' })
-
-  fs.writeFileSync(navOut, JSON.stringify(compactNav, null, 2) + '\n')
   console.log(`Wrote ${written} content files to ${path.relative(astroRoot, outDir)}`)
-  console.log(`Wrote nav (${compactNav.length} groups) to ${path.relative(astroRoot, navOut)}`)
+  // Curated nav (docs-nav-data parity) — never auto-title from H1s ("Case study", duplicate "Getting started")
+  const navGen = spawnSync(process.execPath, [path.join(__dirname, 'generate-curated-nav.mjs')], {
+    stdio: 'inherit',
+  })
+  if (navGen.status !== 0) process.exit(navGen.status ?? 1)
 }
 
 main()
