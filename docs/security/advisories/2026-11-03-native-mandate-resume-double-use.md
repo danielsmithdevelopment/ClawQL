@@ -16,12 +16,12 @@ single-use approval guarantee.
 
 ## Affected versions
 
-| Channel | Affected? | Notes |
-| ------- | --------- | ----- |
-| **npm `clawql-mcp`** | **No published release** | Latest npm is **7.2.0** (2026-08-05). Vulnerable code landed **2026-10-19** (`2fbacf791`, native-tool governance choke point) — **after** `v7.2.0`. |
-| **Git tags ≤ `v7.2.0`** | No | |
-| **`main` / unreleased 8.0.0 tree** | **Yes**, from 2026-10-19 until PR #1459 merges | Anyone running images or checkouts from `main` in that window |
-| **Helm / managed hosting** | Only if the image was built from vulnerable `main` | Managed hosting is waitlist; confirm image digests/tags against the intro commit |
+| Channel                            | Affected?                                          | Notes                                                                                                                                               |
+| ---------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **npm `clawql-mcp`**               | **No published release**                           | Latest npm is **7.2.0** (2026-08-05). Vulnerable code landed **2026-10-19** (`2fbacf791`, native-tool governance choke point) — **after** `v7.2.0`. |
+| **Git tags ≤ `v7.2.0`**            | No                                                 |                                                                                                                                                     |
+| **`main` / unreleased 8.0.0 tree** | **Yes**, from 2026-10-19 until PR #1459 merges     | Anyone running images or checkouts from `main` in that window                                                                                       |
+| **Helm / managed hosting**         | Only if the image was built from vulnerable `main` | Managed hosting is waitlist; confirm image digests/tags against the intro commit                                                                    |
 
 **Fixed in:** PR #1459 (consume CAS before native handler; finalize after). Ship as
 the next published release that includes that commit (planned **8.0.0** or a

@@ -26,8 +26,8 @@ That page is fed by CI artifacts and an append-only publish job — not hand-edi
 
 ## Advisories
 
-| Date | Topic | Draft |
-| ---- | ----- | ----- |
+| Date       | Topic                                                | Draft                                                                                                                                              |
+| ---------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-11-03 | Native MCP resume could re-use a single-use approval | [docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md](docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md) |
 
 ## Related documentation
