@@ -55,9 +55,7 @@ describe("AcpCheckoutService", () => {
     expect(completed.payment_intent_id).toMatch(/^pi_dry_/);
     expect(completed.order?.checkout_session_id).toBe(completed.id);
     // Write-ahead: durable Stripe idempotency key must be present before/with complete.
-    expect(completed.stripe_idempotency_key).toBe(
-      `clawql-acp-complete:${completed.id}`
-    );
+    expect(completed.stripe_idempotency_key).toBe(`clawql-acp-complete:${completed.id}`);
     expect(completed.stripe_idempotency_written_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 

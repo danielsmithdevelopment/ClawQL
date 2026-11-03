@@ -23,10 +23,7 @@ import {
   isAchTopupEnabled,
   isCreditsEnabled,
 } from "./config.js";
-import {
-  attachAchTopupPaymentIntentId,
-  ensureAchTopupIntent,
-} from "./ach-topup-intent-store.js";
+import { attachAchTopupPaymentIntentId, ensureAchTopupIntent } from "./ach-topup-intent-store.js";
 import { CreditsLedgerService } from "./ledger.js";
 import { CreditsError, CreditsService } from "./credits-service.js";
 

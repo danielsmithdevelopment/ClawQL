@@ -49,11 +49,11 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 
 ## Production exposure (priority gate)
 
-| Rail | Managed production charging real customers? | Notes |
-| ---- | --------------------------------------------- | ----- |
-| ACP checkout | **No** (opt-in `CLAWQL_ACP_ENABLED`; default off; dry-run for demos) | Fix before any live merchant SPT |
-| ACH credit top-up | **No** on managed waitlist; self-host only when credits + Stripe key set | Live path now requires `correlationId` for durable key |
-| Platform Stripe Checkout / subscriptions | Separate path (webhook-idempotent) | Not the ACP/ACH write-ahead gap |
+| Rail                                     | Managed production charging real customers?                              | Notes                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------ |
+| ACP checkout                             | **No** (opt-in `CLAWQL_ACP_ENABLED`; default off; dry-run for demos)     | Fix before any live merchant SPT                       |
+| ACH credit top-up                        | **No** on managed waitlist; self-host only when credits + Stripe key set | Live path now requires `correlationId` for durable key |
+| Platform Stripe Checkout / subscriptions | Separate path (webhook-idempotent)                                       | Not the ACP/ACH write-ahead gap                        |
 
 **Queue:** resume consume security (#1459) first; Stripe write-ahead next; then celld.
 If ACP/ACH ever charge live customers before this lands, reorder Stripe ahead of celld

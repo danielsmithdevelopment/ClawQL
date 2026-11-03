@@ -277,21 +277,17 @@ export function acpCheckoutLiveLayer(
               if (existing) {
                 intent = existing;
               } else {
-                intent = yield* stripeTryPromise(
-                  "stripe acp SPT paymentIntent create failed",
-                  () =>
-                    stripe.paymentIntents.create(createParams, {
-                      idempotencyKey,
-                    })
-                );
-              }
-            } else {
-              intent = yield* stripeTryPromise(
-                "stripe acp SPT paymentIntent create failed",
-                () =>
+                intent = yield* stripeTryPromise("stripe acp SPT paymentIntent create failed", () =>
                   stripe.paymentIntents.create(createParams, {
                     idempotencyKey,
                   })
+                );
+              }
+            } else {
+              intent = yield* stripeTryPromise("stripe acp SPT paymentIntent create failed", () =>
+                stripe.paymentIntents.create(createParams, {
+                  idempotencyKey,
+                })
               );
             }
             paymentIntentId = intent.id;
