@@ -82,3 +82,10 @@ export {
   type StripeCatalogEnsureResult,
   type StripeCatalogValidateResult,
 } from "./stripe-catalog-service.js";
+export {
+  STRIPE_IDEMPOTENCY_TTL_MS,
+  findPaymentIntentByMetadata,
+  stripeIdempotencyKeyForAcpComplete,
+  stripeIdempotencyKeyForAchTopup,
+  stripeIdempotencyKeyLikelyExpired,
+} from "./stripe-idempotency.js";

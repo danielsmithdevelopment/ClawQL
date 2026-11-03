@@ -8,6 +8,11 @@ import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { buildAcpCheckoutCompletedEntry, buildAcpCheckoutCreatedEntry } from "../audit/events.js";
 import { StripeClientService, stripeTryPromise } from "../stripe/stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js";
+import {
+  findPaymentIntentByMetadata,
+  stripeIdempotencyKeyForAcpComplete,
+  stripeIdempotencyKeyLikelyExpired,
+} from "../stripe/stripe-idempotency.js";
 import { acpMerchantId, isAcpEnabled } from "./config.js";
 import type {
   AcpCheckoutSession,
@@ -184,29 +189,111 @@ export function acpCheckoutLiveLayer(
             return yield* Effect.fail(new AcpError({ reason: "payment_data.token required" }));
           }
 
+          // Crash recovery: PI already recorded → complete without a second charge.
+          if (session.payment_intent_id?.trim()) {
+            const nowRecover = new Date().toISOString();
+            const recovered: AcpCheckoutSession = {
+              ...session,
+              status: "completed",
+              buyer: input.buyer ?? session.buyer,
+              order: session.order ?? {
+                id: `ord_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
+                checkout_session_id: session.id,
+              },
+              updated_at: nowRecover,
+            };
+            yield* Effect.tryPromise({
+              try: async () => {
+                const store = await loadStore(env);
+                store[recovered.id] = recovered;
+                await saveStore(env, store);
+              },
+              catch: (cause) =>
+                new AcpError({
+                  reason: cause instanceof Error ? cause.message : String(cause),
+                  cause,
+                }),
+            });
+            return recovered;
+          }
+
+          // Write-ahead: durable idempotency key BEFORE Stripe create.
+          const idempotencyKey =
+            session.stripe_idempotency_key?.trim() ||
+            stripeIdempotencyKeyForAcpComplete(session.id);
+          const idempotencyWrittenAt =
+            session.stripe_idempotency_written_at?.trim() || new Date().toISOString();
+          if (
+            !session.stripe_idempotency_key?.trim() ||
+            !session.stripe_idempotency_written_at?.trim()
+          ) {
+            const withKey: AcpCheckoutSession = {
+              ...session,
+              stripe_idempotency_key: idempotencyKey,
+              stripe_idempotency_written_at: idempotencyWrittenAt,
+              updated_at: new Date().toISOString(),
+            };
+            yield* Effect.tryPromise({
+              try: async () => {
+                const store = await loadStore(env);
+                store[withKey.id] = withKey;
+                await saveStore(env, store);
+              },
+              catch: (cause) =>
+                new AcpError({
+                  reason: cause instanceof Error ? cause.message : String(cause),
+                  cause,
+                }),
+            });
+          }
+
           let paymentIntentId: string;
           if (isAcpDryRun(env) || !stripeClient.isConfigured()) {
             paymentIntentId = `pi_dry_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
           } else {
             const stripe = yield* stripeClient.getClient();
-            const intent = yield* stripeTryPromise(
-              "stripe acp SPT paymentIntent create failed",
-              () =>
-                stripe.paymentIntents.create({
-                  amount: session.totals.total.amount,
-                  currency: session.currency,
-                  confirm: true,
-                  automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-                  // SPT field — Stripe agentic commerce; cast for SDK version variance.
-                  payment_method_data: {
-                    shared_payment_granted_token: token,
-                  } as never,
-                  metadata: {
-                    clawql_acp_checkout_session_id: session.id,
-                    clawql_acp_merchant: acpMerchantId(env),
-                  },
-                })
-            );
+            const metadata = {
+              clawql_acp_checkout_session_id: session.id,
+              clawql_acp_merchant: acpMerchantId(env),
+            };
+            const createParams = {
+              amount: session.totals.total.amount,
+              currency: session.currency,
+              confirm: true,
+              automatic_payment_methods: { enabled: true, allow_redirects: "never" as const },
+              payment_method_data: {
+                shared_payment_granted_token: token,
+              } as never,
+              metadata,
+            };
+
+            let intent;
+            if (stripeIdempotencyKeyLikelyExpired(idempotencyWrittenAt)) {
+              // Stripe keys expire ~24h — check-then-decide by metadata before create.
+              const existing = yield* stripeTryPromise(
+                "stripe acp paymentIntent metadata lookup failed",
+                () => findPaymentIntentByMetadata(stripe, metadata)
+              );
+              if (existing) {
+                intent = existing;
+              } else {
+                intent = yield* stripeTryPromise(
+                  "stripe acp SPT paymentIntent create failed",
+                  () =>
+                    stripe.paymentIntents.create(createParams, {
+                      idempotencyKey,
+                    })
+                );
+              }
+            } else {
+              intent = yield* stripeTryPromise(
+                "stripe acp SPT paymentIntent create failed",
+                () =>
+                  stripe.paymentIntents.create(createParams, {
+                    idempotencyKey,
+                  })
+              );
+            }
             paymentIntentId = intent.id;
           }
 
@@ -216,6 +303,8 @@ export function acpCheckoutLiveLayer(
             status: "completed",
             buyer: input.buyer ?? session.buyer,
             payment_intent_id: paymentIntentId,
+            stripe_idempotency_key: idempotencyKey,
+            stripe_idempotency_written_at: idempotencyWrittenAt,
             order: {
               id: `ord_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
               checkout_session_id: session.id,
