@@ -22,6 +22,11 @@ Pitch in one line: _You've built the read side. Here's how agents can safely sta
 orders across every model — patient approval bound to exact drug/qty/price, PHI
 only to BAA-covered providers, full audit trail._
 
+**Publish hold:** do not ship the explainer video / “approval works once, then it's
+spent” / payments-bound-to-same-patient-approval follow-up until
+[`docs/gtm/claim-holds-mandate-resume-and-payments.md`](../../gtm/claim-holds-mandate-resume-and-payments.md)
+is cleared (native resume consume regression + payments routing/evidence).
+
 ## Quick smoke (offline)
 
 ```bash

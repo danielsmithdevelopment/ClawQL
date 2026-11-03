@@ -117,6 +117,7 @@ Decline(r, e, principal) ==
   /\ UNCHANGED <<nextEid, sideEffects, clock, approvals>>
 
 \* Atomic consume: approved → outcome_unknown in one step (target).
+\* Catalog execute-core and native resume-by-id both use this CAS before send.
 Consume(r, e, liveDigest) ==
   /\ ~WeakConsume
   /\ r \in Replicas
@@ -127,6 +128,13 @@ Consume(r, e, liveDigest) ==
   /\ liveDigest = executions[e].digest
   /\ executions' = [executions EXCEPT ![e].status = "outcome_unknown"]
   /\ UNCHANGED <<nextEid, sideEffects, clock, approvals>>
+
+\* Resume-by-id (native MCP / approvedExecutionId): same CAS as Consume.
+\* Named separately so traces and conformance scripts can bind the resume path;
+\* treating resume as "already approved → side effect" without Consume is the
+\* WeakResumeById bug below (lost-intent / split-step pattern).
+ResumeById(r, e, liveDigest) ==
+  Consume(r, e, liveDigest)
 
 \* Side effect only from outcome_unknown (after consume).
 SideEffect(r, e) ==
@@ -150,7 +158,7 @@ Finalize(r, e, ok) ==
        IF ok THEN "completed" ELSE "failed"]
   /\ UNCHANGED <<nextEid, sideEffects, clock, approvals>>
 
-\* Legacy weak path: execute while still approved (pre-fix).
+\* Legacy weak path: execute while still approved (pre-fix catalog consume).
 WeakExecute(r, e, liveDigest) ==
   /\ WeakConsume
   /\ r \in Replicas
@@ -161,6 +169,11 @@ WeakExecute(r, e, liveDigest) ==
   /\ liveDigest = executions[e].digest
   /\ sideEffects' = [sideEffects EXCEPT ![e] = @ + 1]
   /\ UNCHANGED <<executions, nextEid, clock, approvals>>
+
+\* Weak native resume-by-id: approvedExecutionId present → allow without CAS.
+\* Same violation surface as WeakExecute (double side effect while approved).
+WeakResumeById(r, e, liveDigest) ==
+  WeakExecute(r, e, liveDigest)
 
 MarkDoneWeak(r, e, ok) ==
   /\ WeakConsume
@@ -187,12 +200,16 @@ Next ==
        Decline(r, e, p)
   \/ \E r \in Replicas, e \in Eid, d \in Digests :
        Consume(r, e, d)
+  \/ \E r \in Replicas, e \in Eid, d \in Digests :
+       ResumeById(r, e, d)
   \/ \E r \in Replicas, e \in Eid :
        SideEffect(r, e)
   \/ \E r \in Replicas, e \in Eid, ok \in BOOLEAN :
        Finalize(r, e, ok)
   \/ \E r \in Replicas, e \in Eid, d \in Digests :
        WeakExecute(r, e, d)
+  \/ \E r \in Replicas, e \in Eid, d \in Digests :
+       WeakResumeById(r, e, d)
   \/ \E r \in Replicas, e \in Eid, ok \in BOOLEAN :
        MarkDoneWeak(r, e, ok)
   \/ Tick
