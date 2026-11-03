@@ -2,11 +2,11 @@
 
 ## Verdict
 
-| Mechanism | Covers `clawql-payments` money writes? |
-| --------- | -------------------------------------- |
-| Mandate / `PendingExecution` consume | **PARTIAL** |
-| Program journal / write-intent | **NO** |
-| Payments ledger + compensation stores | **YES** (own path) |
+| Mechanism                             | Covers `clawql-payments` money writes? |
+| ------------------------------------- | -------------------------------------- |
+| Mandate / `PendingExecution` consume  | **PARTIAL**                            |
+| Program journal / write-intent        | **NO**                                 |
+| Payments ledger + compensation stores | **YES** (own path)                     |
 
 MandateLifecycle + ProgramResume TLA+ evidence therefore does **not** underwrite
 agentic-payments claims. Formal payments safety lives in

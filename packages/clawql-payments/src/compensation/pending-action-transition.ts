@@ -11,9 +11,7 @@ import { Data, Effect } from "effect";
 export type PendingActionStatus = "pending" | "executed" | "cancelled" | "expired";
 
 export type PendingActionEvent =
-  | { readonly _tag: "Confirm" }
-  | { readonly _tag: "Cancel" }
-  | { readonly _tag: "Expire" };
+  { readonly _tag: "Confirm" } | { readonly _tag: "Cancel" } | { readonly _tag: "Expire" };
 
 export class PendingActionIllegalTransition extends Data.TaggedError(
   "PendingActionIllegalTransition"

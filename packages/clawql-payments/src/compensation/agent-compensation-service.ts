@@ -610,9 +610,7 @@ export function agentCompensationLiveLayer(
             return record.result as unknown as DepositResult | CashoutResult;
           }
           if (confirmTransition.alreadyDone) {
-            return yield* Effect.fail(
-              new CompensationError({ reason: "Action already executed" })
-            );
+            return yield* Effect.fail(new CompensationError({ reason: "Action already executed" }));
           }
 
           const runExecute =
