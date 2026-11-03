@@ -38,10 +38,10 @@ approval” until the routing or evidence exists.
 
 Checked ACP + ACH top-up paths:
 
-| Path | Idempotency key durable **before** Stripe call? |
-| ---- | ----------------------------------------------- |
+| Path                                 | Idempotency key durable **before** Stripe call?                                                          |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
 | `AcpCheckoutService.completeSession` | **No** — `paymentIntents.create` has no `idempotencyKey`; session marked `completed` **after** PI create |
-| `AchTopupService` live PI | **No** — creates PI, then `appendEntry(topup_pending)` with `paymentIntentId` |
+| `AchTopupService` live PI            | **No** — creates PI, then `appendEntry(topup_pending)` with `paymentIntentId`                            |
 
 Same class of bug as lost write-intent: crash between provider call and durable
 record can double-charge on retry. Treat as a **payments cluster fix** before

@@ -110,9 +110,7 @@ function deny(block: NativeToolGateBlock): NativeToolGateDeny {
 }
 
 function allow(consumedExecutionId?: string): NativeToolGateAllow {
-  return consumedExecutionId
-    ? { blocked: false, consumedExecutionId }
-    : { blocked: false };
+  return consumedExecutionId ? { blocked: false, consumedExecutionId } : { blocked: false };
 }
 
 /** Host-only resume key — never part of the parked args digest. */
@@ -179,9 +177,7 @@ export async function gateNativeToolBeforeInvoke(opts: {
   const rawArgs = readArgsRecord(opts.args);
   const approvedId =
     opts.approvedExecutionId?.trim() ||
-    (typeof rawArgs.approvedExecutionId === "string"
-      ? rawArgs.approvedExecutionId.trim()
-      : "");
+    (typeof rawArgs.approvedExecutionId === "string" ? rawArgs.approvedExecutionId.trim() : "");
 
   const operationId = `native.${toolName}`;
   const bindArgs = bindArgsWithoutHostKeys(rawArgs);
@@ -313,9 +309,7 @@ export function governNativeHandler<TArgs extends unknown[], TResult>(
     try {
       const result = await handler(...args);
       const ok =
-        !result ||
-        typeof result !== "object" ||
-        (result as { isError?: boolean }).isError !== true;
+        !result || typeof result !== "object" || (result as { isError?: boolean }).isError !== true;
       if (decision.consumedExecutionId) {
         await markPendingCompleted(decision.consumedExecutionId, {
           ok,
