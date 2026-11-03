@@ -5,8 +5,15 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { Context, Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer, Result } from "effect";
 import { resolveCreditsLedgerPath } from "../config/paths.js";
+import {
+  CreditHoldIllegalTransition,
+  transitionCreditHold,
+  type CreditHoldStatus,
+} from "./hold-transition.js";
+
+export type { CreditHoldStatus } from "./hold-transition.js";
 
 export type CreditLedgerKind =
   | "topup_pending"
@@ -36,8 +43,6 @@ export type CreditHoldAllocation = {
   readonly grantId: string;
   readonly cents: number;
 };
-
-export type CreditHoldStatus = "held" | "captured" | "released";
 
 export type CreditHold = {
   readonly id: string;
@@ -554,14 +559,21 @@ async function captureHoldImpl(
     const holdIdx = account.holds.findIndex((h) => h.idempotencyKey === key);
     if (holdIdx < 0) throw new Error(`Unknown hold idempotencyKey: ${key}`);
     const hold = account.holds[holdIdx]!;
-    if (hold.status === "captured") {
+    const captureTransition = Effect.runSync(
+      Effect.result(transitionCreditHold(hold.status, { _tag: "Capture" }))
+    );
+    if (Result.isFailure(captureTransition)) {
+      const err = captureTransition.failure;
+      if (err instanceof CreditHoldIllegalTransition && err.from === "released") {
+        throw new Error(`Hold ${hold.id} already released`);
+      }
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+    if (captureTransition.success.alreadyDone) {
       const entry =
         account.entries.find((e) => e.holdId === hold.id && e.kind === "capture") ??
         account.entries[account.entries.length - 1]!;
       return { hold, entry, refundedCents: 0, alreadyCaptured: true };
-    }
-    if (hold.status === "released") {
-      throw new Error(`Hold ${hold.id} already released`);
     }
 
     const now = new Date();
@@ -675,14 +687,21 @@ async function releaseHoldImpl(
     const holdIdx = account.holds.findIndex((h) => h.idempotencyKey === key);
     if (holdIdx < 0) throw new Error(`Unknown hold idempotencyKey: ${key}`);
     const hold = account.holds[holdIdx]!;
-    if (hold.status === "released") {
+    const releaseTransition = Effect.runSync(
+      Effect.result(transitionCreditHold(hold.status, { _tag: "Release" }))
+    );
+    if (Result.isFailure(releaseTransition)) {
+      const err = releaseTransition.failure;
+      if (err instanceof CreditHoldIllegalTransition && err.from === "captured") {
+        throw new Error(`Hold ${hold.id} already captured`);
+      }
+      throw err instanceof Error ? err : new Error(String(err));
+    }
+    if (releaseTransition.success.alreadyDone) {
       const entry =
         account.entries.find((e) => e.holdId === hold.id && e.kind === "release") ??
         account.entries[account.entries.length - 1]!;
       return { hold, entry, alreadyReleased: true };
-    }
-    if (hold.status === "captured") {
-      throw new Error(`Hold ${hold.id} already captured`);
     }
 
     const now = new Date();

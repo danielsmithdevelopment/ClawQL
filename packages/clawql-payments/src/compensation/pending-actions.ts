@@ -12,8 +12,12 @@ import { Context, Data, Effect, Layer } from "effect";
 import { resolvePendingActionsDir } from "../config/paths.js";
 import { compensationActionTtlSec, compensationApprovalBaseUrl } from "./config.js";
 import type { HighImpactClassification } from "./high-impact.js";
+import {
+  transitionPendingActionSync,
+  type PendingActionStatus,
+} from "./pending-action-transition.js";
 
-export type PendingActionStatus = "pending" | "executed" | "cancelled" | "expired";
+export type { PendingActionStatus } from "./pending-action-transition.js";
 
 export type CompensationPendingKind =
   | "deposit_credits"
@@ -218,10 +222,11 @@ export function materializeExpiry(
   record: PendingActionRecord,
   nowMs: number = Date.now()
 ): PendingActionRecord {
-  if (record.status === "pending" && new Date(record.expiresAt).getTime() <= nowMs) {
-    return { ...record, status: "expired" };
-  }
-  return record;
+  if (record.status !== "pending") return record;
+  if (new Date(record.expiresAt).getTime() > nowMs) return record;
+  const next = transitionPendingActionSync(record.status, { _tag: "Expire" });
+  if (next.alreadyDone) return record;
+  return { ...record, status: next.status };
 }
 
 /** @deprecated Prefer PendingActionsService.assertCode — Promise façade retained for legacy callers. */

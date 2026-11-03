@@ -16,6 +16,8 @@ on:
       - "packages/clawql-api/src/pending/**"
       - "packages/clawql-api/src/policy/**"
       - "packages/clawql-api/src/ifc/**"
+      - "packages/clawql-payments/src/credits/**"
+      - "packages/clawql-payments/src/compensation/**"
   workflow_dispatch:
 
 concurrency:
@@ -70,3 +72,6 @@ jobs:
 
       - name: Run program-resume TLC dual configs
         run: bash scripts/formal/run-program-resume-tlc.sh
+
+      - name: Run payments hold+compensation TLC dual configs
+        run: bash scripts/formal/run-payments-hold-tlc.sh

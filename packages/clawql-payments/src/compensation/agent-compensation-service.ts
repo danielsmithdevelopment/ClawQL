@@ -34,6 +34,10 @@ import {
   buildConfirmUrl,
   type PendingActionRecord,
 } from "./pending-actions.js";
+import {
+  PendingActionIllegalTransition,
+  transitionPendingAction,
+} from "./pending-action-transition.js";
 import type { StageRecruitCompensationMeta } from "./staging-types.js";
 
 export class CompensationError extends Data.TaggedError("CompensationError")<{
@@ -584,20 +588,30 @@ export function agentCompensationLiveLayer(
           const record = yield* pending
             .assertCode(input.actionId, input.code)
             .pipe(Effect.mapError(toCompensationError));
-          if (record.status === "executed" && record.result) {
+          const confirmTransition = yield* transitionPendingAction(record.status, {
+            _tag: "Confirm",
+          }).pipe(
+            Effect.mapError((err) => {
+              if (err instanceof PendingActionIllegalTransition) {
+                if (err.from === "cancelled") {
+                  return new CompensationError({ reason: "Action already cancelled" });
+                }
+                if (err.from === "expired") {
+                  return new CompensationError({ reason: "Action expired" });
+                }
+                return new CompensationError({
+                  reason: `Action not pending (${err.from})`,
+                });
+              }
+              return new CompensationError({ reason: String(err) });
+            })
+          );
+          if (confirmTransition.alreadyDone && record.result) {
             return record.result as unknown as DepositResult | CashoutResult;
           }
-          if (record.status === "cancelled") {
+          if (confirmTransition.alreadyDone) {
             return yield* Effect.fail(
-              new CompensationError({ reason: "Action already cancelled" })
-            );
-          }
-          if (record.status === "expired") {
-            return yield* Effect.fail(new CompensationError({ reason: "Action expired" }));
-          }
-          if (record.status !== "pending") {
-            return yield* Effect.fail(
-              new CompensationError({ reason: `Action not pending (${record.status})` })
+              new CompensationError({ reason: "Action already executed" })
             );
           }
 
@@ -654,7 +668,7 @@ export function agentCompensationLiveLayer(
 
           const updated: PendingActionRecord = {
             ...record,
-            status: "executed",
+            status: confirmTransition.status,
             executedAt: new Date().toISOString(),
             result: executed as unknown as Record<string, unknown>,
           };
@@ -668,18 +682,30 @@ export function agentCompensationLiveLayer(
           const record = yield* pending
             .assertCode(input.actionId, input.code)
             .pipe(Effect.mapError(toCompensationError));
-          if (record.status === "cancelled") {
+          const cancelTransition = yield* transitionPendingAction(record.status, {
+            _tag: "Cancel",
+          }).pipe(
+            Effect.mapError((err) => {
+              if (err instanceof PendingActionIllegalTransition) {
+                if (err.from === "executed") {
+                  return new CompensationError({ reason: "Action already executed" });
+                }
+                if (err.from === "expired") {
+                  return new CompensationError({ reason: "Action expired" });
+                }
+                return new CompensationError({
+                  reason: `Action cannot be cancelled (${err.from})`,
+                });
+              }
+              return new CompensationError({ reason: String(err) });
+            })
+          );
+          if (cancelTransition.alreadyDone) {
             return { actionId: record.actionId, status: "cancelled" as const };
-          }
-          if (record.status === "executed") {
-            return yield* Effect.fail(new CompensationError({ reason: "Action already executed" }));
-          }
-          if (record.status === "expired") {
-            return yield* Effect.fail(new CompensationError({ reason: "Action expired" }));
           }
           const updated: PendingActionRecord = {
             ...record,
-            status: "cancelled",
+            status: cancelTransition.status,
             cancelledAt: new Date().toISOString(),
           };
           yield* pending.save(updated).pipe(Effect.mapError(toCompensationError));

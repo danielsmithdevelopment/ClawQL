@@ -15,7 +15,7 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-on
 
 ## Decision
 
-1. **TLA+/Quint for protocol state machines** — mandates (shipped), event delivery (at-least-once + stable ID + receiver dedup).
+1. **TLA+/Quint for protocol state machines** — mandates (shipped), event delivery (at-least-once + stable ID + receiver dedup), program resume (shipped), payments hold + compensation 2PC ([`formal/tla/payments/`](../../formal/tla/payments/) — money path is **not** covered by mandate/journal; see that README).
 2. **Lean for the policy-kernel oracle** — approval-policy evaluation first; differential + exhaustive tests vs production TypeScript.
 3. **gdp-ts** stays layer-1 compile-time capability flow ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)).
 4. **pstack / E2E** stay runtime evidence.
