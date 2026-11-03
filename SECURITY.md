@@ -24,8 +24,15 @@ Published scan history, SBOM links, and signature verification commands:
 
 That page is fed by CI artifacts and an append-only publish job — not hand-edited summaries.
 
+## Advisories
+
+| Date | Topic | Draft |
+| ---- | ----- | ----- |
+| 2026-11-03 | Native MCP resume could re-use a single-use approval | [docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md](docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md) |
+
 ## Related documentation
 
 - [Security overview (docs)](https://docs.clawql.com/security)
 - [Golden image pipeline](docs/security/golden-image-pipeline.md)
 - [npm supply chain](docs/security/npm-supply-chain.md)
+- [Claim holds — mandate resume + payments](docs/gtm/claim-holds-mandate-resume-and-payments.md)

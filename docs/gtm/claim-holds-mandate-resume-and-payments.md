@@ -2,6 +2,16 @@
 
 **Status:** Hold public copy until green evidence below is published.
 
+## 0. Security fix (not only a copy hold)
+
+This is a **governance integrity** bug: a single approval could drive more than
+one native side effect. Treat it as a security fix.
+
+- **Advisory draft:** [`docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md`](../security/advisories/2026-11-03-native-mandate-resume-double-use.md)
+- **npm:** no published `clawql-mcp` release contains the bug (latest **7.2.0** predates intro). Vulnerable window = **`main` / unreleased 8.0** from **2026-10-19** until #1459 merges.
+- **Operator hunt:** `node scripts/formal/audit-mandate-double-execute.mjs --dir "$CLAWQL_HOME/worm"` (exit 2 = investigate).
+- Publish a GitHub Security Advisory when the fix is released; notify anyone who ran post-Oct-19 `main` images.
+
 ## 1. Single-use approvals / “approval works once, then it's spent”
 
 **Why held:** Native MCP resume with `approvedExecutionId` previously **skipped**
@@ -16,6 +26,13 @@ allow; wrap/govern finalize after the handler. Regression:
 
 **Hold until:** CI green on that test + mandate TLC; then refresh video/demo copy
 only if the claim still matches the shipped path (catalog **and** native).
+
+**Video / wire-transfer framing:** If the explainer shows a payment waiting for
+approval, that is accurate **only** for an outside payments API invoked through
+the **gateway catalog** (`execute` → mandate). It is **not** accurate for
+`clawql-payments` rails (ACP/ACH/credits), which bypass mandate consume today.
+Scope on-camera and Cost Plus copy to: **gateway-mediated tool calls** wait for
+a person — not “ClawQL’s own payment rails.”
 
 ## 2. Payments “same patient approval” / crash-safety from the 1,000-crash board
 
