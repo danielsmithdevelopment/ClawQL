@@ -48,7 +48,7 @@ That is not a flaw — no system does better without the other side’s cooperat
 | **Golem**                    | Completing the work (retry)            | Possible **duplicate**                                    |
 | **ClawQL (governed writes)** | Never repeating a consequential action | **At most once**; may land `outcome_unknown` for a person |
 
-Wire transfers, emails, contract changes — anywhere a duplicate is worse than a pause — are ClawQL’s side of that trade-off **when those writes go through the gateway catalog mandate path** (`execute` / native park → human resume → single-use consume). That sentence does **not** cover `clawql-payments` cash rails (ACP/ACH/credits), which are a separate store and must not inherit this claim until they route through mandate+journal or carry their own measured evidence ([claim holds](./claim-holds-mandate-resume-and-payments.md)).
+Wire transfers, emails, contract changes — anywhere a duplicate is worse than a pause — are ClawQL’s side of that trade-off **when those writes go through the gateway catalog mandate path** (`execute` / native park → human resume → single-use consume). That sentence does **not** cover `clawql-payments` cash rails (ACP/ACH/credits), which are a separate store with their own Stripe write-ahead evidence (#1460) and must not inherit the mandate “spent once” claim until they route through mandate+journal ([claim posture](./claim-holds-mandate-resume-and-payments.md)).
 
 ---
 

@@ -1,6 +1,8 @@
 # Draft GHSA — Native MCP resume could re-use a single-use approval
 
-**Status:** Draft for publication after the fix is on `main` / in a release.  
+**Status:** Draft for publication when the fix is on `main` / in a release.  
+**Public retract:** **Not required** — no npm, Helm chart, or managed-hosting
+release shipped the vulnerable path; finding is pre-public / `main`-only.  
 **Severity:** High (for any deployment that exposed native destructive tools under
 `CLAWQL_OPERATION_RISK_ENFORCE=1` with human resume via `approvedExecutionId`).  
 **CVE:** TBD (assign when publishing on GitHub Security Advisories)  
@@ -16,12 +18,12 @@ single-use approval guarantee.
 
 ## Affected versions
 
-| Channel                            | Affected?                                          | Notes                                                                                                                                               |
-| ---------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **npm `clawql-mcp`**               | **No published release**                           | Latest npm is **7.2.0** (2026-08-05). Vulnerable code landed **2026-10-19** (`2fbacf791`, native-tool governance choke point) — **after** `v7.2.0`. |
-| **Git tags ≤ `v7.2.0`**            | No                                                 |                                                                                                                                                     |
-| **`main` / unreleased 8.0.0 tree** | **Yes**, from 2026-10-19 until PR #1459 merges     | Anyone running images or checkouts from `main` in that window                                                                                       |
-| **Helm / managed hosting**         | Only if the image was built from vulnerable `main` | Managed hosting is waitlist; confirm image digests/tags against the intro commit                                                                    |
+| Channel | Affected? | Notes |
+| ------- | --------- | ----- |
+| **npm `clawql-mcp`** | **No published release** | Latest npm is **7.2.0** (2026-08-05). Vulnerable code landed **2026-10-19** (`2fbacf791`) — **after** `v7.2.0`. |
+| **Git tags ≤ `v7.2.0`** | No | |
+| **`main` / unreleased 8.0.0 tree** | **Yes**, from 2026-10-19 until PR #1459 merges | Anyone running images or checkouts from `main` in that window |
+| **Helm / managed hosting** | Only if the image was built from vulnerable `main` | Managed hosting is waitlist; confirm image digests/tags against the intro commit |
 
 **Fixed in:** PR #1459 (consume CAS before native handler; finalize after). Ship as
 the next published release that includes that commit (planned **8.0.0** or a
@@ -59,9 +61,10 @@ scanned files.
 1. Merge #1459; cut a release that includes the fix.
 2. Publish this note as a **GitHub Security Advisory** (GHSA) with the fixed
    version range (`< fixed` for any pre-release packages/images that carried
-   the Oct 19–fix window; npm 7.x marked unaffected).
+   the Oct 19–fix window; npm 7.x marked unaffected). Prompt advisory still
+   builds trust even when no public package needs a retract.
 3. Notify operators of managed / self-hosted fleets that ran `main` images after
-   2026-10-19.
+   2026-10-19 (if any).
 
 Publishing the GHSA requires a maintainer with Security Advisory write access
 (this agent’s `gh` is read-only).

@@ -1,72 +1,62 @@
-# Claim holds — mandate resume + payments (2026-11-03)
+# Claim posture — mandate resume + payments (cleared pre-public)
 
-**Status:** Hold public copy until green evidence below is published.
+**Status:** **CLEARED for ship** (2026-11-03). Nothing was used publicly yet —
+no marketing retract. Ship the scoped claims below; do not re-widen them.
 
-## 0. Security fix (not only a copy hold)
+| Claim | Posture | Evidence |
+| ----- | ------- | -------- |
+| Approvals are single-use (catalog **and** native resume) | **Ship** | #1459 — CAS consume before native allow; `native-tool-gate-resume.test.ts`; `ResumeById` TLA |
+| Wire-transfer / payment-waiting explainer | **Ship only if** framed as gateway catalog tool call | Not `clawql-payments` ACP/ACH/credits |
+| Cost Plus “consequential actions wait for a person” | **Ship** scoped to gateway-mediated tool calls | Cost Plus landing + example README |
+| “Payments bound to the same patient approval” | **Do not ship** until cash rails use mandate + journal | Permanent scope — not a temporary hold |
+| Stripe ACP/ACH no double-charge on crash/retry | **Ship** write-ahead path | #1460 — durable key → Idempotency-Key → record PI; `PaymentsStripeIdempotency` |
 
-This is a **governance integrity** bug: a single approval could drive more than
-one native side effect. Treat it as a security fix.
+## 0. Security fix (pre-public)
 
-- **Advisory draft:** [`docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md`](../security/advisories/2026-11-03-native-mandate-resume-double-use.md)
-- **npm:** no published `clawql-mcp` release contains the bug (latest **7.2.0** predates intro). Vulnerable window = **`main` / unreleased 8.0** from **2026-10-19** until #1459 merges.
-- **Operator hunt:** `node scripts/formal/audit-mandate-double-execute.mjs --dir "$CLAWQL_HOME/worm"` (exit 2 = investigate).
-- Publish a GitHub Security Advisory when the fix is released; notify anyone who ran post-Oct-19 `main` images.
+Governance integrity: a single approval must never drive more than one native
+side effect. Fixed on #1459 before any public npm/Helm/managed release carried
+the vulnerable resume path.
 
-## 1. Single-use approvals / “approval works once, then it's spent”
+- **Advisory:** [`docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md`](../security/advisories/2026-11-03-native-mandate-resume-double-use.md)
+- **npm:** latest published **7.2.0** predates the bug (intro 2026-10-19 on `main`).
+- **Public retract:** **none** — no released channel shipped the vulnerable path.
+- Still publish a GHSA when the fix lands on `main` / 8.0 so operators who ran
+  post-Oct-19 `main` images get a clear upgrade signal (trust > silence).
+- **Operator hunt:** `node scripts/formal/audit-mandate-double-execute.mjs --dir "$CLAWQL_HOME/worm"`
 
-**Why held:** Native MCP resume with `approvedExecutionId` previously **skipped**
-`tryConsumeApprovedMandate` and allowed the handler through. Approving once and
-resuming twice (serial or concurrent) could run the action more than once —
-undercutting the published single-use claim (explainer video + Cost Plus demo).
+## 1. Single-use approvals — cleared to ship
 
-**Fix (this change):** `gateNativeToolBeforeInvoke` atomically consumes before
-allow; wrap/govern finalize after the handler. Regression:
-`native-tool-gate-resume.test.ts`. TLA+: `ResumeById` / `WeakResumeById` in
-`MandateLifecycle.tla`.
+Native resume with `approvedExecutionId` now atomically
+`tryConsumeApprovedMandate` before allow; wrap/govern finalize after.
+Regression + MandateLifecycle `ResumeById` / `WeakResumeById` cover the path.
 
-**Hold until:** CI green on that test + mandate TLC; then refresh video/demo copy
-only if the claim still matches the shipped path (catalog **and** native).
+**Shippable wording:** Approvals for **gateway-mediated tool calls** (catalog
+`execute` / native tools under operation-risk enforce) are spent once.
 
-**Video / wire-transfer framing:** If the explainer shows a payment waiting for
-approval, that is accurate **only** for an outside payments API invoked through
-the **gateway catalog** (`execute` → mandate). It is **not** accurate for
-`clawql-payments` rails (ACP/ACH/credits), which bypass mandate consume today.
-Scope on-camera and Cost Plus copy to: **gateway-mediated tool calls** wait for
-a person — not “ClawQL’s own payment rails.”
+**Not shippable:** implying `clawql-payments` cash rails share that mandate
+consume path.
 
-## 2. Payments “same patient approval” / crash-safety from the 1,000-crash board
+## 2. Payments vs patient approval — permanent scope (never overclaim)
 
-**Why held:** `clawql-payments` money writes are **PARTIAL** on mandate and **NO**
-on the program write-intent journal (see
-[`docs/payments/crash-safety-coverage.md`](../payments/crash-safety-coverage.md)).
-They do not inherit mandate single-use consume or the durability board’s journal
-resume evidence.
+`clawql-payments` money writes remain **PARTIAL** on mandate and **NO** on the
+program write-intent journal
+([`docs/payments/crash-safety-coverage.md`](../payments/crash-safety-coverage.md)).
+They have their own ledger/idempotency/Stripe write-ahead evidence — they do
+**not** inherit the 1,000-crash board’s journal resume claim.
 
-**Keep out of public copy until** either:
+Keep “payments bound to the same patient approval” out of Cost Plus / GTM until
+routing exists. That is accurate product scope, not a temporary hold.
 
-- payment writes route through mandate consume + write-intent journal, **or**
-- payments have their own measured crash/idempotency board and formal model
-  coverage (holds/compensation TLA started; ACP/money-request still open).
+## 3. Stripe write-ahead — cleared by #1460
 
-Also do **not** claim Cost Plus follow-up “payments bound to the same patient
-approval” until the routing or evidence exists.
+ACP complete + ACH top-up persist a durable idempotency key **before**
+`paymentIntents.create`, record the PI after, reuse the key on retry, and look
+up by metadata after Stripe’s ~24h window. Formal invariant: `AtMostOneCharge`.
 
-## 3. Stripe idempotency write-ahead (open finding)
-
-Checked ACP + ACH top-up paths:
-
-| Path                                 | Idempotency key durable **before** Stripe call?                                                          |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `AcpCheckoutService.completeSession` | **No** — `paymentIntents.create` has no `idempotencyKey`; session marked `completed` **after** PI create |
-| `AchTopupService` live PI            | **No** — creates PI, then `appendEntry(topup_pending)` with `paymentIntentId`                            |
-
-Same class of bug as lost write-intent: crash between provider call and durable
-record can double-charge on retry. Treat as a **payments cluster fix** before
-any cash-rail crash-safety claim.
-
-## Queue after this hold clears
+## Formal / product queue (not claim blockers)
 
 1. celld lease/supersede (PR #1456 vendor lab)
-2. OAuth/PKCE + HTTP session IFC labels (accumulate only)
-3. Account deletion vs WORM
-4. Program proposal graph
+2. Payments hold+compensation TLA + transitions (#1458)
+3. OAuth/PKCE + HTTP session IFC labels (accumulate only)
+4. Account deletion vs WORM
+5. Program proposal graph
