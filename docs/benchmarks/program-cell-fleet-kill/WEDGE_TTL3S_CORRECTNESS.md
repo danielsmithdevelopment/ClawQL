@@ -32,11 +32,15 @@ A pass on remasure under lighter lease pressure is not root cause and not a gree
 
 ## Regression signal vs stock tip
 
-Prior stock **0.6.3** wedged N=100 at TTL=3000 on an earlier host pass: **0/100** lost ([`phased-n100-wedge-upstream-0.6.3.json`](./phased-n100-wedge-upstream-0.6.3.json), measured 2026-10-31). Lab enriched at the **same TTL on this host** lost **2**. Separate:
+Prior stock **0.6.3** wedged N=100 at TTL=3000 on an earlier host pass: **0/100** lost ([`phased-n100-wedge-upstream-0.6.3.json`](./phased-n100-wedge-upstream-0.6.3.json), measured 2026-10-31). Lab enriched at the **same TTL on this host** lost **2**. Separation attempted:
 
-1. **Stock control on this same host** — wedged N=100 · TTL=3000 · stock 0.6.3. Pass ⇒ lab patches implicated. Fail ⇒ stock bug this host’s timing exposes (upstream note).
-2. **Supersede lines on the two failing trials** — if same-host supersede fired on a wedged (still-alive) owner, that is the bug; check `dead_reason`.
-3. **Lease-sweep / eager dead-leader recovery** — `lease_may_be_fenced_as_dead` treats **published expiry alone** as dead (stock tip rule). A wedged owner whose renewals go ambiguous under short TTL can expire while still alive with an intent in flight; `sweep_dead_leaders` then recovers the open log. That path does **not** emit the dual-sided `same-host supersede` line (that log is only for pre-TTL host_process proof). Look for `eager recovery: dead session with an open log` around the failing trials.
+| Step | Result |
+| ---- | ------ |
+| **1. Stock same-host control** | Stock 0.6.3 wedged N=100 @ TTL=3000 on **this host**: **PASS** 0 lost ([`phased-n100-wedge-stock-063-ttl3s-same-host.json`](./phased-n100-wedge-stock-063-ttl3s-same-host.json)). Quiet R2 (resume p99≈6.5s). Lab quiet remasure also passed — **not yet pressure-matched**, so this does **not** yet pin lab patches vs host. |
+| **2. Supersede on failing trials** | Original board audit: **0** `same-host supersede` lines (logs truncated by default `startNode` rewrite). Quiet remasure with `FLEET_PHASED_APPEND_LOGS=1`: **0** supersede lines (and 0 lost intents). No `dead_reason` to inspect for a same-host supersede of a wedged-alive owner on a failing trial — **not reproduced**. |
+| **3. Lease-sweep / eager recovery** | Code: `lease_may_be_fenced_as_dead` treats published expiry alone as dead; `sweep_dead_leaders` recovers open logs (`eager recovery: dead session with an open log`). Quiet remasure: **0** eager-recovery lines. Original truncated end-of-run logs showed **ambiguous renewals** + peer unreachable — consistent with expiry-while-wedged under R2 pressure, but **not trial-tied** to i=1 / i=5. |
+
+**Open:** reproduce the 2-loss case under lease pressure (append logs on), then pull supersede / eager-recovery / `dead_reason` around those trials. Until then lab-vs-stock cause stays **unresolved**; v4 stays blocked on the original failure.
 
 ### Code note (hypothesis, not yet trial-tied)
 
