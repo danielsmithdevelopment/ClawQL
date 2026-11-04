@@ -2,6 +2,8 @@
 
 Frozen **before** the next **authorizing** soak. v4 N=1000 starts only when a soak reports `status=measured_v4_ready` (`ok=true`) on the **fixed** build (incarnation + same-host supersede + lease-sweep + alive≠ready). A soak only authorizes the binary it measured.
 
+**v4 currently blocked** by lab enriched wedged N=100 correctness failure at **TTL=3000** (2 × `lost_midflight_intent`). TTL=10000 pass on the same board is diagnostic only. See [`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md). Do not start v4 N=1000 until that failure is root-caused.
+
 ## Why node-ceiling-alone is not enough
 
 | Mode | Node records | Failure mode |
