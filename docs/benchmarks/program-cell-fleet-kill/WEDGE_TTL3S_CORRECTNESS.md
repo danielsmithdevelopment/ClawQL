@@ -19,16 +19,16 @@ Moving the board to the TTL that passes is exactly the loosening we said we woul
 | Fail items | `i=1` and `i=5`, both `phase=after_intent_before_call` |
 | Availability | 5/100 (rate 0.05, ceiling 0.05) — **pass** (not the gate that failed) |
 | Measured | 2026-11-03 ~6:16–6:58 PM PT (`trialsCompleted=100`, `ok=false`) |
-| Evidence | Authentic JSON was written then **overwritten** by the TTL=10s remasure. Reconstruct from board stdout until remasure lands at [`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json). The file committed earlier as “ttl3s-failed” was a **contaminated partial TTL=10s** write (`status=partial`, `celldTtlMs=10000`, 0 correctness failures) — do not treat it as the failure. |
+| Evidence | [`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json) — gate summary reconstructed from board stdout (authentic JSON was overwritten by the TTL=10s remasure; an earlier commit also mislabeled a partial TTL=10s write). |
 
 ## Diagnostic only (not a correctness pass)
 
-| Field | Value |
-| ----- | ----- |
-| Same lab binary | TTL=**10000** wedged N=100 |
-| Correctness | 0 failures |
-| Evidence | [`phased-n100-wedge-lab-enriched.json`](./phased-n100-wedge-lab-enriched.json) |
-| Role | **Diagnostic** — longer TTL hid lost-intent; does **not** clear the TTL=3s failure |
+| Arm | TTL | Correctness | Evidence | Role |
+| --- | --- | ----------- | -------- | ---- |
+| Lab enriched wedged N=100 | **10000** | 0 | [`phased-n100-wedge-lab-enriched.json`](./phased-n100-wedge-lab-enriched.json) | Longer TTL hid lost-intent |
+| Lab enriched wedged N=100 remasure | **3000** | 0 | [`phased-n100-wedge-lab-enriched-ttl3s-remeasure-pass.json`](./phased-n100-wedge-lab-enriched-ttl3s-remeasure-pass.json) | Quieter R2 (resume p99≈6.9s; **7** ambiguous renews; **0** supersede / eager-recovery lines). Shows intermittency — **does not** clear the original 2-loss result |
+
+A pass on remasure under lighter lease pressure is not root cause and not a green light for v4.
 
 ## Regression signal vs stock tip
 
