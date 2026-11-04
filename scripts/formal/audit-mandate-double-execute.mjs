@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 /**
  * Hunt WORM / audit trails for mandate IDs with more than one successful consume
- * or execute. Use before launch to see whether the pre-atomic race fired in the wild.
+ * or execute. Use before launch / after the native-resume double-use advisory
+ * (docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md).
  *
  * Usage:
  *   node scripts/formal/audit-mandate-double-execute.mjs --file trail.ndjson
  *   node scripts/formal/audit-mandate-double-execute.mjs --dir ~/.ClawQL/worm
  *
  * Reads NDJSON (one WORM entry JSON per line) or a JSON array of entries.
- * Flags executionIds with ≥2 of: MANDATE_CONSUMED, or TOOL_CALL_RESULT with ok+executionId.
+ * Flags executionIds with ≥2 of: MANDATE_CONSUMED, or TOOL_CALL_RESULT with ok+executionId,
+ * or MANDATE_FINALIZED ok=true. Also prints distinct MANDATE_CONSUMED count per id
+ * (native resume bug could skip consume — still catch multi TOOL_CALL_RESULT).
  */
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
