@@ -3,13 +3,13 @@
 **Status:** **CLEARED for ship** (2026-11-03). Nothing was used publicly yet —
 no marketing retract. Ship the scoped claims below; do not re-widen them.
 
-| Claim                                                    | Posture                                                | Evidence                                                                                     |
-| -------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Approvals are single-use (catalog **and** native resume) | **Ship**                                               | #1459 — CAS consume before native allow; `native-tool-gate-resume.test.ts`; `ResumeById` TLA |
-| Wire-transfer / payment-waiting explainer                | **Ship only if** framed as gateway catalog tool call   | Not `clawql-payments` ACP/ACH/credits                                                        |
-| Cost Plus “consequential actions wait for a person”      | **Ship** scoped to gateway-mediated tool calls         | Cost Plus landing + example README                                                           |
-| “Payments bound to the same patient approval”            | **Do not ship** until cash rails use mandate + journal | Permanent scope — not a temporary hold                                                       |
-| Stripe ACP/ACH no double-charge on crash/retry           | **Ship** write-ahead path                              | #1460 — durable key → Idempotency-Key → record PI; `PaymentsStripeIdempotency`               |
+| Claim                                                    | Posture                                                | Evidence                                                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Approvals are single-use (catalog **and** native resume) | **Ship**                                               | #1459 — CAS consume before native allow; `native-tool-gate-resume.test.ts`; `ResumeById` TLA   |
+| Wire-transfer / payment-waiting explainer                | **Ship only if** framed as gateway catalog tool call   | Not `clawql-payments` ACP/ACH/credits                                                          |
+| Cost Plus “consequential actions wait for a person”      | **Ship** scoped to gateway-mediated tool calls         | Cost Plus landing + example README                                                             |
+| “Payments bound to the same patient approval”            | **Do not ship** until cash rails use mandate + journal | Permanent scope — not a temporary hold                                                         |
+| Stripe ACP/ACH/MPP no double-charge on crash/retry       | **Ship** write-ahead path                              | #1460 — durable key → Idempotency-Key → record PI; post-TTL fail-closed; TLA `AtMostOneCharge` |
 
 ## 0. Security fix (pre-public)
 
@@ -49,9 +49,11 @@ routing exists. That is accurate product scope, not a temporary hold.
 
 ## 3. Stripe write-ahead — cleared by #1460
 
-ACP complete + ACH top-up persist a durable idempotency key **before**
-`paymentIntents.create`, record the PI after, reuse the key on retry, and look
-up by metadata after Stripe’s ~24h window. Formal invariant: `AtMostOneCharge`.
+ACP complete, ACH top-up, and MPP Stripe SPT persist a durable idempotency key
+**before** `paymentIntents.create`, record the PI after, reuse the key on retry,
+and look up by metadata after Stripe’s ~24h window. If metadata search is
+unavailable after TTL, refuse to create (fail closed). Formal invariant:
+`AtMostOneCharge`.
 
 ## Formal / product queue (not claim blockers)
 

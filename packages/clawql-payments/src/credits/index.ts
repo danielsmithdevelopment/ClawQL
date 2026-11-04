@@ -175,6 +175,12 @@ export {
   type CreateBankLinkSessionInput,
 } from "./ach-topup-service.js";
 export {
+  attachAchTopupPaymentIntentId,
+  ensureAchTopupIntent,
+  loadAchTopupIntent,
+  type AchTopupIntent,
+} from "./ach-topup-intent-store.js";
+export {
   DeductionError,
   DeductionService,
   deductionLiveLayer,

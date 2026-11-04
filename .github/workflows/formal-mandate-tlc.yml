@@ -16,6 +16,9 @@ on:
       - "packages/clawql-api/src/pending/**"
       - "packages/clawql-api/src/policy/**"
       - "packages/clawql-api/src/ifc/**"
+      - "packages/clawql-payments/src/credits/**"
+      - "packages/clawql-payments/src/acp/**"
+      - "packages/clawql-payments/src/stripe/**"
   workflow_dispatch:
 
 concurrency:
@@ -70,3 +73,6 @@ jobs:
 
       - name: Run program-resume TLC dual configs
         run: bash scripts/formal/run-program-resume-tlc.sh
+
+      - name: Run payments Stripe write-ahead TLC dual configs
+        run: bash scripts/formal/run-payments-stripe-tlc.sh

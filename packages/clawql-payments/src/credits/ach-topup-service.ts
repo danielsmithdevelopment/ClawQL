@@ -13,11 +13,18 @@ import { buildBankLinkedEntry, buildCreditTopupPendingEntry } from "../audit/eve
 import { StripeClientService, stripeTryPromise } from "../stripe/stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js";
 import {
+  decidePostTtlPaymentIntentAction,
+  lookupPaymentIntentByMetadata,
+  stripeIdempotencyKeyForAchTopup,
+  stripeIdempotencyKeyLikelyExpired,
+} from "../stripe/stripe-idempotency.js";
+import {
   creditsReturnUrl,
   isAchTopupDryRun,
   isAchTopupEnabled,
   isCreditsEnabled,
 } from "./config.js";
+import { attachAchTopupPaymentIntentId, ensureAchTopupIntent } from "./ach-topup-intent-store.js";
 import { CreditsLedgerService } from "./ledger.js";
 import { CreditsError, CreditsService } from "./credits-service.js";
 
@@ -238,26 +245,119 @@ export function achTopupLiveLayer(
             );
           }
 
-          const stripe = yield* stripeClient.getClient();
-          const pi = yield* stripeTryPromise(
-            "paymentIntents.create",
-            (): Promise<Stripe.PaymentIntent> =>
-              stripe.paymentIntents.create({
-                amount: amountCents,
-                currency: "usd",
-                customer: input.customerId,
-                payment_method: input.paymentMethodId,
-                payment_method_types: ["us_bank_account"],
-                confirm: true,
-                // Mandate acceptance is collected during Financial Connections / Link.
-                off_session: true,
-                description: input.description?.trim() || "ClawQL credit top-up",
-                metadata: {
-                  [TOPUP_META_KEY]: "1",
-                  tenant_id: tenantId,
-                },
+          // Write-ahead: durable id + Stripe idempotency key before create.
+          // Live path requires a caller-stable correlationId so retries reuse the same key.
+          const durableId = input.correlationId?.trim();
+          if (!durableId) {
+            return yield* Effect.fail(
+              new AchTopupError({
+                reason:
+                  "correlationId required for live ACH top-up (durable Stripe idempotency key)",
               })
-          );
+            );
+          }
+          const idempotencyKey = stripeIdempotencyKeyForAchTopup(durableId);
+          const nowIso = new Date().toISOString();
+          const intent = yield* Effect.tryPromise({
+            try: () =>
+              ensureAchTopupIntent(
+                {
+                  durableId,
+                  tenantId,
+                  amountCents,
+                  customerId: input.customerId,
+                  idempotencyKey,
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
+                },
+                env
+              ),
+            catch: (cause) =>
+              new AchTopupError({
+                reason: cause instanceof Error ? cause.message : String(cause),
+                cause,
+              }),
+          });
+
+          if (intent.paymentIntentId?.trim()) {
+            // Prior crash after Stripe create — reuse recorded PI (no second charge).
+            const paymentIntentId = intent.paymentIntentId.trim();
+            yield* ledger
+              .appendEntry({
+                tenantId,
+                kind: "topup_pending",
+                deltaCents: 0,
+                paymentIntentId,
+                correlationId: durableId,
+                idempotencyKey,
+                note: "ACH PI recovered from write-ahead intent",
+              })
+              .pipe(
+                Effect.mapError(
+                  (cause) => new AchTopupError({ reason: cause.reason, cause: cause.cause })
+                )
+              );
+            return {
+              paymentIntentId,
+              status: "processing",
+              amountCents,
+              dryRun: false,
+              settledImmediately: false,
+            } satisfies AchTopupResult;
+          }
+
+          const stripe = yield* stripeClient.getClient();
+          const metadata = {
+            [TOPUP_META_KEY]: "1",
+            tenant_id: tenantId,
+            clawql_ach_topup_id: durableId,
+          };
+          const createParams = {
+            amount: amountCents,
+            currency: "usd",
+            customer: input.customerId,
+            payment_method: input.paymentMethodId,
+            payment_method_types: ["us_bank_account" as const],
+            confirm: true,
+            off_session: true,
+            description: input.description?.trim() || "ClawQL credit top-up",
+            metadata,
+          };
+
+          let pi: Stripe.PaymentIntent;
+          if (stripeIdempotencyKeyLikelyExpired(intent.createdAt)) {
+            const lookup = yield* stripeTryPromise("ACH paymentIntent metadata lookup failed", () =>
+              lookupPaymentIntentByMetadata(stripe, metadata)
+            );
+            const decision = decidePostTtlPaymentIntentAction(lookup);
+            if (decision.action === "fail_closed") {
+              return yield* Effect.fail(new AchTopupError({ reason: decision.reason }));
+            }
+            if (decision.action === "reuse") {
+              pi = decision.intent;
+            } else {
+              pi = yield* stripeTryPromise(
+                "paymentIntents.create",
+                (): Promise<Stripe.PaymentIntent> =>
+                  stripe.paymentIntents.create(createParams, { idempotencyKey })
+              );
+            }
+          } else {
+            pi = yield* stripeTryPromise(
+              "paymentIntents.create",
+              (): Promise<Stripe.PaymentIntent> =>
+                stripe.paymentIntents.create(createParams, { idempotencyKey })
+            );
+          }
+
+          yield* Effect.tryPromise({
+            try: () => attachAchTopupPaymentIntentId(durableId, pi.id, env),
+            catch: (cause) =>
+              new AchTopupError({
+                reason: cause instanceof Error ? cause.message : String(cause),
+                cause,
+              }),
+          });
 
           yield* ledger
             .appendEntry({
@@ -265,7 +365,8 @@ export function achTopupLiveLayer(
               kind: "topup_pending",
               deltaCents: 0,
               paymentIntentId: pi.id,
-              correlationId: input.correlationId,
+              correlationId: durableId,
+              idempotencyKey,
               note: `ACH PI ${pi.status}`,
             })
             .pipe(
@@ -279,7 +380,7 @@ export function achTopupLiveLayer(
                 tenantId,
                 amountUsd: amountCents / 100,
                 paymentIntentId: pi.id,
-                correlationId: input.correlationId ?? pi.id,
+                correlationId: durableId,
               })
             )
             .pipe(Effect.catch(() => Effect.void));
@@ -291,7 +392,7 @@ export function achTopupLiveLayer(
                 tenantId,
                 paymentIntentId: pi.id,
                 amountCents,
-                correlationId: input.correlationId ?? pi.id,
+                correlationId: durableId,
               })
               .pipe(
                 Effect.mapError(

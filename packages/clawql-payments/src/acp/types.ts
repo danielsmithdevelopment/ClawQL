@@ -46,6 +46,13 @@ export type AcpCheckoutSession = {
     permalink_url?: string;
   };
   payment_intent_id?: string;
+  /**
+   * Durable Stripe Idempotency-Key, persisted **before** paymentIntents.create
+   * (write-ahead). Derived from session id — retries reuse the same key.
+   */
+  stripe_idempotency_key?: string;
+  /** ISO time when stripe_idempotency_key was first written (24h Stripe window). */
+  stripe_idempotency_written_at?: string;
   created_at: string;
   updated_at: string;
 };

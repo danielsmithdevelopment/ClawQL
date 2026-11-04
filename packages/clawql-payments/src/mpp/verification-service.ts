@@ -5,6 +5,12 @@ import { buildX402PaymentReceivedEntry } from "../audit/events.js";
 import { stripeTryPromise } from "../stripe/stripe-client-service.js";
 import { StripeClientService } from "../stripe/stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js";
+import {
+  decidePostTtlPaymentIntentAction,
+  lookupPaymentIntentByMetadata,
+  stripeIdempotencyKeyForMpp,
+  stripeIdempotencyKeyLikelyExpired,
+} from "../stripe/stripe-idempotency.js";
 import { ConfigError, X402Error } from "../errors/payment-errors.js";
 import type { X402Gate } from "../x402/gate.js";
 import { X402FacilitatorService } from "../x402/x402-facilitator-service.js";
@@ -16,6 +22,10 @@ import {
   x402PayloadFromMppCredential,
   type ParsedPaymentCredential,
 } from "./credential.js";
+import {
+  attachMppStripePaymentIntentId,
+  ensureMppStripeIntent,
+} from "./mpp-stripe-intent-store.js";
 import { buildMppPaymentReceipt, mppPaymentReceiptHeader } from "./receipt.js";
 import { MppVerificationError } from "./verification-errors.js";
 import {
@@ -290,30 +300,127 @@ export function mppVerificationLiveLayer(
             );
           }
 
+          const challengeId = input.credential.challenge.id?.trim();
+          const durableId =
+            input.correlationId?.trim() ||
+            challengeId ||
+            `${input.tenantId}:${input.gate.resource}:${amount}:${currency.toLowerCase()}`;
+          if (!durableId) {
+            return yield* Effect.fail(
+              new MppVerificationError({
+                reason: "MPP Stripe charge requires challenge id or correlationId for idempotency",
+                method: MPP_METHOD_STRIPE,
+                code: MPP_MCP_VERIFICATION_FAILED_CODE,
+              })
+            );
+          }
+
+          const idempotencyKey = stripeIdempotencyKeyForMpp(durableId);
+          const nowIso = new Date().toISOString();
+          const intentRecord = yield* Effect.tryPromise({
+            try: () =>
+              ensureMppStripeIntent(
+                {
+                  durableId,
+                  tenantId: input.tenantId,
+                  resource: input.gate.resource,
+                  amount,
+                  currency: currency.toLowerCase(),
+                  idempotencyKey,
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
+                },
+                input.runEnv
+              ),
+            catch: (cause) =>
+              new MppVerificationError({
+                reason: cause instanceof Error ? cause.message : String(cause),
+                method: MPP_METHOD_STRIPE,
+                code: MPP_MCP_VERIFICATION_FAILED_CODE,
+                cause,
+              }),
+          });
+
+          if (intentRecord.paymentIntentId?.trim()) {
+            const paymentIntentId = intentRecord.paymentIntentId.trim();
+            const receipt = buildMppPaymentReceipt({
+              method: MPP_METHOD_STRIPE,
+              resource: input.gate.resource,
+              settledAt: new Date().toISOString(),
+              settlementId: paymentIntentId,
+              stripePaymentIntentId: paymentIntentId,
+            });
+            return {
+              method: MPP_METHOD_STRIPE as MppPaymentMethod,
+              receipt,
+              receiptHeader: mppPaymentReceiptHeader(receipt),
+              settlementId: paymentIntentId,
+            } satisfies MppVerificationSuccess;
+          }
+
           const stripe = yield* stripeClient.getClient();
           const profileId =
             input.runEnv.STRIPE_PROFILE_ID?.trim() ||
             input.runEnv.STRIPE_NETWORK_ID?.trim() ||
             (typeof request?.networkId === "string" ? request.networkId : undefined);
 
-          const paymentIntent = yield* stripeTryPromise("stripe mpp spt payment", () =>
-            stripe.paymentIntents.create(
-              {
-                amount,
-                currency: currency.toLowerCase(),
-                payment_method: spt,
-                confirm: true,
-                metadata: {
-                  clawql_resource: input.gate.resource,
-                  clawql_tenant: input.tenantId,
-                  ...(profileId ? { stripe_profile_id: profileId } : {}),
-                },
-              },
-              {
-                apiVersion: "2026-03-04.preview",
-              }
-            )
-          );
+          const metadata = {
+            clawql_resource: input.gate.resource,
+            clawql_tenant: input.tenantId,
+            clawql_mpp_durable_id: durableId,
+            ...(profileId ? { stripe_profile_id: profileId } : {}),
+          };
+          const createParams = {
+            amount,
+            currency: currency.toLowerCase(),
+            payment_method: spt,
+            confirm: true,
+            metadata,
+          };
+          const createOpts = {
+            apiVersion: "2026-03-04.preview" as const,
+            idempotencyKey: intentRecord.idempotencyKey,
+          };
+
+          let paymentIntent;
+          if (stripeIdempotencyKeyLikelyExpired(intentRecord.createdAt)) {
+            const lookup = yield* stripeTryPromise(
+              "stripe mpp paymentIntent metadata lookup failed",
+              () => lookupPaymentIntentByMetadata(stripe, metadata)
+            );
+            const decision = decidePostTtlPaymentIntentAction(lookup);
+            if (decision.action === "fail_closed") {
+              return yield* Effect.fail(
+                new MppVerificationError({
+                  reason: decision.reason,
+                  method: MPP_METHOD_STRIPE,
+                  code: MPP_MCP_VERIFICATION_FAILED_CODE,
+                })
+              );
+            }
+            if (decision.action === "reuse") {
+              paymentIntent = decision.intent;
+            } else {
+              paymentIntent = yield* stripeTryPromise("stripe mpp spt payment", () =>
+                stripe.paymentIntents.create(createParams, createOpts)
+              );
+            }
+          } else {
+            paymentIntent = yield* stripeTryPromise("stripe mpp spt payment", () =>
+              stripe.paymentIntents.create(createParams, createOpts)
+            );
+          }
+
+          yield* Effect.tryPromise({
+            try: () => attachMppStripePaymentIntentId(durableId, paymentIntent.id, input.runEnv),
+            catch: (cause) =>
+              new MppVerificationError({
+                reason: cause instanceof Error ? cause.message : String(cause),
+                method: MPP_METHOD_STRIPE,
+                code: MPP_MCP_VERIFICATION_FAILED_CODE,
+                cause,
+              }),
+          });
 
           if (paymentIntent.status !== "succeeded" && paymentIntent.status !== "processing") {
             return yield* Effect.fail(
