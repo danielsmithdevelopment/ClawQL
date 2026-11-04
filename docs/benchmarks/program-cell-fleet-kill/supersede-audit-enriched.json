@@ -1,0 +1,76 @@
+{
+  "kind": "celld-same-host-supersede-audit",
+  "auditedAt": "2026-11-04T01:41:55.297Z",
+  "auditorGitCommit": "2a8dd487c42823fc0ce706fa5ea1e0f6609bdb61",
+  "authorizingSoakGitCommit": "112a8aa6ecb2d11053cca10118c8eb4e718d0a78",
+  "logs": {
+    "/tmp/fleet-soak-a.log": {
+      "lines": 6060,
+      "supersedes": 257
+    },
+    "/tmp/fleet-soak-b.log": {
+      "lines": 5040,
+      "supersedes": 219
+    }
+  },
+  "totals": {
+    "supersedes": 476,
+    "dualSided": 476,
+    "leaseStampOnly": 0,
+    "bareDecisionOnly": 0,
+    "comparisonOk": 476,
+    "comparisonFail": 0,
+    "preTtl": 476,
+    "notPreTtl": 0,
+    "uniqueDeadSessions": 400
+  },
+  "expectCount": null,
+  "expectOk": null,
+  "honesty": {
+    "count_and_flag_only": "Pre-enrichment logs show the supersede *decision* (dead= session key + expires_in_ms) but not the process evidence or local /proc observation. This status confirms count and that every line is the same-host pre-TTL message — it does **not** prove the predecessor process was gone. Not a pass.",
+    "pass_process_evidence": "Every supersede line carries lease stamp + local observation; dead_reason is pid_absent or start_ticks_mismatch; boot_id matched; comparison fields are internally consistent.",
+    "buildChain": "Authorizing soak measured_v4_ready was commit 112a8aa6e (pre-enrichment lab). Dual-sided proof soaks/boards run on a later enriched lab commit — record celldLabGitCommit in evidence."
+  },
+  "ok": true,
+  "status": "pass_process_evidence",
+  "sampleBare": [],
+  "sampleDualOk": [
+    {
+      "dead": "fleet_A/3592aae53537f7dc37c833622559c627a65e315bcd1961f868b1342005f8d9af",
+      "leasePid": 1281206,
+      "leaseProcessStartTicks": "16292414",
+      "leaseBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "observedBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "pidDirExists": false,
+      "observedProcessStartTicks": null,
+      "startTicksMatch": null,
+      "deadReason": "pid_absent",
+      "expiresInMs": 9484
+    },
+    {
+      "dead": "fleet_B/0a7319e6605797ca7503816f40d50a2a54f4a02d1d628bd077a5bd47829160c1",
+      "leasePid": 1281720,
+      "leaseProcessStartTicks": "16292446",
+      "leaseBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "observedBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "pidDirExists": false,
+      "observedProcessStartTicks": null,
+      "startTicksMatch": null,
+      "deadReason": "pid_absent",
+      "expiresInMs": 6378
+    },
+    {
+      "dead": "fleet_A/b5b3f58862b5ee6d967a9f5c984f0cc61a800a7a9e4e65f467112f03b9991c0f",
+      "leasePid": 1282251,
+      "leaseProcessStartTicks": "16293170",
+      "leaseBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "observedBootId": "cdc00558-a65d-48a0-9ecd-295342e3f99f",
+      "pidDirExists": false,
+      "observedProcessStartTicks": null,
+      "startTicksMatch": null,
+      "deadReason": "pid_absent",
+      "expiresInMs": 9176
+    }
+  ],
+  "sampleComparisonFail": []
+}
