@@ -153,7 +153,9 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 1. **Incarnation + same-host supersede** (narrow “provably dead” above; cross-host wait/refuse) — **landed in** [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md)
 2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
 3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
-4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (suspend-gap ≤2s), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences — Mac mini: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)
-5. **Only then** v4 N=1000 under unchanged frozen board criteria
+4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (suspend-gap ≤2s), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences — Mac mini: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md) · evidence branch `soak-mac-mini-authorizing-20261101`
+5. **Supersede process-evidence audit** on that soak’s celld logs — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
+6. **Rerun** stale-owner N=40 + wedged N=100 on the lab binary
+7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check)
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

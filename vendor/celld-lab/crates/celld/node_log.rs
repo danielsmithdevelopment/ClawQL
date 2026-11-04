@@ -4947,9 +4947,17 @@ impl NodeLogManager {
                 wire.expires_ms.saturating_sub(now)
             );
             if wire.expires_ms > now {
+                // Emit pid + start ticks + boot_id so soak audits can re-check
+                // the process evidence without relying only on the message text.
+                let hp = wire.host_process.as_ref();
                 info!(
                     dead,
                     expires_in_ms = wire.expires_ms.saturating_sub(now),
+                    pid = hp.map(|h| h.pid),
+                    process_start_ticks = hp
+                        .map(|h| h.process_start_ticks.as_str())
+                        .unwrap_or(""),
+                    boot_id = hp.map(|h| h.boot_id.as_str()).unwrap_or(""),
                     "same-host supersede: fencing predecessor whose host_process is provably dead"
                 );
             }

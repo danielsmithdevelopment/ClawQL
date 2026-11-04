@@ -12,7 +12,8 @@ This tree is tip **v0.6.3** plus ClawQL **availability** patches for the pre-v4 
 | Bounded maintenance / lease-sweep ticker (`CELLD_MAINTENANCE_PHASE_BUDGET_SECS`) | **Landed** |
 | Lease stamps `host_process` (`pid` + start ticks + `boot_id`) | **Landed** |
 | Same-host supersede when prior `host_process` is provably dead (claim path) | **Landed** — recovery fence + sweep + initial CAS refuse live/unknown |
-| Authorizing overnight soak on lab binary | **Run on non-suspending host** ([`SOAK_HOST.md`](../../docs/benchmarks/program-cell-fleet-kill/SOAK_HOST.md)); harness voids if suspend-gap growth >2s. Mac mini local agent: [`MAC_MINI_AGENT.md`](../../docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md) (Colima Linux — `/proc` required for supersede) |
+| Authorizing overnight soak on lab binary | **Measured** on Mac mini/Colima — [`node-soak-lab-authorizing-mac-mini.json`](../../docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json) (`measured_v4_ready`). Host rules: [`SOAK_HOST.md`](../../docs/benchmarks/program-cell-fleet-kill/SOAK_HOST.md) / [`MAC_MINI_AGENT.md`](../../docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md) |
+| Supersede process-evidence audit | **Next** — [`SUPERSEDE_AUDIT.md`](../../docs/benchmarks/program-cell-fleet-kill/SUPERSEDE_AUDIT.md); log lines now include `pid` / `process_start_ticks` / `boot_id` |
 
 ## Same-host supersede (claim path)
 
