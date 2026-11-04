@@ -14,5 +14,8 @@ export {
   gateNativeToolBeforeInvoke,
   governNativeHandler,
   taintSessionFromUntrustedChannel,
+  type NativeToolGateAllow,
   type NativeToolGateBlock,
+  type NativeToolGateDecision,
+  type NativeToolGateDeny,
 } from "./native-tool-gate.js";

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import {
   accumulateNativeToolReadAfterSuccess,
   gateNativeToolBeforeInvoke,
+  markPendingCompleted,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
 } from "clawql-api";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
@@ -185,19 +186,23 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
 
     // Native-tool choke point: session IFC + park destructive (same properties as execute).
     // Catalog execute-path tools skip this body; they are gated inside execute-core.
+    // Resume with approvedExecutionId consumes atomically here before the handler runs.
+    let consumedExecutionId: string | undefined;
     try {
       const mcpCtxGate = getMcpRequestContext();
-      const nativeBlock = await gateNativeToolBeforeInvoke({
+      const decision = await gateNativeToolBeforeInvoke({
         toolName,
         args: args[0],
         sessionId: mcpCtxGate?.sessionId,
       });
-      if (nativeBlock) {
+      if (decision.blocked) {
+        const nativeBlock = decision.errorResult;
         const detail = JSON.stringify(nativeBlock).slice(0, 500);
         await Effect.runPromise(appendMcpToolResultEffect(toolName, false, detail));
         await auditWrappedTool(toolName, args[0], "blocked", nativeBlock as TResult, detail);
         return nativeBlock as TResult;
       }
+      consumedExecutionId = decision.consumedExecutionId;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
@@ -208,6 +213,12 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     try {
       const result = await handler(...args);
       const ok = toolResultLooksOk(result);
+      if (consumedExecutionId) {
+        await markPendingCompleted(consumedExecutionId, {
+          ok,
+          error: ok ? undefined : JSON.stringify(result).slice(0, 500),
+        });
+      }
       const mcpCtxAfter = getMcpRequestContext();
       if (ok) {
         accumulateNativeToolReadAfterSuccess({
@@ -227,6 +238,9 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       return result;
     } catch (err: unknown) {
       const errDetail = err instanceof Error ? err.message : String(err);
+      if (consumedExecutionId) {
+        await markPendingCompleted(consumedExecutionId, { ok: false, error: errDetail });
+      }
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
       await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;

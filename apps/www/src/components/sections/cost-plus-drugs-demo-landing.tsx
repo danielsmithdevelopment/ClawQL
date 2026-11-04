@@ -126,8 +126,10 @@ export function CostPlusDrugsDemoLanding() {
             <p className="text-pretty text-[var(--cpd-muted)]">
               Cost Plus already exposes a public, unauthenticated MCP for price and availability (
               <Link href={CPD_MCP_DOCS}>their scope page</Link> stops at estimates). The valuable next step — and this
-              demo — is safely letting agents <em>stage</em> consequential actions across Claude, ChatGPT, Grok, and the
-              rest without giving any model unilateral write power or unrestricted PHI.
+              demo — is safely letting agents <em>stage</em> consequential{' '}
+              <strong>gateway-mediated tool calls</strong> (catalog / mock refill writes) across Claude, ChatGPT, Grok,
+              and the rest without giving any model unilateral write power or unrestricted PHI. This page does not
+              claim ClawQL&apos;s own payment rails share that approval path.
             </p>
           </div>
           <ul className="cpd-demo-accomplishments">

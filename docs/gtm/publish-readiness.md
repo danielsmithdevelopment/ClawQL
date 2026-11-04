@@ -31,6 +31,12 @@ True by design and covered by tests — safe as product description:
 
 - Write **intent is journaled before** the call goes out.
 - Approvals are **single-use**, bound to the approver’s key and the exact arguments, consumed before send; requester cannot approve their own request.
+  - **Scope (cleared pre-public):** gateway-mediated tool calls (catalog `execute` and
+    native tools under operation-risk enforce after #1459 CAS consume). Evidence:
+    `native-tool-gate-resume.test.ts` + MandateLifecycle `ResumeById`. Do **not**
+    extend this bullet to `clawql-payments` cash rails — see
+    [`claim-holds-mandate-resume-and-payments.md`](./claim-holds-mandate-resume-and-payments.md)
+    (no public retract; permanent scope).
 - A write interrupted mid-flight is **never retried blindly** — resolved by the API’s own mechanism where one exists, or marked **outcome unknown** for a person.
 - Automatic resolution by API type:
   - **Idempotency keys:** key derived from the approval is resent → exactly once at the API.

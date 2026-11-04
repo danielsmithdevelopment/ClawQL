@@ -36,12 +36,12 @@ describe("native tool gate", () => {
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
     process.env.CLAWQL_SESSION_ID = "gate-park";
-    const block = await gateNativeToolBeforeInvoke({
+    const decision = await gateNativeToolBeforeInvoke({
       toolName: "memory_ingest",
       args: { title: "x", insights: "y" },
       sessionId: "gate-park",
     });
-    expect(block).toBeNull();
+    expect(decision.blocked).toBe(false);
   });
 
   it("allows memory_ingest after first-party clawql-chatgpt settings read", async () => {
@@ -58,12 +58,12 @@ describe("native tool gate", () => {
       success: true,
       sessionId: "gate-chatgpt-to-memory",
     });
-    const block = await gateNativeToolBeforeInvoke({
+    const decision = await gateNativeToolBeforeInvoke({
       toolName: "memory_ingest",
       args: { title: "lessons", insights: "ok" },
       sessionId: "gate-chatgpt-to-memory",
     });
-    expect(block).toBeNull();
+    expect(decision.blocked).toBe(false);
   });
 
   it("blocks memory_ingest after untrusted channel taint even when park opt-out", async () => {
@@ -71,15 +71,17 @@ describe("native tool gate", () => {
     process.env.CLAWQL_ENABLE_SESSION_IFC = "1";
     process.env.CLAWQL_SESSION_ID = "gate-taint";
     taintSessionFromUntrustedChannel("email", "gate-taint");
-    const block = await gateNativeToolBeforeInvoke({
+    const decision = await gateNativeToolBeforeInvoke({
       toolName: "memory_ingest",
       args: { title: "OVERRIDE", insights: "99.99" },
       sessionId: "gate-taint",
     });
-    expect(block).not.toBeNull();
-    const body = JSON.parse((block as { content: { text: string }[] }).content[0]!.text);
-    expect(body.status).toBe("blocked");
-    expect(["untrusted_read_taint", "data_flow"]).toContain(body.mechanism);
+    expect(decision.blocked).toBe(true);
+    if (decision.blocked) {
+      const body = JSON.parse(decision.errorResult.content[0]!.text);
+      expect(body.status).toBe("blocked");
+      expect(["untrusted_read_taint", "data_flow"]).toContain(body.mechanism);
+    }
   });
 
   it("allows memory_recall and accumulates labels", () => {
@@ -96,10 +98,10 @@ describe("native tool gate", () => {
 
   it("skips execute-path tools", async () => {
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
-    const block = await gateNativeToolBeforeInvoke({
+    const decision = await gateNativeToolBeforeInvoke({
       toolName: "execute",
       args: { operationId: "x" },
     });
-    expect(block).toBeNull();
+    expect(decision.blocked).toBe(false);
   });
 });

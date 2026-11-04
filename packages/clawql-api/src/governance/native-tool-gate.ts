@@ -4,6 +4,10 @@
  *
  * Called from `wrapRegisteredMcpToolHandler` so every registered tool hits this
  * choke point (proxy hooks already run first).
+ *
+ * Resume with `approvedExecutionId` MUST atomically consume the mandate
+ * (CAS approved → outcome_unknown) before the handler runs — same as execute-core.
+ * Allowing through without consume would re-use a single-use approval.
  */
 
 import { Effect } from "effect";
@@ -15,7 +19,12 @@ import {
 } from "../ifc/session-ifc-enforce.js";
 import { accumulateSessionLabelsSync, resolveSessionLabelKey } from "../ifc/session-label-store.js";
 import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
-import { parkMandateExecute } from "../pending/pending-execution-service.js";
+import { hashPendingArgs } from "../pending/args-hash.js";
+import {
+  markPendingCompleted,
+  parkMandateExecute,
+  tryConsumeApprovedMandate,
+} from "../pending/pending-execution-service.js";
 import {
   isExecutePathTool,
   NATIVE_TOOL_GOVERNANCE_MODULE_ID,
@@ -32,10 +41,31 @@ export type NativeToolGateBlock = {
   readonly status: "blocked" | "mandate_required";
   readonly reason: string;
   readonly toolName: string;
-  readonly mechanism: "untrusted_read_taint" | "data_flow" | "park_destructive_write";
+  readonly mechanism:
+    | "untrusted_read_taint"
+    | "data_flow"
+    | "park_destructive_write"
+    | "resume_consume_failed"
+    | "resume_operation_mismatch";
   readonly executionId?: string;
   readonly risk?: unknown;
 };
+
+export type NativeToolGateAllow = {
+  readonly blocked: false;
+  /** Set when resume consumed a mandate; callers must finalize after the handler. */
+  readonly consumedExecutionId?: string;
+};
+
+export type NativeToolGateDeny = {
+  readonly blocked: true;
+  readonly errorResult: {
+    content: [{ type: "text"; text: string }];
+    isError: true;
+  };
+};
+
+export type NativeToolGateDecision = NativeToolGateAllow | NativeToolGateDeny;
 
 function syntheticOperation(
   toolName: string,
@@ -68,19 +98,38 @@ function syntheticOperation(
   } as Operation;
 }
 
-function mcpErrorResult(block: NativeToolGateBlock): {
-  content: [{ type: "text"; text: string }];
-  isError: true;
-} {
+function mcpErrorResult(block: NativeToolGateBlock): NativeToolGateDeny["errorResult"] {
   return {
     content: [{ type: "text", text: JSON.stringify(block) }],
     isError: true,
   };
 }
 
+function deny(block: NativeToolGateBlock): NativeToolGateDeny {
+  return { blocked: true, errorResult: mcpErrorResult(block) };
+}
+
+function allow(consumedExecutionId?: string): NativeToolGateAllow {
+  return consumedExecutionId ? { blocked: false, consumedExecutionId } : { blocked: false };
+}
+
+/** Host-only resume key — never part of the parked args digest. */
+function bindArgsWithoutHostKeys(args: Record<string, unknown>): Record<string, unknown> {
+  const { approvedExecutionId: _drop, ...rest } = args;
+  return rest;
+}
+
+function readArgsRecord(args: unknown): Record<string, unknown> {
+  if (args && typeof args === "object" && !Array.isArray(args)) {
+    return { ...(args as Record<string, unknown>) };
+  }
+  return {};
+}
+
 /**
- * Pre-invoke gate for native tools. Returns an MCP error result to short-circuit
- * the handler, or null to proceed.
+ * Pre-invoke gate for native tools.
+ * - `blocked: true` → return `errorResult` to the MCP client
+ * - `blocked: false` → proceed; if `consumedExecutionId` is set, finalize after invoke
  */
 export async function gateNativeToolBeforeInvoke(opts: {
   readonly toolName: string;
@@ -88,16 +137,16 @@ export async function gateNativeToolBeforeInvoke(opts: {
   readonly sessionId?: string;
   readonly env?: NodeJS.ProcessEnv;
   readonly approvedExecutionId?: string;
-}): Promise<ReturnType<typeof mcpErrorResult> | null> {
+}): Promise<NativeToolGateDecision> {
   const { toolName } = opts;
-  if (isExecutePathTool(toolName)) return null;
+  if (isExecutePathTool(toolName)) return allow();
 
   const env = opts.env ?? process.env;
   const policy = resolveNativeToolPolicy(toolName);
   const sessionId = opts.sessionId;
 
   if (policy.kind === "passthrough" || policy.kind === "read") {
-    return null;
+    return allow();
   }
 
   // Data-flow / untrusted-read taint: mutating sinks checked against session labels
@@ -111,7 +160,7 @@ export async function gateNativeToolBeforeInvoke(opts: {
     const mechanism = ifcBlock.sessionLabels.some((l) => l.includes("untrusted"))
       ? ("untrusted_read_taint" as const)
       : ("data_flow" as const);
-    return mcpErrorResult({
+    return deny({
       ok: false,
       status: "blocked",
       reason: ifcBlock.reason,
@@ -122,36 +171,61 @@ export async function gateNativeToolBeforeInvoke(opts: {
 
   // Park destructive (and write) natives when risk enforce is on — same as execute mandate.
   const enforce = await Effect.runPromise(operationRiskEnforceEnabledEffect(env));
-  if (!enforce) return null;
-  if (policy.kind !== "destructive" && policy.kind !== "write") return null;
+  if (!enforce) return allow();
+  if (policy.kind !== "destructive" && policy.kind !== "write") return allow();
 
+  const rawArgs = readArgsRecord(opts.args);
   const approvedId =
     opts.approvedExecutionId?.trim() ||
-    (opts.args &&
-    typeof opts.args === "object" &&
-    typeof (opts.args as { approvedExecutionId?: unknown }).approvedExecutionId === "string"
-      ? String((opts.args as { approvedExecutionId: string }).approvedExecutionId).trim()
-      : "");
+    (typeof rawArgs.approvedExecutionId === "string" ? rawArgs.approvedExecutionId.trim() : "");
+
+  const operationId = `native.${toolName}`;
+  const bindArgs = bindArgsWithoutHostKeys(rawArgs);
 
   if (approvedId) {
-    // Resume path for native tools is follow-up; for now require fresh park without auto-consume
-    // unless approvedExecutionId is present — leave consume to execute-core for catalog ops.
-    // Native approved resume: allow through (simplest honest path until native resume lands).
-    return null;
+    // Atomic consume before any side effect — same CAS as execute-core.
+    const argsHash = hashPendingArgs({ operationId, args: bindArgs });
+    const consumed = await tryConsumeApprovedMandate({
+      executionId: approvedId,
+      argsHash,
+    });
+    if (!consumed) {
+      return deny({
+        ok: false,
+        status: "mandate_required",
+        reason: `No consumable approved mandate for ${approvedId} (already used, digest mismatch, or expired)`,
+        toolName,
+        mechanism: "resume_consume_failed",
+        executionId: approvedId,
+        risk: writeOp.risk,
+      });
+    }
+    if (consumed.operationId !== operationId) {
+      await markPendingCompleted(approvedId, {
+        ok: false,
+        error: "approved executionId is bound to a different native tool",
+      });
+      return deny({
+        ok: false,
+        status: "blocked",
+        reason: "approved executionId is bound to a different native tool",
+        toolName,
+        mechanism: "resume_operation_mismatch",
+        executionId: approvedId,
+        risk: writeOp.risk,
+      });
+    }
+    return allow(approvedId);
   }
 
   if (policy.kind === "destructive") {
     const risk = writeOp.risk!;
-    const args =
-      opts.args && typeof opts.args === "object" && !Array.isArray(opts.args)
-        ? ({ ...(opts.args as Record<string, unknown>) } as Record<string, unknown>)
-        : {};
     const parked = await parkMandateExecute({
-      operationId: `native.${toolName}`,
-      args,
+      operationId,
+      args: bindArgs,
       risk,
     });
-    return mcpErrorResult({
+    return deny({
       ok: false,
       status: "mandate_required",
       reason: parked.reason,
@@ -162,7 +236,7 @@ export async function gateNativeToolBeforeInvoke(opts: {
     });
   }
 
-  return null;
+  return allow();
 }
 
 /**
@@ -225,25 +299,41 @@ export function governNativeHandler<TArgs extends unknown[], TResult>(
   opts?: { readonly sessionId?: string; readonly env?: NodeJS.ProcessEnv }
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
-    const block = await gateNativeToolBeforeInvoke({
+    const decision = await gateNativeToolBeforeInvoke({
       toolName,
       args: args[0],
       sessionId: opts?.sessionId,
       env: opts?.env,
     });
-    if (block) return block as TResult;
-    const result = await handler(...args);
-    const ok =
-      !result || typeof result !== "object" || (result as { isError?: boolean }).isError !== true;
-    if (ok) {
-      accumulateNativeToolReadAfterSuccess({
-        toolName,
-        success: true,
-        sessionId: opts?.sessionId,
-        env: opts?.env,
-      });
+    if (decision.blocked) return decision.errorResult as TResult;
+    try {
+      const result = await handler(...args);
+      const ok =
+        !result || typeof result !== "object" || (result as { isError?: boolean }).isError !== true;
+      if (decision.consumedExecutionId) {
+        await markPendingCompleted(decision.consumedExecutionId, {
+          ok,
+          error: ok ? undefined : "native handler returned isError",
+        });
+      }
+      if (ok) {
+        accumulateNativeToolReadAfterSuccess({
+          toolName,
+          success: true,
+          sessionId: opts?.sessionId,
+          env: opts?.env,
+        });
+      }
+      return result;
+    } catch (err) {
+      if (decision.consumedExecutionId) {
+        await markPendingCompleted(decision.consumedExecutionId, {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      throw err;
     }
-    return result;
   };
 }
 
