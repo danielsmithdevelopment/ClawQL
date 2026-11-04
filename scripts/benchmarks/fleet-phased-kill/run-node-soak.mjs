@@ -589,6 +589,28 @@ async function runOnce({ attempt = 1 } = {}) {
   const celldBuild = labBin
     ? "lab_fixed_alive_sweep_supersede"
     : process.env.FLEET_SOAK_CELLD_BUILD || "stock_or_unknown";
+  let celldLabGitCommit = process.env.FLEET_SOAK_CELLD_GIT_COMMIT?.trim() || null;
+  if (!celldLabGitCommit) {
+    try {
+      celldLabGitCommit = execFileSync(
+        "git",
+        ["-C", join(REPO, "vendor/celld-lab"), "rev-parse", "HEAD"],
+        { encoding: "utf8" }
+      ).trim();
+    } catch {
+      try {
+        celldLabGitCommit = execFileSync("git", ["rev-parse", "HEAD"], {
+          encoding: "utf8",
+        }).trim();
+      } catch {
+        celldLabGitCommit = null;
+      }
+    }
+  }
+  /** Authorizing Mac mini soak landed at this evidence commit (pre-enrichment). */
+  const authorizingBaselineCommit =
+    process.env.FLEET_SOAK_AUTHORIZING_BASELINE_COMMIT?.trim() ||
+    "112a8aa6ecb2d11053cca10118c8eb4e718d0a78";
 
   if (voidInfo) {
     const voidPath = OUT.replace(/\.json$/i, "") + `-void-attempt${attempt}.json`;
@@ -605,6 +627,8 @@ async function runOnce({ attempt = 1 } = {}) {
       attempt,
       celldBuild,
       celldBin: CELLD_BIN,
+      celldLabGitCommit,
+      authorizingBaselineCommit,
       host,
       suspendMonitor: {
         thresholdSec: SUSPEND_GAP_SECS,
@@ -670,6 +694,12 @@ async function runOnce({ attempt = 1 } = {}) {
     voided: false,
     celldBuild,
     celldBin: CELLD_BIN,
+    celldLabGitCommit,
+    authorizingBaselineCommit,
+    buildChainNote:
+      celldLabGitCommit && celldLabGitCommit.startsWith(authorizingBaselineCommit.slice(0, 9))
+        ? "same_commit_as_authorizing_baseline"
+        : "enriched_or_later_lab_vs_authorizing_baseline_112a8aa6e",
     host,
     suspendMonitor: {
       thresholdSec: SUSPEND_GAP_SECS,

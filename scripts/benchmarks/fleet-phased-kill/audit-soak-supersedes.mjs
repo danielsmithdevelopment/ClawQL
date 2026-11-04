@@ -1,24 +1,27 @@
 #!/usr/bin/env node
 /**
- * Audit same-host supersede lines from celld soak logs.
+ * Audit same-host supersede lines from celld soak / board logs.
  *
- * Each INFO line:
+ * Lab emits (pre-TTL only):
  *   same-host supersede: fencing predecessor whose host_process is provably dead
- * is emitted only when lease expiry is still in the future AND
- * host_process::is_provably_dead_on_this_host returned true (see lab
- * node_log.rs). TTL-only fences do not use this message.
  *
- * Pre-enrichment lab builds log dead= + expires_in_ms= only.
- * Post-enrichment also logs pid=, process_start_ticks=, boot_id=.
+ * Enriched dual-sided lines also carry:
+ *   lease_pid / lease_process_start_ticks / lease_boot_id
+ *   observed_boot_id / boot_id_matches / pid_dir_exists
+ *   observed_process_start_ticks / start_ticks_match / dead_reason
+ *
+ * Pre-enrichment Mac mini authorizing soak logs have only dead= + expires_in_ms.
+ * That audit is **count_and_flag_only** (not a pass): it cannot prove the
+ * process was gone, only that the decision was logged.
  *
  * Usage:
  *   node scripts/benchmarks/fleet-phased-kill/audit-soak-supersedes.mjs \
  *     /tmp/fleet-soak-a.log /tmp/fleet-soak-b.log \
- *     [--out docs/benchmarks/program-cell-fleet-kill/supersede-audit-mac-mini.json] \
- *     [--expect 2117]
+ *     [--out report.json] [--expect 2117]
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const args = process.argv.slice(2);
 const files = [];
@@ -46,7 +49,8 @@ if (!files.length) {
 const MSG =
   "same-host supersede: fencing predecessor whose host_process is provably dead";
 
-/** Parse tracing-style `key=value` / `key="value"` tokens from a line. */
+const DEAD_REASONS_OK = new Set(["pid_absent", "start_ticks_mismatch"]);
+
 function parseFields(line) {
   const fields = {};
   const re = /(\w+)=(?:"([^"]*)"|([^\s]+))/g;
@@ -55,6 +59,23 @@ function parseFields(line) {
     fields[m[1]] = m[2] !== undefined ? m[2] : m[3];
   }
   return fields;
+}
+
+function parseBoolish(v) {
+  if (v === undefined || v === null || v === "" || v === "null" || v === "none") {
+    return null;
+  }
+  if (v === "true" || v === true) return true;
+  if (v === "false" || v === false) return false;
+  return null;
+}
+
+function gitHead() {
+  try {
+    return execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  } catch {
+    return null;
+  }
 }
 
 const events = [];
@@ -69,105 +90,168 @@ for (const file of files) {
     byFile[file].supersedes += 1;
     const f = parseFields(line);
     const expiresInMs = Number(f.expires_in_ms);
-    const pidRaw = f.pid;
-    const pid =
-      pidRaw === undefined || pidRaw === "null" || pidRaw === ""
+
+    // Prefer dual-sided lease_* names; accept legacy pid=/boot_id= briefly.
+    const leasePidRaw = f.lease_pid ?? f.pid;
+    const leaseTicks = f.lease_process_start_ticks ?? f.process_start_ticks ?? null;
+    const leaseBoot = f.lease_boot_id ?? f.boot_id ?? null;
+    const leasePid =
+      leasePidRaw === undefined || leasePidRaw === "null" || leasePidRaw === ""
         ? null
-        : Number(pidRaw);
-    const ticks = f.process_start_ticks ?? null;
-    const bootId = f.boot_id ?? null;
-    const hasProcessEvidence =
-      pid !== null &&
-      Number.isFinite(pid) &&
-      pid > 0 &&
-      typeof ticks === "string" &&
-      ticks.length > 0 &&
-      typeof bootId === "string" &&
-      bootId.length > 0;
+        : Number(leasePidRaw);
+
+    const observedBoot = f.observed_boot_id || null;
+    const bootIdMatches = parseBoolish(f.boot_id_matches);
+    const pidDirExists = parseBoolish(f.pid_dir_exists);
+    const observedTicks = f.observed_process_start_ticks || null;
+    const startTicksMatch = parseBoolish(f.start_ticks_match);
+    const deadReason = f.dead_reason || null;
+
+    const hasLeaseStamp =
+      leasePid !== null &&
+      Number.isFinite(leasePid) &&
+      leasePid > 0 &&
+      typeof leaseTicks === "string" &&
+      leaseTicks.length > 0 &&
+      typeof leaseBoot === "string" &&
+      leaseBoot.length > 0;
+
+    const hasLocalObservation =
+      deadReason != null &&
+      deadReason.length > 0 &&
+      bootIdMatches !== null &&
+      pidDirExists !== null &&
+      typeof observedBoot === "string" &&
+      observedBoot.length > 0;
+
+    const dualSided = hasLeaseStamp && hasLocalObservation;
+
+    let comparisonOk = false;
+    let comparisonFail = null;
+    if (dualSided) {
+      if (!bootIdMatches) {
+        comparisonFail = "boot_id_matches_false";
+      } else if (!DEAD_REASONS_OK.has(deadReason)) {
+        comparisonFail = `dead_reason_not_ok:${deadReason}`;
+      } else if (deadReason === "pid_absent" && pidDirExists !== false) {
+        comparisonFail = "pid_absent_but_dir_exists";
+      } else if (
+        deadReason === "start_ticks_mismatch" &&
+        (pidDirExists !== true || startTicksMatch !== false)
+      ) {
+        comparisonFail = "start_ticks_mismatch_inconsistent";
+      } else {
+        comparisonOk = true;
+      }
+    }
+
     events.push({
       file,
       dead: f.dead || null,
       expiresInMs: Number.isFinite(expiresInMs) ? expiresInMs : null,
-      pid,
-      processStartTicks: ticks,
-      bootId,
-      hasProcessEvidence,
+      leasePid,
+      leaseProcessStartTicks: leaseTicks,
+      leaseBootId: leaseBoot,
+      observedBootId: observedBoot,
+      bootIdMatches,
+      pidDirExists,
+      observedProcessStartTicks: observedTicks,
+      startTicksMatch,
+      deadReason,
+      hasLeaseStamp,
+      hasLocalObservation,
+      dualSided,
+      comparisonOk,
+      comparisonFail,
       preTtl: Number.isFinite(expiresInMs) && expiresInMs > 0,
-      line: line.slice(0, 500),
+      line: line.slice(0, 800),
     });
   }
 }
 
-const withEvidence = events.filter((e) => e.hasProcessEvidence);
-const missingEvidence = events.filter((e) => !e.hasProcessEvidence);
+const dual = events.filter((e) => e.dualSided);
+const leaseOnly = events.filter((e) => e.hasLeaseStamp && !e.hasLocalObservation);
+const bare = events.filter((e) => !e.hasLeaseStamp);
+const comparisonFails = dual.filter((e) => !e.comparisonOk);
 const notPreTtl = events.filter((e) => !e.preTtl);
 const uniqueDead = new Set(events.map((e) => e.dead).filter(Boolean));
-const uniqueBoot = new Set(
-  withEvidence.map((e) => e.bootId).filter((b) => b && b.length)
-);
-const uniquePidTicks = new Set(
-  withEvidence.map((e) => `${e.pid}@${e.processStartTicks}`)
-);
+const expectOk = expectCount == null ? null : events.length === expectCount;
 
-const expectOk =
-  expectCount == null ? null : events.length === expectCount;
+let status;
+let ok;
+if (events.length === 0) {
+  status = "no_supersede_lines";
+  ok = false;
+} else if (notPreTtl.length) {
+  status = "failed_non_pre_ttl";
+  ok = false;
+} else if (expectCount != null && !expectOk) {
+  status = "failed_expect_count";
+  ok = false;
+} else if (dual.length === events.length && comparisonFails.length === 0) {
+  status = "pass_process_evidence";
+  ok = true;
+} else if (dual.length === events.length && comparisonFails.length > 0) {
+  status = "failed_comparison";
+  ok = false;
+} else if (bare.length === events.length) {
+  // Pre-enrichment authorizing soak: count + flag only — NOT a pass.
+  status = "count_and_flag_only";
+  ok = false;
+} else {
+  status = "failed_incomplete_evidence_fields";
+  ok = false;
+}
 
 const report = {
   kind: "celld-same-host-supersede-audit",
   auditedAt: new Date().toISOString(),
+  auditorGitCommit: gitHead(),
+  authorizingSoakGitCommit: "112a8aa6ecb2d11053cca10118c8eb4e718d0a78",
   logs: byFile,
   totals: {
     supersedes: events.length,
-    withProcessEvidence: withEvidence.length,
-    missingProcessEvidenceInLog: missingEvidence.length,
+    dualSided: dual.length,
+    leaseStampOnly: leaseOnly.length,
+    bareDecisionOnly: bare.length,
+    comparisonOk: dual.filter((e) => e.comparisonOk).length,
+    comparisonFail: comparisonFails.length,
     preTtl: events.filter((e) => e.preTtl).length,
     notPreTtl: notPreTtl.length,
     uniqueDeadSessions: uniqueDead.size,
-    uniqueBootIds: uniqueBoot.size,
-    uniquePidStartPairs: uniquePidTicks.size,
   },
   expectCount,
   expectOk,
   honesty: {
-    messageMeans:
-      "Lab emits this INFO only when expires_ms > now AND host_process proved the owner dead on this host (pid gone or start-ticks mismatch; same boot_id). TTL-only fences do not use this message.",
-    processEvidence:
-      withEvidence.length === events.length && events.length > 0
-        ? "Every supersede line carries pid + process_start_ticks + boot_id (post-enrichment lab)."
-        : missingEvidence.length === events.length && events.length > 0
-          ? "Log lines lack pid/start ticks/boot_id (pre-enrichment lab). Deadness was still evaluated in-process at fence time; this audit cannot re-read /proc retrospectively. Re-soak on enriched lab or capture logs that include those fields for a field-level check."
-          : "Mixed: some lines include process evidence fields.",
-    cannotRetrospectiveProc:
-      "Off-host audit cannot re-open Mac mini /proc; field-level check validates the stamped identity was logged and well-formed, not a second live /proc probe.",
+    count_and_flag_only:
+      "Pre-enrichment logs show the supersede *decision* (dead= session key + expires_in_ms) but not the process evidence or local /proc observation. This status confirms count and that every line is the same-host pre-TTL message — it does **not** prove the predecessor process was gone. Not a pass.",
+    pass_process_evidence:
+      "Every supersede line carries lease stamp + local observation; dead_reason is pid_absent or start_ticks_mismatch; boot_id matched; comparison fields are internally consistent.",
+    buildChain:
+      "Authorizing soak measured_v4_ready was commit 112a8aa6e (pre-enrichment lab). Dual-sided proof soaks/boards run on a later enriched lab commit — record celldLabGitCommit in evidence.",
   },
-  ok:
-    events.length > 0 &&
-    notPreTtl.length === 0 &&
-    (expectCount == null || expectOk === true) &&
-    (withEvidence.length === events.length ||
-      // Message-only audit for pre-enrichment authorizing soak logs.
-      (process.env.ALLOW_PRE_ENRICHMENT === "1" &&
-        missingEvidence.length === events.length)),
-  status:
-    events.length === 0
-      ? "no_supersede_lines"
-      : notPreTtl.length
-        ? "failed_non_pre_ttl"
-        : expectCount != null && !expectOk
-          ? "failed_expect_count"
-          : withEvidence.length === events.length
-            ? "pass_process_evidence"
-            : process.env.ALLOW_PRE_ENRICHMENT === "1" &&
-                missingEvidence.length === events.length
-              ? "pass_message_only_pre_enrichment"
-              : "failed_missing_process_evidence_fields",
-  sampleMissing: missingEvidence.slice(0, 3).map((e) => e.line),
-  sampleWithEvidence: withEvidence.slice(0, 3).map((e) => ({
-    dead: e.dead,
-    pid: e.pid,
-    processStartTicks: e.processStartTicks,
-    bootId: e.bootId,
-    expiresInMs: e.expiresInMs,
+  ok,
+  status,
+  sampleBare: bare.slice(0, 2).map((e) => e.line),
+  sampleDualOk: dual
+    .filter((e) => e.comparisonOk)
+    .slice(0, 3)
+    .map((e) => ({
+      dead: e.dead,
+      leasePid: e.leasePid,
+      leaseProcessStartTicks: e.leaseProcessStartTicks,
+      leaseBootId: e.leaseBootId,
+      observedBootId: e.observedBootId,
+      pidDirExists: e.pidDirExists,
+      observedProcessStartTicks: e.observedProcessStartTicks,
+      startTicksMatch: e.startTicksMatch,
+      deadReason: e.deadReason,
+      expiresInMs: e.expiresInMs,
+    })),
+  sampleComparisonFail: comparisonFails.slice(0, 5).map((e) => ({
+    fail: e.comparisonFail,
+    deadReason: e.deadReason,
+    line: e.line,
   })),
 };
 
@@ -179,4 +263,7 @@ if (outPath) {
 
 console.log(JSON.stringify(report.totals, null, 2));
 console.log(`status=${report.status} ok=${report.ok}`);
-process.exit(report.ok ? 0 : 1);
+// count_and_flag_only exits 0 so Mac mini agents can land the honest report
+// without treating it as a gate pass (ok=false in JSON).
+if (status === "count_and_flag_only") process.exit(0);
+process.exit(ok ? 0 : 1);

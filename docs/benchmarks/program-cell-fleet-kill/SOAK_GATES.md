@@ -154,8 +154,8 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 2. **Lease-sweep / dead-node GC** (bound stuck maintain) — **landed in lab**
 3. **Alive ≠ ready** (liveness always answers; readiness may 503) — **landed in lab**
 4. **Overnight soak** on the **lab binary** on a **non-suspending** host: environment-valid (suspend-gap ≤2s), then `cycles ≥ 1000` consecutive with **0** readyFails and **0** selfFences — Mac mini: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md) · evidence branch `soak-mac-mini-authorizing-20261101`
-5. **Supersede process-evidence audit** on that soak’s celld logs — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
-6. **Rerun** stale-owner N=40 + wedged N=100 on the lab binary
-7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check)
+5. **Supersede process-evidence audit** — pre-enrichment Mac mini logs → `count_and_flag_only` (not a pass); real proof on **enriched** dual-sided logs (`pass_process_evidence`) — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
+6. **Rerun** stale-owner N=40 + wedged N=100 on the **enriched** lab binary (parallel with step 5)
+7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check); record `celldLabGitCommit` vs authorizing baseline `112a8aa6e`
 
 Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.

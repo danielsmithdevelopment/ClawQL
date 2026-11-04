@@ -13,7 +13,7 @@ This tree is tip **v0.6.3** plus ClawQL **availability** patches for the pre-v4 
 | Lease stamps `host_process` (`pid` + start ticks + `boot_id`) | **Landed** |
 | Same-host supersede when prior `host_process` is provably dead (claim path) | **Landed** — recovery fence + sweep + initial CAS refuse live/unknown |
 | Authorizing overnight soak on lab binary | **Measured** on Mac mini/Colima — [`node-soak-lab-authorizing-mac-mini.json`](../../docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json) (`measured_v4_ready`). Host rules: [`SOAK_HOST.md`](../../docs/benchmarks/program-cell-fleet-kill/SOAK_HOST.md) / [`MAC_MINI_AGENT.md`](../../docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md) |
-| Supersede process-evidence audit | **Next** — [`SUPERSEDE_AUDIT.md`](../../docs/benchmarks/program-cell-fleet-kill/SUPERSEDE_AUDIT.md); log lines now include `pid` / `process_start_ticks` / `boot_id` |
+| Supersede process-evidence audit | Dual-sided logs (lease stamp **and** local `/proc` observation) — [`SUPERSEDE_AUDIT.md`](../../docs/benchmarks/program-cell-fleet-kill/SUPERSEDE_AUDIT.md). Pre-enrichment Mac mini audit = `count_and_flag_only` (not a pass). Authorizing baseline commit `112a8aa6e`. |
 
 ## Same-host supersede (claim path)
 

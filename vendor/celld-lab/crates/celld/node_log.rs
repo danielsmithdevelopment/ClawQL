@@ -4947,17 +4947,41 @@ impl NodeLogManager {
                 wire.expires_ms.saturating_sub(now)
             );
             if wire.expires_ms > now {
-                // Emit pid + start ticks + boot_id so soak audits can re-check
-                // the process evidence without relying only on the message text.
-                let hp = wire.host_process.as_ref();
+                // Log **both** sides of the dead-proof: lease stamp and local
+                // /proc observation. Lease fields alone cannot prove the check
+                // ran; audits need observed_* + dead_reason too.
+                let obs = wire
+                    .host_process
+                    .as_ref()
+                    .map(crate::host_process::HostProcessIdentity::observe_on_this_host);
                 info!(
                     dead,
                     expires_in_ms = wire.expires_ms.saturating_sub(now),
-                    pid = hp.map(|h| h.pid),
-                    process_start_ticks = hp
-                        .map(|h| h.process_start_ticks.as_str())
+                    lease_pid = obs.as_ref().map(|o| o.lease_pid),
+                    lease_process_start_ticks = obs
+                        .as_ref()
+                        .map(|o| o.lease_process_start_ticks.as_str())
                         .unwrap_or(""),
-                    boot_id = hp.map(|h| h.boot_id.as_str()).unwrap_or(""),
+                    lease_boot_id = obs
+                        .as_ref()
+                        .map(|o| o.lease_boot_id.as_str())
+                        .unwrap_or(""),
+                    observed_boot_id = obs
+                        .as_ref()
+                        .and_then(|o| o.observed_boot_id.as_deref())
+                        .unwrap_or(""),
+                    boot_id_matches = obs.as_ref().map(|o| o.boot_id_matches),
+                    pid_dir_exists = obs.as_ref().map(|o| o.pid_dir_exists),
+                    observed_process_start_ticks = obs
+                        .as_ref()
+                        .and_then(|o| o.observed_process_start_ticks.as_deref())
+                        .unwrap_or(""),
+                    start_ticks_match = obs
+                        .as_ref()
+                        .and_then(|o| o.start_ticks_match)
+                        .map(|v| if v { "true" } else { "false" })
+                        .unwrap_or("none"),
+                    dead_reason = obs.as_ref().map(|o| o.reason).unwrap_or("missing_host_process"),
                     "same-host supersede: fencing predecessor whose host_process is provably dead"
                 );
             }
