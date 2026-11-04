@@ -83,7 +83,6 @@ ExpireKey(c) ==
   /\ c \in Cid
   /\ c < nextCid
   /\ keys[c] = "written"
-  /\ charges[c] = 1
   /\ ~piRecorded[c]
   /\ keys' = [keys EXCEPT ![c] = "expired"]
   /\ UNCHANGED <<charges, piRecorded, nextCid, clock>>
@@ -97,6 +96,16 @@ MetadataRecover(c) ==
   /\ charges[c] = 1
   /\ piRecorded' = [piRecorded EXCEPT ![c] = TRUE]
   /\ UNCHANGED <<keys, charges, nextCid, clock>>
+
+\* After TTL with successful search and no PI: first create is still at most one charge.
+PostTtlCreateWhenNotFound(c) ==
+  /\ ~WeakWriteAhead
+  /\ c \in Cid
+  /\ c < nextCid
+  /\ keys[c] = "expired"
+  /\ charges[c] = 0
+  /\ charges' = [charges EXCEPT ![c] = 1]
+  /\ UNCHANGED <<keys, piRecorded, nextCid, clock>>
 
 \* Persist local PI id after Stripe returns (within TTL).
 RecordPi(c) ==
@@ -126,6 +135,7 @@ Next ==
   \/ \E c \in Cid : StripeRetrySameKey(c)
   \/ \E c \in Cid : ExpireKey(c)
   \/ \E c \in Cid : MetadataRecover(c)
+  \/ \E c \in Cid : PostTtlCreateWhenNotFound(c)
   \/ \E c \in Cid : RecordPi(c)
   \/ \E c \in Cid : WeakStripeCreate(c)
   \/ Tick

@@ -41,11 +41,12 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
    `transitionCreditHold` (`hold-transition.ts`).
 3. Compensation stage → confirm with `transitionPendingAction`; re-confirm of
    `executed` is a no-op side-effect.
-4. Stripe PaymentIntent write-ahead idempotency for ACP complete + ACH top-up:
-   durable key → Stripe `Idempotency-Key` → record PI; post-~24h metadata lookup
-   before create (`stripe-idempotency.ts`, `PaymentsStripeIdempotency.tla`).
-   ACP also short-circuits when session is already `completed` or `payment_intent_id`
-   is already on the session.
+4. Stripe PaymentIntent write-ahead idempotency for ACP complete, ACH top-up, and
+   MPP Stripe SPT: durable key → Stripe `Idempotency-Key` → record PI; post-~24h
+   metadata lookup before create; **fail closed** if Stripe Search is unavailable
+   (`stripe-idempotency.ts`, `PaymentsStripeIdempotency.tla`). ACP also
+   short-circuits when session is already `completed` or `payment_intent_id` is
+   already on the session.
 
 ## Production exposure (priority gate)
 

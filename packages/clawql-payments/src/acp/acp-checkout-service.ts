@@ -9,7 +9,8 @@ import { buildAcpCheckoutCompletedEntry, buildAcpCheckoutCreatedEntry } from "..
 import { StripeClientService, stripeTryPromise } from "../stripe/stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js";
 import {
-  findPaymentIntentByMetadata,
+  decidePostTtlPaymentIntentAction,
+  lookupPaymentIntentByMetadata,
   stripeIdempotencyKeyForAcpComplete,
   stripeIdempotencyKeyLikelyExpired,
 } from "../stripe/stripe-idempotency.js";
@@ -270,12 +271,16 @@ export function acpCheckoutLiveLayer(
             let intent;
             if (stripeIdempotencyKeyLikelyExpired(idempotencyWrittenAt)) {
               // Stripe keys expire ~24h — check-then-decide by metadata before create.
-              const existing = yield* stripeTryPromise(
+              const lookup = yield* stripeTryPromise(
                 "stripe acp paymentIntent metadata lookup failed",
-                () => findPaymentIntentByMetadata(stripe, metadata)
+                () => lookupPaymentIntentByMetadata(stripe, metadata)
               );
-              if (existing) {
-                intent = existing;
+              const decision = decidePostTtlPaymentIntentAction(lookup);
+              if (decision.action === "fail_closed") {
+                return yield* Effect.fail(new AcpError({ reason: decision.reason }));
+              }
+              if (decision.action === "reuse") {
+                intent = decision.intent;
               } else {
                 intent = yield* stripeTryPromise("stripe acp SPT paymentIntent create failed", () =>
                   stripe.paymentIntents.create(createParams, {

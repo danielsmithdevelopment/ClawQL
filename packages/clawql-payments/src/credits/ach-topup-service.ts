@@ -13,7 +13,8 @@ import { buildBankLinkedEntry, buildCreditTopupPendingEntry } from "../audit/eve
 import { StripeClientService, stripeTryPromise } from "../stripe/stripe-client-service.js";
 import { StripeApiError, StripeNotConfigured } from "../stripe/stripe-errors.js";
 import {
-  findPaymentIntentByMetadata,
+  decidePostTtlPaymentIntentAction,
+  lookupPaymentIntentByMetadata,
   stripeIdempotencyKeyForAchTopup,
   stripeIdempotencyKeyLikelyExpired,
 } from "../stripe/stripe-idempotency.js";
@@ -325,12 +326,15 @@ export function achTopupLiveLayer(
 
           let pi: Stripe.PaymentIntent;
           if (stripeIdempotencyKeyLikelyExpired(intent.createdAt)) {
-            const existing = yield* stripeTryPromise(
-              "ACH paymentIntent metadata lookup failed",
-              () => findPaymentIntentByMetadata(stripe, metadata)
+            const lookup = yield* stripeTryPromise("ACH paymentIntent metadata lookup failed", () =>
+              lookupPaymentIntentByMetadata(stripe, metadata)
             );
-            if (existing) {
-              pi = existing;
+            const decision = decidePostTtlPaymentIntentAction(lookup);
+            if (decision.action === "fail_closed") {
+              return yield* Effect.fail(new AchTopupError({ reason: decision.reason }));
+            }
+            if (decision.action === "reuse") {
+              pi = decision.intent;
             } else {
               pi = yield* stripeTryPromise(
                 "paymentIntents.create",

@@ -84,8 +84,12 @@ export {
 } from "./stripe-catalog-service.js";
 export {
   STRIPE_IDEMPOTENCY_TTL_MS,
+  decidePostTtlPaymentIntentAction,
   findPaymentIntentByMetadata,
+  lookupPaymentIntentByMetadata,
   stripeIdempotencyKeyForAcpComplete,
   stripeIdempotencyKeyForAchTopup,
+  stripeIdempotencyKeyForMpp,
   stripeIdempotencyKeyLikelyExpired,
+  type PaymentIntentMetadataLookup,
 } from "./stripe-idempotency.js";

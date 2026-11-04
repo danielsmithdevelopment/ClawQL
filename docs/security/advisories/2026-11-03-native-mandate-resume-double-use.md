@@ -1,8 +1,9 @@
 # Draft GHSA — Native MCP resume could re-use a single-use approval
 
-**Status:** Draft for publication when the fix is on `main` / in a release.  
+**Status:** Fix merged to `main` via PR #1459 (2026-11-04). Draft GHSA ready to
+publish with the next release that includes that commit.  
 **Public retract:** **Not required** — no npm, Helm chart, or managed-hosting
-release shipped the vulnerable path; finding is pre-public / `main`-only.  
+release shipped the vulnerable path; finding was pre-public / `main`-only.  
 **Severity:** High (for any deployment that exposed native destructive tools under
 `CLAWQL_OPERATION_RISK_ENFORCE=1` with human resume via `approvedExecutionId`).  
 **CVE:** TBD (assign when publishing on GitHub Security Advisories)  
