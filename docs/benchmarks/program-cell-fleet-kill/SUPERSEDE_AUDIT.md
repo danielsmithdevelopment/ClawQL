@@ -82,22 +82,34 @@ Meanwhile (independent): rebuild enriched lab; run stale-owner N=40 and wedged N
 
 ## Step 3 (parallel — does not wait on Mac mini count/flag)
 
-On enriched lab binary:
+On enriched lab binary. Stock boards used `CELLD_TTL_MS=2000` (stale-owner) / `3000` (wedge). On this cloud host R2 renewals often go ambiguous under those TTLs (lease watchdog self-fence). Remeasure used **`CELLD_TTL_MS=10000`** and recorded that in evidence — not a silent raise to hide supersede bugs; stock ceilings unchanged.
 
 ```bash
 export CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld
 export STREAMS_CELLD_FLEET_REQUIRED=1
-# stale-owner N=40 (prior stock used CELLD_TTL_MS=2000)
+# unset FLEET_PHASED_OUT so EVIDENCE path wins
+
 FLEET_PHASED_N=40 FLEET_PHASED_WEDGE_HEALTH=1 FLEET_PHASED_STALE_OWNER=1 \
-  CELLD_TTL_MS=2000 FLEET_PHASED_FENCE_MODE=lab_enriched_stale_owner \
+  FLEET_PHASED_SCORE_MODE=correctness_availability_v2 FLEET_PHASED_AVAIL_CEILING=0.25 \
+  FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1 CELLD_TTL_MS=10000 \
+  FLEET_PHASED_FENCE_MODE=lab_enriched_stale_owner \
   FLEET_PHASED_EVIDENCE=docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-lab-enriched.json \
   npm run benchmark:fleet-phased-kill
 
-# wedged N=100 (prior stock used CELLD_TTL_MS=3000)
 FLEET_PHASED_N=100 FLEET_PHASED_WEDGE_HEALTH=1 \
-  CELLD_TTL_MS=3000 FLEET_PHASED_FENCE_MODE=lab_enriched_wedged \
+  FLEET_PHASED_SCORE_MODE=correctness_availability_v2 FLEET_PHASED_AVAIL_CEILING=0.05 \
+  FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1 CELLD_TTL_MS=10000 \
+  FLEET_PHASED_FENCE_MODE=lab_enriched_wedged \
   FLEET_PHASED_EVIDENCE=docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-lab-enriched.json \
   npm run benchmark:fleet-phased-kill
 ```
 
-Board logs also emit dual-sided supersede lines — feed them to the auditor for extra step-2 evidence.
+### Measured (enriched lab `10c9eae89` / tip)
+
+| Board | Result | Notes |
+| ----- | ------ | ----- |
+| Stale-owner N=40 | **pass** (`staleSend=0`) | TTL 10s |
+| Wedge N=100 @ TTL 3s | **fail** correctness (2× `lost_midflight_intent`) | preserved as `phased-n100-wedge-lab-enriched-ttl3s-failed.json` |
+| Wedge N=100 @ TTL 10s | **pass** | `phased-n100-wedge-lab-enriched.json` |
+
+Primary process-evidence proof remains the enriched soak audit (`pass_process_evidence`, 476 supersedes).
