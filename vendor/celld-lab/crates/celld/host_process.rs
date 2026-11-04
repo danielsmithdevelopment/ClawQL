@@ -20,6 +20,30 @@ pub struct HostProcessIdentity {
     pub boot_id: String,
 }
 
+/// Local observation used when judging a stamped lease identity.
+///
+/// Audits need **both** sides: what the predecessor lease recorded, and what
+/// `/proc` showed on this host at the check. Logging only the lease fields
+/// cannot prove the comparison ran.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HostProcessDeadnessObservation {
+    pub lease_pid: u32,
+    pub lease_process_start_ticks: String,
+    pub lease_boot_id: String,
+    pub observed_boot_id: Option<String>,
+    pub boot_id_matches: bool,
+    pub pid_dir_exists: bool,
+    pub observed_process_start_ticks: Option<String>,
+    /// `Some(true)` when pid exists and ticks equal the lease; `Some(false)`
+    /// when pid exists and ticks differ; `None` when pid is absent / unread.
+    pub start_ticks_match: Option<bool>,
+    pub provably_dead: bool,
+    /// Stable token for logs/audits: `pid_absent` | `start_ticks_mismatch` |
+    /// `still_live` | `boot_mismatch_or_cross_host` | `pid_zero` |
+    /// `boot_unreadable`.
+    pub reason: &'static str,
+}
+
 /// Whether a node lease may be treated as dead for fencing / claim supersede.
 ///
 /// - Published expiry already passed → dead (stock tip rule).
@@ -55,34 +79,118 @@ impl HostProcessIdentity {
         })
     }
 
-    /// True when this identity's process is gone **on the current host**.
-    ///
-    /// - Different `boot_id` than the running host → not same-host proof; caller
-    ///   must not supersede (cross-host / reboot without matching fields).
-    /// - Same boot, PID missing → dead.
-    /// - Same boot, PID present but start ticks differ → PID reused; dead.
-    /// - Same boot, PID + start match → still live; do not supersede.
-    pub fn is_provably_dead_on_this_host(&self) -> bool {
-        let Ok(current_boot) = fs::read_to_string("/proc/sys/kernel/random/boot_id") else {
-            return false;
+    /// Compare this lease stamp to local `/proc` (both sides of the check).
+    pub fn observe_on_this_host(&self) -> HostProcessDeadnessObservation {
+        let lease_pid = self.pid;
+        let lease_process_start_ticks = self.process_start_ticks.clone();
+        let lease_boot_id = self.boot_id.clone();
+
+        let observed_boot_id = fs::read_to_string("/proc/sys/kernel/random/boot_id")
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
+        let Some(ref current_boot) = observed_boot_id else {
+            return HostProcessDeadnessObservation {
+                lease_pid,
+                lease_process_start_ticks,
+                lease_boot_id,
+                observed_boot_id: None,
+                boot_id_matches: false,
+                pid_dir_exists: false,
+                observed_process_start_ticks: None,
+                start_ticks_match: None,
+                provably_dead: false,
+                reason: "boot_unreadable",
+            };
         };
-        let current_boot = current_boot.trim();
-        if self.boot_id.is_empty() || self.boot_id != current_boot {
-            // Cross-host or unknown boot — not a same-host dead proof.
-            return false;
+
+        if self.boot_id.is_empty() || &self.boot_id != current_boot {
+            return HostProcessDeadnessObservation {
+                lease_pid,
+                lease_process_start_ticks,
+                lease_boot_id,
+                observed_boot_id: Some(current_boot.clone()),
+                boot_id_matches: false,
+                pid_dir_exists: false,
+                observed_process_start_ticks: None,
+                start_ticks_match: None,
+                provably_dead: false,
+                reason: "boot_mismatch_or_cross_host",
+            };
         }
+
         if self.pid == 0 {
-            return false;
+            return HostProcessDeadnessObservation {
+                lease_pid,
+                lease_process_start_ticks,
+                lease_boot_id,
+                observed_boot_id: Some(current_boot.clone()),
+                boot_id_matches: true,
+                pid_dir_exists: false,
+                observed_process_start_ticks: None,
+                start_ticks_match: None,
+                provably_dead: false,
+                reason: "pid_zero",
+            };
         }
+
         let proc_dir = format!("/proc/{}", self.pid);
-        if !Path::new(&proc_dir).exists() {
-            return true;
+        let pid_dir_exists = Path::new(&proc_dir).exists();
+        if !pid_dir_exists {
+            return HostProcessDeadnessObservation {
+                lease_pid,
+                lease_process_start_ticks,
+                lease_boot_id,
+                observed_boot_id: Some(current_boot.clone()),
+                boot_id_matches: true,
+                pid_dir_exists: false,
+                observed_process_start_ticks: None,
+                start_ticks_match: None,
+                provably_dead: true,
+                reason: "pid_absent",
+            };
         }
+
         match read_process_start_ticks(self.pid) {
-            Some(ticks) => ticks != self.process_start_ticks,
+            Some(ticks) => {
+                let matches = ticks == self.process_start_ticks;
+                HostProcessDeadnessObservation {
+                    lease_pid,
+                    lease_process_start_ticks,
+                    lease_boot_id,
+                    observed_boot_id: Some(current_boot.clone()),
+                    boot_id_matches: true,
+                    pid_dir_exists: true,
+                    observed_process_start_ticks: Some(ticks),
+                    start_ticks_match: Some(matches),
+                    provably_dead: !matches,
+                    reason: if matches {
+                        "still_live"
+                    } else {
+                        "start_ticks_mismatch"
+                    },
+                }
+            }
             // Unreadable stat while dir exists — treat as live (fail closed).
-            None => false,
+            None => HostProcessDeadnessObservation {
+                lease_pid,
+                lease_process_start_ticks,
+                lease_boot_id,
+                observed_boot_id: Some(current_boot.clone()),
+                boot_id_matches: true,
+                pid_dir_exists: true,
+                observed_process_start_ticks: None,
+                start_ticks_match: None,
+                provably_dead: false,
+                reason: "still_live",
+            },
         }
+    }
+
+    /// True when this identity's process is gone **on the current host**.
+    pub fn is_provably_dead_on_this_host(&self) -> bool {
+        self.observe_on_this_host().provably_dead
     }
 }
 
@@ -108,6 +216,12 @@ mod tests {
         assert!(!id.boot_id.is_empty());
         assert!(!id.process_start_ticks.is_empty());
         assert!(!id.is_provably_dead_on_this_host());
+        let obs = id.observe_on_this_host();
+        assert!(obs.boot_id_matches);
+        assert!(obs.pid_dir_exists);
+        assert_eq!(obs.start_ticks_match, Some(true));
+        assert_eq!(obs.reason, "still_live");
+        assert!(!obs.provably_dead);
     }
 
     #[test]
@@ -128,6 +242,11 @@ mod tests {
             process_start_ticks: "1".into(),
             boot_id: live.boot_id.clone(),
         };
+        let obs = dead.observe_on_this_host();
+        assert!(obs.provably_dead);
+        assert_eq!(obs.reason, "pid_absent");
+        assert!(!obs.pid_dir_exists);
+        assert!(obs.boot_id_matches);
         assert!(dead.is_provably_dead_on_this_host());
         assert!(lease_may_be_fenced_as_dead(u64::MAX, Some(&dead), 0));
         let other_boot = HostProcessIdentity {
@@ -135,6 +254,9 @@ mod tests {
             process_start_ticks: "1".into(),
             boot_id: "not-this-boot".into(),
         };
+        let obs2 = other_boot.observe_on_this_host();
+        assert!(!obs2.provably_dead);
+        assert_eq!(obs2.reason, "boot_mismatch_or_cross_host");
         assert!(!other_boot.is_provably_dead_on_this_host());
         assert!(!lease_may_be_fenced_as_dead(u64::MAX, Some(&other_boot), 0));
     }
