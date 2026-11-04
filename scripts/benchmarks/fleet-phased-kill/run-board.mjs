@@ -339,10 +339,14 @@ function spawnLogged(cmd, args, logPath, env = process.env) {
   mkdirSync(dirname(logPath), { recursive: true });
   // Append when collecting timing (RUST_LOG=timing*) so durable_wait wait_us
   // survives startNode restarts; truncate otherwise to keep board logs small.
+  // FLEET_PHASED_APPEND_LOGS=1 also appends — needed to forensics supersede /
+  // lease-sweep lines across SIGKILL+restart (default truncate hid TTL3s
+  // lost-intent context: only the final ~30s of each node log survived).
   const rustLog = String(env.RUST_LOG || env.CELLD_RUST_LOG || "");
-  const appendTiming = /timing/i.test(rustLog);
-  const fd = openSync(logPath, appendTiming ? "a" : "w");
-  if (appendTiming) {
+  const appendLogs =
+    process.env.FLEET_PHASED_APPEND_LOGS === "1" || /timing/i.test(rustLog);
+  const fd = openSync(logPath, appendLogs ? "a" : "w");
+  if (appendLogs) {
     writeSync(
       fd,
       `\n----- celld restart ${new Date().toISOString()} ${cmd} ${args.join(" ")} -----\n`

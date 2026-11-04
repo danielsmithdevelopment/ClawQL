@@ -232,6 +232,20 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Before v4 (order):** (1) **incarnation + same-host supersede** (lease carries `pid` + process start time + `bootId`; supersede only when that exact process is gone — **cross-host wait TTL or refuse**, do not reopen stale-owner); (2) lease-sweep; (3) alive≠ready; (4) **overnight soak on that fixed build** meeting [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md) (`cycles ≥ 1000`; **0** readyFails and **0** selfFences; **environment-valid**: BOOTTIME−MONOTONIC growth ≤2s or run is void/restarted — no partial combining); (5) **only then** N=1000 under unchanged frozen criteria. A soak only authorizes the binary it measured — stock 0.6.3 baseline cannot authorize v4. Lab tree: [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md) — product path landed. Authorizing soak: **not on cloud-agent VMs** — use non-suspending host ([`SOAK_HOST.md`](../program-cell-fleet-kill/SOAK_HOST.md)); do not raise TTL. Pause recovery after intentional suspend is a **separate** probe (`benchmark:fleet-pause-recovery`), not a soak gate.
 
+### v4 BLOCKED — lab enriched wedged N=100 @ TTL 3s lost intent
+
+**Headline (step-3 wedge board):** lab enriched wedged N=100 · **`CELLD_TTL_MS=3000`** · **2** × `lost_midflight_intent` (`i=1`, `i=5`, both `after_intent_before_call`) · `ok=false`. Full narrative: [`WEDGE_TTL3S_CORRECTNESS.md`](../program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md).
+
+| Arm | TTL | Correctness | Role |
+| --- | --- | ----------- | ---- |
+| Lab enriched wedged N=100 | **3000** | **2 lost intents — FAIL** | **Headline** — blocks v4 |
+| Lab enriched wedged N=100 | 10000 | 0 — pass | **Diagnostic only** — longer TTL hid the bug; not a green light |
+| Stock 0.6.3 wedged N=100 (earlier host, 2026-10-31) | 3000 | 0 | Regression signal — remeasure **on this same host** to separate lab patches vs host timing |
+
+**Frozen rule:** correctness must be 0 under every condition tested. TTL may affect availability only. Raising TTL until the board passes is loosening. Mechanism claim stays **paused** until root-caused (stock same-host control + supersede/`dead_reason` + lease-sweep / eager dead-leader recovery vs in-flight intent on the two failing trials).
+
+**Separation (partial):** same-host stock 0.6.3 @ TTL=3000 **passed** under quiet R2; lab quiet remasure also **passed**. Original 2-loss run had avail pressure (resumeMs up to ~62s, 5 avail failures) and truncated logs with ambiguous renewals — not reproduced. Cause (lab patches vs host timing) **unresolved** until a pressure-matched loss with append logs. Details: [`WEDGE_TTL3S_CORRECTNESS.md`](../program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md).
+
 **Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
 
 **Soak gates (frozen, strict):** nodes ≤2; readyFail & selfFence **observed and Wilson 95% UB** ≤**0.5%** each; **`cycles ≥ 1000`**. At n=1000 that is effectively **0 readyFails and 0 selfFences** (1 event → UB≈0.56% fail). Deliberate headroom after v2/v3 avail fails — not relaxed to ~1% UB. See [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md).
