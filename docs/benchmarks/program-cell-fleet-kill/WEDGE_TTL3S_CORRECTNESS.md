@@ -42,6 +42,10 @@ Prior stock **0.6.3** wedged N=100 at TTL=3000 on an earlier host pass: **0/100*
 
 **Open:** reproduce the 2-loss case under lease pressure (append logs on), then pull supersede / eager-recovery / `dead_reason` around those trials. Until then lab-vs-stock cause stays **unresolved**; v4 stays blocked on the original failure.
 
+### Pressure remasure (still no reproduction)
+
+Lab enriched wedged N=100 @ TTL=3000 with append logs + parallel stock companion board (+ brief R2 object churn): **PASS** 0 lost ([`phased-n100-wedge-lab-enriched-ttl3s-pressure.json`](./phased-n100-wedge-lab-enriched-ttl3s-pressure.json)). Forensics: **1** ambiguous renew, **0** supersede, **0** eager-recovery. Resume p99≈6.8s — still far from the original fail’s ~62s resume tail. Induced load did not recreate the lease-pressure regime of the headline failure.
+
 ### Code note (hypothesis, not yet trial-tied)
 
 Lab `host_process::lease_may_be_fenced_as_dead` (`vendor/celld-lab/crates/celld/host_process.rs`):
