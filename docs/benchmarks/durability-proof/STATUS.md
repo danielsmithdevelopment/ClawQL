@@ -244,7 +244,9 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Frozen rule:** correctness must be 0 under every condition tested. TTL may affect availability only. Raising TTL until the board passes is loosening. Mechanism claim stays **paused** until root-caused (stock same-host control + supersede/`dead_reason` + lease-sweep / eager dead-leader recovery vs in-flight intent on the two failing trials).
 
-**Separation (partial):** same-host stock 0.6.3 @ TTL=3000 **passed** under quiet R2; lab quiet remasure also **passed**. Original 2-loss run had avail pressure (resumeMs up to ~62s, 5 avail failures) and truncated logs with ambiguous renewals — not reproduced. Cause (lab patches vs host timing) **unresolved** until a pressure-matched loss with append logs. Details: [`WEDGE_TTL3S_CORRECTNESS.md`](../program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md).
+**Separation (partial):** same-host stock 0.6.3 @ TTL=3000 **passed** under quiet R2; lab quiet remasure also **passed**. Original 2-loss run had avail pressure (resumeMs up to ~62s, 5 avail failures) and truncated logs with ambiguous renewals — not reproduced. Quiet passes do **not** clear 2/100 (≈1% rate; 0/100 → ~3.7% UB).
+
+**Lead + fix (do not wait on load repro):** treating expiry as death is unsafe by itself. Lab fix: `lease_may_be_fenced` (expiry → fenced takeover only) vs `lease_open_log_may_be_recovered_as_dead` (process evidence / cross-host TTL+fencing). TLA `formal/tla/lease/LeaseSweepExpiry` (weak expiry-as-dead counterexamples). Deterministic test: `docs/examples/streams-celld/scripts/expiry-sweep-intent.test.mjs`. Narrative: [`EXPIRY_NOT_DEAD.md`](../program-cell-fleet-kill/EXPIRY_NOT_DEAD.md). After fix lands in the measured binary, rerun TTL=3s wedge at **N=300**. v4 still blocked until that board is clean.
 
 **Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
 

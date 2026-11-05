@@ -40,25 +40,20 @@ Prior stock **0.6.3** wedged N=100 at TTL=3000 on an earlier host pass: **0/100*
 | **2. Supersede on failing trials** | Original board audit: **0** `same-host supersede` lines (logs truncated by default `startNode` rewrite). Quiet remasure with `FLEET_PHASED_APPEND_LOGS=1`: **0** supersede lines (and 0 lost intents). No `dead_reason` to inspect for a same-host supersede of a wedged-alive owner on a failing trial — **not reproduced**. |
 | **3. Lease-sweep / eager recovery** | Code: `lease_may_be_fenced_as_dead` treats published expiry alone as dead; `sweep_dead_leaders` recovers open logs (`eager recovery: dead session with an open log`). Quiet remasure: **0** eager-recovery lines. Original truncated end-of-run logs showed **ambiguous renewals** + peer unreachable — consistent with expiry-while-wedged under R2 pressure, but **not trial-tied** to i=1 / i=5. |
 
-**Open:** reproduce the 2-loss case under lease pressure (append logs on), then pull supersede / eager-recovery / `dead_reason` around those trials. Until then lab-vs-stock cause stays **unresolved**; v4 stays blocked on the original failure.
+**Do not wait on load reproduction to act.** Treating expiry as death is unsafe by itself. Lead and fix: [`EXPIRY_NOT_DEAD.md`](./EXPIRY_NOT_DEAD.md).
 
-### Pressure remasure (still no reproduction)
+Quiet remasures (0/100) do **not** clear the 2/100 headline — consistent with ~1% rate; rule-of-three on 100 zeros is still ~3.7% UB. After the fix, rerun TTL=3s wedge at **N=300** (zero losses → ~1% UB); the deterministic SIGSTOP+sweep test is the real proof.
 
-Lab enriched wedged N=100 @ TTL=3000 with append logs + parallel stock companion board (+ brief R2 object churn): **PASS** 0 lost ([`phased-n100-wedge-lab-enriched-ttl3s-pressure.json`](./phased-n100-wedge-lab-enriched-ttl3s-pressure.json)). Forensics: **1** ambiguous renew, **0** supersede, **0** eager-recovery. Resume p99≈6.8s — still far from the original fail’s ~62s resume tail. Induced load did not recreate the lease-pressure regime of the headline failure.
+### Code fix (lab)
 
-### Code note (hypothesis, not yet trial-tied)
+- `lease_may_be_fenced` — expiry permits **fenced takeover** only.
+- `lease_open_log_may_be_recovered_as_dead` — open-log sweep requires process evidence (same-host) or TTL+fencing (cross-host/unstamped). Same-host live past expiry → **not** abandoned.
+- TLA: `formal/tla/lease/LeaseSweepExpiry` (weak expiry-as-dead must counterexample).
 
-Lab `host_process::lease_may_be_fenced_as_dead` (`vendor/celld-lab/crates/celld/host_process.rs`):
-
-- `expires_ms <= now` → **dead** (even if the process is still alive / wedged)
-- else same-host `host_process` provably gone → dead
-- else not dead
-
-`NodeLogManager::sweep_dead_leaders` uses that predicate and, when dead + open log, runs `recover` (`eager recovery: dead session with an open log`). Dual-sided `same-host supersede: … dead_reason=…` only logs when fencing a **still-unexpired** lease via host_process proof. First TTL=3s board audit saw **0** supersede lines — consistent with post-TTL sweep/recovery rather than pre-TTL same-host supersede, **or** with truncated logs (`startNode` default-truncated celld logs each restart; harness now supports `FLEET_PHASED_APPEND_LOGS=1` for forensics).
-
-## Until root-caused
+## Until the fix is measured
 
 - **v4 N=1000 stays blocked**
 - Step-3 wedge board headline = **TTL 3s fail** (10s pass beside it as diagnostic only)
 - Mechanism claim stays **paused**
 - Do not raise TTL to green-wash the board
+- After expiry≠dead fix is in the measured lab binary: deterministic SIGSTOP+sweep green, then TTL=3s wedge **N=300** with 0 lost

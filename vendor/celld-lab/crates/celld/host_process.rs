@@ -3,6 +3,16 @@
 //! A new generation may supersede its own prior lease **only** when the
 //! recorded process cannot still be running on **this** host. Cross-host
 //! duplicates must wait out the lease TTL or be refused (stale-owner safety).
+//!
+//! # Expiry ≠ dead
+//!
+//! Published lease expiry permits a **fenced takeover** (epoch bump + storage
+//! CAS the old owner cannot pass). It does **not** prove the owner is dead.
+//! A wedged owner is alive past expiry — that is what wedged means. Eager
+//! open-log recovery must not treat expiry alone as abandonment: recovering
+//! while the owner is frozen mid-write can read the log before an in-flight
+//! intent lands, then start a generation without that intent (stale-incarnation
+//! / H2 through the sweep path).
 
 use std::fs;
 use std::path::Path;
@@ -44,20 +54,85 @@ pub struct HostProcessDeadnessObservation {
     pub reason: &'static str,
 }
 
-/// Whether a node lease may be treated as dead for fencing / claim supersede.
+/// Expiry alone: may take over only through the **fenced** path (epoch bump +
+/// CAS the old owner cannot pass). Never proof the owner process is gone.
+#[inline]
+pub fn lease_expiry_permits_fenced_takeover(expires_ms: u64, now_ms: u64) -> bool {
+    expires_ms <= now_ms
+}
+
+/// Same-host process evidence that the recorded owner is gone.
+/// Never inferred from published expiry.
+pub fn lease_owner_provably_dead(host_process: Option<&HostProcessIdentity>) -> bool {
+    host_process.is_some_and(HostProcessIdentity::is_provably_dead_on_this_host)
+}
+
+/// Whether a node lease may be **fenced** / claimed for takeover.
 ///
-/// - Published expiry already passed → dead (stock tip rule).
-/// - Same-host `host_process` proves the recorded PID is gone → dead (lab).
-/// - Missing stamp, live PID, or different boot → **not** dead; wait TTL / refuse.
+/// - Published expiry already passed → fenceable (takeover must fence).
+/// - Same-host `host_process` proves the recorded PID is gone → fenceable.
+/// - Otherwise → wait TTL / refuse.
+///
+/// This is **not** permission to treat an open log as abandoned dead-leader
+/// content — see [`lease_open_log_may_be_recovered_as_dead`].
+pub fn lease_may_be_fenced(
+    expires_ms: u64,
+    host_process: Option<&HostProcessIdentity>,
+    now_ms: u64,
+) -> bool {
+    lease_expiry_permits_fenced_takeover(expires_ms, now_ms)
+        || lease_owner_provably_dead(host_process)
+}
+
+/// Historical name used at fence/claim call sites. Prefer [`lease_may_be_fenced`].
+///
+/// **Warning:** the old body treated expiry as “dead.” Call sites that recover
+/// open logs must use [`lease_open_log_may_be_recovered_as_dead`] instead.
+#[inline]
 pub fn lease_may_be_fenced_as_dead(
     expires_ms: u64,
     host_process: Option<&HostProcessIdentity>,
     now_ms: u64,
 ) -> bool {
-    if expires_ms <= now_ms {
+    lease_may_be_fenced(expires_ms, host_process, now_ms)
+}
+
+/// Whether eager sweep may recover an **open** log as abandoned dead-leader
+/// content.
+///
+/// - Same-host process provably gone → yes.
+/// - Same-host process still live (including wedged past expiry) → **no**.
+/// - Cross-host / boot mismatch / unstamped → yes only when expiry has passed
+///   (TTL + fencing is the cross-host dead proof; recovery itself fences).
+///
+/// Expiry alone on a same-host live owner must never return true.
+pub fn lease_open_log_may_be_recovered_as_dead(
+    expires_ms: u64,
+    host_process: Option<&HostProcessIdentity>,
+    now_ms: u64,
+) -> bool {
+    if lease_owner_provably_dead(host_process) {
         return true;
     }
-    host_process.is_some_and(HostProcessIdentity::is_provably_dead_on_this_host)
+    match host_process {
+        Some(hp) => {
+            let obs = hp.observe_on_this_host();
+            match obs.reason {
+                // Cannot observe this host's /proc for that stamp — treat like
+                // cross-host: expiry + fenced recovery only.
+                "boot_mismatch_or_cross_host" | "boot_unreadable" => {
+                    lease_expiry_permits_fenced_takeover(expires_ms, now_ms)
+                }
+                // Same boot, process still there (or unreadable → fail closed live).
+                "still_live" | "pid_zero" => false,
+                // pid_absent / start_ticks_mismatch already returned via
+                // lease_owner_provably_dead; keep fail-closed.
+                _ => false,
+            }
+        }
+        // Unstamped lease (stock writers): expiry permits fenced open-log recovery.
+        None => lease_expiry_permits_fenced_takeover(expires_ms, now_ms),
+    }
 }
 
 impl HostProcessIdentity {
@@ -226,9 +301,27 @@ mod tests {
 
     #[test]
     fn fenceable_when_expired_even_without_host_process() {
-        assert!(lease_may_be_fenced_as_dead(100, None, 100));
-        assert!(lease_may_be_fenced_as_dead(99, None, 100));
-        assert!(!lease_may_be_fenced_as_dead(101, None, 100));
+        assert!(lease_may_be_fenced(100, None, 100));
+        assert!(lease_may_be_fenced(99, None, 100));
+        assert!(!lease_may_be_fenced(101, None, 100));
+        // Unstamped + expired: open-log recovery allowed (cross-host/stock path).
+        assert!(lease_open_log_may_be_recovered_as_dead(100, None, 100));
+        assert!(!lease_open_log_may_be_recovered_as_dead(101, None, 100));
+    }
+
+    #[test]
+    fn expired_same_host_live_is_fenceable_but_not_abandoned() {
+        let Some(live) = HostProcessIdentity::current() else {
+            return;
+        };
+        // Wedged past expiry: takeover may fence, but open log is NOT dead.
+        assert!(lease_may_be_fenced(0, Some(&live), 100));
+        assert!(lease_expiry_permits_fenced_takeover(0, 100));
+        assert!(!lease_owner_provably_dead(Some(&live)));
+        assert!(
+            !lease_open_log_may_be_recovered_as_dead(0, Some(&live), 100),
+            "expiry must not treat a still-live same-host owner as dead for open-log sweep"
+        );
     }
 
     #[test]
@@ -236,7 +329,7 @@ mod tests {
         let Some(live) = HostProcessIdentity::current() else {
             return;
         };
-        assert!(!lease_may_be_fenced_as_dead(u64::MAX, Some(&live), 0));
+        assert!(!lease_may_be_fenced(u64::MAX, Some(&live), 0));
         let dead = HostProcessIdentity {
             pid: 1_000_000_007, // almost certainly absent
             process_start_ticks: "1".into(),
@@ -248,7 +341,12 @@ mod tests {
         assert!(!obs.pid_dir_exists);
         assert!(obs.boot_id_matches);
         assert!(dead.is_provably_dead_on_this_host());
-        assert!(lease_may_be_fenced_as_dead(u64::MAX, Some(&dead), 0));
+        assert!(lease_may_be_fenced(u64::MAX, Some(&dead), 0));
+        assert!(lease_open_log_may_be_recovered_as_dead(
+            u64::MAX,
+            Some(&dead),
+            0
+        ));
         let other_boot = HostProcessIdentity {
             pid: 1_000_000_007,
             process_start_ticks: "1".into(),
@@ -258,6 +356,55 @@ mod tests {
         assert!(!obs2.provably_dead);
         assert_eq!(obs2.reason, "boot_mismatch_or_cross_host");
         assert!(!other_boot.is_provably_dead_on_this_host());
-        assert!(!lease_may_be_fenced_as_dead(u64::MAX, Some(&other_boot), 0));
+        // Unexpired cross-host: not fenceable, not abandoned.
+        assert!(!lease_may_be_fenced(u64::MAX, Some(&other_boot), 0));
+        assert!(!lease_open_log_may_be_recovered_as_dead(
+            u64::MAX,
+            Some(&other_boot),
+            0
+        ));
+        // Expired cross-host: fenceable + open-log recovery (TTL + fencing).
+        assert!(lease_may_be_fenced(0, Some(&other_boot), 100));
+        assert!(lease_open_log_may_be_recovered_as_dead(
+            0,
+            Some(&other_boot),
+            100
+        ));
+    }
+
+    /// Deterministic H2-via-sweep scenario (predicate layer):
+    /// intent mid-flight → owner still live past expiry → buggy expiry-as-dead
+    /// would authorize open-log recovery; fixed predicate must refuse.
+    #[test]
+    fn wedged_owner_past_expiry_blocks_open_log_abandonment() {
+        let Some(owner) = HostProcessIdentity::current() else {
+            return;
+        };
+        let expires_ms = 1_000;
+        let now_after_wedge = 5_000; // past expiry while process still live
+        assert!(lease_expiry_permits_fenced_takeover(
+            expires_ms,
+            now_after_wedge
+        ));
+        // Buggy historical rule (expiry ⇒ dead):
+        let buggy_expiry_as_dead = expires_ms <= now_after_wedge;
+        assert!(buggy_expiry_as_dead);
+        // Fixed rule:
+        assert!(!lease_open_log_may_be_recovered_as_dead(
+            expires_ms,
+            Some(&owner),
+            now_after_wedge
+        ));
+        // After process is gone, abandonment is allowed even before "now" matters.
+        let gone = HostProcessIdentity {
+            pid: 1_000_000_009,
+            process_start_ticks: "1".into(),
+            boot_id: owner.boot_id.clone(),
+        };
+        assert!(lease_open_log_may_be_recovered_as_dead(
+            expires_ms,
+            Some(&gone),
+            now_after_wedge
+        ));
     }
 }

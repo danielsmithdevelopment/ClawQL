@@ -18,7 +18,7 @@ This tree is tip **v0.6.3** plus ClawQL **availability** patches for the pre-v4 
 ## Same-host supersede (claim path)
 
 1. Writers stamp `host_process` on every node-lease CAS.
-2. Predecessor recovery / dead-leader sweep may fence when expiry passed **or** `host_process` is provably dead on this host (`host_process.rs`).
+2. **Expiry ≠ dead.** Published expiry permits a **fenced** takeover (`lease_may_be_fenced`). Open-log abandonment / eager sweep recovery uses `lease_open_log_may_be_recovered_as_dead` — same-host process evidence, or cross-host/unstamped TTL+fencing. A wedged (still-live) owner past expiry must not have its open log recovered as abandoned. See [`EXPIRY_NOT_DEAD.md`](../../docs/benchmarks/program-cell-fleet-kill/EXPIRY_NOT_DEAD.md) · TLA `formal/tla/lease/LeaseSweepExpiry`.
 3. Initial lease claim replaces an *unexpired* foreign generation only with `same_host_owner_dead=Some(true)`. Live same-host duplicates and unstamped/cross-host unexpired leases wait TTL / retry (never “looks dead”).
 
 ## Build
