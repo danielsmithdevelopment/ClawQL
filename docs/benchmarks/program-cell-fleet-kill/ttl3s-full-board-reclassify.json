@@ -1,0 +1,1322 @@
+{
+  "board": "tier-c-wedge100-lab-20261104021638",
+  "cell": "ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f",
+  "method": "definitional reclassify of all N=100; R2 LTX string scan for after_intent sample; stdout gates for old labels",
+  "effectLedger": {
+    "petsMockOwnerKey": "owner_${idempotencyKey}",
+    "petsMock": "unavailable_after_board",
+    "twinDigest": "unavailable_evidence_overwritten_by_ttl10s_remeasure",
+    "journalSurrogateTrial1": {
+      "entriesPresent": [
+        0,
+        1,
+        2
+      ],
+      "entry2OwnersCreateOk": true,
+      "metaStatus": "completed",
+      "pausedForKillDurable": false
+    }
+  },
+  "summary": {
+    "old": {
+      "pass": 98,
+      "lost_midflight_intent": 2
+    },
+    "new": {
+      "pass": 73,
+      "injection_missed": 1,
+      "incomplete_no_pause": 1,
+      "midflight_pause_durable": 23,
+      "other": 1,
+      "midflight_then_completed": 1
+    },
+    "changed": [
+      {
+        "i": 1,
+        "oldLabel": "lost_midflight_intent",
+        "newLabel": "injection_missed"
+      },
+      {
+        "i": 5,
+        "oldLabel": "lost_midflight_intent",
+        "newLabel": "incomplete_no_pause"
+      },
+      {
+        "i": 9,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 13,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 17,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 21,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 25,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 29,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 33,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 37,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 41,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 45,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 49,
+        "oldLabel": "pass",
+        "newLabel": "other"
+      },
+      {
+        "i": 53,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 57,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 61,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 65,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 69,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 73,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 77,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 81,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 82,
+        "oldLabel": "pass",
+        "newLabel": "midflight_then_completed"
+      },
+      {
+        "i": 87,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 88,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 91,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 94,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      },
+      {
+        "i": 96,
+        "oldLabel": "pass",
+        "newLabel": "midflight_pause_durable"
+      }
+    ],
+    "publishedCorrectnessOld": 2,
+    "publishedCorrectnessNew": 1,
+    "injectionMissedNew": 1,
+    "note": "Definitional correction applied to all 100 rows. Old labels from published stdout gates (only i=1,5 were lost_midflight_intent). New labels use R2 settle where sampled; unsampled pass trials stay pass. Do not rewrite the published 2/100 file \u2014 report side-by-side. i=1 \u2192 injection_missed; i=5 \u2192 incomplete_no_pause (unsettled). Pets effect ledger owner_* unavailable; journal surrogate used for i=1."
+  },
+  "trials": [
+    {
+      "i": 0,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 1,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_1_1793758650321",
+      "oldLabel": "lost_midflight_intent",
+      "newLabel": "injection_missed",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": false,
+        "completed": true,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      },
+      "reasoning": "R2 meta status=completed; never durable paused_for_kill; journal entries 0/1/2 present with entry:2 owners.create ok. Pets __writes owner_* ledger gone (ephemeral); twin digest gone (TTL=10s evidence overwrite). Surrogate: one write effect in journal + normal completion \u21d2 injection window missed, not a mid-flight intent loss."
+    },
+    {
+      "i": 2,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 3,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 4,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 5,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_5_1793758728011",
+      "oldLabel": "lost_midflight_intent",
+      "newLabel": "incomplete_no_pause",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": false,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      },
+      "reasoning": "R2 meta status=running (or incomplete); no durable paused_for_kill; no journal entries. Does not meet injection_missed (requires completed without pause). Effect ledger / twin unavailable. Remains unsettled \u2014 do not reclassify as injection_missed; not proven loss either."
+    },
+    {
+      "i": 6,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 7,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 8,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 9,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_9_1793758918129",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 10,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 11,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 12,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 13,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_13_1793759008063",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 14,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 15,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 16,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 17,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_17_1793759092462",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 18,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 19,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 20,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 21,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_21_1793759174518",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": true,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 22,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 23,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 24,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 25,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_25_1793759258562",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 26,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 27,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 28,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 29,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_29_1793759355920",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 30,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 31,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 32,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 33,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_33_1793759445954",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 34,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 35,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 36,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 37,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_37_1793759601736",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 38,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 39,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 40,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 41,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_41_1793759687320",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 42,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 43,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 44,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 45,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_45_1793759775166",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": true,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 46,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 47,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 48,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 49,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_49_1793759861986",
+      "oldLabel": "pass",
+      "newLabel": "other",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": false,
+        "completed": true,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 50,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 51,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 52,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 53,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_53_1793759946457",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 54,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 55,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 56,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 57,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_57_1793760033032",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 58,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 59,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 60,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 61,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_61_1793760135923",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 62,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 63,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 64,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 65,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_65_1793760239106",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 66,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 67,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 68,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 69,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_69_1793760343633",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 70,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 71,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 72,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 73,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_73_1793760432106",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 74,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 75,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 76,
+      "phase": "before_intent",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 77,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_77_1793760523294",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 78,
+      "phase": "during_call",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 79,
+      "phase": "after_call_before_journal",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 80,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 81,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_81_1793760612425",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 82,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_82_1793760631908",
+      "oldLabel": "pass",
+      "newLabel": "midflight_then_completed",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": true,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 83,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 84,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 85,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 86,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 87,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_87_1793760821399",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 88,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_88_1793760849110",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 89,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 90,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 91,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_91_1793760907450",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": true,
+        "hasEntry2": true,
+        "entry2Owners": true
+      }
+    },
+    {
+      "i": 92,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 93,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 94,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_94_1793760976362",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": true,
+        "hasEntry1": true,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 95,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 96,
+      "phase": "random_tail_unknown",
+      "programId": "phased_after_intent_before_call_96_1793761021955",
+      "oldLabel": "pass",
+      "newLabel": "midflight_pause_durable",
+      "provenance": "r2_ltx_string_scan",
+      "r2": {
+        "paused": true,
+        "completed": false,
+        "running": false,
+        "failed": false,
+        "hasEntry0": false,
+        "hasEntry1": false,
+        "hasEntry2": false,
+        "entry2Owners": false
+      }
+    },
+    {
+      "i": 97,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 98,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    },
+    {
+      "i": 99,
+      "phase": "random_tail_unknown",
+      "programId": null,
+      "oldLabel": "pass",
+      "newLabel": "pass",
+      "provenance": "board_stdout_gates_only_no_r2_sample",
+      "r2": null
+    }
+  ]
+}

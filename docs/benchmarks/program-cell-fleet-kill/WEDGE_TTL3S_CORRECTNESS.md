@@ -13,11 +13,12 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 | Binary | lab enriched `lab_enriched_10c9eae89` |
 | Board | wedged N=100 · `correctness_availability_v2` · fenceMode `lab_enriched_wedged` |
 | `CELLD_TTL_MS` | **3000** |
-| Correctness | **FAIL** — **2** × `lost_midflight_intent` (`i=1`, `i=5`, `after_intent_before_call`) |
+| Correctness (published) | **FAIL** — **2** × `lost_midflight_intent` (`i=1`, `i=5`, `after_intent_before_call`) — fail file kept as-is |
+| Correctness (reclassify) | Side-by-side: **i=1 → `injection_missed`**; **i=5 → `incomplete_no_pause` (unsettled)** — [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json) |
 | Availability | **5**/100 (rate 0.05) — pass at ceiling |
 | Regime | Resume tail up to **~62s**; truncated logs with **`outcome="ambiguous"`** renewals |
 | Evidence | [`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json) |
-| Mechanism | **unexplained** — do not mark resolved |
+| Mechanism | **open** for any remaining loss; trial 1 is an injection miss, not a proven durability failure |
 
 ## What later boards showed (not root cause)
 
@@ -33,17 +34,20 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 
 | Check | Result |
 | ----- | ------ |
-| R2 settle i=1,5 | **Real loss** (i=1): meta present, midflight `paused_for_kill` absent; ok i=9 has it |
-| Host / pause | Cloud Agent VM; no board BOOTTIME telemetry; mono-vs-wall pause **candidate**; **do not void** |
-| Classifier | Timeout was mislabeled lost — **fixed** (`midflight_storage_unknown`); does not erase §1 |
+| R2 settle i=1,5 | **i=1 injection miss** (completed, no durable pause; journal 0/1/2 write ok). **i=5 unsettled**. Pets ledger + twin digest unavailable (overwrite) |
+| Full-board reclassify | All 100 rows old/new side-by-side — [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json). Published fail file **not** rewritten |
+| Host / pause | Cloud Agent VM; trial 1 completed normally (pause clock does not explain it); trial 5 still candidate |
+| Classifier | Timeout → `midflight_storage_unknown`; completed-without-pause → **`injection_missed`** |
+| Evidence path | Unique TTL+UTC default; refuse overwrite unless `FLEET_PHASED_ALLOW_OVERWRITE=1` |
+| BOOTTIME | Lease `mono_ms` on Linux **CLOCK_BOOTTIME** — **hardening**, not claimed as the 2/100 fix |
 
-Lease-belief Ambiguous/receipt paths remain ruled out ([`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)). Open product candidate: **CLOCK_BOOTTIME** lease deadlines (`WeakHolderClockPaused` TLA tooth).
+Lease-belief Ambiguous/receipt paths remain ruled out ([`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)).
 
 Chase remaining:
 
-1. Pause-aware lease clock (BOOTTIME) — concrete candidate from host class + mono `last_ok`
-2. **Force arm A** — Ambiguous/timeout renew response
-3. **Force arm B** — late Applied renew response
+1. **Force arm A** — Ambiguous/timeout renew response
+2. **Force arm B** — late Applied renew response
+3. Dig trial 5 unsettled shape if it reappears under unique evidence paths
 
 ## Expiry ≠ dead (landed; separate)
 

@@ -1,66 +1,80 @@
-# TTL3s 2/100 — three pre-latency checks
+# TTL3s 2/100 — three pre-latency checks (+ trial-1 injection-miss reading)
 
 Cheaper than forced-latency. Done on the original failing board data.
 
 | # | Check | Result |
 | - | ----- | ------ |
-| 1 | R2 settle trials 1 & 5 | **Loss real** (at least i=1): meta durable, midflight pause markers absent; ok neighbor has `paused_for_kill` |
-| 2 | Host / BOOTTIME−MONOTONIC | **Cloud Agent VM**; no board-local drift telemetry; pause candidate **open** (fits resumeMs=62920); run **still counts** |
-| 3 | Classifier audit | **Bug found & fixed**: status timeout/fetchError was counted as `lost_midflight_intent` |
+| 1 | R2 settle trials 1 & 5 | **Trial 1 = injection miss** (completed, never durable `paused_for_kill`); **trial 5 unsettled** (incomplete, no pause) |
+| 2 | Host / BOOTTIME−MONOTONIC | **Cloud Agent VM**; no board-local drift telemetry; pause candidate **open** for trial 5 shape; run **still counts**. BOOTTIME lease deadlines shipped as **hardening**, not as the 2/100 fix |
+| 3 | Classifier audit | **Bug found & fixed**: status timeout/fetchError → `midflight_storage_unknown`; plus new **`injection_missed`** outcome |
 
-Mechanism stays **open**. Pause-aware `CLOCK_BOOTTIME` for lease deadlines is now a concrete product candidate (TLA weak pause tooth added). Forced-latency arms still useful after these.
+Mechanism for the published 2/100 stays **open at the headline** (do not rewrite the fail file). Side-by-side reclassify below. Forced-latency arms still useful after these.
 
-## 1. R2 settle (trials 1 & 5)
+## 1. R2 settle (trials 1 & 5) — injection-miss reading
 
 **Prefix:** `s3://clawql-streams-state/tier-c-wedge100-lab-20261104021638`  
-**Cell:** `ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f`  
-**Method:** read-only LTX page scan for `programId:meta` bodies (same spirit as [`during-call-404-r2-settle.md`](./during-call-404-r2-settle.md); no live DO).
+**Cell:** `ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f`
 
-| Trial | programId | Meta | Midflight pause durable? |
-| ----- | --------- | ---- | ------------------------ |
-| **1** (lost) | `phased_after_intent_before_call_1_1793758650321` | yes (epoch 2+) | **No** — never `paused_for_kill` in meta body; ends `completed` |
-| **5** (lost) | `phased_after_intent_before_call_5_1793758728011` | yes | **Not confirmed** — no clean pause meta like the control |
-| **9** (ok control) | `phased_after_intent_before_call_9_1793758918129` | yes | **Yes** — `status":"paused_for_kill"` in e9 `:meta` |
+| Trial | programId | Meta | Midflight pause durable? | Reading |
+| ----- | --------- | ---- | ------------------------ | ------- |
+| **1** | `…_1_1793758650321` | `completed` | **No** — never `paused_for_kill` | **Injection miss** — program ran to completion; harness then looked for mid-flight intent that never had reason to exist |
+| **5** | `…_5_1793758728011` | incomplete / `running` | **Not confirmed** | **Unsettled** — not `injection_missed` (did not complete); not proven loss |
+| **9** (ok control) | `…_9_1793758918129` | yes | **Yes** — `paused_for_kill` in e9 `:meta` | Injection hit |
 
-**Split:** not “intents missing from R2 because we looked at the wrong place / late landing of empty programs.” Programs exist. Trial 1 never journaled the midflight pause shape the harness requires. That is a real durability miss (or never-written pause), not a measurement-only ghost.
+### Effect ledger / twin digest (trial 1)
 
-Evidence: [`ttl3s-r2-settle-trials-1-5.json`](./ttl3s-r2-settle-trials-1-5.json).
+| Source | Result |
+| ------ | ------ |
+| Pets mock `owner_${idempotencyKey}` | **Unavailable** after board (ephemeral `__writes`) |
+| Twin digest | **Unavailable** — TTL=10s remasure overwrote evidence |
+| Journal surrogate | entries **0/1/2** present; entry:2 has `owners.create` + ok; meta `completed` |
+
+Settle rule applied: one write effect (journal) + normal completion without durable pause ⇒ **not a correctness loss**; classify **`injection_missed`**. Pets/twin absence is why this is a journal-surrogate settle, not a pets-ledger settle.
+
+Evidence: [`ttl3s-r2-settle-trials-1-5.json`](./ttl3s-r2-settle-trials-1-5.json) · [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json).
+
+## 1b. Full-board side-by-side reclassify (all 100)
+
+Definitional correction (same spirit as the readable-gate classifier fix): applied to **every** trial, old and new labels reported together. Published fail file is **not** rewritten.
+
+| Label set | Correctness-shaped count | Notes |
+| --------- | ------------------------ | ----- |
+| **Old** (stdout gates) | **2** × `lost_midflight_intent` (i=1, i=5) | As published |
+| **New** | **0** confirmed lost; **1** × `injection_missed` (i=1); **1** × `incomplete_no_pause` (i=5 unsettled) | R2-sampled after_intent rows refined to `midflight_pause_durable` / etc.; unsampled passes stay `pass` |
+
+Relabeling only the two failures would not be legitimate; the JSON carries all 100 rows.
 
 ## 2. Host / suspend (BOOTTIME − MONOTONIC)
 
 | Fact | Detail |
 | ---- | ------ |
-| Host | Cursor **Cloud Agent** `bc-01a180e1-e75b-78be-89f2-1c9728212725` (repo env; suspending hypervisor class) |
-| Board suspend telemetry | **None** — soak-style `boottimeSec` / `growthSec` was **not** recorded on this wedge board |
-| Regime fit | Trial 5 `resumeMs=62920`; avail 5/100; ambiguous renewals in residual logs — suspend-shaped |
-| Product clock | `asyncrt::mono_ms` = `Instant::elapsed` (**CLOCK_MONOTONIC**, stops during suspend); storage/peers use **wall** `expires_ms` |
-| Void rule | Soak void (growth >2s) does **not** cover this board. **Do not void after the fact.** Report as a real fail; pause is a candidate mechanism |
+| Host | Cursor **Cloud Agent** (repo env; suspending hypervisor class) |
+| Board suspend telemetry | **None** on this wedge board |
+| Trial 1 | Completed normally — a paused clock does **not** explain it |
+| Trial 5 | Unconfirmed; resumeMs≈62s remains suspend-shaped **candidate** |
+| Product | `asyncrt::mono_ms` now prefers **CLOCK_BOOTTIME** on Linux (lease `last_ok` keeps advancing through suspend); peers already expire on wall `expires_ms` |
 
-TLA: `WeakHolderClockPaused` — wall advances, holder mono frozen → belief > storage → SurvivorTakeover drops intent. Target PASS; weak CE. Product fix candidate: lease deadlines on **CLOCK_BOOTTIME** (pending pause-aware clock work).
+**Ship as hardening**, justified by the `WeakHolderClockPaused` TLA tooth. **Do not claim** BOOTTIME fixed the published 2/100.
 
-## 3. Classifier + stdout provenance
+## 3. Classifier + stdout provenance + evidence overwrite
 
-### How `lost_midflight_intent` was decided
+### `lost_midflight_intent` / `injection_missed`
 
-`run-board.mjs` mid-flight check: GET survivor `/program/status`; require `meta` and (`intents.length > 0` OR `pauseKind` ∈ {`during_call`,`after_intent_before_call`}).
+- Readable-gate fix (prior): timeout/fetchError → `midflight_storage_unknown` (availability), not lost.
+- New: if `/program/run` returns **`completed`** instead of `paused_for_kill`, classify **`injection_missed`** (`failureClass: injection`) — counted in `gates.injection`, neither a durability pass nor a loss.
+- Mid-flight markers absent after a **completed single-write** resume are not treated as lost.
 
-**Bug (fixed):** `fetchJson` timeout/error returns `{ ok:false, fetchError:true, body:{error} }` → `meta=null` → `present=false` → classified **`lost_midflight_intent`**. Under pressure that is **unknown**, not lost.
+### Evidence overwrite (fixed)
 
-**Fix:** only emit `lost_midflight_intent` when status is **readable** (`ok && body.ok && !fetchError`) and midflight markers absent. Otherwise `midflight_storage_unknown` (availability).
+[`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json) is `status=measured_stdout_only` because TTL=10s remasure overwrote the TTL=3s `trialFailures`.
 
-R2 settle (§1) still shows trial 1 lacked durable pause markers — so the 2/100 is **not** explained away as classifier-only. The fix stops future false losses.
+Harness now:
 
-### Failed JSON reconstruction
-
-[`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json) is `status=measured_stdout_only`:
-
-1. Authentic TTL=3000 board wrote `phased-n100-wedge-lab-enriched.json` (included `trialFailures` with programIds).
-2. TTL=10s remasure **overwrote** that path.
-3. Gates-only reconstruction from transcript stdout (L380356): correctness items `{i, phase, failureReason}` only — **no** `midFlightStorage` / programIds in the committed fail file.
-4. ProgramIds recovered later via R2 prefix discovery (§1).
+1. Defaults `FLEET_PHASED_OUT` to a **TTL+UTC-stamped unique path** when unset.
+2. **Refuses** to overwrite an existing evidence file unless `FLEET_PHASED_ALLOW_OVERWRITE=1`.
 
 ## Next
 
-1. Pause-aware lease clock (BOOTTIME) — product fix candidate from §2  
-2. Forced-latency arms A (Ambiguous timeout) + B (late Applied) still on the table  
-3. Remeasure boards must use a **TTL-stamped evidence path** so overwrite cannot destroy `trialFailures` again
+1. Forced-latency arms A (Ambiguous timeout) + B (late Applied) — still on the table  
+2. Remeasure with unique evidence paths (overwrite guard is live)  
+3. Treat published 2/100 as **side-by-side reclassified** (1 injection miss + 1 unsettled), mechanism for any remaining loss still open

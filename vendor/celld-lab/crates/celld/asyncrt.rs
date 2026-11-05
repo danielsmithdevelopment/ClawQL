@@ -69,14 +69,63 @@ fn current_domain() -> &'static ProductionDomain {
 
 struct ProductionDomainOwner {
     handle: tokio::runtime::Handle,
-    started_at: Instant,
+    /// Process-local monotonic origin. On Linux this is CLOCK_BOOTTIME so
+    /// lease `last_ok` deadlines keep advancing through VM suspend; peers
+    /// already expire on wall `expires_ms`. Non-Linux falls back to Instant.
+    /// Hardening for the WeakHolderClockPaused TLA tooth — not claimed as the
+    /// fix for the TTL3s N=100 published 2/100 (trial 1 completed normally).
+    mono_origin: MonoOrigin,
+}
+
+enum MonoOrigin {
+    #[cfg(target_os = "linux")]
+    Boottime { origin: Duration },
+    Instant { started_at: Instant },
+}
+
+impl MonoOrigin {
+    fn now() -> Self {
+        #[cfg(target_os = "linux")]
+        {
+            if let Some(origin) = clock_boottime_duration() {
+                return Self::Boottime { origin };
+            }
+        }
+        Self::Instant {
+            started_at: Instant::now(),
+        }
+    }
+
+    fn elapsed(&self) -> Duration {
+        match self {
+            #[cfg(target_os = "linux")]
+            Self::Boottime { origin } => clock_boottime_duration()
+                .unwrap_or(*origin)
+                .saturating_sub(*origin),
+            Self::Instant { started_at } => started_at.elapsed(),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn clock_boottime_duration() -> Option<Duration> {
+    let mut ts = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    // CLOCK_BOOTTIME counts suspend time; CLOCK_MONOTONIC (Instant) does not.
+    let rc = unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut ts) };
+    if rc != 0 {
+        return None;
+    }
+    Some(Duration::new(ts.tv_sec as u64, ts.tv_nsec as u32))
 }
 
 impl ProductionDomainOwner {
     fn new(handle: tokio::runtime::Handle) -> Self {
         Self {
             handle,
-            started_at: Instant::now(),
+            mono_origin: MonoOrigin::now(),
         }
     }
 }
@@ -115,12 +164,12 @@ impl DomainToken {
     }
 
     pub(crate) fn mono_ms(&self) -> Result<u64, DomainClosed> {
-        Ok(self.owner()?.started_at.elapsed().as_millis() as u64)
+        Ok(self.owner()?.mono_origin.elapsed().as_millis() as u64)
     }
 
     pub(crate) fn sleep_until(&self, deadline_ms: u64) -> Result<Sleep, DomainClosed> {
         let owner = self.owner()?;
-        let now_ms = owner.started_at.elapsed().as_millis() as u64;
+        let now_ms = owner.mono_origin.elapsed().as_millis() as u64;
         let wait = Duration::from_millis(deadline_ms.saturating_sub(now_ms));
         // Tokio binds a sleep to the current timer driver when it constructs
         // the future. Enter this token's runtime so an ambient runtime cannot
@@ -247,12 +296,12 @@ pub fn wall_ms() -> i64 {
 }
 
 pub fn mono_ms() -> u64 {
-    current_domain().owner.started_at.elapsed().as_millis() as u64
+    current_domain().owner.mono_origin.elapsed().as_millis() as u64
 }
 
 /// Return monotonic process time in microseconds for timing instrumentation.
 pub fn mono_us() -> u64 {
-    current_domain().owner.started_at.elapsed().as_micros() as u64
+    current_domain().owner.mono_origin.elapsed().as_micros() as u64
 }
 
 pub fn rng(consumer: &'static str) -> rng::Stream {

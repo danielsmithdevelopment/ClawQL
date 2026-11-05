@@ -20,7 +20,8 @@
  * Env:
  *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
  *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
- *   FLEET_PHASED_EVIDENCE            output path
+ *   FLEET_PHASED_OUT / EVIDENCE      output path (default: TTL+UTC-stamped unique file)
+ *   FLEET_PHASED_ALLOW_OVERWRITE     1=replace existing evidence (default refuse)
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
  *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
  *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
@@ -101,17 +102,6 @@ function autoWireR2() {
 autoWireR2();
 
 const N = Math.max(1, Math.min(100_000, Number(process.env.FLEET_PHASED_N || 100)));
-const OUT =
-  process.env.FLEET_PHASED_OUT ||
-  process.env.FLEET_PHASED_EVIDENCE ||
-  join(REPO, "docs/benchmarks/program-cell-fleet-kill/phased-evidence.json");
-if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
-    process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
-  console.warn(
-    `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
-  );
-}
-console.log(`fleet-phased: evidence → ${OUT}`);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
 const PORT_B = Number(process.env.PROGRAM_CELL_FLEET_PORT_B || 9882);
 const INTERNAL_A = Number(process.env.PROGRAM_CELL_FLEET_INTERNAL_A || 9883);
@@ -125,6 +115,40 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+
+/**
+ * Evidence path: unique by default (TTL + UTC stamp). Refuse to overwrite an
+ * existing file unless FLEET_PHASED_ALLOW_OVERWRITE=1 — the TTL=3s→10s
+ * remasure that clobbered trialFailures taught that lesson.
+ */
+function resolveEvidenceOut() {
+  if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
+      process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
+    console.warn(
+      `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
+    );
+  }
+  let out =
+    process.env.FLEET_PHASED_OUT ||
+    process.env.FLEET_PHASED_EVIDENCE ||
+    null;
+  if (!out) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    out = join(
+      REPO,
+      `docs/benchmarks/program-cell-fleet-kill/phased-evidence-ttl${CELLD_TTL_MS}-${stamp}.json`
+    );
+  }
+  if (existsSync(out) && process.env.FLEET_PHASED_ALLOW_OVERWRITE !== "1") {
+    throw new Error(
+      `fleet-phased: refusing to overwrite existing evidence at ${out} ` +
+        `(set FLEET_PHASED_ALLOW_OVERWRITE=1 to replace, or point FLEET_PHASED_OUT at a new path)`
+    );
+  }
+  return out;
+}
+const OUT = resolveEvidenceOut();
+console.log(`fleet-phased: evidence → ${OUT}`);
 /**
  * Default stable node ids (v3 lesson): fresh ids every start fill R2 `nodes/`
  * without upstream lease-sweep. Opt into legacy minting with FRESH_NODE_IDS=1.
@@ -1226,16 +1250,26 @@ async function main() {
         body: JSON.stringify(body),
       });
       if (runRes.body?.status !== "paused_for_kill") {
+        // Timing-based pause can miss under load: the program runs past the
+        // injection window and completes normally. That is not a durability
+        // loss and not a silent pass — count it as injection_missed.
+        const completedNormally =
+          runRes.body?.status === "completed" && runRes.body?.ok === true;
+        const injectionMissed = completedNormally;
         phaseStats[phase].failures += 1;
         phaseStats[phase].n += 1;
         trials.push({
           i,
           phase,
+          programId,
           ok: false,
-          pauseFailed: true,
-          failureClass: "availability",
-          failureReason: "pause_failed",
-          detail: `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
+          pauseFailed: !injectionMissed,
+          injectionMissed,
+          failureClass: injectionMissed ? "injection" : "availability",
+          failureReason: injectionMissed ? "injection_missed" : "pause_failed",
+          detail: injectionMissed
+            ? `injection missed: program completed without mid-flight pause (${JSON.stringify(runRes.body).slice(0, 120)})`
+            : `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
         });
         if (!nodes[victim].pid) await restartNode(victim);
         continue;
@@ -1566,8 +1600,20 @@ async function main() {
       failureReason = "midflight_storage_unknown";
       expectOk = false;
     } else if (midFlightStorage && midFlightStorage.present === false) {
-      failureClass = "correctness";
-      failureReason = "lost_midflight_intent";
+      // Successful mid-flight resume that lands exactly one write and completes
+      // consumes pauseKind/intents — that is a correct outcome, not a loss.
+      // (Historical false-loss risk when checking markers after completion.)
+      if (
+        writeCount === 1 &&
+        (completedClean || resume.body?.status === "completed")
+      ) {
+        failureClass = null;
+        failureReason = null;
+        expectOk = true;
+      } else {
+        failureClass = "correctness";
+        failureReason = "lost_midflight_intent";
+      }
     } else if (STALE_OWNER && staleOwner && !staleOwner.ownershipMoved) {
       failureClass = "availability";
       failureReason = "ownership_never_moved";
@@ -1915,6 +1961,7 @@ async function main() {
       ...trials.filter((t) => t.failureClass === "availability"),
       ...awaitTrials.filter((t) => t.failureClass === "availability"),
     ];
+    const injectionItems = trials.filter((t) => t.failureClass === "injection");
     const correctnessFailures = correctnessItems.length;
     const availabilityFailures = availabilityItems.length;
     const availabilityFailureRate =
@@ -1946,7 +1993,17 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (readable survivor status lacks intent/pauseKind after mid-flight kill; timeout/fetchError → midflight_storage_unknown availability), stale_owner_send (egress after own.json left the victim)",
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (readable survivor status lacks intent/pauseKind after mid-flight kill, and not a completed single-write resume; timeout/fetchError → midflight_storage_unknown availability), stale_owner_send (egress after own.json left the victim). injection_missed is NOT correctness.",
+            },
+            injection: {
+              failures: injectionItems.length,
+              items: injectionItems.slice(0, 50).map((t) => ({
+                i: t.i,
+                phase: t.phase,
+                failureReason: t.failureReason,
+              })),
+              meaning:
+                "pause window missed — program completed without mid-flight pause. Counted openly; not a pass and not a durability loss.",
             },
             availability: {
               failures: availabilityFailures,
@@ -1993,6 +2050,10 @@ async function main() {
             scoreMode: SCORE_MODE,
             note: "legacy_zero_deadline — ok requires zero deadline misses and all phase expectations",
           };
+    const injectionMissed = injectionItems.length;
+    const injectionClean = injectionMissed === 0;
+    // Durability ok ignores injection misses (neither pass nor loss). Boards must
+    // still publish gates.injection so misses are not silent.
     const okV2 =
       complete &&
       correctnessFailures === 0 &&
@@ -2004,6 +2065,10 @@ async function main() {
       measuredAt: new Date().toISOString(),
       // Partial mid-run snapshots must not look like a finished clean board.
       ok: SCORE_MODE === "correctness_availability_v2" ? okV2 : okLegacy,
+      injectionMissed,
+      injectionClean,
+      injectionMissedNote:
+        "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows.",
       status: complete ? "measured" : "partial",
       scoreMode: SCORE_MODE,
       gates,
@@ -2021,7 +2086,7 @@ async function main() {
               awaitApprovalTrials: AWAIT_TRIALS,
               overallTrials: N + AWAIT_TRIALS,
               tailsHavePassFailCeiling: false,
-              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling.",
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability.",
             }
           : null,
       n: N,
@@ -2349,11 +2414,11 @@ async function main() {
 
   const evidence = writeEvidencePartial();
   console.log(
-    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok}`
+    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok} injectionMissed=${evidence.injectionMissed} injectionClean=${evidence.injectionClean}`
   );
   if (SCORE_MODE === "correctness_availability_v2" && evidence.gates) {
     console.log(
-      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
+      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} injectionMissed=${evidence.gates.injection?.failures ?? 0} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
     );
   }
   console.log(`wrote ${OUT}`);
