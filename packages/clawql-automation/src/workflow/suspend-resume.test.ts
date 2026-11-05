@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  classifyHitlResumeStatus,
   isActiveSuspendNode,
   nodeMatchesFieldSelector,
   parseHitlWorkflowRef,
 } from "./suspend-resume.js";
-import type { ArgoWorkflowNodeStatus } from "./k8s-client.js";
+import type { ArgoWorkflowNodeStatus, ArgoWorkflowObject } from "./k8s-client.js";
 
 describe("isActiveSuspendNode", () => {
   it("matches Suspend type in Running phase", () => {
@@ -36,6 +37,22 @@ describe("nodeMatchesFieldSelector", () => {
   it("requires all comma-separated clauses", () => {
     expect(nodeMatchesFieldSelector("displayName=approve,phase=Running", node, "n1")).toBe(true);
     expect(nodeMatchesFieldSelector("displayName=approve,phase=Succeeded", node, "n1")).toBe(false);
+  });
+});
+
+describe("classifyHitlResumeStatus", () => {
+  it("classifies suspended, running, and terminal", () => {
+    const suspended = {
+      spec: { suspend: true },
+      status: { phase: "Running" },
+    } as ArgoWorkflowObject;
+    expect(classifyHitlResumeStatus(suspended)).toBe("suspended");
+    expect(classifyHitlResumeStatus({ status: { phase: "Running" } } as ArgoWorkflowObject)).toBe(
+      "running"
+    );
+    expect(classifyHitlResumeStatus({ status: { phase: "Succeeded" } } as ArgoWorkflowObject)).toBe(
+      "terminal"
+    );
   });
 });
 

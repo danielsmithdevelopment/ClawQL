@@ -99,6 +99,9 @@ jobs:
       - name: Run Agent Substrate session TLC dual configs
         run: bash scripts/formal/run-agent-substrate-session-tlc.sh
 
+      - name: Run HITL resume idempotency TLC dual configs
+        run: bash scripts/formal/run-hitl-resume-idempotency-tlc.sh
+
       - name: Run account-deletion vs WORM TLC dual configs
         run: bash scripts/formal/run-account-deletion-worm-tlc.sh
 
