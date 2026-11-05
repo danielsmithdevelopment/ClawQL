@@ -28,6 +28,11 @@ export type AcpCheckoutTransition = {
   readonly alreadyDone: boolean;
 };
 
+/** Map pre-create `"none"` into a reportable status for IllegalTransition. */
+function reportFrom(from: AcpCheckoutStatus | "none"): AcpCheckoutStatus {
+  return from === "none" ? "not_ready_for_payment" : from;
+}
+
 /**
  * Exhaustive ACP checkout transition.
  * - CreateReady: none → ready (createSession today)
@@ -46,7 +51,7 @@ export function transitionAcpCheckout(
           return { status: "ready_for_payment" as const, alreadyDone: false };
         }
         return yield* new AcpCheckoutIllegalTransition({
-          from: from === "none" ? "not_ready_for_payment" : from,
+          from: reportFrom(from),
           event: "CreateReady",
         });
       }
@@ -58,7 +63,7 @@ export function transitionAcpCheckout(
           return { status: "ready_for_payment" as const, alreadyDone: true };
         }
         return yield* new AcpCheckoutIllegalTransition({
-          from: from === "none" ? "not_ready_for_payment" : from,
+          from: reportFrom(from),
           event: "MakeReady",
         });
       }
@@ -70,7 +75,7 @@ export function transitionAcpCheckout(
           return { status: "completed" as const, alreadyDone: true };
         }
         return yield* new AcpCheckoutIllegalTransition({
-          from: from === "none" ? "not_ready_for_payment" : from,
+          from: reportFrom(from),
           event: "Complete",
         });
       }
@@ -82,7 +87,7 @@ export function transitionAcpCheckout(
           return { status: "canceled" as const, alreadyDone: true };
         }
         return yield* new AcpCheckoutIllegalTransition({
-          from: from === "none" ? "not_ready_for_payment" : from,
+          from: reportFrom(from),
           event: "Cancel",
         });
       }
