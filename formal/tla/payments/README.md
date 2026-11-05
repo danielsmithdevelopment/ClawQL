@@ -9,6 +9,7 @@ consume or the program write-intent journal. See
 | `PaymentsHoldCompensation.*`  | Credit holds + compensation HITL 2PC                |
 | `PaymentsStripeIdempotency.*` | Stripe PI write-ahead idempotency (ACP / ACH / MPP) |
 | `MoneyRequestStatus.*`        | Money-request / invoice status graph                |
+| `AcpCheckoutStatus.*`         | ACP checkout session status graph                   |
 
 ## Coverage finding (critical)
 
@@ -105,7 +106,22 @@ Helpers: `packages/clawql-payments/src/stripe/stripe-idempotency.ts`.
 Code: `money-request-transition.ts` wired into `requests.ts` (`markAccepted` /
 `markPaid` / decline / cancel / expire).
 
+## ACP checkout status
+
+| File | Role |
+| ---- | ---- |
+| `AcpCheckoutStatus.tla` | Spec — ready → completed; cancel; make-ready |
+| `AcpCheckoutStatus.cfg` | Target (`WeakCompleteNotReady = FALSE`); must pass |
+| `AcpCheckoutStatusWeak.cfg` | Complete from not_ready; must fail `CompleteOnlyWhenReady` |
+
+```bash
+./scripts/formal/run-acp-checkout-tlc.sh
+```
+
+Code: `acp-checkout-transition.ts` wired into `acp-checkout-service.ts`
+(`createSession` / `completeSession`). Stripe PI write-ahead remains
+`PaymentsStripeIdempotency.*`.
+
 ## Next (same cluster)
 
-- ACP checkout status graph beyond Stripe PI create
 - Multi-node ledger lock (today: in-process per-tenant; Valkey called out as future)

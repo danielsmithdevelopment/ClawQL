@@ -95,3 +95,6 @@ jobs:
 
       - name: Run money-request status TLC dual configs
         run: bash scripts/formal/run-money-request-tlc.sh
+
+      - name: Run ACP checkout status TLC dual configs
+        run: bash scripts/formal/run-acp-checkout-tlc.sh

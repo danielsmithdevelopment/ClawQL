@@ -15,6 +15,7 @@ import {
   stripeIdempotencyKeyLikelyExpired,
 } from "../stripe/stripe-idempotency.js";
 import { acpMerchantId, isAcpEnabled } from "./config.js";
+import { transitionAcpCheckoutSync } from "./acp-checkout-transition.js";
 import type {
   AcpCheckoutSession,
   AcpLineItem,
@@ -108,9 +109,10 @@ export function acpCheckoutLiveLayer(
             });
             const subtotal = lineItems.reduce((sum, li) => sum + li.total_amount.amount, 0);
             const now = new Date().toISOString();
+            const createdStatus = transitionAcpCheckoutSync("none", { _tag: "CreateReady" });
             const session: AcpCheckoutSession = {
               id: `acs_${randomUUID().replace(/-/g, "")}`,
-              status: "ready_for_payment",
+              status: createdStatus.status,
               currency,
               line_items: lineItems,
               totals: {
@@ -174,10 +176,20 @@ export function acpCheckoutLiveLayer(
             );
           }
           const session = yield* getSession(input.checkout_session_id);
-          if (session.status === "completed") return session;
-          if (session.status === "canceled") {
-            return yield* Effect.fail(new AcpError({ reason: "Checkout session canceled" }));
+          let completeTransition;
+          try {
+            completeTransition = transitionAcpCheckoutSync(session.status, { _tag: "Complete" });
+          } catch {
+            return yield* Effect.fail(
+              new AcpError({
+                reason:
+                  session.status === "canceled"
+                    ? "Checkout session canceled"
+                    : `Cannot complete checkout in status ${session.status}`,
+              })
+            );
           }
+          if (completeTransition.alreadyDone) return session;
           if (input.payment_data.provider !== "stripe") {
             return yield* Effect.fail(
               new AcpError({
@@ -195,7 +207,7 @@ export function acpCheckoutLiveLayer(
             const nowRecover = new Date().toISOString();
             const recovered: AcpCheckoutSession = {
               ...session,
-              status: "completed",
+              status: completeTransition.status,
               buyer: input.buyer ?? session.buyer,
               order: session.order ?? {
                 id: `ord_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
@@ -301,7 +313,7 @@ export function acpCheckoutLiveLayer(
           const now = new Date().toISOString();
           const completed: AcpCheckoutSession = {
             ...session,
-            status: "completed",
+            status: completeTransition.status,
             buyer: input.buyer ?? session.buyer,
             payment_intent_id: paymentIntentId,
             stripe_idempotency_key: idempotencyKey,
