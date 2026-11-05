@@ -9,10 +9,7 @@ import { Data, Effect } from "effect";
 
 /** ACP checkout lifecycle — single source for the transition table. */
 export type AcpCheckoutStatus =
-  | "not_ready_for_payment"
-  | "ready_for_payment"
-  | "completed"
-  | "canceled";
+  "not_ready_for_payment" | "ready_for_payment" | "completed" | "canceled";
 
 export type AcpCheckoutEvent =
   | { readonly _tag: "CreateReady" }
