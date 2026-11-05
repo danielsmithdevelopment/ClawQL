@@ -12,37 +12,28 @@ Frozen **before** the N=300 run. Do not loosen after results.
 | Score mode | `correctness_availability_v2` |
 | Logs | **`FLEET_PHASED_APPEND_LOGS=1`** |
 | Audit | Supersede audit on the board’s celld logs after the run |
-| Binary | Lab release built **with** expiry≠dead fix (`lease_open_log_may_be_recovered_as_dead`) |
+| Binary | Lab release built **with** expiry≠dead fix |
 
 Zero of 300 → 95% rule-of-three upper bound **3/300 = 1.0%**.
 
-## Order (do not skip)
-
-1. **E2E SIGSTOP before/after** on real lab binaries ([`EXPIRY_NOT_DEAD.md`](./EXPIRY_NOT_DEAD.md)) — **done 2026-11-05:** pre-fix eager-recovers open log while owner is `T`, post-fix skips; **program intent kept on both** ⇒ 2/100 has another cause. Fix still ships; N=300 still required.
-2. **200-cycle enriched soak** on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) — **done:** nodes=2, readyFails=0, selfFences=3 (correlated dual + 1 solo; cloud-VM pause signature, not sweep-stall). Host cannot authorize.
-3. **This N=300 board.**
-4. Only then consider **v4**.
-
-## Evidence path
-
-`docs/benchmarks/program-cell-fleet-kill/phased-n300-wedge-lab-enriched-ttl3s.json`
-
-## Result (2026-11-05 America/Los_Angeles)
+## Result (2026-11-05 America/Los_Angeles) — bar met; mechanism not closed
 
 | Gate | Result |
 | ---- | ------ |
 | N | **300**/300 write-kill (+ 8 await) |
 | `lost_midflight_intent` | **0** |
-| Correctness failures | **0** (`gates.correctness.pass`) |
-| Availability rate | **1.30%** (4/308) ≤ 2% ceiling |
-| Board `ok` | **true** · `status=measured` |
-| Binary | `lab_enriched_expiry_not_dead_1360bdf3f967` (sha256 `1360bdf…`) |
-| TTL | 3000 · append logs · fenceMode `lab_enriched_wedged` |
-| Supersede audit | [`n300-ttl3s-supersede-audit.json`](./n300-ttl3s-supersede-audit.json) — **0** supersede lines (`status=no_supersede_lines`) |
+| Correctness failures | **0** |
+| Availability rate | **1.30%** (4/308) ≤ 2% |
+| Board `ok` | **true** |
+| Resume tail | p99≈7.9s · max≈13.9s — **quieter** than the failing 2/100 regime (~62s resumes, 5 avail failures) |
+| Supersede audit | [`n300-ttl3s-supersede-audit.json`](./n300-ttl3s-supersede-audit.json) — 0 supersede lines |
 
-**Bar met.** Rule-of-three 95% UB on lost-intent rate: **3/300 = 1.0%**. Original 2/100 mechanism remains unidentified (e2e showed expiry-as-dead is not sufficient alone); this board clears the frozen N=300 correctness gate.
+**What this clears:** the frozen N=300 correctness **rate** bar (loss rare on this build at TTL 3s).
 
-## Not a pass
+**What this does not clear:** the **cause** of the original 2/100. Publish that board as [mechanism unexplained](./WEDGE_TTL3S_CORRECTNESS.md). Neither remasures nor N=300 re-entered the ambiguous-renewal / long-resume pressure regime. Open lead: [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md).
 
-- Quiet N=100 remasure at TTL 3s or 10s
-- Predicate-only / TLA-only proof without the e2e pair and this board
+Evidence: [`phased-n300-wedge-lab-enriched-ttl3s.json`](./phased-n300-wedge-lab-enriched-ttl3s.json).
+
+## Next
+
+Mac mini authorizing soak → v4 N=1000 with append logs + R2 intent check; report unexplained mechanism alongside. Parallel: model + force ambiguous renewals.

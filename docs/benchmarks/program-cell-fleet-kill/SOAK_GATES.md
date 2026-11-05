@@ -2,7 +2,7 @@
 
 Frozen **before** the next **authorizing** soak. v4 N=1000 starts only when a soak reports `status=measured_v4_ready` (`ok=true`) on the **fixed** build (incarnation + same-host supersede + lease-sweep + alive≠ready). A soak only authorizes the binary it measured.
 
-**TTL=3000 correctness hold cleared** by frozen wedged **N=300** (**0**/300 `lost_midflight_intent` — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md)). Original N=100 2-loss cause still unidentified (e2e: expiry-as-dead is not sufficient — [`EXPIRY_NOT_DEAD.md`](./EXPIRY_NOT_DEAD.md)). v4 N=1000 still needs `status=measured_v4_ready` on a non-suspending host.
+**N=300 rate bar met** (**0**/300 lost — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md)); original TTL3s **2/100 remains mechanism unexplained** ([`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md) · [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)). Post-fix cloud **200-cycle soak had 3 selfFences with `voided=false`** — those fences **count** (do not reattribute to pause without a monitor void); possible regression vs pre-fix authorizing 0 fences. v4 needs `measured_v4_ready` on Mac mini ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)), then report the open mechanism alongside v4.
 
 ## Why node-ceiling-alone is not enough
 

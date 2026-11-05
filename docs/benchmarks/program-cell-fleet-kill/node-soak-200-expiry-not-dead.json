@@ -2512,18 +2512,21 @@
   "availabilityRegressionCheck": {
     "role": "post_expiry_not_dead_200_cycle",
     "authorizing": false,
-    "hostValidForAuthorizing": false,
+    "voided": false,
+    "selfFencesCount": true,
     "notes": [
-      "Correlated A+B self-fence at 2026-11-05T01:44:36.619Z / .661Z (42ms) \u2014 host-pause signature",
-      "BOOTTIME-MONOTONIC suspend void did not fire (gap~0); cloud VM likely freezes both clocks",
-      "No readyFails; nodes=2; no fence storm \u2014 not a clear expiry\u2260dead avail regression",
-      "Solo B fence near cycle 195 also counted"
+      "voided=false \u2014 suspend monitor did not void; do not reclassify the 3 selfFences as host pause after the fact",
+      "selfFences=3 counts against the self-fence gate (allows zero) \u2014 possible regression vs pre-fix authorizing soak with 0 fences",
+      "Correlated A+B exit at same wall time is consistent with pause but is NOT a monitor void",
+      "Only a non-suspending host soak (Mac mini) can settle the question"
     ],
     "observed": {
       "cycles": 200,
       "readyFails": 0,
       "selfFences": 3,
-      "maxUniqueNodeIds": 2
+      "maxUniqueNodeIds": 2,
+      "voided": false,
+      "suspendGrowthSec": 2.5989720597863197e-08
     }
   },
   "celldSha256": "1360bdf3f967f279b415269e57b3787791e044b18b82f379323bcf22451d7423"

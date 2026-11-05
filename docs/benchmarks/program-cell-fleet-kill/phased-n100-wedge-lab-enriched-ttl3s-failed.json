@@ -25,7 +25,7 @@
           "failureReason": "lost_midflight_intent"
         }
       ],
-      "meaning": "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)"
+      "meaning": "wrong outcome only \u2014 duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)"
     },
     "availability": {
       "failures": 5,
@@ -50,5 +50,12 @@
     "v4": "blocked",
     "ttl10sPassRole": "diagnostic_only",
     "seeAlso": "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md"
-  }
+  },
+  "mechanism": "unexplained",
+  "mechanismNote": "Publish as mechanism unexplained. Expiry\u2260dead e2e ruled out as sufficient cause (pre-fix eager recovery while owner T; ProgramCell intent kept). N=300 zeros bound rate only (~1% UB) and did not re-enter the failing regime (5 avail / ~62s resumes / ambiguous renewals). Open lead: ambiguous R2 renew \u2014 see AMBIGUOUS_RENEWAL.md.",
+  "seeAlso": [
+    "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md",
+    "docs/benchmarks/program-cell-fleet-kill/AMBIGUOUS_RENEWAL.md",
+    "docs/benchmarks/program-cell-fleet-kill/N300_TTL3S_WEDGE.md"
+  ]
 }
