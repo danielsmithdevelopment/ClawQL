@@ -89,3 +89,6 @@ jobs:
 
       - name: Run account-deletion vs WORM TLC dual configs
         run: bash scripts/formal/run-account-deletion-worm-tlc.sh
+
+      - name: Run program-proposal graph TLC dual configs
+        run: bash scripts/formal/run-program-proposal-tlc.sh

@@ -10,11 +10,11 @@ This is **not** transparent / mid-line resumption (Golem-class). Still say **“
 
 ## Files
 
-| File                     | Role                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `ProgramResume.tla`      | Spec — steps, intents, journal `completed`, crash/resume             |
-| `ProgramResume.cfg`      | TLC — **target** (`WeakAllowCompletedRerun = FALSE`); must pass      |
-| `ProgramResumeWeak.cfg`  | TLC — **buggy** (`WeakAllowCompletedRerun = TRUE`); must _fail_ Safety |
+| File                    | Role                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `ProgramResume.tla`     | Spec — steps, intents, journal `completed`, crash/resume               |
+| `ProgramResume.cfg`     | TLC — **target** (`WeakAllowCompletedRerun = FALSE`); must pass        |
+| `ProgramResumeWeak.cfg` | TLC — **buggy** (`WeakAllowCompletedRerun = TRUE`); must _fail_ Safety |
 
 ## Invariants (target)
 
@@ -32,15 +32,40 @@ Expect: target config exit 0; weak config exit ≠ 0 with `Safety` / `NoComplete
 
 ## Mapping to code
 
-| Spec              | Code                                                              |
-| ----------------- | ----------------------------------------------------------------- |
-| `completed`       | `ProgramJournal.entries`                                          |
-| `intent`          | `ProgramJournal.intents` (writes)                                 |
-| `BeginWrite`      | durable-runner `appendIntent` before host execute                 |
-| `Complete*`       | `appendEntry` / land                                              |
-| `CrashMid`        | SIGKILL / interrupt mid-call                                      |
-| `Resume`          | `execute_program { programId }` / peer failover                   |
-| `unknown`         | `outcome_unknown` call records (writes in flight)                 |
-| `ReRunCompleted`  | **forbidden** path — weak config proves the invariant has teeth   |
+| Spec             | Code                                                            |
+| ---------------- | --------------------------------------------------------------- |
+| `completed`      | `ProgramJournal.entries`                                        |
+| `intent`         | `ProgramJournal.intents` (writes)                               |
+| `BeginWrite`     | durable-runner `appendIntent` before host execute               |
+| `Complete*`      | `appendEntry` / land                                            |
+| `CrashMid`       | SIGKILL / interrupt mid-call                                    |
+| `Resume`         | `execute_program { programId }` / peer failover                 |
+| `unknown`        | `outcome_unknown` call records (writes in flight)               |
+| `ReRunCompleted` | **forbidden** path — weak config proves the invariant has teeth |
 
 Does **not** yet model `sleep` / `await_approval` / `model_call` as distinct actions, nor multi-replica lease failover (fleet evidence).
+
+---
+
+# Program proposal graph (TLA+)
+
+`ProgramProposalGraph.tla` — `submit_program_proposals` DAG (ADR 0015). Batches
+are not atomic; settled leaves never re-run; a leaf whose dependency
+failed/dropped is dropped without execute.
+
+| File                           | Role                                                |
+| ------------------------------ | --------------------------------------------------- |
+| `ProgramProposalGraph.tla`     | Spec — P1 independent; P2 dependsOn P1              |
+| `ProgramProposalGraph.cfg`     | Target (`WeakAllowSettledRerun = FALSE`); must pass |
+| `ProgramProposalGraphWeak.cfg` | Weak re-run / run-after-dead-dep; must fail Safety  |
+
+```bash
+./scripts/formal/run-program-proposal-tlc.sh
+```
+
+| Spec                                | Code                                       |
+| ----------------------------------- | ------------------------------------------ |
+| `RunSuccess` / `RunFailed` / `Park` | `program-submit.ts` leaf outcomes          |
+| `DropDependent`                     | dependency failed/dropped → leaf `dropped` |
+| `NoSettledRerun`                    | “settled leaves never run twice”           |
+| Weak\*                              | forbidden re-execute / run after dead dep  |
