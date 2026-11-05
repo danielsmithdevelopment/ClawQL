@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-04T23:37:25.116Z",
+  "updatedAt": "2026-11-05T06:37:03.627Z",
   "latestRelease": {
     "version": "8.0.0",
-    "published": "2026-11-04",
-    "commit": "e4db480fe9c966dca5b3b416dd1cf757a17e629d",
+    "published": "2026-11-05",
+    "commit": "53361522bd4bcb07824306c59cce80b9f2a667d5",
     "sbomFormat": "cyclonedx-json",
     "sbomArtifactName": "sbom-cyclonedx-repository",
-    "sbomArtifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41786145134#artifacts",
+    "sbomArtifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41977280558#artifacts",
     "image": {
       "repository": "ghcr.io/danielsmithdevelopment/clawql-mcp",
       "digest": null,
@@ -15,6 +15,188 @@
     }
   },
   "runs": [
+    {
+      "runId": "41977280558",
+      "timestamp": "2026-11-05T06:00:43.302Z",
+      "commit": "53361522bd4bcb07824306c59cce80b9f2a667d5",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41977280558#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41977280558"
+    },
+    {
+      "runId": "41970031063",
+      "timestamp": "2026-11-05T04:50:54.283Z",
+      "commit": "a46d2bb11a3ec5d9819f2137b32e76466ea7b1be",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41970031063#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41970031063"
+    },
+    {
+      "runId": "41965810911",
+      "timestamp": "2026-11-05T04:09:40.015Z",
+      "commit": "9af6d1f6966b164207dccac5ecd33ea409fac83b",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41965810911#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41965810911"
+    },
+    {
+      "runId": "41962817824",
+      "timestamp": "2026-11-05T03:41:02.921Z",
+      "commit": "b5accb4405cd496d129732b052cff5dad1e1ba8e",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41962817824#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41962817824"
+    },
+    {
+      "runId": "41959468452",
+      "timestamp": "2026-11-05T03:08:37.401Z",
+      "commit": "25083dcbf787341dac2767a7082ebbb326eb49a6",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41959468452#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41959468452"
+    },
+    {
+      "runId": "41954685110",
+      "timestamp": "2026-11-05T02:24:40.380Z",
+      "commit": "d928e44a4b2faad15b8f2d44f89a87ec34b25edc",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41954685110#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41954685110"
+    },
+    {
+      "runId": "41952251437",
+      "timestamp": "2026-11-05T02:02:27.392Z",
+      "commit": "aeec0e00c3341f9dd31fbc3ed6d54a47a3884661",
+      "branch": "main",
+      "scanners": {
+        "trivy": {
+          "result": "pass"
+        },
+        "osv": {
+          "result": "pass"
+        }
+      },
+      "sbom": {
+        "generated": true,
+        "format": "cyclonedx-json",
+        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41952251437#artifacts",
+        "artifactName": "sbom-cyclonedx-repository"
+      },
+      "signing": {
+        "signed": false,
+        "imageDigest": null
+      },
+      "overallResult": "merged",
+      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/41952251437"
+    },
     {
       "runId": "41786145134",
       "timestamp": "2026-11-04T06:34:10.863Z",
@@ -612,220 +794,6 @@
       },
       "overallResult": "merged",
       "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40279880963"
-    },
-    {
-      "runId": "40279125391",
-      "timestamp": "2026-10-26T06:22:33.268Z",
-      "commit": "1e496abbe7c0bef93bb36d581f3434d12a24e2cd",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40279125391#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40279125391"
-    },
-    {
-      "runId": "40268497999",
-      "timestamp": "2026-10-26T04:23:04.523Z",
-      "commit": "8ece734d41650d06d7571025b692c5c175d74743",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "fail",
-          "findings": [
-            {
-              "cveId": "CVE-2026-109869",
-              "severity": "high",
-              "package": "undici",
-              "fixedVersion": "6.29.1, 7.30.1, 8.12.2"
-            },
-            {
-              "cveId": "CVE-2026-109869",
-              "severity": "high",
-              "package": "undici",
-              "fixedVersion": "6.29.1, 7.30.1, 8.12.2"
-            },
-            {
-              "cveId": "CVE-2026-109869",
-              "severity": "high",
-              "package": "undici",
-              "fixedVersion": "6.29.1, 7.30.1, 8.12.2"
-            },
-            {
-              "cveId": "CVE-2026-109869",
-              "severity": "high",
-              "package": "undici",
-              "fixedVersion": "6.29.1, 7.30.1, 8.12.2"
-            },
-            {
-              "cveId": "CVE-2026-109869",
-              "severity": "high",
-              "package": "undici",
-              "fixedVersion": "6.29.1, 7.30.1, 8.12.2"
-            }
-          ]
-        },
-        "osv": {
-          "result": "fail"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40268497999#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "blocked",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40268497999"
-    },
-    {
-      "runId": "40033665211",
-      "timestamp": "2026-10-23T22:29:58.366Z",
-      "commit": "4034ffe1c28c90e291fd63b9664150d1757cd549",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40033665211#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40033665211"
-    },
-    {
-      "runId": "40017944776",
-      "timestamp": "2026-10-23T20:19:37.413Z",
-      "commit": "a64880444a18b9506cd0b69c7fb592561d9412da",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40017944776#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40017944776"
-    },
-    {
-      "runId": "40002579897",
-      "timestamp": "2026-10-23T18:24:03.899Z",
-      "commit": "90ad5c43839df1e34f9c884da99e642d97bff35a",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40002579897#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/40002579897"
-    },
-    {
-      "runId": "39992983846",
-      "timestamp": "2026-10-23T17:13:52.444Z",
-      "commit": "5e7cd675eb82487b350f5c3bf24224646b5e2858",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39992983846#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39992983846"
-    },
-    {
-      "runId": "39913060345",
-      "timestamp": "2026-10-23T06:45:13.779Z",
-      "commit": "69e4f651433c346a4473efddb1002d007777089a",
-      "branch": "main",
-      "scanners": {
-        "trivy": {
-          "result": "pass"
-        },
-        "osv": {
-          "result": "pass"
-        }
-      },
-      "sbom": {
-        "generated": true,
-        "format": "cyclonedx-json",
-        "artifactUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39913060345#artifacts",
-        "artifactName": "sbom-cyclonedx-repository"
-      },
-      "signing": {
-        "signed": false,
-        "imageDigest": null
-      },
-      "overallResult": "merged",
-      "ciRunUrl": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39913060345"
     }
   ]
 }
