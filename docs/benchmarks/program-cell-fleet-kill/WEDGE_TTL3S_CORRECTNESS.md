@@ -29,12 +29,16 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 | SIGSTOP e2e pre/post expiry≠dead | Pre: eager recovery while `T`, intent **kept**; post: skip abandon | Expiry-as-dead **ruled out** as sufficient cause |
 | Frozen **N=300** TTL=3s fixed build | **0**/300 lost; avail ≈1.3%; resume p99≈7.9s | Rate bound only — **did not** re-enter the 5-avail / ~62s resume regime |
 
-## Likeliest open lead: ambiguous renewal
+## Likeliest open lead: ambiguous renewal (partially narrowed)
 
-A renew CAS may take effect (or not) while the client sees `outcome="ambiguous"`. Owner belief and storage truth diverge. Chase in parallel with Mac mini soak / v4:
+A renew CAS may take effect (or not) while the client sees `outcome="ambiguous"`. TLC weak mode shows optimistic belief after Ambiguous **can** lose intent — **candidate only**.
 
-1. **Model** — [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md) · TLA `formal/tla/lease/LeaseRenewAmbiguous`
-2. **Force** — inject latency/timeouts on R2 **renew** only so ambiguous renewals happen at scale
+**Code check:** product renew-on-timeout does **not** bump belief; it readbacks and keeps authority on the last confirmed apply. The weak CE **does not apply** as product root-cause. See [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md). Mechanism stays **unexplained**.
+
+Chase remaining:
+
+1. **Force** — inject latency/timeouts on R2 **renew** only so Ambiguous→readback runs at scale under wedged TTL=3s
+2. Hunt any **other** unfenced append/ack/recovery step under that pressure (not the ruled-out optimistic bump)
 
 ## Expiry ≠ dead (landed; separate)
 
@@ -42,6 +46,6 @@ Still correct and shipped: expiry permits **fenced** takeover; open-log abandon 
 
 ## Next
 
-1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Settles the post-fix soak self-fence question (void only if the monitor voids).
-2. **v4 N=1000** there with append logs + R2 intent check — report **mechanism unexplained** alongside the result.
-3. Ambiguous-renewal TLA + forced-latency board in parallel.
+1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Settles the post-fix soak self-fence question (void only if the monitor voids). Unblocked by the renew code check (no optimistic-bump fix required first).
+2. **v4 N=1000** there with append logs + R2 intent check — report **mechanism unexplained** alongside the result (do not claim the 2/100 closed).
+3. Forced renew-latency board in parallel (Ambiguous→readback path under pressure).

@@ -25,3 +25,5 @@ Open lead for TTL3s 2/100 ([`AMBIGUOUS_RENEWAL.md`](../../../docs/benchmarks/pro
 ```bash
 scripts/formal/run-lease-renew-ambiguous-tlc.sh
 ```
+
+**Product code check:** celld Ambiguous renew → readback; does **not** bump `last_ok` / held expiry. Weak CE is a model tooth, not a proven product bug. See `AMBIGUOUS_RENEWAL.md` § Code check.
