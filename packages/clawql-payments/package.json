@@ -125,6 +125,7 @@
   },
   "optionalDependencies": {
     "mppx": "^0.8.14",
+    "redis": "^5.10.0",
     "viem": "^2.57.2"
   },
   "devDependencies": {

@@ -98,3 +98,6 @@ jobs:
 
       - name: Run ACP checkout status TLC dual configs
         run: bash scripts/formal/run-acp-checkout-tlc.sh
+
+      - name: Run payments ledger lock TLC dual configs
+        run: bash scripts/formal/run-payments-ledger-lock-tlc.sh

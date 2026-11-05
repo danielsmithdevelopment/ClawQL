@@ -164,6 +164,23 @@ export {
   type CreditHoldTransition,
 } from "./hold-transition.js";
 export {
+  LedgerLockError,
+  TenantLedgerLock,
+  createInProcessTenantLedgerLock,
+  createPostgresTenantLedgerLock,
+  createRedisTenantLedgerLock,
+  ledgerLockKey,
+  resolveLedgerLockRedisUrl,
+  resolveTenantLedgerLock,
+  setTenantLedgerLockForTests,
+  tenantLedgerAdvisoryLockId,
+  tenantLedgerLockLiveLayer,
+  withTenantLedgerLockPromise,
+  type LedgerLockBackend,
+  type RedisLockClient,
+  type TenantLedgerLockApi,
+} from "./ledger-lock.js";
+export {
   MoneyRequestIllegalTransition,
   transitionMoneyRequest,
   transitionMoneyRequestSync,

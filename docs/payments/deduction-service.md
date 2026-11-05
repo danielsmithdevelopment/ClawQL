@@ -57,7 +57,12 @@ Balances are **rows** (grants), not a single column: `promo` → `plan` → `top
 - **release** — full refund (failed / cancelled work)
 - **idempotencyKey** — safe retries (`inference:<tenant>:<correlationId>`)
 
-Per-tenant in-process lock serializes mutations (stage-appropriate). Multi-node Valkey Lua counters remain a scale-out layer on the same API.
+Per-tenant ledger lock serializes mutations (`ledger-lock.ts`): Valkey/Redis
+`SET NX` + fencing token when `CLAWQL_PAYMENTS_LEDGER_LOCK_URL` /
+`CLAWQL_VALKEY_URL` / `CLAWQL_REDIS_URL` is set; else Postgres advisory lock when
+a payments DB pool is configured; else in-process. Formal twin:
+`PaymentsLedgerLock.tla`. Valkey Lua hot counters remain a further scale-out
+layer on the same DeductionService API.
 
 ## Scale-out (not in this tier)
 

@@ -10,6 +10,7 @@ consume or the program write-intent journal. See
 | `PaymentsStripeIdempotency.*` | Stripe PI write-ahead idempotency (ACP / ACH / MPP) |
 | `MoneyRequestStatus.*`        | Money-request / invoice status graph                |
 | `AcpCheckoutStatus.*`         | ACP checkout session status graph                   |
+| `PaymentsLedgerLock.*`        | Multi-node tenant ledger lock + fencing             |
 
 ## Coverage finding (critical)
 
@@ -122,6 +123,21 @@ Code: `acp-checkout-transition.ts` wired into `acp-checkout-service.ts`
 (`createSession` / `completeSession`). Stripe PI write-ahead remains
 `PaymentsStripeIdempotency.*`.
 
+## Multi-node ledger lock
+
+| File | Role |
+| ---- | ---- |
+| `PaymentsLedgerLock.tla` | Spec — SET NX acquire, fenced CS, compare-and-delete release |
+| `PaymentsLedgerLock.cfg` | Target (`WeakNoFence = FALSE`); must pass |
+| `PaymentsLedgerLockWeak.cfg` | Overwrite acquire / unfenced release; must fail `AtMostOneInCS` |
+
+```bash
+./scripts/formal/run-payments-ledger-lock-tlc.sh
+```
+
+Code: `ledger-lock.ts` — Valkey/Redis URL → Postgres advisory → in-process.
+Env: `CLAWQL_PAYMENTS_LEDGER_LOCK_URL` / `CLAWQL_VALKEY_URL` / `CLAWQL_REDIS_URL`.
+
 ## Next (same cluster)
 
-- Multi-node ledger lock (today: in-process per-tenant; Valkey called out as future)
+- Valkey Lua hot counters for deduction (beyond mutex); celld lab soak still off-main
