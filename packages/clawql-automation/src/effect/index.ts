@@ -28,7 +28,16 @@ export {
   resumeWorkflowEffect,
   maybeResumeWorkflowFromHitlEffect,
   resumeWorkflowFromHitlRefEffect,
+  classifyHitlResumeStatus,
 } from "../workflow/suspend-resume.js";
+export {
+  HitlResumeIllegalTransition,
+  transitionHitlResume,
+  transitionHitlResumeSync,
+  type HitlResumeEvent,
+  type HitlResumeStatus,
+  type HitlResumeTransition,
+} from "../workflow/hitl-resume-transition.js";
 export { maybeNotifyWorkflowTerminalEffect } from "../workflow/workflow-notify.js";
 export { runVaultDailyDigestEffect } from "../workflow/vault-digest/run-vault-digest.js";
 export {

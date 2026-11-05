@@ -15,6 +15,11 @@ import {
 import { automationFromPromise } from "../effect/automation-effect-utils.js";
 import { AutomationError } from "../effect/automation-errors.js";
 import { isTerminalWorkflowPhase } from "./wait.js";
+import {
+  transitionHitlResume,
+  type HitlResumeIllegalTransition,
+  type HitlResumeStatus,
+} from "./hitl-resume-transition.js";
 
 export function isActiveSuspendNode(node: ArgoWorkflowNodeStatus): boolean {
   return node.type === "Suspend" && node.phase === "Running";
@@ -23,6 +28,20 @@ export function isActiveSuspendNode(node: ArgoWorkflowNodeStatus): boolean {
 export function workflowHasActiveSuspend(wf: ArgoWorkflowObject): boolean {
   if (wf.spec?.suspend === true) return true;
   return Object.values(wf.status?.nodes ?? {}).some(isActiveSuspendNode);
+}
+
+/** ClawQL HITL resume-plane status derived from the Workflow CRD. */
+export function classifyHitlResumeStatus(wf: ArgoWorkflowObject): HitlResumeStatus {
+  if (isTerminalWorkflowPhase(wf.status?.phase)) return "terminal";
+  if (workflowHasActiveSuspend(wf)) return "suspended";
+  return "running";
+}
+
+function mapHitlIllegal(err: HitlResumeIllegalTransition): AutomationError {
+  return new AutomationError({
+    reason: `illegal HITL resume transition: ${err.from}+${err.event}`,
+    cause: err,
+  });
 }
 
 function nodeTemplateName(node: ArgoWorkflowNodeStatus): string | undefined {
@@ -112,16 +131,18 @@ export function suspendWorkflowEffect(
 ): Effect.Effect<ArgoWorkflowObject, AutomationError> {
   return Effect.gen(function* () {
     const wf = yield* getWorkflowObjectEffect(namespace, name);
-    if (isTerminalWorkflowPhase(wf.status?.phase)) {
-      return yield* Effect.fail(
-        new AutomationError({
-          reason: `workflow ${name} is already completed (phase: ${wf.status?.phase})`,
-        })
-      );
-    }
-    if (wf.spec?.suspend === true) {
-      return wf;
-    }
+    const plane = classifyHitlResumeStatus(wf);
+    const next = yield* transitionHitlResume(plane, { _tag: "Suspend" }).pipe(
+      Effect.mapError((err) =>
+        plane === "terminal"
+          ? new AutomationError({
+              reason: `workflow ${name} is already completed (phase: ${wf.status?.phase})`,
+              cause: err,
+            })
+          : mapHitlIllegal(err)
+      )
+    );
+    if (next.alreadyDone) return wf;
     const updated: ArgoWorkflowObject = {
       ...wf,
       spec: { ...wf.spec, suspend: true },
@@ -142,6 +163,8 @@ export type ResumeWorkflowResult = {
   workflow: ArgoWorkflowObject;
   resumed_nodes: string[];
   workflow_level_resumed: boolean;
+  /** True when Resume was a soft no-op (already running/terminal). */
+  readonly alreadyDone?: boolean;
 };
 
 export function resumeWorkflowEffect(
@@ -151,6 +174,19 @@ export function resumeWorkflowEffect(
 ): Effect.Effect<ResumeWorkflowResult, AutomationError> {
   return Effect.gen(function* () {
     const wf = yield* getWorkflowObjectEffect(namespace, name);
+    const plane = classifyHitlResumeStatus(wf);
+    const planeNext = yield* transitionHitlResume(plane, { _tag: "Resume" }).pipe(
+      Effect.mapError(mapHitlIllegal)
+    );
+    if (planeNext.alreadyDone) {
+      return {
+        workflow: wf,
+        resumed_nodes: [],
+        workflow_level_resumed: false,
+        alreadyDone: true,
+      };
+    }
+
     const selector = nodeFieldSelector?.trim() ?? "";
     const resumedNodes: string[] = [];
     let workflowLevelResumed = false;
@@ -192,13 +228,7 @@ export function resumeWorkflowEffect(
     }
 
     if (!workflowUpdated) {
-      if (!workflowHasActiveSuspend(wf)) {
-        return yield* Effect.fail(
-          new AutomationError({
-            reason: `workflow ${name} has no active suspend state to resume`,
-          })
-        );
-      }
+      // Still suspended but selector matched nothing — hard fail (not soft idempotent).
       if (selector) {
         return yield* Effect.fail(
           new AutomationError({
@@ -218,6 +248,7 @@ export function resumeWorkflowEffect(
       workflow: saved,
       resumed_nodes: resumedNodes,
       workflow_level_resumed: workflowLevelResumed,
+      alreadyDone: false,
     };
   });
 }
