@@ -68,10 +68,24 @@ Verdicts: `pre_fix_sweep_fired_intent_kept` · `post_fix_skip_abandon_intent_kep
 
 Evidence: [`expiry-sweep-e2e-pre-fix.json`](./expiry-sweep-e2e-pre-fix.json) · [`expiry-sweep-e2e-post-fix.json`](./expiry-sweep-e2e-post-fix.json).
 
+## 200-cycle soak (availability regression check)
+
+Evidence: [`node-soak-200-expiry-not-dead.json`](./node-soak-200-expiry-not-dead.json) · fixed binary `1360bdf…` · `CELLD_TTL_MS=10000` · n=200.
+
+| Gate | Result |
+| ---- | ------ |
+| Unique nodes | **2** |
+| readyFails | **0** |
+| selfFences | **3** (correlated A+B at cycle ~95 within 42ms — host-pause signature; +1 solo B near cycle 195) |
+| Suspend void | **not** fired (`BOOTTIME−MONOTONIC` gap stayed ~0 on this cloud VM — clocks appear to freeze together) |
+| Wilson / v4 rate gates | **fail** (expected at n=200 even for 0/0; also 3 fences) |
+
+**Regression read:** no readyFails, nodes bounded, no distributed fence storm after expiry≠dead. The dual fence matches prior cloud-VM pause pattern, not a sweep-stall signature. This host cannot authorize soaks ([`SOAK_GATES.md`](./SOAK_GATES.md)); Mac mini / non-suspending host still required for `measured_v4_ready`. Proceed to N=300 correctness bar.
+
 ## Order before v4
 
 1. Real-binary e2e before/after (this doc) — **done**; another cause for 2/100
-2. **200-cycle** enriched soak on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) (availability regression: live owners past expiry are no longer swept)
+2. **200-cycle** enriched soak on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) — **done** (no clear avail regression; host invalid for authorizing)
 3. Frozen TTL=3s wedged **N=300** — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md) (0 lost; any loss fails; append logs + supersede audit) — still required; do not clear via quiet remasures
 4. Only then v4 — still blocked; mechanism claim for 2/100 stays open
 

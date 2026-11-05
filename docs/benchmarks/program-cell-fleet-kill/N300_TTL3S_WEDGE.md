@@ -19,7 +19,7 @@ Zero of 300 → 95% rule-of-three upper bound **3/300 = 1.0%**.
 ## Order (do not skip)
 
 1. **E2E SIGSTOP before/after** on real lab binaries ([`EXPIRY_NOT_DEAD.md`](./EXPIRY_NOT_DEAD.md)) — **done 2026-11-05:** pre-fix eager-recovers open log while owner is `T`, post-fix skips; **program intent kept on both** ⇒ 2/100 has another cause. Fix still ships; N=300 still required.
-2. **200-cycle enriched soak** on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) (availability regression check).
+2. **200-cycle enriched soak** on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) — **done:** nodes=2, readyFails=0, selfFences=3 (correlated dual + 1 solo; cloud-VM pause signature, not sweep-stall). Host cannot authorize.
 3. **This N=300 board.**
 4. Only then consider **v4**.
 
