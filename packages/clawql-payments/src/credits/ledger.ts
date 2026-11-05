@@ -1,6 +1,8 @@
 /**
  * Prepaid credit ledger: grant buckets + holds + append-only entries.
- * Authoritative balances live here (Postgres/Valkey scale-out later).
+ * Authoritative balances live here. Mutations serialize via tenant ledger lock
+ * (in-process default; Valkey/Redis or Postgres advisory when configured —
+ * see ledger-lock.ts / PaymentsLedgerLock.tla).
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -12,6 +14,7 @@ import {
   transitionCreditHold,
   type CreditHoldStatus,
 } from "./hold-transition.js";
+import { withTenantLedgerLockPromise } from "./ledger-lock.js";
 
 export type { CreditHoldStatus } from "./hold-transition.js";
 
@@ -102,29 +105,8 @@ const SOURCE_PRIORITY: Record<CreditGrantSource, number> = {
   adjust: 4,
 };
 
-const tenantLocks = new Map<string, Promise<unknown>>();
-
 async function withTenantLedgerLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
-  const key = tenantId.trim() || "default";
-  const prev = tenantLocks.get(key) ?? Promise.resolve();
-  let release!: () => void;
-  const gate = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const chained = prev.then(() => gate);
-  tenantLocks.set(
-    key,
-    chained.catch(() => undefined)
-  );
-  await prev.catch(() => undefined);
-  try {
-    return await fn();
-  } finally {
-    release();
-    if (tenantLocks.get(key) === chained) {
-      tenantLocks.delete(key);
-    }
-  }
+  return withTenantLedgerLockPromise(tenantId, fn);
 }
 
 async function loadFile(env: NodeJS.ProcessEnv): Promise<LedgerFile> {

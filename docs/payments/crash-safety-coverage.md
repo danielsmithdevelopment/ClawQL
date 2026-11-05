@@ -35,7 +35,8 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 
 ## What payments rely on today
 
-1. Idempotent ledger keys under `withTenantLedgerLock` (single-process today).
+1. Idempotent ledger keys under `withTenantLedgerLock` (Valkey/Redis or Postgres
+   advisory when configured; in-process default — `PaymentsLedgerLock.tla`).
 2. Capture/release short-circuit via explicit
    `transitionCreditHold` (`hold-transition.ts`).
 3. Compensation stage → confirm with `transitionPendingAction`; re-confirm of
@@ -58,7 +59,7 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 ## Formalization order (agreed)
 
 1. **Payments cluster** — Stripe write-ahead (#1460) + holds/compensation TLA
-   (#1458) + money-request + ACP checkout status graphs.
+   (#1458) + money-request + ACP checkout status graphs + multi-node ledger lock.
 2. **celld lease / supersede** — lease sweep expiry≠dead TLA on `main`
    (`formal/tla/lease/`); lab Rust + soak evidence still on stack PRs
    (#1456 / #1462 / #1464). Invariant: two live owners never both send; open-log
