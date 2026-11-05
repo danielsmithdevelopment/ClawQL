@@ -93,6 +93,9 @@ jobs:
       - name: Run pending-source status TLC dual configs
         run: bash scripts/formal/run-pending-source-tlc.sh
 
+      - name: Run WebMCP draft candidate TLC dual configs
+        run: bash scripts/formal/run-webmcp-draft-tlc.sh
+
       - name: Run account-deletion vs WORM TLC dual configs
         run: bash scripts/formal/run-account-deletion-worm-tlc.sh
 

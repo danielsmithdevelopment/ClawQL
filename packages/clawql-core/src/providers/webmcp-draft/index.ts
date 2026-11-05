@@ -1,12 +1,11 @@
 import { Effect, Layer } from "effect";
-import {
-  AuditLive,
-  AuditService,
-  AuditTestLayer,
-} from "../../audit/audit-service.js";
+import { AuditLive, AuditService, AuditTestLayer } from "../../audit/audit-service.js";
 import type { ClawQLError, McpToolAlreadyRegisteredError } from "../../errors/clawql-error.js";
 import { InMemoryHookRegistryLive } from "../../plugin/hook-registry.js";
-import { defineRegisteringProviderPlugin, NoopVaultSeedLive } from "../../plugin/plugin-installer.js";
+import {
+  defineRegisteringProviderPlugin,
+  NoopVaultSeedLive,
+} from "../../plugin/plugin-installer.js";
 import type { PluginInstallServices, ProviderPlugin } from "../../plugin/provider-types.js";
 import type { ClawQLPluginRegistrationApi, McpToolResult } from "../../plugin/registration-api.js";
 import { InMemorySkillRegistryLive } from "../../plugin/skill-registry.js";
@@ -37,6 +36,7 @@ export * from "./inference/from-openapi.js";
 export * from "./inference/from-graphql.js";
 export * from "./inference/from-forms.js";
 export * from "./lifecycle/draft-store.js";
+export * from "./lifecycle/draft-candidate-transition.js";
 export * from "./lifecycle/approval.js";
 export * from "./lifecycle/publish.js";
 export * from "./lifecycle/rollback.js";
@@ -137,7 +137,6 @@ const publishSchema = {
   additionalProperties: false,
 } as const;
 
-
 const executeSchema = {
   type: "object",
   properties: {
@@ -169,8 +168,7 @@ function registerWebMcpDraftTools(
   return Effect.gen(function* () {
     yield* api.registerMcpTool({
       name: "webmcp_draft",
-      description:
-        "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic).",
+      description: "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic).",
       schema: { ...draftSchema },
       handler: async (args: unknown) => {
         const a = asRecord(args);
@@ -220,7 +218,6 @@ function registerWebMcpDraftTools(
       },
     });
 
-    
     yield* api.registerMcpTool({
       name: "webmcp_draft_execute",
       description:
@@ -239,18 +236,16 @@ function registerWebMcpDraftTools(
           const toolName = String(a.toolName ?? "");
           const binding = findBinding(version.bindings, toolName);
           if (!binding) {
-            return yield* Effect.fail(new Error(`no binding for tool ${toolName} in ${version.versionId}`));
+            return yield* Effect.fail(
+              new Error(`no binding for tool ${toolName} in ${version.versionId}`)
+            );
           }
           const argMap =
             a.args && typeof a.args === "object" && !Array.isArray(a.args)
               ? (a.args as Record<string, unknown>)
               : {};
           return yield* executeBoundOperation(binding, argMap);
-        }).pipe(
-          Effect.provide(
-            Layer.mergeAll(WebMcpDraftLive, BoundOperationInvokerHostLive)
-          )
-        );
+        }).pipe(Effect.provide(Layer.mergeAll(WebMcpDraftLive, BoundOperationInvokerHostLive)));
         return textResult(await Effect.runPromise(program));
       },
     });

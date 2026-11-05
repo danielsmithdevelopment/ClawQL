@@ -14,6 +14,7 @@ import type {
   PublishedWebMcpVersion,
   StoredDraftCandidate,
 } from "../types.js";
+import { transitionDraftCandidate } from "./draft-candidate-transition.js";
 
 export type DraftStoreState = {
   readonly candidates: ReadonlyMap<string, StoredDraftCandidate>;
@@ -40,7 +41,9 @@ const defaultStore: MutableDraftStore = {
   activeVersionId: null,
 };
 
-export class DraftStoreService extends Context.Service<DraftStoreService, {
+export class DraftStoreService extends Context.Service<
+  DraftStoreService,
+  {
     /** Stub stores are process-local — restart loses unreviewed drafts with no durable error. */
     readonly durability: "ephemeral" | "durable";
     readonly putCandidates: (
@@ -57,11 +60,17 @@ export class DraftStoreService extends Context.Service<DraftStoreService, {
       readonly status: "approved" | "rejected";
       readonly reviewedBy: string;
       readonly editedTool?: Partial<ProposedWebMcpTool>;
-    }) => Effect.Effect<StoredDraftCandidate, WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError>;
+    }) => Effect.Effect<
+      StoredDraftCandidate,
+      WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError
+    >;
     readonly publishApproved: (input: {
       readonly publishedBy: string;
       readonly candidateIds?: readonly string[];
-    }) => Effect.Effect<PublishedWebMcpVersion, WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError>;
+    }) => Effect.Effect<
+      PublishedWebMcpVersion,
+      WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError
+    >;
     readonly getActiveVersion: () => Effect.Effect<PublishedWebMcpVersion | null>;
     readonly getVersion: (
       versionId: string
@@ -71,7 +80,8 @@ export class DraftStoreService extends Context.Service<DraftStoreService, {
       readonly publishedBy: string;
     }) => Effect.Effect<PublishedWebMcpVersion, WebMcpPublishVersionNotFoundError>;
     readonly resetForTests: () => Effect.Effect<void>;
-  }>()("clawql/webmcp-draft/DraftStoreService") {}
+  }
+>()("clawql/webmcp-draft/DraftStoreService") {}
 
 function resolveTool(candidate: StoredDraftCandidate): ProposedWebMcpTool {
   if (!candidate.editedTool) return candidate.proposedTool;
@@ -97,10 +107,13 @@ function serviceFromOps(ops: StoreOps, durability: "ephemeral" | "durable" = "ep
     durability,
     putCandidates: (candidates) =>
       Effect.gen(function* () {
-        const stored: StoredDraftCandidate[] = candidates.map((c) => ({
-          ...c,
-          status: "pending" as const,
-        }));
+        const stored: StoredDraftCandidate[] = [];
+        for (const c of candidates) {
+          const drafted = yield* transitionDraftCandidate("none", { _tag: "Draft" }).pipe(
+            Effect.orDie
+          );
+          stored.push({ ...c, status: drafted.status });
+        }
         const s = yield* ops.read();
         const next = new Map(s.candidates);
         for (const c of stored) next.set(c.candidateId, c);
@@ -132,18 +145,23 @@ function serviceFromOps(ops: StoreOps, durability: "ephemeral" | "durable" = "ep
             new WebMcpDraftNotFoundError({ candidateId: input.candidateId })
           );
         }
-        if (found.status !== "pending") {
-          return yield* Effect.fail(
-            new WebMcpDraftInvalidStateError({
-              candidateId: input.candidateId,
-              status: found.status,
-              reason: "only pending candidates can be reviewed",
-            })
-          );
-        }
+        const event =
+          input.status === "rejected"
+            ? ({ _tag: "Reject" } as const)
+            : ({ _tag: "Approve" } as const);
+        const transition = yield* transitionDraftCandidate(found.status, event).pipe(
+          Effect.mapError(
+            () =>
+              new WebMcpDraftInvalidStateError({
+                candidateId: input.candidateId,
+                status: found.status,
+                reason: "only pending candidates can be reviewed",
+              })
+          )
+        );
         const updated: StoredDraftCandidate = {
           ...found,
-          status: input.status,
+          status: transition.status,
           reviewedBy: input.reviewedBy,
           reviewedAt: new Date().toISOString(),
           ...(input.editedTool ? { editedTool: input.editedTool } : {}),
@@ -176,9 +194,7 @@ function serviceFromOps(ops: StoreOps, durability: "ephemeral" | "durable" = "ep
           toolName: resolveTool(c).name,
           sourceType: c.sourceType,
           sourceRef: c.sourceRef,
-          ...(c.formAction
-            ? { formAction: c.formAction, formMethod: c.formMethod ?? "POST" }
-            : {}),
+          ...(c.formAction ? { formAction: c.formAction, formMethod: c.formMethod ?? "POST" } : {}),
         }));
         const version: PublishedWebMcpVersion = {
           versionId: `${versionIdFor(publishedTools)}_${randomUUID().slice(0, 8)}`,
@@ -190,7 +206,20 @@ function serviceFromOps(ops: StoreOps, durability: "ephemeral" | "durable" = "ep
         };
         const candidates = new Map(s.candidates);
         for (const c of approved) {
-          candidates.set(c.candidateId, { ...candidates.get(c.candidateId)!, status: "published" });
+          const current = candidates.get(c.candidateId)!;
+          const published = yield* transitionDraftCandidate(current.status, {
+            _tag: "Publish",
+          }).pipe(
+            Effect.mapError(
+              () =>
+                new WebMcpDraftInvalidStateError({
+                  candidateId: c.candidateId,
+                  status: current.status,
+                  reason: "publish requires approved status",
+                })
+            )
+          );
+          candidates.set(c.candidateId, { ...current, status: published.status });
         }
         const versions = new Map(s.versions);
         versions.set(version.versionId, version);
@@ -251,13 +280,15 @@ export const DraftStoreTestLayer = Layer.effect(
   DraftStoreService,
   Effect.gen(function* () {
     const stateRef = yield* Ref.make(emptyState());
-    return serviceFromOps({
-      read: () => Ref.get(stateRef),
-      write: (next) => Ref.set(stateRef, next),
-    }, "ephemeral");
+    return serviceFromOps(
+      {
+        read: () => Ref.get(stateRef),
+        write: (next) => Ref.set(stateRef, next),
+      },
+      "ephemeral"
+    );
   })
 );
-
 
 function snapshotFromMutable(store: MutableDraftStore): DraftStoreState {
   return {
@@ -339,13 +370,12 @@ function makeProcessStoreOps(filePath: string | null): StoreOps {
  * `CLAWQL_WEBMCP_DRAFT_STORE_PATH` is set; otherwise ephemeral (test default).
  */
 export const DraftStoreLive = Layer.sync(DraftStoreService, () => {
-  const filePath =
-    process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH?.trim()
-      ? resolve(process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH.trim())
-      : process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "1" ||
-          process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "true"
-        ? resolve(process.cwd(), ".clawql", "webmcp-draft-store.json")
-        : null;
+  const filePath = process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH?.trim()
+    ? resolve(process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH.trim())
+    : process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "1" ||
+        process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "true"
+      ? resolve(process.cwd(), ".clawql", "webmcp-draft-store.json")
+      : null;
   const durability = filePath ? ("durable" as const) : ("ephemeral" as const);
   return serviceFromOps(makeProcessStoreOps(filePath), durability);
 });
