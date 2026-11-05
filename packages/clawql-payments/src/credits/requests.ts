@@ -18,9 +18,9 @@ import {
   type DirectoryEntry,
 } from "./directory.js";
 import { buildInviteDeepLink } from "./deeplinks.js";
+import { transitionMoneyRequestSync, type MoneyRequestStatus } from "./money-request-transition.js";
 
-export type MoneyRequestStatus =
-  "pending" | "accepted" | "paid" | "declined" | "cancelled" | "expired";
+export type { MoneyRequestStatus } from "./money-request-transition.js";
 
 export type MoneyRequest = {
   readonly requestId: string;
@@ -100,9 +100,10 @@ async function saveFile(file: RequestsFile, env: NodeJS.ProcessEnv): Promise<voi
 }
 
 function touchExpired(req: MoneyRequest): MoneyRequest {
-  if (req.status !== "pending" && req.status !== "accepted") return req;
   if (Date.parse(req.expiresAt) > Date.now()) return req;
-  return { ...req, status: "expired", updatedAt: new Date().toISOString() };
+  const next = transitionMoneyRequestSync(req.status, { _tag: "Expire" });
+  if (next.alreadyDone) return req;
+  return { ...req, status: next.status, updatedAt: new Date().toISOString() };
 }
 
 /** Private IO helper backing {@link CreditsRequestsService}. */
@@ -338,12 +339,15 @@ async function cancelMoneyRequestImpl(
   if (req.requesterTenantId !== input.requesterTenantId.trim()) {
     throw new Error("Only the requester can cancel this request");
   }
-  if (req.status !== "pending" && req.status !== "accepted") {
+  let cancelTransition;
+  try {
+    cancelTransition = transitionMoneyRequestSync(req.status, { _tag: "Cancel" });
+  } catch {
     throw new Error(`Cannot cancel request in status ${req.status}`);
   }
   const updated: MoneyRequest = {
     ...req,
-    status: "cancelled",
+    status: cancelTransition.status,
     updatedAt: new Date().toISOString(),
   };
   file.requests[updated.requestId] = updated;
@@ -366,7 +370,15 @@ async function updateAsPayer(
     await saveFile(file, env);
     throw new Error("Request expired");
   }
-  if (req.status !== "pending") throw new Error(`Request is ${req.status}`);
+  let declineTransition;
+  try {
+    declineTransition = transitionMoneyRequestSync(req.status, { _tag: "Decline" });
+  } catch {
+    throw new Error(`Request is ${req.status}`);
+  }
+  if (status !== declineTransition.status) {
+    throw new Error(`Request is ${req.status}`);
+  }
   if (!req.payerTenantId) {
     throw new Error(
       "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
@@ -377,7 +389,7 @@ async function updateAsPayer(
   }
   const updated: MoneyRequest = {
     ...req,
-    status,
+    status: declineTransition.status,
     updatedAt: new Date().toISOString(),
   };
   file.requests[updated.requestId] = updated;
@@ -403,7 +415,12 @@ async function markMoneyRequestAcceptedImpl(
     await saveFile(file, env);
     throw new Error("Request expired");
   }
-  if (req.status !== "pending") throw new Error(`Request is ${req.status}`);
+  let acceptTransition;
+  try {
+    acceptTransition = transitionMoneyRequestSync(req.status, { _tag: "Accept" });
+  } catch {
+    throw new Error(`Request is ${req.status}`);
+  }
   if (!req.payerTenantId) {
     throw new Error(
       "Payer has not joined yet — claim the invite first: clawql payments credits request claim-invite …"
@@ -414,7 +431,7 @@ async function markMoneyRequestAcceptedImpl(
   }
   const updated: MoneyRequest = {
     ...req,
-    status: "accepted",
+    status: acceptTransition.status,
     stagedTransferActionId: input.stagedTransferActionId,
     updatedAt: new Date().toISOString(),
   };
@@ -431,10 +448,16 @@ async function markMoneyRequestPaidImpl(
   const file = await loadFile(env);
   const req = file.requests[input.requestId.trim()];
   if (!req) return undefined;
-  if (req.status === "paid") return req;
+  let payTransition;
+  try {
+    payTransition = transitionMoneyRequestSync(req.status, { _tag: "Pay" });
+  } catch {
+    throw new Error(`Cannot mark paid from status ${req.status}`);
+  }
+  if (payTransition.alreadyDone) return req;
   const updated: MoneyRequest = {
     ...req,
-    status: "paid",
+    status: payTransition.status,
     paidTransferId: input.transferId,
     updatedAt: new Date().toISOString(),
   };

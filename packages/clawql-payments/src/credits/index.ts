@@ -164,6 +164,13 @@ export {
   type CreditHoldTransition,
 } from "./hold-transition.js";
 export {
+  MoneyRequestIllegalTransition,
+  transitionMoneyRequest,
+  transitionMoneyRequestSync,
+  type MoneyRequestEvent,
+  type MoneyRequestTransition,
+} from "./money-request-transition.js";
+export {
   CREDITS_TRANSFER_CONFIRM_TOOL,
   CREDITS_TRANSFER_STAGE_TOOL,
   CreditsError,
