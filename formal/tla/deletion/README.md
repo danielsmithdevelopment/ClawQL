@@ -21,13 +21,17 @@ scripts/formal/run-account-deletion-worm-tlc.sh
 
 ## Mapping
 
-| Spec                         | Code                                                        |
-| ---------------------------- | ----------------------------------------------------------- |
-| Steps 1..5                   | `ACCOUNT_DELETION_STEPS` in `account-deletion-job-store.ts` |
-| `RunNextStep` / `CrashRetry` | `runJob` + durable job store                                |
-| Vault step (`s=4`)           | `eraseAuthorizedEffect` / crypto-shred                      |
-| `FinalizeAtomic`             | `finalize` → `buildAccountDeletedEntry` once                |
-| Weak\*                       | early WORM, WORM erase, or complete with PII still readable |
+| Spec                         | Code                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| Steps 1..5                   | `ACCOUNT_DELETION_STEPS` in `account-deletion-job-store.ts`                       |
+| `RunNextStep` / `CrashRetry` | `runJob` + durable job store                                                      |
+| Job/step status graph        | `account-deletion-transition.ts` (Start/Fail/Resume/Complete; Complete/Skip/Fail) |
+| TLA `open`                   | job `pending` \| `in_progress` (Effect refinement)                                |
+| Vault step (`s=4`)           | `eraseAuthorizedEffect` / crypto-shred                                            |
+| `FinalizeAtomic`             | `finalize` → `Complete` → `buildAccountDeletedEntry` once                         |
+| `ResumeCompleted`            | `runJob` early return when `completed` + `wormWritten`                            |
+| Weak\*                       | early WORM, WORM erase, or complete with PII still readable                       |
 
 Service: `packages/clawql-payments/src/provisioning/account-deletion-service.ts`  
+Transitions: `packages/clawql-payments/src/provisioning/account-deletion-transition.ts`  
 Spec: `docs/specs/auth/supabase-managed-signup-v0.1.md` (§ Account deletion)

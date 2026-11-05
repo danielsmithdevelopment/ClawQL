@@ -64,6 +64,18 @@ export {
   type AccountDeletionJob,
   type AccountDeletionStepId,
 } from "./account-deletion-job-store.js";
+export {
+  AccountDeletionJobIllegalTransition,
+  AccountDeletionStepIllegalTransition,
+  transitionAccountDeletionJob,
+  transitionAccountDeletionJobSync,
+  transitionAccountDeletionStep,
+  transitionAccountDeletionStepSync,
+  type AccountDeletionJobEvent,
+  type AccountDeletionJobTransition,
+  type AccountDeletionStepEvent,
+  type AccountDeletionStepTransition,
+} from "./account-deletion-transition.js";
 export { attachCpcDashboardRoutes } from "./dashboard-http.js";
 export {
   renderCpcDashboardHtml,

@@ -30,6 +30,13 @@ import {
   type AccountDeletionStepId,
   type AccountDeletionStepState,
 } from "./account-deletion-job-store.js";
+import {
+  transitionAccountDeletionJob,
+  transitionAccountDeletionStep,
+  type AccountDeletionJobIllegalTransition,
+  type AccountDeletionStepEvent,
+  type AccountDeletionStepIllegalTransition,
+} from "./account-deletion-transition.js";
 
 export class AccountDeletionError extends Data.TaggedError("AccountDeletionError")<{
   readonly reason: string;
@@ -71,6 +78,37 @@ const nowIsoEffect = (): Effect.Effect<string> => Effect.sync(() => new Date().t
 const stepDone = (state: AccountDeletionStepState): boolean =>
   state.status === "completed" || state.status === "skipped";
 
+const mapJobIllegal = (err: AccountDeletionJobIllegalTransition): AccountDeletionError =>
+  new AccountDeletionError({
+    reason: `illegal account-deletion job transition: ${err.from}+${err.event}`,
+    cause: err,
+  });
+
+const mapStepIllegal = (err: AccountDeletionStepIllegalTransition): AccountDeletionError =>
+  new AccountDeletionError({
+    reason: `illegal account-deletion step transition: ${err.from}+${err.event}`,
+    cause: err,
+  });
+
+const stepEventForPatch = (
+  status: AccountDeletionStepState["status"]
+): AccountDeletionStepEvent | null => {
+  switch (status) {
+    case "completed":
+      return { _tag: "Complete" };
+    case "skipped":
+      return { _tag: "Skip" };
+    case "failed":
+      return { _tag: "Fail" };
+    case "pending":
+      return null;
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+};
+
 const resultFromJobEffect = (job: AccountDeletionJob): Effect.Effect<DeleteAccountResult> =>
   Effect.gen(function* () {
     const userIdHash = yield* sha256HexEffect(job.clawqlUserId);
@@ -92,12 +130,26 @@ const patchStep = (
   job: AccountDeletionJob,
   id: AccountDeletionStepId,
   patch: AccountDeletionStepState
-): Effect.Effect<AccountDeletionJob> =>
+): Effect.Effect<AccountDeletionJob, AccountDeletionError> =>
   Effect.gen(function* () {
+    const stepEvent = stepEventForPatch(patch.status);
+    if (!stepEvent) {
+      return yield* Effect.fail(
+        new AccountDeletionError({
+          reason: `account-deletion step ${id} cannot patch to pending`,
+        })
+      );
+    }
+    yield* transitionAccountDeletionStep(job.steps[id].status, stepEvent).pipe(
+      Effect.mapError(mapStepIllegal)
+    );
+    const jobNext = yield* transitionAccountDeletionJob(job.status, { _tag: "Start" }).pipe(
+      Effect.mapError(mapJobIllegal)
+    );
     const updatedAt = yield* nowIsoEffect();
     return {
       ...job,
-      status: "in_progress" as const,
+      status: jobNext.status,
       updatedAt,
       steps: { ...job.steps, [id]: patch },
     };
@@ -153,10 +205,16 @@ export function accountDeletionLiveLayer(): Layer.Layer<
 
       const failStep = (job: AccountDeletionJob, id: AccountDeletionStepId, reason: string) =>
         Effect.gen(function* () {
+          yield* transitionAccountDeletionStep(job.steps[id].status, { _tag: "Fail" }).pipe(
+            Effect.mapError(mapStepIllegal)
+          );
+          const jobNext = yield* transitionAccountDeletionJob(job.status, { _tag: "Fail" }).pipe(
+            Effect.mapError(mapJobIllegal)
+          );
           const updatedAt = yield* nowIsoEffect();
           const failed: AccountDeletionJob = {
             ...job,
-            status: "failed",
+            status: jobNext.status,
             updatedAt,
             steps: {
               ...job.steps,
@@ -419,16 +477,22 @@ export function accountDeletionLiveLayer(): Layer.Layer<
                 correlationId: next.correlationId,
               })
             );
+            const completed = yield* transitionAccountDeletionJob(next.status, {
+              _tag: "Complete",
+            }).pipe(Effect.mapError(mapJobIllegal));
             const updatedAt = yield* nowIsoEffect();
             next = yield* persist({
               ...next,
               wormWritten: true,
-              status: "completed",
+              status: completed.status,
               updatedAt,
             });
           } else if (next.status !== "completed") {
+            const completed = yield* transitionAccountDeletionJob(next.status, {
+              _tag: "Complete",
+            }).pipe(Effect.mapError(mapJobIllegal));
             const updatedAt = yield* nowIsoEffect();
-            next = yield* persist({ ...next, status: "completed", updatedAt });
+            next = yield* persist({ ...next, status: completed.status, updatedAt });
           }
 
           return yield* resultFromJobEffect(next);
@@ -440,6 +504,19 @@ export function accountDeletionLiveLayer(): Layer.Layer<
             return yield* resultFromJobEffect(job);
           }
           let current = job;
+          if (job.status !== "completed") {
+            const startEvent =
+              job.status === "failed"
+                ? ({ _tag: "Resume" } as const)
+                : ({ _tag: "Start" } as const);
+            const started = yield* transitionAccountDeletionJob(job.status, startEvent).pipe(
+              Effect.mapError(mapJobIllegal)
+            );
+            if (started.status !== job.status) {
+              const updatedAt = yield* nowIsoEffect();
+              current = yield* persist({ ...job, status: started.status, updatedAt });
+            }
+          }
           for (const step of ACCOUNT_DELETION_STEPS) {
             if (step === "keys") current = yield* runKeys(current);
             else if (step === "org") current = yield* runOrg(current);
