@@ -9,6 +9,10 @@ import type { SandboxCodeToolInput } from "../types.js";
 import { recordAgentSubstrateLifecycle } from "./worm-bridge.js";
 import type { AgentSubstrateWormSink } from "./worm-bridge.js";
 import {
+  transitionAgentSubstrateSession,
+  type AgentSubstrateSessionIllegalTransition,
+} from "./agent-substrate-session-transition.js";
+import {
   readAgentSubstrateConfig,
   type AgentSubstrateConfig,
   type AgentSubstrateExecResult,
@@ -35,6 +39,9 @@ export class AgentSubstrateService extends Context.Service<
     readonly resume: (
       sessionId: string
     ) => Effect.Effect<AgentSubstrateSession, AgentSubstrateError, AgentSubstrateWormSink>;
+    readonly terminate: (
+      sessionId: string
+    ) => Effect.Effect<AgentSubstrateSession, AgentSubstrateError, AgentSubstrateWormSink>;
     readonly exec: (
       input: SandboxCodeToolInput
     ) => Effect.Effect<AgentSubstrateExecResult, AgentSubstrateError, AgentSubstrateWormSink>;
@@ -45,6 +52,13 @@ type SessionStore = Map<string, AgentSubstrateSession>;
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function mapSessionIllegal(err: AgentSubstrateSessionIllegalTransition): AgentSubstrateError {
+  return new AgentSubstrateError({
+    reason: `illegal agent-substrate session transition: ${err.from}+${err.event}`,
+    cause: err,
+  });
 }
 
 function makeSession(sessionId: string, runtime: AgentSubstrateRuntime): AgentSubstrateSession {
@@ -70,45 +84,61 @@ export function createMockAgentSubstrateLayer(
     Effect.gen(function* () {
       const sessions = yield* Ref.make<SessionStore>(new Map());
 
+      const putSession = (session: AgentSubstrateSession) =>
+        Ref.update(sessions, (m) => {
+          const next = new Map(m);
+          next.set(session.sessionId, session);
+          return next;
+        });
+
       const ensureSession = (sessionId: string) =>
         Effect.gen(function* () {
           const map = yield* Ref.get(sessions);
           const existing = map.get(sessionId);
-          if (existing && existing.state !== "terminated") {
-            if (existing.state === "suspended") {
-              return yield* resume(sessionId);
-            }
+          if (!existing) {
+            yield* transitionAgentSubstrateSession("none", { _tag: "Create" }).pipe(
+              Effect.mapError(mapSessionIllegal)
+            );
+            const session = makeSession(sessionId, config.runtime);
+            yield* putSession(session);
+            yield* recordAgentSubstrateLifecycle({ kind: "session_created", session });
+            return session;
+          }
+          if (existing.state === "suspended") {
+            return yield* resume(sessionId);
+          }
+          if (existing.state === "running") {
+            yield* transitionAgentSubstrateSession("running", { _tag: "Resume" }).pipe(
+              Effect.mapError(mapSessionIllegal)
+            );
             return existing;
           }
-          const session = makeSession(sessionId, config.runtime);
-          yield* Ref.update(sessions, (m) => {
-            const next = new Map(m);
-            next.set(sessionId, session);
-            return next;
-          });
-          yield* recordAgentSubstrateLifecycle({ kind: "session_created", session });
-          return session;
+          // terminated — no rebirth (CreateAtMostOnce)
+          yield* transitionAgentSubstrateSession("terminated", { _tag: "Create" }).pipe(
+            Effect.mapError(mapSessionIllegal)
+          );
+          return existing;
         });
 
       const suspend = (sessionId: string) =>
         Effect.gen(function* () {
           const map = yield* Ref.get(sessions);
           const cur = map.get(sessionId);
-          if (!cur || cur.state === "terminated") {
+          if (!cur) {
             return yield* Effect.fail(
-              new AgentSubstrateError({ reason: `unknown or terminated session: ${sessionId}` })
+              new AgentSubstrateError({ reason: `unknown session: ${sessionId}` })
             );
           }
+          const next = yield* transitionAgentSubstrateSession(cur.state, { _tag: "Suspend" }).pipe(
+            Effect.mapError(mapSessionIllegal)
+          );
+          if (next.alreadyDone) return cur;
           const session: AgentSubstrateSession = {
             ...cur,
-            state: "suspended",
+            state: next.status,
             lastTransitionAt: nowIso(),
           };
-          yield* Ref.update(sessions, (m) => {
-            const next = new Map(m);
-            next.set(sessionId, session);
-            return next;
-          });
+          yield* putSession(session);
           yield* recordAgentSubstrateLifecycle({ kind: "session_suspended", session });
           return session;
         });
@@ -117,22 +147,45 @@ export function createMockAgentSubstrateLayer(
         Effect.gen(function* () {
           const map = yield* Ref.get(sessions);
           const cur = map.get(sessionId);
-          if (!cur || cur.state === "terminated") {
+          if (!cur) {
             return yield* Effect.fail(
-              new AgentSubstrateError({ reason: `unknown or terminated session: ${sessionId}` })
+              new AgentSubstrateError({ reason: `unknown session: ${sessionId}` })
             );
           }
+          const next = yield* transitionAgentSubstrateSession(cur.state, { _tag: "Resume" }).pipe(
+            Effect.mapError(mapSessionIllegal)
+          );
+          if (next.alreadyDone) return cur;
           const session: AgentSubstrateSession = {
             ...cur,
-            state: "running",
+            state: next.status,
             lastTransitionAt: nowIso(),
           };
-          yield* Ref.update(sessions, (m) => {
-            const next = new Map(m);
-            next.set(sessionId, session);
-            return next;
-          });
+          yield* putSession(session);
           yield* recordAgentSubstrateLifecycle({ kind: "session_resumed", session });
+          return session;
+        });
+
+      const terminate = (sessionId: string) =>
+        Effect.gen(function* () {
+          const map = yield* Ref.get(sessions);
+          const cur = map.get(sessionId);
+          if (!cur) {
+            return yield* Effect.fail(
+              new AgentSubstrateError({ reason: `unknown session: ${sessionId}` })
+            );
+          }
+          const next = yield* transitionAgentSubstrateSession(cur.state, {
+            _tag: "Terminate",
+          }).pipe(Effect.mapError(mapSessionIllegal));
+          if (next.alreadyDone) return cur;
+          const session: AgentSubstrateSession = {
+            ...cur,
+            state: next.status,
+            lastTransitionAt: nowIso(),
+          };
+          yield* putSession(session);
+          yield* recordAgentSubstrateLifecycle({ kind: "session_terminated", session });
           return session;
         });
 
@@ -141,6 +194,7 @@ export function createMockAgentSubstrateLayer(
         ensureSession,
         suspend,
         resume,
+        terminate,
         exec: (input) =>
           Effect.gen(function* () {
             if (
@@ -206,6 +260,9 @@ export function createLiveAgentSubstrateLayer(
     config: () => config,
     ensureSession: (sessionId) =>
       Effect.gen(function* () {
+        const expected = yield* transitionAgentSubstrateSession("none", { _tag: "Create" }).pipe(
+          Effect.mapError(mapSessionIllegal)
+        );
         const res = yield* Effect.tryPromise({
           try: () =>
             fetch(`${base}/v1/sessions`, {
@@ -225,6 +282,13 @@ export function createLiveAgentSubstrateLayer(
           try: () => res.json() as Promise<AgentSubstrateSession>,
           catch: (cause) => new AgentSubstrateError({ reason: "ensureSession JSON failed", cause }),
         })) as AgentSubstrateSession;
+        if (body.state !== expected.status) {
+          return yield* Effect.fail(
+            new AgentSubstrateError({
+              reason: `ensureSession returned state ${body.state}, expected ${expected.status}`,
+            })
+          );
+        }
         yield* recordAgentSubstrateLifecycle({ kind: "session_created", session: body });
         return body;
       }),
@@ -247,6 +311,13 @@ export function createLiveAgentSubstrateLayer(
           try: () => res.json() as Promise<AgentSubstrateSession>,
           catch: (cause) => new AgentSubstrateError({ reason: "suspend JSON failed", cause }),
         })) as AgentSubstrateSession;
+        if (body.state !== "suspended") {
+          return yield* Effect.fail(
+            new AgentSubstrateError({
+              reason: `suspend returned state ${body.state}, expected suspended`,
+            })
+          );
+        }
         yield* recordAgentSubstrateLifecycle({ kind: "session_suspended", session: body });
         return body;
       }),
@@ -269,7 +340,43 @@ export function createLiveAgentSubstrateLayer(
           try: () => res.json() as Promise<AgentSubstrateSession>,
           catch: (cause) => new AgentSubstrateError({ reason: "resume JSON failed", cause }),
         })) as AgentSubstrateSession;
+        if (body.state !== "running") {
+          return yield* Effect.fail(
+            new AgentSubstrateError({
+              reason: `resume returned state ${body.state}, expected running`,
+            })
+          );
+        }
         yield* recordAgentSubstrateLifecycle({ kind: "session_resumed", session: body });
+        return body;
+      }),
+    terminate: (sessionId) =>
+      Effect.gen(function* () {
+        const res = yield* Effect.tryPromise({
+          try: () =>
+            fetch(`${base}/v1/sessions/${encodeURIComponent(sessionId)}/terminate`, {
+              method: "POST",
+              headers,
+            }),
+          catch: (cause) => new AgentSubstrateError({ reason: "terminate fetch failed", cause }),
+        });
+        if (!res.ok) {
+          return yield* Effect.fail(
+            new AgentSubstrateError({ reason: `terminate HTTP ${res.status}` })
+          );
+        }
+        const body = (yield* Effect.tryPromise({
+          try: () => res.json() as Promise<AgentSubstrateSession>,
+          catch: (cause) => new AgentSubstrateError({ reason: "terminate JSON failed", cause }),
+        })) as AgentSubstrateSession;
+        if (body.state !== "terminated") {
+          return yield* Effect.fail(
+            new AgentSubstrateError({
+              reason: `terminate returned state ${body.state}, expected terminated`,
+            })
+          );
+        }
+        yield* recordAgentSubstrateLifecycle({ kind: "session_terminated", session: body });
         return body;
       }),
     exec: (input) =>

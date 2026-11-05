@@ -157,4 +157,29 @@ describe("Agent Substrate backend", () => {
     expect(r.backend).toBe("agent-substrate");
     expect(r.success).toBe(true);
   });
+
+  it("terminate is terminal — ensureSession rejects rebirth", async () => {
+    const layer = Layer.merge(
+      createMockAgentSubstrateLayer(readAgentSubstrateConfig()),
+      InMemoryAgentSubstrateWormSinkLive
+    );
+    const sandboxId = "session-sess-term";
+    const { types, err } = await Effect.runPromise(
+      Effect.gen(function* () {
+        const svc = yield* AgentSubstrateService;
+        yield* svc.ensureSession(sandboxId);
+        yield* svc.terminate(sandboxId);
+        const worm = yield* AgentSubstrateWormSink;
+        const events = yield* worm.list();
+        const retry = yield* Effect.result(svc.ensureSession(sandboxId));
+        return {
+          types: events.map((e) => e.type),
+          err: retry._tag === "Failure" ? retry.failure.reason : null,
+        };
+      }).pipe(Effect.provide(layer))
+    );
+
+    expect(types).toContain("AGENT_SUBSTRATE_SESSION_TERMINATED");
+    expect(err).toContain("terminated+Create");
+  });
 });

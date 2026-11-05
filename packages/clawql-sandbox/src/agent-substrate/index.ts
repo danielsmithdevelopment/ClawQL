@@ -86,6 +86,15 @@ export {
   type AgentSubstrateConfig,
   type AgentSubstrateRuntime,
   type AgentSubstrateSession,
+  type AgentSubstrateSessionState,
   type AgentSubstrateExecResult,
   type AgentSubstrateLifecycleEvent,
 } from "./types.js";
+export {
+  AgentSubstrateSessionIllegalTransition,
+  transitionAgentSubstrateSession,
+  transitionAgentSubstrateSessionSync,
+  type AgentSubstrateSessionEvent,
+  type AgentSubstrateSessionStateOrNone,
+  type AgentSubstrateSessionTransition,
+} from "./agent-substrate-session-transition.js";
