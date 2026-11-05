@@ -13,17 +13,18 @@ scripts/formal/run-lease-sweep-expiry-tlc.sh
 
 Lab: `vendor/celld-lab/crates/celld/host_process.rs`.
 
-## `LeaseRenewAmbiguous` — renew with unknown outcome
+## `LeaseRenewAmbiguous` — renew with unknown / late outcome
 
 Open lead for TTL3s 2/100 ([`AMBIGUOUS_RENEWAL.md`](../../../docs/benchmarks/program-cell-fleet-kill/AMBIGUOUS_RENEWAL.md)).
 
-| Config | `WeakIgnoreAmbiguousDivergence` | Expect |
-| ------ | ------------------------------- | ------ |
-| `LeaseRenewAmbiguous.cfg` | `FALSE` (target) | **PASS** — no optimistic belief bump; fence on divergence |
-| `LeaseRenewAmbiguousWeak.cfg` | `TRUE` | **COUNTEREXAMPLE** — optimistic belief after Ambiguous → write past storage expiry → survivor drops intent |
+| Config | Weak flag | Expect |
+| ------ | --------- | ------ |
+| `LeaseRenewAmbiguous.cfg` | both `FALSE` (target) | **PASS** — send-anchored belief; no optimistic Ambiguous bump |
+| `LeaseRenewAmbiguousWeak.cfg` | `WeakIgnoreAmbiguousDivergence` | **COUNTEREXAMPLE** — optimistic Ambiguous bump → write past storage → drop |
+| `LeaseRenewAmbiguousWeakReceipt.cfg` | `WeakStampAuthorityAtResponse` | **COUNTEREXAMPLE** — Applied stamps belief at receipt after RTT → belief > storage → drop |
 
 ```bash
 scripts/formal/run-lease-renew-ambiguous-tlc.sh
 ```
 
-**Product code check:** celld Ambiguous renew → readback; does **not** bump `last_ok` / held expiry. Weak CE is a model tooth, not a proven product bug. See `AMBIGUOUS_RENEWAL.md` § Code check.
+**Product code checks:** (1) Ambiguous → readback, no belief bump. (2) `last_ok_mono_ms := anchor_mono_ms` at renew **send**, not Applied receipt. Both weak CEs are model teeth, not proven product bugs. Mechanism for 2/100 stays open. See `AMBIGUOUS_RENEWAL.md`.

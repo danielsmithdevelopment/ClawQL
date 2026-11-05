@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# LeaseRenewAmbiguous: target PASS; weak ignore-divergence must COUNTEREXAMPLE.
+# LeaseRenewAmbiguous: target PASS; weak optimistic Ambiguous + weak receipt-stamp
+# must each COUNTEREXAMPLE.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -21,6 +22,7 @@ fi
 cp "$DIR"/LeaseRenewAmbiguous.tla \
   "$DIR"/LeaseRenewAmbiguous.cfg \
   "$DIR"/LeaseRenewAmbiguousWeak.cfg \
+  "$DIR"/LeaseRenewAmbiguousWeakReceipt.cfg \
   "$WORKDIR/"
 cd "$WORKDIR"
 
@@ -35,15 +37,26 @@ if [[ "$TARGET_EXIT" -ne 0 ]]; then
   exit 1
 fi
 
-echo "=== LeaseRenewAmbiguous weak ignore-divergence (must COUNTEREXAMPLE) ==="
+echo "=== LeaseRenewAmbiguous weak optimistic Ambiguous (must COUNTEREXAMPLE) ==="
 set +e
 java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
   -config LeaseRenewAmbiguousWeak.cfg LeaseRenewAmbiguous
 WEAK_EXIT=$?
 set -e
 if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
+  echo "FAIL: weak Ambiguous config must violate Safety (got clean exit)" >&2
   exit 1
 fi
 
-echo "OK: LeaseRenewAmbiguous Safety holds; weak divergence counterexample (exit=$WEAK_EXIT)"
+echo "=== LeaseRenewAmbiguous weak receipt-stamp (must COUNTEREXAMPLE) ==="
+set +e
+java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
+  -config LeaseRenewAmbiguousWeakReceipt.cfg LeaseRenewAmbiguous
+RECEIPT_EXIT=$?
+set -e
+if [[ "$RECEIPT_EXIT" -eq 0 ]]; then
+  echo "FAIL: weak receipt-stamp config must violate Safety (got clean exit)" >&2
+  exit 1
+fi
+
+echo "OK: LeaseRenewAmbiguous Safety holds; weak Ambiguous exit=$WEAK_EXIT; weak receipt exit=$RECEIPT_EXIT"

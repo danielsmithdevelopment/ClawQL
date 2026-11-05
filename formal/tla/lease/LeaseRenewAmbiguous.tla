@@ -1,38 +1,38 @@
 --------------------------- MODULE LeaseRenewAmbiguous ---------------------------
 (***************************************************************************)
-(* Ambiguous node-lease renewal vs mid-flight intent.                      *)
+(* Ambiguous / late node-lease renewal vs mid-flight intent.               *)
 (*                                                                         *)
-(* A renew CAS may reach R2 and still return Ambiguous to the owner        *)
-(* (timeout / transport). Storage truth and owner belief can diverge:      *)
+(* Divergence classes (belief > storage → write past expiry → survivor     *)
+(* drops mid-flight intent):                                               *)
 (*                                                                         *)
-(*   - Storage extended, owner did not update belief → owner may self-     *)
-(*     fence or under-renew while still holding.                           *)
-(*   - Storage did NOT extend, owner still believes it holds → owner keeps *)
-(*     writing past storage expiry; survivor may take over and drop a      *)
-(*     mid-flight intent (lost_midflight_intent lead).                     *)
+(* 1. WeakIgnoreAmbiguousDivergence: owner optimistically bumps belief     *)
+(*    after Ambiguous without readback. Product does NOT: Ambiguous →      *)
+(*    readback; authority stays on last confirmed apply.                   *)
 (*                                                                         *)
-(* WeakIgnoreAmbiguousDivergence = TRUE: owner optimistically bumps belief *)
-(* after Ambiguous without readback (unsafe class). TLC must               *)
-(* counterexample. Product celld does NOT do this: Ambiguous → readback,   *)
-(* authority stays on last confirmed apply (see AMBIGUOUS_RENEWAL.md).     *)
-(* Keep the weak config as a regression tooth.                             *)
+(* 2. WeakStampAuthorityAtResponse: renew CAS body (and storage expiry)    *)
+(*    is computed at request *send*, but owner stamps local authority at   *)
+(*    Applied *receipt*. Slow RTT stretches belief past storage by the     *)
+(*    response latency. Product does NOT: PendingNodeLease.anchor_mono_ms  *)
+(*    is the send instant; last_ok_mono_ms := anchor (see                 *)
+(*    AMBIGUOUS_RENEWAL.md).                                               *)
 (*                                                                         *)
-(* Target FALSE: after Ambiguous, owner must not treat belief as           *)
-(* authority for a mid-flight write once storage is expired — fence or     *)
-(* stop writing until readback reconciles.                                 *)
+(* Target: both weak constants FALSE. Keep weak configs as regression      *)
+(* teeth.                                                                  *)
 (***************************************************************************)
 
 EXTENDS Naturals, TLC
 
 CONSTANTS
-  WeakIgnoreAmbiguousDivergence,  \* BOOLEAN
+  WeakIgnoreAmbiguousDivergence,  \* BOOLEAN — optimistic Ambiguous bump
+  WeakStampAuthorityAtResponse,   \* BOOLEAN — authority stamped at receipt
   MaxClock
 
 VARIABLES
   clock,
-  storageExpiresAt,     \* truth in the lease store
-  ownerBeliefExpiresAt, \* what the owner last successfully applied
+  storageExpiresAt,     \* truth in the lease store (expires from CAS body)
+  ownerBeliefExpiresAt, \* local authority deadline
   renewInFlight,
+  renewSentAt,          \* clock when renew request / CAS body was formed
   \* When renew resolves Ambiguous, nondet whether storage actually applied.
   pendingStorageApplied,
   ownerWriting,         \* mid-flight intent (not yet durable)
@@ -41,14 +41,15 @@ VARIABLES
   survivorTookOver,
   intentDropped         \* survivor recovery dropped mid-flight intent
 
-\* Expiry timestamps may sit slightly past MaxClock after a renew extend.
-MaxExpiry == MaxClock + 2
+\* Receipt-stamped belief can land slightly past MaxClock + TTL step.
+MaxExpiry == MaxClock + 4
 
 TypeOK ==
   /\ clock \in 0..MaxClock
   /\ storageExpiresAt \in 0..MaxExpiry
   /\ ownerBeliefExpiresAt \in 0..MaxExpiry
   /\ renewInFlight \in BOOLEAN
+  /\ renewSentAt \in 0..MaxClock
   /\ pendingStorageApplied \in BOOLEAN
   /\ ownerWriting \in BOOLEAN
   /\ intentDurable \in BOOLEAN
@@ -62,6 +63,7 @@ Init ==
   /\ storageExpiresAt = 2
   /\ ownerBeliefExpiresAt = 2
   /\ renewInFlight = FALSE
+  /\ renewSentAt = 0
   /\ pendingStorageApplied = FALSE
   /\ ownerWriting = FALSE
   /\ intentDurable = FALSE
@@ -74,7 +76,7 @@ Tick ==
   /\ clock < MaxClock
   /\ clock' = clock + 1
   /\ UNCHANGED <<storageExpiresAt, ownerBeliefExpiresAt, renewInFlight,
-                 pendingStorageApplied, ownerWriting, intentDurable,
+                 renewSentAt, pendingStorageApplied, ownerWriting, intentDurable,
                  intentEverInFlight, survivorTookOver, intentDropped>>
 
 StartWrite ==
@@ -86,7 +88,7 @@ StartWrite ==
   /\ ownerWriting' = TRUE
   /\ intentEverInFlight' = TRUE
   /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, renewInFlight,
-                 pendingStorageApplied, intentDurable, survivorTookOver,
+                 renewSentAt, pendingStorageApplied, intentDurable, survivorTookOver,
                  intentDropped>>
 
 LandIntent ==
@@ -97,32 +99,41 @@ LandIntent ==
   /\ intentDurable' = TRUE
   /\ ownerWriting' = FALSE
   /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, renewInFlight,
-                 pendingStorageApplied, intentEverInFlight, survivorTookOver,
+                 renewSentAt, pendingStorageApplied, intentEverInFlight, survivorTookOver,
                  intentDropped>>
 
 \* Owner starts a renew while belief headroom is low.
+\* CAS body expires_ms is sampled here (send) — same instant as product
+\* PendingNodeLease.anchor_mono_ms / desired.expires_ms.
 StartRenew ==
   /\ ~renewInFlight
   /\ ~survivorTookOver
   /\ ownerBeliefExpiresAt <= clock + 1
   /\ renewInFlight' = TRUE
+  /\ renewSentAt' = clock
   /\ pendingStorageApplied' \in BOOLEAN   \* nondet: will storage apply?
   /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, ownerWriting,
                  intentDurable, intentEverInFlight, survivorTookOver,
                  intentDropped>>
 
-ExtendTo(cur) ==
-  LET raw == IF cur > clock THEN cur + 2 ELSE clock + 2
+\* Extend relative to an anchor (send or receipt clock), not "now" alone.
+ExtendToAt(anchor, cur) ==
+  LET raw == IF cur > anchor THEN cur + 2 ELSE anchor + 2
   IN IF raw > MaxExpiry THEN MaxExpiry ELSE raw
 
-\* Clean apply: both sides extend.
+\* Clean apply. Storage always takes the send-anchored body.
+\* Product: belief also send-anchored (last_ok := anchor_mono_ms).
+\* WeakStampAuthorityAtResponse: belief stamped at receipt (clock).
 RenewApplied ==
   /\ renewInFlight
   /\ pendingStorageApplied
   /\ renewInFlight' = FALSE
-  /\ storageExpiresAt' = ExtendTo(storageExpiresAt)
-  /\ ownerBeliefExpiresAt' = storageExpiresAt'
-  /\ UNCHANGED <<clock, pendingStorageApplied, ownerWriting, intentDurable,
+  /\ storageExpiresAt' = ExtendToAt(renewSentAt, storageExpiresAt)
+  /\ ownerBeliefExpiresAt' =
+       IF WeakStampAuthorityAtResponse
+         THEN ExtendToAt(clock, ownerBeliefExpiresAt)
+         ELSE storageExpiresAt'
+  /\ UNCHANGED <<clock, renewSentAt, pendingStorageApplied, ownerWriting, intentDurable,
                  intentEverInFlight, survivorTookOver, intentDropped>>
 
 \* Clean reject: storage did not extend; owner learns it.
@@ -130,58 +141,59 @@ RenewRejected ==
   /\ renewInFlight
   /\ ~pendingStorageApplied
   /\ renewInFlight' = FALSE
-  /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt,
+  /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, renewSentAt,
                  pendingStorageApplied, ownerWriting, intentDurable,
                  intentEverInFlight, survivorTookOver, intentDropped>>
 
 \* Ambiguous timeout: storage may or may not have applied the CAS.
 \* WeakIgnoreAmbiguousDivergence: owner optimistically bumps belief (assumes
 \* success) without readback — if storage did not apply, belief > storage.
-\* Target: owner leaves belief unchanged until readback reconciles.
+\* Target / product: belief unchanged until readback; storage may still extend
+\* from the send-anchored body if the CAS landed.
 RenewAmbiguous ==
   /\ renewInFlight
   /\ renewInFlight' = FALSE
   /\ storageExpiresAt' = IF pendingStorageApplied
-                           THEN ExtendTo(storageExpiresAt)
+                           THEN ExtendToAt(renewSentAt, storageExpiresAt)
                            ELSE storageExpiresAt
   /\ ownerBeliefExpiresAt' =
        IF WeakIgnoreAmbiguousDivergence
-         THEN ExtendTo(ownerBeliefExpiresAt)
+         THEN ExtendToAt(clock, ownerBeliefExpiresAt)
          ELSE ownerBeliefExpiresAt
-  /\ UNCHANGED <<clock, pendingStorageApplied, ownerWriting, intentDurable,
+  /\ UNCHANGED <<clock, renewSentAt, pendingStorageApplied, ownerWriting, intentDurable,
                  intentEverInFlight, survivorTookOver, intentDropped>>
 
 StorageExpired == storageExpiresAt <= clock
 OwnerBelievesHolding == ownerBeliefExpiresAt > clock
 
+UnsafeBeliefPastStorage ==
+  WeakIgnoreAmbiguousDivergence \/ WeakStampAuthorityAtResponse
+
 \* Survivor takeover on storage expiry (fenced).
-\* WeakIgnoreAmbiguousDivergence: owner kept writing on stale belief after
-\* Ambiguous → takeover may drop the mid-flight intent (counterexample).
-\* Target: fencing / readback means takeover must not drop that intent
-\* (same spirit as expiry≠dead: expiry permits fence, not abandon).
+\* Either weak class can leave belief holding past storage → drop mid-flight.
 SurvivorTakeover ==
   /\ ~survivorTookOver
   /\ StorageExpired
   /\ survivorTookOver' = TRUE
   /\ intentDropped' =
-       IF WeakIgnoreAmbiguousDivergence /\ ownerWriting /\ OwnerBelievesHolding
+       IF UnsafeBeliefPastStorage /\ ownerWriting /\ OwnerBelievesHolding
          THEN TRUE
          ELSE intentDropped
   /\ ownerWriting' = IF intentDropped' THEN FALSE ELSE ownerWriting
   /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, renewInFlight,
-                 pendingStorageApplied, intentDurable, intentEverInFlight>>
+                 renewSentAt, pendingStorageApplied, intentDurable, intentEverInFlight>>
 
-\* Target: once storage is expired but belief still says holding (typical
-\* after Ambiguous without readback), stop writing until reconciled.
+\* Target: once storage is expired but belief still says holding, stop writing.
 OwnerFenceOnDivergence ==
   /\ ~WeakIgnoreAmbiguousDivergence
+  /\ ~WeakStampAuthorityAtResponse
   /\ OwnerBelievesHolding
   /\ StorageExpired
   /\ ownerWriting
   /\ ~survivorTookOver
   /\ ownerWriting' = FALSE
   /\ UNCHANGED <<clock, storageExpiresAt, ownerBeliefExpiresAt, renewInFlight,
-                 pendingStorageApplied, intentDurable, intentEverInFlight,
+                 renewSentAt, pendingStorageApplied, intentDurable, intentEverInFlight,
                  survivorTookOver, intentDropped>>
 
 -----------------------------------------------------------------------------
@@ -197,12 +209,12 @@ Next ==
   \/ OwnerFenceOnDivergence
 
 Spec == Init /\ [][Next]_<<clock, storageExpiresAt, ownerBeliefExpiresAt,
-  renewInFlight, pendingStorageApplied, ownerWriting, intentDurable,
+  renewInFlight, renewSentAt, pendingStorageApplied, ownerWriting, intentDurable,
   intentEverInFlight, survivorTookOver, intentDropped>>
 
 -----------------------------------------------------------------------------
 \* Mid-flight intent must not be dropped by survivor takeover under belief
-\* divergence after an ambiguous renew path.
+\* divergence (Ambiguous optimistic bump or receipt-stamped authority).
 IntentPreserved ==
   ~(intentDropped /\ intentEverInFlight /\ ~intentDurable)
 

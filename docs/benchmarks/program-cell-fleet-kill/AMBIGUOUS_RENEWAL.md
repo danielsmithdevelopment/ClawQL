@@ -2,7 +2,12 @@
 
 **Status:** open lead for the TTL=3s wedged **2 × `lost_midflight_intent`**. Not resolved by expiry≠dead, quiet remasures, or N=300 zeros.
 
-**Code check (2026-11-05):** TLC weak counterexample is a **candidate only**. Product renew-on-timeout is **not** the optimistic-belief path the weak model uses → **CE does not apply as a product root-cause**. Mechanism stays **unexplained**. No pessimistic-belief + fence fix from this CE alone before v4.
+**Code checks (2026-11-05):** Two TLC weak classes that produce belief > storage are **ruled out as product matches**. Mechanism stays **unexplained**. No speculative renew-belief fix before v4 from these CEs alone.
+
+| Candidate | Product? | Doc |
+| --------- | -------- | --- |
+| Optimistic belief bump after Ambiguous | **No** — Ambiguous → readback | § Optimistic Ambiguous |
+| Authority stamped at Applied *receipt* (RTT stretch) | **No** — `last_ok_mono_ms := anchor_mono_ms` at *send* | § Receipt stamp |
 
 ## What N=300 did and did not show
 
@@ -11,7 +16,8 @@
 | Loss is rare on the fixed build at TTL=3s | **Supported** — 0/300 lost → ~1% rule-of-three UB |
 | Cause of the original 2/100 is gone | **Not supported** |
 | Expiry-as-dead caused the 2/100 | **Ruled out** as sufficient — e2e pre-fix eager-recovered while owner was `T` and ProgramCell intent **survived** ([`EXPIRY_NOT_DEAD.md`](./EXPIRY_NOT_DEAD.md)) |
-| Optimistic belief after Ambiguous renew caused the 2/100 | **Ruled out as product match** — see code check below |
+| Optimistic belief after Ambiguous renew | **Ruled out as product match** |
+| Receipt-stamped `last_ok` stretching past storage | **Ruled out as product match** |
 
 Publish the 2/100 as **mechanism unexplained**. See [`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md).
 
@@ -26,62 +32,81 @@ Neither remasures nor N=300 (avail failures ≈1.3%, quieter resumes) reproduced
 | Resume tail | up to **~62s** (board window) | N=300 resume p99≈7.9s / max≈13.9s |
 | Ambiguous renewals (`outcome="ambiguous"`) | present in truncated / pressure logs | sparse or absent under quiet R2 |
 
-Likeliest remaining *regime* suspect is still pressure around renew / R2 latency — but **not** via optimistic expiry bump after Ambiguous.
+Likeliest remaining *regime* suspect is still pressure around renew / R2 latency — but **not** via the two ruled-out belief > storage classes above.
 
 Celld already treats store write failures as ambiguous unless proven not committed (`ownership_store.rs` `LeaseCasError::Ambiguous`; actor logs `outcome="ambiguous"`).
 
-## Code check vs TLC weak counterexample
+## Code check: optimistic Ambiguous
 
-### What TLC weak shows (model only)
-
-`WeakIgnoreAmbiguousDivergence = TRUE` counterexample (depth 7):
+### TLC (`WeakIgnoreAmbiguousDivergence`)
 
 | State | Action | Meaning |
 | ----- | ------ | ------- |
-| 4 | `StartRenew` | renew in flight |
-| 5 | `RenewAmbiguous` | **bumps** `ownerBeliefExpiresAt` 2→4 while `storageExpiresAt` stays 2 |
-| 6 | `StartWrite` | mid-flight write under optimistic belief (`belief > storage`) |
-| 7 | `SurvivorTakeover` | **unfenced step** — drops non-durable mid-flight intent |
+| `StartRenew` | renew in flight | |
+| `RenewAmbiguous` | **bumps** belief while storage may stay put | |
+| `StartWrite` | mid-flight write under optimistic belief | |
+| `SurvivorTakeover` | drops non-durable mid-flight intent | |
 
-Optimistic belief alone only costs availability if every write/ack/recovery path is epoch-fenced. Intent loss in this trace requires the takeover step to succeed against an owner that still believes it holds — i.e. belief diverged above storage.
-
-Target config (`FALSE`) still **PASS**es: no optimistic bump; fence on divergence. Runner: `scripts/formal/run-lease-renew-ambiguous-tlc.sh`.
-
-### What celld actually does on Ambiguous / renew timeout
+### Product
 
 | Site | Behavior |
 | ---- | -------- |
-| `actor/effects.rs` renew timeout | maps to `Failure::Ambiguous` (half remaining authority bound) |
-| `node_lease_cas_completed` + `Err(Ambiguous)` | sets `readback_only = true`, enters `NodeAuthority::Reading`, emits `ReadSelfNodeLease` — **does not** advance `last_ok_mono_ms` / held expiry |
-| `complete_node_lease_write` / `hold_node_lease` | only path that installs fresh Held + `last_ok_mono_ms = anchor` after **Applied** (or zombie adoption after readback proves storage extended) |
-| `node_authoritative()` while `Reading`/`Writing` | true iff **prior** `last_ok_mono_ms` is still within TTL — last **confirmed** apply, not the in-flight renew |
+| `actor/effects.rs` renew timeout | `Failure::Ambiguous` |
+| `node_lease_cas_completed` + Ambiguous | `readback_only`; `ReadSelfNodeLease`; **no** `last_ok` advance |
+| `hold_node_lease` | fresh Held only after Applied / zombie adopt |
 
-So:
+**Verdict:** not product. Keep weak cfg as regression tooth.
 
-1. **Optimistic belief bump?** **No.** Ambiguous → readback; belief stays on last Applied until readback reconciles.
-2. **Stop sending until re-read?** **No** — outputs continue while prior confirmed authority is fresh (`output_gate` / `node_authoritative`). That is *not* the weak CE (which needs belief **above** storage). Prior confirmed authority tracks the last storage-applied expiry under normal clocks.
-3. **Unfenced product step matching State 7?** Not via this renew path: without belief > storage, the CE’s write-past-expiry + drop does not form. Takeover fencing is the expiry≠dead / epoch story, already separate.
+## Code check: receipt-stamped authority (timing)
 
-**Verdict:** CE is a valid warning about a class of bugs; **celld’s renew path does not implement that class**. Do **not** land a “pessimistic belief + hold outputs on Ambiguous” fix from this CE alone. Mechanism for the 2/100 stays **open**.
+Same divergence can appear through **time** instead of an epoch-style bump: storage expiry is whatever the CAS body carried (sampled at **send**); if the holder stamps local authority when the Applied **response arrives**, every slow RTT stretches belief past storage by that latency. Failing regime (slow resumes, ambiguous renews) is exactly where that would show.
 
-## Chase (parallel with Mac mini soak)
+### Where `last_ok_mono_ms` is stamped (product)
 
-### 1. Model it (TLA) — done for optimistic-bump class
+| Site | Stamp |
+| ---- | ----- |
+| Renew start (`Timer::NodeLeaseRenew`) | `desired.expires_ms = now_ms + ttl`; `PendingNodeLease.anchor_mono_ms = now_mono_ms` (**send**) |
+| `hold_node_lease` after Applied | `last_ok_mono_ms: anchor_mono_ms` — **not** completion mono |
+| Doc on `PendingNodeLease::anchor_mono_ms` | Explicitly: bucket says `expires_ms` sampled at send; anchoring the fence to write **completion** would serve after peers declare dead for an unbounded RTT |
 
-`formal/tla/lease/LeaseRenewAmbiguous` — weak CE + product code check documented here. Keep the weak model as a regression tooth for any future renew path that would bump belief on Ambiguous.
+Zombie adoption after Ambiguous readback takes `min(delta_anchor, observed_anchor)` — earlier of the two, not a receipt stretch of a successful renew.
 
-### 2. Force it (lab / board) — still useful
+**Verdict:** stamped at **request send**. Receipt-stamp CE **ruled out** as product match. No “stamp at send minus drift margin” fix required — already send-anchored.
 
-Inject latency or timeouts on **R2 node-lease renew** calls only (not all S3), so `outcome="ambiguous"` happens at scale under wedged TTL=3s. That exercises the **real** Ambiguous→readback→continue-on-prior path and any *other* unfenced step under pressure — not the ruled-out optimistic bump. Env / harness hooks TBD.
+### TLC (`WeakStampAuthorityAtResponse`)
+
+Late Applied after Ticks during flight (receipt CE, depth 9 excerpt):
+
+| State | Action | Meaning |
+| ----- | ------ | ------- |
+| `StartRenew` | `renewSentAt = 2` | CAS body / send anchor |
+| `Tick` ×2 | clock → 4, renew still in flight | response latency |
+| `RenewApplied` | storage → 4 (send+TTL), belief → **6** (receipt+TTL) | belief > storage by RTT |
+| `StartWrite` | write under stretched belief | |
+| `SurvivorTakeover` | drops mid-flight intent | |
+
+Target (both weaks `FALSE`): belief also send-anchored → **PASS**. Runner: `scripts/formal/run-lease-renew-ambiguous-tlc.sh`.
+
+## Forced-latency chase (two arms)
+
+Different code paths — run **both** under wedged TTL=3s before claiming anything about renew under pressure:
+
+| Arm | Inject | Exercises |
+| --- | ------ | --------- |
+| **A — Ambiguous / timeout** | Drop or time out the renew **response** (CAS may or may not have landed) | Ambiguous → readback path |
+| **B — Late success** | Delay the **response** of a renew that **succeeded** at storage (Applied still returns, late) | Timing path — would expose receipt-stamp if it existed; still useful as soak of send-anchored authority under slow R2 |
+
+Env / harness hooks TBD (renew-only, not all S3). Do not raise `CELLD_TTL_MS` to hide the race.
 
 ## Sequencing
 
 | Step | Status |
 | ---- | ------ |
-| Code check renew-on-timeout vs weak CE | **Done** — not optimistic; CE does not apply |
-| Fix pessimistic+fence from this CE before v4 | **Not required** (would be speculative) |
-| Mac mini authorizing 1000-cycle soak | **Unblocked** — does not depend on this CE |
-| v4 N=1000 | May run after soak; must still report **mechanism unexplained** |
-| Forced renew-latency board | Next chase for the open mechanism |
+| Code check optimistic Ambiguous | **Done** — not product |
+| Code check receipt-stamp `last_ok` | **Done** — stamped at send; not product |
+| Speculative renew-belief fix before v4 | **Not required** from these CEs |
+| Mac mini authorizing 1000-cycle soak | **Unblocked** |
+| v4 N=1000 | After soak; still report **mechanism unexplained** |
+| Forced renew-latency arms A+B | Next chase for the open mechanism |
 
 See [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md).
