@@ -6,7 +6,7 @@ Design-time models for ClawQL protocols and policy. See [ADR 0014](../docs/adr/0
 | -------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
 | [`tla/mandate/`](tla/mandate/)                     | TLA+ / TLC — mandate lifecycle + crash/`outcome_unknown` | Atomic SQLite CAS; dual CI                                        |
 | [`tla/events/`](tla/events/)                       | TLA+ / TLC — event delivery / resume                     | Starter; dual configs                                             |
-| [`tla/program/`](tla/program/)                     | TLA+ / TLC — program step resume / no completed re-run   | Claim-path §5; dual configs                                       |
+| [`tla/program/`](tla/program/)                     | TLA+ / TLC — program resume + proposal DAG               | Claim-path §5 + submit_program_proposals; dual configs            |
 | [`tla/payments/`](tla/payments/)                   | TLA+ / TLC — holds/compensation + Stripe write-ahead     | Dual configs; **not** covered by mandate/journal — see README     |
 | [`tla/lease/`](tla/lease/)                         | TLA+ / TLC — lease sweep expiry ≠ dead                   | Dual configs; open-log abandon only on process evidence           |
 | [`tla/oauth/`](tla/oauth/)                         | TLA+ / TLC — OAuth auth-code + PKCE single-use           | Dual configs; delete-on-read consume                              |
