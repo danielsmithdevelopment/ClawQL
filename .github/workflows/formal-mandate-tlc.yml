@@ -83,3 +83,6 @@ jobs:
 
       - name: Run lease-sweep expiry≠dead TLC (target + weak counterexample)
         run: bash scripts/formal/run-lease-sweep-expiry-tlc.sh
+
+      - name: Run OAuth PKCE auth-code TLC dual configs
+        run: bash scripts/formal/run-oauth-pkce-tlc.sh

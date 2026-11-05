@@ -63,8 +63,9 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
    (`formal/tla/lease/`); lab Rust + soak evidence still on stack PRs
    (#1456 / #1462 / #1464). Invariant: two live owners never both send; open-log
    abandon only on process evidence.
-3. **Security machines** — OAuth/PKCE single-use+expiry+verifier; HTTP session
-   IFC labels must only accumulate (never drop on reset/resume/reconnect).
+3. **Security machines** — OAuth/PKCE single-use+expiry+verifier
+   (`formal/tla/oauth/`); HTTP session IFC labels only accumulate — Lean
+   `labels_only_grow` + TS differential (never drop within a session key).
 4. **Account deletion** vs WORM retention.
 5. **Program proposal** graph (half of program formalization).
 
