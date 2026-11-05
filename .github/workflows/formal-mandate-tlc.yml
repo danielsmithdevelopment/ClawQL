@@ -74,7 +74,7 @@ jobs:
       - name: Run lease-sweep expiry≠dead TLC (target + weak counterexample)
         run: bash scripts/formal/run-lease-sweep-expiry-tlc.sh
 
-      - name: Run lease-renew ambiguous TLC (target + weak Ambiguous + weak receipt-stamp)
+      - name: Run lease-renew ambiguous TLC (target + weak Ambiguous/receipt/pause)
         run: bash scripts/formal/run-lease-renew-ambiguous-tlc.sh
 
       - name: Trace check intent durable before send

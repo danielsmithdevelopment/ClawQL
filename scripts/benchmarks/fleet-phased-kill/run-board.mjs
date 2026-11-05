@@ -1505,7 +1505,9 @@ async function main() {
     st.replayedSteps = (st.replayedSteps || 0) + replayedSteps;
 
     // Mid-flight storage check (v3): intent or pauseKind must be visible on the
-    // survivor after journal-before-hang. Missing = durability/correctness.
+    // survivor after journal-before-hang. Missing under a *successful* status
+    // read = durability/correctness. Timeout / transport / non-OK status =
+    // unknown (availability) — never classify as lost_midflight_intent.
     // Does not use local re-get-as-proof — queries survivor /program/status.
     let midFlightStorage = null;
     if (midFlight) {
@@ -1514,6 +1516,8 @@ async function main() {
         {},
         8_000
       );
+      const fetchError = Boolean(statusRes.fetchError);
+      const statusOk = Boolean(statusRes.ok && statusRes.body?.ok);
       const meta = statusRes.body?.meta || null;
       const intents = Array.isArray(statusRes.body?.intents) ? statusRes.body.intents : [];
       const hasIntent = intents.length > 0;
@@ -1523,14 +1527,20 @@ async function main() {
         (hasIntent ||
           pauseKind === "during_call" ||
           pauseKind === "after_intent_before_call");
+      const readable = statusOk && !fetchError;
       midFlightStorage = {
-        statusOk: Boolean(statusRes.ok && statusRes.body?.ok),
+        statusOk,
+        fetchError,
+        status: statusRes.status || 0,
+        readable,
         hasMeta: Boolean(meta),
         hasIntent,
         pauseKind,
         present,
       };
-      if (!present) {
+      // Only a definitive empty durable view fails the mid-flight expect.
+      // Unreadable status leaves expectOk alone (availability path below).
+      if (readable && !present) {
         expectOk = false;
       }
     }
@@ -1550,6 +1560,10 @@ async function main() {
     } else if (staleOwner?.staleSend) {
       failureClass = "correctness";
       failureReason = "stale_owner_send";
+      expectOk = false;
+    } else if (midFlightStorage && !midFlightStorage.readable) {
+      failureClass = "availability";
+      failureReason = "midflight_storage_unknown";
       expectOk = false;
     } else if (midFlightStorage && midFlightStorage.present === false) {
       failureClass = "correctness";
@@ -1628,7 +1642,10 @@ async function main() {
       const elapsedSec = (Date.now() - boardStarted) / 1000;
       const rate = (i + 1) / Math.max(1, elapsedSec);
       const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
-      const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
+      const lostIntent =
+        midFlightStorage && midFlightStorage.readable && midFlightStorage.present === false
+          ? 1
+          : 0;
       const callSentFlag =
         phase === "during_call" ? (callSent?.sawInFlight ? 1 : 0) : "-";
       const staleFlag = STALE_OWNER
@@ -1929,7 +1946,7 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)",
+                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (readable survivor status lacks intent/pauseKind after mid-flight kill; timeout/fetchError → midflight_storage_unknown availability), stale_owner_send (egress after own.json left the victim)",
             },
             availability: {
               failures: availabilityFailures,

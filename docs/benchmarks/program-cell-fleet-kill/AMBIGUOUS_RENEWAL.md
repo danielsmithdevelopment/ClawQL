@@ -87,14 +87,20 @@ Late Applied after Ticks during flight (receipt CE, depth 9 excerpt):
 
 Target (both weaks `FALSE`): belief also send-anchored → **PASS**. Runner: `scripts/formal/run-lease-renew-ambiguous-tlc.sh`.
 
+## Third weak class: holder clock paused (open product candidate)
+
+`WeakHolderClockPaused`: wall/storage time advances while holder mono is frozen (VM suspend). Send-anchored `last_ok` then sits past storage expiry → write → SurvivorTakeover drops intent.
+
+Product today: `asyncrt::mono_ms` = `Instant::elapsed` (CLOCK_MONOTONIC). Peers use wall `expires_ms`. The original 2/100 ran on a **Cloud Agent VM** with suspend-shaped resumes ([`TTL3S_THREE_CHECKS.md`](./TTL3S_THREE_CHECKS.md)). Fix candidate: lease deadlines on **CLOCK_BOOTTIME**.
+
 ## Forced-latency chase (two arms)
 
-Different code paths — run **both** under wedged TTL=3s before claiming anything about renew under pressure:
+Still useful after the three checks — different code from pause:
 
 | Arm | Inject | Exercises |
 | --- | ------ | --------- |
-| **A — Ambiguous / timeout** | Drop or time out the renew **response** (CAS may or may not have landed) | Ambiguous → readback path |
-| **B — Late success** | Delay the **response** of a renew that **succeeded** at storage (Applied still returns, late) | Timing path — would expose receipt-stamp if it existed; still useful as soak of send-anchored authority under slow R2 |
+| **A — Ambiguous / timeout** | Drop or time out the renew **response** | Ambiguous → readback |
+| **B — Late success** | Delay Applied **response** of a storage-successful renew | Timing path under slow R2 |
 
 Env / harness hooks TBD (renew-only, not all S3). Do not raise `CELLD_TTL_MS` to hide the race.
 

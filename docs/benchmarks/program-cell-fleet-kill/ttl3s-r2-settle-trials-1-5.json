@@ -1,0 +1,55 @@
+{
+  "kind": "ttl3s-wedge-lost-intent-r2-settle",
+  "measuredAt": "2026-11-05T22:48:38.050Z",
+  "host": "cursor-cloud-agent bc-01a180e1-e75b-78be-89f2-1c9728212725",
+  "boardWindow": {
+    "startedAt": "2026-11-04T02:16:36.312Z",
+    "endedAt": "2026-11-04T02:58:39.463Z"
+  },
+  "prefix": "tier-c-wedge100-lab-20261104021638",
+  "cell": "ProgramCellDO:8b3f8c259c1b2bf1aed4a4270920817997c5d8f760e4dc8e59f3f428e2c89b4f",
+  "method": [
+    "read-only ListObjects/GetObject on R2 LTX pages under the failing-board prefix",
+    "string-scan for programId:meta bodies; compare midflight pause markers",
+    "no PutObject / mutate against the live prefix"
+  ],
+  "programIds": {
+    "1": "phased_after_intent_before_call_1_1793758650321",
+    "5": "phased_after_intent_before_call_5_1793758728011",
+    "okNeighbor9": "phased_after_intent_before_call_9_1793758918129"
+  },
+  "results": {
+    "1": {
+      "metaPresent": true,
+      "paused_for_kill_in_meta": false,
+      "statusesObserved": [
+        "completed"
+      ],
+      "verdict": "midflight_markers_absent",
+      "notes": "meta durable from epoch 2 onward; never observed status=paused_for_kill in meta body across 101 pages. Contrast ok trial 9."
+    },
+    "5": {
+      "metaPresent": true,
+      "paused_for_kill_in_meta": "inconclusive_binary_scan",
+      "statusesObserved": [
+        "running",
+        "completed"
+      ],
+      "verdict": "midflight_markers_not_confirmed",
+      "notes": "meta durable; no clean paused_for_kill meta body like ok trial 9. Loss not explained as missing program object."
+    },
+    "9": {
+      "metaPresent": true,
+      "paused_for_kill_in_meta": true,
+      "firstSeenEpoch": 9,
+      "verdict": "midflight_pause_durable",
+      "notes": "control: e9 page shows status=paused_for_kill in :meta — journal-before-hang shape that fail trials lack."
+    }
+  },
+  "verdict": "Loss is real for at least trial 1 (create/meta without durable midflight pause). Not a pure measurement artifact of absent programs. Intent :intent suffix keys are rare in LTX string scan even for ok trials — rely on paused_for_kill / pauseKind in meta.",
+  "evidenceFiles": [
+    "ttl3s-r2-settle-trials-1-5.json",
+    "settle-meta-body.json",
+    "settle-pause-markers.json"
+  ]
+}

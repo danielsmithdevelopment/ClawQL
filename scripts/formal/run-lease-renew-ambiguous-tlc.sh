@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LeaseRenewAmbiguous: target PASS; weak optimistic Ambiguous + weak receipt-stamp
+# LeaseRenewAmbiguous: target PASS; weak Ambiguous / receipt-stamp / pause-clock
 # must each COUNTEREXAMPLE.
 set -euo pipefail
 
@@ -23,40 +23,40 @@ cp "$DIR"/LeaseRenewAmbiguous.tla \
   "$DIR"/LeaseRenewAmbiguous.cfg \
   "$DIR"/LeaseRenewAmbiguousWeak.cfg \
   "$DIR"/LeaseRenewAmbiguousWeakReceipt.cfg \
+  "$DIR"/LeaseRenewAmbiguousWeakPause.cfg \
   "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== LeaseRenewAmbiguous target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config LeaseRenewAmbiguous.cfg LeaseRenewAmbiguous
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+run_expect_pass() {
+  local cfg="$1" label="$2"
+  echo "=== LeaseRenewAmbiguous ${label} (must PASS) ==="
+  set +e
+  java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config "$cfg" LeaseRenewAmbiguous
+  local ec=$?
+  set -e
+  if [[ "$ec" -ne 0 ]]; then
+    echo "FAIL: ${label} must report no errors (exit=$ec)" >&2
+    exit 1
+  fi
+}
 
-echo "=== LeaseRenewAmbiguous weak optimistic Ambiguous (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config LeaseRenewAmbiguousWeak.cfg LeaseRenewAmbiguous
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak Ambiguous config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+run_expect_ce() {
+  local cfg="$1" label="$2"
+  echo "=== LeaseRenewAmbiguous ${label} (must COUNTEREXAMPLE) ==="
+  set +e
+  java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config "$cfg" LeaseRenewAmbiguous
+  local ec=$?
+  set -e
+  if [[ "$ec" -eq 0 ]]; then
+    echo "FAIL: ${label} must violate Safety (got clean exit)" >&2
+    exit 1
+  fi
+  echo "${label}_exit=$ec"
+}
 
-echo "=== LeaseRenewAmbiguous weak receipt-stamp (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config LeaseRenewAmbiguousWeakReceipt.cfg LeaseRenewAmbiguous
-RECEIPT_EXIT=$?
-set -e
-if [[ "$RECEIPT_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak receipt-stamp config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+run_expect_pass LeaseRenewAmbiguous.cfg "target"
+run_expect_ce LeaseRenewAmbiguousWeak.cfg "weak Ambiguous"
+run_expect_ce LeaseRenewAmbiguousWeakReceipt.cfg "weak receipt-stamp"
+run_expect_ce LeaseRenewAmbiguousWeakPause.cfg "weak holder-pause"
 
-echo "OK: LeaseRenewAmbiguous Safety holds; weak Ambiguous exit=$WEAK_EXIT; weak receipt exit=$RECEIPT_EXIT"
+echo "OK: LeaseRenewAmbiguous Safety holds; all three weak configs counterexample"

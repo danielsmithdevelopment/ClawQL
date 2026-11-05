@@ -1,0 +1,49 @@
+{
+  "fail1": {
+    "id": "phased_after_intent_before_call_1_1793758650321",
+    "counts": {
+      "paused_for_kill_after_meta": 0,
+      "status_running": 0,
+      "status_paused": 0,
+      "status_completed": 100,
+      "status_failed": 0
+    },
+    "examples": []
+  },
+  "fail5": {
+    "id": "phased_after_intent_before_call_5_1793758728011",
+    "counts": {
+      "paused_for_kill_after_meta": 2,
+      "status_running": 0,
+      "status_paused": 0,
+      "status_completed": 4,
+      "status_failed": 0
+    },
+    "examples": [
+      {
+        "key": "e68/0000/0000000000000005-0000000000000006.ltx",
+        "snip": "phased_after_intent_before_call_5_1793758728011:meta ) d 7_1793760033032:meta x ) u entry:2 | ?1 z0 ?0 y] l 3] 59946457:meta [- l ] _] l ?1 ]0 ?0 \\] k$490 b861986] > k ] B ?1 @] k 0 ?0 ?] l c977516] ! l ] % ?1 #] l 0 ?0 \"] l 1 b687320 l ] ?1 ] l 0 ?0 ] k 3 59601736:meta - k 1736:entry:2 + * \\ p $ k "
+      },
+      {
+        "key": "e7/0000/0000000000000001-0000000000000002.ltx",
+        "snip": "phased_after_intent_before_call_5_1793758728011:meta o\" A OId\"/D i\" status\" running\" plano\" vI \" mode\" sequential\" callsA o\" operationId\" listPets\" method\" GET\" path\" /pets\" risk\" read{ @ streams.session.noop2 2 owners.createw D POSx \" /$ H write\" argso\" name/ idempotencyKeyA 0{ { $ { \" owner\" lab\" "
+      }
+    ]
+  },
+  "ok9": {
+    "id": "phased_after_intent_before_call_9_1793758918129",
+    "counts": {
+      "paused_for_kill_after_meta": 1,
+      "status_running": 0,
+      "status_paused": 0,
+      "status_completed": 0,
+      "status_failed": 0
+    },
+    "examples": [
+      {
+        "key": "e9/0000/0000000000000001-0000000000000002.ltx",
+        "snip": "phased_after_intent_before_call_9_1793758918129:meta o\" A OId\"/D q\" status\" paused_for_kill\" plano\" vI \" mode\" sequential\" callsA o\" operationId\" listPets\" method\" GET\" path\" /pets\" risk\" read{ @ streams.session.noop2 2 owners.createw D POSx \" /$ H write\" argso\" name7 idempotencyKeyA 0{ { $ { \" owne"
+      }
+    ]
+  }
+}

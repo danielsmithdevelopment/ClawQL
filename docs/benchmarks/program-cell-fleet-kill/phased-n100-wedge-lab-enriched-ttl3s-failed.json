@@ -52,8 +52,10 @@
     "seeAlso": "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md"
   },
   "mechanism": "unexplained",
-  "mechanismNote": "Publish as mechanism unexplained. Expiry\u2260dead e2e ruled out as sufficient cause (pre-fix eager recovery while owner T; ProgramCell intent kept). N=300 zeros bound rate only (~1% UB) and did not re-enter the failing regime (5 avail / ~62s resumes / ambiguous renewals). Open lead: ambiguous R2 renew \u2014 see AMBIGUOUS_RENEWAL.md.",
+  "mechanismNote": "Publish as mechanism unexplained. R2 settle: loss real for trial 1 (meta without midflight pause; see TTL3S_THREE_CHECKS.md). Host=cloud agent VM — mono-vs-wall pause candidate (do not void). Classifier timeout→lost fixed going forward. Ambiguous/receipt belief paths ruled out.",
   "seeAlso": [
+    "docs/benchmarks/program-cell-fleet-kill/TTL3S_THREE_CHECKS.md",
+    "docs/benchmarks/program-cell-fleet-kill/ttl3s-r2-settle-trials-1-5.json",
     "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md",
     "docs/benchmarks/program-cell-fleet-kill/AMBIGUOUS_RENEWAL.md",
     "docs/benchmarks/program-cell-fleet-kill/N300_TTL3S_WEDGE.md"

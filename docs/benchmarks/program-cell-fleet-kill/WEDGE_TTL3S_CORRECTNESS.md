@@ -29,20 +29,21 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 | SIGSTOP e2e pre/post expiry≠dead | Pre: eager recovery while `T`, intent **kept**; post: skip abandon | Expiry-as-dead **ruled out** as sufficient cause |
 | Frozen **N=300** TTL=3s fixed build | **0**/300 lost; avail ≈1.3%; resume p99≈7.9s | Rate bound only — **did not** re-enter the 5-avail / ~62s resume regime |
 
-## Likeliest open lead: ambiguous / slow renewal (narrowed)
+## Pre-latency checks ([`TTL3S_THREE_CHECKS.md`](./TTL3S_THREE_CHECKS.md))
 
-Two TLC weak classes produce belief > storage and intent loss — both **ruled out as product matches**:
+| Check | Result |
+| ----- | ------ |
+| R2 settle i=1,5 | **Real loss** (i=1): meta present, midflight `paused_for_kill` absent; ok i=9 has it |
+| Host / pause | Cloud Agent VM; no board BOOTTIME telemetry; mono-vs-wall pause **candidate**; **do not void** |
+| Classifier | Timeout was mislabeled lost — **fixed** (`midflight_storage_unknown`); does not erase §1 |
 
-1. Optimistic belief bump after Ambiguous — product readbacks; no bump
-2. Authority stamped at Applied **receipt** (RTT stretch) — product stamps `last_ok_mono_ms` at renew **send** (`anchor_mono_ms`)
-
-See [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md). Mechanism stays **unexplained**.
+Lease-belief Ambiguous/receipt paths remain ruled out ([`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)). Open product candidate: **CLOCK_BOOTTIME** lease deadlines (`WeakHolderClockPaused` TLA tooth).
 
 Chase remaining:
 
-1. **Force arm A** — timeout/drop renew **response** → Ambiguous→readback under wedged TTL=3s
-2. **Force arm B** — delay Applied **response** of a storage-successful renew (late success / timing path)
-3. Hunt any **other** unfenced append/ack/recovery step under that pressure
+1. Pause-aware lease clock (BOOTTIME) — concrete candidate from host class + mono `last_ok`
+2. **Force arm A** — Ambiguous/timeout renew response
+3. **Force arm B** — late Applied renew response
 
 ## Expiry ≠ dead (landed; separate)
 
@@ -52,4 +53,4 @@ Still correct and shipped: expiry permits **fenced** takeover; open-log abandon 
 
 1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Settles the post-fix soak self-fence question (void only if the monitor voids). Unblocked by the renew code check (no optimistic-bump fix required first).
 2. **v4 N=1000** there with append logs + R2 intent check — report **mechanism unexplained** alongside the result (do not claim the 2/100 closed).
-3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms.
+3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms (after pause-clock decision).

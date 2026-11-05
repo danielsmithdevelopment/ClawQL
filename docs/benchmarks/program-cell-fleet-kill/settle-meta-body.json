@@ -1,0 +1,31 @@
+{
+  "fail1": {
+    "id": "phased_after_intent_before_call_1_1793758650321",
+    "firstEpoch": 2,
+    "totalMetaPages": 101,
+    "anyIntentKey": false,
+    "anyPauseInMetaBody": false,
+    "pauseVals": [],
+    "statuses": [
+      "completed"
+    ]
+  },
+  "fail5": {
+    "id": "phased_after_intent_before_call_5_1793758728011",
+    "firstEpoch": 5,
+    "totalMetaPages": 99,
+    "anyIntentKey": false,
+    "anyPauseInMetaBody": false,
+    "pauseVals": [],
+    "statuses": []
+  },
+  "ok9": {
+    "id": "phased_after_intent_before_call_9_1793758918129",
+    "firstEpoch": 9,
+    "totalMetaPages": 96,
+    "anyIntentKey": false,
+    "anyPauseInMetaBody": true,
+    "pauseVals": [],
+    "statuses": []
+  }
+}
