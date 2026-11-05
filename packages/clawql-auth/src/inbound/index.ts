@@ -74,6 +74,15 @@ export {
   type DeviceFlowConfig,
 } from "./mcp-device-flow.js";
 export {
+  DeviceFlowIllegalTransition,
+  deviceFlowStatusFromRecord,
+  transitionDeviceFlow,
+  transitionDeviceFlowSync,
+  type DeviceFlowEvent,
+  type DeviceFlowStatus,
+  type DeviceFlowTransition,
+} from "./mcp-device-flow-transition.js";
+export {
   MCP_OAUTH_AUTH_CODE_PREFIX,
   createMemoryMcpAuthorizationCodeStore,
   createSecretStoreMcpAuthorizationCodeStore,
