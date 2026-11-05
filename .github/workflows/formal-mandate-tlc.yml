@@ -92,3 +92,6 @@ jobs:
 
       - name: Run program-proposal graph TLC dual configs
         run: bash scripts/formal/run-program-proposal-tlc.sh
+
+      - name: Run money-request status TLC dual configs
+        run: bash scripts/formal/run-money-request-tlc.sh
