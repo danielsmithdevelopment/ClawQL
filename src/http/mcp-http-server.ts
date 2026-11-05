@@ -19,6 +19,11 @@ import {
   resolveSessionMax,
   startSessionIdleWatcher,
 } from "./mcp-session-idle.js";
+import {
+  canAcceptNewMcpHttpSession,
+  mcpHttpSessionStatusFromMap,
+  transitionMcpHttpSessionSync,
+} from "./mcp-http-session-transition.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
 import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
 import {
@@ -780,7 +785,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
       if (!useStateless && sessionId && transports.has(sessionId)) {
         transport = transports.get(sessionId);
-        if (sessionId) sessionIdle?.touch(sessionId);
+        if (sessionId) {
+          transitionMcpHttpSessionSync(mcpHttpSessionStatusFromMap(transports, sessionId), {
+            _tag: "Touch",
+          });
+          sessionIdle?.touch(sessionId);
+        }
       } else if (useStateless) {
         // Per-request transport — no session affinity (MCP 2026-07-28).
         const streamableJson = ["1", "true", "yes"].includes(
@@ -795,7 +805,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         closeTransportAfter = true;
       } else if (!sessionId && isInitializeRequest(req.body)) {
         sessionIdle?.sweep();
-        if (transports.size >= sessionMax) {
+        if (!canAcceptNewMcpHttpSession(transports.size, sessionMax)) {
           res.status(503).json({
             jsonrpc: "2.0",
             error: {
@@ -812,6 +822,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
+            transitionMcpHttpSessionSync(mcpHttpSessionStatusFromMap(transports, sid), {
+              _tag: "Initialize",
+            });
             transports.set(sid, transport!);
             sessionIdle?.touch(sid);
             // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
@@ -832,7 +845,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         transport.onclose = () => {
           const sid = transport!.sessionId;
           if (sid) {
-            transports.delete(sid);
+            const next = transitionMcpHttpSessionSync(
+              mcpHttpSessionStatusFromMap(transports, sid),
+              { _tag: "Close" }
+            );
+            if (!next.alreadyDone) {
+              transports.delete(sid);
+            }
             clearSessionLabelsSync(sid);
             void import("../composition/clawql-api-adapters.js")
               .then(({ getClawqlApi }) => {
@@ -939,6 +958,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       res.status(405).setHeader("Allow", "POST, DELETE").end();
       return;
     }
+    transitionMcpHttpSessionSync(mcpHttpSessionStatusFromMap(transports, sessionId), {
+      _tag: "Touch",
+    });
     sessionIdle?.touch(sessionId);
     await runWithOptionalX402Context(req, () =>
       runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res))

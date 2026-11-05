@@ -9,6 +9,10 @@
 
 import { Effect } from "effect";
 import type { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import {
+  mcpHttpSessionStatusFromMap,
+  transitionMcpHttpSessionSync,
+} from "./mcp-http-session-transition.js";
 
 const DEFAULT_IDLE_MS = 1_800_000;
 const DEFAULT_SESSION_MAX = 1024;
@@ -53,6 +57,10 @@ export const startSessionIdleWatcher = (
 
     const touch = (sessionId: string) => {
       if (!sessionId) return;
+      if (!transports.has(sessionId)) return;
+      transitionMcpHttpSessionSync(mcpHttpSessionStatusFromMap(transports, sessionId), {
+        _tag: "Touch",
+      });
       lastTouch.set(sessionId, Date.now());
     };
 
@@ -62,10 +70,15 @@ export const startSessionIdleWatcher = (
       for (const [sid, transport] of [...transports.entries()]) {
         const touched = lastTouch.get(sid) ?? now;
         if (now - touched < idleMs) continue;
+        const next = transitionMcpHttpSessionSync(mcpHttpSessionStatusFromMap(transports, sid), {
+          _tag: "IdleEvict",
+        });
         lastTouch.delete(sid);
         log(`[clawql-mcp-http] session idle eviction sid=${sid.slice(0, 8)}… idle_ms=${idleMs}`);
         void transport.close().catch(() => undefined);
-        if (transports.get(sid) === transport) transports.delete(sid);
+        if (!next.alreadyDone && transports.get(sid) === transport) {
+          transports.delete(sid);
+        }
         evicted += 1;
       }
       for (const sid of [...lastTouch.keys()]) {
