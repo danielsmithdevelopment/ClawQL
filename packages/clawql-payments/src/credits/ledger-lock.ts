@@ -31,11 +31,37 @@ export type RedisLockClient = {
 
 export type TenantLedgerLockApi = {
   readonly backend: LedgerLockBackend;
+  /**
+   * Host-boundary mutex. Errors thrown by `fn` propagate unchanged (ledger domain
+   * errors must not be rewritten as LedgerLockError).
+   */
+  readonly withLockRaw: <A>(tenantId: string, fn: () => Promise<A>) => Promise<A>;
   readonly withLock: <A>(
     tenantId: string,
     fn: () => Promise<A>
   ) => Effect.Effect<A, LedgerLockError>;
 };
+
+function lockEffectFromRaw(
+  raw: TenantLedgerLockApi["withLockRaw"]
+): TenantLedgerLockApi["withLock"] {
+  return <A>(tenantId: string, fn: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: () => raw(tenantId, fn),
+      catch: (cause) =>
+        cause instanceof LedgerLockError
+          ? cause
+          : new LedgerLockError({
+              reason:
+                cause && typeof cause === "object" && "reason" in cause
+                  ? String((cause as { reason: unknown }).reason)
+                  : cause instanceof Error
+                    ? cause.message
+                    : String(cause),
+              cause,
+            }),
+    });
+}
 
 export class TenantLedgerLock extends Context.Service<TenantLedgerLock, TenantLedgerLockApi>()(
   "clawql/TenantLedgerLock"
@@ -96,38 +122,30 @@ end
 
 export function createInProcessTenantLedgerLock(): TenantLedgerLockApi {
   const gates = new Map<string, Promise<unknown>>();
+  const withLockRaw = async <A>(tenantId: string, fn: () => Promise<A>): Promise<A> => {
+    const key = tenantId.trim() || "default";
+    const prev = gates.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const chained = prev.then(() => gate);
+    gates.set(
+      key,
+      chained.catch(() => undefined)
+    );
+    await prev.catch(() => undefined);
+    try {
+      return await fn();
+    } finally {
+      release();
+      if (gates.get(key) === chained) gates.delete(key);
+    }
+  };
   return {
     backend: "inprocess",
-    withLock: <A>(tenantId: string, fn: () => Promise<A>) =>
-      Effect.tryPromise({
-        try: async () => {
-          const key = tenantId.trim() || "default";
-          const prev = gates.get(key) ?? Promise.resolve();
-          let release!: () => void;
-          const gate = new Promise<void>((resolve) => {
-            release = resolve;
-          });
-          const chained = prev.then(() => gate);
-          gates.set(
-            key,
-            chained.catch(() => undefined)
-          );
-          await prev.catch(() => undefined);
-          try {
-            return await fn();
-          } finally {
-            release();
-            if (gates.get(key) === chained) gates.delete(key);
-          }
-        },
-        catch: (cause) =>
-          cause instanceof LedgerLockError
-            ? cause
-            : new LedgerLockError({
-                reason: cause instanceof Error ? cause.message : String(cause),
-                cause,
-              }),
-      }),
+    withLockRaw,
+    withLock: lockEffectFromRaw(withLockRaw),
   };
 }
 
@@ -137,39 +155,31 @@ export function createRedisTenantLedgerLock(
 ): TenantLedgerLockApi {
   const ttlMs = opts.ttlMs ?? DEFAULT_TTL_MS;
   const waitMs = opts.waitMs ?? DEFAULT_WAIT_MS;
+  const withLockRaw = async <A>(tenantId: string, fn: () => Promise<A>): Promise<A> => {
+    const key = ledgerLockKey(tenantId);
+    const token = randomUUID();
+    const deadline = Date.now() + waitMs;
+    let acquired = false;
+    while (!acquired) {
+      acquired = await client.setNxPx(key, token, ttlMs);
+      if (acquired) break;
+      if (Date.now() >= deadline) {
+        throw new LedgerLockError({
+          reason: `ledger lock wait exceeded for tenant ${tenantId.trim() || "default"}`,
+        });
+      }
+      await sleep(SPIN_MS);
+    }
+    try {
+      return await fn();
+    } finally {
+      await client.compareAndDelete(key, token);
+    }
+  };
   return {
     backend: "redis",
-    withLock: <A>(tenantId: string, fn: () => Promise<A>) =>
-      Effect.tryPromise({
-        try: async () => {
-          const key = ledgerLockKey(tenantId);
-          const token = randomUUID();
-          const deadline = Date.now() + waitMs;
-          let acquired = false;
-          while (!acquired) {
-            acquired = await client.setNxPx(key, token, ttlMs);
-            if (acquired) break;
-            if (Date.now() >= deadline) {
-              throw new LedgerLockError({
-                reason: `ledger lock wait exceeded for tenant ${tenantId.trim() || "default"}`,
-              });
-            }
-            await sleep(SPIN_MS);
-          }
-          try {
-            return await fn();
-          } finally {
-            await client.compareAndDelete(key, token);
-          }
-        },
-        catch: (cause) =>
-          cause instanceof LedgerLockError
-            ? cause
-            : new LedgerLockError({
-                reason: cause instanceof Error ? cause.message : String(cause),
-                cause,
-              }),
-      }),
+    withLockRaw,
+    withLock: lockEffectFromRaw(withLockRaw),
   };
 }
 
@@ -226,47 +236,39 @@ export function createPostgresTenantLedgerLock(
   opts: { readonly waitMs?: number } = {}
 ): TenantLedgerLockApi {
   const waitMs = opts.waitMs ?? DEFAULT_WAIT_MS;
+  const withLockRaw = async <A>(tenantId: string, fn: () => Promise<A>): Promise<A> => {
+    const lockId = tenantLedgerAdvisoryLockId(tenantId);
+    const deadline = Date.now() + waitMs;
+    const client = await pool.connect();
+    try {
+      let acquired = false;
+      while (!acquired) {
+        const result = await client.query<{ acquired: boolean }>(
+          "SELECT pg_try_advisory_lock($1::bigint) AS acquired",
+          [lockId]
+        );
+        acquired = Boolean(result.rows[0]?.acquired);
+        if (acquired) break;
+        if (Date.now() >= deadline) {
+          throw new LedgerLockError({
+            reason: `postgres ledger lock wait exceeded for tenant ${tenantId.trim() || "default"}`,
+          });
+        }
+        await sleep(SPIN_MS);
+      }
+      try {
+        return await fn();
+      } finally {
+        await client.query("SELECT pg_advisory_unlock($1::bigint)", [lockId]);
+      }
+    } finally {
+      client.release();
+    }
+  };
   return {
     backend: "postgres",
-    withLock: <A>(tenantId: string, fn: () => Promise<A>) =>
-      Effect.tryPromise({
-        try: async () => {
-          const lockId = tenantLedgerAdvisoryLockId(tenantId);
-          const deadline = Date.now() + waitMs;
-          const client = await pool.connect();
-          try {
-            let acquired = false;
-            while (!acquired) {
-              const result = await client.query<{ acquired: boolean }>(
-                "SELECT pg_try_advisory_lock($1::bigint) AS acquired",
-                [lockId]
-              );
-              acquired = Boolean(result.rows[0]?.acquired);
-              if (acquired) break;
-              if (Date.now() >= deadline) {
-                throw new LedgerLockError({
-                  reason: `postgres ledger lock wait exceeded for tenant ${tenantId.trim() || "default"}`,
-                });
-              }
-              await sleep(SPIN_MS);
-            }
-            try {
-              return await fn();
-            } finally {
-              await client.query("SELECT pg_advisory_unlock($1::bigint)", [lockId]);
-            }
-          } finally {
-            client.release();
-          }
-        },
-        catch: (cause) =>
-          cause instanceof LedgerLockError
-            ? cause
-            : new LedgerLockError({
-                reason: cause instanceof Error ? cause.message : String(cause),
-                cause,
-              }),
-      }),
+    withLockRaw,
+    withLock: lockEffectFromRaw(withLockRaw),
   };
 }
 
@@ -320,24 +322,18 @@ export function resolveTenantLedgerLock(env: NodeJS.ProcessEnv = process.env): T
       }
       await initPromise;
     };
+    const withLockRaw = async <A>(tenantId: string, fn: () => Promise<A>): Promise<A> => {
+      await ensure();
+      if (initError) throw initError;
+      if (!inner) {
+        throw new LedgerLockError({ reason: "redis ledger lock failed to initialize" });
+      }
+      return inner.withLockRaw(tenantId, fn);
+    };
     const lock: TenantLedgerLockApi = {
       backend: "redis",
-      withLock: <A>(tenantId: string, fn: () => Promise<A>) =>
-        Effect.gen(function* () {
-          yield* Effect.tryPromise({
-            try: ensure,
-            catch: (cause) =>
-              new LedgerLockError({
-                reason: cause instanceof Error ? cause.message : String(cause),
-                cause,
-              }),
-          });
-          if (initError) return yield* initError;
-          if (!inner) {
-            return yield* new LedgerLockError({ reason: "redis ledger lock failed to initialize" });
-          }
-          return yield* inner.withLock(tenantId, fn);
-        }),
+      withLockRaw,
+      withLock: lockEffectFromRaw(withLockRaw),
     };
     cached = { key, lock };
     return lock;
@@ -366,12 +362,11 @@ export function tenantLedgerLockLiveLayer(
   return Layer.succeed(TenantLedgerLock, resolveTenantLedgerLock(env));
 }
 
-/** Promise façade for ledger.ts host boundary. */
+/** Promise façade for ledger.ts host boundary — preserves domain errors from `fn`. */
 export async function withTenantLedgerLockPromise<A>(
   tenantId: string,
   fn: () => Promise<A>,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<A> {
-  const lock = resolveTenantLedgerLock(env);
-  return Effect.runPromise(lock.withLock(tenantId, fn));
+  return resolveTenantLedgerLock(env).withLockRaw(tenantId, fn);
 }
