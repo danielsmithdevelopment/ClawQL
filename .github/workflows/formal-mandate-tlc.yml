@@ -71,5 +71,11 @@ jobs:
       - name: Run program-resume TLC configs (target + weak rerun + weak send)
         run: bash scripts/formal/run-program-resume-tlc.sh
 
+      - name: Run lease-sweep expiry≠dead TLC (target + weak counterexample)
+        run: bash scripts/formal/run-lease-sweep-expiry-tlc.sh
+
       - name: Trace check intent durable before send
         run: node scripts/formal/check-intent-durable-before-send.mjs
+
+      - name: Deterministic expiry≠dead intent test
+        run: node docs/examples/streams-celld/scripts/expiry-sweep-intent.test.mjs
