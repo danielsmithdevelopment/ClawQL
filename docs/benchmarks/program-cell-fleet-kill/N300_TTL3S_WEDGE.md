@@ -27,6 +27,21 @@ Zero of 300 → 95% rule-of-three upper bound **3/300 = 1.0%**.
 
 `docs/benchmarks/program-cell-fleet-kill/phased-n300-wedge-lab-enriched-ttl3s.json`
 
+## Result (2026-11-05 America/Los_Angeles)
+
+| Gate | Result |
+| ---- | ------ |
+| N | **300**/300 write-kill (+ 8 await) |
+| `lost_midflight_intent` | **0** |
+| Correctness failures | **0** (`gates.correctness.pass`) |
+| Availability rate | **1.30%** (4/308) ≤ 2% ceiling |
+| Board `ok` | **true** · `status=measured` |
+| Binary | `lab_enriched_expiry_not_dead_1360bdf3f967` (sha256 `1360bdf…`) |
+| TTL | 3000 · append logs · fenceMode `lab_enriched_wedged` |
+| Supersede audit | [`n300-ttl3s-supersede-audit.json`](./n300-ttl3s-supersede-audit.json) — **0** supersede lines (`status=no_supersede_lines`) |
+
+**Bar met.** Rule-of-three 95% UB on lost-intent rate: **3/300 = 1.0%**. Original 2/100 mechanism remains unidentified (e2e showed expiry-as-dead is not sufficient alone); this board clears the frozen N=300 correctness gate.
+
 ## Not a pass
 
 - Quiet N=100 remasure at TTL 3s or 10s

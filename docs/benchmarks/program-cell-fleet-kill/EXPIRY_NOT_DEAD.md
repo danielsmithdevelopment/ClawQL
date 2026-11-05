@@ -86,8 +86,8 @@ Evidence: [`node-soak-200-expiry-not-dead.json`](./node-soak-200-expiry-not-dead
 
 1. Real-binary e2e before/after (this doc) — **done**; another cause for 2/100
 2. **200-cycle** enriched soak on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) — **done** (no clear avail regression; host invalid for authorizing)
-3. Frozen TTL=3s wedged **N=300** — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md) (0 lost; any loss fails; append logs + supersede audit) — still required; do not clear via quiet remasures
-4. Only then v4 — still blocked; mechanism claim for 2/100 stays open
+3. Frozen TTL=3s wedged **N=300** — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md) — **PASS** 0/300 lost · correctness 0 · avail 1.30% ≤ 2%
+4. v4 — TTL3s correctness bar cleared by N=300; authorizing soak (`measured_v4_ready` on non-suspending host) still required per [`SOAK_GATES.md`](./SOAK_GATES.md). Mechanism for original 2/100 remains open (not expiry-as-dead on the e2e recipe).
 
 ## Quiet board passes do not clear this
 

@@ -52,7 +52,7 @@ Quiet remasures (0/100) do **not** clear the 2/100 headline — consistent with 
 
 ## Until the fix is measured
 
-- **v4 N=1000 stays blocked**
+- **v4 N=1000:** TTL3s correctness hold cleared by frozen N=300 (**0**/300 lost — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md)). Authorizing soak still required. Original 2/100 cause still unidentified (e2e: expiry-as-dead sweeps but does not drop ProgramCell intent).
 - Step-3 wedge board headline = **TTL 3s fail** (10s pass beside it as diagnostic only)
 - Mechanism claim stays **paused**
 - Do not raise TTL to green-wash the board
