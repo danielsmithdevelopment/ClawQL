@@ -6,9 +6,9 @@ lands (H2 / stale-incarnation through the sweep path).
 
 ## Rule
 
-| Concept | Criterion |
-| ------- | --------- |
-| **Fenced takeover** | Expiry **or** same-host process evidence. Takeover must fence (epoch bump + storage CAS the old owner cannot pass). |
+| Concept                     | Criterion                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Fenced takeover**         | Expiry **or** same-host process evidence. Takeover must fence (epoch bump + storage CAS the old owner cannot pass).            |
 | **Dead** (abandon open log) | Same-host **process evidence**, or cross-host/unstamped **TTL + fencing**. Never expiry alone on a still-live same-host owner. |
 
 ## Formal oracle (on `main`)
