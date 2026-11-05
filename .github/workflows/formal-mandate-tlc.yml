@@ -87,6 +87,9 @@ jobs:
       - name: Run OAuth PKCE auth-code TLC dual configs
         run: bash scripts/formal/run-oauth-pkce-tlc.sh
 
+      - name: Run OAuth device authorization TLC dual configs
+        run: bash scripts/formal/run-oauth-device-tlc.sh
+
       - name: Run account-deletion vs WORM TLC dual configs
         run: bash scripts/formal/run-account-deletion-worm-tlc.sh
 

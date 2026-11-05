@@ -9,6 +9,11 @@ import { createHash, randomBytes } from "node:crypto";
 import { Context, Data, Effect, Layer } from "effect";
 import type { SecretStore } from "../stores/types.js";
 import type { McpDeviceAuthorizationPending } from "./mcp-oauth.js";
+import {
+  deviceFlowStatusFromRecord,
+  transitionDeviceFlow,
+  transitionDeviceFlowSync,
+} from "./mcp-device-flow-transition.js";
 
 /** Wire-format grant type for RFC 8628 device code exchange. */
 export const DEVICE_CODE_GRANT = "urn:ietf:params:oauth:grant-type:device_code" as const;
@@ -78,10 +83,24 @@ export function createMemoryDeviceCodeStore(now: () => number = Date.now): Devic
           );
         }
         if (rec.expiresAtMs <= now()) {
+          transitionDeviceFlowSync(deviceFlowStatusFromRecord(rec), { _tag: "Expire" });
+          byDevice.delete(rec.deviceCode);
+          byUser.delete(normalizeUserCode(rec.userCode));
           return yield* Effect.fail(
             new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
           );
         }
+        const from = deviceFlowStatusFromRecord(rec);
+        const next = yield* transitionDeviceFlow(from, { _tag: "Approve" }).pipe(
+          Effect.mapError(
+            () =>
+              new DeviceFlowError({
+                error: "invalid_grant",
+                description: `illegal_approve_from_${from}`,
+              })
+          )
+        );
+        if (next.alreadyDone) return;
         byDevice.set(rec.deviceCode, { ...rec, approvedSubject: subject });
       }),
     consumeApproved: (deviceCode) =>
@@ -93,15 +112,26 @@ export function createMemoryDeviceCodeStore(now: () => number = Date.now): Devic
           );
         }
         if (rec.expiresAtMs <= now()) {
+          transitionDeviceFlowSync(deviceFlowStatusFromRecord(rec), { _tag: "Expire" });
           byDevice.delete(deviceCode);
           byUser.delete(normalizeUserCode(rec.userCode));
           return yield* Effect.fail(
             new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
           );
         }
-        if (!rec.approvedSubject) {
+        const from = deviceFlowStatusFromRecord(rec);
+        if (from === "pending") {
           return yield* Effect.fail(new DeviceFlowError({ error: "authorization_pending" }));
         }
+        yield* transitionDeviceFlow(from, { _tag: "Consume" }).pipe(
+          Effect.mapError(
+            () =>
+              new DeviceFlowError({
+                error: "invalid_grant",
+                description: `illegal_consume_from_${from}`,
+              })
+          )
+        );
         byDevice.delete(deviceCode);
         byUser.delete(normalizeUserCode(rec.userCode));
         return rec;
@@ -127,6 +157,7 @@ export function createDeviceAuthorizationEffect(
     const interval = config.intervalSec ?? 5;
     const deviceCode = `dvc_${randomBytes(24).toString("base64url")}`;
     const userCode = formatUserCode(randomBytes(5).toString("hex").toUpperCase());
+    transitionDeviceFlowSync("none", { _tag: "Issue" });
     const record: McpDeviceAuthorizationPending = {
       deviceCode,
       userCode,
@@ -205,10 +236,22 @@ export function createSecretStoreDeviceCodeStore(
           );
         }
         if (rec.expiresAtMs <= now()) {
+          transitionDeviceFlowSync(deviceFlowStatusFromRecord(rec), { _tag: "Expire" });
           return yield* Effect.fail(
             new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
           );
         }
+        const from = deviceFlowStatusFromRecord(rec);
+        const next = yield* transitionDeviceFlow(from, { _tag: "Approve" }).pipe(
+          Effect.mapError(
+            () =>
+              new DeviceFlowError({
+                error: "invalid_grant",
+                description: `illegal_approve_from_${from}`,
+              })
+          )
+        );
+        if (next.alreadyDone) return;
         const updated = { ...rec, approvedSubject: subject };
         yield* store
           .setSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`, JSON.stringify(updated))
@@ -224,15 +267,26 @@ export function createSecretStoreDeviceCodeStore(
           );
         }
         if (rec.expiresAtMs <= now()) {
+          transitionDeviceFlowSync(deviceFlowStatusFromRecord(rec), { _tag: "Expire" });
           yield* store.deleteSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`).pipe(Effect.orDie);
           yield* store.deleteSecret(deviceUserPath(rec.userCode)).pipe(Effect.orDie);
           return yield* Effect.fail(
             new DeviceFlowError({ error: "expired_token", description: "device_code_expired" })
           );
         }
-        if (!rec.approvedSubject) {
+        const from = deviceFlowStatusFromRecord(rec);
+        if (from === "pending") {
           return yield* Effect.fail(new DeviceFlowError({ error: "authorization_pending" }));
         }
+        yield* transitionDeviceFlow(from, { _tag: "Consume" }).pipe(
+          Effect.mapError(
+            () =>
+              new DeviceFlowError({
+                error: "invalid_grant",
+                description: `illegal_consume_from_${from}`,
+              })
+          )
+        );
         yield* store.deleteSecret(`${MCP_OAUTH_DEVICE_CODE_PREFIX}${hash}`).pipe(Effect.orDie);
         yield* store.deleteSecret(deviceUserPath(rec.userCode)).pipe(Effect.orDie);
         return rec;

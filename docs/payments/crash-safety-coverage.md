@@ -65,8 +65,9 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
    (#1456 / #1462 / #1464). Invariant: two live owners never both send; open-log
    abandon only on process evidence.
 3. **Security machines** — OAuth/PKCE single-use+expiry+verifier
-   (`formal/tla/oauth/`); HTTP session IFC labels only accumulate — Lean
-   `labels_only_grow` + TS differential (never drop within a session key).
+   (`formal/tla/oauth/OauthPkceAuthCode.*`) + device authorization
+   (`OauthDeviceAuthorization.*`); HTTP session IFC labels only accumulate —
+   Lean `labels_only_grow` + TS differential (never drop within a session key).
 4. **Account deletion** vs WORM retention (`formal/tla/deletion/`) —
    ordered cascade; crypto-shred vault; single retained `ACCOUNT_DELETED`.
 5. **Program proposal** graph (`formal/tla/program/ProgramProposalGraph.*`) —
