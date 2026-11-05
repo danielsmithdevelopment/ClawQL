@@ -90,6 +90,9 @@ jobs:
       - name: Run OAuth device authorization TLC dual configs
         run: bash scripts/formal/run-oauth-device-tlc.sh
 
+      - name: Run pending-source status TLC dual configs
+        run: bash scripts/formal/run-pending-source-tlc.sh
+
       - name: Run account-deletion vs WORM TLC dual configs
         run: bash scripts/formal/run-account-deletion-worm-tlc.sh
 

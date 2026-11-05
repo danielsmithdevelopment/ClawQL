@@ -36,6 +36,10 @@ import {
   updatePendingSourceStatusEffect,
   writePendingSourceEffect,
 } from "./pending-source-store.js";
+import {
+  transitionPendingSource,
+  transitionPendingSourceSync,
+} from "./pending-source-transition.js";
 import type {
   PendingSourceRecord,
   ProposedOperationSample,
@@ -216,13 +220,14 @@ export function proposeSourceEffect(
     const ttlHours = yield* pendingSourceTtlHoursEffect();
     const createdAt = new Date().toISOString();
     const expiresAt = new Date(Date.now() + ttlHours * 3600_000).toISOString();
+    const proposedStatus = transitionPendingSourceSync("none", { _tag: "Propose" });
     const record: PendingSourceRecord = {
       version: 2,
       proposalId,
       entry,
       riskSummary,
       sampleOperations,
-      status: "pending",
+      status: proposedStatus.status,
       createdAt,
       expiresAt,
       decidedAt: null,
@@ -302,9 +307,16 @@ export function commitApprovedSourceEffect<A, P>(
     }
 
     if (ctx.decision === "decline") {
+      const declined = yield* transitionPendingSource(existing.status, { _tag: "Decline" }).pipe(
+        Effect.mapError((e) => new Error(`Illegal pending-source decline from ${e.from}`))
+      );
       yield* updatePendingSourceStatusEffect(
         existing.proposalId,
-        { status: "declined", decidedAt: ctx.decidedAt, approvedBy: ctx.approvedByFormatted },
+        {
+          status: declined.status,
+          decidedAt: ctx.decidedAt,
+          approvedBy: ctx.approvedByFormatted,
+        },
         ctx.home
       );
       yield* appendProcessWormEffect({
@@ -328,6 +340,19 @@ export function commitApprovedSourceEffect<A, P>(
       };
     }
 
+    const approved = yield* transitionPendingSource(existing.status, { _tag: "Approve" }).pipe(
+      Effect.mapError((e) => new Error(`Illegal pending-source approve from ${e.from}`))
+    );
+    if (approved.alreadyDone) {
+      return {
+        ok: true as const,
+        decision: "approve" as const,
+        proposalId: existing.proposalId,
+        sourceId: existing.entry.id,
+        status: "approved" as const,
+      };
+    }
+
     yield* Effect.tryPromise({
       try: () => upsertCustomSource(existing.entry, ctx.home),
       catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -339,7 +364,11 @@ export function commitApprovedSourceEffect<A, P>(
     }
     yield* updatePendingSourceStatusEffect(
       existing.proposalId,
-      { status: "approved", decidedAt: ctx.decidedAt, approvedBy: ctx.approvedByFormatted },
+      {
+        status: approved.status,
+        decidedAt: ctx.decidedAt,
+        approvedBy: ctx.approvedByFormatted,
+      },
       ctx.home
     );
     yield* appendProcessWormEffect({
@@ -386,9 +415,10 @@ export function approveSourceEffect(
       );
     }
     if (Date.parse(existing.expiresAt) <= Date.now()) {
+      const expired = transitionPendingSourceSync(existing.status, { _tag: "Expire" });
       yield* updatePendingSourceStatusEffect(
         params.proposalId,
-        { status: "expired", decidedAt: new Date().toISOString() },
+        { status: expired.status, decidedAt: new Date().toISOString() },
         home
       );
       return yield* Effect.fail(new Error(`Proposal ${params.proposalId} has expired`));
