@@ -4,6 +4,7 @@
 (*                                                                         *)
 (* Maps to clawql-payments provisioning:                                   *)
 (*   account-deletion-service.ts  — ordered steps + finalize               *)
+(*   account-deletion-transition.ts — job/step (status,event) table        *)
 (*   ACCOUNT_DELETED via PaymentAuditService (hashed refs only)            *)
 (*                                                                         *)
 (* Steps (fixed order): keys → org → stripe → vault → supabase             *)
