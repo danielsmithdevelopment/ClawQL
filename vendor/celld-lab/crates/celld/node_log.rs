@@ -3900,7 +3900,18 @@ impl FleetShipper {
 pub(crate) const EPOCH_GC_RETRY_MS: u64 = 5 * 60 * 1000;
 
 /// The period of the node-log maintenance loop, which runs epoch GC.
+/// Default maintenance cadence (dead-leader sweep, ensemble repair, epoch GC).
+/// Override with `CELLD_LOG_MAINTENANCE_TICK_MS` (min 1000) for lab e2e so a
+/// SIGSTOP-past-expiry probe can wait one tick without a 30s floor.
 pub(crate) const LOG_MAINTENANCE_TICK_MS: u64 = 30 * 1000;
+
+fn log_maintenance_tick_ms() -> u64 {
+    std::env::var("CELLD_LOG_MAINTENANCE_TICK_MS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .filter(|&n| n >= 1_000)
+        .unwrap_or(LOG_MAINTENANCE_TICK_MS)
+}
 
 /// The wait before epoch GC looks again at a cell whose last pass deleted
 /// everything it could.
@@ -6587,8 +6598,8 @@ fn spawn_maintenance(
     let watcher = Arc::downgrade(&manager);
     let maintenance_stop = stop.clone();
     roots.spawn_owned("node_log_maintenance", async move {
-        let mut tick =
-            crate::asyncrt::interval(std::time::Duration::from_millis(LOG_MAINTENANCE_TICK_MS));
+        let tick_ms = log_maintenance_tick_ms();
+        let mut tick = crate::asyncrt::interval(std::time::Duration::from_millis(tick_ms));
         tick.set_missed_tick_behavior(crate::asyncrt::MissedTickBehavior::Delay);
         loop {
             crate::asyncrt::select_biased! {

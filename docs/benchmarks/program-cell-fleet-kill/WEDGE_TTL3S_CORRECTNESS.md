@@ -56,4 +56,4 @@ Quiet remasures (0/100) do **not** clear the 2/100 headline — consistent with 
 - Step-3 wedge board headline = **TTL 3s fail** (10s pass beside it as diagnostic only)
 - Mechanism claim stays **paused**
 - Do not raise TTL to green-wash the board
-- After expiry≠dead fix is in the measured lab binary: deterministic SIGSTOP+sweep green, then TTL=3s wedge **N=300** with 0 lost
+- Order: real-binary SIGSTOP e2e before/after → 200-cycle soak → frozen **N=300** TTL=3s wedge ([`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md)) → only then v4

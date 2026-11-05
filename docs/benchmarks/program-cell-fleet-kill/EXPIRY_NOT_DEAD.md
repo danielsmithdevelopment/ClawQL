@@ -25,26 +25,60 @@ A wedged owner is alive past expiry — that is what wedged means. If `sweep_dea
 4. `SIGCONT` the owner.
 5. Assert: intent present; any ack from the old generation rejected.
 
-Predicate-layer test (fails every time on the buggy rule):
+### Predicate / TLA (fast)
 
 ```bash
 node docs/examples/streams-celld/scripts/expiry-sweep-intent.test.mjs
-# Counterexample demo:
 CLAWQL_SIMULATE_BUGGY_EXPIRY_AS_DEAD=1 node docs/examples/streams-celld/scripts/expiry-sweep-intent.test.mjs
-```
-
-Rust unit tests: `host_process::wedged_owner_past_expiry_blocks_open_log_abandonment`.
-
-TLA+ (TLC weak config must counterexample):
-
-```bash
 scripts/formal/run-lease-sweep-expiry-tlc.sh
 ```
 
+### Real binary e2e (required before N=300)
+
+Paired evidence on **actual lab celld** (real storage, real sweep, real SIGSTOP/CONT):
+
+```bash
+# Pre-fix (expect lost intent):
+CELLD_BIN=.../celld-lab-pre-fix-expiry-as-dead \
+  FLEET_EXPIRY_E2E_LABEL=pre_fix FLEET_EXPIRY_E2E_EXPECT_LOST=1 \
+  FLEET_EXPIRY_E2E_OUT=docs/benchmarks/program-cell-fleet-kill/expiry-sweep-e2e-pre-fix.json \
+  npm run benchmark:fleet-expiry-sweep-e2e
+
+# Post-fix (expect intent kept):
+CELLD_BIN=.../celld-lab-fixed-expiry-not-dead \
+  FLEET_EXPIRY_E2E_LABEL=post_fix FLEET_EXPIRY_E2E_EXPECT_KEPT=1 \
+  FLEET_EXPIRY_E2E_OUT=docs/benchmarks/program-cell-fleet-kill/expiry-sweep-e2e-post-fix.json \
+  npm run benchmark:fleet-expiry-sweep-e2e
+```
+
+## E2E result (2026-11-05, lab binaries)
+
+Harness: `scripts/benchmarks/fleet-phased-kill/run-expiry-sweep-e2e.mjs` — absolute `CELLD_BIN`, `/proc/pid/exe` check, owner confirmed `State: T` for the whole hold.
+
+| Build | sha256 (12) | Owner T samples | Eager recovery | Skip abandon | Program intent |
+| ----- | ----------- | --------------- | -------------- | ------------ | -------------- |
+| **Pre-fix** | `22a6569affd4…` | 11 (held) | **1** (open log recovered+sealed while live) | 0 | **kept** during freeze + after resume |
+| **Post-fix** | `1360bdf3f967…` | ≥7 (held) | **0** | **≥2** | **kept** |
+
+Verdicts: `pre_fix_sweep_fired_intent_kept` · `post_fix_skip_abandon_intent_kept`.
+
+**Sweep differential confirmed** (same paired shape as the original fence board): pre-fix abandons open log on expiry alone while the owner is still stopped; post-fix skips.
+
+**Program-level `lost_midflight_intent` not reproduced** on this recipe (`pauseAfterIntentIndex` — intent already durable in ProgramCellDO before SIGSTOP). Per the freeze rule: pre-fix does **not** lose intent end-to-end ⇒ the TTL=3s wedged 2/100 has **another cause**. Expiry≠dead remains a correct safety fix (TLA + e2e sweep shape); it is **not** the proven mechanism for trials 1 and 5.
+
+Evidence: [`expiry-sweep-e2e-pre-fix.json`](./expiry-sweep-e2e-pre-fix.json) · [`expiry-sweep-e2e-post-fix.json`](./expiry-sweep-e2e-post-fix.json).
+
+## Order before v4
+
+1. Real-binary e2e before/after (this doc) — **done**; another cause for 2/100
+2. **200-cycle** enriched soak on the fixed build vs [`SOAK_GATES.md`](./SOAK_GATES.md) (availability regression: live owners past expiry are no longer swept)
+3. Frozen TTL=3s wedged **N=300** — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md) (0 lost; any loss fails; append logs + supersede audit) — still required; do not clear via quiet remasures
+4. Only then v4 — still blocked; mechanism claim for 2/100 stays open
+
 ## Quiet board passes do not clear this
 
-2/100 lost then 0/100 remasure is consistent with ~1% rate. Zero events in 100 trials still leave a 95% upper bound near **3.7%**. After the fix, rerun the TTL=3s wedge board with more trials (**N=300** with zero losses → bound near 1%). The deterministic test carries the real proof.
+2/100 lost then 0/100 remasure is consistent with ~1% rate. Zero of 100 → ~3.7% UB. N=300 zeros → ~1% UB. N=300 + continued root-cause work carry the claim; quiet remasures do not.
 
 ## v4
 
-Still blocked until the fix is in the measured binary and the TTL=3s wedge board is clean at higher N. Mechanism claim stays paused.
+Still blocked until soak check and N=300 are clean on the fixed binary, and the 2/100 cause is identified (expiry-as-dead alone does not explain it on the e2e recipe).
