@@ -151,10 +151,18 @@ export {
   type CreditAccount,
   type CreditGrant,
   type CreditHold,
+  type CreditHoldStatus,
   type CreditLedgerEntry,
   type CreditLedgerKind,
   type CreditTransferResult,
 } from "./ledger.js";
+export {
+  CreditHoldIllegalTransition,
+  transitionCreditHold,
+  transitionCreditHoldSync,
+  type CreditHoldEvent,
+  type CreditHoldTransition,
+} from "./hold-transition.js";
 export {
   CREDITS_TRANSFER_CONFIRM_TOOL,
   CREDITS_TRANSFER_STAGE_TOOL,

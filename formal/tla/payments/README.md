@@ -1,16 +1,68 @@
-# Payments Stripe write-ahead (TLA+)
+# Payments formal models (TLA+)
 
-Model-checks Stripe PaymentIntent create with a durable idempotency key —
-the recovery pattern used by ACP checkout complete and ACH credit top-up.
-
-MandateLifecycle + ProgramResume crash-safety evidence does **not** cover
-these cash rails (they bypass PendingExecution / write-intent journal). See
+Two specs for `clawql-payments` money paths that are **not** covered by mandate
+consume or the program write-intent journal. See
 [`docs/payments/crash-safety-coverage.md`](../../../docs/payments/crash-safety-coverage.md).
 
-Credit-hold + compensation 2PC formalization lives alongside this module when
-merged from the payments-hold formal PR (`PaymentsHoldCompensation.*`).
+| Spec | Role |
+| ---- | ---- |
+| `PaymentsHoldCompensation.*` | Credit holds + compensation HITL 2PC |
+| `PaymentsStripeIdempotency.*` | Stripe PI write-ahead idempotency (ACP / ACH / MPP) |
 
-## Files
+## Coverage finding (critical)
+
+| Path | Covers payments money writes? |
+| ---- | ----------------------------- |
+| Mandate / `PendingExecution` | **PARTIAL** — native resume now CAS-consumes (#1459); direct Effect / HTTP / Stripe / ACP still bypass PendingExecution |
+| Program journal / write-intent | **NO** — durable intents only wrap catalog `execute` / program proposals |
+| AP2 "mandate" JWT | Orthogonal auth — not `pex_…` pending-execution |
+
+**Implication:** MandateLifecycle + ProgramResume crash-safety evidence does **not**
+underwrite agentic-payments claims. Orphaned `held` rows, double-capture, and
+Stripe double-charge races are owned by ledger locks, explicit transitions, and
+these models.
+
+---
+
+## Hold + compensation
+
+| File | Role |
+| ---- | ---- |
+| `PaymentsHoldCompensation.tla` | Spec — holds + compensation actions, crash/retry |
+| `PaymentsHoldCompensation.cfg` | TLC — **atomic** (`WeakAtomicity = FALSE`); must pass |
+| `PaymentsHoldCompensationWeak.cfg` | TLC — **legacy race** (`WeakAtomicity = TRUE`); must fail Safety |
+
+### Invariants
+
+1. **AtMostOneCapture** — a hold id is never successfully captured more than once.
+2. **AtMostOneRelease** — same for release.
+3. **HoldExclusiveSettle** — never both a capture and a release effect on one hold.
+4. **AtMostOneCompensationExecute** — confirm/execute side effect runs at most once.
+
+### Mapping to code
+
+| Spec | Code |
+| ---- | ---- |
+| `HoldCreate` | `holdCreditsImpl` / `CreditsService` / `DeductionService.hold` |
+| `CaptureAtomic` / `CaptureIdempotent` | `captureHoldImpl` + `transitionCreditHold` |
+| `ReleaseAtomic` / `ReleaseIdempotent` | `releaseHoldImpl` + `transitionCreditHold` |
+| `StageAction` | `stagePendingAction` |
+| `ConfirmAtomic` / `ConfirmIdempotent` | compensation confirm + `transitionPendingAction` |
+| `CancelAtomic` / `ExpireAtomic` | cancel / `materializeExpiry` |
+| Weak\* | historical non-atomic status write after side effect (counterexample oracle) |
+
+Explicit transitions:
+
+- `packages/clawql-payments/src/credits/hold-transition.ts`
+- `packages/clawql-payments/src/compensation/pending-action-transition.ts`
+
+```bash
+./scripts/formal/run-payments-hold-tlc.sh
+```
+
+---
+
+## Stripe write-ahead
 
 | File | Role |
 | ---- | ---- |
@@ -18,34 +70,28 @@ merged from the payments-hold formal PR (`PaymentsHoldCompensation.*`).
 | `PaymentsStripeIdempotency.cfg` | TLC — **atomic** (`WeakWriteAhead = FALSE`); must pass |
 | `PaymentsStripeIdempotencyWeak.cfg` | TLC — create without prior key; must fail `AtMostOneCharge` |
 
-## Recovery model (code + spec)
+### Recovery model
 
-1. Persist durable idempotency key (checkout session id / top-up `correlationId`)
+1. Persist durable idempotency key (checkout session / top-up / MPP challenge id)
 2. Call Stripe with that key as `Idempotency-Key`
 3. Record the PaymentIntent id
-4. Retries reuse the same key (Stripe returns the original PI within ~24h)
-5. After ~24h, look up by metadata before any new create (check-then-decide)
+4. Retries reuse the same key (within ~24h)
+5. After ~24h, metadata lookup; **fail closed** if Search is unavailable
 
 **Invariant:** `AtMostOneCharge` — a crash between the Stripe call and the local
 record never leads to a second charge.
-
-## Mapping to code
-
-| Spec | Code |
-| ---- | ---- |
-| `WriteKey` | ACP session `stripe_idempotency_*` / `ensureAchTopupIntent` |
-| `StripeCreateAtomic` / `StripeRetrySameKey` | `paymentIntents.create(..., { idempotencyKey })` |
-| `ExpireKey` + `MetadataRecover` | `stripeIdempotencyKeyLikelyExpired` + `findPaymentIntentByMetadata` |
-| `RecordPi` | session `payment_intent_id` / `attachAchTopupPaymentIntentId` |
-| `WeakStripeCreate` | pre-fix create-before-durable-key (counterexample oracle) |
-
-Helpers: `packages/clawql-payments/src/stripe/stripe-idempotency.ts`.
-
-## Run TLC
 
 ```bash
 ./scripts/formal/run-payments-stripe-tlc.sh
 ```
 
-Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneCharge`
-violated.
+Helpers: `packages/clawql-payments/src/stripe/stripe-idempotency.ts`.
+
+---
+
+## Next (same cluster)
+
+- Money-request status graph (`pending` → `accepted` → `paid` / …)
+- ACP checkout status graph beyond Stripe PI create
+- Account deletion vs WORM retention
+- Multi-node ledger lock (today: in-process per-tenant; Valkey called out as future)

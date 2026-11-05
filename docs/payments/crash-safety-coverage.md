@@ -20,8 +20,7 @@ agentic-payments claims. Formal payments safety lives in
   They are **not** in `NATIVE_TOOL_POLICY`, so they default to **destructive** and
   can park via `parkMandateExecute`.
 - Resume consume: fixed in PR #1459 (`tryConsumeApprovedMandate` CAS before
-  native allow). Until that ships on `main`, treat single-use native resume as
-  held — see advisory draft under `docs/security/advisories/`.
+  native allow) — on `main`.
 - Direct Effect services (`CreditsService`, `DeductionService`,
   `AgentCompensationService`, `AcpCheckoutService`), HTTP HATEOAS, Stripe webhooks,
   and ACH top-up **never** touch PendingExecution.
@@ -50,23 +49,18 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 
 ## Production exposure (priority gate)
 
-| Rail                                     | Managed production charging real customers?                              | Notes                                                  |
-| ---------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------ |
-| ACP checkout                             | **No** (opt-in `CLAWQL_ACP_ENABLED`; default off; dry-run for demos)     | Fix before any live merchant SPT                       |
-| ACH credit top-up                        | **No** on managed waitlist; self-host only when credits + Stripe key set | Live path now requires `correlationId` for durable key |
-| Platform Stripe Checkout / subscriptions | Separate path (webhook-idempotent)                                       | Not the ACP/ACH write-ahead gap                        |
-
-**Queue:** resume consume security (#1459) first; Stripe write-ahead next; then celld.
-If ACP/ACH ever charge live customers before this lands, reorder Stripe ahead of celld
-immediately — double-charge risk is live then.
+| Rail                                     | Managed production charging real customers?                              | Notes                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| ACP checkout                             | **No** (opt-in `CLAWQL_ACP_ENABLED`; default off; dry-run for demos)     | Write-ahead required before live merchant SPT      |
+| ACH credit top-up                        | **No** on managed waitlist; self-host only when credits + Stripe key set | Live path requires `correlationId` for durable key |
+| Platform Stripe Checkout / subscriptions | Separate path (webhook-idempotent)                                       | Not the ACP/ACH write-ahead gap                    |
 
 ## Formalization order (agreed)
 
-1. **Payments cluster** — Stripe write-ahead (this change +
-   `PaymentsStripeIdempotency`); holds/compensation TLA + explicit transitions
-   (parallel PR #1458); next: money requests, ACP status graph.
-2. **celld lease / supersede** — vendored `vendor/celld-lab` on PR #1456 (not on
-   `main`); invariant: two live owners never both send.
+1. **Payments cluster** — Stripe write-ahead (#1460) + holds/compensation TLA and
+   explicit transitions (this PR); next: money requests, ACP status graph.
+2. **celld lease / supersede** — vendored `vendor/celld-lab` on soak-stack PRs
+   (#1456 / #1462; not yet on `main`); invariant: two live owners never both send.
 3. **Security machines** — OAuth/PKCE single-use+expiry+verifier; HTTP session
    IFC labels must only accumulate (never drop on reset/resume/reconnect).
 4. **Account deletion** vs WORM retention.

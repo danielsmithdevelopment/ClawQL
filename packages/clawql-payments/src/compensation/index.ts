@@ -48,6 +48,13 @@ export {
   type PendingActionStatus,
 } from "./pending-actions.js";
 export {
+  PendingActionIllegalTransition,
+  transitionPendingAction,
+  transitionPendingActionSync,
+  type PendingActionEvent,
+  type PendingActionTransition,
+} from "./pending-action-transition.js";
+export {
   AgentCompensationService,
   CompensationError,
   agentCompensationLiveLayer,
