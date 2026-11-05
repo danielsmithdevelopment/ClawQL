@@ -1,5 +1,8 @@
 /** ACP checkout session types (OpenAI/Stripe Agentic Checkout subset). */
 
+export type { AcpCheckoutStatus } from "./acp-checkout-transition.js";
+import type { AcpCheckoutStatus } from "./acp-checkout-transition.js";
+
 export type AcpMoney = {
   currency: string;
   /** Minor units. */
@@ -24,9 +27,6 @@ export type AcpPaymentData = {
   token: string;
   provider: "stripe" | "adyen" | "braintree" | "paypal";
 };
-
-export type AcpCheckoutStatus =
-  "not_ready_for_payment" | "ready_for_payment" | "completed" | "canceled";
 
 export type AcpCheckoutSession = {
   id: string;

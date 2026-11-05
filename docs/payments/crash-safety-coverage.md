@@ -58,7 +58,7 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 ## Formalization order (agreed)
 
 1. **Payments cluster** — Stripe write-ahead (#1460) + holds/compensation TLA
-   (#1458) + money-request status graph; next: ACP checkout status graph.
+   (#1458) + money-request + ACP checkout status graphs.
 2. **celld lease / supersede** — lease sweep expiry≠dead TLA on `main`
    (`formal/tla/lease/`); lab Rust + soak evidence still on stack PRs
    (#1456 / #1462 / #1464). Invariant: two live owners never both send; open-log
