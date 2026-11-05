@@ -10,6 +10,7 @@ Design-time models for ClawQL protocols and policy. See [ADR 0014](../docs/adr/0
 | [`tla/payments/`](tla/payments/)                   | TLA+ / TLC — holds/compensation + Stripe write-ahead     | Dual configs; **not** covered by mandate/journal — see README     |
 | [`tla/lease/`](tla/lease/)                         | TLA+ / TLC — lease sweep expiry ≠ dead                   | Dual configs; open-log abandon only on process evidence           |
 | [`tla/oauth/`](tla/oauth/)                         | TLA+ / TLC — OAuth auth-code + PKCE single-use           | Dual configs; delete-on-read consume                              |
+| [`tla/deletion/`](tla/deletion/)                   | TLA+ / TLC — account deletion vs WORM retention          | Dual configs; crypto-shred + single ACCOUNT_DELETED               |
 | [`lean/`](lean/)                                   | Lean — approval-policy + IFC oracles                     | No-sorry CI + differential + exhaustive                           |
 | _(planned)_ `crates/clawql-dataplane/` Verus specs | Verus — policy / labels / digests on running Rust        | Spike only — [ADR 0016](../docs/adr/0016-rust-dataplane-spike.md) |
 

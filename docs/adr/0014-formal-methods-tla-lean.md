@@ -15,7 +15,7 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-on
 
 ## Decision
 
-1. **TLA+/Quint for protocol state machines** — mandates (shipped), event delivery (at-least-once + stable ID + receiver dedup), program resume (shipped), payments hold + compensation 2PC and Stripe write-ahead idempotency ([`formal/tla/payments/`](../../formal/tla/payments/) — money path is **not** covered by mandate/journal; see that README), celld lease sweep expiry≠dead ([`formal/tla/lease/`](../../formal/tla/lease/)), OAuth auth-code + PKCE single-use ([`formal/tla/oauth/`](../../formal/tla/oauth/)).
+1. **TLA+/Quint for protocol state machines** — mandates (shipped), event delivery (at-least-once + stable ID + receiver dedup), program resume (shipped), payments hold + compensation 2PC and Stripe write-ahead idempotency ([`formal/tla/payments/`](../../formal/tla/payments/) — money path is **not** covered by mandate/journal; see that README), celld lease sweep expiry≠dead ([`formal/tla/lease/`](../../formal/tla/lease/)), OAuth auth-code + PKCE single-use ([`formal/tla/oauth/`](../../formal/tla/oauth/)), account deletion vs WORM ([`formal/tla/deletion/`](../../formal/tla/deletion/)).
 2. **Lean for the policy-kernel oracle** — approval-policy evaluation first; differential + exhaustive tests vs production TypeScript.
 3. **gdp-ts** stays layer-1 compile-time capability flow ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)).
 4. **pstack / E2E** stay runtime evidence.
