@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^2.0.0",
-    "effect": "4.0.0",
+    "effect": "4.0.6",
     "undici": "^8.12.3"
   },
   "devDependencies": {

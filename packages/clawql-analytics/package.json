@@ -30,7 +30,7 @@
   "dependencies": {
     "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
-    "effect": "4.0.0"
+    "effect": "4.0.6"
   },
   "optionalDependencies": {
     "posthog-node": "^5.56.2"
