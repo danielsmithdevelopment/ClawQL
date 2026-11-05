@@ -49,11 +49,19 @@ Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneS
 | `Park`                | `PendingExecutionService.park`                           |
 | `Approve` / `Decline` | `decide`                                                 |
 | `TamperPendingDigest` | args change while pending (digest re-bind)               |
-| `Consume`             | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` |
-| `SideEffect`          | execute body after consume                               |
-| `Finalize`            | `markCompleted`                                          |
-| Digests               | `hashPendingArgsEffect` / `args-hash.ts`                 |
+| `Consume`             | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` (execute-core) |
+| `ResumeById`          | Native MCP resume: `gateNativeToolBeforeInvoke` + `tryConsumeApprovedMandate` before handler (`approvedExecutionId`) |
+| `WeakResumeById`      | **Bug oracle** — allow resume without CAS (pre-fix native gate) |
+| `SideEffect`          | execute / native handler body after consume              |
+| `Finalize`            | `markCompleted` / `markPendingCompleted` after handler   |
+| Digests               | `hashPendingArgsEffect` / `args-hash.ts` (strip host-only `approvedExecutionId`) |
 | Idempotency           | `mandateIdempotencyKey(executionId)` for Stripe etc.     |
+
+### Trace conformance (resume)
+
+Native resume must appear in traces as **Consume/ResumeById → SideEffect → Finalize**, never
+**approved → SideEffect** while status stays `approved`. Vitest:
+`packages/clawql-api/src/governance/native-tool-gate-resume.test.ts` (serial + concurrent).
 
 ## Audit hunt (production)
 

@@ -1,38 +1,45 @@
-# Payments hold + compensation (TLA+)
+# Payments formal models (TLA+)
 
-Model-checks the **credit-hold** and **compensation HITL 2PC** protocols that
-live in `clawql-payments` — independent of mandate consume and the program
-write-intent journal.
+Two specs for `clawql-payments` money paths that are **not** covered by mandate
+consume or the program write-intent journal. See
+[`docs/payments/crash-safety-coverage.md`](../../../docs/payments/crash-safety-coverage.md).
+
+| Spec | Role |
+| ---- | ---- |
+| `PaymentsHoldCompensation.*` | Credit holds + compensation HITL 2PC |
+| `PaymentsStripeIdempotency.*` | Stripe PI write-ahead idempotency (ACP / ACH / MPP) |
 
 ## Coverage finding (critical)
 
 | Path | Covers payments money writes? |
 | ---- | ----------------------------- |
-| Mandate / `PendingExecution` | **PARTIAL** — unknown native MCP tools default to `destructive` and may *park* for approval, but resume skips `tryConsumeApprovedMandate` (`native-tool-gate.ts`). Direct Effect services / HTTP / Stripe / ACP bypass PendingExecution entirely. |
-| Program journal / write-intent | **NO** — durable intents only wrap catalog `execute` / program proposals. Payment MCP tools and ledger stores are not journaled. |
-| AP2 "mandate" JWT | Orthogonal auth check — not `pex_…` pending-execution. |
+| Mandate / `PendingExecution` | **PARTIAL** — native resume now CAS-consumes (#1459); direct Effect / HTTP / Stripe / ACP still bypass PendingExecution |
+| Program journal / write-intent | **NO** — durable intents only wrap catalog `execute` / program proposals |
+| AP2 "mandate" JWT | Orthogonal auth — not `pex_…` pending-execution |
 
 **Implication:** MandateLifecycle + ProgramResume crash-safety evidence does **not**
-cover agentic payments. Orphaned `held` rows and double-capture races are owned
-by the ledger lock + idempotency keys (and this model), not by `outcome_unknown`
-redrive.
+underwrite agentic-payments claims. Orphaned `held` rows, double-capture, and
+Stripe double-charge races are owned by ledger locks, explicit transitions, and
+these models.
 
-## Files
+---
+
+## Hold + compensation
 
 | File | Role |
 | ---- | ---- |
 | `PaymentsHoldCompensation.tla` | Spec — holds + compensation actions, crash/retry |
-| `PaymentsHoldCompensation.cfg` | TLC — **atomic** target (`WeakAtomicity = FALSE`); must pass |
+| `PaymentsHoldCompensation.cfg` | TLC — **atomic** (`WeakAtomicity = FALSE`); must pass |
 | `PaymentsHoldCompensationWeak.cfg` | TLC — **legacy race** (`WeakAtomicity = TRUE`); must fail Safety |
 
-## Invariants (target)
+### Invariants
 
 1. **AtMostOneCapture** — a hold id is never successfully captured more than once.
 2. **AtMostOneRelease** — same for release.
 3. **HoldExclusiveSettle** — never both a capture and a release effect on one hold.
-4. **AtMostOneCompensationExecute** — confirm/execute side effect (bounty, transfer) runs at most once.
+4. **AtMostOneCompensationExecute** — confirm/execute side effect runs at most once.
 
-## Mapping to code
+### Mapping to code
 
 | Spec | Code |
 | ---- | ---- |
@@ -40,32 +47,51 @@ redrive.
 | `CaptureAtomic` / `CaptureIdempotent` | `captureHoldImpl` + `transitionCreditHold` |
 | `ReleaseAtomic` / `ReleaseIdempotent` | `releaseHoldImpl` + `transitionCreditHold` |
 | `StageAction` | `stagePendingAction` |
-| `ConfirmAtomic` / `ConfirmIdempotent` | compensation confirm (short-circuit on `executed`) + `transitionPendingAction` |
+| `ConfirmAtomic` / `ConfirmIdempotent` | compensation confirm + `transitionPendingAction` |
 | `CancelAtomic` / `ExpireAtomic` | cancel / `materializeExpiry` |
 | Weak\* | historical non-atomic status write after side effect (counterexample oracle) |
 
-## Explicit transition functions (TypeScript)
-
-Scattered `if (status === …)` guards are being collapsed into:
+Explicit transitions:
 
 - `packages/clawql-payments/src/credits/hold-transition.ts`
 - `packages/clawql-payments/src/compensation/pending-action-transition.ts`
-
-Pure `(state, event) → next | IllegalTransition` with exhaustive matching in Effect —
-one place to log transitions for conformance against this TLA+ model.
-
-## Run TLC
 
 ```bash
 ./scripts/formal/run-payments-hold-tlc.sh
 ```
 
-Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneCapture`
-or `AtMostOneCompensationExecute` violated.
+---
 
-## Next (same cluster, not yet in this module)
+## Stripe write-ahead
+
+| File | Role |
+| ---- | ---- |
+| `PaymentsStripeIdempotency.tla` | Spec — write-ahead key, Stripe create, retry, post-TTL metadata recover |
+| `PaymentsStripeIdempotency.cfg` | TLC — **atomic** (`WeakWriteAhead = FALSE`); must pass |
+| `PaymentsStripeIdempotencyWeak.cfg` | TLC — create without prior key; must fail `AtMostOneCharge` |
+
+### Recovery model
+
+1. Persist durable idempotency key (checkout session / top-up / MPP challenge id)
+2. Call Stripe with that key as `Idempotency-Key`
+3. Record the PaymentIntent id
+4. Retries reuse the same key (within ~24h)
+5. After ~24h, metadata lookup; **fail closed** if Search is unavailable
+
+**Invariant:** `AtMostOneCharge` — a crash between the Stripe call and the local
+record never leads to a second charge.
+
+```bash
+./scripts/formal/run-payments-stripe-tlc.sh
+```
+
+Helpers: `packages/clawql-payments/src/stripe/stripe-idempotency.ts`.
+
+---
+
+## Next (same cluster)
 
 - Money-request status graph (`pending` → `accepted` → `paid` / …)
-- ACP checkout (`ready_for_payment` → `completed` | `canceled`) + Stripe PI idempotency
+- ACP checkout status graph beyond Stripe PI create
 - Account deletion vs WORM retention
 - Multi-node ledger lock (today: in-process per-tenant; Valkey called out as future)

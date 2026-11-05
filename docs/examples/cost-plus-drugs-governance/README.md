@@ -22,6 +22,13 @@ Pitch in one line: _You've built the read side. Here's how agents can safely sta
 orders across every model — patient approval bound to exact drug/qty/price, PHI
 only to BAA-covered providers, full audit trail._
 
+**Publish posture (cleared pre-public):** ship “approval works once, then it's
+spent” for **gateway-mediated** catalog / mock refill writes (#1459). Do **not**
+claim Cost Plus payments ride the same patient-approval path, and frame any
+wire-transfer explainer as an outside payments API through the gateway catalog —
+not `clawql-payments` rails. Canonical scope:
+[`docs/gtm/claim-holds-mandate-resume-and-payments.md`](../../gtm/claim-holds-mandate-resume-and-payments.md).
+
 ## Quick smoke (offline)
 
 ```bash
