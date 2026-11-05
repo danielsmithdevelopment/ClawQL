@@ -66,7 +66,8 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 3. **Security machines** — OAuth/PKCE single-use+expiry+verifier
    (`formal/tla/oauth/`); HTTP session IFC labels only accumulate — Lean
    `labels_only_grow` + TS differential (never drop within a session key).
-4. **Account deletion** vs WORM retention.
+4. **Account deletion** vs WORM retention (`formal/tla/deletion/`) —
+   ordered cascade; crypto-shred vault; single retained `ACCOUNT_DELETED`.
 5. **Program proposal** graph (half of program formalization).
 
 Structural rule for every machine touched: one explicit `(state, event) → next |
