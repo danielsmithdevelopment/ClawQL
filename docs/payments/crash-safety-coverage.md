@@ -59,8 +59,10 @@ crash after `hold` before `capture`/`release` leaves status `held` with **no**
 
 1. **Payments cluster** — Stripe write-ahead (#1460) + holds/compensation TLA and
    explicit transitions (this PR); next: money requests, ACP status graph.
-2. **celld lease / supersede** — vendored `vendor/celld-lab` on soak-stack PRs
-   (#1456 / #1462; not yet on `main`); invariant: two live owners never both send.
+2. **celld lease / supersede** — lease sweep expiry≠dead TLA on `main`
+   (`formal/tla/lease/`); lab Rust + soak evidence still on stack PRs
+   (#1456 / #1462 / #1464). Invariant: two live owners never both send; open-log
+   abandon only on process evidence.
 3. **Security machines** — OAuth/PKCE single-use+expiry+verifier; HTTP session
    IFC labels must only accumulate (never drop on reset/resume/reconnect).
 4. **Account deletion** vs WORM retention.
