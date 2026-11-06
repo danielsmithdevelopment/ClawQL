@@ -4,23 +4,23 @@
 
 **Launch channel:** see [`LAUNCH-CHANNEL.md`](./LAUNCH-CHANNEL.md). npm `latest` is still 1.6.11; tip install channel is `executor@beta` = **2.0.0-beta.37**. Treat these numbers as **tip-channel / harness-under-review**, not “stable 2.0.0 product truth.”
 
-| Field | Value |
-| --- | --- |
-| Binary | `executor@beta` → **2.0.0-beta.37** |
-| Host | Cursor cloud agent · 4 vCPU · ~15 Gi guest |
+| Field   | Value                                                                                   |
+| ------- | --------------------------------------------------------------------------------------- |
+| Binary  | `executor@beta` → **2.0.0-beta.37**                                                     |
+| Host    | Cursor cloud agent · 4 vCPU · ~15 Gi guest                                              |
 | Harness | `scripts/benchmarks/http-concurrency-heap-ab.mjs` `ARMS=executor_v2` `CURVE=1` `REPS=3` |
-| Invite | [`../outreach-rhys-executor-draft.md`](../outreach-rhys-executor-draft.md) |
+| Invite  | [`../outreach-rhys-executor-draft.md`](../outreach-rhys-executor-draft.md)              |
 
 ## HTTP concurrency (priority remasure)
 
 Artifact: [`http-concurrency-executor-β37-r3.json`](./http-concurrency-executor-β37-r3.json) · rollup [`SUMMARY.json`](./SUMMARY.json)
 
 | Threshold (p99) | Prior publish (β.15) | β.37 REPS=3 median (range) |
-| --- | ---: | ---: |
-| 100 ms | **2** | **1** (1–2) |
-| 250 ms | **10** | **9** (9–10) |
-| 500 ms | **22** | **23** (21–23) |
-| Peak RPS | **73** | **~71** (67.7–73) |
+| --------------- | -------------------: | -------------------------: |
+| 100 ms          |                **2** |                **1** (1–2) |
+| 250 ms          |               **10** |               **9** (9–10) |
+| 500 ms          |               **22** |             **23** (21–23) |
+| Peak RPS        |               **73** |          **~71** (67.7–73) |
 
 Anon memory (from harness log, process tree): ~**1.5–3.2 GB** across the curve — still GB-class; not a β.15-only artifact. Zone-audit single-session ~2.1 GB cell is a different board (not remasured here).
 

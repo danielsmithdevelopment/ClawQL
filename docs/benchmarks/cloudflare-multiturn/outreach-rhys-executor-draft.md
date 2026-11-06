@@ -19,9 +19,9 @@ We ran a first concurrency pass and the results look **far off from what we’d 
 
 **Harness + raw artifacts** (no numbers on our public board until you’ve had a chance to reply):
 
-- Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/http-concurrency-heap-ab.mjs  
-- OpenAPI→mock app wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs  
-- Provisional artifacts: https://github.com/danielsmithdevelopment/ClawQL/tree/cursor/executor-v2-remeasure-invite-c0bf/docs/benchmarks/cloudflare-multiturn/remeasure-beta37  
+- Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/http-concurrency-heap-ab.mjs
+- OpenAPI→mock app wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs
+- Provisional artifacts: https://github.com/danielsmithdevelopment/ClawQL/tree/cursor/executor-v2-remeasure-invite-c0bf/docs/benchmarks/cloudflare-multiturn/remeasure-beta37
 - Single-client profile notes: same folder / agent artifacts after merge
 
 Happy to change the arm to whatever you consider a fair default and remasure on the same host.

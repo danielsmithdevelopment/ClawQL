@@ -2,12 +2,12 @@
 
 **Measured binary:** `executor@beta` → **2.0.0-beta.37** (2026-11-05).
 
-| Registry / forge | Finding |
-| --- | --- |
-| npm `dist-tag latest` | **1.6.11** (Executor 1 stable) |
-| npm `dist-tag beta` | **2.0.0-beta.37** |
-| GitHub Releases (UsefulSoftwareCo/executor) | Tip releases are **prerelease** `executor@2.0.0-beta.*`; no non-prerelease `2.0.0` found in recent pages |
-| npm version string `2.0.0` | Exists as an older tarball (`RhysSullivan/executor.git` metadata) — **not** the current UsefulSoftwareCo stable on `latest` |
+| Registry / forge                            | Finding                                                                                                                     |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| npm `dist-tag latest`                       | **1.6.11** (Executor 1 stable)                                                                                              |
+| npm `dist-tag beta`                         | **2.0.0-beta.37**                                                                                                           |
+| GitHub Releases (UsefulSoftwareCo/executor) | Tip releases are **prerelease** `executor@2.0.0-beta.*`; no non-prerelease `2.0.0` found in recent pages                    |
+| npm version string `2.0.0`                  | Exists as an older tarball (`RhysSullivan/executor.git` metadata) — **not** the current UsefulSoftwareCo stable on `latest` |
 
 **Conclusion for artifacts:** today’s Executor 2 “launch” tip we can install is the **beta channel (β.37)**, not a stable `2.0.0` on `latest`. If a different tag is the official launch binary, remasure that and replace these artifacts.
 
