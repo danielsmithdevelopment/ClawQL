@@ -91,7 +91,15 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 | **Availability tail**    | Evidence reports `resumeMs.p99`/`max`, `recoveryMs.p99`/`max`, and `resumeActiveMs`     | **Reported without a pass/fail ceiling.** Diagnostic split only: wall `resumeMs` = active + recovery. A 904s stall must stay visible and must count as an availability failure when wall time exceeds **60 000 ms** |
 | **Outer completion**     | Reported with per-miss class                                                            | Informational for the claim; misses classified, not required to be 0 if they are availability                                                                                                                       |
 | **Wait approval**        | Wrong-write → correctness; no survive/complete within **60 000 ms** wall → availability | Same split; each await trial counts in the 1000-trial denominator                                                                                                                                                   |
-| **Board ok**             | Correctness zero **and** availability ≤ 2%                                              | `status=measured` only when both arms finish                                                                                                                                                                        |
+| **Board ok**             | Correctness zero **and** availability ≤ 2% **and** missing-data pass                    | `status=measured` only when both arms finish; overwrite → `invalidated_overwrite`                                                                                                                                   |
+
+**Missing-data gates (frozen before Mac mini / v4 — see [`FROZEN_MISSING_DATA.md`](../program-cell-fleet-kill/FROZEN_MISSING_DATA.md)):**
+
+| Gate | Pass iff | Note |
+| ---- | -------- | ---- |
+| **Effect ledger** | Every trial persists `effect-ledger.json` | Missing counts against the board; settle uses pets ledger, not the journal under test |
+| **Twin `captured:false` ceiling** | Outer twin-eligible fail rate ≤ **0.02** | Mid-flight `captured:false` excluded |
+| **Overwrite** | Escape hatch unused | Any `FLEET_PHASED_ALLOW_OVERWRITE` use invalidates the artifact |
 
 **Sampling honesty (not a criteria change):** With a true availability-miss rate near the published ~1.5%, a 1000-trial binomial draw sits above 2% by chance roughly **1 time in 12**. If that happens, it is an **honest fail** like v1 — fix celld / re-measure; do **not** loosen the ceiling or the 60 s deadline after seeing results.
 

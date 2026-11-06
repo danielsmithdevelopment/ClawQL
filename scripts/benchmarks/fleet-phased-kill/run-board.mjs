@@ -20,6 +20,7 @@
  * Env:
  *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
  *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
+ *   FLEET_PHASED_PHASE_STRICT        1=always PHASES[i%n] (exact per-phase counts; smokes)
  *   FLEET_PHASED_OUT / EVIDENCE      output path (default: TTL+UTC-stamped unique file)
  *   FLEET_PHASED_ALLOW_OVERWRITE     1=replace existing evidence (default refuse;
  *                                    when set, evidence.evidenceOverwrite records it)
@@ -29,6 +30,9 @@
  *   FLEET_PHASED_SCORE_MODE          legacy_zero_deadline (default) |
  *                                    correctness_availability_v2 (split gates; see durability STATUS)
  *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
+ *   FLEET_PHASED_TWIN_CAPTURE_FAIL_CEILING
+ *                                    max rate of captured:false among outer twin-eligible
+ *                                    trials (default 0.02). Mid-flight twins are not eligible.
  *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   FLEET_PHASED_FRESH_NODE_IDS      1=mint a new CELLD_NODE every start (legacy;
@@ -296,6 +300,18 @@ const AVAIL_CEILING = Math.min(
   1,
   Math.max(0, Number(process.env.FLEET_PHASED_AVAIL_CEILING || 0.02))
 );
+/**
+ * Frozen missing-data rules (v4 — do not loosen after results):
+ * 1. Trial without persisted effect ledger → board fail
+ * 2. Outer twin-eligible captured:false rate ≤ this ceiling
+ * 3. Any FLEET_PHASED_ALLOW_OVERWRITE use → artifact invalidated
+ */
+const TWIN_CAPTURE_FAIL_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_PHASED_TWIN_CAPTURE_FAIL_CEILING || 0.02))
+);
+const MISSING_EFFECT_LEDGER_FAILS_BOARD = true;
+const OVERWRITE_INVALIDATES_ARTIFACT = true;
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -510,7 +526,15 @@ function awaitPlan(programId, executionId) {
   };
 }
 
+/**
+ * Default: first 80% cycle through PHASES; last 20% uniform random.
+ * FLEET_PHASED_PHASE_STRICT=1 → always PHASES[i % n] (exact counts for smokes /
+ * fair N divisible by phase count — e.g. N=8 → 2 per phase).
+ */
 function pickPhase(i) {
+  if (process.env.FLEET_PHASED_PHASE_STRICT === "1") {
+    return PHASES[i % PHASES.length];
+  }
   const targeted = Math.ceil(N * 0.8);
   if (i < targeted) return PHASES[i % PHASES.length];
   return PHASES[Math.floor(Math.random() * PHASES.length)];
@@ -2179,20 +2203,98 @@ async function main() {
           };
     const injectionMissed = injectionItems.length;
     const injectionClean = injectionMissed === 0;
-    // Durability ok ignores injection misses (neither pass nor loss). Boards must
-    // still publish gates.injection so misses are not silent.
-    const okV2 =
-      complete &&
-      correctnessFailures === 0 &&
-      availabilityFailureRate != null &&
-      availabilityFailureRate <= AVAIL_CEILING;
-    const okLegacy = complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk;
     const writeKillWithGroundTruth = trials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
     const awaitWithGroundTruth = awaitTrials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
     const effectLedgerPersisted =
       writeKillWithGroundTruth === trials.length &&
       awaitWithGroundTruth === awaitTrials.length &&
       trials.length + awaitTrials.length > 0;
+    const missingLedgerItems = [
+      ...trials
+        .filter((t) => t.effectGroundTruth?.effect_ledger !== "persisted")
+        .map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          failureReason: "effect_ledger_missing",
+        })),
+      ...awaitTrials
+        .filter((t) => t.effectGroundTruth?.effect_ledger !== "persisted")
+        .map((t) => ({
+          a: t.a,
+          phase: "await_approval",
+          failureReason: "effect_ledger_missing",
+        })),
+    ];
+    // Outer twin-eligible = same window as statePreserved (outer + completedClean).
+    // Mid-flight captured:false is expected and not in this denominator.
+    const twinEligibleItems = STATE_BASELINE
+      ? trials.filter(
+          (t) =>
+            (t.phase === "before_intent" || t.phase === "after_call_before_journal") &&
+            t.completedClean === true
+        )
+      : [];
+    const twinCaptureFailItems = twinEligibleItems.filter(
+      (t) =>
+        t.effectGroundTruth?.twinCaptured !== true ||
+        t.statePreserved?.reason === "twin_capture_failed"
+    );
+    const twinCaptureFailRate =
+      twinEligibleItems.length > 0
+        ? twinCaptureFailItems.length / twinEligibleItems.length
+        : 0;
+    const twinCaptureFailPass =
+      twinEligibleItems.length === 0 || twinCaptureFailRate <= TWIN_CAPTURE_FAIL_CEILING;
+    const artifactInvalidatedByOverwrite =
+      OVERWRITE_INVALIDATES_ARTIFACT &&
+      (EVIDENCE_ALLOW_OVERWRITE || EVIDENCE_REPLACED_EXISTING);
+    const missingDataPass =
+      (!MISSING_EFFECT_LEDGER_FAILS_BOARD || effectLedgerPersisted) &&
+      twinCaptureFailPass &&
+      !artifactInvalidatedByOverwrite;
+    // Durability ok ignores injection misses (neither pass nor loss). Boards must
+    // still publish gates.injection so misses are not silent. Missing-data rules
+    // are hard gates for v2/v4 (frozen before Mac mini / v4).
+    const okV2 =
+      complete &&
+      correctnessFailures === 0 &&
+      availabilityFailureRate != null &&
+      availabilityFailureRate <= AVAIL_CEILING &&
+      missingDataPass;
+    const okLegacy =
+      complete &&
+      zeroDup &&
+      totalDeadlineMisses === 0 &&
+      allPhaseOk &&
+      missingDataPass;
+    if (gates && SCORE_MODE === "correctness_availability_v2") {
+      gates.missingData = {
+        effectLedgerPersisted,
+        missingLedgerFailures: missingLedgerItems.length,
+        missingLedgerItems: missingLedgerItems.slice(0, 50),
+        missingEffectLedgerFailsBoard: MISSING_EFFECT_LEDGER_FAILS_BOARD,
+        twinCaptureFailCeiling: TWIN_CAPTURE_FAIL_CEILING,
+        twinEligibleN: twinEligibleItems.length,
+        twinCaptureFailures: twinCaptureFailItems.length,
+        twinCaptureFailRate,
+        twinCaptureFailPass,
+        twinCaptureFailItems: twinCaptureFailItems.slice(0, 50).map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          reason: t.statePreserved?.reason || "captured_false",
+        })),
+        overwriteInvalidatesArtifact: OVERWRITE_INVALIDATES_ARTIFACT,
+        artifactInvalidatedByOverwrite,
+        pass: missingDataPass,
+        meaning:
+          "Frozen before v4: (1) every trial must persist effect-ledger.json — missing counts against the board; (2) outer twin-eligible captured:false rate ≤ twinCaptureFailCeiling (mid-flight excluded); (3) any FLEET_PHASED_ALLOW_OVERWRITE use invalidates the artifact.",
+      };
+    }
+    const status = artifactInvalidatedByOverwrite
+      ? "invalidated_overwrite"
+      : complete
+        ? "measured"
+        : "partial";
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
@@ -2202,7 +2304,7 @@ async function main() {
       injectionClean,
       injectionMissedNote:
         "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows. Historical journal-surrogate settles must carry basis=journal_surrogate + effect_ledger=unavailable — never read as verified.",
-      status: complete ? "measured" : "partial",
+      status,
       scoreMode: SCORE_MODE,
       evidencePath: OUT,
       evidenceTrialsDir: EVIDENCE_DIR,
@@ -2210,13 +2312,16 @@ async function main() {
         allowOverwriteEnv: EVIDENCE_ALLOW_OVERWRITE,
         existedBefore: EVIDENCE_EXISTED_BEFORE,
         replacedExisting: EVIDENCE_REPLACED_EXISTING,
-        note: EVIDENCE_ALLOW_OVERWRITE
-          ? "FLEET_PHASED_ALLOW_OVERWRITE=1 was set for this run — escape hatch is never silent."
-          : "Overwrite escape hatch was not set; unique path or first write.",
+        invalidatesArtifact: artifactInvalidatedByOverwrite,
+        note: artifactInvalidatedByOverwrite
+          ? "FLEET_PHASED_ALLOW_OVERWRITE was set and/or replaced an existing file — artifact invalidated under frozen missing-data rules."
+          : EVIDENCE_ALLOW_OVERWRITE
+            ? "FLEET_PHASED_ALLOW_OVERWRITE=1 was set for this run — escape hatch is never silent."
+            : "Overwrite escape hatch was not set; unique path or first write.",
       },
       effectLedgerPersisted,
       effectLedgerPersistedNote:
-        "Per-trial mock-pets __writes + twin digest under evidenceTrialsDir/trials/. Independent of ProgramCell journal. Precondition for v4 settle (do not start v4 without this).",
+        "Per-trial mock-pets __writes + twin digest under evidenceTrialsDir/trials/. Independent of ProgramCell journal. Missing ledger fails the board (frozen). Precondition for v4 settle.",
       effectLedgerCoverage: {
         writeKillPersisted: writeKillWithGroundTruth,
         writeKillTrials: trials.length,
@@ -2242,8 +2347,8 @@ async function main() {
         })),
       ],
       gates,
-      // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
-      // loosening of deadline / denominator / ceiling is visible against this file.
+      // Frozen before the run (see durability-proof STATUS v2 + FROZEN_MISSING_DATA.md).
+      // Recorded so post-hoc loosening is visible against this file.
       frozenCriteria:
         SCORE_MODE === "correctness_availability_v2"
           ? {
@@ -2256,7 +2361,14 @@ async function main() {
               awaitApprovalTrials: AWAIT_TRIALS,
               overallTrials: N + AWAIT_TRIALS,
               tailsHavePassFailCeiling: false,
-              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability.",
+              missingData: {
+                missingEffectLedgerFailsBoard: MISSING_EFFECT_LEDGER_FAILS_BOARD,
+                twinCaptureFailCeiling: TWIN_CAPTURE_FAIL_CEILING,
+                twinCaptureFailDenominator:
+                  "outer phases (before_intent, after_call_before_journal) with completedClean; mid-flight captured:false excluded",
+                overwriteInvalidatesArtifact: OVERWRITE_INVALIDATES_ARTIFACT,
+              },
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability. Missing-data rules are hard gates for v4.",
             }
           : null,
       n: N,
@@ -2608,6 +2720,12 @@ async function main() {
     console.log(
       `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} injectionMissed=${evidence.gates.injection?.failures ?? 0} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
     );
+    const md = evidence.gates.missingData;
+    if (md) {
+      console.log(
+        `fleet-phased: missingData pass=${md.pass} effectLedgerPersisted=${md.effectLedgerPersisted} twinCaptureFailRate=${md.twinCaptureFailRate} twinCeiling=${md.twinCaptureFailCeiling} overwriteInvalidated=${md.artifactInvalidatedByOverwrite}`
+      );
+    }
   }
   console.log(`wrote ${OUT}`);
   cleanup();
