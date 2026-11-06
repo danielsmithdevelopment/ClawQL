@@ -312,6 +312,13 @@ const TWIN_CAPTURE_FAIL_CEILING = Math.min(
 );
 const MISSING_EFFECT_LEDGER_FAILS_BOARD = true;
 const OVERWRITE_INVALIDATES_ARTIFACT = true;
+/**
+ * during_call phase targeting validity: at least one trial must observe
+ * mock-pets inFlight before kill (callVerifiedSent). Zero of N means the
+ * injector never landed mid-call — same class of invalidity as injection_missed,
+ * board-wide. Frozen before v4; do not loosen after results.
+ */
+const DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT = true;
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -1707,7 +1714,9 @@ async function main() {
     let failureReason = null;
     if (duplicates > 0 || writeStepsRerun > 0) {
       failureClass = "correctness";
-      failureReason = "duplicate_or_write_rerun";
+      // Mid-flight correctness: at most one effect, never two.
+      failureReason =
+        midFlight && writeCount > 1 ? "midflight_effect_gt_one" : "duplicate_or_write_rerun";
     } else if (journalDivergence) {
       failureClass = "correctness";
       failureReason = "journal_divergence";
@@ -1737,6 +1746,11 @@ async function main() {
         failureClass = "correctness";
         failureReason = "lost_midflight_intent";
       }
+    } else if (midFlight && !outcomeUnknown) {
+      // Mid-flight correctness: every in-flight trial must be outcome_unknown.
+      failureClass = "correctness";
+      failureReason = "midflight_not_outcome_unknown";
+      expectOk = false;
     } else if (STALE_OWNER && staleOwner && !staleOwner.ownershipMoved) {
       failureClass = "availability";
       failureReason = "ownership_never_moved";
@@ -2144,7 +2158,7 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (readable survivor status lacks intent/pauseKind after mid-flight kill, and not a completed single-write resume; timeout/fetchError → midflight_storage_unknown availability), stale_owner_send (egress after own.json left the victim). injection_missed is NOT correctness.",
+                "wrong outcome only — duplicates / midflight_effect_gt_one, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent, midflight_not_outcome_unknown (in-flight trials must be outcome_unknown; at most one effect), stale_owner_send. injection_missed is NOT correctness. Phase targeting validity (during_call callVerifiedSent) is gates.phaseValidity, not correctness.",
             },
             injection: {
               failures: injectionItems.length,
@@ -2252,21 +2266,62 @@ async function main() {
       (!MISSING_EFFECT_LEDGER_FAILS_BOARD || effectLedgerPersisted) &&
       twinCaptureFailPass &&
       !artifactInvalidatedByOverwrite;
+
+    function midFlightPhaseEffectDist(phaseName) {
+      const pts = trials.filter((t) => t.phase === phaseName);
+      const effects0 = pts.filter((t) => (t.writeCount ?? 0) === 0).length;
+      const effects1 = pts.filter((t) => (t.writeCount ?? 0) === 1).length;
+      const effects2plus = pts.filter((t) => (t.writeCount ?? 0) >= 2).length;
+      const callVerifiedSent =
+        phaseName === "during_call"
+          ? pts.filter((t) => t.callSent?.sawInFlight === true).length
+          : null;
+      const outcomeUnknownN = pts.filter((t) => t.outcomeUnknown === true).length;
+      return {
+        n: pts.length,
+        effects0,
+        effects1,
+        effects2plus,
+        callVerifiedSent,
+        callVerifiedSentRate:
+          phaseName === "during_call" && pts.length
+            ? callVerifiedSent / pts.length
+            : null,
+        outcomeUnknown: outcomeUnknownN,
+        outcomeUnknownRate: pts.length ? outcomeUnknownN / pts.length : null,
+      };
+    }
+    const midFlightEffectDistribution = {
+      after_intent_before_call: midFlightPhaseEffectDist("after_intent_before_call"),
+      during_call: midFlightPhaseEffectDist("during_call"),
+      meaning:
+        "Effect counts from mock-pets ledger (writeCount). during_call.callVerifiedSent = sawInFlight before kill. Zero callVerifiedSent across all during_call trials ⇒ phase targeting invalid (injector never mid-call).",
+    };
+    const duringCallN = midFlightEffectDistribution.during_call.n;
+    const duringCallVerifiedSent = midFlightEffectDistribution.during_call.callVerifiedSent || 0;
+    const duringCallPhaseValid =
+      duringCallN === 0 ||
+      !DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT ||
+      duringCallVerifiedSent >= 1;
+    const phaseValidityPass = duringCallPhaseValid;
+
     // Durability ok ignores injection misses (neither pass nor loss). Boards must
-    // still publish gates.injection so misses are not silent. Missing-data rules
-    // are hard gates for v2/v4 (frozen before Mac mini / v4).
+    // still publish gates.injection so misses are not silent. Missing-data +
+    // phase-validity rules are hard gates for v2/v4 (frozen before Mac mini / v4).
     const okV2 =
       complete &&
       correctnessFailures === 0 &&
       availabilityFailureRate != null &&
       availabilityFailureRate <= AVAIL_CEILING &&
-      missingDataPass;
+      missingDataPass &&
+      phaseValidityPass;
     const okLegacy =
       complete &&
       zeroDup &&
       totalDeadlineMisses === 0 &&
       allPhaseOk &&
-      missingDataPass;
+      missingDataPass &&
+      phaseValidityPass;
     if (gates && SCORE_MODE === "correctness_availability_v2") {
       gates.missingData = {
         effectLedgerPersisted,
@@ -2289,12 +2344,30 @@ async function main() {
         meaning:
           "Frozen before v4: (1) every trial must persist effect-ledger.json — missing counts against the board; (2) outer twin-eligible captured:false rate ≤ twinCaptureFailCeiling (mid-flight excluded); (3) any FLEET_PHASED_ALLOW_OVERWRITE use invalidates the artifact.",
       };
+      gates.phaseValidity = {
+        duringCallRequireSomeCallVerifiedSent: DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT,
+        duringCallN,
+        duringCallVerifiedSent,
+        duringCallPhaseValid,
+        midFlightEffectDistribution,
+        midFlightCorrectness: {
+          atMostOneEffect: true,
+          requireOutcomeUnknown: true,
+          meaning:
+            "Mid-flight (after_intent_before_call, during_call): writeCount ≤ 1 (never 2+); every trial must be outcome_unknown. Violations are correctness failures (midflight_effect_gt_one / midflight_not_outcome_unknown).",
+        },
+        pass: phaseValidityPass,
+        meaning:
+          "Frozen before v4: if the board includes during_call trials, at least one must have callVerifiedSent (mock inFlight before kill). Otherwise the phase is mislabeled — injection landed before the call — and the board cannot claim to have tested during-call crashes.",
+      };
     }
     const status = artifactInvalidatedByOverwrite
       ? "invalidated_overwrite"
-      : complete
-        ? "measured"
-        : "partial";
+      : !phaseValidityPass && complete
+        ? "invalid_phase_targeting"
+        : complete
+          ? "measured"
+          : "partial";
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
@@ -2368,9 +2441,16 @@ async function main() {
                   "outer phases (before_intent, after_call_before_journal) with completedClean; mid-flight captured:false excluded",
                 overwriteInvalidatesArtifact: OVERWRITE_INVALIDATES_ARTIFACT,
               },
-              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability. Missing-data rules are hard gates for v4.",
+              phaseValidity: {
+                duringCallRequireSomeCallVerifiedSent:
+                  DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT,
+                midFlightAtMostOneEffect: true,
+                midFlightRequireOutcomeUnknown: true,
+              },
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability. Missing-data + phase-validity rules are hard gates for v4.",
             }
           : null,
+      midFlightEffectDistribution,
       n: N,
       trialsCompleted: trials.length,
       awaitTrialsCompleted: awaitTrials.length,
@@ -2724,6 +2804,14 @@ async function main() {
     if (md) {
       console.log(
         `fleet-phased: missingData pass=${md.pass} effectLedgerPersisted=${md.effectLedgerPersisted} twinCaptureFailRate=${md.twinCaptureFailRate} twinCeiling=${md.twinCaptureFailCeiling} overwriteInvalidated=${md.artifactInvalidatedByOverwrite}`
+      );
+    }
+    const pv = evidence.gates.phaseValidity;
+    if (pv) {
+      const dc = pv.midFlightEffectDistribution?.during_call;
+      const ai = pv.midFlightEffectDistribution?.after_intent_before_call;
+      console.log(
+        `fleet-phased: phaseValidity pass=${pv.pass} duringCallVerifiedSent=${pv.duringCallVerifiedSent}/${pv.duringCallN} during_call effects0/1/2+=${dc?.effects0}/${dc?.effects1}/${dc?.effects2plus} after_intent effects0/1/2+=${ai?.effects0}/${ai?.effects1}/${ai?.effects2plus}`
       );
     }
   }

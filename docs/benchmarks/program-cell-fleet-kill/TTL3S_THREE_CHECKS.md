@@ -44,7 +44,7 @@ Every future board persists, per trial, under `<evidence>-trials/trials/NNNN_<pr
 
 Evidence JSON also records `effectLedgerPersisted`, `effectGroundTruthSample`, and `evidenceOverwrite` (including when `FLEET_PHASED_ALLOW_OVERWRITE=1` is set). A sibling `<evidence>-trials/index.json` lists trial paths. **Do not start v4** without per-trial effect-ledger + twin-digest persistence.
 
-**Frozen missing-data rules** (before Mac mini / v4): [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md) — missing ledger fails board; outer twin `captured:false` ≤2%; overwrite invalidates.
+**Frozen missing-data + phase-validity** (before Mac mini / v4): [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md) — missing ledger fails board; outer twin `captured:false` ≤2%; overwrite invalidates; `during_call` needs ≥1 `callVerifiedSent`; mid-flight ≤1 effect + all `outcome_unknown`.
 
 **Smoke (cloud, not authorizing):**
 - N=2 outer phases — twin `captured+preserved`, `ownerEffectCount=1`

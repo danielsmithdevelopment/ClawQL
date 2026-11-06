@@ -159,6 +159,6 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 5. **Supersede process-evidence audit** — pre-enrichment Mac mini logs → `count_and_flag_only` (not a pass); real proof on **enriched** dual-sided logs (`pass_process_evidence`) — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
 6. **Rerun** stale-owner N=40 + wedged N=100 on the **enriched** lab binary (parallel with step 5)
 7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check); record `celldLabGitCommit` vs authorizing baseline `112a8aa6e`
-8. **v4 missing-data rules (frozen — [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md)):** every trial persists effect ledger; outer twin `captured:false` rate ≤ 0.02; any overwrite invalidates the artifact. Never settle from the ProgramCell journal alone.
+8. **v4 missing-data + phase-validity (frozen — [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md)):** every trial persists effect ledger; outer twin `captured:false` ≤ 0.02; overwrite invalidates; `during_call` must have ≥1 `callVerifiedSent`; mid-flight ≤1 effect and all `outcome_unknown`. Never settle from the ProgramCell journal alone.
 
-Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted. Missing-data rules are frozen in harness `frozenCriteria.missingData` — Mac mini soak is the remaining gate before `measured_v4_ready`.
+Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted. Rules live in `frozenCriteria.missingData` + `frozenCriteria.phaseValidity` — Mac mini soak is the remaining gate before `measured_v4_ready`.

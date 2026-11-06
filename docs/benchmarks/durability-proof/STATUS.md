@@ -93,13 +93,15 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 | **Wait approval**        | Wrong-write → correctness; no survive/complete within **60 000 ms** wall → availability | Same split; each await trial counts in the 1000-trial denominator                                                                                                                                                   |
 | **Board ok**             | Correctness zero **and** availability ≤ 2% **and** missing-data pass                    | `status=measured` only when both arms finish; overwrite → `invalidated_overwrite`                                                                                                                                   |
 
-**Missing-data gates (frozen before Mac mini / v4 — see [`FROZEN_MISSING_DATA.md`](../program-cell-fleet-kill/FROZEN_MISSING_DATA.md)):**
+**Missing-data + phase-validity gates (frozen before Mac mini / v4 — see [`FROZEN_MISSING_DATA.md`](../program-cell-fleet-kill/FROZEN_MISSING_DATA.md)):**
 
 | Gate | Pass iff | Note |
 | ---- | -------- | ---- |
 | **Effect ledger** | Every trial persists `effect-ledger.json` | Missing counts against the board; settle uses pets ledger, not the journal under test |
 | **Twin `captured:false` ceiling** | Outer twin-eligible fail rate ≤ **0.02** | Mid-flight `captured:false` excluded |
 | **Overwrite** | Escape hatch unused | Any `FLEET_PHASED_ALLOW_OVERWRITE` use invalidates the artifact |
+| **`during_call` targeting** | ≥1 `callVerifiedSent` when phase is present | Else `invalid_phase_targeting` — injection never mid-call |
+| **Mid-flight correctness** | ≤1 effect; every trial `outcome_unknown` | `midflight_effect_gt_one` / `midflight_not_outcome_unknown` |
 
 **Sampling honesty (not a criteria change):** With a true availability-miss rate near the published ~1.5%, a 1000-trial binomial draw sits above 2% by chance roughly **1 time in 12**. If that happens, it is an **honest fail** like v1 — fix celld / re-measure; do **not** loosen the ceiling or the 60 s deadline after seeing results.
 
