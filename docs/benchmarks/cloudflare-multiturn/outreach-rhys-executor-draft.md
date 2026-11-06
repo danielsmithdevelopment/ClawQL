@@ -1,42 +1,45 @@
 # Draft outreach — Executor maintainers (Rhys / Useful Software)
 
-**Status:** draft for human review — do not send until approved.  
-**Tone:** congratulations + harness help request. No product comparison. No public numbers until you respond.
+**Status:** draft for human review — do **not** send until approved.  
+**Tone:** congratulations + config questions. No product comparison. No ClawQL numbers in the message.
+
+**Before send:** merge/publish the “Executor v2 β — under review” HTTP concurrency row on `/benchmarks` so the claim in the email is true when he opens the page.
+
+**Pinned SHA:** `2a0998368ab353391e78f8949fb1bca797458aa7`
 
 ---
 
-**Subject:** Congrats on Executor 2 — can you sanity-check our concurrent HTTP harness?
+**Subject:** Congrats on Executor 2, and a config question for our benchmark harness
 
-Hi Rhys —
+Hi Rhys,
 
-Congratulations on Executor 2.
+Congrats on the Executor 2 launch. I'm Daniel, building ClawQL, an open-source MCP gateway. We publish equal-arm benchmark boards that include Executor, and I want to make sure we run v2 the way you'd recommend.
 
-We’re remeasuring our equal-arm MCP boards against the current Executor 2 install channel (`executor@beta` → **2.0.0-beta.37** as of 2026-11-05). On npm, `latest` is still **1.6.11**, and we don’t see a non-prerelease GitHub `2.0.0` release — so we’re treating β.37 as today’s launch tip unless you point us at a different binary/tag.
+We're testing the current install channel (`executor@beta`, 2.0.0-beta.37 as of today). Please tell me if a different tag is the right one.
 
-We ran a first concurrency pass and the results look **far off from what we’d expect for a shipped product** (very low sustained clients under a 100 ms p99 SLO, and ~2 GB resident before load). We suspect **our setup**, not your intended operator path. A single warm MCP `execute` on `/mcp` is ~60 ms here; idle RSS is already GB-class (serve + workerd; motel excluded). That smells like a topology/config mismatch (e.g. how we should run concurrent HTTP clients against the background service) more than a fair product measurement.
+Since Executor is meant to serve as a shared gateway for teams, I want to make sure we're measuring concurrent use the way you'd recommend. Our first concurrent-HTTP pass looks far off from a multi-client gateway story: single requests are fine (~60 ms for a warm execute on `/mcp`), but sustained concurrency is very low, peak throughput stays flat around ~70 RPS as we add clients, and memory is ~2 GB at idle (serve plus workerd). Our page currently shows similar numbers from beta.15; I've marked that row as under review until we sort this out.
 
-**Ask:** what’s the recommended way to run Executor 2 for **concurrent Streamable HTTP MCP clients** (stock flags, service vs serve, worker/isolate knobs, anything we should not do)?
+Three questions:
+1. What's the recommended way to run Executor 2 for concurrent Streamable HTTP MCP clients? Is that a supported setup?
+2. For governance tests, what's the recommended v2 way to configure approvals and blocked tools?
+3. Is there anything in our setup we shouldn't be doing?
 
-**Harness + raw artifacts** (no numbers on our public board until you’ve had a chance to reply):
+Harness and raw results (pinned to commit `2a0998368ab353391e78f8949fb1bca797458aa7`):
+- Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/2a0998368ab353391e78f8949fb1bca797458aa7/scripts/benchmarks/http-concurrency-heap-ab.mjs
+- OpenAPI-to-mock wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/2a0998368ab353391e78f8949fb1bca797458aa7/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs
+- Provisional results: https://github.com/danielsmithdevelopment/ClawQL/tree/2a0998368ab353391e78f8949fb1bca797458aa7/docs/benchmarks/cloudflare-multiturn/remeasure-beta37
 
-- Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/http-concurrency-heap-ab.mjs
-- OpenAPI→mock app wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs
-- Provisional artifacts: https://github.com/danielsmithdevelopment/ClawQL/tree/cursor/executor-v2-remeasure-invite-c0bf/docs/benchmarks/cloudflare-multiturn/remeasure-beta37
-- Single-client profile notes: same folder / agent artifacts after merge
+Happy to switch to whatever configuration you consider fair and rerun on the same host. If I don't hear back by Wednesday, November 19, we'll publish with the exact `executor --version` used, noting that we invited your review.
 
-Happy to change the arm to whatever you consider a fair default and remasure on the same host.
-
-**Deadline:** if we don’t hear back by **Wednesday 2026-11-12 (America/Los_Angeles)**, we’ll publish the tip-channel board labeled with the exact `executor --version` we used and a note that maintainer config review was invited.
-
-Thanks —  
-[Name]
+Thanks,
+Daniel
 
 ---
 
 ## Checklist before send
 
+- [ ] Under-review row live on clawql.com/benchmarks (HTTP concurrency Executor cell)
 - [ ] Confirm channel wording with Rhys’s launch post (β.37 tip vs any other tag he names)
-- [ ] Prefer private channel first (email `rhys@executor.sh` / Slack connect / Discord) — not a dunk thread
-- [ ] Do **not** paste concurrency tables or ClawQL comparisons into the message
-- [ ] Sign with real name / ClawQL contact
-- [ ] After send: keep `/benchmarks` on labeled historical β.15 cells until response or deadline
+- [ ] Prefer private channel first (email `rhys@executor.sh` / Slack connect / Discord) — not his launch thread
+- [ ] Do **not** paste ClawQL comparisons or adjectives into the message
+- [ ] After send: keep under-review label until response or Nov 19 deadline
