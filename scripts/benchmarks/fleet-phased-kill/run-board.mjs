@@ -21,7 +21,8 @@
  *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
  *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
  *   FLEET_PHASED_OUT / EVIDENCE      output path (default: TTL+UTC-stamped unique file)
- *   FLEET_PHASED_ALLOW_OVERWRITE     1=replace existing evidence (default refuse)
+ *   FLEET_PHASED_ALLOW_OVERWRITE     1=replace existing evidence (default refuse;
+ *                                    when set, evidence.evidenceOverwrite records it)
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
  *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
  *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
@@ -53,6 +54,11 @@ import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareDigestStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
+import {
+  resolveEvidenceOut as resolveEvidenceOutPaths,
+  evidenceTrialsDir,
+  persistTrialGroundTruth as persistTrialGroundTruthFiles,
+} from "./evidence-ground-truth.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -120,35 +126,41 @@ process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
  * Evidence path: unique by default (TTL + UTC stamp). Refuse to overwrite an
  * existing file unless FLEET_PHASED_ALLOW_OVERWRITE=1 — the TTL=3s→10s
  * remasure that clobbered trialFailures taught that lesson.
+ * When the escape hatch is set, the run records it in evidence (never silent).
  */
-function resolveEvidenceOut() {
-  if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
-      process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
-    console.warn(
-      `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
-    );
-  }
-  let out =
-    process.env.FLEET_PHASED_OUT ||
-    process.env.FLEET_PHASED_EVIDENCE ||
-    null;
-  if (!out) {
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    out = join(
-      REPO,
-      `docs/benchmarks/program-cell-fleet-kill/phased-evidence-ttl${CELLD_TTL_MS}-${stamp}.json`
-    );
-  }
-  if (existsSync(out) && process.env.FLEET_PHASED_ALLOW_OVERWRITE !== "1") {
-    throw new Error(
-      `fleet-phased: refusing to overwrite existing evidence at ${out} ` +
-        `(set FLEET_PHASED_ALLOW_OVERWRITE=1 to replace, or point FLEET_PHASED_OUT at a new path)`
-    );
-  }
-  return out;
+const ALLOW_OVERWRITE = process.env.FLEET_PHASED_ALLOW_OVERWRITE === "1";
+const stampDefault = new Date().toISOString().replace(/[:.]/g, "-");
+const {
+  out: OUT,
+  existedBefore: EVIDENCE_EXISTED_BEFORE,
+  allowOverwrite: EVIDENCE_ALLOW_OVERWRITE,
+  replacedExisting: EVIDENCE_REPLACED_EXISTING,
+} = resolveEvidenceOutPaths({
+  outEnv: process.env.FLEET_PHASED_OUT || null,
+  evidenceEnv: process.env.FLEET_PHASED_EVIDENCE || null,
+  allowOverwrite: ALLOW_OVERWRITE,
+  defaultOut: join(
+    REPO,
+    `docs/benchmarks/program-cell-fleet-kill/phased-evidence-ttl${CELLD_TTL_MS}-${stampDefault}.json`
+  ),
+});
+if (EVIDENCE_ALLOW_OVERWRITE) {
+  console.warn(
+    `fleet-phased: FLEET_PHASED_ALLOW_OVERWRITE=1` +
+      (EVIDENCE_REPLACED_EXISTING
+        ? ` — replacing existing evidence at ${OUT}`
+        : ` — set (no prior file at ${OUT})`)
+  );
 }
-const OUT = resolveEvidenceOut();
+/** Sibling directory for per-trial ground truth (effect ledger + twin digest). */
+const EVIDENCE_DIR = evidenceTrialsDir(OUT);
+mkdirSync(join(EVIDENCE_DIR, "trials"), { recursive: true });
 console.log(`fleet-phased: evidence → ${OUT}`);
+console.log(`fleet-phased: trial ground truth → ${EVIDENCE_DIR}/trials/`);
+
+function persistTrialGroundTruth(opts) {
+  return persistTrialGroundTruthFiles({ evidenceDir: EVIDENCE_DIR, ...opts });
+}
 /**
  * Default stable node ids (v3 lesson): fresh ids every start fill R2 `nodes/`
  * without upstream lease-sweep. Opt into legacy minting with FRESH_NODE_IDS=1.
@@ -1191,6 +1203,15 @@ async function main() {
           // would confuse durability scoring with a blocked-before-send gate.
           ac.abort();
           await runPromise;
+          const ledgerSnap = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          const groundTruth = persistTrialGroundTruth({
+            i,
+            programId,
+            phase,
+            effectLedger: ledgerSnap.body || {},
+            twinDigest: { captured: false, reason: "call_never_sent_no_twin" },
+            note: "call_never_sent: effect ledger after inFlight stayed 0",
+          });
           phaseStats[phase].failures += 1;
           phaseStats[phase].n += 1;
           trials.push({
@@ -1203,6 +1224,16 @@ async function main() {
             failureReason: "call_never_sent",
             callSent,
             detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
+            effectGroundTruth: {
+              basis: "effect_ledger",
+              effect_ledger: "persisted",
+              ownerKey: groundTruth.ownerKey,
+              ownerEffectCount: groundTruth.ownerEffectCount,
+              dir: groundTruth.dir,
+              effectLedgerPath: groundTruth.effectLedgerPath,
+              twinDigestPath: groundTruth.twinDigestPath,
+            },
+            writeCount: ledgerSnap.body?.count || 0,
           });
           console.warn(
             `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
@@ -1256,6 +1287,20 @@ async function main() {
         const completedNormally =
           runRes.body?.status === "completed" && runRes.body?.ok === true;
         const injectionMissed = completedNormally;
+        const ledgerSnap = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+        const groundTruth = persistTrialGroundTruth({
+          i,
+          programId,
+          phase,
+          effectLedger: ledgerSnap.body || {},
+          twinDigest: {
+            captured: false,
+            reason: injectionMissed ? "injection_missed_no_twin" : "pause_failed_no_twin",
+          },
+          note: injectionMissed
+            ? "injection_missed: effect ledger after unpaused completion (independent of journal)"
+            : "pause_failed: effect ledger after unexpected run status",
+        });
         phaseStats[phase].failures += 1;
         phaseStats[phase].n += 1;
         trials.push({
@@ -1270,6 +1315,16 @@ async function main() {
           detail: injectionMissed
             ? `injection missed: program completed without mid-flight pause (${JSON.stringify(runRes.body).slice(0, 120)})`
             : `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
+          effectGroundTruth: {
+            basis: "effect_ledger",
+            effect_ledger: "persisted",
+            ownerKey: groundTruth.ownerKey,
+            ownerEffectCount: groundTruth.ownerEffectCount,
+            dir: groundTruth.dir,
+            effectLedgerPath: groundTruth.effectLedgerPath,
+            twinDigestPath: groundTruth.twinDigestPath,
+          },
+          writeCount: ledgerSnap.body?.count || 0,
         });
         if (!nodes[victim].pid) await restartNode(victim);
         continue;
@@ -1364,6 +1419,8 @@ async function main() {
     const resumeMs = Date.now() - resumeStart;
     const resumeActiveMs = resumeActiveMsFrom(resumeMs, avail.recoveryMs);
 
+    // Snapshot pets effect ledger BEFORE twin __reset — independent ground truth
+    // for settle (not the ProgramCell journal under test).
     const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
     const writeCount = ledger.body?.count || 0;
     const duplicates = Math.max(0, writeCount - 1);
@@ -1386,6 +1443,8 @@ async function main() {
 
     /** @type {null | { preserved: boolean, reason: string, attempts?: number }} */
     let statePreservedTrial = null;
+    /** @type {null | Record<string, unknown>} */
+    let twinDigestPersist = null;
     const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
     if (STATE_BASELINE && outerPhase && completedClean && resumeCalls.length) {
       stateEligible += 1;
@@ -1428,6 +1487,20 @@ async function main() {
               twinRes.body?.result,
               resume.body?.result
             );
+            twinDigestPersist = {
+              captured: true,
+              twinId,
+              attempts: twinAttempt,
+              preserved: cmp.preserved,
+              stepsMatch: cmp.stepsMatch,
+              resultMatch: cmp.resultMatch,
+              mismatchIndexes: cmp.mismatchIndexes,
+              baselineResultDigest: cmp.baselineResultDigest,
+              observedResultDigest: cmp.observedResultDigest,
+              baselineSteps: cmp.baseline,
+              observedSteps: cmp.observed,
+              meaning: cmp.meaning,
+            };
             if (cmp.preserved) {
               statePreserved += 1;
               statePreservedTrial = {
@@ -1486,11 +1559,37 @@ async function main() {
           attempts: twinAttempt,
           detail: twinLastErr,
         };
+        twinDigestPersist = {
+          captured: false,
+          twinId,
+          reason: "twin_capture_failed",
+          attempts: twinAttempt,
+          detail: twinLastErr,
+        };
       } else if (statePreservedTrial.preserved === false) {
         if (statePreservedTrial.reason === "twin_capture_failed") stateTwinFailures += 1;
         // digest_mismatch still fails the rate (preservedN) without counting as twinCaptureFailures
       }
+    } else {
+      twinDigestPersist = {
+        captured: false,
+        reason: !STATE_BASELINE
+          ? "state_baseline_disabled"
+          : !outerPhase
+            ? "midflight_phase_no_twin"
+            : !completedClean
+              ? "resume_not_completed_clean"
+              : "no_resume_calls",
+      };
     }
+
+    const groundTruth = persistTrialGroundTruth({
+      i,
+      programId,
+      phase,
+      effectLedger: ledger.body || {},
+      twinDigest: twinDigestPersist,
+    });
 
     let expectOk = false;
     if (!avail.resumeDeadlineMiss) {
@@ -1662,6 +1761,16 @@ async function main() {
       resumeBodyStatus: resume.body?.status ?? null,
       resumeOk: resume.body?.ok ?? null,
       resumeError: resume.body?.error ?? resume.body?.raw ?? null,
+      effectGroundTruth: {
+        basis: "effect_ledger",
+        effect_ledger: "persisted",
+        ownerKey: groundTruth.ownerKey,
+        ownerEffectCount: groundTruth.ownerEffectCount,
+        dir: groundTruth.dir,
+        effectLedgerPath: groundTruth.effectLedgerPath,
+        twinDigestPath: groundTruth.twinDigestPath,
+        twinCaptured: Boolean(twinDigestPersist?.captured),
+      },
     });
 
     // Victim only needs /health before the next flip; program routing is checked
@@ -1852,8 +1961,17 @@ async function main() {
         : "await_not_completed_in_time";
     }
     const awaitResumeMs = Date.now() - resumeStart;
+    const awaitGroundTruth = persistTrialGroundTruth({
+      i: `await_${a}`,
+      programId,
+      phase: "await_approval",
+      effectLedger: ledger.body || {},
+      twinDigest: { captured: false, reason: "await_approval_no_twin" },
+      note: "await_approval arm effect ledger (independent of journal)",
+    });
     awaitTrials.push({
       a,
+      programId,
       ok,
       survived,
       completedAfterApprove,
@@ -1864,6 +1982,15 @@ async function main() {
       resumeMs: awaitResumeMs,
       resumeActiveMs: resumeActiveMsFrom(awaitResumeMs, avail.recoveryMs),
       recoveryMs: avail.recoveryMs,
+      effectGroundTruth: {
+        basis: "effect_ledger",
+        effect_ledger: "persisted",
+        ownerKey: awaitGroundTruth.ownerKey,
+        ownerEffectCount: awaitGroundTruth.ownerEffectCount,
+        dir: awaitGroundTruth.dir,
+        effectLedgerPath: awaitGroundTruth.effectLedgerPath,
+        twinDigestPath: awaitGroundTruth.twinDigestPath,
+      },
     });
 
     try {
@@ -2060,6 +2187,12 @@ async function main() {
       availabilityFailureRate != null &&
       availabilityFailureRate <= AVAIL_CEILING;
     const okLegacy = complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk;
+    const writeKillWithGroundTruth = trials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
+    const awaitWithGroundTruth = awaitTrials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
+    const effectLedgerPersisted =
+      writeKillWithGroundTruth === trials.length &&
+      awaitWithGroundTruth === awaitTrials.length &&
+      trials.length + awaitTrials.length > 0;
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
@@ -2068,9 +2201,28 @@ async function main() {
       injectionMissed,
       injectionClean,
       injectionMissedNote:
-        "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows.",
+        "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows. Historical journal-surrogate settles must carry basis=journal_surrogate + effect_ledger=unavailable — never read as verified.",
       status: complete ? "measured" : "partial",
       scoreMode: SCORE_MODE,
+      evidencePath: OUT,
+      evidenceTrialsDir: EVIDENCE_DIR,
+      evidenceOverwrite: {
+        allowOverwriteEnv: EVIDENCE_ALLOW_OVERWRITE,
+        existedBefore: EVIDENCE_EXISTED_BEFORE,
+        replacedExisting: EVIDENCE_REPLACED_EXISTING,
+        note: EVIDENCE_ALLOW_OVERWRITE
+          ? "FLEET_PHASED_ALLOW_OVERWRITE=1 was set for this run — escape hatch is never silent."
+          : "Overwrite escape hatch was not set; unique path or first write.",
+      },
+      effectLedgerPersisted,
+      effectLedgerPersistedNote:
+        "Per-trial mock-pets __writes + twin digest under evidenceTrialsDir/trials/. Independent of ProgramCell journal. Precondition for v4 settle (do not start v4 without this).",
+      effectLedgerCoverage: {
+        writeKillPersisted: writeKillWithGroundTruth,
+        writeKillTrials: trials.length,
+        awaitPersisted: awaitWithGroundTruth,
+        awaitTrials: awaitTrials.length,
+      },
       gates,
       // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
       // loosening of deadline / denominator / ceiling is visible against this file.

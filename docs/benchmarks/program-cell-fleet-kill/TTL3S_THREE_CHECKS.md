@@ -29,9 +29,20 @@ Mechanism for the published 2/100 stays **open at the headline** (do not rewrite
 | Twin digest | **Unavailable** — TTL=10s remasure overwrote evidence |
 | Journal surrogate | entries **0/1/2** present; entry:2 has `owners.create` + ok; meta `completed` |
 
-Settle rule applied: one write effect (journal) + normal completion without durable pause ⇒ **not a correctness loss**; classify **`injection_missed`**. Pets/twin absence is why this is a journal-surrogate settle, not a pets-ledger settle.
+**Label (with caveat):** `injection_missed` · `basis: journal_surrogate` · `effect_ledger: unavailable`.
+
+The journal is part of the system under test. Using it as a stand-in for the external effect is **evidence, not proof** — a wrong journal would hide exactly the failure under test. Do **not** read trial 1 as a verified settle.
 
 Evidence: [`ttl3s-r2-settle-trials-1-5.json`](./ttl3s-r2-settle-trials-1-5.json) · [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json).
+
+### Harness fix (v4 precondition)
+
+Every future board persists, per trial, under `<evidence>-trials/trials/NNNN_<programId>/`:
+
+- `effect-ledger.json` — mock-pets `__writes` snapshot **before** twin `__reset`
+- `twin-digest.json` — twin digest comparison (or explicit `captured: false` reason)
+
+Evidence JSON also records `effectLedgerPersisted` and `evidenceOverwrite` (including when `FLEET_PHASED_ALLOW_OVERWRITE=1` is set). **Do not start v4** without per-trial effect-ledger + twin-digest persistence.
 
 ## 1b. Full-board side-by-side reclassify (all 100)
 
@@ -72,9 +83,11 @@ Harness now:
 
 1. Defaults `FLEET_PHASED_OUT` to a **TTL+UTC-stamped unique path** when unset.
 2. **Refuses** to overwrite an existing evidence file unless `FLEET_PHASED_ALLOW_OVERWRITE=1`.
+3. When the escape hatch **is** set, evidence records `evidenceOverwrite.allowOverwriteEnv` / `replacedExisting` — never silent.
+4. Per-trial effect ledger + twin digest on disk (v4 precondition).
 
 ## Next
 
-1. Forced-latency arms A (Ambiguous timeout) + B (late Applied) — still on the table  
-2. Remeasure with unique evidence paths (overwrite guard is live)  
-3. Treat published 2/100 as **side-by-side reclassified** (1 injection miss + 1 unsettled), mechanism for any remaining loss still open
+1. Mac mini authorizing soak → `measured_v4_ready` (ledger persistence unblocks the path; trial 5 remains unsettled)  
+2. v4 N=1000 with persisted ledgers; report trial 5 unsettled alongside  
+3. Forced-latency arms A/B still on the table

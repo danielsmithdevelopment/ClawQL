@@ -159,5 +159,6 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 5. **Supersede process-evidence audit** — pre-enrichment Mac mini logs → `count_and_flag_only` (not a pass); real proof on **enriched** dual-sided logs (`pass_process_evidence`) — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
 6. **Rerun** stale-owner N=40 + wedged N=100 on the **enriched** lab binary (parallel with step 5)
 7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check); record `celldLabGitCommit` vs authorizing baseline `112a8aa6e`
+8. **v4 harness precondition:** per-trial mock-pets effect ledger + twin digest persisted (`effectLedgerPersisted=true`); never settle failures from the ProgramCell journal alone. If `FLEET_PHASED_ALLOW_OVERWRITE=1`, evidence must record `evidenceOverwrite`.
 
-Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.
+Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted. Ledger persistence is now in the phased harness — Mac mini soak is the remaining gate before `measured_v4_ready`.

@@ -14,7 +14,7 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 | Board | wedged N=100 · `correctness_availability_v2` · fenceMode `lab_enriched_wedged` |
 | `CELLD_TTL_MS` | **3000** |
 | Correctness (published) | **FAIL** — **2** × `lost_midflight_intent` (`i=1`, `i=5`, `after_intent_before_call`) — fail file kept as-is |
-| Correctness (reclassify) | Side-by-side: **i=1 → `injection_missed`**; **i=5 → `incomplete_no_pause` (unsettled)** — [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json) |
+| Correctness (reclassify) | Side-by-side: **i=1 → `injection_missed` (`basis: journal_surrogate`, `effect_ledger: unavailable` — not verified settle)**; **i=5 → `incomplete_no_pause` (unsettled)** — [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json) |
 | Availability | **5**/100 (rate 0.05) — pass at ceiling |
 | Regime | Resume tail up to **~62s**; truncated logs with **`outcome="ambiguous"`** renewals |
 | Evidence | [`phased-n100-wedge-lab-enriched-ttl3s-failed.json`](./phased-n100-wedge-lab-enriched-ttl3s-failed.json) |
@@ -38,7 +38,8 @@ Correctness must be **0** under every condition you test. TTL may only affect **
 | Full-board reclassify | All 100 rows old/new side-by-side — [`ttl3s-full-board-reclassify.json`](./ttl3s-full-board-reclassify.json). Published fail file **not** rewritten |
 | Host / pause | Cloud Agent VM; trial 1 completed normally (pause clock does not explain it); trial 5 still candidate |
 | Classifier | Timeout → `midflight_storage_unknown`; completed-without-pause → **`injection_missed`** |
-| Evidence path | Unique TTL+UTC default; refuse overwrite unless `FLEET_PHASED_ALLOW_OVERWRITE=1` |
+| Evidence path | Unique TTL+UTC default; refuse overwrite unless `FLEET_PHASED_ALLOW_OVERWRITE=1` (escape hatch **recorded** in evidence when set) |
+| Effect ledger | Per-trial `__writes` + twin digest persisted under `<evidence>-trials/` — **v4 precondition** |
 | BOOTTIME | Lease `mono_ms` on Linux **CLOCK_BOOTTIME** — **hardening**, not claimed as the 2/100 fix |
 
 Lease-belief Ambiguous/receipt paths remain ruled out ([`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)).
@@ -55,6 +56,6 @@ Still correct and shipped: expiry permits **fenced** takeover; open-log abandon 
 
 ## Next
 
-1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Settles the post-fix soak self-fence question (void only if the monitor voids). Unblocked by the renew code check (no optimistic-bump fix required first).
-2. **v4 N=1000** there with append logs + R2 intent check — report **mechanism unexplained** alongside the result (do not claim the 2/100 closed).
-3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms (after pause-clock decision).
+1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Nothing blocks Mac mini except confirming v4 boards run with **persisted effect ledgers** (now in harness). Trial 5 stays unsettled.
+2. **v4 N=1000** there with append logs + R2 intent check + per-trial `effect-ledger.json` / `twin-digest.json` — report trial 5 unsettled; do not claim the 2/100 closed; do not treat journal-surrogate labels as verified settles.
+3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms.

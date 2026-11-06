@@ -15,6 +15,12 @@
       "entry2OwnersCreateOk": true,
       "metaStatus": "completed",
       "pausedForKillDurable": false
+    },
+    "trial1Label": {
+      "newLabel": "injection_missed",
+      "basis": "journal_surrogate",
+      "effect_ledger": "unavailable",
+      "caveat": "Journal is part of the system under test; using it as a stand-in for the external effect is evidence, not proof. A wrong journal would hide exactly the failure under test. Pets owner_* ledger and twin digest were unavailable."
     }
   },
   "summary": {
@@ -170,7 +176,7 @@
     "publishedCorrectnessOld": 2,
     "publishedCorrectnessNew": 1,
     "injectionMissedNew": 1,
-    "note": "Definitional correction applied to all 100 rows. Old labels from published stdout gates (only i=1,5 were lost_midflight_intent). New labels use R2 settle where sampled; unsampled pass trials stay pass. Do not rewrite the published 2/100 file \u2014 report side-by-side. i=1 \u2192 injection_missed; i=5 \u2192 incomplete_no_pause (unsettled). Pets effect ledger owner_* unavailable; journal surrogate used for i=1."
+    "note": "Definitional correction applied to all 100 rows. Old labels from published stdout gates (only i=1,5 were lost_midflight_intent). New labels use R2 settle where sampled; unsampled pass trials stay pass. Do not rewrite the published 2/100 file \u2014 report side-by-side. i=1 \u2192 injection_missed; i=5 \u2192 incomplete_no_pause (unsettled). Pets effect ledger owner_* unavailable; journal surrogate used for i=1. Trial 1 carries basis=journal_surrogate, effect_ledger=unavailable \u2014 not a verified settle."
   },
   "trials": [
     {
@@ -199,7 +205,10 @@
         "hasEntry2": true,
         "entry2Owners": true
       },
-      "reasoning": "R2 meta status=completed; never durable paused_for_kill; journal entries 0/1/2 present with entry:2 owners.create ok. Pets __writes owner_* ledger gone (ephemeral); twin digest gone (TTL=10s evidence overwrite). Surrogate: one write effect in journal + normal completion \u21d2 injection window missed, not a mid-flight intent loss."
+      "reasoning": "R2 meta status=completed; never durable paused_for_kill; journal entries 0/1/2 with entry:2 owners.create ok \u2014 journal_surrogate only. Pets __writes owner_* and twin digest unavailable. Label: injection_missed with basis=journal_surrogate, effect_ledger=unavailable.",
+      "basis": "journal_surrogate",
+      "effect_ledger": "unavailable",
+      "caveat": "Journal is part of the system under test; using it as a stand-in for the external effect is evidence, not proof. A wrong journal would hide exactly the failure under test. Do not read this as a verified settle."
     },
     {
       "i": 2,
