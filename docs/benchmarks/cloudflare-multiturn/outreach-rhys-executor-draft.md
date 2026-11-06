@@ -15,9 +15,9 @@ Hi Rhys,
 
 Congrats on the Executor 2 launch. I'm Daniel, building ClawQL, an open-source MCP gateway. We publish equal-arm benchmark boards that include Executor, and I want to make sure we run v2 the way you'd recommend.
 
-We're testing the current install channel (`executor@beta`, 2.0.0-beta.37 as of today). Please tell me if a different tag is the right one.
+We're testing the current install channel (`executor@beta`, 2.0.0-beta.37 as of November 5). Please tell me if a different tag is the right one.
 
-Since Executor is meant to serve as a shared gateway for teams, I want to make sure we're measuring concurrent use the way you'd recommend. Our first concurrent-HTTP pass looks far off from a multi-client gateway story: single requests are fine (~60 ms for a warm execute on `/mcp`), but sustained concurrency is very low, peak throughput stays flat around ~70 RPS as we add clients, and memory is ~2 GB at idle (serve plus workerd). Our page currently shows similar numbers from beta.15; I've marked that row as under review until we sort this out.
+Since Executor is meant to serve as a shared gateway for teams, concurrent clients are a key part of what we test. Our first pass came in well below what we'd expect: single requests are fine (~60 ms for a warm execute on `/mcp`), but throughput stays flat around 50–70 requests per second as we add clients, with all four vCPUs about 65–75% busy, and memory is ~2 GB at idle (serve plus workerd). Our page currently shows similar numbers from beta.15; I've marked that row as under review until we sort this out.
 
 Three questions:
 
@@ -40,7 +40,7 @@ Daniel
 
 ## Checklist before send
 
-- [ ] Under-review row live on clawql.com/benchmarks (HTTP concurrency Executor cell)
+- [ ] Under-review row live on clawql.com/benchmarks (HTTP concurrency Executor cell) — requires #1480 merged + deployed
 - [ ] Confirm channel wording with Rhys’s launch post (β.37 tip vs any other tag he names)
 - [ ] Prefer private channel first (email `rhys@executor.sh` / Slack connect / Discord) — not his launch thread
 - [ ] Do **not** paste ClawQL comparisons or adjectives into the message
