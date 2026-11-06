@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Production hostname docs.clawql.com binds to this Worker (Workers Assets).
+  // Pages project clawql-docs-astro remains for *.pages.dev previews.
+  // Set CLOUDFLARE_ACCOUNT_ID in the environment (account-scoped tokens need it;
+  // wrangler /memberships error 9106 without account context).
+  "name": "clawql-docs-astro",
+  "compatibility_date": "2025-10-11",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./dist"
+  }
+}

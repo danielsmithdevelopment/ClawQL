@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "ClawQL docs site (Astro) \u2014 migrates docs.clawql.com off Next/OpenNext (ADR 0018)",
+  "description": "ClawQL docs site (Astro) — migrates docs.clawql.com off Next/OpenNext (ADR 0018)",
   "scripts": {
-    "prebuild": "node scripts/import-from-next.mjs",
+    "prebuild": "node scripts/import-from-next.mjs && node scripts/generate-search-index.mjs",
     "import:next": "node scripts/import-from-next.mjs",
+    "nav:curated": "node scripts/generate-curated-nav.mjs",
+    "search:index": "node scripts/generate-search-index.mjs",
     "dev": "astro dev --port 4321",
     "build": "astro build",
     "preview": "astro preview --port 4321",
-    "check": "astro check"
+    "check": "astro check",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:pages-preview": "npm run build && wrangler pages deploy dist --project-name=clawql-docs-astro --branch=main"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.2",
@@ -18,12 +22,14 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.17",
     "astro": "^7.4.4",
+    "flexsearch": "^0.8.212",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.156.0"
   },
   "overrides": {
     "postcss-selector-parser": "6.1.5",

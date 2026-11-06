@@ -1,4 +1,5 @@
 ---
+import DocsSearch from '@/components/DocsSearch.astro'
 import Sidebar from '@/components/Sidebar.astro'
 import { getSiteOrigin, site } from '@/lib/site'
 import '@/styles/global.css'
@@ -54,88 +55,293 @@ const canonical = new URL(Astro.url.pathname, origin).toString()
       href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap"
       rel="stylesheet"
     />
+    <script is:inline>
+      try {
+        const t = localStorage.getItem('clawql-docs-theme')
+        if (t === 'dark') document.documentElement.classList.add('dark')
+        else if (t === 'light') document.documentElement.classList.add('light')
+      } catch {}
+    </script>
   </head>
-  <body class="min-h-dvh font-sans">
+  <body class="min-h-dvh font-sans antialiased">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 font-sans focus:text-zinc-900"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-zinc-900"
     >
       Skip to content
     </a>
-    <header
-      class="docs-chrome border-b border-zinc-900/10 bg-claw-warm-white/90 backdrop-blur dark:border-claw-graph/40 dark:bg-claw-bg/90"
-      aria-label="Site"
-    >
-      <div
-        class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6"
+
+    {/* Protocol-style shell: fixed sidebar on lg+, mobile drawer below */}
+    <div class="lg:ml-72 xl:ml-80">
+      <header
+        class="docs-chrome fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between gap-4 border-b border-zinc-900/10 bg-claw-warm-white/90 px-4 backdrop-blur lg:left-72 lg:z-30 lg:border-transparent lg:bg-white/80 lg:px-8 xl:left-80 dark:border-claw-graph/40 dark:bg-claw-bg/90 lg:dark:bg-claw-bg/80"
       >
-        <a
-          href="/"
-          class="inline-flex items-center gap-2 no-underline"
-          aria-label="ClawQL home"
-        >
-          {/* Soft-matted from originals: white plate removed, Q glow stripped; @2x for retina.
-              Raw JPGs can't drop in as-is — both have opaque white backgrounds, and the
-              dark JPG is cream-on-white (near-invisible ink) so dark UI uses cream recolor
-              of the light master. Originals kept as *-original.jpg / *.jpg for provenance. */}
-          <img
-            src="/brand/clawql-wordmark-light.png"
-            srcset="/brand/clawql-wordmark-light.png 1x, /brand/clawql-wordmark-light@2x.png 2x"
-            alt={site.name}
-            width="146"
-            height="50"
-            class="h-11 w-auto dark:hidden"
-            decoding="async"
-          />
-          <img
-            src="/brand/clawql-wordmark-dark.png"
-            srcset="/brand/clawql-wordmark-dark.png 1x, /brand/clawql-wordmark-dark@2x.png 2x"
-            alt={site.name}
-            width="146"
-            height="50"
-            class="hidden h-11 w-auto dark:block"
-            decoding="async"
-          />
-          <span
-            class="font-sans text-sm font-medium tracking-wide text-zinc-500 dark:text-zinc-400"
-            >docs</span
+        <div class="flex items-center gap-3 lg:hidden">
+          <button
+            type="button"
+            id="docs-nav-open"
+            class="relative flex size-9 items-center justify-center rounded-md text-zinc-900 transition hover:bg-zinc-900/5 dark:text-white dark:hover:bg-white/5"
+            aria-label="Open navigation"
+            aria-controls="docs-mobile-nav"
+            aria-expanded="false"
           >
-        </a>
-        <div class="flex items-center gap-4 font-sans text-sm">
-          <a href={site.marketing} class="no-underline hover:underline"
-            >clawql.com</a
+            <svg class="size-4" viewBox="0 0 10 9" fill="none" aria-hidden="true">
+              <path
+                d="M.5 1h9M.5 8h9M.5 4.5h9"
+                stroke="currentColor"
+                stroke-linecap="round"></path>
+            </svg>
+          </button>
+          <a href="/" class="inline-flex items-center gap-2 no-underline" aria-label="Home">
+            <img
+              src="/ClawQL-logo.jpeg"
+              alt=""
+              width="36"
+              height="36"
+              class="size-9 rounded-md object-cover object-top ring-1 ring-black/10 dark:ring-white/15"
+              decoding="async"
+            />
+            <span class="text-base font-semibold tracking-tight text-zinc-900 dark:text-white"
+              >ClawQL</span
+            >
+          </a>
+        </div>
+
+        <div class="hidden min-w-0 flex-1 justify-center px-4 lg:flex">
+          <DocsSearch variant="desktop-trigger" />
+        </div>
+
+        <nav class="docs-chrome hidden items-center gap-6 xl:flex" aria-label="Site">
+          <a href="/" class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            >Home</a
+          >
+          <a
+            href="/quickstart"
+            class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            >Quickstart</a
+          >
+          <a
+            href="/learn"
+            class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            >Learn</a
+          >
+          <a
+            href="/plugins"
+            class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            >Plugins</a
           >
           <a
             href={site.github}
-            class="no-underline hover:underline"
+            class="text-sm text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
             rel="noopener noreferrer">GitHub</a
           >
+        </nav>
+
+        <div class="ml-auto flex items-center gap-2 lg:ml-0">
+          <div class="lg:hidden">
+            <DocsSearch variant="mobile-trigger" />
+          </div>
+          <a
+            href={site.marketing}
+            class="hidden text-sm text-zinc-600 no-underline hover:text-zinc-900 sm:inline dark:text-zinc-400 dark:hover:text-white"
+            >clawql.com</a
+          >
+          <button
+            type="button"
+            id="docs-theme-toggle"
+            class="flex size-9 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-900/5 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white"
+            aria-label="Toggle color theme"
+          >
+            <svg class="size-4 dark:hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 3v2m0 14v2M5.6 5.6l1.4 1.4m10 10 1.4 1.4M3 12h2m14 0h2M5.6 18.4 7 17m10-10 1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"></path>
+            </svg>
+            <svg class="hidden size-4 dark:block" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M21 14.3A9 9 0 1 1 9.7 3 7 7 0 0 0 21 14.3Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop sidebar */}
+      <div
+        class="docs-chrome docs-sidebar pointer-events-none fixed inset-y-0 left-0 z-40 hidden w-72 overflow-y-auto border-r border-zinc-900/10 bg-claw-warm-white px-6 pt-4 pb-8 lg:pointer-events-auto lg:block xl:w-80 dark:border-claw-graph/40 dark:bg-claw-bg"
+      >
+        <a href="/" class="mb-8 inline-flex items-center gap-2.5 no-underline" aria-label="Home">
+          <img
+            src="/ClawQL-logo.jpeg"
+            alt=""
+            width="40"
+            height="40"
+            class="size-10 rounded-md object-cover object-top ring-1 ring-black/10 dark:ring-white/15"
+            decoding="async"
+          />
+          <span class="text-base font-semibold tracking-tight text-zinc-900 dark:text-white"
+            >ClawQL</span
+          >
+        </a>
+        <div class="mt-10">
+          <Sidebar />
         </div>
       </div>
-    </header>
-    <div
-      class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 md:flex-row md:gap-10"
-    >
-      <Sidebar />
-      <main id="main-content" class="min-w-0 flex-1">
-        <article
-          class="prose prose-zinc dark:prose-invert max-w-none prose-headings:font-display prose-a:text-claw-terra dark:prose-a:text-claw-cyan"
+
+      {/* Mobile drawer */}
+      <div
+        id="docs-mobile-nav"
+        class="docs-mobile-nav fixed inset-0 z-50 hidden lg:hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Documentation navigation"
+      >
+        <button
+          type="button"
+          class="docs-mobile-backdrop absolute inset-0 bg-zinc-400/20 backdrop-blur-sm dark:bg-black/40"
+          aria-label="Close navigation"
+          data-nav-close
+        ></button>
+        <div
+          class="docs-mobile-panel absolute inset-y-0 left-0 flex w-full max-w-sm flex-col overflow-y-auto bg-claw-warm-white shadow-xl ring-1 ring-zinc-900/10 dark:bg-claw-bg dark:ring-claw-graph/50"
         >
-          <slot />
-        </article>
-      </main>
+          <div class="flex h-14 items-center justify-between gap-3 border-b border-zinc-900/10 px-4 dark:border-claw-graph/40">
+            <a href="/" class="inline-flex items-center gap-2 no-underline" aria-label="Home" data-nav-close>
+              <img
+                src="/ClawQL-logo.jpeg"
+                alt=""
+                width="36"
+                height="36"
+                class="size-9 rounded-md object-cover object-top ring-1 ring-black/10 dark:ring-white/15"
+                decoding="async"
+              />
+              <span class="text-base font-semibold tracking-tight text-zinc-900 dark:text-white"
+                >ClawQL</span
+              >
+            </a>
+            <button
+              type="button"
+              class="flex size-9 items-center justify-center rounded-md text-zinc-900 hover:bg-zinc-900/5 dark:text-white dark:hover:bg-white/5"
+              aria-label="Close navigation"
+              data-nav-close
+            >
+              <svg class="size-3.5" viewBox="0 0 10 9" fill="none" aria-hidden="true">
+                <path
+                  d="m1.5 1 7 7M8.5 1l-7 7"
+                  stroke="currentColor"
+                  stroke-linecap="round"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="flex-1 px-4 py-4">
+            <Sidebar />
+          </div>
+        </div>
+      </div>
+
+      <div class="relative flex min-h-dvh flex-col px-4 pt-14 sm:px-6 lg:px-8">
+        {/* Protocol-style hero wash in the content column */}
+        <div
+          class="pointer-events-none absolute inset-x-0 top-14 -z-10 h-56 overflow-hidden lg:left-0"
+          aria-hidden="true"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-claw-terra/10 via-claw-warm-white to-claw-warm-white dark:from-claw-terra/20 dark:via-claw-bg dark:to-claw-bg"
+          >
+          </div>
+          <svg
+            class="absolute inset-x-0 -top-8 h-[160%] w-full -skew-y-[18deg] fill-claw-graph/5 stroke-claw-graph/15 dark:fill-claw-cyan/5 dark:stroke-claw-terra/25"
+            aria-hidden="true"
+          >
+            <defs>
+              <pattern
+                id="docs-grid"
+                width="72"
+                height="56"
+                patternUnits="userSpaceOnUse"
+                x="50%"
+                y="-6"
+              >
+                <path d="M.5 56V.5H72" fill="none"></path>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" stroke-width="0" fill="url(#docs-grid)"></rect>
+          </svg>
+        </div>
+
+        <main
+          id="main-content"
+          class="mx-auto w-full max-w-2xl flex-auto py-10 lg:max-w-3xl"
+          tabindex="-1"
+        >
+          <article class="docs-prose">
+            <slot />
+          </article>
+        </main>
+        <footer
+          class="docs-chrome mx-auto w-full max-w-2xl border-t border-zinc-900/10 py-8 text-sm text-zinc-500 lg:max-w-3xl dark:border-claw-graph/40"
+        >
+          <p>
+            © {new Date().getFullYear()} ClawQL ·
+            <a href={site.github} class="no-underline hover:underline" rel="noopener noreferrer"
+              >GitHub</a
+            >
+            ·
+            <a href={site.marketing} class="no-underline hover:underline">clawql.com</a>
+          </p>
+        </footer>
+      </div>
     </div>
-    <footer
-      class="docs-chrome border-t border-zinc-900/10 py-8 text-center font-sans text-sm text-zinc-500 dark:border-claw-graph/40"
-    >
-      <p>
-        © {new Date().getFullYear()} ClawQL · Static Astro docs (ADR 0018) ·
-        <a
-          href={site.github}
-          class="no-underline hover:underline"
-          rel="noopener noreferrer">GitHub</a
-        >
-      </p>
-    </footer>
+
+    <DocsSearch variant="dialog" />
+
+    <script>
+      function closeNav() {
+        const root = document.getElementById('docs-mobile-nav')
+        const openBtn = document.getElementById('docs-nav-open')
+        if (!root) return
+        root.classList.add('hidden')
+        document.body.classList.remove('overflow-hidden')
+        openBtn?.setAttribute('aria-expanded', 'false')
+      }
+
+      function openNav() {
+        const root = document.getElementById('docs-mobile-nav')
+        const openBtn = document.getElementById('docs-nav-open')
+        if (!root) return
+        root.classList.remove('hidden')
+        document.body.classList.add('overflow-hidden')
+        openBtn?.setAttribute('aria-expanded', 'true')
+      }
+
+      document.getElementById('docs-nav-open')?.addEventListener('click', openNav)
+      document.querySelectorAll('[data-nav-close]').forEach((el) => {
+        el.addEventListener('click', () => closeNav())
+      })
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeNav()
+      })
+
+      document.getElementById('docs-theme-toggle')?.addEventListener('click', () => {
+        const root = document.documentElement
+        const isDark =
+          root.classList.contains('dark') ||
+          (!root.classList.contains('light') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        root.classList.remove('dark', 'light')
+        if (isDark) {
+          root.classList.add('light')
+          localStorage.setItem('clawql-docs-theme', 'light')
+        } else {
+          root.classList.add('dark')
+          localStorage.setItem('clawql-docs-theme', 'dark')
+        }
+      })
+    </script>
   </body>
 </html>
