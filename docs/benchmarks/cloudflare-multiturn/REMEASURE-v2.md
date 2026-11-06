@@ -44,15 +44,15 @@ export EXECUTOR_API_KEY="$EXECUTOR_V2_API_KEY"
 
 ## Priority remasure order
 
-| # | Board | Command sketch | Why first |
-| --- | --- | --- | --- |
-| 1 | HTTP concurrency + memory | `CURVE=1 THRESHOLDS=100,250,500 REPS=3 ARMS=executor_v2 OUT=docs/benchmarks/cloudflare-multiturn/http-concurrency-with-executor-β37.json npm run benchmark:http-concurrency-heap-ab` | Most unflattering β.15 cells (~2 clients / ~2.1 GB) |
-| 2 | CF zone-audit smoke | `CF_MT_ITERS=20 CF_MT_ARMS=executor_v2 npm run benchmark:cloudflare-multiturn:board` | Sanity before 10k |
-| 3 | CF zone-audit publish | `CF_MT_ITERS=10000 CF_MT_REPS=3 CF_MT_ARMS=…,executor_v2 npm run benchmark:cloudflare-multiturn:board` | Tokens + session p50 |
-| 4 | Pets multiturn | `MT_ARMS=…,executor npm run benchmark:gateway-multi-multiturn` | Headline 3.38× |
-| 5 | Interleaved + chaos | `npm run benchmark:gateway-multi-comparison` | Latency / Topology A |
-| 6 | Governance cells | Update `ci-executor-peer.sh` for v2 CLI, then `npm run benchmark:governance-policy-depth:executor` | Pause / resume probe |
-| 7 | Multi-attack + best-config | Never measured — fresh on stable/tip | Pending peer runner |
+| #   | Board                      | Command sketch                                                                                                                                                                       | Why first                                           |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| 1   | HTTP concurrency + memory  | `CURVE=1 THRESHOLDS=100,250,500 REPS=3 ARMS=executor_v2 OUT=docs/benchmarks/cloudflare-multiturn/http-concurrency-with-executor-β37.json npm run benchmark:http-concurrency-heap-ab` | Most unflattering β.15 cells (~2 clients / ~2.1 GB) |
+| 2   | CF zone-audit smoke        | `CF_MT_ITERS=20 CF_MT_ARMS=executor_v2 npm run benchmark:cloudflare-multiturn:board`                                                                                                 | Sanity before 10k                                   |
+| 3   | CF zone-audit publish      | `CF_MT_ITERS=10000 CF_MT_REPS=3 CF_MT_ARMS=…,executor_v2 npm run benchmark:cloudflare-multiturn:board`                                                                               | Tokens + session p50                                |
+| 4   | Pets multiturn             | `MT_ARMS=…,executor npm run benchmark:gateway-multi-multiturn`                                                                                                                       | Headline 3.38×                                      |
+| 5   | Interleaved + chaos        | `npm run benchmark:gateway-multi-comparison`                                                                                                                                         | Latency / Topology A                                |
+| 6   | Governance cells           | Update `ci-executor-peer.sh` for v2 CLI, then `npm run benchmark:governance-policy-depth:executor`                                                                                   | Pause / resume probe                                |
+| 7   | Multi-attack + best-config | Never measured — fresh on stable/tip                                                                                                                                                 | Pending peer runner                                 |
 
 ## Before publishing new cells on /benchmarks
 
@@ -63,11 +63,11 @@ export EXECUTOR_API_KEY="$EXECUTOR_V2_API_KEY"
 
 ## Smoke verified (this agent host, 2026-11-05 PT)
 
-| Check | Result |
-| --- | --- |
-| `npm i executor@beta` | **2.0.0-beta.37** |
-| `executor service start` + `KEY_STORAGE=file` | listens `127.0.0.1:4312`, dashboard HTTP 200 |
-| MCP `initialize` with Bearer `keys.json.apiKey` | HTTP 200, `executor-build: 2.0.0-beta.37` |
+| Check                                                 | Result                                                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm i executor@beta`                                 | **2.0.0-beta.37**                                                                                    |
+| `executor service start` + `KEY_STORAGE=file`         | listens `127.0.0.1:4312`, dashboard HTTP 200                                                         |
+| MCP `initialize` with Bearer `keys.json.apiKey`       | HTTP 200, `executor-build: 2.0.0-beta.37`                                                            |
 | `ensureExecutorOpenapiApp` → curated OAS → local mock | deploy OK after fixing `defineApp({ accounts: {} })` → `defineApp({}, …)` (β.37 scoped requirements) |
 
 Artifacts: `/opt/cursor/artifacts/executor-beta37-service-start.log`, `executor-beta37-mcp-probe.log`, `executor-beta37-openapi-ensure-smoke.log`, `cf-mt-harness-unit-tests.log`.

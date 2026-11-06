@@ -32,16 +32,16 @@ Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-c
 
 Latency at n=10 000 is essentially a tie among the top three. ClawQL’s figure includes governance work the aggregators skip.
 
-| Capability on the hot path           |               ClawQL (slim Core)               |                Executor                 |     MCPJungle     |   agentgateway    |
-| ------------------------------------ | :--------------------------------------------: | :-------------------------------------: | :---------------: | :---------------: |
+| Capability on the hot path           |               ClawQL (slim Core)               |                 Executor                  |     MCPJungle     |   agentgateway    |
+| ------------------------------------ | :--------------------------------------------: | :---------------------------------------: | :---------------: | :---------------: |
 | Auth / capability gate               | ✓ (lifecycle off in bench; gate still present) | Per-tool policy (allow / approve / block) |     optional      |     optional      |
-| Operation risk / policy              |       ✓ (ALLOW_NO_ENFORCEMENT in bench)        | ✓ (`policies.block`, destructive pause) |         —         |         —         |
-| Ephemeral audit ring                 |                       ✓                        |                    —                    |         —         |         —         |
-| Output redaction hooks               |         ✓ (available; unused on pets)          |                    —                    |         —         |         —         |
-| Result projection (`where`/`fields`) |              ✓ (gateway-enforced)              | ✗ (pass-through; no gateway projection) |         —         |         —         |
-| Upstream HTTP to equal mock          |                       ✓                        |         ✗ (sandbox; upstream=0)         |         ✓         |         ✓         |
-| Multi-tool catalog discovery         |              search (server-side)              |               N/A (code)                | full `tools/list` | full `tools/list` |
-| WORM / pricing claims                |                       ✓                        | Unverified for Executor 2 — recheck docs | self-host | self-host |
+| Operation risk / policy              |       ✓ (ALLOW_NO_ENFORCEMENT in bench)        |  ✓ (`policies.block`, destructive pause)  |         —         |         —         |
+| Ephemeral audit ring                 |                       ✓                        |                     —                     |         —         |         —         |
+| Output redaction hooks               |         ✓ (available; unused on pets)          |                     —                     |         —         |         —         |
+| Result projection (`where`/`fields`) |              ✓ (gateway-enforced)              |  ✗ (pass-through; no gateway projection)  |         —         |         —         |
+| Upstream HTTP to equal mock          |                       ✓                        |          ✗ (sandbox; upstream=0)          |         ✓         |         ✓         |
+| Multi-tool catalog discovery         |              search (server-side)              |                N/A (code)                 | full `tools/list` | full `tools/list` |
+| WORM / pricing claims                |                       ✓                        | Unverified for Executor 2 — recheck docs  |     self-host     |     self-host     |
 
 Executor token/latency cells on /benchmarks still cite **2.0.0-β.15** until remasure — see [REMEASURE-v2.md](../cloudflare-multiturn/REMEASURE-v2.md).
 

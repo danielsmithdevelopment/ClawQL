@@ -26,12 +26,12 @@ Target binary: **latest Executor 2 channel** (`executor@beta` → currently `2.0
 
 ### Harness pointers (open in the ClawQL repo)
 
-| Board | Entry | Notes |
-| --- | --- | --- |
-| CF HTTP concurrency | `scripts/benchmarks/http-concurrency-heap-ab.mjs` | `ARMS=…,executor_v2` · Streamable HTTP · Bearer auth |
-| CF zone-audit board | `scripts/benchmarks/cloudflare-multiturn/run-board.mjs` | OpenAPI app → local replay mock (`ensure-executor-openapi-app.mjs`) |
-| Pets multiturn | `scripts/benchmarks/gateway-multi-multiturn.mjs` | Equal-arm fat catalog |
-| Governance cells | `scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh` | Pause / resume probe — resume cell is harness-driven, **not** stock auto-approve |
+| Board               | Entry                                                            | Notes                                                                            |
+| ------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| CF HTTP concurrency | `scripts/benchmarks/http-concurrency-heap-ab.mjs`                | `ARMS=…,executor_v2` · Streamable HTTP · Bearer auth                             |
+| CF zone-audit board | `scripts/benchmarks/cloudflare-multiturn/run-board.mjs`          | OpenAPI app → local replay mock (`ensure-executor-openapi-app.mjs`)              |
+| Pets multiturn      | `scripts/benchmarks/gateway-multi-multiturn.mjs`                 | Equal-arm fat catalog                                                            |
+| Governance cells    | `scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh` | Pause / resume probe — resume cell is harness-driven, **not** stock auto-approve |
 
 Artifacts / method: `docs/benchmarks/cloudflare-multiturn/` and `docs/benchmarks/gateway-multi-comparison/`.
 
