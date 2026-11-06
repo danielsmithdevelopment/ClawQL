@@ -1,8 +1,12 @@
 # Executor v2 remasure runbook
 
-**Status:** harness restored to tree · invite drafted · tip binary = `executor@beta` (`2.0.0-beta.37` as of 2026-11-05) · npm `latest` still **1.6.11** · stable `2.0.0` not on the `latest` dist-tag yet.
+**Status:** harness restored · invite drafted · **HTTP concurrency REPS=3 on β.37 measured (provisional)** · tip binary = `executor@beta` (`2.0.0-beta.37`) · npm `latest` still **1.6.11**.
 
-**Publish rule:** do not replace labeled β.15 cells with new numbers until (1) maintainer invite is sent and (2) the remasure artifact records the exact `executor --version`.
+**Publish rule:** do not replace labeled β.15 cells on `/benchmarks` until (1) maintainer invite is sent and (2) you consciously promote the provisional board in [`remeasure-beta37/`](./remeasure-beta37/).
+
+### Provisional concurrency result (β.37, invite pending)
+
+See [`remeasure-beta37/README.md`](./remeasure-beta37/README.md). Median clients @100 ms p99 = **1** (range 1–2) vs prior publish **2**; peak RPS ~**71** vs **73**; anon still **GB-class**. Tip does not clear the β.15 unflattering cells.
 
 ## Why the harness was missing on `main`
 

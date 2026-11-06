@@ -633,7 +633,10 @@ function memAvailableMb() {
 }
 
 /** Wait for RSS to return after a heavy arm so the next arm is not host-starved. */
-async function waitForHostReclaim({ minMb = 8000, maxWaitMs = 90000 } = {}) {
+async function waitForHostReclaim({
+  minMb = Math.max(0, Number(process.env.HOST_RECLAIM_MIN_MB || 8000) || 8000),
+  maxWaitMs = Math.max(0, Number(process.env.HOST_RECLAIM_MAX_MS || 90000) || 90000),
+} = {}) {
   const t0 = performance.now();
   let avail = memAvailableMb();
   while (avail != null && avail < minMb && performance.now() - t0 < maxWaitMs) {
@@ -1051,18 +1054,6 @@ function writeReport(results, { partial = false } = {}) {
 }
 
 async function main() {
-  if (!existsSync(join(ROOT, "dist/server-http.js"))) {
-    throw new Error("dist/server-http.js missing — build first");
-  }
-  for (const [bin, label] of [
-    [MCPJUNGLE, "MCPJUNGLE_BIN"],
-    [AGENTGATEWAY, "AGENTGATEWAY_BIN"],
-  ]) {
-    if (!existsSync(bin)) throw new Error(`${label} not found at ${bin}`);
-  }
-
-  const mock = await startMock();
-  const results = [];
   const want = new Set(
     (
       process.env.ARMS ||
@@ -1072,6 +1063,20 @@ async function main() {
       .map((s) => s.trim())
       .filter(Boolean)
   );
+  const needsClawql = [...want].some((id) => id.startsWith("clawql_"));
+  if (needsClawql && !existsSync(join(ROOT, "dist/server-http.js"))) {
+    throw new Error("dist/server-http.js missing — build first");
+  }
+  // Only require peer binaries for arms actually selected (Executor-only remasure OK).
+  if (want.has("mcpjungle") && !existsSync(MCPJUNGLE)) {
+    throw new Error(`MCPJUNGLE_BIN not found at ${MCPJUNGLE}`);
+  }
+  if (want.has("agentgateway") && !existsSync(AGENTGATEWAY)) {
+    throw new Error(`AGENTGATEWAY_BIN not found at ${AGENTGATEWAY}`);
+  }
+
+  const mock = await startMock();
+  const results = [];
   // Preserve ARMS= env order when set; otherwise default order below.
   // Prefer measuring memory-heavy peers early on a clean host (still no client caps).
   const starterFns = new Map([
