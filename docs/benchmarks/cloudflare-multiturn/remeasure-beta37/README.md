@@ -24,11 +24,11 @@ Artifact: [`http-concurrency-executor-β37-r3.json`](./http-concurrency-executor
 
 Anon memory (from harness log, process tree): ~**1.5–3.2 GB** across the curve — still GB-class; not a β.15-only artifact. Zone-audit single-session ~2.1 GB cell is a different board (not remasured here).
 
-### Reading (harness-first)
+### Reading
 
-Treat this board as **suspect until config review**. Single-client warm `execute` on `/mcp` is ~60 ms and idle excl-motel RSS is already ~2 GB — so we are probably measuring **service residency + multiplex behavior under our flags**, not “one call is gigabyte-expensive.” Ask Rhys for the recommended concurrent-HTTP setup before promoting any cell.
+Treat this board as **under review until config confirmation**. Single-client warm `execute` on `/mcp` is ~60 ms; idle RSS is already ~2 GB (serve + workerd). Per-core CPU under 16 clients is **multi-core busy**, not one pinned lane — see [`LAUNCH-CHANNEL.md`](./LAUNCH-CHANNEL.md). Peak RPS stays flat (~70 on the curve; ~51 in the 16-client CPU window) while p99 scales with client count. Ask Rhys whether multi-client Streamable HTTP is a supported setup and what flags to use before promoting any cell.
 
-Relative to the old β.15 publish: tip does not look better at 100 ms (median 1 vs 2). That is **not** a claim to put on the marketing page; it is a reason to fix the harness with maintainer input.
+Live `/benchmarks` keeps the β.15 numbers with an **under review** label (not a silent flip to β.37).
 
 Smoke (REPS=1, 2 s windows) had looked slightly friendlier (sustained 3 @100 ms) — REPS=3 with 3 s windows is the provisional draft board only.
 

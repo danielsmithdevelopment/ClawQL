@@ -177,12 +177,12 @@ export const cfHttpConcRows: CfConcRow[] = [
     peakRps: '476',
   },
   {
-    arm: 'Executor v2 β',
+    arm: 'Executor v2 β — under review',
     at100: '2',
     at250: '10',
     at500: '22',
     peakRps: '73',
-    note: 'Published β.15 cell · provisional β.37 REPS=3 draft is 1 / 9 / 23 · ~71 RPS (invite pending — see remasure-beta37/) · do not treat draft as live',
+    note: 'Under review — confirming recommended concurrent-HTTP setup with maintainers. Published β.15 cell; tip (β.37) draft similar (1 / 9 / 23 · ~71 RPS). Do not treat as product truth until config review.',
   },
 ]
 
@@ -214,7 +214,7 @@ export const cfBenchmarkHonesty = [
   },
   {
     title: 'Two concurrency topologies',
-    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for historical Executor v1). Do not mix the cells. Published Executor HTTP concurrency (2 / 10 / 22 · 73 RPS) is β.15. A provisional β.37 REPS=3 draft (1 / 9 / 23 · ~71 RPS) lives under docs/benchmarks/cloudflare-multiturn/remeasure-beta37/ — invite pending before any live flip; tip does not reverse the story.',
+    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for historical Executor v1). Do not mix the cells. The Executor HTTP row (β.15: 2 / 10 / 22 · 73 RPS) is marked under review while we confirm the recommended concurrent-HTTP setup with maintainers. A tip (β.37) draft is similar — see remasure-beta37/; no live flip until that review.',
   },
   {
     title: 'Session latency transports',

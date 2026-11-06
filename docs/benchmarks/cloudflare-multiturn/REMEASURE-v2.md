@@ -2,7 +2,7 @@
 
 **Status:** harness restored · invite drafted · **HTTP concurrency REPS=3 on β.37 measured (provisional)** · tip binary = `executor@beta` (`2.0.0-beta.37`) · npm `latest` still **1.6.11**.
 
-**Publish rule:** do not replace labeled β.15 cells on `/benchmarks` until (1) maintainer invite is sent and (2) you consciously promote the provisional board in [`remeasure-beta37/`](./remeasure-beta37/).
+**Publish rule:** keep the β.15 HTTP concurrency cells on `/benchmarks` labeled **under review** until (1) maintainer invite is answered or the Nov 19 deadline passes and (2) you consciously promote a tip/stable board in [`remeasure-beta37/`](./remeasure-beta37/). Do not flip raw cells to β.37 while under review.
 
 ### Provisional concurrency result (β.37, invite pending)
 
