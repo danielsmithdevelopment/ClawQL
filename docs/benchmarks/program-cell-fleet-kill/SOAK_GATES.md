@@ -2,7 +2,7 @@
 
 Frozen **before** the next **authorizing** soak. v4 N=1000 starts only when a soak reports `status=measured_v4_ready` (`ok=true`) on the **fixed** build (incarnation + same-host supersede + lease-sweep + alive≠ready). A soak only authorizes the binary it measured.
 
-**v4 currently blocked** by lab enriched wedged N=100 correctness failure at **TTL=3000** (2 × `lost_midflight_intent`). TTL=10000 pass on the same board is diagnostic only. See [`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md). Do not start v4 N=1000 until that failure is root-caused.
+**N=300 rate bar met** (**0**/300 lost — [`N300_TTL3S_WEDGE.md`](./N300_TTL3S_WEDGE.md)); original TTL3s **2/100 remains mechanism unexplained** ([`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md) · [`AMBIGUOUS_RENEWAL.md`](./AMBIGUOUS_RENEWAL.md)). Post-fix cloud **200-cycle soak had 3 selfFences with `voided=false`** — those fences **count** (do not reattribute to pause without a monitor void); possible regression vs pre-fix authorizing 0 fences. v4 needs `measured_v4_ready` on Mac mini ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)), then report the open mechanism alongside v4.
 
 ## Why node-ceiling-alone is not enough
 
@@ -159,5 +159,6 @@ Three attempts on lab `CELLD_BIN` with stock `CELLD_TTL_MS=10000` aborted after 
 5. **Supersede process-evidence audit** — pre-enrichment Mac mini logs → `count_and_flag_only` (not a pass); real proof on **enriched** dual-sided logs (`pass_process_evidence`) — [`SUPERSEDE_AUDIT.md`](./SUPERSEDE_AUDIT.md)
 6. **Rerun** stale-owner N=40 + wedged N=100 on the **enriched** lab binary (parallel with step 5)
 7. **Only then** v4 N=1000 under unchanged frozen board criteria (+ R2 intent check); record `celldLabGitCommit` vs authorizing baseline `112a8aa6e`
+8. **v4 missing-data + phase-validity (frozen — [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md)):** every trial persists effect ledger; outer twin `captured:false` ≤ 0.02; overwrite invalidates; `during_call` must have ≥1 `callVerifiedSent`; mid-flight ≤1 effect and all `outcome_unknown`. Never settle from the ProgramCell journal alone.
 
-Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted.
+Until a soak meets the gates on the runtime under test, leave the mechanism claim unrestored and keep v4 unstarted. Rules live in `frozenCriteria.missingData` + `frozenCriteria.phaseValidity` — Mac mini soak is the remaining gate before `measured_v4_ready`.

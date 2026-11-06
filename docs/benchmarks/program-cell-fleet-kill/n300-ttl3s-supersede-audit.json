@@ -1,0 +1,39 @@
+{
+  "kind": "celld-same-host-supersede-audit",
+  "auditedAt": "2026-11-05T05:55:18.231Z",
+  "auditorGitCommit": "27c1e68439d1d777b978696620702a54c97b8076",
+  "authorizingSoakGitCommit": "112a8aa6ecb2d11053cca10118c8eb4e718d0a78",
+  "logs": {
+    "/tmp/fleet-phased-n300ttl3s-a.log": {
+      "lines": 17058,
+      "supersedes": 0
+    },
+    "/tmp/fleet-phased-n300ttl3s-b.log": {
+      "lines": 16355,
+      "supersedes": 0
+    }
+  },
+  "totals": {
+    "supersedes": 0,
+    "dualSided": 0,
+    "leaseStampOnly": 0,
+    "bareDecisionOnly": 0,
+    "comparisonOk": 0,
+    "comparisonFail": 0,
+    "preTtl": 0,
+    "notPreTtl": 0,
+    "uniqueDeadSessions": 0
+  },
+  "expectCount": null,
+  "expectOk": null,
+  "honesty": {
+    "count_and_flag_only": "Pre-enrichment logs show the supersede *decision* (dead= session key + expires_in_ms) but not the process evidence or local /proc observation. This status confirms count and that every line is the same-host pre-TTL message — it does **not** prove the predecessor process was gone. Not a pass.",
+    "pass_process_evidence": "Every supersede line carries lease stamp + local observation; dead_reason is pid_absent or start_ticks_mismatch; boot_id matched; comparison fields are internally consistent.",
+    "buildChain": "Authorizing soak measured_v4_ready was commit 112a8aa6e (pre-enrichment lab). Dual-sided proof soaks/boards run on a later enriched lab commit — record celldLabGitCommit in evidence."
+  },
+  "ok": false,
+  "status": "no_supersede_lines",
+  "sampleBare": [],
+  "sampleDualOk": [],
+  "sampleComparisonFail": []
+}

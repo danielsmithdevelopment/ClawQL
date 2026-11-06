@@ -1,36 +1,40 @@
 # Mac mini local agent — authorizing fleet soak
 
-**Branch:** `cursor/soak-mac-mini-agent-2725`  
-**Goal:** Run the **authorizing** overnight soak on the **lab** celld binary so evidence can report `status=measured_v4_ready`. Do **not** start v4 N=1000 until that status appears on this binary.
+**Branch:** `cursor/expiry-not-dead-fence-takeover-2725` (fixed lab: expiry≠dead + prior alive/sweep/supersede)  
+**Goal:** Run the **authorizing** 1000-cycle soak so evidence reports `status=measured_v4_ready`, then run **v4 N=1000** on this host. Settles the cloud 200-cycle soak’s **3 counted self-fences** (`voided=false` — do not reattribute without a monitor void).
 
-This file is the runbook. Paste the **Local agent prompt** block below into your Mac mini agent, then let it follow the rest of this document.
+**Context:** N=300 TTL3s passed 0/300 lost (rate bound). Original 2/100 stays published; side-by-side reclassify: trial 1 = `injection_missed` with `basis: journal_surrogate` / `effect_ledger: unavailable` (not a verified settle); trial 5 = `incomplete_no_pause` (unsettled) — [`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md) · [`TTL3S_THREE_CHECKS.md`](./TTL3S_THREE_CHECKS.md). Renew-path code checks ruled out optimistic Ambiguous bump **and** receipt-stamped `last_ok`. **v4 precondition:** frozen missing-data + phase-validity ([`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md)) — `effectLedgerPersisted=true`, outer twin `captured:false` ≤2%, no overwrite, `during_call` ≥1 `callVerifiedSent`, mid-flight ≤1 effect + all `outcome_unknown`. Report trial 5 unsettled alongside v4.
+
+This file is the runbook. Paste the **Local agent prompt** block below into your Mac mini agent.
 
 ---
 
 ## Local agent prompt (copy/paste)
 
 ```text
-You are on a Mac mini. Checkout branch cursor/soak-mac-mini-agent-2725 of danielsmithdevelopment/ClawQL and follow docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md exactly.
+You are on a Mac mini. Checkout branch cursor/expiry-not-dead-fence-takeover-2725 of danielsmithdevelopment/ClawQL and follow docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md exactly.
 
-Mission: authorize pre-v4 fleet readiness by running the lab celld node soak to status=measured_v4_ready.
+Mission: (1) authorize pre-v4 fleet readiness — lab celld node soak to status=measured_v4_ready; (2) if soak passes, run v4 N=1000 wedged TTL=3000 with append logs + R2 intent check; (3) always report the open TTL3s 2/100 mechanism (unexplained; ambiguous-renewal lead) alongside results.
 
 Hard constraints (do not renegotiate):
-1. Use the lab binary built from vendor/celld-lab (alive≠ready + lease-sweep + same-host supersede). Stock 0.6.3 is baseline-only — never claim authorizing from it.
+1. Use the lab binary built from vendor/celld-lab on THIS branch (expiry≠dead + alive≠ready + lease-sweep + same-host supersede). Stock 0.6.3 is baseline-only — never claim authorizing from it.
 2. Lab same-host supersede needs Linux /proc. Run the soak INSIDE a Linux guest (Colima preferred). Do not run celld natively on Darwin for this soak.
 3. Mac host must not sleep/suspend for the soak window (pmset + caffeinate). If the Mac sleeps, Colima pauses → harness voids the run.
 4. Gates (SOAK_GATES.md): ≥1000 consecutive cycles in ONE non-void run; unique nodes ≤2; readyFails=0; selfFences=0; Wilson UB ≤0.5% each. Do NOT raise CELLD_TTL_MS. Do NOT combine partial/voided runs.
-5. Host suspend gap growth >2s voids the run (harness auto-restarts from cycle 0 by default). That is infrastructure, not a software fail.
+5. Host suspend gap growth >2s voids the run (harness auto-restarts from cycle 0 by default). That is infrastructure, not a software fail. If voided=false, self-fences COUNT — never reclassify them as pause after the fact.
 6. Pause-recovery (benchmark:fleet-pause-recovery) is OPTIONAL and SEPARATE — never feeds measured_v4_ready.
+7. Do not claim the original TTL3s 2/100 is root-caused. N=300 zeros bound rate only. Publish mechanism unexplained.
 
 Procedure:
 A. Disable Mac sleep; start/keep Colima; enter the Linux guest.
 B. Install deps (Rust toolchain, Node 22+, python3, build-essential) inside the guest if missing.
-C. Checkout this branch; npm ci (or npm install); cargo build -p celld --release --manifest-path vendor/celld-lab/Cargo.toml.
+C. Checkout cursor/expiry-not-dead-fence-takeover-2725; npm ci (or npm install); cargo build -p celld --release --manifest-path vendor/celld-lab/Cargo.toml. Record sha256 of target/release/celld.
 D. Export R2 creds (CLAWQL_R2_ACCOUNT_ID + CLAWQL_SYNC_ACCESS_KEY_ID + CLAWQL_SYNC_SECRET_ACCESS_KEY, or equivalent AWS_* + CELLD_BUCKET). Fresh bucket prefix recommended.
 E. Smoke: FLEET_SOAK_CYCLES=12 FLEET_SOAK_MIN_CYCLES=12 with lab CELLD_BIN — expect 0/0 fences/ready and same-host supersede in logs. Not authorizing.
-F. Authorizing run: FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000 FLEET_SOAK_HOST_LABEL=mac-mini-colima FLEET_SOAK_OUT=docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json npm run benchmark:fleet-node-soak under caffeinate on the Mac host (or ensure guest stays up for the full run).
+F. Authorizing run: CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000 FLEET_SOAK_HOST_LABEL=mac-mini-colima FLEET_SOAK_CELLD_BUILD=lab_expiry_not_dead_fixed FLEET_SOAK_OUT=docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json npm run benchmark:fleet-node-soak under caffeinate on the Mac host.
 G. Pass only if evidence has voided=false, status=measured_v4_ready, authorizing=true, readyFails=0, selfFences=0, cyclesCompleted≥1000, suspendMonitor.final.growthSec≤2.
-H. Commit evidence JSON on a branch off this one (or push to this branch) and report the path + key fields. Do not invent a pass. If void loops or gates fail, stop and report facts.
+H. If soak passes: run v4 N=1000 wedged TTL=3000 (FLEET_PHASED_N=1000 FLEET_PHASED_WEDGE_HEALTH=1 FLEET_PHASED_SCORE_MODE=correctness_availability_v2 FLEET_PHASED_APPEND_LOGS=1 CELLD_TTL_MS=3000 FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1 FLEET_PHASED_FENCE_MODE=lab_enriched_wedged) with PATH/CELLD_BIN on the same lab binary; supersede audit + R2 intent check; evidence under docs/benchmarks/program-cell-fleet-kill/. Require gates.missingData.pass=true and gates.phaseValidity.pass=true (during_call callVerifiedSent≥1; report midFlightEffectDistribution). Never set FLEET_PHASED_ALLOW_OVERWRITE=1 — it invalidates the artifact. In the evidence/PR note: "TTL3s published 2/100 kept; trial1 injection_missed basis=journal_surrogate effect_ledger=unavailable (not verified); trial5 incomplete_no_pause unsettled; forced-latency arms A/B still open".
+I. Commit evidence on a branch off this one and report paths + key fields. Do not invent a pass. If void loops or gates fail, stop and report facts.
 
 Read SOAK_GATES.md and SOAK_HOST.md if anything conflicts — gates win.
 ```
@@ -104,8 +108,8 @@ source "$HOME/.cargo/env"
 # Repo
 git clone https://github.com/danielsmithdevelopment/ClawQL.git
 cd ClawQL
-git fetch origin cursor/soak-mac-mini-agent-2725
-git checkout cursor/soak-mac-mini-agent-2725
+git fetch origin cursor/expiry-not-dead-fence-takeover-2725
+git checkout cursor/expiry-not-dead-fence-takeover-2725
 
 npm ci
 # if npm ci fails on lockfile mismatch: npm install

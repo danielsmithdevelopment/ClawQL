@@ -25,7 +25,7 @@
           "failureReason": "lost_midflight_intent"
         }
       ],
-      "meaning": "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)"
+      "meaning": "wrong outcome only \u2014 duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)"
     },
     "availability": {
       "failures": 5,
@@ -50,5 +50,14 @@
     "v4": "blocked",
     "ttl10sPassRole": "diagnostic_only",
     "seeAlso": "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md"
-  }
+  },
+  "mechanism": "unexplained",
+  "mechanismNote": "Publish as mechanism unexplained. R2 settle: loss real for trial 1 (meta without midflight pause; see TTL3S_THREE_CHECKS.md). Host=cloud agent VM — mono-vs-wall pause candidate (do not void). Classifier timeout→lost fixed going forward. Ambiguous/receipt belief paths ruled out.",
+  "seeAlso": [
+    "docs/benchmarks/program-cell-fleet-kill/TTL3S_THREE_CHECKS.md",
+    "docs/benchmarks/program-cell-fleet-kill/ttl3s-r2-settle-trials-1-5.json",
+    "docs/benchmarks/program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md",
+    "docs/benchmarks/program-cell-fleet-kill/AMBIGUOUS_RENEWAL.md",
+    "docs/benchmarks/program-cell-fleet-kill/N300_TTL3S_WEDGE.md"
+  ]
 }

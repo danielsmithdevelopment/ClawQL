@@ -1,0 +1,316 @@
+{
+  "status": "measured",
+  "label": "post_fix",
+  "verdict": "post_fix_skip_abandon_intent_kept",
+  "ok": true,
+  "sweepShapeOk": true,
+  "intentOk": true,
+  "celldBin": "/workspace/.local/lib/celld/e2e/celld-lab-fixed-expiry-not-dead",
+  "celldSha256": "1360bdf3f967f279b415269e57b3787791e044b18b82f379323bcf22451d7423",
+  "victimExe": "/workspace/.local/lib/celld/e2e/celld-lab-fixed-expiry-not-dead",
+  "victimPid": 1545005,
+  "celldTtlMs": 3000,
+  "maintenanceTickMs": 2000,
+  "holdMs": 11000,
+  "frozeAt": "2026-11-05T01:16:59.578Z",
+  "programId": "expiry_sweep_post_fix_1793841417980",
+  "intentBeforeFreeze": true,
+  "hasIntentDuringFreeze": true,
+  "hasIntentAfterResume": true,
+  "lostMidflightIntent": false,
+  "pauseKindDuringFreeze": "after_intent_before_call",
+  "pauseKindAfter": "after_intent_before_call",
+  "ownerAliveStoppedSamples": 11,
+  "ownerNotStoppedSamples": 0,
+  "eagerRecoveryLines": 0,
+  "skipAbandonedLines": 2,
+  "sweepFiredWhileLive": false,
+  "sweepSkippedWhileLive": true,
+  "expectLost": false,
+  "expectKept": true,
+  "statusBefore": {
+    "ok": true,
+    "do": "ProgramCellDO",
+    "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+    "meta": {
+      "programId": "expiry_sweep_post_fix_1793841417980",
+      "status": "paused_for_kill",
+      "plan": {
+        "v": 1,
+        "mode": "sequential",
+        "calls": [
+          {
+            "operationId": "listPets",
+            "method": "GET",
+            "path": "/pets",
+            "risk": "read"
+          },
+          {
+            "operationId": "streams.session.noop",
+            "risk": "read"
+          },
+          {
+            "operationId": "owners.create",
+            "method": "POST",
+            "path": "/owners",
+            "risk": "write",
+            "args": {
+              "name": "expiry_sweep_post_fix_1793841417980",
+              "idempotencyKey": "expiry_sweep_post_fix_1793841417980"
+            }
+          }
+        ]
+      },
+      "owner": "lab",
+      "createdAt": "2026-11-05T01:16:58.498Z",
+      "updatedAt": "2026-11-05T01:16:59.101Z",
+      "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+      "pausedAtIndex": 2,
+      "pauseKind": "after_intent_before_call"
+    },
+    "entries": [
+      {
+        "index": 0,
+        "callId": "c0",
+        "tool": "execute",
+        "operationId": "listPets",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": 200,
+            "body": {
+              "pets": [
+                {
+                  "id": 1,
+                  "name": "celld-core"
+                }
+              ]
+            },
+            "operationId": "listPets"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      },
+      {
+        "index": 1,
+        "callId": "c1",
+        "tool": "execute",
+        "operationId": "streams.session.noop",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": "noop",
+            "inCell": true,
+            "operationId": "streams.session.noop"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      }
+    ],
+    "intents": [
+      {
+        "index": 2,
+        "callId": "c2",
+        "operationId": "owners.create",
+        "startedAt": "2026-11-05T01:16:59.101Z"
+      }
+    ]
+  },
+  "statusDuringFreeze": {
+    "ok": true,
+    "do": "ProgramCellDO",
+    "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+    "meta": {
+      "programId": "expiry_sweep_post_fix_1793841417980",
+      "status": "paused_for_kill",
+      "plan": {
+        "v": 1,
+        "mode": "sequential",
+        "calls": [
+          {
+            "operationId": "listPets",
+            "method": "GET",
+            "path": "/pets",
+            "risk": "read"
+          },
+          {
+            "operationId": "streams.session.noop",
+            "risk": "read"
+          },
+          {
+            "operationId": "owners.create",
+            "method": "POST",
+            "path": "/owners",
+            "risk": "write",
+            "args": {
+              "name": "expiry_sweep_post_fix_1793841417980",
+              "idempotencyKey": "expiry_sweep_post_fix_1793841417980"
+            }
+          }
+        ]
+      },
+      "owner": "lab",
+      "createdAt": "2026-11-05T01:16:58.498Z",
+      "updatedAt": "2026-11-05T01:16:59.101Z",
+      "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+      "pausedAtIndex": 2,
+      "pauseKind": "after_intent_before_call"
+    },
+    "entries": [
+      {
+        "index": 0,
+        "callId": "c0",
+        "tool": "execute",
+        "operationId": "listPets",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": 200,
+            "body": {
+              "pets": [
+                {
+                  "id": 1,
+                  "name": "celld-core"
+                }
+              ]
+            },
+            "operationId": "listPets"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      },
+      {
+        "index": 1,
+        "callId": "c1",
+        "tool": "execute",
+        "operationId": "streams.session.noop",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": "noop",
+            "inCell": true,
+            "operationId": "streams.session.noop"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      }
+    ],
+    "intents": [
+      {
+        "index": 2,
+        "callId": "c2",
+        "operationId": "owners.create",
+        "startedAt": "2026-11-05T01:16:59.101Z"
+      }
+    ]
+  },
+  "statusAfterThawOk": false,
+  "statusAfter": {
+    "ok": true,
+    "do": "ProgramCellDO",
+    "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+    "meta": {
+      "programId": "expiry_sweep_post_fix_1793841417980",
+      "status": "paused_for_kill",
+      "plan": {
+        "v": 1,
+        "mode": "sequential",
+        "calls": [
+          {
+            "operationId": "listPets",
+            "method": "GET",
+            "path": "/pets",
+            "risk": "read"
+          },
+          {
+            "operationId": "streams.session.noop",
+            "risk": "read"
+          },
+          {
+            "operationId": "owners.create",
+            "method": "POST",
+            "path": "/owners",
+            "risk": "write",
+            "args": {
+              "name": "expiry_sweep_post_fix_1793841417980",
+              "idempotencyKey": "expiry_sweep_post_fix_1793841417980"
+            }
+          }
+        ]
+      },
+      "owner": "lab",
+      "createdAt": "2026-11-05T01:16:58.498Z",
+      "updatedAt": "2026-11-05T01:16:59.101Z",
+      "honesty": "ProgramCellDO: durable plan journal in celld DO storage (LTX). SIGKILL of celld binary + resume proves isolate crash survival for this journal — not fleet diagnose, not host file-journal stand-in.",
+      "pausedAtIndex": 2,
+      "pauseKind": "after_intent_before_call"
+    },
+    "entries": [
+      {
+        "index": 0,
+        "callId": "c0",
+        "tool": "execute",
+        "operationId": "listPets",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": 200,
+            "body": {
+              "pets": [
+                {
+                  "id": 1,
+                  "name": "celld-core"
+                }
+              ]
+            },
+            "operationId": "listPets"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      },
+      {
+        "index": 1,
+        "callId": "c1",
+        "tool": "execute",
+        "operationId": "streams.session.noop",
+        "args": {},
+        "result": {
+          "ok": true,
+          "status": "ok",
+          "value": {
+            "status": "noop",
+            "inCell": true,
+            "operationId": "streams.session.noop"
+          }
+        },
+        "completedAt": "2026-11-05T01:16:59.101Z",
+        "replayed": false
+      }
+    ],
+    "intents": [
+      {
+        "index": 2,
+        "callId": "c2",
+        "operationId": "owners.create",
+        "startedAt": "2026-11-05T01:16:59.101Z"
+      }
+    ]
+  },
+  "measuredAt": "2026-11-05T01:17:16.986Z",
+  "recipe": "intent visible → SIGSTOP (confirm T) past TTL+maint tick → status while frozen → SIGCONT → SIGKILL → survivor status"
+}

@@ -3900,7 +3900,18 @@ impl FleetShipper {
 pub(crate) const EPOCH_GC_RETRY_MS: u64 = 5 * 60 * 1000;
 
 /// The period of the node-log maintenance loop, which runs epoch GC.
+/// Default maintenance cadence (dead-leader sweep, ensemble repair, epoch GC).
+/// Override with `CELLD_LOG_MAINTENANCE_TICK_MS` (min 1000) for lab e2e so a
+/// SIGSTOP-past-expiry probe can wait one tick without a 30s floor.
 pub(crate) const LOG_MAINTENANCE_TICK_MS: u64 = 30 * 1000;
+
+fn log_maintenance_tick_ms() -> u64 {
+    std::env::var("CELLD_LOG_MAINTENANCE_TICK_MS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .filter(|&n| n >= 1_000)
+        .unwrap_or(LOG_MAINTENANCE_TICK_MS)
+}
 
 /// The wait before epoch GC looks again at a cell whose last pass deleted
 /// everything it could.
@@ -4928,15 +4939,17 @@ impl NodeLogManager {
                 token,
                 wire,
             } = folded;
-            // Re-judge deadness on the record actually being fenced: the
+            // Re-judge fenceability on the record actually being fenced: the
             // caller's verdict may be stale — an owner
             // can restart between the read that justified this call and
-            // now, and the spec's RecoverLog is enabled only past expiry
-            // AT the step (or same-host host_process dead proof). A live
-            // lease without that proof is an error, not a skip: the
-            // caller's claim must refuse and re-resolve to routing.
+            // now. Fencing is enabled past expiry AT the step (or same-host
+            // host_process dead proof). Expiry alone is fenceable — not
+            // "dead"; open-log abandonment uses a stricter predicate at
+            // sweep. A live unexpired lease without process-dead proof is
+            // an error, not a skip: the caller's claim must refuse and
+            // re-resolve to routing.
             let now = crate::ownership_store::now_ms();
-            let fenceable = crate::host_process::lease_may_be_fenced_as_dead(
+            let fenceable = crate::host_process::lease_may_be_fenced(
                 wire.expires_ms,
                 wire.host_process.as_ref(),
                 now,
@@ -6459,15 +6472,19 @@ impl NodeLogManager {
             };
             let session = format!("{node}/{}", folded.wire.generation);
             let record = folded.record;
-            // Under the fold, the lease we just read IS the record: a
-            // session is dead the moment its published expiry passed, or
-            // when same-host host_process proves the owner is gone. A
-            // restarted node replaces the record (generation and all)
-            // through recovery-before-install, so the sweep never
-            // contends with a returning leader; an expired same-
-            // generation lease is a process that self-fenced or is about
-            // to, and recovery's CAS fences its remaining renewals.
-            let dead = crate::host_process::lease_may_be_fenced_as_dead(
+            // Expiry ≠ dead. Published expiry permits a *fenced* takeover
+            // elsewhere; open-log abandonment requires process evidence on
+            // the same host (or TTL+fencing cross-host / unstamped). A
+            // wedged owner is alive past expiry — recovering its open log
+            // before an in-flight intent lands is the H2 lost-intent path.
+            // Sealed-session GC may still follow the fenceable predicate:
+            // sealed means complete; bundles are garbage once fenceable.
+            let fenceable = crate::host_process::lease_may_be_fenced(
+                folded.wire.expires_ms,
+                folded.wire.host_process.as_ref(),
+                now,
+            );
+            let abandoned = crate::host_process::lease_open_log_may_be_recovered_as_dead(
                 folded.wire.expires_ms,
                 folded.wire.host_process.as_ref(),
                 now,
@@ -6484,7 +6501,7 @@ impl NodeLogManager {
                 // log/ grows one record per restart for the fleet's
                 // lifetime, and every sweep and takeover LIST scales with
                 // restart history.
-                if dead && !self.gc_confirmed_empty.lock().unwrap().contains(&session) {
+                if fenceable && !self.gc_confirmed_empty.lock().unwrap().contains(&session) {
                     match self.gc_sealed_session(&session).await {
                         Ok(empty) => {
                             if empty {
@@ -6496,7 +6513,14 @@ impl NodeLogManager {
                 }
                 continue;
             }
-            if !dead {
+            if !abandoned {
+                if fenceable {
+                    info!(
+                        session,
+                        "sweep: lease fenceable (expiry) but owner not abandoned; \
+                         skipping open-log recovery until process evidence or cross-host TTL+fence"
+                    );
+                }
                 continue;
             }
             info!(session, "eager recovery: dead session with an open log");
@@ -6574,8 +6598,8 @@ fn spawn_maintenance(
     let watcher = Arc::downgrade(&manager);
     let maintenance_stop = stop.clone();
     roots.spawn_owned("node_log_maintenance", async move {
-        let mut tick =
-            crate::asyncrt::interval(std::time::Duration::from_millis(LOG_MAINTENANCE_TICK_MS));
+        let tick_ms = log_maintenance_tick_ms();
+        let mut tick = crate::asyncrt::interval(std::time::Duration::from_millis(tick_ms));
         tick.set_missed_tick_behavior(crate::asyncrt::MissedTickBehavior::Delay);
         loop {
             crate::asyncrt::select_biased! {

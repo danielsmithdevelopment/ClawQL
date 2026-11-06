@@ -20,13 +20,19 @@
  * Env:
  *   FLEET_PHASED_N                   write-kill trials (default 100; lab N=1000 overall =
  *                                    write-kill + FLEET_PHASED_AWAIT_TRIALS)
- *   FLEET_PHASED_EVIDENCE            output path
+ *   FLEET_PHASED_PHASE_STRICT        1=always PHASES[i%n] (exact per-phase counts; smokes)
+ *   FLEET_PHASED_OUT / EVIDENCE      output path (default: TTL+UTC-stamped unique file)
+ *   FLEET_PHASED_ALLOW_OVERWRITE     1=replace existing evidence (default refuse;
+ *                                    when set, evidence.evidenceOverwrite records it)
  *   FLEET_PHASED_RESUME_DEADLINE_MS  resume+recovery budget (default 60000)
  *   FLEET_PHASED_AWAIT_TRIALS        await_approval kill/resume trials (default 0; lab ~250–300)
  *   FLEET_PHASED_STATE_BASELINE      1=per-outer-trial no-crash twin for statePreserved (default 1)
  *   FLEET_PHASED_SCORE_MODE          legacy_zero_deadline (default) |
  *                                    correctness_availability_v2 (split gates; see durability STATUS)
  *   FLEET_PHASED_AVAIL_CEILING       max availability failure rate for v2 (default 0.02)
+ *   FLEET_PHASED_TWIN_CAPTURE_FAIL_CEILING
+ *                                    max rate of captured:false among outer twin-eligible
+ *                                    trials (default 0.02). Mid-flight twins are not eligible.
  *   FLEET_PHASED_TWIN_ATTEMPTS       twin capture retries (default 3)
  *   CELLD_TTL_MS                     passed through to celld (default stock 10000)
  *   FLEET_PHASED_FRESH_NODE_IDS      1=mint a new CELLD_NODE every start (legacy;
@@ -52,6 +58,11 @@ import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareDigestStepState } from "../../../docs/examples/streams-celld/src/program-cell-step-state.js";
+import {
+  resolveEvidenceOut as resolveEvidenceOutPaths,
+  evidenceTrialsDir,
+  persistTrialGroundTruth as persistTrialGroundTruthFiles,
+} from "./evidence-ground-truth.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -101,17 +112,6 @@ function autoWireR2() {
 autoWireR2();
 
 const N = Math.max(1, Math.min(100_000, Number(process.env.FLEET_PHASED_N || 100)));
-const OUT =
-  process.env.FLEET_PHASED_OUT ||
-  process.env.FLEET_PHASED_EVIDENCE ||
-  join(REPO, "docs/benchmarks/program-cell-fleet-kill/phased-evidence.json");
-if (process.env.FLEET_PHASED_OUT && process.env.FLEET_PHASED_EVIDENCE &&
-    process.env.FLEET_PHASED_OUT !== process.env.FLEET_PHASED_EVIDENCE) {
-  console.warn(
-    `fleet-phased: FLEET_PHASED_OUT wins over FLEET_PHASED_EVIDENCE (${process.env.FLEET_PHASED_EVIDENCE} ignored)`
-  );
-}
-console.log(`fleet-phased: evidence → ${OUT}`);
 const PORT_A = Number(process.env.PROGRAM_CELL_FLEET_PORT_A || 9881);
 const PORT_B = Number(process.env.PROGRAM_CELL_FLEET_PORT_B || 9882);
 const INTERNAL_A = Number(process.env.PROGRAM_CELL_FLEET_INTERNAL_A || 9883);
@@ -125,6 +125,46 @@ const RESUME_DEADLINE_MS = Math.max(
 /** Stock celld default is 10000; record whatever we pass through. */
 const CELLD_TTL_MS = Math.max(1_000, Number(process.env.CELLD_TTL_MS || 10_000));
 process.env.CELLD_TTL_MS = String(CELLD_TTL_MS);
+
+/**
+ * Evidence path: unique by default (TTL + UTC stamp). Refuse to overwrite an
+ * existing file unless FLEET_PHASED_ALLOW_OVERWRITE=1 — the TTL=3s→10s
+ * remasure that clobbered trialFailures taught that lesson.
+ * When the escape hatch is set, the run records it in evidence (never silent).
+ */
+const ALLOW_OVERWRITE = process.env.FLEET_PHASED_ALLOW_OVERWRITE === "1";
+const stampDefault = new Date().toISOString().replace(/[:.]/g, "-");
+const {
+  out: OUT,
+  existedBefore: EVIDENCE_EXISTED_BEFORE,
+  allowOverwrite: EVIDENCE_ALLOW_OVERWRITE,
+  replacedExisting: EVIDENCE_REPLACED_EXISTING,
+} = resolveEvidenceOutPaths({
+  outEnv: process.env.FLEET_PHASED_OUT || null,
+  evidenceEnv: process.env.FLEET_PHASED_EVIDENCE || null,
+  allowOverwrite: ALLOW_OVERWRITE,
+  defaultOut: join(
+    REPO,
+    `docs/benchmarks/program-cell-fleet-kill/phased-evidence-ttl${CELLD_TTL_MS}-${stampDefault}.json`
+  ),
+});
+if (EVIDENCE_ALLOW_OVERWRITE) {
+  console.warn(
+    `fleet-phased: FLEET_PHASED_ALLOW_OVERWRITE=1` +
+      (EVIDENCE_REPLACED_EXISTING
+        ? ` — replacing existing evidence at ${OUT}`
+        : ` — set (no prior file at ${OUT})`)
+  );
+}
+/** Sibling directory for per-trial ground truth (effect ledger + twin digest). */
+const EVIDENCE_DIR = evidenceTrialsDir(OUT);
+mkdirSync(join(EVIDENCE_DIR, "trials"), { recursive: true });
+console.log(`fleet-phased: evidence → ${OUT}`);
+console.log(`fleet-phased: trial ground truth → ${EVIDENCE_DIR}/trials/`);
+
+function persistTrialGroundTruth(opts) {
+  return persistTrialGroundTruthFiles({ evidenceDir: EVIDENCE_DIR, ...opts });
+}
 /**
  * Default stable node ids (v3 lesson): fresh ids every start fill R2 `nodes/`
  * without upstream lease-sweep. Opt into legacy minting with FRESH_NODE_IDS=1.
@@ -260,6 +300,25 @@ const AVAIL_CEILING = Math.min(
   1,
   Math.max(0, Number(process.env.FLEET_PHASED_AVAIL_CEILING || 0.02))
 );
+/**
+ * Frozen missing-data rules (v4 — do not loosen after results):
+ * 1. Trial without persisted effect ledger → board fail
+ * 2. Outer twin-eligible captured:false rate ≤ this ceiling
+ * 3. Any FLEET_PHASED_ALLOW_OVERWRITE use → artifact invalidated
+ */
+const TWIN_CAPTURE_FAIL_CEILING = Math.min(
+  1,
+  Math.max(0, Number(process.env.FLEET_PHASED_TWIN_CAPTURE_FAIL_CEILING || 0.02))
+);
+const MISSING_EFFECT_LEDGER_FAILS_BOARD = true;
+const OVERWRITE_INVALIDATES_ARTIFACT = true;
+/**
+ * during_call phase targeting validity: at least one trial must observe
+ * mock-pets inFlight before kill (callVerifiedSent). Zero of N means the
+ * injector never landed mid-call — same class of invalidity as injection_missed,
+ * board-wide. Frozen before v4; do not loosen after results.
+ */
+const DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT = true;
 
 if (!process.env.CELLD_BUCKET) {
   if (process.env.STREAMS_CELLD_FLEET_REQUIRED === "1") {
@@ -474,7 +533,15 @@ function awaitPlan(programId, executionId) {
   };
 }
 
+/**
+ * Default: first 80% cycle through PHASES; last 20% uniform random.
+ * FLEET_PHASED_PHASE_STRICT=1 → always PHASES[i % n] (exact counts for smokes /
+ * fair N divisible by phase count — e.g. N=8 → 2 per phase).
+ */
 function pickPhase(i) {
+  if (process.env.FLEET_PHASED_PHASE_STRICT === "1") {
+    return PHASES[i % PHASES.length];
+  }
   const targeted = Math.ceil(N * 0.8);
   if (i < targeted) return PHASES[i % PHASES.length];
   return PHASES[Math.floor(Math.random() * PHASES.length)];
@@ -1167,6 +1234,15 @@ async function main() {
           // would confuse durability scoring with a blocked-before-send gate.
           ac.abort();
           await runPromise;
+          const ledgerSnap = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+          const groundTruth = persistTrialGroundTruth({
+            i,
+            programId,
+            phase,
+            effectLedger: ledgerSnap.body || {},
+            twinDigest: { captured: false, reason: "call_never_sent_no_twin" },
+            note: "call_never_sent: effect ledger after inFlight stayed 0",
+          });
           phaseStats[phase].failures += 1;
           phaseStats[phase].n += 1;
           trials.push({
@@ -1179,6 +1255,16 @@ async function main() {
             failureReason: "call_never_sent",
             callSent,
             detail: "mock pets inFlight stayed 0 before kill — egress never left the node",
+            effectGroundTruth: {
+              basis: "effect_ledger",
+              effect_ledger: "persisted",
+              ownerKey: groundTruth.ownerKey,
+              ownerEffectCount: groundTruth.ownerEffectCount,
+              dir: groundTruth.dir,
+              effectLedgerPath: groundTruth.effectLedgerPath,
+              twinDigestPath: groundTruth.twinDigestPath,
+            },
+            writeCount: ledgerSnap.body?.count || 0,
           });
           console.warn(
             `fleet-phased: ${i + 1}/${N} call_never_sent programId=${programId} polls=${inFlightPolls} waitMs=${callSent.inFlightWaitMs}`
@@ -1226,16 +1312,50 @@ async function main() {
         body: JSON.stringify(body),
       });
       if (runRes.body?.status !== "paused_for_kill") {
+        // Timing-based pause can miss under load: the program runs past the
+        // injection window and completes normally. That is not a durability
+        // loss and not a silent pass — count it as injection_missed.
+        const completedNormally =
+          runRes.body?.status === "completed" && runRes.body?.ok === true;
+        const injectionMissed = completedNormally;
+        const ledgerSnap = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
+        const groundTruth = persistTrialGroundTruth({
+          i,
+          programId,
+          phase,
+          effectLedger: ledgerSnap.body || {},
+          twinDigest: {
+            captured: false,
+            reason: injectionMissed ? "injection_missed_no_twin" : "pause_failed_no_twin",
+          },
+          note: injectionMissed
+            ? "injection_missed: effect ledger after unpaused completion (independent of journal)"
+            : "pause_failed: effect ledger after unexpected run status",
+        });
         phaseStats[phase].failures += 1;
         phaseStats[phase].n += 1;
         trials.push({
           i,
           phase,
+          programId,
           ok: false,
-          pauseFailed: true,
-          failureClass: "availability",
-          failureReason: "pause_failed",
-          detail: `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
+          pauseFailed: !injectionMissed,
+          injectionMissed,
+          failureClass: injectionMissed ? "injection" : "availability",
+          failureReason: injectionMissed ? "injection_missed" : "pause_failed",
+          detail: injectionMissed
+            ? `injection missed: program completed without mid-flight pause (${JSON.stringify(runRes.body).slice(0, 120)})`
+            : `pause failed: ${JSON.stringify(runRes.body).slice(0, 120)}`,
+          effectGroundTruth: {
+            basis: "effect_ledger",
+            effect_ledger: "persisted",
+            ownerKey: groundTruth.ownerKey,
+            ownerEffectCount: groundTruth.ownerEffectCount,
+            dir: groundTruth.dir,
+            effectLedgerPath: groundTruth.effectLedgerPath,
+            twinDigestPath: groundTruth.twinDigestPath,
+          },
+          writeCount: ledgerSnap.body?.count || 0,
         });
         if (!nodes[victim].pid) await restartNode(victim);
         continue;
@@ -1330,6 +1450,8 @@ async function main() {
     const resumeMs = Date.now() - resumeStart;
     const resumeActiveMs = resumeActiveMsFrom(resumeMs, avail.recoveryMs);
 
+    // Snapshot pets effect ledger BEFORE twin __reset — independent ground truth
+    // for settle (not the ProgramCell journal under test).
     const ledger = await fetchJson(`http://127.0.0.1:${PETS_PORT}/__writes`);
     const writeCount = ledger.body?.count || 0;
     const duplicates = Math.max(0, writeCount - 1);
@@ -1352,6 +1474,8 @@ async function main() {
 
     /** @type {null | { preserved: boolean, reason: string, attempts?: number }} */
     let statePreservedTrial = null;
+    /** @type {null | Record<string, unknown>} */
+    let twinDigestPersist = null;
     const outerPhase = phase === "before_intent" || phase === "after_call_before_journal";
     if (STATE_BASELINE && outerPhase && completedClean && resumeCalls.length) {
       stateEligible += 1;
@@ -1394,6 +1518,20 @@ async function main() {
               twinRes.body?.result,
               resume.body?.result
             );
+            twinDigestPersist = {
+              captured: true,
+              twinId,
+              attempts: twinAttempt,
+              preserved: cmp.preserved,
+              stepsMatch: cmp.stepsMatch,
+              resultMatch: cmp.resultMatch,
+              mismatchIndexes: cmp.mismatchIndexes,
+              baselineResultDigest: cmp.baselineResultDigest,
+              observedResultDigest: cmp.observedResultDigest,
+              baselineSteps: cmp.baseline,
+              observedSteps: cmp.observed,
+              meaning: cmp.meaning,
+            };
             if (cmp.preserved) {
               statePreserved += 1;
               statePreservedTrial = {
@@ -1452,11 +1590,37 @@ async function main() {
           attempts: twinAttempt,
           detail: twinLastErr,
         };
+        twinDigestPersist = {
+          captured: false,
+          twinId,
+          reason: "twin_capture_failed",
+          attempts: twinAttempt,
+          detail: twinLastErr,
+        };
       } else if (statePreservedTrial.preserved === false) {
         if (statePreservedTrial.reason === "twin_capture_failed") stateTwinFailures += 1;
         // digest_mismatch still fails the rate (preservedN) without counting as twinCaptureFailures
       }
+    } else {
+      twinDigestPersist = {
+        captured: false,
+        reason: !STATE_BASELINE
+          ? "state_baseline_disabled"
+          : !outerPhase
+            ? "midflight_phase_no_twin"
+            : !completedClean
+              ? "resume_not_completed_clean"
+              : "no_resume_calls",
+      };
     }
+
+    const groundTruth = persistTrialGroundTruth({
+      i,
+      programId,
+      phase,
+      effectLedger: ledger.body || {},
+      twinDigest: twinDigestPersist,
+    });
 
     let expectOk = false;
     if (!avail.resumeDeadlineMiss) {
@@ -1505,7 +1669,9 @@ async function main() {
     st.replayedSteps = (st.replayedSteps || 0) + replayedSteps;
 
     // Mid-flight storage check (v3): intent or pauseKind must be visible on the
-    // survivor after journal-before-hang. Missing = durability/correctness.
+    // survivor after journal-before-hang. Missing under a *successful* status
+    // read = durability/correctness. Timeout / transport / non-OK status =
+    // unknown (availability) — never classify as lost_midflight_intent.
     // Does not use local re-get-as-proof — queries survivor /program/status.
     let midFlightStorage = null;
     if (midFlight) {
@@ -1514,6 +1680,8 @@ async function main() {
         {},
         8_000
       );
+      const fetchError = Boolean(statusRes.fetchError);
+      const statusOk = Boolean(statusRes.ok && statusRes.body?.ok);
       const meta = statusRes.body?.meta || null;
       const intents = Array.isArray(statusRes.body?.intents) ? statusRes.body.intents : [];
       const hasIntent = intents.length > 0;
@@ -1523,14 +1691,20 @@ async function main() {
         (hasIntent ||
           pauseKind === "during_call" ||
           pauseKind === "after_intent_before_call");
+      const readable = statusOk && !fetchError;
       midFlightStorage = {
-        statusOk: Boolean(statusRes.ok && statusRes.body?.ok),
+        statusOk,
+        fetchError,
+        status: statusRes.status || 0,
+        readable,
         hasMeta: Boolean(meta),
         hasIntent,
         pauseKind,
         present,
       };
-      if (!present) {
+      // Only a definitive empty durable view fails the mid-flight expect.
+      // Unreadable status leaves expectOk alone (availability path below).
+      if (readable && !present) {
         expectOk = false;
       }
     }
@@ -1540,7 +1714,9 @@ async function main() {
     let failureReason = null;
     if (duplicates > 0 || writeStepsRerun > 0) {
       failureClass = "correctness";
-      failureReason = "duplicate_or_write_rerun";
+      // Mid-flight correctness: at most one effect, never two.
+      failureReason =
+        midFlight && writeCount > 1 ? "midflight_effect_gt_one" : "duplicate_or_write_rerun";
     } else if (journalDivergence) {
       failureClass = "correctness";
       failureReason = "journal_divergence";
@@ -1551,9 +1727,30 @@ async function main() {
       failureClass = "correctness";
       failureReason = "stale_owner_send";
       expectOk = false;
+    } else if (midFlightStorage && !midFlightStorage.readable) {
+      failureClass = "availability";
+      failureReason = "midflight_storage_unknown";
+      expectOk = false;
     } else if (midFlightStorage && midFlightStorage.present === false) {
+      // Successful mid-flight resume that lands exactly one write and completes
+      // consumes pauseKind/intents — that is a correct outcome, not a loss.
+      // (Historical false-loss risk when checking markers after completion.)
+      if (
+        writeCount === 1 &&
+        (completedClean || resume.body?.status === "completed")
+      ) {
+        failureClass = null;
+        failureReason = null;
+        expectOk = true;
+      } else {
+        failureClass = "correctness";
+        failureReason = "lost_midflight_intent";
+      }
+    } else if (midFlight && !outcomeUnknown) {
+      // Mid-flight correctness: every in-flight trial must be outcome_unknown.
       failureClass = "correctness";
-      failureReason = "lost_midflight_intent";
+      failureReason = "midflight_not_outcome_unknown";
+      expectOk = false;
     } else if (STALE_OWNER && staleOwner && !staleOwner.ownershipMoved) {
       failureClass = "availability";
       failureReason = "ownership_never_moved";
@@ -1602,6 +1799,16 @@ async function main() {
       resumeBodyStatus: resume.body?.status ?? null,
       resumeOk: resume.body?.ok ?? null,
       resumeError: resume.body?.error ?? resume.body?.raw ?? null,
+      effectGroundTruth: {
+        basis: "effect_ledger",
+        effect_ledger: "persisted",
+        ownerKey: groundTruth.ownerKey,
+        ownerEffectCount: groundTruth.ownerEffectCount,
+        dir: groundTruth.dir,
+        effectLedgerPath: groundTruth.effectLedgerPath,
+        twinDigestPath: groundTruth.twinDigestPath,
+        twinCaptured: Boolean(twinDigestPersist?.captured),
+      },
     });
 
     // Victim only needs /health before the next flip; program routing is checked
@@ -1628,7 +1835,10 @@ async function main() {
       const elapsedSec = (Date.now() - boardStarted) / 1000;
       const rate = (i + 1) / Math.max(1, elapsedSec);
       const etaMin = ((N - i - 1) / Math.max(0.01, rate) / 60).toFixed(1);
-      const lostIntent = midFlightStorage && midFlightStorage.present === false ? 1 : 0;
+      const lostIntent =
+        midFlightStorage && midFlightStorage.readable && midFlightStorage.present === false
+          ? 1
+          : 0;
       const callSentFlag =
         phase === "during_call" ? (callSent?.sawInFlight ? 1 : 0) : "-";
       const staleFlag = STALE_OWNER
@@ -1789,8 +1999,17 @@ async function main() {
         : "await_not_completed_in_time";
     }
     const awaitResumeMs = Date.now() - resumeStart;
+    const awaitGroundTruth = persistTrialGroundTruth({
+      i: `await_${a}`,
+      programId,
+      phase: "await_approval",
+      effectLedger: ledger.body || {},
+      twinDigest: { captured: false, reason: "await_approval_no_twin" },
+      note: "await_approval arm effect ledger (independent of journal)",
+    });
     awaitTrials.push({
       a,
+      programId,
       ok,
       survived,
       completedAfterApprove,
@@ -1801,6 +2020,15 @@ async function main() {
       resumeMs: awaitResumeMs,
       resumeActiveMs: resumeActiveMsFrom(awaitResumeMs, avail.recoveryMs),
       recoveryMs: avail.recoveryMs,
+      effectGroundTruth: {
+        basis: "effect_ledger",
+        effect_ledger: "persisted",
+        ownerKey: awaitGroundTruth.ownerKey,
+        ownerEffectCount: awaitGroundTruth.ownerEffectCount,
+        dir: awaitGroundTruth.dir,
+        effectLedgerPath: awaitGroundTruth.effectLedgerPath,
+        twinDigestPath: awaitGroundTruth.twinDigestPath,
+      },
     });
 
     try {
@@ -1898,6 +2126,7 @@ async function main() {
       ...trials.filter((t) => t.failureClass === "availability"),
       ...awaitTrials.filter((t) => t.failureClass === "availability"),
     ];
+    const injectionItems = trials.filter((t) => t.failureClass === "injection");
     const correctnessFailures = correctnessItems.length;
     const availabilityFailures = availabilityItems.length;
     const availabilityFailureRate =
@@ -1929,7 +2158,17 @@ async function main() {
                 failureReason: t.failureReason,
               })),
               meaning:
-                "wrong outcome only — duplicates, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent (survivor status lacks intent/pauseKind after mid-flight kill), stale_owner_send (egress after own.json left the victim)",
+                "wrong outcome only — duplicates / midflight_effect_gt_one, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent, midflight_not_outcome_unknown (in-flight trials must be outcome_unknown; at most one effect), stale_owner_send. injection_missed is NOT correctness. Phase targeting validity (during_call callVerifiedSent) is gates.phaseValidity, not correctness.",
+            },
+            injection: {
+              failures: injectionItems.length,
+              items: injectionItems.slice(0, 50).map((t) => ({
+                i: t.i,
+                phase: t.phase,
+                failureReason: t.failureReason,
+              })),
+              meaning:
+                "pause window missed — program completed without mid-flight pause. Counted openly; not a pass and not a durability loss.",
             },
             availability: {
               failures: availabilityFailures,
@@ -1976,22 +2215,213 @@ async function main() {
             scoreMode: SCORE_MODE,
             note: "legacy_zero_deadline — ok requires zero deadline misses and all phase expectations",
           };
+    const injectionMissed = injectionItems.length;
+    const injectionClean = injectionMissed === 0;
+    const writeKillWithGroundTruth = trials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
+    const awaitWithGroundTruth = awaitTrials.filter((t) => t.effectGroundTruth?.effect_ledger === "persisted").length;
+    const effectLedgerPersisted =
+      writeKillWithGroundTruth === trials.length &&
+      awaitWithGroundTruth === awaitTrials.length &&
+      trials.length + awaitTrials.length > 0;
+    const missingLedgerItems = [
+      ...trials
+        .filter((t) => t.effectGroundTruth?.effect_ledger !== "persisted")
+        .map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          failureReason: "effect_ledger_missing",
+        })),
+      ...awaitTrials
+        .filter((t) => t.effectGroundTruth?.effect_ledger !== "persisted")
+        .map((t) => ({
+          a: t.a,
+          phase: "await_approval",
+          failureReason: "effect_ledger_missing",
+        })),
+    ];
+    // Outer twin-eligible = same window as statePreserved (outer + completedClean).
+    // Mid-flight captured:false is expected and not in this denominator.
+    const twinEligibleItems = STATE_BASELINE
+      ? trials.filter(
+          (t) =>
+            (t.phase === "before_intent" || t.phase === "after_call_before_journal") &&
+            t.completedClean === true
+        )
+      : [];
+    const twinCaptureFailItems = twinEligibleItems.filter(
+      (t) =>
+        t.effectGroundTruth?.twinCaptured !== true ||
+        t.statePreserved?.reason === "twin_capture_failed"
+    );
+    const twinCaptureFailRate =
+      twinEligibleItems.length > 0
+        ? twinCaptureFailItems.length / twinEligibleItems.length
+        : 0;
+    const twinCaptureFailPass =
+      twinEligibleItems.length === 0 || twinCaptureFailRate <= TWIN_CAPTURE_FAIL_CEILING;
+    const artifactInvalidatedByOverwrite =
+      OVERWRITE_INVALIDATES_ARTIFACT &&
+      (EVIDENCE_ALLOW_OVERWRITE || EVIDENCE_REPLACED_EXISTING);
+    const missingDataPass =
+      (!MISSING_EFFECT_LEDGER_FAILS_BOARD || effectLedgerPersisted) &&
+      twinCaptureFailPass &&
+      !artifactInvalidatedByOverwrite;
+
+    function midFlightPhaseEffectDist(phaseName) {
+      const pts = trials.filter((t) => t.phase === phaseName);
+      const effects0 = pts.filter((t) => (t.writeCount ?? 0) === 0).length;
+      const effects1 = pts.filter((t) => (t.writeCount ?? 0) === 1).length;
+      const effects2plus = pts.filter((t) => (t.writeCount ?? 0) >= 2).length;
+      const callVerifiedSent =
+        phaseName === "during_call"
+          ? pts.filter((t) => t.callSent?.sawInFlight === true).length
+          : null;
+      const outcomeUnknownN = pts.filter((t) => t.outcomeUnknown === true).length;
+      return {
+        n: pts.length,
+        effects0,
+        effects1,
+        effects2plus,
+        callVerifiedSent,
+        callVerifiedSentRate:
+          phaseName === "during_call" && pts.length
+            ? callVerifiedSent / pts.length
+            : null,
+        outcomeUnknown: outcomeUnknownN,
+        outcomeUnknownRate: pts.length ? outcomeUnknownN / pts.length : null,
+      };
+    }
+    const midFlightEffectDistribution = {
+      after_intent_before_call: midFlightPhaseEffectDist("after_intent_before_call"),
+      during_call: midFlightPhaseEffectDist("during_call"),
+      meaning:
+        "Effect counts from mock-pets ledger (writeCount). during_call.callVerifiedSent = sawInFlight before kill. Zero callVerifiedSent across all during_call trials ⇒ phase targeting invalid (injector never mid-call).",
+    };
+    const duringCallN = midFlightEffectDistribution.during_call.n;
+    const duringCallVerifiedSent = midFlightEffectDistribution.during_call.callVerifiedSent || 0;
+    const duringCallPhaseValid =
+      duringCallN === 0 ||
+      !DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT ||
+      duringCallVerifiedSent >= 1;
+    const phaseValidityPass = duringCallPhaseValid;
+
+    // Durability ok ignores injection misses (neither pass nor loss). Boards must
+    // still publish gates.injection so misses are not silent. Missing-data +
+    // phase-validity rules are hard gates for v2/v4 (frozen before Mac mini / v4).
     const okV2 =
       complete &&
       correctnessFailures === 0 &&
       availabilityFailureRate != null &&
-      availabilityFailureRate <= AVAIL_CEILING;
-    const okLegacy = complete && zeroDup && totalDeadlineMisses === 0 && allPhaseOk;
+      availabilityFailureRate <= AVAIL_CEILING &&
+      missingDataPass &&
+      phaseValidityPass;
+    const okLegacy =
+      complete &&
+      zeroDup &&
+      totalDeadlineMisses === 0 &&
+      allPhaseOk &&
+      missingDataPass &&
+      phaseValidityPass;
+    if (gates && SCORE_MODE === "correctness_availability_v2") {
+      gates.missingData = {
+        effectLedgerPersisted,
+        missingLedgerFailures: missingLedgerItems.length,
+        missingLedgerItems: missingLedgerItems.slice(0, 50),
+        missingEffectLedgerFailsBoard: MISSING_EFFECT_LEDGER_FAILS_BOARD,
+        twinCaptureFailCeiling: TWIN_CAPTURE_FAIL_CEILING,
+        twinEligibleN: twinEligibleItems.length,
+        twinCaptureFailures: twinCaptureFailItems.length,
+        twinCaptureFailRate,
+        twinCaptureFailPass,
+        twinCaptureFailItems: twinCaptureFailItems.slice(0, 50).map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          reason: t.statePreserved?.reason || "captured_false",
+        })),
+        overwriteInvalidatesArtifact: OVERWRITE_INVALIDATES_ARTIFACT,
+        artifactInvalidatedByOverwrite,
+        pass: missingDataPass,
+        meaning:
+          "Frozen before v4: (1) every trial must persist effect-ledger.json — missing counts against the board; (2) outer twin-eligible captured:false rate ≤ twinCaptureFailCeiling (mid-flight excluded); (3) any FLEET_PHASED_ALLOW_OVERWRITE use invalidates the artifact.",
+      };
+      gates.phaseValidity = {
+        duringCallRequireSomeCallVerifiedSent: DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT,
+        duringCallN,
+        duringCallVerifiedSent,
+        duringCallPhaseValid,
+        midFlightEffectDistribution,
+        midFlightCorrectness: {
+          atMostOneEffect: true,
+          requireOutcomeUnknown: true,
+          meaning:
+            "Mid-flight (after_intent_before_call, during_call): writeCount ≤ 1 (never 2+); every trial must be outcome_unknown. Violations are correctness failures (midflight_effect_gt_one / midflight_not_outcome_unknown).",
+        },
+        pass: phaseValidityPass,
+        meaning:
+          "Frozen before v4: if the board includes during_call trials, at least one must have callVerifiedSent (mock inFlight before kill). Otherwise the phase is mislabeled — injection landed before the call — and the board cannot claim to have tested during-call crashes.",
+      };
+    }
+    const status = artifactInvalidatedByOverwrite
+      ? "invalidated_overwrite"
+      : !phaseValidityPass && complete
+        ? "invalid_phase_targeting"
+        : complete
+          ? "measured"
+          : "partial";
     return {
       kind: "celld-fleet-phased-kill",
       measuredAt: new Date().toISOString(),
       // Partial mid-run snapshots must not look like a finished clean board.
       ok: SCORE_MODE === "correctness_availability_v2" ? okV2 : okLegacy,
-      status: complete ? "measured" : "partial",
+      injectionMissed,
+      injectionClean,
+      injectionMissedNote:
+        "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows. Historical journal-surrogate settles must carry basis=journal_surrogate + effect_ledger=unavailable — never read as verified.",
+      status,
       scoreMode: SCORE_MODE,
+      evidencePath: OUT,
+      evidenceTrialsDir: EVIDENCE_DIR,
+      evidenceOverwrite: {
+        allowOverwriteEnv: EVIDENCE_ALLOW_OVERWRITE,
+        existedBefore: EVIDENCE_EXISTED_BEFORE,
+        replacedExisting: EVIDENCE_REPLACED_EXISTING,
+        invalidatesArtifact: artifactInvalidatedByOverwrite,
+        note: artifactInvalidatedByOverwrite
+          ? "FLEET_PHASED_ALLOW_OVERWRITE was set and/or replaced an existing file — artifact invalidated under frozen missing-data rules."
+          : EVIDENCE_ALLOW_OVERWRITE
+            ? "FLEET_PHASED_ALLOW_OVERWRITE=1 was set for this run — escape hatch is never silent."
+            : "Overwrite escape hatch was not set; unique path or first write.",
+      },
+      effectLedgerPersisted,
+      effectLedgerPersistedNote:
+        "Per-trial mock-pets __writes + twin digest under evidenceTrialsDir/trials/. Independent of ProgramCell journal. Missing ledger fails the board (frozen). Precondition for v4 settle.",
+      effectLedgerCoverage: {
+        writeKillPersisted: writeKillWithGroundTruth,
+        writeKillTrials: trials.length,
+        awaitPersisted: awaitWithGroundTruth,
+        awaitTrials: awaitTrials.length,
+      },
+      /** Paths into evidenceTrialsDir — full ledgers stay on disk, not in this JSON. */
+      effectGroundTruthSample: [
+        ...trials.slice(0, 20).map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          programId: t.programId,
+          ownerEffectCount: t.effectGroundTruth?.ownerEffectCount ?? null,
+          twinCaptured: t.effectGroundTruth?.twinCaptured ?? null,
+          dir: t.effectGroundTruth?.dir ?? null,
+        })),
+        ...awaitTrials.slice(0, 10).map((t) => ({
+          a: t.a,
+          phase: "await_approval",
+          programId: t.programId,
+          ownerEffectCount: t.effectGroundTruth?.ownerEffectCount ?? null,
+          dir: t.effectGroundTruth?.dir ?? null,
+        })),
+      ],
       gates,
-      // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
-      // loosening of deadline / denominator / ceiling is visible against this file.
+      // Frozen before the run (see durability-proof STATUS v2 + FROZEN_MISSING_DATA.md).
+      // Recorded so post-hoc loosening is visible against this file.
       frozenCriteria:
         SCORE_MODE === "correctness_availability_v2"
           ? {
@@ -2004,9 +2434,23 @@ async function main() {
               awaitApprovalTrials: AWAIT_TRIALS,
               overallTrials: N + AWAIT_TRIALS,
               tailsHavePassFailCeiling: false,
-              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling.",
+              missingData: {
+                missingEffectLedgerFailsBoard: MISSING_EFFECT_LEDGER_FAILS_BOARD,
+                twinCaptureFailCeiling: TWIN_CAPTURE_FAIL_CEILING,
+                twinCaptureFailDenominator:
+                  "outer phases (before_intent, after_call_before_journal) with completedClean; mid-flight captured:false excluded",
+                overwriteInvalidatesArtifact: OVERWRITE_INVALIDATES_ARTIFACT,
+              },
+              phaseValidity: {
+                duringCallRequireSomeCallVerifiedSent:
+                  DURING_CALL_REQUIRE_SOME_CALL_VERIFIED_SENT,
+                midFlightAtMostOneEffect: true,
+                midFlightRequireOutcomeUnknown: true,
+              },
+              note: "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability. Missing-data + phase-validity rules are hard gates for v4.",
             }
           : null,
+      midFlightEffectDistribution,
       n: N,
       trialsCompleted: trials.length,
       awaitTrialsCompleted: awaitTrials.length,
@@ -2327,17 +2771,49 @@ async function main() {
     const evidence = summarize();
     mkdirSync(dirname(OUT), { recursive: true });
     writeFileSync(OUT, JSON.stringify(evidence, null, 2) + "\n");
+    // Compact index next to per-trial ledgers so settle does not depend on the
+    // (historically overwritable) evidence JSON alone.
+    mkdirSync(join(EVIDENCE_DIR, "trials"), { recursive: true });
+    writeFileSync(
+      join(EVIDENCE_DIR, "index.json"),
+      JSON.stringify(
+        {
+          evidencePath: OUT,
+          measuredAt: evidence.measuredAt,
+          effectLedgerPersisted: evidence.effectLedgerPersisted,
+          evidenceOverwrite: evidence.evidenceOverwrite,
+          trials: evidence.effectGroundTruthSample,
+          note: "Per-trial effect-ledger.json + twin-digest.json live under trials/. Independent of ProgramCell journal.",
+        },
+        null,
+        2
+      ) + "\n"
+    );
     return evidence;
   }
 
   const evidence = writeEvidencePartial();
   console.log(
-    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok}`
+    `fleet-phased: done n=${N} dups=${totalDuplicates} fences=${totalSelfFences} restarts=${totalSurvivorRestarts} deadlineMiss=${totalDeadlineMisses} zeroDuplicates=${evidence.zeroDuplicates} upper95=${evidence.ruleOfThreeUpperBound95} scoreMode=${SCORE_MODE} ok=${evidence.ok} injectionMissed=${evidence.injectionMissed} injectionClean=${evidence.injectionClean}`
   );
   if (SCORE_MODE === "correctness_availability_v2" && evidence.gates) {
     console.log(
-      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
+      `fleet-phased: gates correctnessFailures=${evidence.gates.correctness?.failures} injectionMissed=${evidence.gates.injection?.failures ?? 0} availRate=${evidence.gates.availability?.failureRate} availCeiling=${AVAIL_CEILING} resumeMs.p99=${evidence.gates.availability?.resumeMs?.p99} resumeMs.max=${evidence.gates.availability?.resumeMs?.max}`
     );
+    const md = evidence.gates.missingData;
+    if (md) {
+      console.log(
+        `fleet-phased: missingData pass=${md.pass} effectLedgerPersisted=${md.effectLedgerPersisted} twinCaptureFailRate=${md.twinCaptureFailRate} twinCeiling=${md.twinCaptureFailCeiling} overwriteInvalidated=${md.artifactInvalidatedByOverwrite}`
+      );
+    }
+    const pv = evidence.gates.phaseValidity;
+    if (pv) {
+      const dc = pv.midFlightEffectDistribution?.during_call;
+      const ai = pv.midFlightEffectDistribution?.after_intent_before_call;
+      console.log(
+        `fleet-phased: phaseValidity pass=${pv.pass} duringCallVerifiedSent=${pv.duringCallVerifiedSent}/${pv.duringCallN} during_call effects0/1/2+=${dc?.effects0}/${dc?.effects1}/${dc?.effects2plus} after_intent effects0/1/2+=${ai?.effects0}/${ai?.effects1}/${ai?.effects2plus}`
+      );
+    }
   }
   console.log(`wrote ${OUT}`);
   cleanup();

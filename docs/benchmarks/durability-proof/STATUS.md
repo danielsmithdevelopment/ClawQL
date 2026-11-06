@@ -91,7 +91,17 @@ Evidence field: `awaitArmForensics` on [`phased-n1000-claim-path.json`](../progr
 | **Availability tail**    | Evidence reports `resumeMs.p99`/`max`, `recoveryMs.p99`/`max`, and `resumeActiveMs`     | **Reported without a pass/fail ceiling.** Diagnostic split only: wall `resumeMs` = active + recovery. A 904s stall must stay visible and must count as an availability failure when wall time exceeds **60 000 ms** |
 | **Outer completion**     | Reported with per-miss class                                                            | Informational for the claim; misses classified, not required to be 0 if they are availability                                                                                                                       |
 | **Wait approval**        | Wrong-write → correctness; no survive/complete within **60 000 ms** wall → availability | Same split; each await trial counts in the 1000-trial denominator                                                                                                                                                   |
-| **Board ok**             | Correctness zero **and** availability ≤ 2%                                              | `status=measured` only when both arms finish                                                                                                                                                                        |
+| **Board ok**             | Correctness zero **and** availability ≤ 2% **and** missing-data pass                    | `status=measured` only when both arms finish; overwrite → `invalidated_overwrite`                                                                                                                                   |
+
+**Missing-data + phase-validity gates (frozen before Mac mini / v4 — see [`FROZEN_MISSING_DATA.md`](../program-cell-fleet-kill/FROZEN_MISSING_DATA.md)):**
+
+| Gate | Pass iff | Note |
+| ---- | -------- | ---- |
+| **Effect ledger** | Every trial persists `effect-ledger.json` | Missing counts against the board; settle uses pets ledger, not the journal under test |
+| **Twin `captured:false` ceiling** | Outer twin-eligible fail rate ≤ **0.02** | Mid-flight `captured:false` excluded |
+| **Overwrite** | Escape hatch unused | Any `FLEET_PHASED_ALLOW_OVERWRITE` use invalidates the artifact |
+| **`during_call` targeting** | ≥1 `callVerifiedSent` when phase is present | Else `invalid_phase_targeting` — injection never mid-call |
+| **Mid-flight correctness** | ≤1 effect; every trial `outcome_unknown` | `midflight_effect_gt_one` / `midflight_not_outcome_unknown` |
 
 **Sampling honesty (not a criteria change):** With a true availability-miss rate near the published ~1.5%, a 1000-trial binomial draw sits above 2% by chance roughly **1 time in 12**. If that happens, it is an **honest fail** like v1 — fix celld / re-measure; do **not** loosen the ceiling or the 60 s deadline after seeing results.
 
@@ -244,7 +254,9 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Frozen rule:** correctness must be 0 under every condition tested. TTL may affect availability only. Raising TTL until the board passes is loosening. Mechanism claim stays **paused** until root-caused (stock same-host control + supersede/`dead_reason` + lease-sweep / eager dead-leader recovery vs in-flight intent on the two failing trials).
 
-**Separation (partial):** same-host stock 0.6.3 @ TTL=3000 **passed** under quiet R2; lab quiet remasure also **passed**. Original 2-loss run had avail pressure (resumeMs up to ~62s, 5 avail failures) and truncated logs with ambiguous renewals — not reproduced. Cause (lab patches vs host timing) **unresolved** until a pressure-matched loss with append logs. Details: [`WEDGE_TTL3S_CORRECTNESS.md`](../program-cell-fleet-kill/WEDGE_TTL3S_CORRECTNESS.md).
+**Separation (partial):** same-host stock 0.6.3 @ TTL=3000 **passed** under quiet R2; lab quiet remasure also **passed**. Original 2-loss run had avail pressure (resumeMs up to ~62s, 5 avail failures) and truncated logs with ambiguous renewals — not reproduced. Quiet passes do **not** clear 2/100 (≈1% rate; 0/100 → ~3.7% UB).
+
+**Lead + fix (do not wait on load repro):** treating expiry as death is unsafe by itself. Lab fix: `lease_may_be_fenced` (expiry → fenced takeover only) vs `lease_open_log_may_be_recovered_as_dead` (process evidence / cross-host TTL+fencing). TLA `formal/tla/lease/LeaseSweepExpiry` (weak expiry-as-dead counterexamples). Deterministic test: `docs/examples/streams-celld/scripts/expiry-sweep-intent.test.mjs`. Narrative: [`EXPIRY_NOT_DEAD.md`](../program-cell-fleet-kill/EXPIRY_NOT_DEAD.md). After fix lands in the measured binary, rerun TTL=3s wedge at **N=300**. v4 still blocked until that board is clean.
 
 **Two failure modes (soak diagnosis):** fresh id every restart → no collisions but **712** dead registrations (v3). Stable id → bounded records but restart collides with prior lease → self-fence / TTL wait / ready flakes. Product path: stable id **plus incarnation** with narrow same-host “provably dead” + sweep + alive≠ready.
 

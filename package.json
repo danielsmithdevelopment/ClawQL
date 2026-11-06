@@ -166,7 +166,8 @@
     "benchmark:resume-vs-journal": "node scripts/benchmarks/durability-comparison/run-resume-vs-journal.mjs",
     "benchmark:fleet-node-soak": "node scripts/benchmarks/fleet-phased-kill/run-node-soak.mjs",
     "benchmark:fleet-pause-recovery": "node scripts/benchmarks/fleet-phased-kill/run-pause-recovery.mjs",
-    "benchmark:fleet-supersede-audit": "node scripts/benchmarks/fleet-phased-kill/audit-soak-supersedes.mjs"
+    "benchmark:fleet-supersede-audit": "node scripts/benchmarks/fleet-phased-kill/audit-soak-supersedes.mjs",
+    "benchmark:fleet-expiry-sweep-e2e": "node scripts/benchmarks/fleet-phased-kill/run-expiry-sweep-e2e.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
