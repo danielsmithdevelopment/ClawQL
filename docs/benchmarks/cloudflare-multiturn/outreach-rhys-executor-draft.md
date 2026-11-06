@@ -1,57 +1,42 @@
 # Draft outreach — Executor maintainers (Rhys / Useful Software)
 
-Ready to send once you review. Tone: congratulations first, then equal-arm harness invite — **no comparison claims attached**. Same courtesy already used for Obot and Bifrost before publishing peer rows.
+**Status:** draft for human review — do not send until approved.  
+**Tone:** congratulations + harness help request. No product comparison. No public numbers until you respond.
 
 ---
 
-**Subject:** Congratulations on Executor 2 — equal-arm harness invite before we remasure
+**Subject:** Congrats on Executor 2 — can you sanity-check our concurrent HTTP harness?
 
 Hi Rhys —
 
-Congratulations on Executor 2. The integration-layer work (OpenAPI / MCP / GraphQL / custom functions, OS credential store, workerd runtime) is a serious product surface, and we wanted to say that cleanly without attaching a scoreboard.
+Congratulations on Executor 2.
 
-We publish equal-arm MCP gateway boards on [clawql.com/benchmarks](https://clawql.com/benchmarks). Several cells still cite Executor **2.0.0-β.15** (or an earlier β where the artifact omitted the exact build). Those rows are labeled **remeasure in progress** on the live page; we will not leave β.15 numbers next to a fresh v2 launch without a remasure.
+We’re remeasuring our equal-arm MCP boards against the current Executor 2 install channel (`executor@beta` → **2.0.0-beta.37** as of 2026-11-05). On npm, `latest` is still **1.6.11**, and we don’t see a non-prerelease GitHub `2.0.0` release — so we’re treating β.37 as today’s launch tip unless you point us at a different binary/tag.
 
-**Before we publish new numbers**, we want you to review the harness and suggest config fixes — same invitation we already use for Obot and Bifrost.
+We ran a first concurrency pass and the results look **far off from what we’d expect for a shipped product** (very low sustained clients under a 100 ms p99 SLO, and ~2 GB resident before load). We suspect **our setup**, not your intended operator path. A single warm MCP `execute` on `/mcp` is ~60 ms here; idle RSS is already GB-class (serve + workerd; motel excluded). That smells like a topology/config mismatch (e.g. how we should run concurrent HTTP clients against the background service) more than a fair product measurement.
 
-### What we will remasure first
+**Ask:** what’s the recommended way to run Executor 2 for **concurrent Streamable HTTP MCP clients** (stock flags, service vs serve, worker/isolate knobs, anything we should not do)?
 
-1. **HTTP multiplex concurrency + process-tree memory** (highest priority — the β.15 board showed ~2 clients at 100 ms p99 and ~2.1 GB anon; those are the most load-sensitive cells and the most likely to have been beta artifacts).
-2. Cloudflare zone-audit tokens / session latency.
-3. Pets multiturn tokens (the “3.38×” headline).
-4. Interleaved n=10k latency, Topology-A chaos, governance pause/resume cells.
-5. Fresh: Executor best-config governance + multi-attack rows (never measured).
+**Harness + raw artifacts** (no numbers on our public board until you’ve had a chance to reply):
 
-Target binary: **latest Executor 2 channel** (`executor@beta` → currently `2.0.0-beta.37`). When `latest` moves to a stable `2.0.0`, we remasure again and promote that as the peer baseline.
+- Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/http-concurrency-heap-ab.mjs  
+- OpenAPI→mock app wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/cursor/executor-v2-remeasure-invite-c0bf/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs  
+- Provisional artifacts: https://github.com/danielsmithdevelopment/ClawQL/tree/cursor/executor-v2-remeasure-invite-c0bf/docs/benchmarks/cloudflare-multiturn/remeasure-beta37  
+- Single-client profile notes: same folder / agent artifacts after merge
 
-### Harness pointers (open in the ClawQL repo)
+Happy to change the arm to whatever you consider a fair default and remasure on the same host.
 
-| Board               | Entry                                                            | Notes                                                                            |
-| ------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| CF HTTP concurrency | `scripts/benchmarks/http-concurrency-heap-ab.mjs`                | `ARMS=…,executor_v2` · Streamable HTTP · Bearer auth                             |
-| CF zone-audit board | `scripts/benchmarks/cloudflare-multiturn/run-board.mjs`          | OpenAPI app → local replay mock (`ensure-executor-openapi-app.mjs`)              |
-| Pets multiturn      | `scripts/benchmarks/gateway-multi-multiturn.mjs`                 | Equal-arm fat catalog                                                            |
-| Governance cells    | `scripts/benchmarks/governance-policy-depth/ci-executor-peer.sh` | Pause / resume probe — resume cell is harness-driven, **not** stock auto-approve |
+**Deadline:** if we don’t hear back by **Wednesday 2026-11-12 (America/Los_Angeles)**, we’ll publish the tip-channel board labeled with the exact `executor --version` we used and a note that maintainer config review was invited.
 
-Artifacts / method: `docs/benchmarks/cloudflare-multiturn/` and `docs/benchmarks/gateway-multi-comparison/`.
-
-### Config questions for you
-
-- Preferred stock flags for a fair HTTP multiplex arm (`executor service` / `serve`, port, worker/concurrency knobs)?
-- Anything we should change in the OpenAPI→mock app wiring so we are not under- or over-taxing the sandbox? (We already updated the harness for β.37’s scoped `defineApp({}, …)` requirements — empty `{ accounts: {} }` no longer builds.)
-- Memory: we exclude motel diagnostics from the process-tree plateau — is that the right product-path cut for you?
-
-Happy to adjust the arm to whatever you consider a fair operator default, then remasure on the same host before anyone promotes new Executor cells.
-
-Thanks —
+Thanks —  
 [Name]
 
 ---
 
 ## Checklist before send
 
-- [ ] Confirm harness restored on the remasure branch (`scripts/benchmarks/cloudflare-multiturn/`, `http-concurrency-heap-ab.mjs`)
-- [ ] Confirm /benchmarks still labels β figures (PR #1479)
-- [ ] Decide channel (email `rhys@executor.sh`, Discord, Shared Slack connect, or GitHub issue)
+- [ ] Confirm channel wording with Rhys’s launch post (β.37 tip vs any other tag he names)
+- [ ] Prefer private channel first (email `rhys@executor.sh` / Slack connect / Discord) — not a dunk thread
+- [ ] Do **not** paste concurrency tables or ClawQL comparisons into the message
 - [ ] Sign with real name / ClawQL contact
-- [ ] Do **not** attach a comparison table or “we beat you on X” framing
+- [ ] After send: keep `/benchmarks` on labeled historical β.15 cells until response or deadline
