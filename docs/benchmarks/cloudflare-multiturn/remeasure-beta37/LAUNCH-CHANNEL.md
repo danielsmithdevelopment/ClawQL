@@ -25,10 +25,10 @@ So GB memory is largely **baseline residency**, and single-op latency is fine fo
 Artifact: [`cpu-lanes-16clients.json`](./cpu-lanes-16clients.json).
 
 | Core | mean busy % | peak busy % |
-| --- | ---: | ---: |
-| 0 | 73.6 | 100 |
-| 1 | 74.6 | 100 |
-| 2 | 75.0 | 100 |
-| 3 | 62.5 | 96 |
+| ---- | ----------: | ----------: |
+| 0    |        73.6 |         100 |
+| 1    |        74.6 |         100 |
+| 2    |        75.0 |         100 |
+| 3    |        62.5 |          96 |
 
 **Reading:** not a one-core-pinned / idle-siblings signature. All four vCPUs are busy while throughput stays ~**51–70 RPS** and p99 grows with client count. That can still be a design bottleneck (shared lock, serial sandbox admission, etc.) rather than “we hit the wrong URL,” but it is **not** “one core saturated, three idle.” Confirm recommended concurrent-HTTP setup with maintainers before treating the SLO curve as product truth. Live `/benchmarks` Executor HTTP row is marked **under review**.

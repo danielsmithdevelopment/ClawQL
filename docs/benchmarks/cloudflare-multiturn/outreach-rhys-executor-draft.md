@@ -20,11 +20,13 @@ We're testing the current install channel (`executor@beta`, 2.0.0-beta.37 as of 
 Since Executor is meant to serve as a shared gateway for teams, I want to make sure we're measuring concurrent use the way you'd recommend. Our first concurrent-HTTP pass looks far off from a multi-client gateway story: single requests are fine (~60 ms for a warm execute on `/mcp`), but sustained concurrency is very low, peak throughput stays flat around ~70 RPS as we add clients, and memory is ~2 GB at idle (serve plus workerd). Our page currently shows similar numbers from beta.15; I've marked that row as under review until we sort this out.
 
 Three questions:
+
 1. What's the recommended way to run Executor 2 for concurrent Streamable HTTP MCP clients? Is that a supported setup?
 2. For governance tests, what's the recommended v2 way to configure approvals and blocked tools?
 3. Is there anything in our setup we shouldn't be doing?
 
 Harness and raw results (pinned to commit `2a0998368ab353391e78f8949fb1bca797458aa7`):
+
 - Harness: https://github.com/danielsmithdevelopment/ClawQL/blob/2a0998368ab353391e78f8949fb1bca797458aa7/scripts/benchmarks/http-concurrency-heap-ab.mjs
 - OpenAPI-to-mock wiring: https://github.com/danielsmithdevelopment/ClawQL/blob/2a0998368ab353391e78f8949fb1bca797458aa7/scripts/benchmarks/cloudflare-multiturn/lib/ensure-executor-openapi-app.mjs
 - Provisional results: https://github.com/danielsmithdevelopment/ClawQL/tree/2a0998368ab353391e78f8949fb1bca797458aa7/docs/benchmarks/cloudflare-multiturn/remeasure-beta37
