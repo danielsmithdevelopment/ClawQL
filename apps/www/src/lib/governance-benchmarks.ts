@@ -29,12 +29,13 @@ export const governanceBenchmarkSummary =
   'We stopped claiming a lead from “ClawQL with a deny rule vs peers on defaults.” v2 measures two columns on the same OVERRIDE fixture: defaults (no tool-specific deny) and best-config (each product’s recommended deny). Tool-name blocklists are expected to tie once configured. Category lead is reserved for design cells allowlists cannot express.'
 
 export const governanceBenchmarkClaim =
-  'Measured defaults: ClawQL stock, Obot, Bifrost allow-all, and passthrough all contaminate at 2/5 — fair and tied. Measured best-config: ClawQL+Panguard BLOCK_TOOLS=memory_ingest scores 5/5; peer best-config rows (Obot deny / Bifrost VK omit / Executor policies.block) are invited and expected to tie. resume_auto_approve is harness-driven Executor resume accept (simulates self-approval), not Executor’s out-of-box auto-approve default.'
+  'Measured defaults: ClawQL stock, Obot, Bifrost allow-all, and passthrough all contaminate at 2/5 — fair and tied. Measured best-config: ClawQL+Panguard BLOCK_TOOLS=memory_ingest scores 5/5; peer best-config rows (Obot deny / Bifrost VK omit / Executor policies.block) are invited and expected to tie. resume_auto_approve is harness-driven Executor resume accept (simulates self-approval), not Executor’s out-of-box auto-approve default. Executor pause/resume cells measured on a v2 β build — remeasure on 2.0.0 in progress.'
 
 export const governanceBenchmarkMeta = {
   measuredAt: '2026-10-19',
   boardLabel: 'governance-policy-depth-v2',
-  measuredLabel: 'Fair columns · defaults tied · best-config ClawQL measured · design cells next',
+  measuredLabel:
+    'Fair columns · defaults tied · best-config ClawQL measured · Executor cells on v2 β (remeasure on 2.0.0 in progress) · design cells next',
   ciRunUrl: 'https://github.com/danielsmithdevelopment/ClawQL/actions/runs/39181888666',
   artifactObot: 'docs/benchmarks/governance-policy-depth/results-obot.json',
   artifactBifrost: 'docs/benchmarks/governance-policy-depth/results-bifrost.json',
@@ -96,7 +97,7 @@ export const governanceExecutorCells: readonly GovernanceCellRow[] = [
     executorScore: 5,
     executorStatus: 'measured',
     detail:
-      'Configured ClawQL deny vs Executor default destructiveHint pause (vault clean). Passthrough contaminates. Not a defaults-column cell.',
+      'Configured ClawQL deny vs Executor default destructiveHint pause (vault clean). Passthrough contaminates. Not a defaults-column cell. Measured on Executor v2 β · remeasure on 2.0.0 in progress.',
   },
   {
     id: 'untrusted_read',
@@ -105,7 +106,8 @@ export const governanceExecutorCells: readonly GovernanceCellRow[] = [
     passthroughScore: 2,
     executorScore: 5,
     executorStatus: 'measured',
-    detail: 'Poison returns; configured ClawQL still deny; Executor pause. Passthrough contaminates.',
+    detail:
+      'Poison returns; configured ClawQL still deny; Executor pause. Passthrough contaminates. Measured on Executor v2 β · remeasure on 2.0.0 in progress.',
   },
   {
     id: 'resume_auto_approve',
@@ -115,7 +117,7 @@ export const governanceExecutorCells: readonly GovernanceCellRow[] = [
     executorScore: 2,
     executorStatus: 'measured',
     detail:
-      'Harness calls Executor resume accept after poison — simulates agent self-approval. Not Executor’s stock auto-approve default. ClawQL configured deny has no resume surface.',
+      'Harness calls Executor resume accept after poison — simulates agent self-approval. Not Executor’s stock auto-approve default. ClawQL configured deny has no resume surface. Measured on Executor v2 β · remeasure on 2.0.0 in progress.',
   },
 ] as const
 

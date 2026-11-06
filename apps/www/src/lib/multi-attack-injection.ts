@@ -104,14 +104,14 @@ export const multiAttackArmRows: readonly MultiAttackArmRow[] = [
     column: 'defaults',
     status: 'pending',
     effectuated: '—',
-    note: 'Pending equal-arm peer runner (not every-PR CI)',
+    note: 'Never measured — run fresh on Executor 2.0.0 stable (invite maintainer config first)',
   },
   {
     arm: 'Executor best-config',
     column: 'best_config',
     status: 'pending',
     effectuated: '—',
-    note: 'Pending equal-arm peer runner (not every-PR CI)',
+    note: 'Never measured — run fresh on Executor 2.0.0 stable (invite maintainer config first)',
   },
 ] as const
 
