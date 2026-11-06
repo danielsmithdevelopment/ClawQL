@@ -462,8 +462,8 @@ export function BenchmarksLanding() {
             Pause cells use Executor&apos;s stock destructiveHint pause (fair default). The third cell is{' '}
             <strong className="font-medium text-mist-900 dark:text-mist-100">harness-driven</strong>{' '}
             <code className="text-xs">resume accept</code> after poison — it simulates agent self-approval; it is not
-            Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Via{' '}
-            <code className="text-xs">ci-executor-peer.sh</code>.
+            Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Measured on Executor v2
+            β — remeasure on 2.0.0 in progress. Via <code className="text-xs">ci-executor-peer.sh</code>.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {governanceExecutorCells.map((cell) => (
@@ -1340,8 +1340,8 @@ export function BenchmarksLanding() {
           </tbody>
         </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 is the promoted Executor column; v1 is the
-          stable-release second column on the same mock.
+          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 β is the promoted Executor column
+          (remeasure on 2.0.0 in progress); v1.6.10 is the historical second column on the same mock.
         </p>
       </Section>
 

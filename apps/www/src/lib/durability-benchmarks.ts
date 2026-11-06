@@ -9,11 +9,11 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects on the published Oct 21 Tier C board. Interrupted in-flight writes are marked outcome unknown for a person to resolve. Later claim-path N=1000 boards (v2/v3) failed availability and/or mid-flight intent gates — the intent-durability mechanism claim stays paused pending celld fencing. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
-/** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). */
+/** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). Oct 21 Tier C safety board. */
 export const durabilityBenchmarkClaim =
-  'Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.'
+  'Across 1,000 crashes injected at every phase of a write (Oct 21 Tier C board), programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline. Later claim-path boards are not a pass — see honesty notes.'
 
 export const durabilityBenchmarkMeta = {
   measuredAt: '2026-10-21',
@@ -101,7 +101,7 @@ export const durabilityPhaseRows: readonly DurabilityPhaseRow[] = [
 ] as const
 
 export const durabilityPhaseFraming =
-  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived — unknown is honesty, not a durability failure. In real operation that window is milliseconds, so unknowns are far rarer than this targeted test shows. Prefer check-by-reference or idempotency keys before involving a person (planned).'
+  'Kills are aimed evenly at four phases; two are the brief in-flight window where the API’s reply never arrived. When a durable write intent is present, marking that window outcome unknown is honesty — not a durability failure. A mid-flight kill with no durable intent is a durability defect (under hardening). Prefer check-by-reference or idempotency keys before involving a person (planned).'
 
 export type DurabilityLadderRow = {
   tier: string
@@ -238,8 +238,12 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
     body: 'A runtime can make the program survive a crash. Remote POSTs still need upstream idempotency — or at-most-once governance. ClawQL chooses at most once for consequential writes.',
   },
   {
-    title: 'Outcome unknown does not undermine durability',
-    body: 'When a cell dies mid-call, success and “never arrived” look the same from ClawQL’s side. We never blind-retry and never drop silently — the unknown is recorded. Recovery is not only “retry / do nothing / ask a person”: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
+    title: 'Oct 21 board vs later claim-path boards',
+    body: 'The published N=1000 Tier C numbers are the Oct 21 safety board (0 duplicates). Later claim-path N=1000 runs (v2 availability fail at 3.4%; mid-flight lost-intent on settle; v3 stock-TTL availability fail) are honest fails — the intent-durability / fenced-ack mechanism claim stays paused pending celld output-gate work. Do not read the Oct 21 board as a green claim-path pass.',
+  },
+  {
+    title: 'Outcome unknown vs lost intent',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry that intent. If durable intent is missing, resume can re-run the write (double-charge risk); that gap is under active hardening and is not claimed fixed. Recovery when intent is durable: check by unique reference (after the original can no longer land), then decide; or resend with an idempotency key. Person only when neither exists.',
   },
   {
     title: 'No “exactly once” over HTTP (yet)',

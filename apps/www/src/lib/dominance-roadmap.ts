@@ -123,15 +123,16 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
   },
   {
     id: 'executor',
-    name: 'Executor (v1/v2)',
+    name: 'Executor (v1 hist. / v2 β)',
     whyItMatters:
-      'Closest prior peer; sandbox code execution; per-tool approvals + MCP proxy (Gmail wrappers) — already on published boards.',
+      'Closest prior peer; sandbox code execution; per-tool approvals + MCP proxy (Gmail wrappers) — already on published boards. Treat 2.0.0 stable as the new baseline; join via the same maintainer-review path as Golem and Pi.',
     criteriaToBeat: 'Token lead + governance cells: risky-write approval/deny + untrusted-read→hostile follow-up.',
-    howToProve: 'Tokens: re-pin latest. Governance: ci-executor-peer.sh → results-cells.json.',
+    howToProve:
+      'Tokens: remasure on 2.0.0 (invite maintainer config fixes first). Governance: ci-executor-peer.sh → results-cells.json.',
     status: 'measured',
-    statusLabel: 'Tokens + cells · resume dominance',
+    statusLabel: 'Tokens + cells · pause ties · resume probe',
     nextStep:
-      'Tokens/latency measured (v2 β 3.38×). Governance: pause cells tie 5/5; resume_auto_approve ClawQL 5/5 vs Executor 2/5 (model resume accept contaminates). Re-pin v2 when stable.',
+      'Tokens/latency on 2.0.0-β.15 (3.38×); remeasure on 2.0.0 in progress. Governance: pause cells tie 5/5; harness resume_auto_approve probe is 5/5 vs 2/5 (not Executor stock auto-approve). Send harness before publishing new numbers.',
   },
   {
     id: 'celld-durability',

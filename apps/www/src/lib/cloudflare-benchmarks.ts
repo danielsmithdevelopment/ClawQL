@@ -17,7 +17,7 @@ export const cfTokenBoardProvenance = {
 export const cfBenchmarkHeadline = 'Cloudflare boards — zone-audit, fan-out/join, concurrency.'
 
 export const cfBenchmarkSummary =
-  'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 is the promoted Executor column. HTTP concurrency is multiplex; stdio is process-per-client.'
+  'Zone-audit: ClawQL known-op leads tokens on a curated OpenAPI → replay mock — post–compact-execute remasure 2026-10-17: known_op 1 710 weighted (−123). Fan-out/join: scripted program claim cleared; blind real-model gate is frontier-only so far. Executor v2 β is the promoted Executor column (remeasure on 2.0.0 in progress). HTTP concurrency is multiplex; stdio is process-per-client.'
 
 export const cfBenchmarkMeta = {
   measuredLabel:
@@ -80,22 +80,22 @@ export const cfTokenRows: CfTokenRow[] = [
     note: '−123 vs pre-compact 17 821. *Anon MB: October 15 build',
   },
   {
-    arm: 'Executor v2 (promoted)',
+    arm: 'Executor v2 β (promoted)',
     weighted: '5 328',
     taskSuccess: '1.0',
     sessionP50: '~218 ms',
     transport: 'HTTP',
     anonMb: '~2 103',
-    note: 'Main Executor comparison column · OpenAPI tools → mock',
+    note: 'Main Executor comparison column · OpenAPI tools → mock · β build unstated in artifact · remeasure on 2.0.0 in progress',
   },
   {
-    arm: 'Executor v1 (stable 1.6.10)',
+    arm: 'Executor v1 (historical 1.6.10)',
     weighted: '8 236',
     taskSuccess: '1.0',
     sessionP50: '~84 ms',
     transport: 'stdio',
     anonMb: '~535',
-    note: 'Same mock workload · mcp + daemon · not in HTTP concurrency table · tokens not re-run',
+    note: 'Historical v1 stable · same mock workload · mcp + daemon · not in HTTP concurrency table · tokens not re-run',
   },
   {
     arm: 'MCPJungle',
@@ -177,15 +177,16 @@ export const cfHttpConcRows: CfConcRow[] = [
     peakRps: '476',
   },
   {
-    arm: 'Executor v2',
+    arm: 'Executor v2 β',
     at100: '2',
     at250: '10',
     at500: '22',
     peakRps: '73',
+    note: 'β build unstated in artifact · remeasure on 2.0.0 in progress (priority remasure)',
   },
 ]
 
-/** Stdio process-per-client — fair topology for Executor v1. */
+/** Stdio process-per-client — fair topology for historical Executor v1. */
 export const cfStdioConcRows: CfConcRow[] = [
   {
     arm: 'ClawQL known-op (stdio)',
@@ -197,27 +198,27 @@ export const cfStdioConcRows: CfConcRow[] = [
     note: 'Total anon @100 ms ≈ 3.4 GB (all client processes)',
   },
   {
-    arm: 'Executor v1 stable (stdio)',
+    arm: 'Executor v1 historical (stdio)',
     at100: '8',
     at250: '19',
     at500: '42',
     peakRps: '123',
-    note: 'Total anon @100 ms ≈ 2.0 GB · single-client board ≈ 535 MB',
+    note: 'Historical v1.6.10 · Total anon @100 ms ≈ 2.0 GB · single-client board ≈ 535 MB',
   },
 ]
 
 export const cfBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 stable on the same mock is 8 236 tokens and ~535 MB — the beta excuse does not reverse the token story.',
+    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. The promoted Executor peer is a v2 β build (5 328 tokens, ~2.1 GB; β version unstated in the artifact) — remeasure on 2.0.0 in progress. Historical Executor v1.6.10 on the same mock is 8 236 tokens and ~535 MB.',
   },
   {
     title: 'Two concurrency topologies',
-    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for Executor v1). Do not mix the cells.',
+    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for historical Executor v1). Do not mix the cells. Executor HTTP concurrency (2 / 10 / 22 clients, 73 RPS) is a β figure and is first in the remasure queue.',
   },
   {
     title: 'Session latency transports',
-    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Executor v1 ~84 ms is stdio. Executor v2 ~218 ms is HTTP. Label the transport when comparing.',
+    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Historical Executor v1 ~84 ms is stdio. Executor v2 β ~218 ms is HTTP. Label the transport when comparing; remasure Executor latency on 2.0.0.',
   },
 ] as const
 
