@@ -42,7 +42,9 @@ Every future board persists, per trial, under `<evidence>-trials/trials/NNNN_<pr
 - `effect-ledger.json` — mock-pets `__writes` snapshot **before** twin `__reset`
 - `twin-digest.json` — twin digest comparison (or explicit `captured: false` reason)
 
-Evidence JSON also records `effectLedgerPersisted` and `evidenceOverwrite` (including when `FLEET_PHASED_ALLOW_OVERWRITE=1` is set). **Do not start v4** without per-trial effect-ledger + twin-digest persistence.
+Evidence JSON also records `effectLedgerPersisted`, `effectGroundTruthSample`, and `evidenceOverwrite` (including when `FLEET_PHASED_ALLOW_OVERWRITE=1` is set). A sibling `<evidence>-trials/index.json` lists trial paths. **Do not start v4** without per-trial effect-ledger + twin-digest persistence.
+
+**Smoke (cloud, not authorizing):** N=2 outer phases on lab release with BOOTTIME — `effectLedgerPersisted=true`, each trial `ownerEffectCount=1`, twin `captured+preserved`. Artifacts under `/opt/cursor/artifacts/phased-evidence-ledger-smoke-n2-twin*`.
 
 ## 1b. Full-board side-by-side reclassify (all 100)
 

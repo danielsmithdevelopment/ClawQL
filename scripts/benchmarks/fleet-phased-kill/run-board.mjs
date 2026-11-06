@@ -2223,6 +2223,24 @@ async function main() {
         awaitPersisted: awaitWithGroundTruth,
         awaitTrials: awaitTrials.length,
       },
+      /** Paths into evidenceTrialsDir — full ledgers stay on disk, not in this JSON. */
+      effectGroundTruthSample: [
+        ...trials.slice(0, 20).map((t) => ({
+          i: t.i,
+          phase: t.phase,
+          programId: t.programId,
+          ownerEffectCount: t.effectGroundTruth?.ownerEffectCount ?? null,
+          twinCaptured: t.effectGroundTruth?.twinCaptured ?? null,
+          dir: t.effectGroundTruth?.dir ?? null,
+        })),
+        ...awaitTrials.slice(0, 10).map((t) => ({
+          a: t.a,
+          phase: "await_approval",
+          programId: t.programId,
+          ownerEffectCount: t.effectGroundTruth?.ownerEffectCount ?? null,
+          dir: t.effectGroundTruth?.dir ?? null,
+        })),
+      ],
       gates,
       // Frozen before the run (see durability-proof STATUS v2). Recorded so post-hoc
       // loosening of deadline / denominator / ceiling is visible against this file.
@@ -2561,6 +2579,24 @@ async function main() {
     const evidence = summarize();
     mkdirSync(dirname(OUT), { recursive: true });
     writeFileSync(OUT, JSON.stringify(evidence, null, 2) + "\n");
+    // Compact index next to per-trial ledgers so settle does not depend on the
+    // (historically overwritable) evidence JSON alone.
+    mkdirSync(join(EVIDENCE_DIR, "trials"), { recursive: true });
+    writeFileSync(
+      join(EVIDENCE_DIR, "index.json"),
+      JSON.stringify(
+        {
+          evidencePath: OUT,
+          measuredAt: evidence.measuredAt,
+          effectLedgerPersisted: evidence.effectLedgerPersisted,
+          evidenceOverwrite: evidence.evidenceOverwrite,
+          trials: evidence.effectGroundTruthSample,
+          note: "Per-trial effect-ledger.json + twin-digest.json live under trials/. Independent of ProgramCell journal.",
+        },
+        null,
+        2
+      ) + "\n"
+    );
     return evidence;
   }
 

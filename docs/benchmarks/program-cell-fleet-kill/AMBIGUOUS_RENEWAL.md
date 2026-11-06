@@ -111,8 +111,9 @@ Env / harness hooks TBD (renew-only, not all S3). Do not raise `CELLD_TTL_MS` to
 | Code check optimistic Ambiguous | **Done** — not product |
 | Code check receipt-stamp `last_ok` | **Done** — stamped at send; not product |
 | Speculative renew-belief fix before v4 | **Not required** from these CEs |
-| Mac mini authorizing 1000-cycle soak | **Unblocked** |
-| v4 N=1000 | After soak; still report **mechanism unexplained** |
-| Forced renew-latency arms A+B | Next chase for the open mechanism |
+| Persist per-trial effect ledger + twin digest | **Done** (harness; v4 precondition) |
+| Mac mini authorizing 1000-cycle soak | **Unblocked** (cloud VM not authorizing) |
+| v4 N=1000 | After soak; report trial 5 unsettled + published 2/100 kept; require `effectLedgerPersisted` |
+| Forced renew-latency arms A+B | Parallel chase for any remaining open mechanism |
 
 See [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md).
