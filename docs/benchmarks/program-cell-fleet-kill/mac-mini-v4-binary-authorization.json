@@ -1,9 +1,39 @@
 {
   "kind": "mac-mini-v4-binary-authorization",
-  "measuredAt": "2026-11-07T06:45:00.000Z",
-  "verdict": "label_stale_same_checkout_tip_v4_identity_not_recorded",
-  "authorizingStands": "conditional",
-  "authorizingStandsMeaning": "Soak recorded a monorepo tip that contains expiry≠dead + BOOTTIME + enriched supersede. The celldBuild label is explained by a harness bug (lab path hard-coded lab_fixed_alive_sweep_supersede and ignored FLEET_SOAK_CELLD_BUILD). V4 evidence from the same Mac mini run did not persist celldLabGitCommit or celldSha256, so binary-hash equality soak↔v4 is not in-artifact. Same-machine sequential CELLD_BIN procedure is the residual link; next boards must record identity fields.",
+  "measuredAt": "2026-11-07T13:25:00.000Z",
+  "publishStatus": "v4_passed_authorization_pending_binary_identity_remeasure",
+  "publishLabel": "v4 passed; authorization pending binary-identity remeasure",
+  "mechanismClaim": "paused",
+  "authorizingStands": "no",
+  "authorizingStandsMeaning": "Flagship durability claim requires in-artifact proof that soak and v4 measured the same binary (matching celldLabGitCommit + celldSha256). Conditional authorization from tip ancestry + procedure is honest but insufficient. Do not restore the mechanism claim until the identity remesure lands.",
+  "priorConditionalAnalysis": {
+    "soakCelldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+    "soakTipContainedExpiryBoottimeEnriched": true,
+    "labelWasHarnessHardCode": true,
+    "v4OmittedCommitAndSha": true,
+    "note": "Prior note treated authorization as conditional. That bar is withdrawn for claim restore — remesure required."
+  },
+  "forensicCheck": {
+    "status": "pending_mac_mini",
+    "purpose": "Cheap pre-remeasure support only — never substitutes for in-artifact identity on a paired remesure.",
+    "steps": [
+      "Hash /Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld (or $CELLD_BIN from soak evidence)",
+      "Confirm mtime predates soak measuredAt 2026-11-06T23:52:09.341Z (and preferably predates soak host.capturedAt 2026-11-06T21:01:31.055Z)",
+      "Confirm path equals soak.celldBin",
+      "Append results under forensicCheck.results; label reconstructed_after_the_fact=true"
+    ],
+    "results": null
+  },
+  "identityRemeasure": {
+    "status": "required",
+    "branch": "cursor/mac-mini-v4-authorizing-2725",
+    "harness": "celld-identity.mjs records celldLabGitCommit + celldSha256 on soak and board",
+    "uniqueOutPaths": {
+      "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+      "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json"
+    },
+    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry≠dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass"
+  },
   "soak": {
     "path": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json",
     "measuredAt": "2026-11-06T23:52:09.341Z",
@@ -20,62 +50,55 @@
     "measuredAt": "2026-11-07T05:32:20.024Z",
     "status": "measured",
     "ok": true,
+    "publishAs": "measured_results_real_authorization_pending",
     "celldBinaryVersion": "0.6.3",
     "celldLabGitCommit": null,
     "celldSha256": null,
-    "note": "Board harness did not yet persist commit/sha; fixed going forward in celld-identity.mjs + run-board.mjs"
+    "correctnessFailures": 0,
+    "availabilityFailures": 2,
+    "availabilityFailureRate": 0.002,
+    "duringCallCallVerifiedSent": "251/251",
+    "duringCallIntentVisible": "251/251",
+    "note": "Board harness did not persist commit/sha on this run; fixed in celld-identity.mjs + run-board.mjs for the remesure."
   },
   "commitAncestryAtSoakTip": {
     "tip": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
     "includesExpiryNotDead": {
       "commit": "fcc5e36ab0ad511249584080c83e4866c5f67257",
-      "subject": "fix(celld-lab): expiry ≠ dead for open-log sweep; TLA counterexample",
       "ancestorOfTip": true
     },
     "includesBoottimeMono": {
       "commit": "f4cfddc53bf0a241f528232b65471479dbe1817b",
-      "subject": "fix+docs: injection_missed reclassify, BOOTTIME mono, evidence no-overwrite",
       "ancestorOfTip": true
     },
     "includesEnrichedSupersedeLogging": {
       "commit": "2a8dd487c42823fc0ce706fa5ea1e0f6609bdb61",
-      "subject": "feat(celld-lab): dual-sided supersede observation; count_and_flag_only audit",
       "ancestorOfTip": true
     },
-    "noteOn1360bdf": "Docs/E2E use 1360bdf… as the sha256 prefix of an earlier post-fix Linux binary (node-soak-200-expiry-not-dead.json celldSha256), not a git commit. A Mac mini rebuild from tip 36d53565c will have a different sha256 while still containing the same source fix."
+    "noteOn1360bdf": "Docs/E2E use 1360bdf… as the sha256 prefix of an earlier post-fix Linux binary, not a git commit."
   },
   "r2IntentCheck": {
     "ranAsPartOfV4Board": true,
-    "mechanism": "Per mid-flight trial, board queries survivor /program/status for intents[] + pauseKind (durable view backed by R2). Missing readable empty view → lost_midflight_intent correctness failure.",
-    "callSent": {
-      "duringCallTrials": 251,
-      "sawInFlight": 251,
-      "neverSent": 0,
-      "outcomeUnknownWithIntentVisible": 251,
-      "outcomeUnknownWithIntentVisibleRate": 1
-    },
-    "correctnessLostMidflightIntent": 0,
-    "separateSupersedeAuditArtifact": false,
-    "note": "No separate supersede-audit JSON was pushed with this Mac mini tip; intent visibility is the board-embedded R2/durable check that gates lost_midflight_intent."
+    "duringCallTrials": 251,
+    "sawInFlight": 251,
+    "outcomeUnknownWithIntentVisible": 251,
+    "correctnessLostMidflightIntent": 0
   },
   "duringCallEffectDistribution": {
     "n": 251,
     "callVerifiedSent": 251,
-    "callVerifiedSentRate": 1,
     "effects0": 251,
     "effects1": 0,
     "effects2plus": 0,
-    "outcomeUnknown": 251,
-    "meaning": "Validity: every during_call trial saw mock inFlight before kill (251/251). Effect split: mock writeCount was 0 on all 251 — kill landed while the call was in flight before pets committed a write. The phase did not also exercise a during_call trial with writeCount=1; after_intent_before_call was likewise 264× effects0. Outer phases still show effects1 on completed writes."
+    "claimWording": "Do not imply during_call covered both effect outcomes. All 251 kills landed before the upstream write committed. The write-landed-but-not-journaled case is covered by after_call_before_journal (0 duplicates on that phase)."
   },
-  "draftMechanismClaim": {
-    "scope": "Measured on ClawQL's lab build of celld (stock 0.6.3 plus same-host supersede and expiry≠dead patches), one Mac mini Colima host, N=1000 wedged write-kill board at CELLD_TTL_MS=3000, correctness failures 0, during_call callVerifiedSent 251/251 with durable intent visible on every mid-flight trial.",
-    "openBesideClaim": [
-      "TTL3s published 2/100 lost_midflight_intent remains as published; mechanism unexplained",
-      "Trial 1 injection_missed basis=journal_surrogate (not a verified settle)",
-      "Trial 5 incomplete_no_pause unsettled",
-      "Forced-latency arms A/B still open",
-      "Residual: v4 artifact lacks celldLabGitCommit/celldSha256; authorization is conditional on soak tip ancestry + sequential same-bin procedure until a board remesure records matching identity"
-    ]
+  "sitePublishNow": {
+    "label": "v4 passed; authorization pending binary-identity remeasure",
+    "showResults": true,
+    "restoreMechanismClaim": false
+  },
+  "siteClaimAfterIdentityRemeasure": {
+    "status": "draft_do_not_publish_until_remeasure",
+    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. In every crash during an external call, the journaled intent was visible on recovery (251/251). Availability: 2 of 1,000 trials missed the recovery deadline.\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress."
   }
 }

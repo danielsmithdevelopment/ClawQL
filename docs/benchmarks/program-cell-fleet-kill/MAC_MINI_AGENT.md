@@ -1,67 +1,97 @@
-# Mac mini local agent — authorizing fleet soak → v4
+# Mac mini local agent — identity remesure (authorize v4)
 
 **Branch to check out:** `cursor/mac-mini-v4-authorizing-2725`  
-**Contains:** expiry≠dead lab celld + BOOTTIME lease mono + harness freezes (effect ledger, missing-data, `during_call` phase-validity).  
-**Goal:** Authorizing 1000-cycle soak → `status=measured_v4_ready`, then **v4 N=1000**. Settles the cloud 200-cycle soak’s **3 counted self-fences** (`voided=false` — do not reattribute without a monitor void).
+**Contains:** expiry≠dead lab celld + BOOTTIME + harness freezes + `celld-identity.mjs` (records `celldLabGitCommit` + `celldSha256` on soak and board).  
+**Current publish status:** [**v4 passed; authorization pending binary-identity remesure**](./V4_CLAIM.md). Mechanism claim stays paused until this remesure.
+
+**Prior Mac mini run (keep; do not overwrite):** soak + v4 N=1000 measured and real, but v4 omitted binary identity. Flagship claim requires matching identity **inside** both artifacts — not a reasonable story. See [`mac-mini-v4-binary-authorization.json`](./mac-mini-v4-binary-authorization.json).
 
 **Context (do not rewrite):**
 - Published TTL3s N=100 **2 × `lost_midflight_intent`** stays as-is.
-- Side-by-side reclassify: trial 1 = `injection_missed` with `basis: journal_surrogate` / `effect_ledger: unavailable` (**not** a verified settle); trial 5 = `incomplete_no_pause` (**unsettled**).
-- See [`WEDGE_TTL3S_CORRECTNESS.md`](./WEDGE_TTL3S_CORRECTNESS.md) · [`TTL3S_THREE_CHECKS.md`](./TTL3S_THREE_CHECKS.md) · [`FROZEN_MISSING_DATA.md`](./FROZEN_MISSING_DATA.md).
+- Trial 1 = `injection_missed` / `journal_surrogate` (**not** verified); trial 5 = `incomplete_no_pause` (**unsettled**).
+- During-call on the prior board was 251× `effects0` — do not imply that phase covered both effect outcomes.
 
-This file is the runbook. Paste the **Local agent prompt** block below into your Mac mini agent.
+Paste the **Local agent prompt** below into the Mac mini agent.
 
 ---
 
-## Local agent prompt (copy/paste)
+## Local agent prompt (copy/paste) — forensic + identity remesure
 
 ```text
-You are on a Mac mini. Checkout branch cursor/mac-mini-v4-authorizing-2725 of danielsmithdevelopment/ClawQL and follow docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md exactly.
+You are on a Mac mini. Checkout branch cursor/mac-mini-v4-authorizing-2725 of danielsmithdevelopment/ClawQL and follow docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md § identity remesure exactly.
 
-Mission: (1) authorize pre-v4 fleet readiness — lab celld node soak to status=measured_v4_ready; (2) if soak passes, run v4 N=1000 wedged TTL=3000 with append logs + R2 intent check + frozen missing-data/phase-validity gates; (3) always report TTL3s published 2/100 kept, trial1 journal_surrogate (not verified), trial5 unsettled.
+Mission:
+1) Cheap forensic check on the prior binary (if still on disk) — supporting evidence only, labeled reconstructed_after_the_fact.
+2) Identity remesure: ONE cargo build, then authorizing 1000-cycle soak AND v4 N=1000 wedged TTL=3000, with celldLabGitCommit + celldSha256 recorded and MATCHING in both artifacts.
+3) Do not restore the mechanism claim yourself. Prior v4 results stay published as measured; claim stays paused until humans confirm matching identity.
+4) Always report: TTL3s published 2/100 kept; trial1 journal_surrogate (not verified); trial5 unsettled; forced-latency A/B open.
 
-Hard constraints (do not renegotiate):
-1. Use the lab binary built from vendor/celld-lab on THIS branch (expiry≠dead + alive≠ready + lease-sweep + same-host supersede + CLOCK_BOOTTIME mono). Stock 0.6.3 is baseline-only — never claim authorizing from it.
-2. Lab same-host supersede needs Linux /proc. Run the soak INSIDE a Linux guest (Colima preferred). Do not run celld natively on Darwin for this soak.
-3. Mac host must not sleep/suspend for the soak window (pmset + caffeinate). If the Mac sleeps, Colima pauses → harness voids the run.
-4. Gates (SOAK_GATES.md): ≥1000 consecutive cycles in ONE non-void run; unique nodes ≤2; readyFails=0; selfFences=0; Wilson UB ≤0.5% each. Do NOT raise CELLD_TTL_MS. Do NOT combine partial/voided runs.
-5. Host suspend gap growth >2s voids the run (harness auto-restarts from cycle 0 by default). That is infrastructure, not a software fail. If voided=false, self-fences COUNT — never reclassify them as pause after the fact.
-6. Pause-recovery (benchmark:fleet-pause-recovery) is OPTIONAL and SEPARATE — never feeds measured_v4_ready.
-7. Do not claim the original TTL3s 2/100 is root-caused. Publish trial5 unsettled; trial1 is journal_surrogate only.
-8. Frozen board rules (FROZEN_MISSING_DATA.md) — do not loosen:
-   - Every trial persists effect-ledger.json + twin-digest.json (effectLedgerPersisted=true)
-   - Outer twin captured:false rate ≤0.02
-   - Never set FLEET_PHASED_ALLOW_OVERWRITE=1 (invalidates artifact)
-   - during_call: ≥1 callVerifiedSent or status=invalid_phase_targeting
-   - Mid-flight: ≤1 effect; every trial outcome_unknown
-   - Report midFlightEffectDistribution (effects0/1/2+ + callVerifiedSent)
+Hard constraints:
+1. Lab binary from vendor/celld-lab on THIS branch only (expiry≠dead + alive≠ready + lease-sweep + same-host supersede + CLOCK_BOOTTIME). Never authorize from stock 0.6.3 alone.
+2. Run celld inside Colima Linux guest (/proc). Mac must not sleep (pmset + caffeinate).
+3. Gates unchanged (SOAK_GATES.md / FROZEN_MISSING_DATA.md). Never FLEET_PHASED_ALLOW_OVERWRITE=1. Never raise CELLD_TTL_MS for soak. Never combine voided runs.
+4. UNIQUE out paths for remesure — do not overwrite prior evidence:
+   - soak: docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json
+   - v4:   docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json
+5. Build ONCE. Do not rebuild between soak and v4. Prefer: build → record sha → soak → v4 with same CELLD_BIN.
+6. Authorization pass only when soak.celldLabGitCommit == v4.celldLabGitCommit AND soak.celldSha256 == v4.celldSha256 (both non-null).
 
 Procedure:
-A. Disable Mac sleep; start/keep Colima; enter the Linux guest.
-B. Install deps (Rust toolchain, Node 22+, python3, build-essential) inside the guest if missing.
-C. Checkout cursor/mac-mini-v4-authorizing-2725; npm ci (or npm install); cargo build -p celld --release --manifest-path vendor/celld-lab/Cargo.toml. Record sha256 of target/release/celld.
-D. Export R2 creds (CLAWQL_R2_ACCOUNT_ID + CLAWQL_SYNC_ACCESS_KEY_ID + CLAWQL_SYNC_SECRET_ACCESS_KEY, or equivalent AWS_* + CELLD_BUCKET). Fresh bucket prefix recommended.
-E. Smoke: FLEET_SOAK_CYCLES=12 FLEET_SOAK_MIN_CYCLES=12 with lab CELLD_BIN — expect 0/0 fences/ready and same-host supersede in logs. Not authorizing.
-F. Authorizing run: CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000 FLEET_SOAK_HOST_LABEL=mac-mini-colima FLEET_SOAK_CELLD_BUILD=lab_expiry_not_dead_fixed FLEET_SOAK_OUT=docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json npm run benchmark:fleet-node-soak under caffeinate on the Mac host. Record evidence.celldLabGitCommit + evidence.celldSha256 (labels are advisory; do not authorize from celldBuild alone).
-G. Pass only if evidence has voided=false, status=measured_v4_ready, authorizing=true, readyFails=0, selfFences=0, cyclesCompleted≥1000, suspendMonitor.final.growthSec≤2.
-H. If soak passes: run v4 N=1000 wedged TTL=3000 with unique FLEET_PHASED_OUT (never overwrite):
-   export PATH="$PWD/vendor/celld-lab/target/release:$PATH"
+A. Forensic (before any rebuild). Bin path from prior soak: /Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld
+   if [ -x "$BIN" ]; then
+     SHA=$(shasum -a 256 "$BIN" | awk '{print $1}')
+     STAT=$(stat -f '%Sm %N' -t '%Y-%m-%dT%H:%M:%SZ' "$BIN" 2>/dev/null || stat -c '%y %n' "$BIN")
+     # Also record epoch mtime; soak measuredAt=2026-11-06T23:52:09.341Z; host.capturedAt=2026-11-06T21:01:31.055Z
+     # Prefer mtime BEFORE soak start. Append into docs/benchmarks/program-cell-fleet-kill/mac-mini-v4-binary-authorization.json under forensicCheck.results with reconstructed_after_the_fact=true.
+   fi
+   If missing/rebuilt already, record forensicCheck.results.status=unavailable and continue to remesure.
+
+B. Disable Mac sleep; Colima up; enter Linux guest; deps if needed.
+C. git fetch && git checkout cursor/mac-mini-v4-authorizing-2725 && npm ci
+D. cargo build -p celld --release --manifest-path vendor/celld-lab/Cargo.toml
    export CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld
+   shasum -a 256 "$CELLD_BIN" | tee /tmp/celld-identity-remeasure.sha256
+   # Do not cargo build again until both soak and v4 finish.
+
+E. Smoke 12 cycles (not authorizing).
+
+F. Authorizing soak (identity remesure out path):
+   export FLEET_SOAK_HOST_LABEL=mac-mini-colima
+   export FLEET_SOAK_CELLD_BUILD=lab_expiry_not_dead_fixed
+   export FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000
+   export FLEET_SOAK_OUT=$PWD/docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json
+   npm run benchmark:fleet-node-soak
+   Require: voided=false, status=measured_v4_ready, celldLabGitCommit and celldSha256 present.
+
+G. Immediately v4 (same CELLD_BIN, no rebuild):
+   export PATH="$(dirname "$CELLD_BIN"):$PATH"
    export FLEET_PHASED_N=1000 FLEET_PHASED_WEDGE_HEALTH=1
    export FLEET_PHASED_SCORE_MODE=correctness_availability_v2
    export FLEET_PHASED_APPEND_LOGS=1 CELLD_TTL_MS=3000
    export FLEET_PHASED_OMIT_REMOVED_CELLD_ENVS=1
    export FLEET_PHASED_FENCE_MODE=lab_enriched_wedged
-   export FLEET_PHASED_OUT=$PWD/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json
-   # Do NOT set FLEET_PHASED_ALLOW_OVERWRITE
+   export FLEET_PHASED_OUT=$PWD/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json
    npm run benchmark:fleet-phased-kill
-   Board embeds the R2/durable intent check (callSent.outcomeUnknownWithIntentVisible + midFlightStorage → lost_midflight_intent). Require gates.missingData.pass=true AND gates.phaseValidity.pass=true (during_call callVerifiedSent≥1; midFlightEffectDistribution present). Report during_call effects0/effects1/effects2plus. Evidence must include celldLabGitCommit + celldSha256 matching the soak. Sibling <evidence>-trials/ must exist with per-trial effect-ledger.json + twin-digest.json.
-I. Commit evidence on a branch off cursor/mac-mini-v4-authorizing-2725 and report paths + key fields. Evidence/PR note must say: "TTL3s published 2/100 kept; trial1 injection_missed basis=journal_surrogate effect_ledger=unavailable (not verified); trial5 incomplete_no_pause unsettled; forced-latency arms A/B still open". Do not invent a pass. If void loops or gates fail, stop and report facts.
+   Require: ok=true; gates.missingData.pass; gates.phaseValidity.pass; callSent intent-visible; celldLabGitCommit+celldSha256 present and EQUAL to soak.
 
-Read SOAK_GATES.md, SOAK_HOST.md, and FROZEN_MISSING_DATA.md if anything conflicts — gates win.
+H. Update mac-mini-v4-binary-authorization.json: forensicCheck.results (if any); identityRemeasure.status=complete with both paths + matching commit/sha. Do not set mechanismClaim to restored.
+
+I. Commit on a branch off cursor/mac-mini-v4-authorizing-2725. PR note must say publish label remains "v4 passed; authorization pending…" until a human restores the claim after verifying matching identity. Keep TTL3s 2/100 / trial1 / trial5 open beside results.
+
+Read SOAK_GATES.md, FROZEN_MISSING_DATA.md, V4_CLAIM.md — gates and paused claim win over optimism.
 ```
 
 ---
+
+## Identity remesure outs (do not overwrite prior evidence)
+
+| Run | Path |
+| --- | ---- |
+| Forensic results | append `forensicCheck.results` in [`mac-mini-v4-binary-authorization.json`](./mac-mini-v4-binary-authorization.json) |
+| Soak remesure | `node-soak-lab-authorizing-mac-mini-identity-remeasure.json` |
+| v4 remesure | `phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json` (+ `-trials/`) |
+
+Prior measured board (`phased-n1000-v4-mac-mini-ttl3000.json`) stays as published measured evidence under the paused-claim label.
 
 ## Why Colima / Linux guest (not native Darwin celld)
 

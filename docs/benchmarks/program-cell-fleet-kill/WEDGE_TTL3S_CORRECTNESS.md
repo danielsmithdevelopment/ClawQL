@@ -56,7 +56,8 @@ Still correct and shipped: expiry permits **fenced** takeover; open-log abandon 
 
 ## Next
 
-1. **Mac mini soak + v4 N=1000 landed** ([`mac-mini-v4-binary-authorization.json`](./mac-mini-v4-binary-authorization.json)): correctness 0; during_call `callVerifiedSent` 251/251 with durable intent visible; missing-data + phase-validity pass. Authorization is **conditional** (v4 omitted `celldLabGitCommit`/`celldSha256`; soak label was harness-stale). Remesure identity on the same binary to fully authorize.
-2. **Do not close** TTL3s published **2/100** (mechanism unexplained), trial 1 journal_surrogate, or trial 5 unsettled — keep them beside any restored claim.
-3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms.
-4. After full authorization: short upstream supersede offer (tests, not a large patch); Golem/Pi peer package can cite the scoped lab claim.
+1. **Publish v4 as measured; claim paused** — label **v4 passed; authorization pending binary-identity remesure** ([`V4_CLAIM.md`](./V4_CLAIM.md)). Prior board is real; it does not authorize until soak↔v4 identity matches in-artifact.
+2. **Mac mini identity remesure** ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)): forensic hash if prior binary still on disk (supporting only), then one build → soak + v4 with matching `celldLabGitCommit` + `celldSha256`.
+3. **Do not close** TTL3s published **2/100**, trial 1 journal_surrogate, or trial 5 unsettled — keep them beside any restored claim (draft wording in `V4_CLAIM.md`).
+4. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms.
+5. After authorized remesure: short upstream supersede offer; Golem/Pi peer package.
