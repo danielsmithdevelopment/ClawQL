@@ -42,7 +42,7 @@ B. Install deps (Rust toolchain, Node 22+, python3, build-essential) inside the 
 C. Checkout cursor/mac-mini-v4-authorizing-2725; npm ci (or npm install); cargo build -p celld --release --manifest-path vendor/celld-lab/Cargo.toml. Record sha256 of target/release/celld.
 D. Export R2 creds (CLAWQL_R2_ACCOUNT_ID + CLAWQL_SYNC_ACCESS_KEY_ID + CLAWQL_SYNC_SECRET_ACCESS_KEY, or equivalent AWS_* + CELLD_BUCKET). Fresh bucket prefix recommended.
 E. Smoke: FLEET_SOAK_CYCLES=12 FLEET_SOAK_MIN_CYCLES=12 with lab CELLD_BIN — expect 0/0 fences/ready and same-host supersede in logs. Not authorizing.
-F. Authorizing run: CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000 FLEET_SOAK_HOST_LABEL=mac-mini-colima FLEET_SOAK_CELLD_BUILD=lab_expiry_not_dead_fixed FLEET_SOAK_OUT=docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json npm run benchmark:fleet-node-soak under caffeinate on the Mac host.
+F. Authorizing run: CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld FLEET_SOAK_CYCLES=1000 FLEET_SOAK_MIN_CYCLES=1000 FLEET_SOAK_HOST_LABEL=mac-mini-colima FLEET_SOAK_CELLD_BUILD=lab_expiry_not_dead_fixed FLEET_SOAK_OUT=docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json npm run benchmark:fleet-node-soak under caffeinate on the Mac host. Record evidence.celldLabGitCommit + evidence.celldSha256 (labels are advisory; do not authorize from celldBuild alone).
 G. Pass only if evidence has voided=false, status=measured_v4_ready, authorizing=true, readyFails=0, selfFences=0, cyclesCompleted≥1000, suspendMonitor.final.growthSec≤2.
 H. If soak passes: run v4 N=1000 wedged TTL=3000 with unique FLEET_PHASED_OUT (never overwrite):
    export PATH="$PWD/vendor/celld-lab/target/release:$PATH"
@@ -55,7 +55,7 @@ H. If soak passes: run v4 N=1000 wedged TTL=3000 with unique FLEET_PHASED_OUT (n
    export FLEET_PHASED_OUT=$PWD/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json
    # Do NOT set FLEET_PHASED_ALLOW_OVERWRITE
    npm run benchmark:fleet-phased-kill
-   Then supersede audit + R2 intent check. Require gates.missingData.pass=true AND gates.phaseValidity.pass=true (during_call callVerifiedSent≥1; midFlightEffectDistribution present). Sibling <evidence>-trials/ must exist with per-trial effect-ledger.json + twin-digest.json.
+   Board embeds the R2/durable intent check (callSent.outcomeUnknownWithIntentVisible + midFlightStorage → lost_midflight_intent). Require gates.missingData.pass=true AND gates.phaseValidity.pass=true (during_call callVerifiedSent≥1; midFlightEffectDistribution present). Report during_call effects0/effects1/effects2plus. Evidence must include celldLabGitCommit + celldSha256 matching the soak. Sibling <evidence>-trials/ must exist with per-trial effect-ledger.json + twin-digest.json.
 I. Commit evidence on a branch off cursor/mac-mini-v4-authorizing-2725 and report paths + key fields. Evidence/PR note must say: "TTL3s published 2/100 kept; trial1 injection_missed basis=journal_surrogate effect_ledger=unavailable (not verified); trial5 incomplete_no_pause unsettled; forced-latency arms A/B still open". Do not invent a pass. If void loops or gates fail, stop and report facts.
 
 Read SOAK_GATES.md, SOAK_HOST.md, and FROZEN_MISSING_DATA.md if anything conflicts — gates win.
@@ -195,6 +195,7 @@ Gates: [`SOAK_GATES.md`](./SOAK_GATES.md). Host: [`SOAK_HOST.md`](./SOAK_HOST.md
 export CELLD_BIN=$PWD/vendor/celld-lab/target/release/celld
 export FLEET_SOAK_HOST_LABEL='mac-mini-colima'
 export FLEET_SOAK_CELLD_BUILD='lab_expiry_not_dead_fixed'
+# Prefer commit+sha over this label. Older harnesses hard-coded lab_fixed_alive_sweep_supersede for any vendor/celld-lab path — that string alone does not prove missing expiry≠dead.
 export FLEET_SOAK_CYCLES=1000
 export FLEET_SOAK_MIN_CYCLES=1000
 export FLEET_SOAK_REQUIRE_SUSPEND_MONITOR=1
