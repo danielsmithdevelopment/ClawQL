@@ -1,0 +1,134 @@
+{
+  "measuredAt": "2026-11-06T02:30:05.816Z",
+  "arm_id": "executor_v2",
+  "steps": [
+    {
+      "concurrency": 1,
+      "ok": 109,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 36.3,
+      "latency_ms": {
+        "p50": 25.991015999985393,
+        "p99": 43.563950000010664,
+        "p999": 44.33306599999196
+      },
+      "memory": {
+        "rss_mb": 2840.79,
+        "anonymous_mb": 2713.51,
+        "pss_mb": 2811.55,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": false,
+      "break_reason": null
+    },
+    {
+      "concurrency": 2,
+      "ok": 152,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 50.7,
+      "latency_ms": {
+        "p50": 34.497036999993725,
+        "p99": 124.79371399999945,
+        "p999": 128.7015679999895
+      },
+      "memory": {
+        "rss_mb": 2858.69,
+        "anonymous_mb": 2731.41,
+        "pss_mb": 2829.45,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": true,
+      "break_reason": "p99 124.8ms"
+    },
+    {
+      "concurrency": 4,
+      "ok": 177,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 59,
+      "latency_ms": {
+        "p50": 64.7526979999966,
+        "p99": 139.1361190000025,
+        "p999": 148.7288459999836
+      },
+      "memory": {
+        "rss_mb": 2966.12,
+        "anonymous_mb": 2838.85,
+        "pss_mb": 2936.88,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": true,
+      "break_reason": "p99 139.1ms"
+    },
+    {
+      "concurrency": 8,
+      "ok": 187,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 62.3,
+      "latency_ms": {
+        "p50": 125.64547200000379,
+        "p99": 216.6078550000093,
+        "p999": 217.54737500002375
+      },
+      "memory": {
+        "rss_mb": 3075.87,
+        "anonymous_mb": 2948.59,
+        "pss_mb": 3046.63,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": true,
+      "break_reason": "p99 216.6ms"
+    },
+    {
+      "concurrency": 16,
+      "ok": 219,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 73,
+      "latency_ms": {
+        "p50": 222.58317900000839,
+        "p99": 367.44989700001315,
+        "p999": 367.8719089999795
+      },
+      "memory": {
+        "rss_mb": 3279.38,
+        "anonymous_mb": 3152.11,
+        "pss_mb": 3250.13,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": true,
+      "break_reason": "p99 367.4ms"
+    },
+    {
+      "concurrency": 32,
+      "ok": 215,
+      "err": 0,
+      "error_rate": 0,
+      "rps": 71.7,
+      "latency_ms": {
+        "p50": 476.6194719999912,
+        "p99": 726.695424000005,
+        "p999": 737.0786549999902
+      },
+      "memory": {
+        "rss_mb": 3121.48,
+        "anonymous_mb": 2994.2,
+        "pss_mb": 3092.23,
+        "process_count": 2,
+        "tree_process_count": 3
+      },
+      "broken": true,
+      "break_reason": "p99 726.7ms"
+    }
+  ],
+  "refine": [],
+  "avail_mb": 5494.79296875
+}

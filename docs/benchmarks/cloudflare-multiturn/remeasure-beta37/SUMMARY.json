@@ -1,0 +1,107 @@
+{
+  "executorVersion": "2.0.0-beta.37",
+  "measuredAt": "2026-11-06T02:31:17.229Z",
+  "artifact": "docs/benchmarks/cloudflare-multiturn/remeasure-beta37/http-concurrency-executor-\u03b237-r3.json",
+  "publishStatus": "provisional_invite_pending",
+  "prior_beta15_publish": {
+    "at100": 2,
+    "at250": 10,
+    "at500": 22,
+    "peakRps": 73,
+    "anonMb_zone_audit": 2103
+  },
+  "beta37_r3": {
+    "at100": {
+      "reps": [
+        1,
+        2,
+        1
+      ],
+      "min": 1,
+      "max": 2,
+      "median": 1
+    },
+    "at250": {
+      "reps": [
+        9,
+        10,
+        9
+      ],
+      "min": 9,
+      "max": 10,
+      "median": 9
+    },
+    "at500": {
+      "reps": [
+        21,
+        23,
+        23
+      ],
+      "min": 21,
+      "max": 23,
+      "median": 23
+    },
+    "peakRps": {
+      "reps": [
+        67.7,
+        71.3,
+        73
+      ],
+      "median": 71.3
+    },
+    "anonMb_by_clients": {},
+    "anonMb_by_clients_from_log": {
+      "1": {
+        "reps": [
+          1458.15,
+          3177.61,
+          2713.51
+        ],
+        "median": 2713.51
+      },
+      "2": {
+        "reps": [
+          1613.24,
+          2962.7,
+          2731.41
+        ],
+        "median": 2731.41
+      },
+      "4": {
+        "reps": [
+          1833.2,
+          2415.45,
+          2838.85
+        ],
+        "median": 2415.45
+      },
+      "8": {
+        "reps": [
+          2024.3,
+          2449.71,
+          2948.59
+        ],
+        "median": 2449.71
+      },
+      "16": {
+        "reps": [
+          2181.46,
+          2435.57,
+          3152.11
+        ],
+        "median": 2435.57
+      },
+      "32": {
+        "reps": [
+          2420.43,
+          2961.32,
+          2994.2
+        ],
+        "median": 2961.32
+      }
+    },
+    "anonMb_at_1_client_median": 2713.51,
+    "anonMb_at_32_clients_median": 2961.32
+  },
+  "note": "Provisional. Do not flip /benchmarks until Rhys invite is sent. Median@100ms=1 (range 1\u20132) vs prior publish 2; @250\u22489 vs 10; @500\u224823 vs 22; peak RPS \u224871 vs 73. Anon under load still GB-class."
+}
