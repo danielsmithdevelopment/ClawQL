@@ -1,0 +1,175 @@
+{
+  "evidencePath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json",
+  "measuredAt": "2026-11-07T05:32:20.024Z",
+  "effectLedgerPersisted": true,
+  "evidenceOverwrite": {
+    "allowOverwriteEnv": false,
+    "existedBefore": false,
+    "replacedExisting": false,
+    "invalidatesArtifact": false,
+    "note": "Overwrite escape hatch was not set; unique path or first write."
+  },
+  "trials": [
+    {
+      "i": 0,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_0_1794013214843",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0000_phased_before_intent_0_1794013214843"
+    },
+    {
+      "i": 1,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_1_1794013230494",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0001_phased_after_intent_before_call_1_1794013230494"
+    },
+    {
+      "i": 2,
+      "phase": "during_call",
+      "programId": "phased_during_call_2_1794013245217",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0002_phased_during_call_2_1794013245217"
+    },
+    {
+      "i": 3,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_3_1794013265584",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0003_phased_after_call_before_journal_3_1794013265584"
+    },
+    {
+      "i": 4,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_4_1794013280170",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0004_phased_before_intent_4_1794013280170"
+    },
+    {
+      "i": 5,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_5_1794013295617",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0005_phased_after_intent_before_call_5_1794013295617"
+    },
+    {
+      "i": 6,
+      "phase": "during_call",
+      "programId": "phased_during_call_6_1794013309659",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0006_phased_during_call_6_1794013309659"
+    },
+    {
+      "i": 7,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_7_1794013330100",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0007_phased_after_call_before_journal_7_1794013330100"
+    },
+    {
+      "i": 8,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_8_1794013346094",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0008_phased_before_intent_8_1794013346094"
+    },
+    {
+      "i": 9,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_9_1794013360197",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0009_phased_after_intent_before_call_9_1794013360197"
+    },
+    {
+      "i": 10,
+      "phase": "during_call",
+      "programId": "phased_during_call_10_1794013372824",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0010_phased_during_call_10_1794013372824"
+    },
+    {
+      "i": 11,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_11_1794013393247",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0011_phased_after_call_before_journal_11_1794013393247"
+    },
+    {
+      "i": 12,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_12_1794013408212",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0012_phased_before_intent_12_1794013408212"
+    },
+    {
+      "i": 13,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_13_1794013423838",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0013_phased_after_intent_before_call_13_1794013423838"
+    },
+    {
+      "i": 14,
+      "phase": "during_call",
+      "programId": "phased_during_call_14_1794013436933",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0014_phased_during_call_14_1794013436933"
+    },
+    {
+      "i": 15,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_15_1794013458646",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0015_phased_after_call_before_journal_15_1794013458646"
+    },
+    {
+      "i": 16,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_16_1794013472801",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0016_phased_before_intent_16_1794013472801"
+    },
+    {
+      "i": 17,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_17_1794013487272",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0017_phased_after_intent_before_call_17_1794013487272"
+    },
+    {
+      "i": 18,
+      "phase": "during_call",
+      "programId": "phased_during_call_18_1794013499986",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0018_phased_during_call_18_1794013499986"
+    },
+    {
+      "i": 19,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_19_1794013521183",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0019_phased_after_call_before_journal_19_1794013521183"
+    }
+  ],
+  "note": "Per-trial effect-ledger.json + twin-digest.json live under trials/. Independent of ProgramCell journal."
+}

@@ -4,7 +4,7 @@ Authorizing overnight soak (`status=measured_v4_ready`) must run on a host that 
 
 ## Mac mini (local agent)
 
-Preferred path when using a Mac mini: **Linux guest via Colima** (lab `host_process` needs `/proc`) with **Mac sleep disabled** so the guest is not paused. Full copy/paste agent prompt + steps: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md) on branch `cursor/soak-mac-mini-agent-2725`.
+Preferred path when using a Mac mini: **Linux guest via Colima** (lab `host_process` needs `/proc`) with **Mac sleep disabled** so the guest is not paused. Full copy/paste agent prompt + steps: [`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md) on branch `cursor/mac-mini-v4-authorizing-2725`.
 
 ## Recommended: workstation / bare metal
 

@@ -1,0 +1,68 @@
+{
+  "i": 632,
+  "programId": "phased_before_intent_632_1794023468368",
+  "phase": "before_intent",
+  "capturedAt": "2026-11-07T03:51:18.813Z",
+  "captured": true,
+  "twinId": "twin_phased_before_intent_632_1794023468368",
+  "attempts": 1,
+  "preserved": true,
+  "stepsMatch": true,
+  "resultMatch": true,
+  "mismatchIndexes": [],
+  "baselineResultDigest": null,
+  "observedResultDigest": null,
+  "baselineSteps": [
+    {
+      "index": 0,
+      "tool": "execute",
+      "operationId": "listPets",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"body\":{\"pets\":[{\"id\":1,\"name\":\"celld-core\"}]},\"operationId\":\"listPets\",\"status\":200}}"
+    },
+    {
+      "index": 1,
+      "tool": "execute",
+      "operationId": "streams.session.noop",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"inCell\":true,\"operationId\":\"streams.session.noop\",\"status\":\"noop\"}}"
+    },
+    {
+      "index": 2,
+      "tool": "execute",
+      "operationId": "owners.create",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"body\":{\"host\":\"mock-pets-upstream\",\"id\":\"owner_phased_before_intent_632_1794023468368\",\"key\":\"phased_before_intent_632_1794023468368\",\"name\":\"phased_before_intent_632_1794023468368\"},\"operationId\":\"owners.create\",\"status\":201}}"
+    }
+  ],
+  "observedSteps": [
+    {
+      "index": 0,
+      "tool": "execute",
+      "operationId": "listPets",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"body\":{\"pets\":[{\"id\":1,\"name\":\"celld-core\"}]},\"operationId\":\"listPets\",\"status\":200}}"
+    },
+    {
+      "index": 1,
+      "tool": "execute",
+      "operationId": "streams.session.noop",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"inCell\":true,\"operationId\":\"streams.session.noop\",\"status\":\"noop\"}}"
+    },
+    {
+      "index": 2,
+      "tool": "execute",
+      "operationId": "owners.create",
+      "ok": true,
+      "status": "ok",
+      "resultDigest": "{\"ok\":true,\"status\":\"ok\",\"value\":{\"body\":{\"host\":\"mock-pets-upstream\",\"id\":\"owner_phased_before_intent_632_1794023468368\",\"key\":\"phased_before_intent_632_1794023468368\",\"name\":\"phased_before_intent_632_1794023468368\"},\"operationId\":\"owners.create\",\"status\":201}}"
+    }
+  ],
+  "meaning": "claim-path §1 fleet — exact digest equality of step slices (index/tool/op/ok/status/error/result body) and program result vs a no-crash twin with the same plan args"
+}
