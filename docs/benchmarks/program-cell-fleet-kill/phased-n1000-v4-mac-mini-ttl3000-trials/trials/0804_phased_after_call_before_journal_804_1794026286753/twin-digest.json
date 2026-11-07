@@ -1,0 +1,8 @@
+{
+  "i": 804,
+  "programId": "phased_after_call_before_journal_804_1794026286753",
+  "phase": "after_call_before_journal",
+  "capturedAt": "2026-11-07T04:38:27.031Z",
+  "captured": false,
+  "reason": "resume_not_completed_clean"
+}

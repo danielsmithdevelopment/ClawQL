@@ -1,0 +1,1015 @@
+{
+  "kind": "celld-fleet-phased-kill",
+  "measuredAt": "2026-11-07T05:32:20.024Z",
+  "ok": true,
+  "injectionMissed": 0,
+  "injectionClean": true,
+  "injectionMissedNote": "injection_missed = program completed without mid-flight paused_for_kill. Counted in gates.injection; does not set ok=false under correctness_availability_v2 and is not a durability loss. ok=true with injectionClean=false means the board measured durability but the pause injector missed some windows. Historical journal-surrogate settles must carry basis=journal_surrogate + effect_ledger=unavailable — never read as verified.",
+  "status": "measured",
+  "scoreMode": "correctness_availability_v2",
+  "evidencePath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json",
+  "evidenceTrialsDir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials",
+  "evidenceOverwrite": {
+    "allowOverwriteEnv": false,
+    "existedBefore": false,
+    "replacedExisting": false,
+    "invalidatesArtifact": false,
+    "note": "Overwrite escape hatch was not set; unique path or first write."
+  },
+  "effectLedgerPersisted": true,
+  "effectLedgerPersistedNote": "Per-trial mock-pets __writes + twin digest under evidenceTrialsDir/trials/. Independent of ProgramCell journal. Missing ledger fails the board (frozen). Precondition for v4 settle.",
+  "effectLedgerCoverage": {
+    "writeKillPersisted": 1000,
+    "writeKillTrials": 1000,
+    "awaitPersisted": 0,
+    "awaitTrials": 0
+  },
+  "effectGroundTruthSample": [
+    {
+      "i": 0,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_0_1794013214843",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0000_phased_before_intent_0_1794013214843"
+    },
+    {
+      "i": 1,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_1_1794013230494",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0001_phased_after_intent_before_call_1_1794013230494"
+    },
+    {
+      "i": 2,
+      "phase": "during_call",
+      "programId": "phased_during_call_2_1794013245217",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0002_phased_during_call_2_1794013245217"
+    },
+    {
+      "i": 3,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_3_1794013265584",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0003_phased_after_call_before_journal_3_1794013265584"
+    },
+    {
+      "i": 4,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_4_1794013280170",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0004_phased_before_intent_4_1794013280170"
+    },
+    {
+      "i": 5,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_5_1794013295617",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0005_phased_after_intent_before_call_5_1794013295617"
+    },
+    {
+      "i": 6,
+      "phase": "during_call",
+      "programId": "phased_during_call_6_1794013309659",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0006_phased_during_call_6_1794013309659"
+    },
+    {
+      "i": 7,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_7_1794013330100",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0007_phased_after_call_before_journal_7_1794013330100"
+    },
+    {
+      "i": 8,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_8_1794013346094",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0008_phased_before_intent_8_1794013346094"
+    },
+    {
+      "i": 9,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_9_1794013360197",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0009_phased_after_intent_before_call_9_1794013360197"
+    },
+    {
+      "i": 10,
+      "phase": "during_call",
+      "programId": "phased_during_call_10_1794013372824",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0010_phased_during_call_10_1794013372824"
+    },
+    {
+      "i": 11,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_11_1794013393247",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0011_phased_after_call_before_journal_11_1794013393247"
+    },
+    {
+      "i": 12,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_12_1794013408212",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0012_phased_before_intent_12_1794013408212"
+    },
+    {
+      "i": 13,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_13_1794013423838",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0013_phased_after_intent_before_call_13_1794013423838"
+    },
+    {
+      "i": 14,
+      "phase": "during_call",
+      "programId": "phased_during_call_14_1794013436933",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0014_phased_during_call_14_1794013436933"
+    },
+    {
+      "i": 15,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_15_1794013458646",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0015_phased_after_call_before_journal_15_1794013458646"
+    },
+    {
+      "i": 16,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_16_1794013472801",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0016_phased_before_intent_16_1794013472801"
+    },
+    {
+      "i": 17,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_17_1794013487272",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0017_phased_after_intent_before_call_17_1794013487272"
+    },
+    {
+      "i": 18,
+      "phase": "during_call",
+      "programId": "phased_during_call_18_1794013499986",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0018_phased_during_call_18_1794013499986"
+    },
+    {
+      "i": 19,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_19_1794013521183",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0019_phased_after_call_before_journal_19_1794013521183"
+    }
+  ],
+  "gates": {
+    "scoreMode": "correctness_availability_v2",
+    "correctness": {
+      "failures": 0,
+      "pass": true,
+      "items": [],
+      "meaning": "wrong outcome only — duplicates / midflight_effect_gt_one, journal_divergence, write rerun, digest_mismatch, lost_midflight_intent, midflight_not_outcome_unknown (in-flight trials must be outcome_unknown; at most one effect), stale_owner_send. injection_missed is NOT correctness. Phase targeting validity (during_call callVerifiedSent) is gates.phaseValidity, not correctness."
+    },
+    "injection": {
+      "failures": 0,
+      "items": [],
+      "meaning": "pause window missed — program completed without mid-flight pause. Counted openly; not a pass and not a durability loss."
+    },
+    "availability": {
+      "failures": 2,
+      "denominator": 1000,
+      "failureRate": 0.002,
+      "ceiling": 0.02,
+      "pass": true,
+      "resumeMs": {
+        "p50": 6742,
+        "p99": 10305,
+        "max": 19191
+      },
+      "recoveryMs": {
+        "n": 1,
+        "p50": 13145,
+        "p99": 13145,
+        "max": 13145
+      },
+      "items": [
+        {
+          "i": 804,
+          "phase": "after_call_before_journal",
+          "failureReason": "no_expected_outcome",
+          "resumeMs": 19191,
+          "recoveryMs": 13145
+        },
+        {
+          "i": 961,
+          "phase": "before_intent",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "recoveryMs": null
+        }
+      ],
+      "meaning": "no outcome in wall-clock time (recovery inclusive) — deadline miss, pause_failed, call_never_sent (during_call never reached mock pets inFlight), twin_capture_failed, await not survive/complete; failure-rate ceiling fixed before run; resumeMs/recoveryMs/resumeActiveMs tails reported without a pass/fail ceiling"
+    },
+    "outerCompletion": {
+      "rateOuterPhases": 0.9958762886597938,
+      "outerPhaseN": 485,
+      "cleanCompletionsOuter": 483,
+      "misses": [
+        {
+          "i": 804,
+          "phase": "after_call_before_journal",
+          "failureClass": "availability",
+          "failureReason": "no_expected_outcome",
+          "resumeMs": 19191,
+          "detail": null
+        },
+        {
+          "i": 961,
+          "phase": "before_intent",
+          "failureClass": "availability",
+          "failureReason": "pause_failed",
+          "resumeMs": null,
+          "detail": "pause failed: {\"error\":\"fetch failed\"}"
+        }
+      ],
+      "meaning": "reported overall; each miss assigned to correctness or availability — not a separate zero-gate"
+    },
+    "missingData": {
+      "effectLedgerPersisted": true,
+      "missingLedgerFailures": 0,
+      "missingLedgerItems": [],
+      "missingEffectLedgerFailsBoard": true,
+      "twinCaptureFailCeiling": 0.02,
+      "twinEligibleN": 483,
+      "twinCaptureFailures": 0,
+      "twinCaptureFailRate": 0,
+      "twinCaptureFailPass": true,
+      "twinCaptureFailItems": [],
+      "overwriteInvalidatesArtifact": true,
+      "artifactInvalidatedByOverwrite": false,
+      "pass": true,
+      "meaning": "Frozen before v4: (1) every trial must persist effect-ledger.json — missing counts against the board; (2) outer twin-eligible captured:false rate ≤ twinCaptureFailCeiling (mid-flight excluded); (3) any FLEET_PHASED_ALLOW_OVERWRITE use invalidates the artifact."
+    },
+    "phaseValidity": {
+      "duringCallRequireSomeCallVerifiedSent": true,
+      "duringCallN": 251,
+      "duringCallVerifiedSent": 251,
+      "duringCallPhaseValid": true,
+      "midFlightEffectDistribution": {
+        "after_intent_before_call": {
+          "n": 264,
+          "effects0": 264,
+          "effects1": 0,
+          "effects2plus": 0,
+          "callVerifiedSent": null,
+          "callVerifiedSentRate": null,
+          "outcomeUnknown": 264,
+          "outcomeUnknownRate": 1
+        },
+        "during_call": {
+          "n": 251,
+          "effects0": 251,
+          "effects1": 0,
+          "effects2plus": 0,
+          "callVerifiedSent": 251,
+          "callVerifiedSentRate": 1,
+          "outcomeUnknown": 251,
+          "outcomeUnknownRate": 1
+        },
+        "meaning": "Effect counts from mock-pets ledger (writeCount). during_call.callVerifiedSent = sawInFlight before kill. Zero callVerifiedSent across all during_call trials ⇒ phase targeting invalid (injector never mid-call)."
+      },
+      "midFlightCorrectness": {
+        "atMostOneEffect": true,
+        "requireOutcomeUnknown": true,
+        "meaning": "Mid-flight (after_intent_before_call, during_call): writeCount ≤ 1 (never 2+); every trial must be outcome_unknown. Violations are correctness failures (midflight_effect_gt_one / midflight_not_outcome_unknown)."
+      },
+      "pass": true,
+      "meaning": "Frozen before v4: if the board includes during_call trials, at least one must have callVerifiedSent (mock inFlight before kill). Otherwise the phase is mislabeled — injection landed before the call — and the board cannot claim to have tested during-call crashes."
+    }
+  },
+  "frozenCriteria": {
+    "resumeDeadlineMs": 60000,
+    "resumeDeadlineMeaning": "wall clock including orchestrator recovery; same for write-kill and await",
+    "availabilityCeiling": 0.02,
+    "availabilityDenominator": "overallN",
+    "writeKillTrials": 1000,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 1000,
+    "tailsHavePassFailCeiling": false,
+    "missingData": {
+      "missingEffectLedgerFailsBoard": true,
+      "twinCaptureFailCeiling": 0.02,
+      "twinCaptureFailDenominator": "outer phases (before_intent, after_call_before_journal) with completedClean; mid-flight captured:false excluded",
+      "overwriteInvalidatesArtifact": true
+    },
+    "phaseValidity": {
+      "duringCallRequireSomeCallVerifiedSent": true,
+      "midFlightAtMostOneEffect": true,
+      "midFlightRequireOutcomeUnknown": true
+    },
+    "note": "Do not change these after the run starts. Tails (resumeMs/recoveryMs/resumeActiveMs p99/max) are reported without a ceiling. injection_missed is reported in gates.injection and does not loosen correctness or availability. Missing-data + phase-validity rules are hard gates for v4."
+  },
+  "midFlightEffectDistribution": {
+    "after_intent_before_call": {
+      "n": 264,
+      "effects0": 264,
+      "effects1": 0,
+      "effects2plus": 0,
+      "callVerifiedSent": null,
+      "callVerifiedSentRate": null,
+      "outcomeUnknown": 264,
+      "outcomeUnknownRate": 1
+    },
+    "during_call": {
+      "n": 251,
+      "effects0": 251,
+      "effects1": 0,
+      "effects2plus": 0,
+      "callVerifiedSent": 251,
+      "callVerifiedSentRate": 1,
+      "outcomeUnknown": 251,
+      "outcomeUnknownRate": 1
+    },
+    "meaning": "Effect counts from mock-pets ledger (writeCount). during_call.callVerifiedSent = sawInFlight before kill. Zero callVerifiedSent across all during_call trials ⇒ phase targeting invalid (injector never mid-call)."
+  },
+  "n": 1000,
+  "trialsCompleted": 1000,
+  "awaitTrialsCompleted": 0,
+  "awaitTrialsN": 0,
+  "overallN": 1000,
+  "phases": [
+    "before_intent",
+    "after_intent_before_call",
+    "during_call",
+    "after_call_before_journal"
+  ],
+  "wedgeHealth": true,
+  "wedgeHoldMs": 6000,
+  "staleOwnerProbe": false,
+  "staleOwnerCell": null,
+  "celldBinaryVersion": "0.6.3",
+  "freshNodeIds": false,
+  "stableNodeIds": {
+    "A": "fleet_A",
+    "B": "fleet_B"
+  },
+  "fenceMode": "lab_enriched_wedged",
+  "outputGate": true,
+  "fencedAck": false,
+  "allowUnfenced": false,
+  "rustLog": null,
+  "nodeCount": 2,
+  "storageProvider": "cloudflare-r2",
+  "bucketRedacted": true,
+  "diagnoseConditionalWrite": "ok",
+  "celldTtlMs": 3000,
+  "resumeDeadlineMs": 60000,
+  "resumeLatencyNote": {
+    "celldTtlMs": 3000,
+    "stockTtlMs": 10000,
+    "resumeMsP50": 6742,
+    "meaning": "CELLD_TTL_MS=3000 (not stock 10000). Resume p50≈6742ms is lease-dominated under this TTL; do not compare to stock ~12–14s boards."
+  },
+  "callSent": {
+    "duringCallTrials": 251,
+    "sawInFlight": 251,
+    "neverSent": 0,
+    "sawInFlightRate": 1,
+    "outcomeUnknownWithIntentVisible": 251,
+    "outcomeUnknownWithIntentVisibleRate": 1,
+    "meaning": "sawInFlight = mock pets __writes.inFlight>0 before wedge/SIGKILL (egress after durable ack). neverSent = availability failure call_never_sent. Settled fenced arm requires sawInFlight===n and outcomeUnknown+intent visible on every trial.",
+    "sample": [
+      {
+        "i": 2,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1058,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 6,
+        "sawInFlight": true,
+        "inFlightWaitMs": 539,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 10,
+        "sawInFlight": true,
+        "inFlightWaitMs": 971,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 14,
+        "sawInFlight": true,
+        "inFlightWaitMs": 945,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 18,
+        "sawInFlight": true,
+        "inFlightWaitMs": 533,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 22,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1173,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 26,
+        "sawInFlight": true,
+        "inFlightWaitMs": 950,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 30,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1163,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 34,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1065,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 38,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1048,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 42,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1054,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 46,
+        "sawInFlight": true,
+        "inFlightWaitMs": 643,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 50,
+        "sawInFlight": true,
+        "inFlightWaitMs": 521,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 54,
+        "sawInFlight": true,
+        "inFlightWaitMs": 533,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 58,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1279,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 62,
+        "sawInFlight": true,
+        "inFlightWaitMs": 528,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 66,
+        "sawInFlight": true,
+        "inFlightWaitMs": 541,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 70,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1279,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 74,
+        "sawInFlight": true,
+        "inFlightWaitMs": 1050,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      },
+      {
+        "i": 78,
+        "sawInFlight": true,
+        "inFlightWaitMs": 836,
+        "inFlightAtKill": 1,
+        "outcomeUnknown": true,
+        "intentPresent": true,
+        "pauseKind": "during_call",
+        "writeCount": 0,
+        "ok": true,
+        "failureReason": null
+      }
+    ]
+  },
+  "staleOwner": null,
+  "trialAccounting": {
+    "writeKillTrials": 1000,
+    "awaitApprovalTrials": 0,
+    "overallTrials": 1000,
+    "filteredOut": 0,
+    "byPhase": {
+      "before_intent": {
+        "n": 244,
+        "completedClean": 243,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 243,
+        "statePreservedTrue": 243,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      },
+      "after_intent_before_call": {
+        "n": 264,
+        "completedClean": 0,
+        "outcomeUnknown": 264,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "during_call": {
+        "n": 251,
+        "completedClean": 0,
+        "outcomeUnknown": 251,
+        "statePreservedEligible": 0,
+        "statePreservedTrue": 0,
+        "expectOutcomeUnknown": true,
+        "inCompletedOuterDenominator": false
+      },
+      "after_call_before_journal": {
+        "n": 241,
+        "completedClean": 240,
+        "outcomeUnknown": 0,
+        "statePreservedEligible": 240,
+        "statePreservedTrue": 240,
+        "expectOutcomeUnknown": false,
+        "inCompletedOuterDenominator": true
+      }
+    },
+    "completed": {
+      "denominatorAllPhases": 1000,
+      "cleanCompletions": 483,
+      "denominatorOuterPhases": 485,
+      "cleanCompletionsOuter": 483,
+      "midFlightExcludedFromOuter": 515,
+      "note": "rateOuterPhases uses only before_intent + after_call_before_journal. Mid-flight phases (after_intent_before_call, during_call) are expected to end outcome_unknown — they are counted in n / rateAllPhases but not in the outer completion window. No trials are dropped."
+    },
+    "statePreserved": {
+      "denominator": 483,
+      "preserved": 483,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "midFlightExcluded": 515,
+      "outerIncompleteExcluded": 2,
+      "note": "Eligible = outer-phase trials that completedClean. Failures classify as twin_capture_failed (baseline twin never completed — often fleet SELF-FENCE) vs digest_mismatch (twin completed but digests differ). Both fail the rate; they are not the same cause. Mid-flight excluded by definition."
+    },
+    "waitApproval": {
+      "denominator": 0,
+      "ok": 0,
+      "note": "Separate arm (FLEET_PHASED_AWAIT_TRIALS), not a subset of write-kill N. Every await trial is in this denominator."
+    },
+    "stepsRepeated": {
+      "denominator": 1000,
+      "writeStepsRerun": 0,
+      "note": "Sum of pets-ledger duplicates across all write-kill trials (target 0)."
+    }
+  },
+  "columns": {
+    "duplicates": {
+      "total": 0,
+      "zeroDuplicates": true,
+      "ruleOfThreeUpperBound95": 0.003,
+      "meaning": "safety — never repeated a write"
+    },
+    "outcomeUnknown": {
+      "total": 515,
+      "rate": 0.515,
+      "meaning": "honest uncertainty — person resolves"
+    },
+    "availability": {
+      "survivorSelfFences": 1,
+      "survivorSelfFenceRate": 0.001,
+      "survivorRestarts": 1,
+      "resumeDeadlineMisses": 0,
+      "recoveryMs": {
+        "n": 1,
+        "p50": 13145,
+        "p95": 13145,
+        "p99": 13145
+      },
+      "meaning": "availability — lease self-fence + orchestrator restart counted; recovery folded into resumeMs"
+    },
+    "completed": {
+      "cleanCompletions": 483,
+      "rateAllPhases": 0.483,
+      "rateOuterPhases": 0.9958762886597938,
+      "outerPhaseN": 485,
+      "meaning": "claim-path §1 — % of resumed programs that reached completed without outcome_unknown; outer phases (before_intent / after_call_before_journal) are the fair completion window; mid-flight phases expect unknown"
+    },
+    "stepsRepeated": {
+      "writeStepsRerun": 0,
+      "zeroWriteStepsRerun": true,
+      "journalDivergence": 0,
+      "meaning": "claim-path §1 — completed write steps that ran again on the host (pets ledger duplicates); target 0. journal_divergence hard-stops when a stored entry no longer matches the plan (ProgramCellDO + Node durable-runner)"
+    },
+    "statePreserved": {
+      "measured": true,
+      "nodeUnitGolden": true,
+      "fleetBaselinePaired": true,
+      "compareMode": "digest_equality",
+      "eligibleN": 483,
+      "preservedN": 483,
+      "twinCaptureFailures": 0,
+      "digestMismatches": 0,
+      "rate": 1,
+      "meaning": "claim-path §1 — exact digest equality vs per-trial no-crash twin. Per-trial reason: digest_match | digest_mismatch | twin_capture_failed (twin never completed; not evidence the resume mutated state). Mid-flight excluded (see trialAccounting)."
+    },
+    "waitApproval": {
+      "measured": false,
+      "nodeAwaitApproval": true,
+      "densityRestartSurvival": true,
+      "fleetAwaitTrials": false,
+      "n": 0,
+      "ran": 0,
+      "ok": 0,
+      "failed": 0,
+      "survivedRate": null,
+      "completedAfterApproveRate": null,
+      "okRate": null,
+      "failureByReason": {},
+      "meaning": "claim-path §4 — await_approval parks while pending, survives peer SIGKILL, then completes after approve (observe-only; never consumes). Separate arm from write-kill phases (see trialAccounting.waitApproval). okRate uses planned n; also report ran/ok/failed + failureByReason so incomplete or park-fail meltdowns are not ambiguous."
+    }
+  },
+  "awaitTrials": [],
+  "awaitFailureSummary": {
+    "ran": 0,
+    "planned": 0,
+    "ok": 0,
+    "failed": 0,
+    "byReason": {}
+  },
+  "totalDuplicates": 0,
+  "zeroDuplicates": true,
+  "ruleOfThreeUpperBound95": 0.003,
+  "totalSurvivorSelfFences": 1,
+  "totalSurvivorRestarts": 1,
+  "totalResumeDeadlineMisses": 0,
+  "claim": "Across 1000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 7 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under these settings, 0.1% of surviving nodes paused themselves for safety, and 0.0% of resumes missed the recovery deadline.",
+  "honesty": "Two celld nodes, one object-storage provider (R2). Not durable execution / exactly-once. Columns: duplicates (safety), outcome_unknown (uncertainty), survivor self-fence/restart (availability), claim-path completed + stepsRepeated, plus statePreserved (exact digest equality vs per-trial no-crash twin on outer phases) and waitApproval (separate FLEET_PHASED_AWAIT_TRIALS arm). Denominators: see trialAccounting — no trials filtered; outer-only rates exclude mid-flight kills that intentionally end outcome_unknown. Completed reads are journaled and replayed; an interrupted read with no entry is re-requested once (resumption assumes that re-read is acceptable). Model calls: at most one repeated model request per crash, never a repeated write. Aggregate outcome_unknown ≈ half only because kills are aimed evenly at four phases — two are the in-flight window; outer phases must stay 0 (nonzero = bug). Resume p50 ≈ lease TTL + detection (failover floor).",
+  "resumeMs": {
+    "p50": 6742,
+    "p95": 8240,
+    "p99": 10305,
+    "p999": 19191,
+    "includesSurvivorRecovery": true
+  },
+  "failoverAboutSec": 7,
+  "lease": {
+    "celldTtlMs": 3000,
+    "renewSamples": 0,
+    "renewElapsedMs": {
+      "p50": null,
+      "p95": null,
+      "p99": null,
+      "max": null
+    },
+    "renewPriorHeadroomMs": {
+      "p50": null,
+      "min": null
+    },
+    "selfFenceLogHits": 2,
+    "note": "Renewals should complete with headroom ≫ R2 RTT. Stock CELLD_TTL_MS=10000 renews near ~6665ms headroom; slow renew cycles under peer-down storms can fence. See AVAILABILITY.md."
+  },
+  "byPhase": {
+    "before_intent": {
+      "n": 244,
+      "ok": 243,
+      "failures": 1,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 243,
+      "completedCleanRate": 0.9959016393442623,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 6928,
+        "p95": 8186,
+        "p99": 10876,
+        "p999": 11435
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_intent_before_call": {
+      "n": 264,
+      "ok": 264,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 264,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 6937,
+        "p95": 8577,
+        "p99": 9864,
+        "p999": 10305
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "during_call": {
+      "n": 251,
+      "ok": 251,
+      "failures": 0,
+      "duplicates": 0,
+      "outcomeUnknown": 251,
+      "outcomeUnknownRate": 1,
+      "completedClean": 0,
+      "completedCleanRate": 0,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 0,
+      "survivorSelfFenceRate": 0,
+      "survivorRestarts": 0,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 4966,
+        "p95": 6193,
+        "p99": 9223,
+        "p999": 10970
+      },
+      "recoveryMs": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null
+      }
+    },
+    "after_call_before_journal": {
+      "n": 241,
+      "ok": 240,
+      "failures": 1,
+      "duplicates": 0,
+      "outcomeUnknown": 0,
+      "outcomeUnknownRate": 0,
+      "completedClean": 240,
+      "completedCleanRate": 0.995850622406639,
+      "writeStepsRerun": 0,
+      "journalDivergence": 0,
+      "survivorSelfFences": 1,
+      "survivorSelfFenceRate": 0.004149377593360996,
+      "survivorRestarts": 1,
+      "resumeDeadlineMisses": 0,
+      "resumeMs": {
+        "p50": 7013,
+        "p95": 8557,
+        "p99": 11805,
+        "p999": 19191
+      },
+      "recoveryMs": {
+        "n": 1,
+        "p50": 13145,
+        "p95": 13145,
+        "p99": 13145
+      }
+    }
+  },
+  "trialFailures": [
+    {
+      "i": 804,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_804_1794026286753",
+      "ok": false,
+      "duplicates": 0,
+      "writeCount": 1,
+      "outcomeUnknown": false,
+      "completedClean": false,
+      "journalDivergence": false,
+      "writeStepsRerun": 0,
+      "replayedSteps": 0,
+      "statePreserved": null,
+      "failureClass": "availability",
+      "failureReason": "no_expected_outcome",
+      "midFlightStorage": null,
+      "callSent": null,
+      "staleOwner": null,
+      "resumeMs": 19191,
+      "resumeActiveMs": 6046,
+      "recoveryMs": 13145,
+      "survivorSelfFence": true,
+      "survivorRestart": true,
+      "resumeDeadlineMiss": false,
+      "writesBefore": 0,
+      "resumeStatus": 404,
+      "resumeBodyStatus": null,
+      "resumeOk": false,
+      "resumeError": "not_found",
+      "effectGroundTruth": {
+        "basis": "effect_ledger",
+        "effect_ledger": "persisted",
+        "ownerKey": "owner_phased_after_call_before_journal_804_1794026286753",
+        "ownerEffectCount": 1,
+        "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0804_phased_after_call_before_journal_804_1794026286753",
+        "effectLedgerPath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0804_phased_after_call_before_journal_804_1794026286753/effect-ledger.json",
+        "twinDigestPath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0804_phased_after_call_before_journal_804_1794026286753/twin-digest.json",
+        "twinCaptured": false
+      }
+    },
+    {
+      "i": 961,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_961_1794028898780",
+      "ok": false,
+      "pauseFailed": true,
+      "injectionMissed": false,
+      "failureClass": "availability",
+      "failureReason": "pause_failed",
+      "detail": "pause failed: {\"error\":\"fetch failed\"}",
+      "effectGroundTruth": {
+        "basis": "effect_ledger",
+        "effect_ledger": "persisted",
+        "ownerKey": "owner_phased_before_intent_961_1794028898780",
+        "ownerEffectCount": 0,
+        "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0961_phased_before_intent_961_1794028898780",
+        "effectLedgerPath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0961_phased_before_intent_961_1794028898780/effect-ledger.json",
+        "twinDigestPath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-trials/trials/0961_phased_before_intent_961_1794028898780/twin-digest.json"
+      },
+      "writeCount": 0
+    }
+  ],
+  "availabilityIncidents": [
+    {
+      "i": 804,
+      "phase": "after_call_before_journal",
+      "survivorSelfFence": true,
+      "survivorRestart": true,
+      "resumeDeadlineMiss": false,
+      "resumeMs": 19191,
+      "recoveryMs": 13145,
+      "ok": false
+    }
+  ]
+}

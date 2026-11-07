@@ -1,0 +1,8 @@
+{
+  "i": 686,
+  "programId": "phased_during_call_686_1794024347998",
+  "phase": "during_call",
+  "capturedAt": "2026-11-07T04:06:04.302Z",
+  "captured": false,
+  "reason": "midflight_phase_no_twin"
+}
