@@ -28,6 +28,8 @@ export default defineConfig({
     "sqlite",
     "express-rate-limit",
     "express",
+    // prom-client: createRequire on first /metrics scrape (Ready RSS).
+    "prom-client",
     /^clawql-/,
     "cbor",
     "qrcode",
