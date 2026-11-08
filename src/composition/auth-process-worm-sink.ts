@@ -8,6 +8,7 @@ import {
   authEventSinkFromPromise,
   composeAuthEventSinks,
   createAuthEventSinkFromEnv,
+  type AuthEvent,
   type AuthEventSink,
 } from "clawql-auth/gateway";
 
@@ -15,8 +16,13 @@ import {
 export function resolveHostAuthEventSink(env: NodeJS.ProcessEnv = process.env): AuthEventSink {
   const primary = createAuthEventSinkFromEnv(env);
   if (env.CLAWQL_WORM_ENABLED?.trim() !== "1") return primary;
+  let sinkPromise: Promise<(event: AuthEvent) => Promise<void>> | undefined;
   return composeAuthEventSinks(
     primary,
-    authEventSinkFromPromise(import("clawql-audit").then((m) => m.createAuthEventWormSink()))
+    authEventSinkFromPromise(async (event) => {
+      sinkPromise ??= import("clawql-audit").then((m) => m.createAuthEventWormSink());
+      const sink = await sinkPromise;
+      await sink(event);
+    })
   );
 }
