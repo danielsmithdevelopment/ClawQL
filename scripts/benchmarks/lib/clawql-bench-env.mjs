@@ -58,6 +58,9 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
     // Tool-call equal-arm never hits events/* — keep clawql-mcp-events off Ready (product
     // default remains on unless CLAWQL_ENABLE_MCP_EVENTS=0). Override with =1 to measure events.
     CLAWQL_ENABLE_MCP_EVENTS: baseEnv.CLAWQL_ENABLE_MCP_EVENTS ?? "0",
+    // Tool-call equal-arm never scrapes GET /metrics — keep route unmounted (product default
+    // remains on). prom-client is also createRequire-deferred until first scrape.
+    CLAWQL_ENABLE_HTTP_METRICS: baseEnv.CLAWQL_ENABLE_HTTP_METRICS ?? "0",
   };
   for (const key of [
     "CLAWQL_PROVIDER",
