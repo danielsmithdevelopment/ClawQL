@@ -55,6 +55,9 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
     // (equal-arm benches never hit /.well-known/payments or registry). Override with =0.
     CLAWQL_HTTP_SKIP_PAYMENTS: baseEnv.CLAWQL_HTTP_SKIP_PAYMENTS ?? "1",
     CLAWQL_HTTP_SKIP_GRAPHQL: baseEnv.CLAWQL_HTTP_SKIP_GRAPHQL ?? "1",
+    // Tool-call equal-arm never hits events/* — keep clawql-mcp-events off Ready (product
+    // default remains on unless CLAWQL_ENABLE_MCP_EVENTS=0). Override with =1 to measure events.
+    CLAWQL_ENABLE_MCP_EVENTS: baseEnv.CLAWQL_ENABLE_MCP_EVENTS ?? "0",
   };
   for (const key of [
     "CLAWQL_PROVIDER",
