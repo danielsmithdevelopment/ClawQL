@@ -37,12 +37,6 @@ import {
   shouldUseStatelessHttpTransport,
 } from "../mcp/mcp-http-protocol.js";
 import {
-  handleMcpEventsJsonRpc,
-  isMcpEventsEnabledSync,
-  isMcpEventsJsonRpc,
-  McpEventsServiceLive,
-} from "clawql-mcp-events";
-import {
   getVaultStartupStatus,
   validateOrDegradeObsidianVaultAtStartup,
 } from "../host/vault-config.js";
@@ -70,6 +64,37 @@ import { applySecurityHeadersMiddleware } from "./security-headers.js";
 /** Inbound MCP OAuth / ID-JAG runtime — loaded only when env enables AS routes. */
 type McpOAuthRuntime = import("clawql-auth").McpOAuthRuntime;
 type IdJagIssuerRuntime = import("clawql-auth").IdJagIssuerRuntime;
+
+/**
+ * Cheap Ready gate for MCP Events (mirrors clawql-mcp-events isMcpEventsEnabledSync).
+ * Package stays off the listen graph until enabled + first events/* RPC / emitter boot.
+ * Default on — set CLAWQL_ENABLE_MCP_EVENTS=0 to skip.
+ */
+function mcpEventsEnvEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = env.CLAWQL_ENABLE_MCP_EVENTS;
+  if (v === undefined) return true;
+  const t = v.trim().toLowerCase();
+  return !(t === "0" || t === "false" || t === "no");
+}
+
+/** Method sniff only — avoid importing clawql-mcp-events for every tools/call. */
+function isMcpEventsJsonRpc(body: unknown): boolean {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return false;
+  const method = (body as { method?: unknown }).method;
+  return (
+    method === "events/list" || method === "events/subscribe" || method === "events/unsubscribe"
+  );
+}
+
+async function maybeConfigureMcpEventsProcessEmitter(): Promise<void> {
+  if (!mcpEventsEnvEnabled()) return;
+  try {
+    const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
+    configureMcpEventsProcessEmitter();
+  } catch {
+    /* mcp-events optional in slim test hosts */
+  }
+}
 
 /**
  * Cheap Ready gate for MCP OAuth AS (mirrors clawql-auth isMcpOAuthEnabled env flags).
@@ -264,12 +289,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   await ensureClawqlApi();
   const { wireOptionalToolDeps } = await import("../mcp/tools.js");
   await wireOptionalToolDeps();
-  try {
-    const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
-    configureMcpEventsProcessEmitter();
-  } catch {
-    /* mcp-events optional in slim test hosts */
-  }
+  await maybeConfigureMcpEventsProcessEmitter();
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
@@ -729,7 +749,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
 
     // MCP Events (ChatGPT / draft Events spec) — same authenticated endpoint as tools.
     if (isMcpEventsJsonRpc(req.body)) {
-      if (!isMcpEventsEnabledSync()) {
+      if (!mcpEventsEnvEnabled()) {
         const body = req.body as { id?: unknown };
         res.status(200).json({
           jsonrpc: "2.0",
@@ -750,6 +770,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           req.header("x-clawql-atr-sub")?.trim()) ||
         "anonymous";
       try {
+        const { handleMcpEventsJsonRpc, McpEventsServiceLive } = await import("clawql-mcp-events");
         const rpc = await Effect.runPromise(
           handleMcpEventsJsonRpc(
             { jsonrpc: "2.0", id: body.id, method: body.method, params: body.params },
@@ -980,8 +1001,7 @@ export async function startMcpHttpServer(): Promise<void> {
   await ensureClawqlApi();
   const { wireOptionalToolDeps } = await import("../mcp/tools.js");
   await wireOptionalToolDeps();
-  const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
-  configureMcpEventsProcessEmitter();
+  await maybeConfigureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");
   await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();
