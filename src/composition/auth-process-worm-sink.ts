@@ -1,8 +1,9 @@
 /**
  * Host wiring: auth SQLite WORM + optional clawql-audit process trail dual-write.
+ *
+ * `clawql-audit` is dynamic-imported only when `CLAWQL_WORM_ENABLED=1`.
  */
 
-import { createAuthEventWormSink } from "clawql-audit";
 import {
   authEventSinkFromPromise,
   composeAuthEventSinks,
@@ -14,5 +15,8 @@ import {
 export function resolveHostAuthEventSink(env: NodeJS.ProcessEnv = process.env): AuthEventSink {
   const primary = createAuthEventSinkFromEnv(env);
   if (env.CLAWQL_WORM_ENABLED?.trim() !== "1") return primary;
-  return composeAuthEventSinks(primary, authEventSinkFromPromise(createAuthEventWormSink()));
+  return composeAuthEventSinks(
+    primary,
+    authEventSinkFromPromise(import("clawql-audit").then((m) => m.createAuthEventWormSink()))
+  );
 }

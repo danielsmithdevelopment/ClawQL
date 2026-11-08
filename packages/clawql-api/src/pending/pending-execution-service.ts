@@ -5,7 +5,7 @@
 
 import { hostname } from "node:os";
 import { Context, Effect, Layer } from "effect";
-import { appendProcessWormEffect } from "clawql-audit";
+import { appendProcessWormLazyEffect } from "../audit/clawql-audit-lazy.js";
 import type { OperationRisk } from "../risk/operation-risk-types.js";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
 import { hashPendingArgsEffect } from "./args-hash.js";
@@ -124,7 +124,7 @@ export const PendingExecutionLive = Layer.succeed(
           idempotencyCapable: input.idempotencyCapable === true,
         };
         yield* writePendingExecutionEffect(record, home);
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormLazyEffect({
           type: "HUMAN_DECISION_REQUESTED",
           timestamp: createdAt,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -202,7 +202,7 @@ export const PendingExecutionLive = Layer.succeed(
             { status: "declined", approvedAt: null, completedAt: now },
             home
           );
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormLazyEffect({
             type: "HUMAN_REJECTION",
             timestamp: now,
             sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -216,7 +216,7 @@ export const PendingExecutionLive = Layer.succeed(
           { status: "approved", approvedAt: now },
           home
         );
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormLazyEffect({
           type: "HUMAN_APPROVAL",
           timestamp: now,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -239,7 +239,7 @@ export const PendingExecutionLive = Layer.succeed(
         );
         if (!consumed) return null;
         const ts = consumed.consumedAt ?? new Date().toISOString();
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormLazyEffect({
           type: "MANDATE_CONSUMED",
           timestamp: ts,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -283,7 +283,7 @@ export const PendingExecutionLive = Layer.succeed(
           },
           home
         );
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormLazyEffect({
           type: outcome.ok ? "MANDATE_FINALIZED" : "MANDATE_FINALIZED",
           timestamp: completedAt,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -323,7 +323,7 @@ export const PendingExecutionLive = Layer.succeed(
             },
             home
           );
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormLazyEffect({
             type: "MANDATE_FINALIZED",
             timestamp: completedAt,
             sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
@@ -348,7 +348,7 @@ export const PendingExecutionLive = Layer.succeed(
           );
         }
         const now = new Date().toISOString();
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormLazyEffect({
           type: "MANDATE_RETRY_AUTHORIZED",
           timestamp: now,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",

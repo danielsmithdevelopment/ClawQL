@@ -1,9 +1,5 @@
-import {
-  appendProcessWormEffect,
-  wormInputFromToolAttempt,
-  wormInputFromToolResult,
-} from "clawql-audit";
 import { Effect, Layer } from "effect";
+import { loadClawqlAuditEffect, processWormEnvLikelyEnabled } from "../audit/clawql-audit-lazy.js";
 import { ExecuteService } from "../execute-service.js";
 import { loadSpec } from "../spec/spec-loader.js";
 import type { LoadSpecFn } from "../search/search-core.js";
@@ -39,13 +35,16 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
       execute: (input) =>
         Effect.gen(function* () {
           const args = input.args ?? {};
-          yield* Effect.gen(function* () {
-            const attempt = yield* wormInputFromToolAttempt({
-              operationId: input.operationId,
-              argKeys: Object.keys(args),
-            });
-            yield* appendProcessWormEffect(attempt);
-          }).pipe(Effect.catch(() => Effect.void));
+          if (processWormEnvLikelyEnabled()) {
+            yield* Effect.gen(function* () {
+              const audit = yield* loadClawqlAuditEffect();
+              const attempt = yield* audit.wormInputFromToolAttempt({
+                operationId: input.operationId,
+                argKeys: Object.keys(args),
+              });
+              yield* audit.appendProcessWormEffect(attempt);
+            }).pipe(Effect.catch(() => Effect.void));
+          }
 
           const content = yield* executeClawqlOperationEffect(
             {
@@ -59,14 +58,17 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
           );
 
           const ok = executeResultLooksOk(content);
-          yield* Effect.gen(function* () {
-            const result = yield* wormInputFromToolResult({
-              operationId: input.operationId,
-              ok,
-              detail: ok ? undefined : content[0]?.text?.slice(0, 500),
-            });
-            yield* appendProcessWormEffect(result);
-          }).pipe(Effect.catch(() => Effect.void));
+          if (processWormEnvLikelyEnabled()) {
+            yield* Effect.gen(function* () {
+              const audit = yield* loadClawqlAuditEffect();
+              const result = yield* audit.wormInputFromToolResult({
+                operationId: input.operationId,
+                ok,
+                detail: ok ? undefined : content[0]?.text?.slice(0, 500),
+              });
+              yield* audit.appendProcessWormEffect(result);
+            }).pipe(Effect.catch(() => Effect.void));
+          }
 
           return { content };
         }),
