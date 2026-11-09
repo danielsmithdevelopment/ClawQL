@@ -3,7 +3,7 @@
  */
 
 import { Context, Effect, Layer } from "effect";
-import { appendProcessWormEffect } from "clawql-audit";
+import { appendProcessWormLazyEffect } from "../audit/clawql-audit-lazy.js";
 import type { Operation } from "../spec/operation-types.js";
 import { classifyOperationRiskEffect } from "./classify-operation-risk.js";
 import {
@@ -84,7 +84,7 @@ export const OperationRiskLive = Layer.succeed(
               reason: ov.reason,
             };
             if (wormLog) {
-              yield* appendProcessWormEffect({
+              yield* appendProcessWormLazyEffect({
                 type: "OPERATION_RISK_OVERRIDE",
                 timestamp: new Date().toISOString(),
                 sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "operation-risk",

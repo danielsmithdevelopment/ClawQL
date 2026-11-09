@@ -71,8 +71,16 @@ async function auditWrappedTool(
   await recordMcpToolCallAudit({ toolName, args, outcome, result, errorMessage });
 }
 
+function processWormEnvLikelyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.CLAWQL_WORM_ENABLED?.trim() === "1";
+}
+
 function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Effect<void> {
-  if (WORM_AUDIT_SKIP_TOOLS.has(toolName) || toolName === "execute") {
+  if (
+    !processWormEnvLikelyEnabled() ||
+    WORM_AUDIT_SKIP_TOOLS.has(toolName) ||
+    toolName === "execute"
+  ) {
     return Effect.void;
   }
   return Effect.gen(function* () {
@@ -91,7 +99,11 @@ function appendMcpToolResultEffect(
   ok: boolean,
   detail?: string
 ): Effect.Effect<void> {
-  if (WORM_AUDIT_SKIP_TOOLS.has(toolName) || toolName === "execute") {
+  if (
+    !processWormEnvLikelyEnabled() ||
+    WORM_AUDIT_SKIP_TOOLS.has(toolName) ||
+    toolName === "execute"
+  ) {
     return Effect.void;
   }
   return Effect.gen(function* () {

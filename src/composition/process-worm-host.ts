@@ -1,21 +1,27 @@
 /**
  * Boot process clawql-audit WORM + register host sinks (memory; auth sink exported).
  * Call once at MCP/HTTP process start when CLAWQL_WORM_ENABLED=1.
+ *
+ * `clawql-audit` is dynamic-imported so WORM-off Ready (equal-arm) never evaluates
+ * cbor/qrcode/raptorq/S3.
  */
 
-import {
-  bootProcessWormFromEnvEffect,
-  createAuthEventWormSink,
-  createMemoryWormSink,
-  stopProcessWormEffect,
-} from "clawql-audit";
 import { createRequire } from "node:module";
 import { Effect } from "effect";
 
 const requireFromHere = createRequire(import.meta.url);
 
+type ClawqlAudit = typeof import("clawql-audit");
+
 let memoryUnsub: (() => void) | undefined;
 let booted = false;
+let auditMod: ClawqlAudit | null = null;
+
+async function loadAudit(): Promise<ClawqlAudit> {
+  if (auditMod) return auditMod;
+  auditMod = await import("clawql-audit");
+  return auditMod;
+}
 
 /**
  * Best-effort boot. Safe when WORM is disabled. Idempotent.
@@ -30,15 +36,17 @@ export function ensureProcessWormHostBootedEffect(
   return Effect.gen(function* () {
     if (booted) return;
     booted = true;
-    const svc = yield* bootProcessWormFromEnvEffect(env).pipe(
-      Effect.catch(() => Effect.succeed(null))
-    );
+    if (env.CLAWQL_WORM_ENABLED?.trim() !== "1") return;
+    const audit = yield* Effect.promise(() => loadAudit());
+    const svc = yield* audit
+      .bootProcessWormFromEnvEffect(env)
+      .pipe(Effect.catch(() => Effect.succeed(null)));
     if (!svc) return;
     try {
       const { registerMemoryWormSink } = requireFromHere(
         "clawql-memory/okf"
       ) as typeof import("clawql-memory/okf");
-      memoryUnsub = registerMemoryWormSink(createMemoryWormSink());
+      memoryUnsub = registerMemoryWormSink(audit.createMemoryWormSink());
     } catch {
       /* memory package optional */
     }
@@ -56,8 +64,9 @@ export async function ensureProcessWormHostBooted(
 }
 
 /** AuthEventSink for createAuth({ authEventSink }) — no-ops until trail is booted. */
-export function getProcessWormAuthEventSink() {
-  return createAuthEventWormSink();
+export async function getProcessWormAuthEventSink() {
+  const audit = await loadAudit();
+  return audit.createAuthEventWormSink();
 }
 
 export function disposeProcessWormHostEffect(): Effect.Effect<void> {
@@ -65,7 +74,8 @@ export function disposeProcessWormHostEffect(): Effect.Effect<void> {
     memoryUnsub?.();
     memoryUnsub = undefined;
     booted = false;
-    yield* stopProcessWormEffect();
+    if (!auditMod) return;
+    yield* auditMod.stopProcessWormEffect();
   });
 }
 
