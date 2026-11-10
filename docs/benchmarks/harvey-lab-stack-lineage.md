@@ -1,8 +1,10 @@
 # Harvey LAB stack lineage
 
-**Updated:** 2026-08-20
+**Updated:** 2026-11-10
 
 Harvey LAB × ClawQL has two distinct measurement stacks. Mixing them invalidates benchmark claims and poisons fine-tune traces.
+
+**Next publishable board:** [right-sizing remeasure handoff](./harvey-lab-rightsizing-remeasure-handoff.md) · [frozen criteria](./harvey-lab-rightsizing-frozen-criteria.md) (arms A–D on `ts-clawql-data-v2`; quarantined ledger never cited as current).
 
 ## Current — `ts-clawql-data-v2`
 
