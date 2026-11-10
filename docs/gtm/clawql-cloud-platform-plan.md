@@ -2,7 +2,7 @@
 
 Nov 3, 2026 · @Daniel
 
-**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json).
+**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Network whitepaper (§11 runtime substrate): [`../vision/clawql-network-whitepaper-v0.2.md`](../vision/clawql-network-whitepaper-v0.2.md).
 
 ## Status and summary
 
