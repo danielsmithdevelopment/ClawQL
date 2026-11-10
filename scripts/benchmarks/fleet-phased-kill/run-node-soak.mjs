@@ -28,8 +28,12 @@
  *   FLEET_SOAK_VOID_RESTART        1=on void, discard run and restart from cycle 0 (default 1)
  *   FLEET_SOAK_REQUIRE_SUSPEND_MONITOR  1=abort if suspend clocks unavailable (default 1)
  *   FLEET_SOAK_HOST_LABEL          human host name recorded in evidence
+ *   FLEET_SOAK_CELLD_BUILD         advisory label (default lab_expiry_not_dead_fixed for lab bins)
+ *   FLEET_SOAK_CELLD_GIT_COMMIT    override recorded monorepo/lab git commit
  *   CELLD_TTL_MS / CELLD_BUCKET / R2 creds — same as run-board.mjs
  *   FLEET_PHASED_FRESH_NODE_IDS must stay unset/0 for a meaningful pass
+ *
+ * Evidence identity: prefer celldLabGitCommit + celldSha256 over celldBuild labels.
  *
  * Environment validity (SOAK_GATES.md): if the suspend gap grows by more than
  * FLEET_SOAK_SUSPEND_GAP_SECS during a run (Linux: BOOTTIME−MONOTONIC; Darwin:
@@ -55,6 +59,7 @@ import {
   makeSuspendMonitor,
   DEFAULT_SUSPEND_GAP_GROWTH_SECS,
 } from "./host-env.mjs";
+import { resolveCelldIdentity } from "./celld-identity.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -584,29 +589,14 @@ async function runOnce({ attempt = 1 } = {}) {
   stopFleet(pets);
 
   const cyclesCompleted = samples.length;
-  const labBin =
-    typeof CELLD_BIN === "string" && /vendor\/celld-lab\//.test(CELLD_BIN);
-  const celldBuild = labBin
-    ? "lab_fixed_alive_sweep_supersede"
-    : process.env.FLEET_SOAK_CELLD_BUILD || "stock_or_unknown";
-  let celldLabGitCommit = process.env.FLEET_SOAK_CELLD_GIT_COMMIT?.trim() || null;
-  if (!celldLabGitCommit) {
-    try {
-      celldLabGitCommit = execFileSync(
-        "git",
-        ["-C", join(REPO, "vendor/celld-lab"), "rev-parse", "HEAD"],
-        { encoding: "utf8" }
-      ).trim();
-    } catch {
-      try {
-        celldLabGitCommit = execFileSync("git", ["rev-parse", "HEAD"], {
-          encoding: "utf8",
-        }).trim();
-      } catch {
-        celldLabGitCommit = null;
-      }
-    }
-  }
+  const identity = resolveCelldIdentity({
+    repoRoot: REPO,
+    celldBin: CELLD_BIN,
+    buildEnv: process.env.FLEET_SOAK_CELLD_BUILD,
+    gitCommitEnv: process.env.FLEET_SOAK_CELLD_GIT_COMMIT,
+    defaultLabBuild: "lab_expiry_not_dead_fixed",
+  });
+  const { celldBuild, celldLabGitCommit, celldSha256, labBin } = identity;
   /** Authorizing Mac mini soak landed at this evidence commit (pre-enrichment). */
   const authorizingBaselineCommit =
     process.env.FLEET_SOAK_AUTHORIZING_BASELINE_COMMIT?.trim() ||
@@ -628,6 +618,7 @@ async function runOnce({ attempt = 1 } = {}) {
       celldBuild,
       celldBin: CELLD_BIN,
       celldLabGitCommit,
+      celldSha256,
       authorizingBaselineCommit,
       host,
       suspendMonitor: {
@@ -695,11 +686,14 @@ async function runOnce({ attempt = 1 } = {}) {
     celldBuild,
     celldBin: CELLD_BIN,
     celldLabGitCommit,
+    celldSha256,
     authorizingBaselineCommit,
     buildChainNote:
       celldLabGitCommit && celldLabGitCommit.startsWith(authorizingBaselineCommit.slice(0, 9))
         ? "same_commit_as_authorizing_baseline"
         : "enriched_or_later_lab_vs_authorizing_baseline_112a8aa6e",
+    identityNote:
+      "celldBuild is an advisory label (FLEET_SOAK_CELLD_BUILD or default). Authorization compares celldLabGitCommit + celldSha256 across soak and v4.",
     host,
     suspendMonitor: {
       thresholdSec: SUSPEND_GAP_SECS,

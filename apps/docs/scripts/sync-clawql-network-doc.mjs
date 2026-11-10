@@ -1,5 +1,5 @@
 /**
- * Copies docs/specs/network/clawql-network-v0.1.md into an MDX fragment for /specs/network/clawql-network.
+ * Copies docs/specs/network/clawql-network-v0.2.md into an MDX fragment for /specs/network/clawql-network.
  */
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -12,12 +12,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'clawql-network-body.mdx')
-const srcRelative = path.join('docs', 'specs', 'network', 'clawql-network-v0.1.md')
+const srcRelative = path.join('docs', 'specs', 'network', 'clawql-network-v0.2.md')
 
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
+    // Prefer monorepo root (docs/specs/…), not apps/docs itself.
+    if (
+      fs.existsSync(path.join(dir, srcRelative)) ||
+      fs.existsSync(path.join(dir, 'docs', 'specs'))
+    ) {
       return dir
     }
     const parent = path.dirname(dir)

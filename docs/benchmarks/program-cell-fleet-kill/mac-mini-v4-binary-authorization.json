@@ -1,0 +1,158 @@
+{
+  "kind": "mac-mini-v4-binary-authorization",
+  "measuredAt": "2026-11-10T01:00:00.000Z",
+  "publishStatus": "v4_authorized_identity_remeasure",
+  "publishLabel": "v4 authorized \u2014 lab celld identity remesure",
+  "mechanismClaim": "restored",
+  "authorizingStands": "yes",
+  "authorizingStandsMeaning": "Soak and v4 identity remesure artifacts record the same celldLabGitCommit (36d53565\u2026) and celldSha256 (5abb5d06\u2026). Forensic reconstructed_after_the_fact hash matches. Flagship claim restored with scoped lab wording; TTL3s 2/100 and forced-latency remain open beside it.",
+  "priorConditionalAnalysis": {
+    "soakCelldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+    "soakTipContainedExpiryBoottimeEnriched": true,
+    "labelWasHarnessHardCode": true,
+    "v4OmittedCommitAndSha": true,
+    "note": "Prior note treated authorization as conditional. That bar is withdrawn for claim restore \u2014 remesure required."
+  },
+  "forensicCheck": {
+    "status": "passed",
+    "purpose": "Cheap pre-remeasure support only \u2014 never substitutes for in-artifact identity on a paired remesure.",
+    "steps": [
+      "Hash /Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld (or $CELLD_BIN from soak evidence)",
+      "Confirm mtime predates soak measuredAt 2026-11-06T23:52:09.341Z (and preferably predates soak host.capturedAt 2026-11-06T21:01:31.055Z)",
+      "Confirm path equals soak.celldBin",
+      "Append results under forensicCheck.results; label reconstructed_after_the_fact=true"
+    ],
+    "results": {
+      "status": "passed",
+      "binarySha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f",
+      "binaryMtimeUtc": "2026-11-06T20:51:40Z",
+      "predatesSoakHostCapturedAt": true,
+      "path": "/Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld",
+      "reconstructedAfterTheFact": true,
+      "note": "Binary on disk at remeasure time is the same file the Nov 6 soak measured (mtime predates soak host capturedAt 2026-11-06T21:01:31Z). sha256 5abb5d06 matches celldSha256 recorded in both remeasure artifacts.",
+      "recordedAt": "2026-11-09T23:00:00Z"
+    }
+  },
+  "identityRemeasure": {
+    "status": "complete",
+    "branch": "v4-soak-mac-mini-20261106",
+    "harness": "celld-identity.mjs records celldLabGitCommit + celldSha256 on soak and board",
+    "uniqueOutPaths": {
+      "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+      "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json"
+    },
+    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry\u2260dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass",
+    "result": {
+      "status": "passed",
+      "soak": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+        "measuredAt": "2026-11-09T11:33:54.646Z",
+        "voided": false,
+        "status": "measured_v4_ready",
+        "cyclesCompleted": 1000,
+        "readyFails": 0,
+        "selfFences": 0,
+        "maxUniqueNodeIds": 2
+      },
+      "board": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+        "measuredAt": "2026-11-10T00:48:45.096Z",
+        "ok": true,
+        "gates": {
+          "missingData": true,
+          "phaseValidity": true
+        },
+        "availabilityFailureRate": 0.018,
+        "duringCallVerifiedSent": "241/243",
+        "duplicates": 0
+      },
+      "celldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+      "celldSha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f",
+      "identityMatch": true,
+      "verifiedAt": "2026-11-09T23:10:00Z",
+      "nextStep": "Human restored mechanismClaim after verifying matching identity in artifacts (2026-11-10)."
+    }
+  },
+  "soak": {
+    "path": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json",
+    "measuredAt": "2026-11-06T23:52:09.341Z",
+    "status": "measured_v4_ready",
+    "celldBuildRecorded": "lab_fixed_alive_sweep_supersede",
+    "celldBuildExpectedByRunbook": "lab_expiry_not_dead_fixed",
+    "celldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+    "celldSha256": null,
+    "celldBin": "/Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld",
+    "labelRootCause": "run-node-soak.mjs previously forced celldBuild=lab_fixed_alive_sweep_supersede whenever CELLD_BIN matched vendor/celld-lab/, ignoring FLEET_SOAK_CELLD_BUILD"
+  },
+  "v4": {
+    "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json",
+    "measuredAt": "2026-11-07T05:32:20.024Z",
+    "status": "measured",
+    "ok": true,
+    "publishAs": "measured_results_real_authorization_pending",
+    "celldBinaryVersion": "0.6.3",
+    "celldLabGitCommit": null,
+    "celldSha256": null,
+    "correctnessFailures": 0,
+    "availabilityFailures": 2,
+    "availabilityFailureRate": 0.002,
+    "duringCallCallVerifiedSent": "251/251",
+    "duringCallIntentVisible": "251/251",
+    "note": "Board harness did not persist commit/sha on this run; fixed in celld-identity.mjs + run-board.mjs for the remesure."
+  },
+  "commitAncestryAtSoakTip": {
+    "tip": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+    "includesExpiryNotDead": {
+      "commit": "fcc5e36ab0ad511249584080c83e4866c5f67257",
+      "ancestorOfTip": true
+    },
+    "includesBoottimeMono": {
+      "commit": "f4cfddc53bf0a241f528232b65471479dbe1817b",
+      "ancestorOfTip": true
+    },
+    "includesEnrichedSupersedeLogging": {
+      "commit": "2a8dd487c42823fc0ce706fa5ea1e0f6609bdb61",
+      "ancestorOfTip": true
+    },
+    "noteOn1360bdf": "Docs/E2E use 1360bdf\u2026 as the sha256 prefix of an earlier post-fix Linux binary, not a git commit."
+  },
+  "r2IntentCheck": {
+    "ranAsPartOfV4Board": true,
+    "duringCallTrials": 251,
+    "sawInFlight": 251,
+    "outcomeUnknownWithIntentVisible": 251,
+    "correctnessLostMidflightIntent": 0
+  },
+  "duringCallEffectDistribution": {
+    "n": 251,
+    "callVerifiedSent": 251,
+    "effects0": 251,
+    "effects1": 0,
+    "effects2plus": 0,
+    "claimWording": "Do not imply during_call covered both effect outcomes. All 251 kills landed before the upstream write committed. The write-landed-but-not-journaled case is covered by after_call_before_journal (0 duplicates on that phase)."
+  },
+  "sitePublishNow": {
+    "label": "v4 authorized \u2014 lab celld identity remesure",
+    "showResults": true,
+    "restoreMechanismClaim": true,
+    "authorizingArtifacts": {
+      "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+      "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+      "celldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+      "celldSha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f"
+    }
+  },
+  "siteClaimAfterIdentityRemeasure": {
+    "status": "published",
+    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share celldLabGitCommit 36d53565\u2026 and celldSha256 5abb5d06\u2026. During-call: 241/243 intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent \u2014 availability, not durability. Availability: 18 of 1,000 (1.8%).\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress.\n\nAvailability tradeoff: remesure 1.8% vs first board 0.2%; 19 successful self-fences with resume p50 \u224817s (first board \u22486.7s) \u2014 consistent with expiry\u2260dead fenced-takeover wait."
+  },
+  "duringCallSettle": {
+    "path": "docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json",
+    "claimLine": "241/243 during-call intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent \u2014 availability, not durability.",
+    "trials": [
+      883,
+      960
+    ],
+    "lost_midflight_intent": false
+  }
+}

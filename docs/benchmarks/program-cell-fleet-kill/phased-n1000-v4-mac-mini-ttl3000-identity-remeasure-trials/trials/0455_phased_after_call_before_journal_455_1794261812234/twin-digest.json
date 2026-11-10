@@ -1,0 +1,11 @@
+{
+  "i": 455,
+  "programId": "phased_after_call_before_journal_455_1794261812234",
+  "phase": "after_call_before_journal",
+  "capturedAt": "2026-11-09T22:03:55.977Z",
+  "captured": false,
+  "twinId": "twin_phased_after_call_before_journal_455_1794261812234",
+  "reason": "twin_capture_failed",
+  "attempts": 3,
+  "detail": "twin status=409"
+}

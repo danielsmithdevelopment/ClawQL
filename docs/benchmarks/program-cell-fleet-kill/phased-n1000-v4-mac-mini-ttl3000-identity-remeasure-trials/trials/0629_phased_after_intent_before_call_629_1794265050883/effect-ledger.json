@@ -1,0 +1,15 @@
+{
+  "i": 629,
+  "programId": "phased_after_intent_before_call_629_1794265050883",
+  "phase": "after_intent_before_call",
+  "capturedAt": "2026-11-09T22:57:31.813Z",
+  "ownerKey": "owner_phased_after_intent_before_call_629_1794265050883",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 945,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "pause_failed: effect ledger after unexpected run status"
+}

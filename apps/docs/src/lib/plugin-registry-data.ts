@@ -177,7 +177,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'clawql-network',
     name: 'Network',
     description:
-      'Headscale standing mesh + Tailcat ephemeral transport, safe-by-default selector, ATR-gated tailcat audit.',
+      'Headscale mesh + Tailcat + customer tailnets, safe-by-default selector, ATR-gated transport audit.',
     category: 'horizontal',
     status: 'shipped',
     package: 'clawql-network',

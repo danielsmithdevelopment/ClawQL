@@ -1,0 +1,15 @@
+{
+  "i": 960,
+  "programId": "phased_during_call_960_1794270973149",
+  "phase": "during_call",
+  "capturedAt": "2026-11-10T00:36:21.956Z",
+  "ownerKey": "owner_phased_during_call_960_1794270973149",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 1453,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "call_never_sent: effect ledger after inFlight stayed 0"
+}

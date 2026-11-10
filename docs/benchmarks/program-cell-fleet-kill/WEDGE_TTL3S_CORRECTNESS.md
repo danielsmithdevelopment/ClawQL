@@ -56,6 +56,7 @@ Still correct and shipped: expiry permits **fenced** takeover; open-log abandon 
 
 ## Next
 
-1. **Authorizing 1000-cycle soak on Mac mini** with the fixed build → `measured_v4_ready` ([`MAC_MINI_AGENT.md`](./MAC_MINI_AGENT.md)). Nothing blocks Mac mini except confirming v4 boards run with **persisted effect ledgers** (now in harness). Trial 5 stays unsettled.
-2. **v4 N=1000** there with append logs + R2 intent check + per-trial `effect-ledger.json` / `twin-digest.json` — report trial 5 unsettled; do not claim the 2/100 closed; do not treat journal-surrogate labels as verified settles.
-3. Forced renew-latency board in parallel — **both** Ambiguous/timeout and late-Applied arms.
+1. **v4 authorized** via identity remesure ([`V4_CLAIM.md`](./V4_CLAIM.md)) — soak↔board matching `celldLabGitCommit`/`celldSha256`. Mechanism claim restored with scoped lab wording.
+2. **Do not close** TTL3s published **2/100**, trial 1 journal_surrogate, or trial 5 unsettled — keep them beside the restored claim.
+3. Forced renew-latency board — **both** Ambiguous/timeout and late-Applied arms.
+4. Short upstream supersede offer (tests, not a large patch); Golem/Pi peer package can cite the scoped lab claim.

@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'clawql-network — private mesh + governed ephemeral transport',
   description:
-    'Headscale persistent mesh, Tailcat ephemeral point-to-point transport, selector safe-by-default routing, and ATR-gated tailcat audit hooks.',
+    'Headscale mesh, Tailcat ephemeral links, customer tailnets via Tailscale OAuth apps, safe-by-default selector, and ATR-gated transport audit.',
   path: '/specs/network/clawql-network',
   ogType: 'article',
 })
@@ -24,24 +24,25 @@ export default function ClawqlNetworkSpecPage() {
           Network
         </Tag>
         <Tag color="amber" variant="medium">
-          v0.1
+          v0.2
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
           <strong>
-            Headscale for standing relationships, Tailcat for genuinely
-            ephemeral links.
+            Headscale for standing relationships, Tailcat for ephemeral links,
+            customer tailnets via Tailscale OAuth apps.
           </strong>{' '}
           The package contribution is the selector (safe-by-default routing) and
-          enforcement (ATR-gated tailcat with WORM audit). Operator bootstrap:{' '}
+          enforcement (gate in every transport entry point with write-ahead WORM
+          audit). Operator bootstrap:{' '}
           <code className="text-sm">clawql init --networking</code>. Source:{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/network/clawql-network-v0.1.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/network/clawql-network-v0.2.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/specs/network/clawql-network-v0.1.md
+            docs/specs/network/clawql-network-v0.2.md
           </a>
           . Deployment:{' '}
           <a

@@ -1,0 +1,8 @@
+{
+  "i": 405,
+  "programId": "phased_after_intent_before_call_405_1794019762090",
+  "phase": "after_intent_before_call",
+  "capturedAt": "2026-11-07T02:49:31.184Z",
+  "captured": false,
+  "reason": "midflight_phase_no_twin"
+}

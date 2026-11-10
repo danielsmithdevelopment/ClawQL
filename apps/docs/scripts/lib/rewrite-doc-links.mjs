@@ -104,6 +104,7 @@ export const DOC_SITE_ROUTES = {
   'docs/specs/classifier/fast-decision-routing-closeout-v0.4.md':
     '/specs/classifier/fast-decision-routing-closeout',
   'docs/specs/network/clawql-network-v0.1.md': '/specs/network/clawql-network',
+  'docs/specs/network/clawql-network-v0.2.md': '/specs/network/clawql-network',
   'docs/agents/clawql-agents-spec-v0.1.md': '/agents/clawql-agents',
   'docs/architecture/zero-trust-agentic-fabric.md':
     '/architecture/agentic-fabric',

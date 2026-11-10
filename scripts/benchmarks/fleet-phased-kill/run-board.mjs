@@ -63,6 +63,7 @@ import {
   evidenceTrialsDir,
   persistTrialGroundTruth as persistTrialGroundTruthFiles,
 } from "./evidence-ground-truth.mjs";
+import { resolveCelldIdentity } from "./celld-identity.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "../../..");
@@ -280,8 +281,18 @@ function detectCelldVersion() {
   }
 }
 const CELLD_BINARY_VERSION = detectCelldVersion();
+const CELLD_IDENTITY = resolveCelldIdentity({
+  repoRoot: REPO,
+  celldBin: process.env.CELLD_BIN,
+  buildEnv:
+    process.env.FLEET_PHASED_CELLD_BUILD || process.env.FLEET_SOAK_CELLD_BUILD,
+  gitCommitEnv:
+    process.env.FLEET_PHASED_CELLD_GIT_COMMIT ||
+    process.env.FLEET_SOAK_CELLD_GIT_COMMIT,
+  defaultLabBuild: "lab_expiry_not_dead_fixed",
+});
 console.log(
-  `fleet-phased: celld ${CELLD_BINARY_VERSION} fenceMode=${FENCE_MODE} gate=${OUTPUT_GATE_ON ? 1 : 0} fencedAck=${FENCED_ACK_ON ? 1 : 0} wedge=${WEDGE_HEALTH ? 1 : 0}`
+  `fleet-phased: celld ${CELLD_BINARY_VERSION} fenceMode=${FENCE_MODE} gate=${OUTPUT_GATE_ON ? 1 : 0} fencedAck=${FENCED_ACK_ON ? 1 : 0} wedge=${WEDGE_HEALTH ? 1 : 0} commit=${CELLD_IDENTITY.celldLabGitCommit || "?"} sha256=${CELLD_IDENTITY.celldSha256 ? CELLD_IDENTITY.celldSha256.slice(0, 12) : "?"}`
 );
 const AWAIT_TRIALS = Math.max(
   0,
@@ -2462,6 +2473,12 @@ async function main() {
       staleOwnerProbe: STALE_OWNER,
       staleOwnerCell: STALE_OWNER ? STALE_OWNER_CELL : null,
       celldBinaryVersion: CELLD_BINARY_VERSION,
+      celldBin: CELLD_IDENTITY.celldBin,
+      celldBuild: CELLD_IDENTITY.celldBuild,
+      celldLabGitCommit: CELLD_IDENTITY.celldLabGitCommit,
+      celldSha256: CELLD_IDENTITY.celldSha256,
+      identityNote:
+        "Prefer celldLabGitCommit + celldSha256 over celldBuild/celldBinaryVersion. Soak↔v4 authorization requires the same commit (with expiry≠dead + BOOTTIME + enriched supersede) and ideally matching sha256.",
       freshNodeIds: FRESH_NODE_IDS,
       stableNodeIds: FRESH_NODE_IDS ? null : { ...STABLE_NODE_IDS },
       fenceMode: FENCE_MODE,

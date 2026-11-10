@@ -1,0 +1,31 @@
+{
+  "i": 676,
+  "programId": "phased_before_intent_676_1794265928968",
+  "phase": "before_intent",
+  "capturedAt": "2026-11-09T23:12:21.228Z",
+  "ownerKey": "owner_phased_before_intent_676_1794265928968",
+  "ownerEffectCount": 1,
+  "count": 1,
+  "inFlight": 0,
+  "generation": 1014,
+  "uniqueKeys": 1,
+  "writes": [
+    {
+      "id": "owner_phased_before_intent_676_1794265928968",
+      "key": "phased_before_intent_676_1794265928968",
+      "at": "2026-11-09T23:12:18.933Z",
+      "name": "phased_before_intent_676_1794265928968",
+      "generation": 1014
+    }
+  ],
+  "ownerWrites": [
+    {
+      "id": "owner_phased_before_intent_676_1794265928968",
+      "key": "phased_before_intent_676_1794265928968",
+      "at": "2026-11-09T23:12:18.933Z",
+      "name": "phased_before_intent_676_1794265928968",
+      "generation": 1014
+    }
+  ],
+  "note": "Independent mock-pets __writes snapshot (external effect ledger). Not the ProgramCell journal."
+}

@@ -2,7 +2,7 @@
 
 **Status:** internal GTM + product honesty (not a published category board)  
 **Audience:** anyone writing public copy, benchmarks, or outreach about durability / program mode  
-**Related:** [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md) · [dominance roadmap](../benchmarks/dominance-roadmap.md) · [mcp-tools § Durable programs](../mcp/mcp-tools.md#durable-programs) · [streams-celld evidence](../streams/streams-celld-evidence.md)  
+**Related:** [ADR 0015](../adr/0015-program-mode-alongside-search-execute.md) · [dominance roadmap](../benchmarks/dominance-roadmap.md) · [mcp-tools § Durable programs](../mcp/mcp-tools.md#durable-programs) · [streams-celld evidence](../streams/streams-celld-evidence.md) · [vs Temporal/Restate/DBOS (honest)](./durability-competition-comparison.md)  
 **External:** [golem.cloud](https://golem.cloud/) · John De Goes durability pressure ([X](https://x.com/jdegoes/status/2112657693349744841))
 
 ---

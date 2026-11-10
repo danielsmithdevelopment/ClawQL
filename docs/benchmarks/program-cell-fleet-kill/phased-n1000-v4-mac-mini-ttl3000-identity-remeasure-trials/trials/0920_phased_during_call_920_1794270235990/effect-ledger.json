@@ -1,0 +1,15 @@
+{
+  "i": 920,
+  "programId": "phased_during_call_920_1794270235990",
+  "phase": "during_call",
+  "capturedAt": "2026-11-10T00:24:12.246Z",
+  "ownerKey": "owner_phased_during_call_920_1794270235990",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 1393,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "Independent mock-pets __writes snapshot (external effect ledger). Not the ProgramCell journal."
+}

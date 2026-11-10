@@ -1,0 +1,15 @@
+{
+  "i": 652,
+  "programId": "phased_before_intent_652_1794265481395",
+  "phase": "before_intent",
+  "capturedAt": "2026-11-09T23:04:41.398Z",
+  "ownerKey": "owner_phased_before_intent_652_1794265481395",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 979,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "pause_failed: effect ledger after unexpected run status"
+}

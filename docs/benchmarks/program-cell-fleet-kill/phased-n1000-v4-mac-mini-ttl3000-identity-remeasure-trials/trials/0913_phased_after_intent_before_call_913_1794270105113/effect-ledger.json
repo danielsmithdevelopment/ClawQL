@@ -1,0 +1,15 @@
+{
+  "i": 913,
+  "programId": "phased_after_intent_before_call_913_1794270105113",
+  "phase": "after_intent_before_call",
+  "capturedAt": "2026-11-10T00:21:54.472Z",
+  "ownerKey": "owner_phased_after_intent_before_call_913_1794270105113",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 1382,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "Independent mock-pets __writes snapshot (external effect ledger). Not the ProgramCell journal."
+}

@@ -1,0 +1,270 @@
+---
+title: "clawql-network — Specification"
+status: "November 2026"
+version: "0.2"
+package: "packages/clawql-network/"
+---
+
+# clawql-network
+
+## Specification v0.2 (draft)
+
+**November 2026** · `packages/clawql-network/` · daniel@clawql.com
+
+*v0.2 changes from v0.1 (August 2026): adds customer tailnets through Tailscale OAuth apps as a third transport; fixes the selector's unsafe default; moves the Tailcat scope check into the adapter so it cannot be bypassed; writes audit intent before connecting; requires client allowlists; treats tunnels as egress paths; hosts each tenant's customer-tailnet node with tsnet in the Go sidecar; and updates every Tailcat and Headscale detail against the projects as of 2026-11-09 (see the verification log).*
+
+---
+
+## 1. Purpose
+
+`clawql-network` gives anyone running ClawQL private, secure connectivity between nodes with minimal setup, wired into the same enforcement and audit machinery as the rest of the ClawQL stack. It covers three cases:
+
+- **ClawQL's own persistent mesh** for known machines (a customer's fleet, a homelab), using **Headscale**, a self-hosted, open-source Tailscale control plane.
+- **Ephemeral, one-off links** where full mesh registration would be overkill, using **Tailcat**, Tailscale's open-source, control-plane-free tool (BSD-3-Clause, open sourced August 2026).
+- **Customer tailnets** that already run on Tailscale's hosted service, joined through **Tailscale OAuth apps** (generally available 2026-11-09), so hosted ClawQL can reach private services without exposing them publicly.
+
+`clawql-network`'s own contribution is the decision layer that picks the right transport per connection, and the governance layer that makes choosing the least-governed option always explicit and audited, never a silent default.
+
+## 2. What each transport is for
+
+|  | Headscale mesh | Tailcat | Customer tailnet (OAuth app) |
+| --- | --- | --- | --- |
+| Relationship | Persistent, known nodes we operate | Ephemeral, one-off peers | A customer's existing Tailscale network |
+| Control plane | Self-hosted Headscale | None | Tailscale's hosted service, owned by the customer |
+| Identity | Node identity issued by Headscale | Possession of the address plus allowed client keys | A device under the authorizing user's identity |
+| Access control | Central ACLs and grants | Client-key allowlist only | The customer's tailnet policy, narrowed by posture attribute or tag |
+| Best fit | A fleet, a homelab | A worker spun up for one task | Reaching a customer's private APIs and MCP servers |
+| Wrong fit | — | Anything needing standing governance or attestation | Networks the customer runs on Headscale (see §6) |
+
+## 3. Package structure
+
+```
+clawql-network/
+  headscale/
+    bootstrap.ts            — stands up a self-hosted Headscale control plane
+    node-registration.ts    — joins a node to the mesh, issues its identity
+  sidecar/                  — one Go process, built against pinned versions of
+                              github.com/tailscale/tailcat and tailscale.com/tsnet,
+                              exposing a stable local API to ClawQL (§5.1, §6.1)
+  tailcat/
+    tailcat-adapter.ts      — TypeScript client for the sidecar's Tailcat API;
+                              owns the scope gate and audit writes (§8)
+    derp-relay/
+      self-hosted-derper.ts — runs our own DERP relay (default for production)
+  customer-tailnet/
+    oauth-app.ts            — Tailscale OAuth app authorization and device
+                              provisioning into a customer's tailnet
+    tenant-node.ts          — TypeScript client for the sidecar's per-tenant
+                              tsnet nodes; owns the scope gate and audit writes
+  selector.ts               — picks the transport per connection request
+  enforcement/
+    transport-gate.ts       — scope checks shared by every transport entry point
+  init/
+    clawql-network-init.ts  — `clawql init --networking` (§10)
+```
+
+## 4. Headscale: persistent mesh
+
+Standard Headscale deployment on whichever always-on node fits (the homelab documentation runs it on the Mac Mini). `clawql-network join` wraps registration so no manual Headscale CLI work is needed.
+
+- **Pin Headscale 0.29.x.** That release line added Tailscale-style grants alongside ACLs, policy tests that reject a policy change when a test fails, and approval flows for SSH checks. Use grants and policy tests for ClawQL's mesh policy.
+- **Client version floor:** Headscale 0.29.1 raised the minimum supported Tailscale client to v1.80.0.
+- **Sign-in:** if nodes register through OpenID Connect, enable PKCE and keep the client secret in a file, not in the config. OIDC groups cannot be used in Headscale ACLs, so map people to Headscale users or tags instead.
+
+```typescript
+// headscale/bootstrap.ts
+export interface HeadscaleBootstrapConfig {
+  controlPlaneHost: string   // node that runs the Headscale server
+  derpMapPath?: string       // optional self-hosted DERP map
+}
+export async function bootstrapHeadscale(config: HeadscaleBootstrapConfig): Promise<void>
+
+// headscale/node-registration.ts
+export async function joinMesh(nodeId: string): Promise<MeshIdentity>
+```
+
+## 5. Tailcat: ephemeral connections
+
+### 5.1 Integration: a pinned Go sidecar, not stdout parsing
+
+Tailcat is both a Go library (`github.com/tailscale/tailcat`) and a CLI. The project makes no stability promises: the Go API, the CLI flags and output, and the wire format may all change. v0.1 planned to parse the CLI's stdout, which is exactly the surface most likely to break. v0.2 instead builds a small Go sidecar against a pinned library version and gives ClawQL a stable local API. Upgrading Tailcat then means bumping the pin and rerunning the sidecar's tests, never debugging a changed log line in production. If the CLI is used anyway, pin its version and test the parsing on every upgrade.
+
+On macOS, Tailcat now installs through Homebrew or Nix; prebuilt static binaries remain Linux and Windows only.
+
+### 5.2 Mandatory settings
+
+- **Always a fresh ephemeral key.** Tailcat silently reuses a saved key named `default` whenever one exists, and anyone who ever received a saved key's address can reconnect to any future server using it. The sidecar always requests a new ephemeral key (the CLI equivalent is `--key=new`).
+- **Pre-shared keys on.** Pre-shared keys are on by default and give post-quantum protection and protection from DERP operators who observe public keys. Never disable them; require a Tailcat version newer than v0.5.0.
+- **Client allowlist required.** Every listener restricts clients to listed node keys (the CLI equivalent is `serve --allow=...`). No listener accepts anyone who merely holds the address.
+- **Forbidden modes.** `exit-node`, `no-auth-ssh`, `exec`, `serve all`, and read-write file serving are never used by ClawQL. Only explicitly listed ports are served.
+- **Addresses are secrets.** A Tailcat address contains the pre-shared key and works as a bearer capability. It is never written to WORM entries, logs, telemetry, or DNS. Audit records carry public keys only.
+
+### 5.3 DERP relays: self-hosted by default in production
+
+Tailscale's public Tailcat relays are rate-limited, have no uptime SLA or throughput target, and access to them may be revoked at any time. Production deployments therefore run their own relay (`cmd/derper`, which needs a hostname with a TLS certificate and can obtain one through Let's Encrypt) and embed it in the address, so clients never contact Tailscale's relays. Co-locate the relay with the primary coordinating node to avoid a third cross-region leg (§11). Public relays are acceptable only for development.
+
+```typescript
+// tailcat/tailcat-adapter.ts
+export interface TailcatListenerHandle {
+  publicKey: string          // safe to log
+  address: SecretString      // contains the pre-shared key; never logged
+  stop(): Promise<void>
+}
+export async function startTailcatListener(
+  ctx: GateContext,
+  opts: { derpHost: string; allowedClientKeys: string[]; ports: number[] },
+): Promise<TailcatListenerHandle>
+export async function connectViaTailcat(
+  ctx: GateContext,
+  address: SecretString,
+): Promise<TailcatConnection>
+```
+
+Both functions take a `GateContext` and run the scope gate themselves (§7), so no caller can reach Tailcat without it.
+
+## 6. Customer tailnets through Tailscale OAuth apps
+
+Most companies run Tailscale's hosted service rather than Headscale. Tailscale OAuth apps let ClawQL join a customer's tailnet through a standard OAuth 2.0 authorization flow. Unlike Tailscale's older OAuth clients, which create tag-owned devices under a shared service identity, an OAuth app acts on behalf of the user who authorizes it, and the device it provisions carries that user's identity, so the customer's access policies, audit logs and device quotas still apply.
+
+- **Narrow access with a posture attribute.** The customer's policy gives ClawQL's device only the services it needs (for example designated MCP servers), separately from the authorizing user's own devices. Custom posture attributes require the customer to be on Tailscale's Premium or Enterprise plans; on other plans, assign a tag to ClawQL's device after authorization and use tag-based rules.
+- **Audit attribution.** At the network layer, ClawQL's traffic carries the authorizing user's identity. ClawQL's own audit trail is what separates "the agent did this" from "this person approved it"; every action through this transport keeps that distinction.
+- **Headscale.** We found no evidence that Headscale supports OAuth apps as of 2026-11-09, so this transport is specific to Tailscale's hosted service. Customers on Headscale use the mesh path with a node registered into their network.
+- **A lighter path than BYOC** for customers who only need hosted ClawQL to reach a few private services.
+
+### 6.1 Where the tenant's node runs: tsnet in the gateway sidecar
+
+**Decision (2026-11-09):** each tenant's customer-tailnet node runs as a `tsnet` node inside the ClawQL Go sidecar, at the gateway, one node per tenant. `tsnet` is Tailscale's Go library for running a tailnet node inside an ordinary process, with full UDP support and therefore direct NAT-traversed paths, and one process can host many nodes. The same pinned sidecar already hosts Tailcat (§5.1), so this adds no new kind of dependency.
+
+- **At the gateway, never in agents.** Agents reach a customer's private services only through governed tool calls. The node's key is a credential, and a tunnel inside an agent would be an egress path around the gateway (§9). This holds for every runtime.
+- **Node state is a credential.** Each tenant node's key and state are stored like any other vault secret, encrypted and scoped to that tenant.
+- **One device per tenant,** which also keeps ClawQL's footprint small against customers' device quotas.
+
+| Option | Status | Reason |
+| --- | --- | --- |
+| `tsnet` node per tenant in the Go sidecar | **Supported** | Mature, full UDP and direct paths, many nodes per process, reuses the Tailcat sidecar |
+| Node hosted in a celld cell (Tailscale's userspace client compiled to WebAssembly, as in `littledivy/tailnet-do`) | **Experimental** | celld's single-owner lease would give exactly one live owner of a node identity with failover, but today it has no UDP (all traffic relayed over DERP), cannot hibernate while connected, and is an early prototype patched against Tailscale internals |
+| Node inside an agent cell, in any runtime | **Never** | Puts a credential and an ungoverned egress path inside the agent |
+
+**Revisit the celld option when all three hold:** celld (or its merged successor in workerd) offers outbound sockets suitable for the Tailscale client; the WebAssembly approach is maintained beyond a prototype; and measured reconnect time makes connecting only on demand practical. At that point the lease-based failover becomes a concrete reason to move the tenant node into celld, behind the same `tenant-node.ts` interface.
+
+## 7. Selector
+
+```typescript
+// selector.ts
+export interface ConnectionRequest {
+  targetType: 'known-fleet-node' | 'customer-tailnet-service' | 'ephemeral-peer' | 'unknown'
+  expectedDurationMs?: number   // informational only; never selects a transport
+}
+
+export function selectTransport(
+  req: ConnectionRequest,
+): 'headscale-mesh' | 'customer-tailnet' | 'tailcat' {
+  switch (req.targetType) {
+    case 'known-fleet-node':         return 'headscale-mesh'
+    case 'customer-tailnet-service': return 'customer-tailnet'
+    case 'ephemeral-peer':           return 'tailcat'   // still gated, §8
+    default:                         return 'headscale-mesh'
+  }
+}
+```
+
+v0.1 returned Tailcat for an `unknown` target whenever the expected duration was under 60 seconds, which sent an ambiguous case to the least-governed transport. In v0.2 only an explicit `ephemeral-peer` can select Tailcat; duration never does, and anything ambiguous goes to the governed mesh.
+
+## 8. Enforcement and audit
+
+### 8.1 The gate lives in the transports
+
+v0.1 gated Tailcat with a hook on the tool name `network.tailcat_connect`, but the selector could choose Tailcat without that tool ever being called. v0.2 puts the check inside every transport entry point, so the gate cannot be bypassed by any route:
+
+```typescript
+// enforcement/transport-gate.ts
+export function requireScope(ctx: GateContext, transport: Transport): void {
+  const needed = {
+    'tailcat': 'network:tailcat_ephemeral',
+    'customer-tailnet': 'network:customer_tailnet',
+    'headscale-mesh': 'network:mesh',
+  }[transport]
+  if (!ctx.session.atrScope.includes(needed)) {
+    throw new ScopeDenied(`${transport} requires scope ${needed}`)  // fails closed
+  }
+}
+```
+
+The `clawql-core` lifecycle hook stays as an additional layer, not the only one.
+
+### 8.2 Write-ahead audit
+
+Tailcat keeps no record of who connected to whom, so ClawQL's WORM trail is the only record. The intent is written before connecting; if the process crashes between connecting and logging, the record still shows the attempt.
+
+```typescript
+export type NetworkWORMEntryType =
+  | 'TAILCAT_CONNECTION_REQUESTED'      // written before connecting
+  | 'TAILCAT_CONNECTION_ESTABLISHED'
+  | 'TAILCAT_CONNECTION_ENDED'
+  | 'TAILCAT_CONNECTION_FAILED'
+  | 'CUSTOMER_TAILNET_AUTHORIZED'
+  | 'CUSTOMER_TAILNET_DEVICE_REMOVED'
+  | 'MESH_NODE_JOINED'
+  | 'MESH_NODE_REMOVED'
+```
+
+Entries carry the session, both public keys, the DERP host or `null` for a direct path, and timestamps. They never carry a Tailcat address.
+
+### 8.3 Where Tailcat is never used
+
+Any connection where standing governance or attestation matters, such as a cloud-hosted `clawql-tee` instance reaching into a secure on-premises network. Tailcat proves you are talking to whoever holds a key, not that they run unmodified code in a verified enclave. Those connections use the Headscale mesh (or the customer's tailnet) with `clawql-tee` attestation on top, and a self-hosted DERP relay where NAT traversal alone is not enough.
+
+## 9. Tunnels are egress paths
+
+A WireGuard tunnel is a route out of a container. In ClawQL Cloud, mesh, Tailcat and customer-tailnet interfaces fall under the same default-deny egress rules as everything else, and the Cilium network policy covers them explicitly. Otherwise a tunnel becomes a way around the ClawQL egress proxy, which is exactly the bypass the security testing plan probes for. The phase 4 security gate includes a test that a container cannot open an unapproved tunnel.
+
+## 10. Init flow
+
+```bash
+clawql init --networking
+```
+
+1. Check for an existing Headscale control plane; bootstrap one locally if none exists.
+2. Register this node with the mesh.
+3. Configure the selector with safe defaults: mesh for anything named or registered, Tailcat only for explicit ephemeral peers and only with scope.
+4. Stand up a self-hosted DERP relay for production use, so nothing depends on Tailscale's rate-limited public relays.
+5. Optionally register ClawQL as a Tailscale OAuth app for customer tailnets.
+
+## 11. Cross-region cost awareness
+
+Tailcat is only a transport; cloud providers bill cross-region traffic regardless of protocol. Direct, NAT-traversed connections cost what a raw socket between the same two instances would. Relayed connections through Tailscale's public relays cost nothing on your bill but are rate-limited, and through a self-hosted relay the relay's region matters: a relay in a third region means paying cross-region egress on two legs. Co-locate the relay with the primary coordinating node. A future extension can add byte totals to the `ENDED` entries to feed the spend dashboard.
+
+## 12. Package boundaries
+
+| Concern | Location | Why |
+| --- | --- | --- |
+| Persistent mesh, grants, node identity | Headscale (self-hosted) | The right tool for standing relationships |
+| Customer private services | Tailscale OAuth app | The customer's own network and policy, narrowed for ClawQL |
+| Ephemeral links | Tailcat via pinned Go sidecar | The right tool for transient links, behind a stable interface |
+| Choosing a transport | `selector.ts` | Safe by default; ambiguity goes to the mesh |
+| Enforcement and audit | Gate in every transport, plus `clawql-core` hook and `clawql-audit` | No route around the gate; write-ahead records |
+| Cloud TEE to on-premises | Mesh or customer tailnet plus `clawql-tee` attestation, never Tailcat | Standing governance and attestation both matter |
+| Tunnels inside ClawQL Cloud | Default-deny egress and Cilium policy | A tunnel is an egress path |
+
+## 13. Verification log (2026-11-09)
+
+| v0.1 assumption | Status today | Spec change |
+| --- | --- | --- |
+| Tailcat is Go-only with no bindings; shell out to the CLI | Still no TypeScript or Rust bindings, but it ships as an importable Go library; no API, CLI or wire-format stability promises | Pinned Go sidecar instead of stdout parsing |
+| No official macOS binary | Homebrew and Nix install on macOS; static binaries still Linux and Windows only | Updated install notes |
+| Address token is `tc` plus base64 CBOR | Unchanged, and it now carries a pre-shared key by default, making it a bearer secret | Addresses never logged; keys only |
+| Optional public-key allowlist | `--allow` exists; saved keys and the magic `default` key can silently reuse old addresses | Allowlist required; always fresh keys |
+| Tailscale's public DERP as a fallback | Rate-limited, no SLA, revocable at any time | Self-hosted relay is the production default |
+| Headscale as the mesh control plane | Current line is 0.29.x, with grants, policy tests and SSH check approvals; client minimum v1.80.0 | Pin 0.29.x; use grants and policy tests |
+| — | Tailscale OAuth apps are generally available for joining a user's tailnet; no evidence Headscale supports them | New customer-tailnet transport |
+
+## 14. Open questions
+
+- [ ] Review the security advisory listed on the Tailcat repository and the threat model in its `SECURITY.md` before shipping.
+- [ ] Which Tailcat version to pin first, and the upgrade cadence.
+- [ ] Whether Headmesh, a pre-release multi-tenant layer built on Headscale, is worth evaluating for ClawQL Cloud's per-tenant meshes.
+- [ ] OAuth app scopes ClawQL requests, and how customers revoke them.
+
+---
+
+*clawql-network Specification · v0.2 (draft) · November 2026*

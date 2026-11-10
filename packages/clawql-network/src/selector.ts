@@ -1,31 +1,31 @@
-export type ConnectionTargetType = "known-fleet-node" | "ephemeral-peer" | "unknown";
+export type ConnectionTargetType =
+  | "known-fleet-node"
+  | "customer-tailnet-service"
+  | "ephemeral-peer"
+  | "unknown";
 
-export type NetworkTransport = "headscale-mesh" | "tailcat";
+export type NetworkTransport = "headscale-mesh" | "customer-tailnet" | "tailcat";
 
 export type ConnectionRequest = {
   readonly targetType: ConnectionTargetType;
+  /** Informational only — never selects a transport (v0.2). */
   readonly expectedDurationMs?: number;
 };
 
-/** Short-lived ephemeral links default to tailcat; ambiguity defaults to governed mesh. */
-export const EPHEMERAL_DURATION_THRESHOLD_MS = 60_000 as const;
-
 /**
- * Pick Headscale mesh vs Tailcat per clawql-network spec §6.
+ * Pick Headscale mesh vs customer tailnet vs Tailcat per clawql-network spec §7 (v0.2).
+ * Only an explicit `ephemeral-peer` selects Tailcat; duration never does; ambiguity → mesh.
  * Pure — safe to call from Effect.sync at boundaries.
  */
 export function selectTransport(req: ConnectionRequest): NetworkTransport {
-  if (req.targetType === "known-fleet-node") {
-    return "headscale-mesh";
+  switch (req.targetType) {
+    case "known-fleet-node":
+      return "headscale-mesh";
+    case "customer-tailnet-service":
+      return "customer-tailnet";
+    case "ephemeral-peer":
+      return "tailcat";
+    default:
+      return "headscale-mesh";
   }
-
-  if (
-    req.targetType === "ephemeral-peer" ||
-    (req.expectedDurationMs !== undefined &&
-      req.expectedDurationMs < EPHEMERAL_DURATION_THRESHOLD_MS)
-  ) {
-    return "tailcat";
-  }
-
-  return "headscale-mesh";
 }

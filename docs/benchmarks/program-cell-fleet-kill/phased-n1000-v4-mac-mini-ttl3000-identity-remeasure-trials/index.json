@@ -1,0 +1,175 @@
+{
+  "evidencePath": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+  "measuredAt": "2026-11-10T00:48:45.096Z",
+  "effectLedgerPersisted": true,
+  "evidenceOverwrite": {
+    "allowOverwriteEnv": false,
+    "existedBefore": false,
+    "replacedExisting": false,
+    "invalidatesArtifact": false,
+    "note": "Overwrite escape hatch was not set; unique path or first write."
+  },
+  "trials": [
+    {
+      "i": 0,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_0_1794253484008",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0000_phased_before_intent_0_1794253484008"
+    },
+    {
+      "i": 1,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_1_1794253500496",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0001_phased_after_intent_before_call_1_1794253500496"
+    },
+    {
+      "i": 2,
+      "phase": "during_call",
+      "programId": "phased_during_call_2_1794253515142",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0002_phased_during_call_2_1794253515142"
+    },
+    {
+      "i": 3,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_3_1794253538200",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0003_phased_after_call_before_journal_3_1794253538200"
+    },
+    {
+      "i": 4,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_4_1794253554300",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0004_phased_before_intent_4_1794253554300"
+    },
+    {
+      "i": 5,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_5_1794253572326",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0005_phased_after_intent_before_call_5_1794253572326"
+    },
+    {
+      "i": 6,
+      "phase": "during_call",
+      "programId": "phased_during_call_6_1794253587259",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0006_phased_during_call_6_1794253587259"
+    },
+    {
+      "i": 7,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_7_1794253608791",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0007_phased_after_call_before_journal_7_1794253608791"
+    },
+    {
+      "i": 8,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_8_1794253625143",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0008_phased_before_intent_8_1794253625143"
+    },
+    {
+      "i": 9,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_9_1794253640773",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0009_phased_after_intent_before_call_9_1794253640773"
+    },
+    {
+      "i": 10,
+      "phase": "during_call",
+      "programId": "phased_during_call_10_1794253700540",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0010_phased_during_call_10_1794253700540"
+    },
+    {
+      "i": 11,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_11_1794253725001",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0011_phased_after_call_before_journal_11_1794253725001"
+    },
+    {
+      "i": 12,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_12_1794253740931",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0012_phased_before_intent_12_1794253740931"
+    },
+    {
+      "i": 13,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_13_1794253758053",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0013_phased_after_intent_before_call_13_1794253758053"
+    },
+    {
+      "i": 14,
+      "phase": "during_call",
+      "programId": "phased_during_call_14_1794253771705",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0014_phased_during_call_14_1794253771705"
+    },
+    {
+      "i": 15,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_15_1794253794032",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0015_phased_after_call_before_journal_15_1794253794032"
+    },
+    {
+      "i": 16,
+      "phase": "before_intent",
+      "programId": "phased_before_intent_16_1794253810633",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0016_phased_before_intent_16_1794253810633"
+    },
+    {
+      "i": 17,
+      "phase": "after_intent_before_call",
+      "programId": "phased_after_intent_before_call_17_1794253826106",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0017_phased_after_intent_before_call_17_1794253826106"
+    },
+    {
+      "i": 18,
+      "phase": "during_call",
+      "programId": "phased_during_call_18_1794253841290",
+      "ownerEffectCount": 0,
+      "twinCaptured": false,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0018_phased_during_call_18_1794253841290"
+    },
+    {
+      "i": 19,
+      "phase": "after_call_before_journal",
+      "programId": "phased_after_call_before_journal_19_1794253863744",
+      "ownerEffectCount": 1,
+      "twinCaptured": true,
+      "dir": "/Users/danielsmith/ClawQL/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0019_phased_after_call_before_journal_19_1794253863744"
+    }
+  ],
+  "note": "Per-trial effect-ledger.json + twin-digest.json live under trials/. Independent of ProgramCell journal."
+}

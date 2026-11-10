@@ -1,0 +1,31 @@
+{
+  "i": 227,
+  "programId": "phased_after_call_before_journal_227_1794016897005",
+  "phase": "after_call_before_journal",
+  "capturedAt": "2026-11-07T02:01:47.337Z",
+  "ownerKey": "owner_phased_after_call_before_journal_227_1794016897005",
+  "ownerEffectCount": 1,
+  "count": 1,
+  "inFlight": 0,
+  "generation": 343,
+  "uniqueKeys": 1,
+  "writes": [
+    {
+      "id": "owner_phased_after_call_before_journal_227_1794016897005",
+      "key": "phased_after_call_before_journal_227_1794016897005",
+      "at": "2026-11-07T02:01:38.111Z",
+      "name": "phased_after_call_before_journal_227_1794016897005",
+      "generation": 343
+    }
+  ],
+  "ownerWrites": [
+    {
+      "id": "owner_phased_after_call_before_journal_227_1794016897005",
+      "key": "phased_after_call_before_journal_227_1794016897005",
+      "at": "2026-11-07T02:01:38.111Z",
+      "name": "phased_after_call_before_journal_227_1794016897005",
+      "generation": 343
+    }
+  ],
+  "note": "Independent mock-pets __writes snapshot (external effect ledger). Not the ProgramCell journal."
+}

@@ -1,0 +1,121 @@
+{
+  "kind": "v4-identity-remeasure-during-call-settle",
+  "board": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+  "settledAt": "2026-11-10T06:15:00.000Z",
+  "question": "Of 243 during_call trials, 241 had outcomeUnknown+intent visible. What about the other 2?",
+  "answer": "Both are availability call_never_sent — egress never left the node. Effect ledgers show 0 effects / 0 inFlight / empty writes. Not midflight_storage_unknown, not lost_midflight_intent, not a resume-without-intent durability loss.",
+  "claimLine": "241/243 during-call intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent — availability, not durability.",
+  "trials": [
+    {
+      "i": 883,
+      "programId": "phased_during_call_883_1794269561072",
+      "phase": "during_call",
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "detail": "mock pets inFlight stayed 0 before kill — egress never left the node",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8747,
+        "inFlightAtKill": 0
+      },
+      "effectLedger": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0883_phased_during_call_883_1794269561072/effect-ledger.json",
+        "ownerEffectCount": 0,
+        "count": 0,
+        "inFlight": 0,
+        "writes": [],
+        "note": "call_never_sent: effect ledger after inFlight stayed 0"
+      },
+      "twinDigest": {
+        "captured": false,
+        "reason": "call_never_sent_no_twin"
+      },
+      "settlement": {
+        "lost_midflight_intent": false,
+        "effectLanded": false,
+        "classification": "availability_call_never_sent",
+        "r2Note": "No mid-call egress means no during_call durable-write path to lose; pets ledger is ground truth (0 writes). Not a storage-read timeout after resume."
+      }
+    },
+    {
+      "i": 960,
+      "programId": "phased_during_call_960_1794270973149",
+      "phase": "during_call",
+      "failureClass": "availability",
+      "failureReason": "call_never_sent",
+      "detail": "mock pets inFlight stayed 0 before kill — egress never left the node",
+      "callSent": {
+        "sawInFlight": false,
+        "inFlightPolls": 80,
+        "inFlightWaitMs": 8798,
+        "inFlightAtKill": 0
+      },
+      "effectLedger": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure-trials/trials/0960_phased_during_call_960_1794270973149/effect-ledger.json",
+        "ownerEffectCount": 0,
+        "count": 0,
+        "inFlight": 0,
+        "writes": [],
+        "note": "call_never_sent: effect ledger after inFlight stayed 0"
+      },
+      "twinDigest": {
+        "captured": false,
+        "reason": "call_never_sent_no_twin"
+      },
+      "settlement": {
+        "lost_midflight_intent": false,
+        "effectLanded": false,
+        "classification": "availability_call_never_sent",
+        "r2Note": "No mid-call egress means no during_call durable-write path to lose; pets ledger is ground truth (0 writes). Not a storage-read timeout after resume."
+      }
+    }
+  ],
+  "notApplicable": {
+    "midflight_storage_unknown_on_during_call": 0,
+    "note": "The only midflight_storage_unknown on this board is trial 317 (after_intent_before_call, status 404 unreadable, resumeMs=60156) — not one of the two during_call gaps."
+  },
+  "availabilityBreakdown18": {
+    "total": 18,
+    "byPhase": {
+      "before_intent": { "n": 3, "reasons": { "pause_failed": 2, "no_expected_outcome": 1 } },
+      "after_intent_before_call": {
+        "n": 4,
+        "reasons": { "pause_failed": 3, "midflight_storage_unknown": 1 },
+        "note": "Trial 317 midflight_storage_unknown: status 404, readable=false, resumeMs=60156, survivorSelfFence=true — availability storage-unknown, not correctness lost-intent"
+      },
+      "during_call": { "n": 2, "reasons": { "call_never_sent": 2 } },
+      "after_call_before_journal": {
+        "n": 9,
+        "reasons": { "pause_failed": 6, "twin_capture_failed": 2, "no_expected_outcome": 1 }
+      }
+    },
+    "byReason": {
+      "pause_failed": 11,
+      "no_expected_outcome": 2,
+      "twin_capture_failed": 2,
+      "call_never_sent": 2,
+      "midflight_storage_unknown": 1
+    },
+    "pause_failed_note": "11/18 are pause_failed (typically fetch failed before kill completed) — injection/infra, not fenced-takeover wait.",
+    "expiryNotDeadTradeoffSignal": {
+      "hypothesis": "Wedged owners no longer swept → recovery waits for fenced takeover → higher resume tails / more self-fences.",
+      "supporting": {
+        "totalSurvivorSelfFences": 24,
+        "survivorSelfFenceRate": 0.024,
+        "okTrialsWithSurvivorSelfFence": 19,
+        "okFenceByPhase": {
+          "during_call": 7,
+          "after_intent_before_call": 1,
+          "after_call_before_journal": 7,
+          "before_intent": 4
+        },
+        "okFenceResumeMsP50": 17067,
+        "okFenceResumeMsMax": 25939,
+        "okFenceRecoveryMsP50": 11884,
+        "compareFirstBoardResumeP50": "~6742ms on original Mac mini v4 (TTL 3000)"
+      },
+      "notTheDominantFailureMode": "Only 6/18 availability failures are mid-flight phases (4 after_intent + 2 during_call). 9/18 are after_call_before_journal; 11/18 are pause_failed. The 1.8% rate is mixed; fence recovery tails on *successful* trials are the cleaner expiry≠dead cost signal."
+    }
+  }
+}
