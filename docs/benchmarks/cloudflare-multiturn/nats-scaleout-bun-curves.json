@@ -1,0 +1,2637 @@
+{
+  "measuredAt": "2026-10-18T20:24:52.575Z",
+  "topology": "NATS_queue_assign_sticky_http",
+  "workflow": "cloudflare-multiturn known-op (dns list + where A-count)",
+  "runtime": "bun --smol",
+  "claim_rules": [
+    "Replica count is measured, not assumed \u2014 sweep SCALEOUT_WORKERS (default 1,2,4,8).",
+    "Same p99 cutoffs as single-instance HTTP curves (100/250/500).",
+    "Old ~135 @100ms was 4\u00d7 Node on an earlier build; do not cite beside Bun 434 without labels.",
+    "Host-bound: if nproc < workers, contention can make more replicas worse."
+  ],
+  "host": {
+    "nproc": 4,
+    "mem_available_mb": 13187,
+    "bun": "1.4.3"
+  },
+  "slo": {
+    "thresholds_p99_ms": [
+      100,
+      250,
+      500
+    ],
+    "break_error_rate": 0.02,
+    "step_ms": 10000,
+    "warmup": 4
+  },
+  "single_instance_reference": {
+    "source": "docs/benchmarks/cloudflare-multiturn/http-concurrency-curves.json",
+    "clawql_bun_smol_at_100_250_500": {
+      "100": 82,
+      "250": 211,
+      "500": 434
+    },
+    "note": "Topology A \u2014 one Bun process, HTTP multiplex"
+  },
+  "historical_scaleout_reference": {
+    "source": "docs/benchmarks/executor-comparison/executor-cmp-chaos-clawql-ceiling-refine.json",
+    "workers": 4,
+    "runtime": "node",
+    "workflow": "pets equal-arm (executor-comparison)",
+    "sustained_at_p99_100ms": 135,
+    "note": "Different workflow + runtime + build \u2014 label or retire beside current Bun curves"
+  },
+  "best_by_threshold": {
+    "100": {
+      "workers": 4,
+      "clients": 134,
+      "peak_rps": 2623.2
+    },
+    "250": {
+      "workers": 2,
+      "clients": 322,
+      "peak_rps": 3004.2
+    },
+    "500": {
+      "workers": 4,
+      "clients": 596,
+      "peak_rps": 2623.2
+    }
+  },
+  "by_workers": [
+    {
+      "workers": 1,
+      "clients_at_threshold": {
+        "100": 85,
+        "250": 202,
+        "500": 430
+      },
+      "peak_rps": 1824.2,
+      "early_stop_reason": null
+    },
+    {
+      "workers": 2,
+      "clients_at_threshold": {
+        "100": 107,
+        "250": 322,
+        "500": 507
+      },
+      "peak_rps": 3004.2,
+      "early_stop_reason": null
+    },
+    {
+      "workers": 4,
+      "clients_at_threshold": {
+        "100": 134,
+        "250": 283,
+        "500": 596
+      },
+      "peak_rps": 2623.2,
+      "early_stop_reason": null
+    },
+    {
+      "workers": 8,
+      "clients_at_threshold": {
+        "100": 128,
+        "250": 289,
+        "500": 415
+      },
+      "peak_rps": 2178.7,
+      "early_stop_reason": null
+    }
+  ],
+  "detail": [
+    {
+      "workers": 1,
+      "runtime": "bun --smol",
+      "clients_at_threshold": {
+        "100": 85,
+        "250": 202,
+        "500": 430
+      },
+      "climb_steps": [
+        {
+          "concurrency": 1,
+          "ok": 5265,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 526.5,
+          "latency": {
+            "n": 5265,
+            "p50": 1.7722490000005564,
+            "p95": 2.7200940000002447,
+            "p99": 3.7954579999995985,
+            "p999": 6.4441320000000815
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 2,
+          "ok": 12359,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1235.9,
+          "latency": {
+            "n": 12359,
+            "p50": 1.502599999999802,
+            "p95": 2.2919369999999617,
+            "p99": 3.854559999999765,
+            "p999": 6.7802430000010645
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 4,
+          "ok": 14692,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1469.2,
+          "latency": {
+            "n": 14692,
+            "p50": 2.497168000001693,
+            "p95": 4.3479240000015125,
+            "p99": 6.0674309999994875,
+            "p999": 12.763895000000048
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 8,
+          "ok": 16179,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1617.9,
+          "latency": {
+            "n": 16179,
+            "p50": 4.166182000000845,
+            "p95": 8.72808900000382,
+            "p99": 11.31943599999795,
+            "p999": 16.279254000000947
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 16,
+          "ok": 17277,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1727.7,
+          "latency": {
+            "n": 17277,
+            "p50": 8.33694999999716,
+            "p95": 15.965560999997251,
+            "p99": 20.117543000000296,
+            "p999": 25.878018000003067
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 32,
+          "ok": 18105,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1810.5,
+          "latency": {
+            "n": 18105,
+            "p50": 16.603546999998798,
+            "p95": 27.907380000004196,
+            "p99": 37.00990599999932,
+            "p999": 53.49920800000109
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 64,
+          "ok": 17787,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1778.7,
+          "latency": {
+            "n": 17787,
+            "p50": 34.270831000001635,
+            "p95": 53.97439399998984,
+            "p99": 75.15880900000047,
+            "p999": 99.38139199999569
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 96,
+          "ok": 17608,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1760.8,
+          "latency": {
+            "n": 17608,
+            "p50": 53.21430400000827,
+            "p95": 77.49297399999341,
+            "p99": 107.30569399999513,
+            "p999": 134.5416269999987
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 128,
+          "ok": 16770,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1677,
+          "latency": {
+            "n": 16770,
+            "p50": 74.64619099999254,
+            "p95": 110.10322600000654,
+            "p99": 149.06528500000422,
+            "p999": 200.980349999998
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 160,
+          "ok": 17242,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1724.2,
+          "latency": {
+            "n": 17242,
+            "p50": 89.92820100000245,
+            "p95": 136.8383759999997,
+            "p99": 190.04360099999758,
+            "p999": 296.9500540000008
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 192,
+          "ok": 17301,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1730.1,
+          "latency": {
+            "n": 17301,
+            "p50": 108.56422900001053,
+            "p95": 151.2195309999952,
+            "p99": 209.12569900001108,
+            "p999": 255.69762900000205
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 224,
+          "ok": 17053,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1705.3,
+          "latency": {
+            "n": 17053,
+            "p50": 127.56773199999589,
+            "p95": 191.93807899999956,
+            "p99": 260.1500600000145,
+            "p999": 344.30484199999773
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 256,
+          "ok": 17327,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1732.7,
+          "latency": {
+            "n": 17327,
+            "p50": 141.037817000004,
+            "p95": 220.32456400000956,
+            "p99": 300.19746699999087,
+            "p999": 401.4830490000022
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 320,
+          "ok": 17544,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1754.4,
+          "latency": {
+            "n": 17544,
+            "p50": 179.11021799998707,
+            "p95": 271.8043600000092,
+            "p99": 373.52827400001115,
+            "p999": 602.135769000015
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 384,
+          "ok": 18242,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1824.2,
+          "latency": {
+            "n": 18242,
+            "p50": 204.346618999989,
+            "p95": 346.33118100001593,
+            "p99": 418.25243400002364,
+            "p999": 645.7664979999827
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 448,
+          "ok": 17355,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1735.5,
+          "latency": {
+            "n": 17355,
+            "p50": 248.35077300001285,
+            "p95": 432.34056799998507,
+            "p99": 541.2317919999768,
+            "p999": 723.6609539999918
+          },
+          "broken": true,
+          "break_reason": "p99 541.2ms",
+          "phase": "climb"
+        }
+      ],
+      "refine": {
+        "100": {
+          "last_ok": 85,
+          "first_break": 86,
+          "steps": [
+            {
+              "concurrency": 80,
+              "ok": 16509,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1650.9,
+              "latency": {
+                "n": 16509,
+                "p50": 47.946526999992784,
+                "p95": 65.93779200001154,
+                "p99": 93.23658499997691,
+                "p999": 111.56986199997482
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 88,
+              "ok": 14737,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1473.7,
+              "latency": {
+                "n": 14737,
+                "p50": 56.32576100001461,
+                "p95": 99.1050389999873,
+                "p99": 121.65820199999143,
+                "p999": 182.11241599998903
+              },
+              "broken": true,
+              "break_reason": "p99 121.7ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 84,
+              "ok": 16863,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1686.3,
+              "latency": {
+                "n": 16863,
+                "p50": 47.569771000009496,
+                "p95": 64.11160899998504,
+                "p99": 96.46038799997768,
+                "p999": 116.36698199997772
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 86,
+              "ok": 14984,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1498.4,
+              "latency": {
+                "n": 14984,
+                "p50": 55.03792000000249,
+                "p95": 89.35167800000636,
+                "p99": 125.96372300002258,
+                "p999": 168.51918900001328
+              },
+              "broken": true,
+              "break_reason": "p99 126.0ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 85,
+              "ok": 17196,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1719.6,
+              "latency": {
+                "n": 17196,
+                "p50": 46.113391999999294,
+                "p95": 69.8199050000112,
+                "p99": 97.41414499998791,
+                "p999": 121.0240380000032
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            }
+          ]
+        },
+        "250": {
+          "last_ok": 202,
+          "first_break": 203,
+          "steps": [
+            {
+              "concurrency": 208,
+              "ok": 16628,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1662.8,
+              "latency": {
+                "n": 16628,
+                "p50": 118.71172600000864,
+                "p95": 200.40328699999372,
+                "p99": 263.957172000024,
+                "p999": 379.6671759999881
+              },
+              "broken": true,
+              "break_reason": "p99 264.0ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 200,
+              "ok": 16925,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1692.5,
+              "latency": {
+                "n": 16925,
+                "p50": 117.0828760000004,
+                "p95": 152.56731399998534,
+                "p99": 210.45617300001322,
+                "p999": 265.4000959999976
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 204,
+              "ok": 15683,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1568.3,
+              "latency": {
+                "n": 15683,
+                "p50": 130.53570599999512,
+                "p95": 195.771688000008,
+                "p99": 261.5421829999541,
+                "p999": 368.276904999977
+              },
+              "broken": true,
+              "break_reason": "p99 261.5ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 202,
+              "ok": 18711,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1871.1,
+              "latency": {
+                "n": 18711,
+                "p50": 106.3164879999822,
+                "p95": 137.7286670000176,
+                "p99": 192.4080209999811,
+                "p999": 231.69805000000633
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 203,
+              "ok": 15248,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1524.8,
+              "latency": {
+                "n": 15248,
+                "p50": 128.76075800001854,
+                "p95": 223.74004000000423,
+                "p99": 293.3889059999492,
+                "p999": 411.72235499997623
+              },
+              "broken": true,
+              "break_reason": "p99 293.4ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            }
+          ]
+        },
+        "500": {
+          "last_ok": 430,
+          "first_break": 431,
+          "steps": [
+            {
+              "concurrency": 416,
+              "ok": 18034,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1803.4,
+              "latency": {
+                "n": 18034,
+                "p50": 226.7541130000027,
+                "p95": 279.77324999996927,
+                "p99": 408.5950929999817,
+                "p999": 456.3550699999905
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 432,
+              "ok": 17524,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1752.4,
+              "latency": {
+                "n": 17524,
+                "p50": 231.74751199997263,
+                "p95": 435.0724239999545,
+                "p99": 584.6028399999486,
+                "p999": 688.6604279999738
+              },
+              "broken": true,
+              "break_reason": "p99 584.6ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 424,
+              "ok": 16874,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1687.4,
+              "latency": {
+                "n": 16874,
+                "p50": 252.0027349999873,
+                "p95": 309.64078399998834,
+                "p99": 440.1804669999983,
+                "p999": 529.8413290000171
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 428,
+              "ok": 18336,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1833.6,
+              "latency": {
+                "n": 18336,
+                "p50": 228.98058899998432,
+                "p95": 285.9501389999641,
+                "p99": 388.4630500000203,
+                "p999": 499.2732449999894
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 430,
+              "ok": 16748,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1674.8,
+              "latency": {
+                "n": 16748,
+                "p50": 258.69650199997704,
+                "p95": 319.7910050000064,
+                "p99": 429.170689999999,
+                "p999": 503.4381830000202
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 431,
+              "ok": 16943,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 1694.3,
+              "latency": {
+                "n": 16943,
+                "p50": 243.27565699996194,
+                "p95": 389.9808479999774,
+                "p99": 505.8778180000372,
+                "p999": 694.1778829999967
+              },
+              "broken": true,
+              "break_reason": "p99 505.9ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            }
+          ]
+        }
+      },
+      "peak_rps": 1824.2,
+      "replica_pids": [
+        3255
+      ]
+    },
+    {
+      "workers": 2,
+      "runtime": "bun --smol",
+      "clients_at_threshold": {
+        "100": 107,
+        "250": 322,
+        "500": 507
+      },
+      "climb_steps": [
+        {
+          "concurrency": 1,
+          "ok": 5179,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 517.9,
+          "latency": {
+            "n": 5179,
+            "p50": 1.8453309999895282,
+            "p95": 2.5041760000167415,
+            "p99": 3.7263629999943078,
+            "p999": 4.8253419999964535
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 2,
+          "ok": 11569,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1156.9,
+          "latency": {
+            "n": 11569,
+            "p50": 1.607285000034608,
+            "p95": 2.5385349999996834,
+            "p99": 4.004620000021532,
+            "p999": 7.355539000011049
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 4,
+          "ok": 13249,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1324.9,
+          "latency": {
+            "n": 13249,
+            "p50": 2.710404000012204,
+            "p95": 5.218978999997489,
+            "p99": 7.392587999987882,
+            "p999": 13.172579000005499
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 8,
+          "ok": 24087,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2408.7,
+          "latency": {
+            "n": 24087,
+            "p50": 2.960811000026297,
+            "p95": 6.021827999968082,
+            "p99": 8.261808999988716,
+            "p999": 15.762049000011757
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 16,
+          "ok": 25233,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2523.3,
+          "latency": {
+            "n": 25233,
+            "p50": 5.696249000029638,
+            "p95": 11.39361299999291,
+            "p99": 15.907390999956988,
+            "p999": 26.557334000011906
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 32,
+          "ok": 27900,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2790,
+          "latency": {
+            "n": 27900,
+            "p50": 10.472744000027888,
+            "p95": 20.424113999994006,
+            "p99": 27.65799599996535,
+            "p999": 39.74537700001383
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 64,
+          "ok": 29133,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2913.3,
+          "latency": {
+            "n": 29133,
+            "p50": 20.251948999997694,
+            "p95": 37.89429999998538,
+            "p99": 50.2258950000396,
+            "p999": 74.00561699998798
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 96,
+          "ok": 27442,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2744.2,
+          "latency": {
+            "n": 27442,
+            "p50": 31.98024899995653,
+            "p95": 61.46071000001393,
+            "p99": 82.77447999996366,
+            "p999": 122.19899299996905
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 128,
+          "ok": 26631,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2663.1,
+          "latency": {
+            "n": 26631,
+            "p50": 44.268160000036005,
+            "p95": 85.66439099999843,
+            "p99": 110.7073719999753,
+            "p999": 146.4274940000032
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 160,
+          "ok": 27483,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2748.3,
+          "latency": {
+            "n": 27483,
+            "p50": 54.80682400002843,
+            "p95": 99.35987799998838,
+            "p99": 127.03658600000199,
+            "p999": 176.91291499999352
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 192,
+          "ok": 25760,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2576,
+          "latency": {
+            "n": 25760,
+            "p50": 68.49098099995172,
+            "p95": 131.21356499998365,
+            "p99": 177.39415499998722,
+            "p999": 248.82526999997208
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 224,
+          "ok": 28306,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2830.6,
+          "latency": {
+            "n": 28306,
+            "p50": 73.08818099997006,
+            "p95": 134.80316999997012,
+            "p99": 177.19159400003264,
+            "p999": 249.87926700001117
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 256,
+          "ok": 26692,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2669.2,
+          "latency": {
+            "n": 26692,
+            "p50": 86.57186300004832,
+            "p95": 177.56327499996405,
+            "p99": 245.44835399999283,
+            "p999": 338.3605080000125
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 320,
+          "ok": 29567,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2956.7,
+          "latency": {
+            "n": 29567,
+            "p50": 102.18178700003773,
+            "p95": 178.81824000005145,
+            "p99": 225.0711860000156,
+            "p999": 308.8395470000105
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 384,
+          "ok": 25349,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2534.9,
+          "latency": {
+            "n": 25349,
+            "p50": 134.8064430000959,
+            "p95": 288.5819729999639,
+            "p99": 433.88946600002237,
+            "p999": 641.0234649999766
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 448,
+          "ok": 30042,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 3004.2,
+          "latency": {
+            "n": 30042,
+            "p50": 138.28540400008205,
+            "p95": 255.05426199990325,
+            "p99": 299.0798790000845,
+            "p999": 341.7125290000113
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 512,
+          "ok": 25408,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2540.8,
+          "latency": {
+            "n": 25408,
+            "p50": 186.99648999993224,
+            "p95": 366.4952930000145,
+            "p99": 506.6383729999652,
+            "p999": 622.7333269999363
+          },
+          "broken": true,
+          "break_reason": "p99 506.6ms",
+          "phase": "climb"
+        }
+      ],
+      "refine": {
+        "100": {
+          "last_ok": 107,
+          "first_break": 108,
+          "steps": [
+            {
+              "concurrency": 112,
+              "ok": 24432,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2443.2,
+              "latency": {
+                "n": 24432,
+                "p50": 41.48965000000317,
+                "p95": 84.75221200007945,
+                "p99": 116.00858699996024,
+                "p999": 174.28304500004742
+              },
+              "broken": true,
+              "break_reason": "p99 116.0ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 104,
+              "ok": 27568,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2756.8,
+              "latency": {
+                "n": 27568,
+                "p50": 35.48377699998673,
+                "p95": 63.305698000011034,
+                "p99": 79.40153900010046,
+                "p999": 100.01022400008515
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 108,
+              "ok": 24292,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2429.2,
+              "latency": {
+                "n": 24292,
+                "p50": 39.38907499995548,
+                "p95": 84.68004100001417,
+                "p99": 119.83210400003009,
+                "p999": 200.57173799991142
+              },
+              "broken": true,
+              "break_reason": "p99 119.8ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 106,
+              "ok": 27846,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2784.6,
+              "latency": {
+                "n": 27846,
+                "p50": 35.57129300001543,
+                "p95": 65.20689499995206,
+                "p99": 83.56657000002451,
+                "p999": 103.55933200009167
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 107,
+              "ok": 26182,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2618.2,
+              "latency": {
+                "n": 26182,
+                "p50": 37.055647999979556,
+                "p95": 73.54200700006913,
+                "p99": 99.39012200001162,
+                "p999": 136.20695100002922
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            }
+          ]
+        },
+        "250": {
+          "last_ok": 322,
+          "first_break": 323,
+          "steps": [
+            {
+              "concurrency": 352,
+              "ok": 26968,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2696.8,
+              "latency": {
+                "n": 26968,
+                "p50": 120.89498499990441,
+                "p95": 233.60743400000501,
+                "p99": 316.18159500008915,
+                "p999": 381.6952740000561
+              },
+              "broken": true,
+              "break_reason": "p99 316.2ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 336,
+              "ok": 26068,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2606.8,
+              "latency": {
+                "n": 26068,
+                "p50": 118.31385500007309,
+                "p95": 230.35696499992628,
+                "p99": 317.06682800001,
+                "p999": 475.81376499996986
+              },
+              "broken": true,
+              "break_reason": "p99 317.1ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 328,
+              "ok": 27200,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2720,
+              "latency": {
+                "n": 27200,
+                "p50": 107.4601890000049,
+                "p95": 224.26757500006352,
+                "p99": 303.915038999985,
+                "p999": 379.1641290000407
+              },
+              "broken": true,
+              "break_reason": "p99 303.9ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 324,
+              "ok": 26257,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2625.7,
+              "latency": {
+                "n": 26257,
+                "p50": 111.49154800001998,
+                "p95": 234.01631099998485,
+                "p99": 312.3666990000056,
+                "p999": 430.2350060000317
+              },
+              "broken": true,
+              "break_reason": "p99 312.4ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 322,
+              "ok": 28486,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2848.6,
+              "latency": {
+                "n": 28486,
+                "p50": 105.32269499998074,
+                "p95": 190.2150590000674,
+                "p99": 235.12746399990283,
+                "p999": 298.6201230000006
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 323,
+              "ok": 21329,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2132.9,
+              "latency": {
+                "n": 21329,
+                "p50": 121.47988200001419,
+                "p95": 339.92167700000573,
+                "p99": 517.629339999985,
+                "p999": 657.0536339998944
+              },
+              "broken": true,
+              "break_reason": "p99 517.6ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            }
+          ]
+        },
+        "500": {
+          "last_ok": 507,
+          "first_break": 508,
+          "steps": [
+            {
+              "concurrency": 480,
+              "ok": 27186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2718.6,
+              "latency": {
+                "n": 27186,
+                "p50": 169.45699899992906,
+                "p95": 285.83992299996316,
+                "p99": 358.1682819999987,
+                "p999": 398.58963299996685
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 496,
+              "ok": 29193,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2919.3,
+              "latency": {
+                "n": 29193,
+                "p50": 158.7013840000145,
+                "p95": 288.0220889999764,
+                "p99": 343.05971000005957,
+                "p999": 436.4622870000312
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 504,
+              "ok": 26830,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2683,
+              "latency": {
+                "n": 26830,
+                "p50": 173.57391099992674,
+                "p95": 313.90959799999837,
+                "p99": 419.0126800000435,
+                "p999": 563.7647629999556
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 508,
+              "ok": 23421,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2342.1,
+              "latency": {
+                "n": 23421,
+                "p50": 193.57877599995118,
+                "p95": 406.8253009999171,
+                "p99": 564.9861569999484,
+                "p999": 723.262396999984
+              },
+              "broken": true,
+              "break_reason": "p99 565.0ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 506,
+              "ok": 29158,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2915.8,
+              "latency": {
+                "n": 29158,
+                "p50": 164.97123699996155,
+                "p95": 289.07698199991137,
+                "p99": 348.73219300003257,
+                "p999": 392.5726329999743
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 507,
+              "ok": 27959,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2795.9,
+              "latency": {
+                "n": 27959,
+                "p50": 171.97738699999172,
+                "p95": 302.3240260001039,
+                "p99": 368.70608799997717,
+                "p999": 452.87807199999224
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            }
+          ]
+        }
+      },
+      "peak_rps": 3004.2,
+      "replica_pids": [
+        3316,
+        3350
+      ]
+    },
+    {
+      "workers": 4,
+      "runtime": "bun --smol",
+      "clients_at_threshold": {
+        "100": 134,
+        "250": 283,
+        "500": 596
+      },
+      "climb_steps": [
+        {
+          "concurrency": 1,
+          "ok": 5191,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 519.1,
+          "latency": {
+            "n": 5191,
+            "p50": 1.828034000005573,
+            "p95": 2.5050590001046658,
+            "p99": 3.817899000016041,
+            "p999": 6.520321000018157
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 2,
+          "ok": 10695,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1069.5,
+          "latency": {
+            "n": 10695,
+            "p50": 1.7184569999808446,
+            "p95": 2.6600170000456274,
+            "p99": 4.578142000013031,
+            "p999": 9.415227000019513
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 4,
+          "ok": 15700,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1570,
+          "latency": {
+            "n": 15700,
+            "p50": 2.3004329999675974,
+            "p95": 4.37070699990727,
+            "p99": 6.622167999972589,
+            "p999": 11.525878999964334
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 8,
+          "ok": 20026,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2002.6,
+          "latency": {
+            "n": 20026,
+            "p50": 3.60279899998568,
+            "p95": 7.193530999938957,
+            "p99": 10.508241000003181,
+            "p999": 16.380194000084884
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 16,
+          "ok": 22672,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2267.2,
+          "latency": {
+            "n": 22672,
+            "p50": 6.646482000011019,
+            "p95": 11.918004999984987,
+            "p99": 15.767271000077017,
+            "p999": 20.95409200002905
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 32,
+          "ok": 24230,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2423,
+          "latency": {
+            "n": 24230,
+            "p50": 12.541656999965198,
+            "p95": 22.030440000002272,
+            "p99": 27.973192000063136,
+            "p999": 41.43537500000093
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 64,
+          "ok": 25250,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2525,
+          "latency": {
+            "n": 25250,
+            "p50": 24.274878000025637,
+            "p95": 40.60291799996048,
+            "p99": 54.49790099996608,
+            "p999": 86.05971799988765
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 96,
+          "ok": 25609,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2560.9,
+          "latency": {
+            "n": 25609,
+            "p50": 36.660248999949545,
+            "p95": 55.988985999953,
+            "p99": 73.16756299999543,
+            "p999": 88.0583270000061
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 128,
+          "ok": 26232,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2623.2,
+          "latency": {
+            "n": 26232,
+            "p50": 47.679771000053734,
+            "p95": 72.87480400002096,
+            "p99": 96.90946899994742,
+            "p999": 112.61483100010082
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 160,
+          "ok": 25328,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2532.8,
+          "latency": {
+            "n": 25328,
+            "p50": 60.78335899999365,
+            "p95": 100.26751000003424,
+            "p99": 135.64195300010033,
+            "p999": 182.6977959999349
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 192,
+          "ok": 25541,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2554.1,
+          "latency": {
+            "n": 25541,
+            "p50": 72.68700599996373,
+            "p95": 118.5882429999765,
+            "p99": 144.75560699997004,
+            "p999": 197.60067600000184
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 224,
+          "ok": 25252,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2525.2,
+          "latency": {
+            "n": 25252,
+            "p50": 84.81100799993146,
+            "p95": 133.82579499995336,
+            "p99": 171.0364680000348,
+            "p999": 259.0904500000179
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 256,
+          "ok": 25752,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2575.2,
+          "latency": {
+            "n": 25752,
+            "p50": 98.335611000075,
+            "p95": 138.25465300003998,
+            "p99": 172.19366300001275,
+            "p999": 203.75041800003964
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 320,
+          "ok": 24254,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2425.4,
+          "latency": {
+            "n": 24254,
+            "p50": 123.98231800005306,
+            "p95": 218.81996199989226,
+            "p99": 270.72643999999855,
+            "p999": 329.90059000009205
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 384,
+          "ok": 24582,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2458.2,
+          "latency": {
+            "n": 24582,
+            "p50": 152.49400100007188,
+            "p95": 226.4995110000018,
+            "p99": 297.25608900003135,
+            "p999": 358.2579919999698
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 448,
+          "ok": 24817,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2481.7,
+          "latency": {
+            "n": 24817,
+            "p50": 176.0581790000433,
+            "p95": 241.56050199992023,
+            "p99": 347.0937589999521,
+            "p999": 373.33698500005994
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 512,
+          "ok": 24347,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2434.7,
+          "latency": {
+            "n": 24347,
+            "p50": 203.21640200004913,
+            "p95": 276.7759349999251,
+            "p99": 459.65157700004056,
+            "p999": 592.5152810000582
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 576,
+          "ok": 24156,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2415.6,
+          "latency": {
+            "n": 24156,
+            "p50": 228.71978899999522,
+            "p95": 343.69577699992806,
+            "p99": 483.6274899999844,
+            "p999": 624.6201949999668
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 640,
+          "ok": 23551,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2355.1,
+          "latency": {
+            "n": 23551,
+            "p50": 264.8113819998689,
+            "p95": 345.99310100008734,
+            "p99": 629.3139289999381,
+            "p999": 799.5109490000177
+          },
+          "broken": true,
+          "break_reason": "p99 629.3ms",
+          "phase": "climb"
+        }
+      ],
+      "refine": {
+        "100": {
+          "last_ok": 134,
+          "first_break": 135,
+          "steps": [
+            {
+              "concurrency": 144,
+              "ok": 25323,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2532.3,
+              "latency": {
+                "n": 25323,
+                "p50": 54.727357000112534,
+                "p95": 88.97748900018632,
+                "p99": 118.49107600003481,
+                "p999": 146.0757810000796
+              },
+              "broken": true,
+              "break_reason": "p99 118.5ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 136,
+              "ok": 24186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2418.6,
+              "latency": {
+                "n": 24186,
+                "p50": 53.2734890000429,
+                "p95": 91.80152500001714,
+                "p99": 114.39598499983549,
+                "p999": 147.21382399997674
+              },
+              "broken": true,
+              "break_reason": "p99 114.4ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 132,
+              "ok": 25628,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2562.8,
+              "latency": {
+                "n": 25628,
+                "p50": 50.19737000018358,
+                "p95": 78.31164299999364,
+                "p99": 98.57086599990726,
+                "p999": 127.73706199997105
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 134,
+              "ok": 26385,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2638.5,
+              "latency": {
+                "n": 26385,
+                "p50": 50.25582299986854,
+                "p95": 70.36810299986973,
+                "p99": 87.35439500003122,
+                "p999": 109.59930000011809
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 135,
+              "ok": 24710,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2471,
+              "latency": {
+                "n": 24710,
+                "p50": 51.10373500012793,
+                "p95": 93.18081100005656,
+                "p99": 122.78719100006856,
+                "p999": 178.5469250001479
+              },
+              "broken": true,
+              "break_reason": "p99 122.8ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            }
+          ]
+        },
+        "250": {
+          "last_ok": 283,
+          "first_break": 284,
+          "steps": [
+            {
+              "concurrency": 288,
+              "ok": 24540,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2454,
+              "latency": {
+                "n": 24540,
+                "p50": 112.17905199993402,
+                "p95": 186.21598199987784,
+                "p99": 250.88941000006162,
+                "p999": 319.20807900000364
+              },
+              "broken": true,
+              "break_reason": "p99 250.9ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 272,
+              "ok": 24107,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2410.7,
+              "latency": {
+                "n": 24107,
+                "p50": 107.80320199998096,
+                "p95": 176.21001200005412,
+                "p99": 226.74986000009812,
+                "p999": 263.4951899999287
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 280,
+              "ok": 25342,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2534.2,
+              "latency": {
+                "n": 25342,
+                "p50": 110.1221450001467,
+                "p95": 149.2050060001202,
+                "p99": 184.5396859999746,
+                "p999": 233.0627679999452
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 284,
+              "ok": 21818,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2181.8,
+              "latency": {
+                "n": 21818,
+                "p50": 116.61365099996328,
+                "p95": 229.79164800001308,
+                "p99": 293.754152999958,
+                "p999": 396.899652000051
+              },
+              "broken": true,
+              "break_reason": "p99 293.8ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 282,
+              "ok": 23818,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2381.8,
+              "latency": {
+                "n": 23818,
+                "p50": 112.4072879999876,
+                "p95": 195.0490610001143,
+                "p99": 233.38332100003026,
+                "p999": 267.67290199990384
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 283,
+              "ok": 25685,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2568.5,
+              "latency": {
+                "n": 25685,
+                "p50": 109.0468089999631,
+                "p95": 155.60406399983913,
+                "p99": 197.80065000010654,
+                "p999": 306.0781260000076
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            }
+          ]
+        },
+        "500": {
+          "last_ok": 596,
+          "first_break": 597,
+          "steps": [
+            {
+              "concurrency": 608,
+              "ok": 24052,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2405.2,
+              "latency": {
+                "n": 24052,
+                "p50": 238.36105299997143,
+                "p95": 411.9227100000717,
+                "p99": 513.7053249999881,
+                "p999": 654.6116620001849
+              },
+              "broken": true,
+              "break_reason": "p99 513.7ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 592,
+              "ok": 23749,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2374.9,
+              "latency": {
+                "n": 23749,
+                "p50": 234.25747799989767,
+                "p95": 405.3045709999278,
+                "p99": 473.6549530001357,
+                "p999": 800.3636100001168
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 600,
+              "ok": 22969,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2296.9,
+              "latency": {
+                "n": 22969,
+                "p50": 245.6339709998574,
+                "p95": 457.97083600005135,
+                "p99": 663.8753180000931,
+                "p999": 828.2099530000705
+              },
+              "broken": true,
+              "break_reason": "p99 663.9ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 596,
+              "ok": 25424,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2542.4,
+              "latency": {
+                "n": 25424,
+                "p50": 232.26542700012214,
+                "p95": 318.2417500000447,
+                "p99": 469.0192289999686,
+                "p999": 940.9581289999187
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 598,
+              "ok": 22186,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2218.6,
+              "latency": {
+                "n": 22186,
+                "p50": 244.94715499994345,
+                "p95": 479.1353249999229,
+                "p99": 549.1346169998869,
+                "p999": 623.403226000024
+              },
+              "broken": true,
+              "break_reason": "p99 549.1ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 597,
+              "ok": 21924,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2192.4,
+              "latency": {
+                "n": 21924,
+                "p50": 243.49649099982344,
+                "p95": 470.56790699996054,
+                "p99": 597.45623599994,
+                "p999": 964.1637470000423
+              },
+              "broken": true,
+              "break_reason": "p99 597.5ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            }
+          ]
+        }
+      },
+      "peak_rps": 2623.2,
+      "replica_pids": [
+        3418,
+        3452,
+        3486,
+        3520
+      ]
+    },
+    {
+      "workers": 8,
+      "runtime": "bun --smol",
+      "clients_at_threshold": {
+        "100": 128,
+        "250": 289,
+        "500": 415
+      },
+      "climb_steps": [
+        {
+          "concurrency": 1,
+          "ok": 5427,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 542.7,
+          "latency": {
+            "n": 5427,
+            "p50": 1.7251919999253005,
+            "p95": 2.438700000056997,
+            "p99": 3.839788000099361,
+            "p999": 7.878762000007555
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 2,
+          "ok": 10785,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1078.5,
+          "latency": {
+            "n": 10785,
+            "p50": 1.6942139999009669,
+            "p95": 2.8229940000455827,
+            "p99": 4.121287000132725,
+            "p999": 7.809565000003204
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 4,
+          "ok": 13730,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1373,
+          "latency": {
+            "n": 13730,
+            "p50": 2.667513999855146,
+            "p95": 4.767417999915779,
+            "p99": 6.442246000049636,
+            "p999": 12.43983000004664
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 8,
+          "ok": 16870,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 1687,
+          "latency": {
+            "n": 16870,
+            "p50": 4.301236999919638,
+            "p95": 8.403674999950454,
+            "p99": 11.812666000099853,
+            "p999": 19.647208999842405
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 16,
+          "ok": 20121,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2012.1,
+          "latency": {
+            "n": 20121,
+            "p50": 7.457047000061721,
+            "p95": 13.636345000006258,
+            "p99": 17.943222999805585,
+            "p999": 25.622303999960423
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 32,
+          "ok": 21381,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2138.1,
+          "latency": {
+            "n": 21381,
+            "p50": 14.392976999981329,
+            "p95": 23.61068299994804,
+            "p99": 29.543776999926195,
+            "p999": 38.07571400003508
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 64,
+          "ok": 20707,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2070.7,
+          "latency": {
+            "n": 20707,
+            "p50": 30.274866999825463,
+            "p95": 45.653315000003204,
+            "p99": 55.90572899999097,
+            "p999": 66.66926900018007
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 96,
+          "ok": 21296,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2129.6,
+          "latency": {
+            "n": 21296,
+            "p50": 44.61078899982385,
+            "p95": 61.55988099984825,
+            "p99": 75.22178000002168,
+            "p999": 94.0980930000078
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 128,
+          "ok": 21787,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2178.7,
+          "latency": {
+            "n": 21787,
+            "p50": 58.141214000061154,
+            "p95": 78.40929800015874,
+            "p99": 98.05627600010484,
+            "p999": 121.34050599997863
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 160,
+          "ok": 21329,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2132.9,
+          "latency": {
+            "n": 21329,
+            "p50": 73.1250070000533,
+            "p95": 102.67503999988548,
+            "p99": 123.64773599989712,
+            "p999": 151.63734099990688
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 192,
+          "ok": 21255,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2125.5,
+          "latency": {
+            "n": 21255,
+            "p50": 88.018441000022,
+            "p95": 123.99404800008051,
+            "p99": 152.00774200004525,
+            "p999": 248.58466799999587
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 224,
+          "ok": 21253,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2125.3,
+          "latency": {
+            "n": 21253,
+            "p50": 102.52038600016385,
+            "p95": 137.98290000017732,
+            "p99": 178.52244199998677,
+            "p999": 303.81148899998516
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 256,
+          "ok": 21316,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2131.6,
+          "latency": {
+            "n": 21316,
+            "p50": 117.15185000002384,
+            "p95": 164.29527899995446,
+            "p99": 226.3400280000642,
+            "p999": 336.8717179999221
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 320,
+          "ok": 20038,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2003.8,
+          "latency": {
+            "n": 20038,
+            "p50": 155.25215100008063,
+            "p95": 205.9065310000442,
+            "p99": 261.6152379999403,
+            "p999": 354.09259999985807
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 384,
+          "ok": 20668,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2066.8,
+          "latency": {
+            "n": 20668,
+            "p50": 180.08269900013693,
+            "p95": 240.11854799999855,
+            "p99": 341.6950259997975,
+            "p999": 608.1885319999419
+          },
+          "broken": false,
+          "break_reason": null,
+          "phase": "climb"
+        },
+        {
+          "concurrency": 448,
+          "ok": 20529,
+          "err": 0,
+          "error_rate": 0,
+          "rps": 2052.9,
+          "latency": {
+            "n": 20529,
+            "p50": 214.018619999988,
+            "p95": 272.1842070000712,
+            "p99": 650.8612299999222,
+            "p999": 824.995326000033
+          },
+          "broken": true,
+          "break_reason": "p99 650.9ms",
+          "phase": "climb"
+        }
+      ],
+      "refine": {
+        "100": {
+          "last_ok": 128,
+          "first_break": 129,
+          "steps": [
+            {
+              "concurrency": 144,
+              "ok": 22261,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2226.1,
+              "latency": {
+                "n": 22261,
+                "p50": 62.8688550000079,
+                "p95": 90.4035019997973,
+                "p99": 124.14966499991715,
+                "p999": 162.86669500009157
+              },
+              "broken": true,
+              "break_reason": "p99 124.1ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 136,
+              "ok": 21257,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2125.7,
+              "latency": {
+                "n": 21257,
+                "p50": 62.184968000045046,
+                "p95": 88.68563700001687,
+                "p99": 113.6622989999596,
+                "p999": 133.67049799999222
+              },
+              "broken": true,
+              "break_reason": "p99 113.7ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 132,
+              "ok": 21181,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2118.1,
+              "latency": {
+                "n": 21181,
+                "p50": 60.000050000147894,
+                "p95": 90.29938199999742,
+                "p99": 122.23347600013949,
+                "p999": 150.0279210000299
+              },
+              "broken": true,
+              "break_reason": "p99 122.2ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 130,
+              "ok": 22217,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2221.7,
+              "latency": {
+                "n": 22217,
+                "p50": 57.324457000009716,
+                "p95": 78.66394100012258,
+                "p99": 103.47548299981281,
+                "p999": 122.26808700012043
+              },
+              "broken": true,
+              "break_reason": "p99 103.5ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            },
+            {
+              "concurrency": 129,
+              "ok": 20824,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2082.4,
+              "latency": {
+                "n": 20824,
+                "p50": 59.40223000012338,
+                "p95": 95.1331609999761,
+                "p99": 117.50157600012608,
+                "p999": 169.20952700008638
+              },
+              "broken": true,
+              "break_reason": "p99 117.5ms",
+              "phase": "refine",
+              "threshold_ms": 100
+            }
+          ]
+        },
+        "250": {
+          "last_ok": 289,
+          "first_break": 290,
+          "steps": [
+            {
+              "concurrency": 288,
+              "ok": 21306,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2130.6,
+              "latency": {
+                "n": 21306,
+                "p50": 131.1759469998069,
+                "p95": 178.7667149999179,
+                "p99": 245.32926000002772,
+                "p999": 388.2123029998038
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 304,
+              "ok": 21226,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2122.6,
+              "latency": {
+                "n": 21226,
+                "p50": 139.30634999996983,
+                "p95": 205.96662099985406,
+                "p99": 258.82632999983616,
+                "p999": 460.54927800013684
+              },
+              "broken": true,
+              "break_reason": "p99 258.8ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 296,
+              "ok": 20757,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2075.7,
+              "latency": {
+                "n": 20757,
+                "p50": 138.92697799997404,
+                "p95": 184.68219300010242,
+                "p99": 289.39080599998124,
+                "p999": 505.425062000053
+              },
+              "broken": true,
+              "break_reason": "p99 289.4ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 292,
+              "ok": 21714,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2171.4,
+              "latency": {
+                "n": 21714,
+                "p50": 131.20950499991886,
+                "p95": 175.62015699991025,
+                "p99": 273.2957119999919,
+                "p999": 315.35105499997735
+              },
+              "broken": true,
+              "break_reason": "p99 273.3ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 290,
+              "ok": 20446,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2044.6,
+              "latency": {
+                "n": 20446,
+                "p50": 133.3313139998354,
+                "p95": 230.14625200000592,
+                "p99": 337.9801560000051,
+                "p999": 370.2522889999673
+              },
+              "broken": true,
+              "break_reason": "p99 338.0ms",
+              "phase": "refine",
+              "threshold_ms": 250
+            },
+            {
+              "concurrency": 289,
+              "ok": 20688,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2068.8,
+              "latency": {
+                "n": 20688,
+                "p50": 134.7795979999937,
+                "p95": 202.01969999982975,
+                "p99": 242.15688999998383,
+                "p999": 433.68623799993657
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 250
+            }
+          ]
+        },
+        "500": {
+          "last_ok": 415,
+          "first_break": 416,
+          "steps": [
+            {
+              "concurrency": 416,
+              "ok": 21326,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2132.6,
+              "latency": {
+                "n": 21326,
+                "p50": 192.53876100014895,
+                "p95": 242.29337199986912,
+                "p99": 566.5848300000653,
+                "p999": 679.471034000162
+              },
+              "broken": true,
+              "break_reason": "p99 566.6ms",
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 400,
+              "ok": 21665,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2166.5,
+              "latency": {
+                "n": 21665,
+                "p50": 179.1414980001282,
+                "p95": 235.81130199995823,
+                "p99": 358.8424529999029,
+                "p999": 512.7420229997952
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 408,
+              "ok": 20964,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2096.4,
+              "latency": {
+                "n": 20964,
+                "p50": 184.18413700000383,
+                "p95": 307.2964159999974,
+                "p99": 381.09053599997424,
+                "p999": 517.8958739999216
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 412,
+              "ok": 20773,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2077.3,
+              "latency": {
+                "n": 20773,
+                "p50": 189.07051699981093,
+                "p95": 340.9310960001312,
+                "p99": 393.08591000013985,
+                "p999": 559.4664480001666
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 414,
+              "ok": 20482,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2048.2,
+              "latency": {
+                "n": 20482,
+                "p50": 196.24017799994908,
+                "p95": 271.93995000002906,
+                "p99": 357.4441339999903,
+                "p999": 790.1098289999645
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            },
+            {
+              "concurrency": 415,
+              "ok": 21728,
+              "err": 0,
+              "error_rate": 0,
+              "rps": 2172.8,
+              "latency": {
+                "n": 21728,
+                "p50": 187.57029299996793,
+                "p95": 238.9632729999721,
+                "p99": 431.45044400007464,
+                "p999": 582.3703999998979
+              },
+              "broken": false,
+              "break_reason": null,
+              "phase": "refine",
+              "threshold_ms": 500
+            }
+          ]
+        }
+      },
+      "peak_rps": 2178.7,
+      "replica_pids": [
+        3623,
+        3657,
+        3691,
+        3725,
+        3759,
+        3793,
+        3827,
+        3861
+      ]
+    }
+  ],
+  "partial": false,
+  "video_guidance": {
+    "do_not_show_beside_434": "historical Node 4\u00d7 pets ~135 @100ms",
+    "show_instead": {
+      "single_instance_bun_at_500ms": 430,
+      "scaleout_best_at_500ms": {
+        "workers": 4,
+        "clients": 596,
+        "peak_rps": 2623.2
+      },
+      "scaleout_best_at_100ms": {
+        "workers": 4,
+        "clients": 134,
+        "peak_rps": 2623.2
+      },
+      "note": "At the same 100ms SLO, 4\u00d7 Bun NATS holds 134 vs single Bun 85 \u2014 scale-out wins. At 500ms, 4\u00d7 holds 596 vs single ~430."
+    },
+    "workers_8_on_4_cores": "Worse than 4\u00d7 at 100ms and 500ms \u2014 host contention, not a ClawQL design limit."
+  }
+}
