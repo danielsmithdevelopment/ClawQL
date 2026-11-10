@@ -12,28 +12,34 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects on the published Tier C board. Tip pin is stock celld 0.6.3 (always-on durability gate): wedged-owner N=100 and stale-owner N=40 tip boards held with call-sent + intent visible. Lab Mac mini v4 N=1000 (TTL 3s) measured 0 correctness failures with during-call intent visible 251/251 — publish as “v4 passed; authorization pending binary-identity remesure” until soak↔v4 celld commit+sha match in-artifact. Mechanism claim stays paused. An earlier TTL 3s wedge board’s 2/100 lost intents remain open beside any future claim. Interrupted in-flight writes with durable intent are marked outcome unknown — never blind-retried. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Lab Mac mini v4 identity remesure (TTL 3s, N=1000) authorized: soak and board share celldLabGitCommit 36d53565… and celldSha256 5abb5d06…; correctness 0; during-call intent visible 241/243; availability 18/1000 (1.8%). Stock celld 0.6.3 tip boards (wedged N=100, stale N=40) remain supporting. An earlier TTL 3s wedge board’s 2/100 lost intents stay open beside the claim. Interrupted in-flight writes with durable intent are marked outcome unknown — never blind-retried. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
-/** Scoped claim — every number measured (stock CELLD_TTL_MS=10000). Swap to tip v3 evidence when that board is measured+ok. */
+/** Scoped lab claim — numbers from authorizing identity remesure (CELLD_TTL_MS=3000). */
 export const durabilityBenchmarkClaim =
-  'Across 1,000 crashes injected at every phase of a write, programs resumed on another node with no repeated writes (the 95% upper bound on the duplicate rate is 0.3%). The median resume took about 12 seconds, set by the lease timeout. Writes caught mid-flight are marked outcome unknown for a person to resolve. Under stock settings, 0.6% of surviving nodes paused themselves for safety, and 0.9% of resumes missed the recovery deadline.'
+  'Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL’s lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share the same celld commit and sha256 in-artifact. During-call journaled intent was visible on recovery in 241/243 trials (2 call_never_sent, counted as availability). Availability: 18 of 1,000 trials (1.8%, under the 2% ceiling). Duplicates: 0.'
 
-/** Dated caveat under the claim — required until stock-TTL v3 confirmation greens. */
+/** Open items sit beside the restored lab claim — not a footnote. */
 export const durabilityBenchmarkClaimCaveat =
-  'Caveat (2026-11-07): lab Mac mini v4 N=1000 measured 0 wrong outcomes and 251/251 during-call intent visibility, but the v4 artifact did not record celldLabGitCommit/celldSha256 matching the authorizing soak — so the flagship mechanism claim stays paused pending an identity remesure (evidence must prove the same binary, not a reasonable story). Separately keep open: earlier TTL 3s wedge 2/100 lost intents (one later journal-surrogate injection miss, one unexplained) and forced-latency arms. Older caveat (2026-10-31): on pinned celld 0.4.0 + ClawQL interleaving, mid-flight kills could leave the upstream call without durable write intent; stock 0.6.3 tip boards closed that path on wedged/stale N=100/40. Zero duplicates on the published Tier C board remain a real measurement.'
+  'Open items (2026-11-10): an earlier 3-second-TTL wedge board recorded 2 lost intents in 100 trials — one later classified as an injection miss (journal surrogate; effect ledger unavailable), the other unexplained. Forced-latency arms still in progress. Remesure availability (1.8%) is looser than the first Mac mini board (0.2%) but under gate. During-call remesure kills were effects0 (in-flight before write commit); after_call_before_journal covers write-landed-not-journaled. Older caveat (2026-10-31): pinned celld 0.4.0 + ClawQL interleaving could leave mid-flight calls without durable write intent; stock 0.6.3 tip boards closed that path on wedged/stale N=100/40. Published Tier C zero-dup measurement remains real.'
 
 export const durabilityBenchmarkMeta = {
-  measuredAt: '2026-10-21',
-  boardLabel: 'tier-c-fleet-phased-kill',
-  measuredLabel: 'N=1000 · 0 duplicates · ~12s failover · R2',
-  tipRuntime: 'celld',
-  tipRuntimeVersion: '0.6.3',
-  tipPackageLabel: 'ClawQL tip · celld 0.6.3 · N=50',
+  measuredAt: '2026-11-10',
+  boardLabel: 'lab-v4-identity-remeasure',
+  measuredLabel: 'N=1000 · 0 correctness · TTL 3s · R2 · identity-matched',
+  tipRuntime: 'celld-lab',
+  tipRuntimeVersion: '0.6.3+supersede+expiry',
+  tipPackageLabel: 'ClawQL lab celld · Mac mini Colima · N=1000',
   storageProvider: 'cloudflare-r2',
   nodeCount: 2,
-  celldTtlMs: 10_000,
+  celldTtlMs: 3_000,
   n: 1000,
-  artifactPhased: 'docs/benchmarks/program-cell-fleet-kill/phased-evidence.json',
+  artifactPhased:
+    'docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json',
+  artifactV4Auth:
+    'docs/benchmarks/program-cell-fleet-kill/mac-mini-v4-binary-authorization.json',
+  artifactV4Claim: 'docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md',
+  artifactSoak:
+    'docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json',
   artifactV3Tip: 'docs/benchmarks/program-cell-fleet-kill/phased-n1000-v3-correctness-availability.json',
   artifactWedgeTip: 'docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json',
   artifactStaleTip: 'docs/benchmarks/program-cell-fleet-kill/phased-n40-stale-owner-upstream-0.6.3.json',
@@ -41,6 +47,7 @@ export const durabilityBenchmarkMeta = {
   artifactTtlTradeoff: 'docs/benchmarks/program-cell-fleet-kill/ttl-tradeoff-evidence.json',
   artifactKillMid: 'docs/benchmarks/security-suite/kill-mid-write/evidence.json',
   artifactComparison: 'docs/benchmarks/durability-proof/comparison/evidence.json',
+  artifactTierCHistorical: 'docs/benchmarks/program-cell-fleet-kill/phased-evidence.json',
   statusDoc: 'docs/benchmarks/durability-proof/STATUS.md',
   harnessFleet: 'scripts/benchmarks/fleet-phased-kill/',
   harnessKillMid: 'scripts/benchmarks/security-suite/kill-mid-write/',

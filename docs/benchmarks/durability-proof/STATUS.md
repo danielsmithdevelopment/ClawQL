@@ -242,20 +242,22 @@ Evidence: [`phased-n1000-v3-correctness-availability.json`](../program-cell-flee
 
 **Before v4 (order):** (1) **incarnation + same-host supersede** (lease carries `pid` + process start time + `bootId`; supersede only when that exact process is gone — **cross-host wait TTL or refuse**, do not reopen stale-owner); (2) lease-sweep; (3) alive≠ready; (4) **overnight soak on that fixed build** meeting [`SOAK_GATES.md`](../program-cell-fleet-kill/SOAK_GATES.md) (`cycles ≥ 1000`; **0** readyFails and **0** selfFences; **environment-valid**: BOOTTIME−MONOTONIC growth ≤2s or run is void/restarted — no partial combining); (5) **only then** N=1000 under unchanged frozen criteria. A soak only authorizes the binary it measured — stock 0.6.3 baseline cannot authorize v4. Lab tree: [`vendor/celld-lab/`](../../../vendor/celld-lab/LAB.md) — product path landed. Authorizing soak: **not on cloud-agent VMs** — use non-suspending host ([`SOAK_HOST.md`](../program-cell-fleet-kill/SOAK_HOST.md)); do not raise TTL. Pause recovery after intentional suspend is a **separate** probe (`benchmark:fleet-pause-recovery`), not a soak gate.
 
-### v4 MEASURED (Mac mini) — authorization pending binary-identity remesure
+### v4 AUTHORIZED (Mac mini identity remesure)
 
-**Publish label:** **v4 passed; authorization pending binary-identity remesure** ([`V4_CLAIM.md`](../program-cell-fleet-kill/V4_CLAIM.md) · [`mac-mini-v4-binary-authorization.json`](../program-cell-fleet-kill/mac-mini-v4-binary-authorization.json)).
+**Publish label:** **v4 authorized — lab celld identity remesure** ([`V4_CLAIM.md`](../program-cell-fleet-kill/V4_CLAIM.md) · [`mac-mini-v4-binary-authorization.json`](../program-cell-fleet-kill/mac-mini-v4-binary-authorization.json)).
 
 | Gate | Result |
 | ---- | ------ |
-| Board | [`phased-n1000-v4-mac-mini-ttl3000.json`](../program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000.json) · lab · Colima · `CELLD_TTL_MS=3000` · N=1000 |
+| Soak | [`node-soak-lab-authorizing-mac-mini-identity-remeasure.json`](../program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json) · `measured_v4_ready` · 1000/1000 · 0/0 |
+| Board | [`phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`](../program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json) · lab · Colima · `CELLD_TTL_MS=3000` · N=1000 |
+| Identity | `celldLabGitCommit` `36d53565…` + `celldSha256` `5abb5d06…` **match** soak↔board |
 | Correctness | **0** |
-| Availability | **2/1000** (0.2% &lt; 2%) |
-| `during_call` | callVerifiedSent **251/251**; intent visible **251/251**; effects **251×0** (in-flight before write commit — do not imply both effect outcomes) |
+| Availability | **18/1000** (1.8% &lt; 2%) |
+| `during_call` | callVerifiedSent **241/243**; intent visible **241/243**; effects **243×0** |
 | Missing-data / phase-validity | **pass** |
-| Same-binary soak↔v4 identity | **missing** on v4 artifact — mechanism claim stays **paused** |
+| Mechanism claim | **restored** (scoped lab); TTL3s 2/100 kept open beside it |
 
-Remesure on Mac mini with `celld-identity.mjs` recording matching `celldLabGitCommit` + `celldSha256` in both artifacts before restoring the flagship claim.
+First Mac mini board (no identity on v4 JSON) remains historical measured evidence only.
 
 ### v4 still blocked by open TTL3s mechanism (separate from Mac mini board)
 

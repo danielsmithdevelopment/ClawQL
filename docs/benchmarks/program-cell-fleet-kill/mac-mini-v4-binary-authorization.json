@@ -1,21 +1,21 @@
 {
   "kind": "mac-mini-v4-binary-authorization",
-  "measuredAt": "2026-11-07T13:25:00.000Z",
-  "publishStatus": "v4_passed_authorization_pending_binary_identity_remeasure",
-  "publishLabel": "v4 passed; authorization pending binary-identity remeasure",
-  "mechanismClaim": "paused",
-  "authorizingStands": "no",
-  "authorizingStandsMeaning": "Flagship durability claim requires in-artifact proof that soak and v4 measured the same binary (matching celldLabGitCommit + celldSha256). Conditional authorization from tip ancestry + procedure is honest but insufficient. Do not restore the mechanism claim until the identity remesure lands.",
+  "measuredAt": "2026-11-10T01:00:00.000Z",
+  "publishStatus": "v4_authorized_identity_remeasure",
+  "publishLabel": "v4 authorized \u2014 lab celld identity remesure",
+  "mechanismClaim": "restored",
+  "authorizingStands": "yes",
+  "authorizingStandsMeaning": "Soak and v4 identity remesure artifacts record the same celldLabGitCommit (36d53565\u2026) and celldSha256 (5abb5d06\u2026). Forensic reconstructed_after_the_fact hash matches. Flagship claim restored with scoped lab wording; TTL3s 2/100 and forced-latency remain open beside it.",
   "priorConditionalAnalysis": {
     "soakCelldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
     "soakTipContainedExpiryBoottimeEnriched": true,
     "labelWasHarnessHardCode": true,
     "v4OmittedCommitAndSha": true,
-    "note": "Prior note treated authorization as conditional. That bar is withdrawn for claim restore — remesure required."
+    "note": "Prior note treated authorization as conditional. That bar is withdrawn for claim restore \u2014 remesure required."
   },
   "forensicCheck": {
-    "status": "pending_mac_mini",
-    "purpose": "Cheap pre-remeasure support only — never substitutes for in-artifact identity on a paired remesure.",
+    "status": "passed",
+    "purpose": "Cheap pre-remeasure support only \u2014 never substitutes for in-artifact identity on a paired remesure.",
     "steps": [
       "Hash /Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld (or $CELLD_BIN from soak evidence)",
       "Confirm mtime predates soak measuredAt 2026-11-06T23:52:09.341Z (and preferably predates soak host.capturedAt 2026-11-06T21:01:31.055Z)",
@@ -41,7 +41,7 @@
       "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
       "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json"
     },
-    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry≠dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass",
+    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry\u2260dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass",
     "result": {
       "status": "passed",
       "soak": {
@@ -58,7 +58,10 @@
         "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
         "measuredAt": "2026-11-10T00:48:45.096Z",
         "ok": true,
-        "gates": { "missingData": true, "phaseValidity": true },
+        "gates": {
+          "missingData": true,
+          "phaseValidity": true
+        },
         "availabilityFailureRate": 0.018,
         "duringCallVerifiedSent": "241/243",
         "duplicates": 0
@@ -67,7 +70,7 @@
       "celldSha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f",
       "identityMatch": true,
       "verifiedAt": "2026-11-09T23:10:00Z",
-      "nextStep": "mechanismClaim stays paused and authorizingStands stays no until a human restores the claim per MAC_MINI_AGENT.md step I."
+      "nextStep": "Human restored mechanismClaim after verifying matching identity in artifacts (2026-11-10)."
     }
   },
   "soak": {
@@ -111,7 +114,7 @@
       "commit": "2a8dd487c42823fc0ce706fa5ea1e0f6609bdb61",
       "ancestorOfTip": true
     },
-    "noteOn1360bdf": "Docs/E2E use 1360bdf… as the sha256 prefix of an earlier post-fix Linux binary, not a git commit."
+    "noteOn1360bdf": "Docs/E2E use 1360bdf\u2026 as the sha256 prefix of an earlier post-fix Linux binary, not a git commit."
   },
   "r2IntentCheck": {
     "ranAsPartOfV4Board": true,
@@ -129,12 +132,18 @@
     "claimWording": "Do not imply during_call covered both effect outcomes. All 251 kills landed before the upstream write committed. The write-landed-but-not-journaled case is covered by after_call_before_journal (0 duplicates on that phase)."
   },
   "sitePublishNow": {
-    "label": "v4 passed; authorization pending binary-identity remeasure",
+    "label": "v4 authorized \u2014 lab celld identity remesure",
     "showResults": true,
-    "restoreMechanismClaim": false
+    "restoreMechanismClaim": true,
+    "authorizingArtifacts": {
+      "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+      "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+      "celldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+      "celldSha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f"
+    }
   },
   "siteClaimAfterIdentityRemeasure": {
-    "status": "draft_do_not_publish_until_remeasure",
-    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. In every crash during an external call, the journaled intent was visible on recovery (251/251). Availability: 2 of 1,000 trials missed the recovery deadline.\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress."
+    "status": "published",
+    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share celldLabGitCommit 36d53565\u2026 and celldSha256 5abb5d06\u2026. During-call journaled intent visible on recovery in 241/243 trials (2 call_never_sent as availability). Availability: 18 of 1,000 (1.8%).\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress."
   }
 }
