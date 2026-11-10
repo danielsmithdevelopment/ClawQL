@@ -1,8 +1,8 @@
 # clawql-network
 
-Headscale persistent mesh + governed Tailcat ephemeral transport for ClawQL nodes.
+Headscale persistent mesh + governed Tailcat ephemeral transport + customer tailnets (Tailscale OAuth apps) for ClawQL nodes.
 
-**Spec:** [`docs/specs/network/clawql-network-v0.1.md`](../../docs/specs/network/clawql-network-v0.1.md)
+**Spec:** [`docs/specs/network/clawql-network-v0.2.md`](../../docs/specs/network/clawql-network-v0.2.md) (v0.1 retained for history)
 
 ## Operator bootstrap
 

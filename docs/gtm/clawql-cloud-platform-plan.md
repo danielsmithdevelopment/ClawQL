@@ -86,7 +86,7 @@ Managed connectors give agents breadth across company systems. Onyx is under eva
 - **Document-heavy sources** (Drive, Confluence, SharePoint, Gmail): vendored Onyx Community Edition connectors (MIT) wrapped as dlt sources, with attribution, and nothing from Onyx's Enterprise code.
 - **Permission-sensitive sources:** live search through the gateway with each user's own OAuth token, so source permissions apply automatically. Where indexing is worth it, connectors fetch access lists and store them beside the documents.
 - **License rule:** no ELv2 tools (Airbyte, Nango) in anything Cloud offers to customers, pending legal review.
-- **Private connectivity without BYOC:** hosted ClawQL can join a customer's existing Tailscale network as a Tailscale OAuth app, scoped by posture attribute (Premium or Enterprise plans) or tag to only the private APIs and MCP servers it needs. Details and safeguards are in the clawql-network specification v0.2.
+- **Private connectivity without BYOC:** hosted ClawQL can join a customer's existing Tailscale network as a Tailscale OAuth app, scoped by posture attribute (Premium or Enterprise plans) or tag to only the private APIs and MCP servers it needs. Details and safeguards are in the [`clawql-network` specification v0.2](../specs/network/clawql-network-v0.2.md).
 
 ## Container security stack
 

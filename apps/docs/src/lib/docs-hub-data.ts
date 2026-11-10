@@ -127,7 +127,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/specs/network/clawql-network',
     name: 'clawql-network',
     description:
-      'Headscale mesh + governed Tailcat ephemeral transport, selector, and ATR audit hooks.',
+      'Headscale mesh, Tailcat, customer tailnets (OAuth apps), safe selector, and ATR audit.',
     icon: DocumentIcon,
   }),
   card({

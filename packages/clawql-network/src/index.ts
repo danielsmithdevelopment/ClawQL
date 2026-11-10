@@ -16,7 +16,6 @@ export {
   type InitNetworkingResult,
 } from "./init/clawql-network-init.js";
 export {
-  EPHEMERAL_DURATION_THRESHOLD_MS,
   selectTransport,
   type ConnectionRequest,
   type ConnectionTargetType,
@@ -34,6 +33,7 @@ export {
   type TailcatListenerOptions,
 } from "./tailcat/tailcat-adapter.js";
 export type {
+  CustomerTailnetAuditPayload,
   MeshNodeAuditPayload,
   NetworkWORMEntryType,
   TailcatConnectionAuditPayload,
