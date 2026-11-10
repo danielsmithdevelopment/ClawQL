@@ -6,9 +6,11 @@ Authorizing evidence: [`node-soak-lab-authorizing-mac-mini-identity-remeasure.js
 
 ## Site claim (restored)
 
-> **Zero wrong outcomes in 1,000 crash trials.** Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share `celldLabGitCommit` `36d53565…` and `celldSha256` `5abb5d06…` in-artifact. During-call journaled intent was visible on recovery in **241/243** trials (2 `call_never_sent`, counted as availability). Availability: **18 of 1,000** trials (1.8%, under the 2% ceiling). Duplicates: 0.
+> **Zero wrong outcomes in 1,000 crash trials.** Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share `celldLabGitCommit` `36d53565…` and `celldSha256` `5abb5d06…` in-artifact. During-call: **241/243** intent visible; **2 `call_never_sent`** (egress never left the node), settled via effect ledger as no effect and no lost intent — availability, not durability ([settle](./v4-identity-remeasure-during-call-settle.json)). Availability: **18 of 1,000** (1.8%, under the 2% ceiling). Duplicates: 0.
 >
 > **Open items:** an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress.
+>
+> **Availability tradeoff:** remesure 1.8% vs first Mac mini board 0.2%. Successful trials with survivor self-fence: 19/1000, resume p50 ≈17s (first board resume p50 ≈6.7s) — consistent with expiry≠dead (wedged owners wait for fenced takeover). Of the 18 availability failures, 11 are `pause_failed` (injection/fetch) and only 6 are mid-flight phases; the fence-recovery tails on *passing* trials are the clearer correctness-over-speed cost.
 
 ## Numbers that authorize
 

@@ -144,6 +144,15 @@
   },
   "siteClaimAfterIdentityRemeasure": {
     "status": "published",
-    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share celldLabGitCommit 36d53565\u2026 and celldSha256 5abb5d06\u2026. During-call journaled intent visible on recovery in 241/243 trials (2 call_never_sent as availability). Availability: 18 of 1,000 (1.8%).\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress."
+    "body": "Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL's lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share celldLabGitCommit 36d53565\u2026 and celldSha256 5abb5d06\u2026. During-call: 241/243 intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent \u2014 availability, not durability. Availability: 18 of 1,000 (1.8%).\n\nOpen items: an earlier 3-second-TTL board recorded 2 lost intents in 100 trials. One was later classified as an injection miss (based on the journal, since the effect ledger wasn't kept); the other remains unexplained. Forced-latency tests are still in progress.\n\nAvailability tradeoff: remesure 1.8% vs first board 0.2%; 19 successful self-fences with resume p50 \u224817s (first board \u22486.7s) \u2014 consistent with expiry\u2260dead fenced-takeover wait."
+  },
+  "duringCallSettle": {
+    "path": "docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json",
+    "claimLine": "241/243 during-call intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent \u2014 availability, not durability.",
+    "trials": [
+      883,
+      960
+    ],
+    "lost_midflight_intent": false
   }
 }

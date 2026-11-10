@@ -16,11 +16,11 @@ export const durabilityBenchmarkSummary =
 
 /** Scoped lab claim — numbers from authorizing identity remesure (CELLD_TTL_MS=3000). */
 export const durabilityBenchmarkClaim =
-  'Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL’s lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share the same celld commit and sha256 in-artifact. During-call journaled intent was visible on recovery in 241/243 trials (2 call_never_sent, counted as availability). Availability: 18 of 1,000 trials (1.8%, under the 2% ceiling). Duplicates: 0.'
+  'Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL’s lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share the same celld commit and sha256 in-artifact. During-call: 241/243 intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent — availability, not durability. Availability: 18 of 1,000 trials (1.8%, under the 2% ceiling). Duplicates: 0.'
 
 /** Open items sit beside the restored lab claim — not a footnote. */
 export const durabilityBenchmarkClaimCaveat =
-  'Open items (2026-11-10): an earlier 3-second-TTL wedge board recorded 2 lost intents in 100 trials — one later classified as an injection miss (journal surrogate; effect ledger unavailable), the other unexplained. Forced-latency arms still in progress. Remesure availability (1.8%) is looser than the first Mac mini board (0.2%) but under gate. During-call remesure kills were effects0 (in-flight before write commit); after_call_before_journal covers write-landed-not-journaled. Older caveat (2026-10-31): pinned celld 0.4.0 + ClawQL interleaving could leave mid-flight calls without durable write intent; stock 0.6.3 tip boards closed that path on wedged/stale N=100/40. Published Tier C zero-dup measurement remains real.'
+  'Open items (2026-11-10): earlier TTL 3s wedge 2/100 lost intents — one journal-surrogate injection miss, one unexplained; forced-latency arms still in progress. Availability trend: remesure 1.8% vs first Mac mini board 0.2%; 19 successful trials self-fenced with resume p50 ≈17s (vs ≈6.7s on the first board) — consistent with expiry≠dead waiting for fenced takeover (correctness over faster recovery). Of 18 availability failures, 11 are pause_failed (injection/fetch); only 6 are mid-flight phases. During-call remesure kills that did send were effects0 (in-flight before write commit). Older caveat (2026-10-31): pinned celld 0.4.0 interleaving gap; stock 0.6.3 tip boards closed that path on wedged/stale N=100/40.'
 
 export const durabilityBenchmarkMeta = {
   measuredAt: '2026-11-10',
