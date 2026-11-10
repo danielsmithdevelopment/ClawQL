@@ -42,3 +42,5 @@ See also [golem honesty — two kinds of durable](./golem-overlap-and-durability
 Run the **same harness** against Temporal, Restate, and DBOS. All three can be self-hosted. Invite their maintainers to review the configuration first, as with Executor. A public, reproducible, cross-engine crash board would be the first of its kind, and useful to the whole field whichever way the numbers fall.
 
 Until that board exists: claim ClawQL's **measured lab crash-safety** (scoped build, open items beside), not superiority over engines whose primary evidence is production scale.
+
+Density peers (Infinity): same discipline — corrected board ratio ~29% history-storage under 2× latency, not “33% denser”; combined density+durability and Nitro composition in [infinity-density-nitro-composition.md](./infinity-density-nitro-composition.md).

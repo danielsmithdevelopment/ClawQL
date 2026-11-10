@@ -232,7 +232,7 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 
 - Crash-safety claims for the durable runtime are scoped to the authorized lab build and its measured numbers (v4 authorized 2026-11-09), and open items are always shown beside the claim.
 - No payment crash-safety or billing claims until the Stripe write-ahead fix lands and is measured.
-- No "denser than" or price-advantage claim until real-host unit costs are measured.
+- No "denser than" or price-advantage claim until real-host unit costs are measured. Infinity history-memory board is ~29% (100k vs 77.5k under 2× latency), not full-stack density, and waits on maintainer review — see [Infinity + Nitro composition](./infinity-density-nitro-composition.md). Density and Nitro compose as **tenant VM × dense in-tenant runtime × per-execution sandbox**, not one agent per VM.
 - No runtime-detection promise on microVM tiers until in-guest sensors are confirmed.
 - Containers are never described as getting the same crash safety as durable agents.
 

@@ -4,7 +4,11 @@
 
 Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](https://github.com/danielsmithdevelopment/ClawQL/pull/1433).
 
-**Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)).
+**Related:** [durability-proof STATUS](../durability-proof/STATUS.md) · Ready RSS boards are different ([memory-plateau.md](../cloudflare-multiturn/memory-plateau.md)) · [Infinity density + Nitro composition](../../gtm/infinity-density-nitro-composition.md).
+
+### Infinity comparison honesty (2026-11-10)
+
+Board figures: Infinity **77,500** · ClawQL **100,000** under the 2× latency gate → about **29% more**, not 33%. ClawQL arm = matched-shape history appends (history-storage memory), **not** full-stack density. No “denser than” until Laddad team review. Next substantive board: **density with durability on** (journal/leases/output gate, OOM kill, recovery storm at ~100k) — freeze criteria first; invite Infinity’s durable config onto the same host.
 
 ## Public claim (Ontologiql — publishable capacity/wake; deadlines = lab until shared-host)
 
