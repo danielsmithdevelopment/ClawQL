@@ -5,7 +5,7 @@
 **Status:** Draft · August 2026 · v0.2  
 **Package:** `clawql-streams` (planned)  
 **Depends on:** `clawql-core` · `mcp-api-adapter` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · [celld](https://celld.dev/) (self-hosted DO) · [`clawql-cellrt`](./clawql-cellrt.md) (ClawQL-owned runtime, planned) · NATS JetStream (K8s path) · OpenBenchTrace / RTP (training emission)  
-**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [`clawql-inference`](../inference/clawql-inference.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [Ouroboros](../ouroboros/) · [OpenBenchTrace collection](../benchmarks/openbench-trace-collection.md) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat)
+**Related:** [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [`clawql-inference`](../inference/clawql-inference.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [**autonomous loop (design intent)**](./clawql-streams-autonomous-loop.md) · [Ouroboros](../ouroboros/) · [OpenBenchTrace collection](../benchmarks/openbench-trace-collection.md) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat)
 
 ---
 

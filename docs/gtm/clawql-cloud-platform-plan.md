@@ -179,7 +179,7 @@ The price edge applies to parked durable agents only. In the measured offloaded 
 
 Phases ship in order, and three gates block progress until their criteria are met. Billing on any tier waits on the Stripe fix, and no public price ships before real-host costs are measured.
 
-**Build order:** seven phases with three blocking gates (diagram may live in the working Claude artifact). The density advantage first shows in phase 2, so that is where pricing is tested. Phase 7 is built only on demand.
+**Build order:** seven phases with three blocking gates (diagram may live in the working Claude artifact). The density advantage first shows in phase 2, so that is where pricing is tested. Phase 7 is built only on demand. Phase 2 also opens schema work for the [Streams autonomous loop](../streams/clawql-streams-autonomous-loop.md) (workers as durable agents); phase 1 has no loop work.
 
 Each phase also has a security gate that is part of its definition of done. The gates live in the ClawQL security testing plan (working artifact).
 
