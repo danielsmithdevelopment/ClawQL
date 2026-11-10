@@ -1,0 +1,15 @@
+{
+  "i": 343,
+  "programId": "phased_after_call_before_journal_343_1794259777149",
+  "phase": "after_call_before_journal",
+  "capturedAt": "2026-11-09T21:29:37.152Z",
+  "ownerKey": "owner_phased_after_call_before_journal_343_1794259777149",
+  "ownerEffectCount": 0,
+  "count": 0,
+  "inFlight": 0,
+  "generation": 516,
+  "uniqueKeys": 0,
+  "writes": [],
+  "ownerWrites": [],
+  "note": "pause_failed: effect ledger after unexpected run status"
+}

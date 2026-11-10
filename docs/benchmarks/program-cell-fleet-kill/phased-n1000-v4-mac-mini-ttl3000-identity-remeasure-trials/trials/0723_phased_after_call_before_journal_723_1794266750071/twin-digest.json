@@ -1,0 +1,8 @@
+{
+  "i": 723,
+  "programId": "phased_after_call_before_journal_723_1794266750071",
+  "phase": "after_call_before_journal",
+  "capturedAt": "2026-11-09T23:25:50.074Z",
+  "captured": false,
+  "reason": "pause_failed_no_twin"
+}

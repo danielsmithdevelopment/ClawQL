@@ -22,17 +22,53 @@
       "Confirm path equals soak.celldBin",
       "Append results under forensicCheck.results; label reconstructed_after_the_fact=true"
     ],
-    "results": null
+    "results": {
+      "status": "passed",
+      "binarySha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f",
+      "binaryMtimeUtc": "2026-11-06T20:51:40Z",
+      "predatesSoakHostCapturedAt": true,
+      "path": "/Users/danielsmith/ClawQL/vendor/celld-lab/target/release/celld",
+      "reconstructedAfterTheFact": true,
+      "note": "Binary on disk at remeasure time is the same file the Nov 6 soak measured (mtime predates soak host capturedAt 2026-11-06T21:01:31Z). sha256 5abb5d06 matches celldSha256 recorded in both remeasure artifacts.",
+      "recordedAt": "2026-11-09T23:00:00Z"
+    }
   },
   "identityRemeasure": {
-    "status": "required",
-    "branch": "cursor/mac-mini-v4-authorizing-2725",
+    "status": "complete",
+    "branch": "v4-soak-mac-mini-20261106",
     "harness": "celld-identity.mjs records celldLabGitCommit + celldSha256 on soak and board",
     "uniqueOutPaths": {
       "soak": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
       "v4": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json"
     },
-    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry≠dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass"
+    "passWhen": "Both artifacts voided=false / ok as applicable; same celldLabGitCommit; same celldSha256; tip contains expiry≠dead + BOOTTIME + enriched supersede; v4 gates missingData+phaseValidity pass",
+    "result": {
+      "status": "passed",
+      "soak": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json",
+        "measuredAt": "2026-11-09T11:33:54.646Z",
+        "voided": false,
+        "status": "measured_v4_ready",
+        "cyclesCompleted": 1000,
+        "readyFails": 0,
+        "selfFences": 0,
+        "maxUniqueNodeIds": 2
+      },
+      "board": {
+        "path": "docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json",
+        "measuredAt": "2026-11-10T00:48:45.096Z",
+        "ok": true,
+        "gates": { "missingData": true, "phaseValidity": true },
+        "availabilityFailureRate": 0.018,
+        "duringCallVerifiedSent": "241/243",
+        "duplicates": 0
+      },
+      "celldLabGitCommit": "36d53565c8ffa6d31bb9dd39b6bcbac317c0629b",
+      "celldSha256": "5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f",
+      "identityMatch": true,
+      "verifiedAt": "2026-11-09T23:10:00Z",
+      "nextStep": "mechanismClaim stays paused and authorizingStands stays no until a human restores the claim per MAC_MINI_AGENT.md step I."
+    }
   },
   "soak": {
     "path": "docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini.json",

@@ -1,0 +1,8 @@
+{
+  "i": 685,
+  "programId": "phased_after_intent_before_call_685_1794266084946",
+  "phase": "after_intent_before_call",
+  "capturedAt": "2026-11-09T23:14:54.198Z",
+  "captured": false,
+  "reason": "midflight_phase_no_twin"
+}
