@@ -4,7 +4,7 @@
 
 Harvey LAB × ClawQL has two distinct measurement stacks. Mixing them invalidates benchmark claims and poisons fine-tune traces.
 
-**Next publishable board:** [right-sizing remeasure handoff](./harvey-lab-rightsizing-remeasure-handoff.md) · [frozen criteria](./harvey-lab-rightsizing-frozen-criteria.md) (arms A–D on `ts-clawql-data-v2`; quarantined ledger never cited as current).
+**Next publishable board:** [right-sizing remeasure handoff](./harvey-lab-rightsizing-remeasure-handoff.md) · [frozen criteria](./harvey-lab-rightsizing-frozen-criteria.md) (arms A–D on `ts-clawql-data-v2`; quarantined ledger never cited as current). **Order locked:** Mac mini A/B → Opus C/D via Cursor after 2026-11-12 reset → 5090 only after Mac mini done.
 
 ## Current — `ts-clawql-data-v2`
 

@@ -1,6 +1,18 @@
 # Harvey LAB right-sizing remeasure: handoff
 
-**Prepared 2026-11-10 · Owner: Daniel Smith · Status: ready to run (after open items + validity gates)**
+**Prepared 2026-11-10 · Owner: Daniel Smith · Status: phased — Mac mini local first; Opus deferred; 5090 after Mac mini**
+
+## Run order (locked 2026-11-10)
+
+Do not reorder these phases. Later phases may start only when the prior phase’s scored artifacts are in place (or explicitly voided).
+
+| Order | Phase | Arms | Host / path | Gate before starting |
+| --- | --- | --- | --- | --- |
+| 1 | Mac mini local | A, B | Mac mini · MLX · batch 1 · wall energy | Open items for local + green task-001 smoke for B |
+| 2 | Opus (frontier) | C, D | **Cursor usage** after the **2026-11-12** reset — not OpenRouter paid spend | Phase 1 Mac mini A/B done (or voided); Opus model string pinned |
+| 3 | 5090 local | A, B | RTX 5090 · vLLM · batch 1 (+ optional batched extra) | **Mac mini phase fully done**; meters + quantization recorded |
+
+Rationale: Opus via Cursor after the monthly usage reset avoids hundreds in OpenRouter spend. The 5090 phase waits so Mac mini energy/success numbers exist first and the high-idle GPU is not powered for this board prematurely.
 
 ## Purpose
 
@@ -28,27 +40,27 @@ Produce publishable evidence for one claim: **a small open-weight model with Cla
 | --- | --- | --- | --- |
 | A | Nemotron 3.5 Lightning (local) | No | Small-model baseline |
 | B | Nemotron 3.5 Lightning (local) | Yes | Does ClawQL lift a small model? |
-| C | Current Opus (API) | No | Frontier baseline |
-| D | Current Opus (API) | Yes | Does ClawQL make the frontier model cheaper per success? |
+| C | Current Opus (via Cursor after 2026-11-12 reset) | No | Frontier baseline |
+| D | Current Opus (via Cursor after 2026-11-12 reset) | Yes | Does ClawQL make the frontier model cheaper per success? |
 
 Pin every model string, quantization and runtime in the run config. Use the same judge for every arm (the earlier campaign used Claude Sonnet 4.6), pinned by exact model string.
 
-**Repeats:** three runs per task for arms A and B (local, free). Arms C and D: three runs if the budget allows, otherwise one, disclosed in the results. Rough API cost from earlier per-task figures: about $250 per Opus-baseline pass and about $15 per Opus + ClawQL pass.
+**Repeats:** three runs per task for arms A and B (local, free). Arms C and D: three runs if Cursor usage allows after the 12th reset, otherwise one, disclosed in the results. **Do not** burn OpenRouter paid quota for C/D while Cursor usage can cover them — earlier per-task OpenRouter figures (~$250 Opus baseline / ~$15 Opus+ClawQL) are why this board waits for the reset.
 
-### Hardware: Mac mini first, then the 5090
+### Hardware: Mac mini first; 5090 only after Mac mini is done
 
-Arms A and B run on both local machines, as two phases:
+Arms A and B run on both local machines, in **strict sequence** (see Run order above):
 
-| Phase | Host | Runtime | Why |
+| Phase | Host | Runtime | When |
 | --- | --- | --- | --- |
-| 1 | Mac mini | MLX | The machine already in daily use; very low idle and peak power |
-| 2 | RTX 5090 host | vLLM | Far more powerful and faster per task, but its idle draw exceeds the Mac mini's peak |
+| 1 | Mac mini | MLX | **Now** (after local open items + smoke) — daily-use host; very low idle and peak power |
+| 2 | RTX 5090 host | vLLM | **Only after Mac mini A/B scored (or voided)** — faster per task, but idle draw exceeds the Mac mini's peak |
 
-The comparison is descriptive, not a hypothesis: energy is power multiplied by time, so the 5090's higher power may be offset by finishing tasks faster, or may not. Measure it rather than assume it.
+The Mac mini ↔ 5090 comparison is descriptive, not a hypothesis: energy is power multiplied by time, so the 5090's higher power may be offset by finishing tasks faster, or may not. Measure it rather than assume it — and do not start the 5090 phase early.
 
 - **Same model, matched quantization where possible.** If the two runtimes cannot use the same quantization, record each one. Quantization can change accuracy, so success is measured on each platform rather than assumed equal, and energy is compared **per successful task**, which accounts for any accuracy difference.
-- **Batch size 1 on both** for the headline comparison, since that matches a single agent's workload. A batched 5090 run (several tasks concurrently) is an optional extra phase, because batching is where a large GPU's efficiency shows and batch-1 results understate it.
-- **Arms C and D (API) are unaffected** and run once regardless of phase.
+- **Batch size 1 on both** for the headline comparison, since that matches a single agent's workload. A batched 5090 run (several tasks concurrently) is an optional extra **after** the batch-1 5090 sweep, because batching is where a large GPU's efficiency shows and batch-1 results understate it.
+- **Arms C and D** run in the Opus phase (order 2), independent of the 5090 phase, but still after Mac mini local A/B unless a contemporaneous void is recorded.
 
 ## Metrics
 
@@ -100,19 +112,30 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 - "With ClawQL, \[Opus model\] cost $\[a\] per successful task versus $\[b\] without."
 - Always beside the claim: number of runs per arm, judge, task set (25 firm-knowledge tasks, not the full LAB), and a link to the frozen criteria and raw results.
 
-## Open items before first scored run
+## Open items before first scored run (Mac mini A/B)
 
 - [ ] Confirm the H2 tolerances (2 tasks, 5 points) or set different ones — defaults frozen as stated in criteria file.
-- [ ] Choose the Opus model string and confirm the budget for repeats in arms C and D.
-- [ ] Get logging power meters for both the Mac mini and the 5090 host, and confirm the quantization each runtime will use.
+- [ ] Get a logging power meter for the **Mac mini**, and confirm MLX quantization for Nemotron.
 - [ ] Correct any public post still citing quarantined results.
-- [ ] Green task-001 product-path smoke on `ts-clawql-data-v2` for each ClawQL arm (B, D).
+- [ ] Green task-001 product-path smoke on `ts-clawql-data-v2` for ClawQL arm **B**.
 
-## Operator sequence (after open items)
+## Open items before Opus phase (C/D) — after 2026-11-12
 
-1. Clear open items; do not loosen frozen criteria.
-2. Mac mini phase 1: arms A then B (batch 1), energy meters + idle baselines.
-3. 5090 phase 2: arms A then B (batch 1); optional batched extra phase.
-4. API arms C then D (budget-disclosed repeats).
-5. Blind judge with pinned Sonnet (or chosen judge string).
+- [ ] Choose the Opus model string available through **Cursor** (not OpenRouter paid).
+- [ ] Confirm Cursor usage budget for repeats (prefer 3; disclose 1 if constrained).
+- [ ] Green task-001 product-path smoke for ClawQL arm **D** on the Cursor path.
+- [ ] Mac mini phase A/B complete (or voided).
+
+## Open items before 5090 phase — after Mac mini done
+
+- [ ] Logging power meter on the 5090 host; confirm vLLM quantization.
+- [ ] Mac mini A/B artifacts committed under `results/ts-v2/rightsizing/`.
+
+## Operator sequence
+
+1. Clear **Mac mini** open items; do not loosen frozen criteria.
+2. **Mac mini:** arms A then B (batch 1), energy meters + idle baselines.
+3. **Wait for Cursor usage reset (2026-11-12):** arms C then D via Cursor; disclose repeats.
+4. Blind judge with pinned Sonnet (or chosen judge string) as arms complete — local can be judged before Opus if desired.
+5. **Only after Mac mini is done:** 5090 arms A then B (batch 1); optional batched extra.
 6. Publish all arms and all hypotheses, including fails.

@@ -1,10 +1,11 @@
 # Harvey LAB right-sizing — frozen criteria
 
 **Frozen:** 2026-11-10 (before any scored rightsizing run)  
+**Run order locked:** 2026-11-10 — Mac mini A/B → Opus C/D via Cursor after **2026-11-12** usage reset (not OpenRouter paid) → 5090 A/B only after Mac mini done  
 **Handoff:** [`harvey-lab-rightsizing-remeasure-handoff.md`](./harvey-lab-rightsizing-remeasure-handoff.md)  
 **Stack:** `ts-clawql-data-v2` only · legacy `python-duckdb-v1` quarantined
 
-These definitions are set **before data exists** and are never loosened afterward. Runs are voided only for monitored environment faults recorded at the time, never after seeing results. All arms and all hypotheses are published, including ones that fail.
+These definitions are set **before data exists** and are never loosened afterward. Runs are voided only for monitored environment faults recorded at the time, never after seeing results. All arms and all hypotheses are published, including ones that fail. **Phase order is part of the freeze** — do not start 5090 before Mac mini completion, and do not burn OpenRouter paid quota for C/D while Cursor usage after the 12th covers them.
 
 ## Task set and harness
 
@@ -23,10 +24,10 @@ These definitions are set **before data exists** and are never loosened afterwar
 | --- | --- | --- |
 | A | Nemotron 3.5 Lightning (local) | No |
 | B | Nemotron 3.5 Lightning (local) | Yes |
-| C | Current Opus (API) — exact string pinned in run config | No |
+| C | Current Opus via **Cursor** after 2026-11-12 reset — exact string pinned in run config | No |
 | D | Same Opus string as C | Yes |
 
-Local phases: (1) Mac mini / MLX, (2) RTX 5090 / vLLM. Headline local energy uses **batch size 1**. Quantization recorded per host; success measured per platform.
+Local phases (strict): (1) Mac mini / MLX **first**, (2) RTX 5090 / vLLM **only after Mac mini A/B done**. Opus C/D between them or after Mac mini, never requiring 5090. Headline local energy uses **batch size 1**. Quantization recorded per host; success measured per platform.
 
 ## Hypotheses (report whatever the outcome)
 
