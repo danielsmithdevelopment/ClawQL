@@ -2,9 +2,9 @@
 
 **Branch to check out:** `cursor/mac-mini-v4-authorizing-2725`  
 **Contains:** expiry≠dead lab celld + BOOTTIME + harness freezes + `celld-identity.mjs` (records `celldLabGitCommit` + `celldSha256` on soak and board).  
-**Current publish status:** [**v4 passed; authorization pending binary-identity remesure**](./V4_CLAIM.md). Mechanism claim stays paused until this remesure.
+**Current publish status:** [**v4 authorized (identity remesure)**](./V4_CLAIM.md). Mechanism claim restored (lab build, scoped). Remesure soak + board share `celldLabGitCommit` / `celldSha256` in-artifact; during-call 2/243 settled as `call_never_sent` ([settle](./v4-identity-remeasure-during-call-settle.json)).
 
-**Prior Mac mini run (keep; do not overwrite):** soak + v4 N=1000 measured and real, but v4 omitted binary identity. Flagship claim requires matching identity **inside** both artifacts — not a reasonable story. See [`mac-mini-v4-binary-authorization.json`](./mac-mini-v4-binary-authorization.json).
+**Prior Mac mini run (keep; do not overwrite):** first soak + v4 N=1000 measured without binary identity; remesure closed that gap. See [`mac-mini-v4-binary-authorization.json`](./mac-mini-v4-binary-authorization.json).
 
 **Context (do not rewrite):**
 - Published TTL3s N=100 **2 × `lost_midflight_intent`** stays as-is.
@@ -15,7 +15,9 @@ Paste the **Local agent prompt** below into the Mac mini agent.
 
 ---
 
-## Local agent prompt (copy/paste) — forensic + identity remesure
+## Local agent prompt (historical — remesure complete)
+
+Kept for audit. Do **not** re-run as if authorization were still pending. Current status is on [`V4_CLAIM.md`](./V4_CLAIM.md).
 
 ```text
 You are on a Mac mini. Checkout branch cursor/mac-mini-v4-authorizing-2725 of danielsmithdevelopment/ClawQL and follow docs/benchmarks/program-cell-fleet-kill/MAC_MINI_AGENT.md § identity remesure exactly.
@@ -23,7 +25,7 @@ You are on a Mac mini. Checkout branch cursor/mac-mini-v4-authorizing-2725 of da
 Mission:
 1) Cheap forensic check on the prior binary (if still on disk) — supporting evidence only, labeled reconstructed_after_the_fact.
 2) Identity remesure: ONE cargo build, then authorizing 1000-cycle soak AND v4 N=1000 wedged TTL=3000, with celldLabGitCommit + celldSha256 recorded and MATCHING in both artifacts.
-3) Do not restore the mechanism claim yourself. Prior v4 results stay published as measured; claim stays paused until humans confirm matching identity.
+3) Do not restore the mechanism claim yourself — human restores after verifying matching identity (done: see V4_CLAIM.md).
 4) Always report: TTL3s published 2/100 kept; trial1 journal_surrogate (not verified); trial5 unsettled; forced-latency A/B open.
 
 Hard constraints:
@@ -76,9 +78,9 @@ G. Immediately v4 (same CELLD_BIN, no rebuild):
 
 H. Update mac-mini-v4-binary-authorization.json: forensicCheck.results (if any); identityRemeasure.status=complete with both paths + matching commit/sha. Do not set mechanismClaim to restored.
 
-I. Commit on a branch off cursor/mac-mini-v4-authorizing-2725. PR note must say publish label remains "v4 passed; authorization pending…" until a human restores the claim after verifying matching identity. Keep TTL3s 2/100 / trial1 / trial5 open beside results.
+I. Commit on a branch off cursor/mac-mini-v4-authorizing-2725. Historical note: publish label was "v4 passed; authorization pending…" until human restored the claim after verifying matching identity (complete). Keep TTL3s 2/100 / trial1 / trial5 open beside results.
 
-Read SOAK_GATES.md, FROZEN_MISSING_DATA.md, V4_CLAIM.md — gates and paused claim win over optimism.
+Read SOAK_GATES.md, FROZEN_MISSING_DATA.md, V4_CLAIM.md — gates and honest caveats win over optimism.
 ```
 
 ---

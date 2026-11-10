@@ -2,7 +2,19 @@
 
 **Context:** During `FLEET_PHASED_N=1000` on Cloudflare R2, a survivor self-fenced (`node_lease_watchdog_fence`, exit **code=3**) while **duplicates stayed 0**. Safety held; liveness needed an orchestrator. The board now counts that as its own column.
 
-## The 12-second median is mostly the lease
+## Recovery is a product metric (not a footnote)
+
+Customers feel resume time. Treat **`resumeMs` p50/p95/p99** (and self-fence count) as first-class availability product numbers beside the ≤2% failure-rate gate.
+
+| Board | TTL | Successful self-fence resume p50 | Notes |
+| ----- | --- | -------------------------------- | ----- |
+| Stock tip (historical claim shape) | 10s | ~12s | Mostly lease wait |
+| First Mac mini v4 | 3s | ~6.7s | Pre-expiry≠dead tails |
+| Identity remesure (authorized) | 3s | **≈17s** | Expiry≠dead: wedged owners wait for fenced takeover; **~14s above TTL** still needs profiling |
+
+**Next board:** keep counting harness `pause_failed` against availability (do not reclassify after the fact). Fix injection reliability before the run. Profile the remesure ≈17s median — lease wait alone cannot explain it with a 3s TTL.
+
+## The 12-second median (stock 10s TTL) is mostly the lease
 
 A survivor can take over a Durable Object only after the dead node's lease expires. With stock `CELLD_TTL_MS=10000`, failover cannot be much faster than **~10s + detection**, which matches measured resume p50 (~12s) once ownership wait is included in `resumeMs`.
 

@@ -77,8 +77,8 @@ export const durabilityColumnChips: readonly DurabilityColumnChip[] = [
   {
     id: 'availability',
     title: 'Availability',
-    value: '0.6% fences · 0.9% deadline',
-    body: '6 survivor self-fences, 9 resume deadline misses. Stated, not hidden. Resume p50 ≈ 12s (lease TTL).',
+    value: '1.8% fail · ~17s resume p50',
+    body: 'Identity remesure: 18/1000 availability failures (11 pause_failed kept on the column). Successful self-fence resume p50 ≈17s with a 3s lease — expiry≠dead fenced-takeover cost; profile the excess over TTL before the next board.',
   },
 ] as const
 

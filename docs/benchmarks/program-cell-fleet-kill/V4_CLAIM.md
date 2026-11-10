@@ -26,3 +26,8 @@ Authorizing evidence: [`node-soak-lab-authorizing-mac-mini-identity-remeasure.js
 - Remesure availability **1.8%** is looser than the first Mac mini board’s **0.2%** (still under gate).
 - During-call was **241× effects0** (in-flight before write commit) — do not imply both effect outcomes; `after_call_before_journal` covers write-landed-not-journaled.
 - TTL3s published **2/100** remains open beside this claim; remesure does not close it.
+
+## Next board (frozen criteria + product metric)
+
+1. **Keep counting all `pause_failed` trials against availability** (11 of 18 on remesure). Relabeling harness injection failures afterward is the post-hoc move the frozen criteria exist to prevent. Fix injection reliability *before* the next run so the availability column sharpens on what the runtime itself does.
+2. **Track recovery time as a product metric**, not a footnote. Remesure successful self-fence resume **p50 ≈17s** (first board ≈6.7s) with **`CELLD_TTL_MS=3000`** — more than waiting out the lease alone. Profile where the remaining time goes (fence handshake, readiness, harness waits) before 17s becomes a sales objection. Expiry≠dead is the deliberate correctness tradeoff; the excess over TTL is the open engineering question.
