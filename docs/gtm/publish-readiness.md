@@ -2,7 +2,7 @@
 
 **Audience:** anyone writing public copy, a launch post, or outreach.  
 **Rule:** ClawQL’s own results are ready. Competitor _comparisons_ wait. Cite competitors only as **their own claims**, linked.  
-**Related:** [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durable-execution claim path](./durable-execution-claim-path.md) · [program-density STATUS](../benchmarks/program-density/STATUS.md)
+**Related:** [durability STATUS](../benchmarks/durability-proof/STATUS.md) · [v4 claim](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · [Cloud platform plan](./clawql-cloud-platform-plan.md) · [golem honesty](./golem-overlap-and-durability-honesty.md) · [durable-execution claim path](./durable-execution-claim-path.md) · [program-density STATUS](../benchmarks/program-density/STATUS.md)
 
 ---
 
