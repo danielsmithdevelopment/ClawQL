@@ -76,13 +76,36 @@ createClawQLAuth({
 
 // Or resolve from CLAWQL_SECRET_STORE=openbao|hashicorp-vault|infisical|…
 createClawQLAuth({ secretStore: resolveSecretStore() });
+
+// Encrypt-at-rest with Vault Transit (derived-key context binds tenant + path)
+createClawQLAuth({
+  secretStore: resolveSecretStore({
+    kind: "sqlite",
+    vaultTransit: true,
+    vaultTransitKey: "clawql-secrets",
+    vaultTransitTenantId: "acme",
+  }),
+});
+// Env: CLAWQL_VAULT_TRANSIT_KEY (+ VAULT_ADDR / VAULT_TOKEN), derived=true on the Transit key
+// Non-ciphertext rows always fail closed.
+```
+
+Integrity scan / rewrap (Effect-primary):
+
+```ts
+import { scanPlaintextSecretsEffect, rewrapAllSecretsEffect } from "clawql-auth";
+
+const scan = await Effect.runPromise(scanPlaintextSecretsEffect(store));
+// scan.plaintextPaths must stay empty
+await Effect.runPromise(rewrapAllSecretsEffect(store)); // after vault key rotate
 ```
 
 | Backend                             | Role                                               |
 | ----------------------------------- | -------------------------------------------------- |
 | SQLite                              | Local / homelab / Hermes                           |
 | OpenBao                             | Self-hosted OSS TEE (preferred over HashiCorp BSL) |
-| HashiCorp Vault                     | Enterprise already on Vault                        |
+| HashiCorp Vault                     | Enterprise already on Vault (KV v2 SecretStore)    |
+| Vault Transit wrapper               | Encrypt values at rest; key stays in Vault/OpenBao |
 | Infisical / 1Password / Vaultwarden | Customer-owned secret managers                     |
 | env                                 | CI only                                            |
 
@@ -247,6 +270,11 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_TEE_DEBUG`                               | `1` = log attestation ids when using `clawql-tee` bridge                                   |
 | `CLAWQL_PASSKEY_ENABLED`                         | `1` = attach `/oauth/passkey/challenge                                                     | enroll | login` (SimpleWebAuthn) |
 | `CLAWQL_PASSKEY_RP_ID` / `CLAWQL_PASSKEY_ORIGIN` | Relying party id + origin for passkey HTTP                                                 |
+| `CLAWQL_SECRET_STORE`                            | `sqlite` (default) \| `memory` \| `env` \| `hashicorp-vault` \| `openbao` \| …             |
+| `CLAWQL_VAULT_TRANSIT_KEY`                       | When set, wrap SecretStore with Vault Transit encrypt-at-rest (needs `VAULT_ADDR`+token)   |
+| `CLAWQL_VAULT_TRANSIT_MOUNT`                     | Transit mount path (default `transit`)                                                     |
+| `CLAWQL_VAULT_TRANSIT_TENANT`                    | Fallback tenant for derived-key context (or `CLAWQL_DEFAULT_ORG_ID`)                       |
+| `CLAWQL_VAULT_TRANSIT_CACHE_TTL_MS`              | In-memory decrypt cache TTL (default `30000`; `0` disables). Never persisted.              |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
@@ -293,6 +321,7 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 | Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                                              |
 | Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` + `PasskeyCredentialStore.enroll`/`delete` (inject `WebAuthnStepUpVerifier`) |
 | Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                                    |
+| Vault Transit   | `VaultTransitProvider` / `VaultTransitService` + `TransitEncryptedSecretStore` / `CLAWQL_VAULT_TRANSIT_KEY`                                   |
 | Re-auth UX      | `buildReauthUrl` + `notifyReauthRequiredEffect`; Hermes: `createTelegramReauthNotifierFromEnv` (`clawql-agents`)                              |
 | ID-JAG TEE      | `CLAWQL_ID_JAG_TEE_SIGNER=1` or inject `assertionSigner` / `clawql-tee` `createDevTeeIdJagSigner`                                             |
 

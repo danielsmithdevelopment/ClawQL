@@ -6,11 +6,17 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createClawQLAuth } from "../create-auth.js";
 import { createEnvSecretStore } from "./env.js";
+import { createVaultTransitProvider } from "../vault/transit.js";
 import { createHashiCorpVaultStore, type VaultHttpClient } from "./hashicorp-vault.js";
 import { createMemorySecretStore } from "./memory.js";
 import { createOpenBaoStore } from "./openbao.js";
-import { resolveSecretStore, resolveSecretStoreKind } from "./resolve.js";
+import {
+  resolveSecretStore,
+  resolveSecretStoreKind,
+  wrapSecretStoreWithVaultTransit,
+} from "./resolve.js";
 import { createSQLiteSecretStore } from "./sqlite.js";
+import { createTransitEncryptedSecretStore } from "./transit-encrypted.js";
 import type { SecretStore } from "./types.js";
 
 describe("SecretStore", () => {
@@ -204,5 +210,49 @@ describe("SecretStore", () => {
   it("resolveSecretStore({ kind: memory }) works without env", () => {
     const store = resolveSecretStore({ kind: "memory" });
     expect(store).toBeDefined();
+  });
+
+  it("wrapSecretStoreWithVaultTransit constructs from VAULT_ADDR/TOKEN", () => {
+    const prevAddr = process.env.VAULT_ADDR;
+    const prevToken = process.env.VAULT_TOKEN;
+    process.env.VAULT_ADDR = "http://vault.test";
+    process.env.VAULT_TOKEN = "t";
+    expect(() =>
+      wrapSecretStoreWithVaultTransit(createMemorySecretStore(), { keyName: "clawql-secrets" })
+    ).not.toThrow();
+    if (prevAddr === undefined) delete process.env.VAULT_ADDR;
+    else process.env.VAULT_ADDR = prevAddr;
+    if (prevToken === undefined) delete process.env.VAULT_TOKEN;
+    else process.env.VAULT_TOKEN = prevToken;
+  });
+
+  it("TransitEncryptedSecretStore keeps plaintext out of the inner store", async () => {
+    const http: VaultHttpClient = {
+      async request({ method, url }) {
+        if (method === "POST" && url.endsWith("/encrypt/clawql-secrets")) {
+          return { status: 200, json: { data: { ciphertext: "vault:v1:wrapped" } } };
+        }
+        if (method === "POST" && url.endsWith("/decrypt/clawql-secrets")) {
+          return {
+            status: 200,
+            json: { data: { plaintext: Buffer.from("plain", "utf8").toString("base64") } },
+          };
+        }
+        return { status: 500, json: null };
+      },
+    };
+    const mem = createMemorySecretStore();
+    const wrapped = createTransitEncryptedSecretStore({
+      inner: mem,
+      transit: createVaultTransitProvider({
+        vaultAddr: "http://vault.test",
+        vaultToken: "t",
+        keyName: "clawql-secrets",
+        http,
+      }),
+    });
+    await Effect.runPromise(wrapped.setSecret("a", "plain"));
+    expect(await Effect.runPromise(mem.getSecret("a"))).toBe("vault:v1:wrapped");
+    expect(await Effect.runPromise(wrapped.getSecret("a"))).toBe("plain");
   });
 });

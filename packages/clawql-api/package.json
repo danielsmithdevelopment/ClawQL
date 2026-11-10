@@ -82,6 +82,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "fixtures",
     "README.md"
   ],
