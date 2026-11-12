@@ -6,12 +6,18 @@ export const site = {
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:
-      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and tamper-evident audit (WORM with S3 Object Lock; optional TEE paths). Self-host free on Apache 2.0, or request early access for managed hosting.',
+      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and tamper-evident audit (WORM with S3 Object Lock; optional TEE paths). Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting.',
     pricingNote:
       'Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds semantic search across connected sources; IDP tiers (Starter $299+) activate document processing. Managed prices are early-access figures, subject to change.',
   },
   waitlistPromise:
     'Request early access or self-host free with npx or Helm — Apache 2.0 packages in this repository, no license fee for those packages.',
+  /** Public contact addresses — security matches SECURITY.md / security.txt. */
+  emails: {
+    general: 'hello@clawql.com',
+    privacy: 'privacy@clawql.com',
+    security: 'daniel@clawql.com',
+  },
   urls: {
     home: '/',
     docs: 'https://docs.clawql.com',
@@ -31,8 +37,12 @@ export const site = {
     governance: '/governance',
     /** ClawQL Cloud product narrative (early access + planned workloads). */
     cloud: '/cloud',
+    /** Practical data-handling narrative (pairs with /privacy-policy). */
+    dataHandling: '/data-handling',
     /** Defense-in-depth security stack (marketing). */
     security: '/security',
+    /** RFC 9116 security.txt */
+    securityTxt: '/.well-known/security.txt',
     /** Public status surface (gateway health + components). */
     status: '/status',
     /** X / Twitter — GTM Phase 1 footer checklist. */

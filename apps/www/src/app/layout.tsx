@@ -197,6 +197,7 @@ export default function RootLayout({
                   <FooterLink href={site.urls.ontology}>Ontology</FooterLink>
                   <FooterLink href={site.urls.governance}>Governance</FooterLink>
                   <FooterLink href={site.urls.cloud}>Cloud</FooterLink>
+                  <FooterLink href={site.urls.dataHandling}>Data handling</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.status}>Status</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>
@@ -229,6 +230,8 @@ export default function RootLayout({
                 </FooterCategory>
                 <FooterCategory title="Legal">
                   <FooterLink href={site.urls.privacy}>Privacy Policy</FooterLink>
+                  <FooterLink href={site.urls.dataHandling}>Data handling</FooterLink>
+                  <FooterLink href={site.urls.securityTxt}>security.txt</FooterLink>
                 </FooterCategory>
               </>
             }

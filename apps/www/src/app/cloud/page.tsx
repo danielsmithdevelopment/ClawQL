@@ -34,6 +34,8 @@ export default function Page() {
         {' · '}
         <Link href={site.urls.pricing}>/pricing</Link>
         {' · '}
+        <Link href={site.urls.dataHandling}>/data-handling</Link>
+        {' · '}
         Plan: <Link href={CLOUD_PLAN}>clawql-cloud-platform-plan.md</Link>
         {' · '}
         Draft: <Link href={DRAFT_DOC}>docs/gtm/clawql-cloud-page-draft.md</Link>
