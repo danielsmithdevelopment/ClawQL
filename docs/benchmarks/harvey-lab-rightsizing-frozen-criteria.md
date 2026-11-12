@@ -1,6 +1,7 @@
 # Harvey LAB right-sizing — frozen criteria
 
 **Frozen:** 2026-11-10 (before any scored rightsizing run)  
+**Revision 2026-11-11:** Energy measurement method for local arms: `powermetrics` (software) is the approved method until a hardware logging meter is available (Daniel's decision, 2026-11-11). H1–H4, tolerances, and pass/publish rules are unchanged.  
 **Run order locked:** 2026-11-10 — Mac mini A/B → Opus C/D via Cursor after **2026-11-12** usage reset (not OpenRouter paid) → 5090 A/B only after Mac mini done  
 **Handoff:** [`harvey-lab-rightsizing-remeasure-handoff.md`](./harvey-lab-rightsizing-remeasure-handoff.md)  
 **Stack:** `ts-clawql-data-v2` only · legacy `python-duckdb-v1` quarantined
@@ -45,7 +46,7 @@ Local phases (strict): (1) Mac mini / MLX **first**, (2) RTX 5090 / vLLM **only 
 
 ## Void rule
 
-Void only for monitored environment faults recorded contemporaneously (power meter failure mid-sweep, host suspend/OOM documented at the time, wrong stack fingerprint). Do not void after inspecting scores.
+Void only for monitored environment faults recorded contemporaneously (power sampler (`powermetrics`) failure mid-sweep, host suspend/OOM documented at the time, wrong stack fingerprint). Do not void after inspecting scores.
 
 ## Open items (block first scored run; do not change H1–H4 text after clearing)
 

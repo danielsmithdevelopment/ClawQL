@@ -8,9 +8,9 @@ Do not reorder these phases. Later phases may start only when the prior phase’
 
 | Order | Phase | Arms | Host / path | Gate before starting |
 | --- | --- | --- | --- | --- |
-| 1 | Mac mini local | A, B | Mac mini · MLX · batch 1 · wall energy | Open items for local + green task-001 smoke for B |
+| 1 | Mac mini local | A, B | Mac mini · MLX · batch 1 · energy via `powermetrics` | Open items for local + green task-001 smoke for B |
 | 2 | Opus (frontier) | C, D | **Cursor usage** after the **2026-11-12** reset — not OpenRouter paid spend | Phase 1 Mac mini A/B done (or voided); Opus model string pinned |
-| 3 | 5090 local | A, B | RTX 5090 · vLLM · batch 1 (+ optional batched extra) | **Mac mini phase fully done**; meters + quantization recorded |
+| 3 | 5090 local | A, B | RTX 5090 · vLLM · batch 1 (+ optional batched extra) | **Mac mini phase fully done**; energy (`powermetrics`) + quantization recorded |
 
 Rationale: Opus via Cursor after the monthly usage reset avoids hundreds in OpenRouter spend. The 5090 phase waits so Mac mini energy/success numbers exist first and the high-idle GPU is not powered for this board prematurely.
 
@@ -78,10 +78,10 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 
 **Local arms (A, B): measured.**
 
-1. Meter the whole host at the wall with a logging power meter; sample at least once per second.
+1. Meter host power with `powermetrics` (software meter — decision 2026-11-11; the approved method until a hardware logging meter is available): sample `cpu_power` + `gpu_power` (+ `ane_power` where present) at ≥1 Hz and sum for host power.
 2. Record idle power for 10 minutes before each sweep.
 3. Energy per task = (mean power during the task − idle) × task time. Also report total energy including idle.
-4. Cross-check with device telemetry (`nvidia-smi` on the 5090, `powermetrics` on the Mac mini).
+4. Cross-check against `nvidia-smi` on the 5090; on the Mac mini `powermetrics` is the primary meter.
 5. Record hardware, model quantization, and batch size (1).
 
 **Report both incremental and total energy for each host.** Incremental energy (above idle) is what a task costs on a machine that is on anyway; total energy (including idle) is what it costs on a machine powered up just for this work. The 5090's high idle draw makes the two numbers diverge sharply, and which one matters depends on the deployment, so show both and say which a claim uses.
@@ -115,7 +115,7 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 ## Open items before first scored run (Mac mini A/B)
 
 - [ ] Confirm the H2 tolerances (2 tasks, 5 points) or set different ones — defaults frozen as stated in criteria file.
-- [ ] Get a logging power meter for the **Mac mini**, and confirm MLX quantization for Nemotron.
+- [ ] Confirm MLX quantization for Nemotron. (Meter: `powermetrics` per 2026-11-11 decision; hardware meter later — no blocker.)
 - [ ] Correct any public post still citing quarantined results.
 - [ ] Green task-001 product-path smoke on `ts-clawql-data-v2` for ClawQL arm **B**.
 
@@ -128,13 +128,13 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 
 ## Open items before 5090 phase — after Mac mini done
 
-- [ ] Logging power meter on the 5090 host; confirm vLLM quantization.
+- [ ] Confirm vLLM quantization. (Meter: `powermetrics` per 2026-11-11 decision; hardware meter later.)
 - [ ] Mac mini A/B artifacts committed under `results/ts-v2/rightsizing/`.
 
 ## Operator sequence
 
 1. Clear **Mac mini** open items; do not loosen frozen criteria.
-2. **Mac mini:** arms A then B (batch 1), energy meters + idle baselines.
+2. **Mac mini:** arms A then B (batch 1), `powermetrics` energy logs + idle baselines.
 3. **Wait for Cursor usage reset (2026-11-12):** arms C then D via Cursor; disclose repeats.
 4. Blind judge with pinned Sonnet (or chosen judge string) as arms complete — local can be judged before Opus if desired.
 5. **Only after Mac mini is done:** 5090 arms A then B (batch 1); optional batched extra.
