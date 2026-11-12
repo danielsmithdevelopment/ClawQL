@@ -318,7 +318,7 @@ One instance on Bun sustained ~1,850 RPS at peak on a simple operation against a
 ### Open questions on scale
 
 - [ ] p99 gateway-added latency target for milestones 4 and 5.
-- [ ] Upstream model for realistic latency and error rates (mock with injected distributions, or real public APIs).
+- [ ] Upstream model for realistic latency and error rates: mock with injected distributions, real public APIs, or AWS Emulator (released November 2026, public domain under CC0, 200+ AWS services running locally and offline; see whitepaper [§7 Smithy](../vision/clawql-network-whitepaper-v0.2.md#smithy-governance-metadata-from-the-spec-itself)), which gives real API behavior with no cost, no rate limits and no risk; real APIs remain necessary for realistic latency.
 - [ ] Source for the 5,000-tool catalog (for example, public OpenAPI collections) and how to keep it representative.
 - [ ] Token-savings baseline definition so the 40% comparison is like for like.
 - [ ] Hardware and cost budget for the 16-instance and 24-hour runs.
@@ -413,3 +413,4 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 - **2026-11-11:** two open questions added: hedged execution to cut recovery time, and the consensus choice for provider-network coordination.
 - **2026-11-11:** Hermes Agent and Pi added as one-click harnesses on the dashboard, with tool-level chat governance, risk-tiered approval channels, channel identity checks, policy-routed virtual models, and labeled ambiguous resends.
 - **2026-11-11:** the positioning and scale-target tabs merged into this single document; their content is unchanged.
+- **2026-11-11:** AWS Emulator added as an upstream option for scale testing.
