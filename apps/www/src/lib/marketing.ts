@@ -120,7 +120,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'knowledge_search_onyx',
-        help: 'Hybrid enterprise search over your Onyx index. Opt in with CLAWQL_ENABLE_ONYX (plus instance/tier composition).',
+        help: 'Semantic search over your connected document index. Opt in when configured (engine under review — see /integrations).',
       },
     ],
   },
@@ -134,7 +134,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'run_idp_pipeline',
-        help: 'Automated multi-hop pipeline: Nextcloud intake → Docling/Tika → Gotenberg → Stirling → archive → Onyx → Coneshare VDR.',
+        help: 'Automated multi-hop pipeline: Nextcloud intake → Docling/Tika → Gotenberg → Stirling → archive → semantic search → Coneshare VDR.',
       },
       {
         name: 'classify_document',
@@ -182,10 +182,10 @@ export const idpPipelineStages = [
     vendor: 'ClawQL Archive Layer',
     role: 'Managed archive',
     detail:
-      'Nextcloud + Postgres metadata store, Onyx-indexed — the default on managed accounts. Paperless-ngx compatible for self-hosted deployments.',
+      'Nextcloud + Postgres metadata store with semantic search — the default on managed accounts. Paperless-ngx compatible for self-hosted deployments.',
   },
   {
-    vendor: 'Onyx',
+    vendor: 'Archive / search',
     role: 'Enterprise search',
     detail: 'Hybrid search and ingestion API — agents query indexed content via knowledge_search_onyx.',
   },
@@ -211,10 +211,10 @@ export const multiProviderBenchmark = {
 
 /** Homepage hero proof chips — compact credibility under the CTA. */
 export const homepageProofChips = [
-  'Apache 2.0 core',
-  'Event-driven, not prompt-driven',
-  'OpenBench mini-firm proven',
-  'Tamper-evident audit · optional TEE',
+  'Apache 2.0 packages in this repo',
+  'Governed MCP gateway shipping today',
+  'OpenBench mini-firm measured (3 tasks)',
+  'Tamper-evident audit · TEE design',
 ] as const
 
 /**
@@ -248,5 +248,5 @@ export const protocolFabricSurfaces = {
 
 export const clawqlTeeSummary = {
   href: 'https://docs.clawql.com/streams/clawql-tee',
-  body: 'For regulated environments where the operator itself cannot be trusted: clawql-tee is a DO-compatible runtime with AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware attestation gates secrets; the audit trail can leave via QR optical channel — no network path across the boundary.',
+  body: 'For regulated environments where the operator itself cannot be trusted: clawql-tee is designed as a DO-compatible runtime targeting AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves (specification — not a shipped product SKU). Hardware attestation is intended to gate secrets; a QR optical channel for audit egress is planned — no network path across the boundary when that path ships.',
 } as const

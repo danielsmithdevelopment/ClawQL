@@ -10,11 +10,11 @@ export const lendingIndustry: Industry = {
   status: 'partial',
   statusLabel: 'Partial — samples shipping',
   overview:
-    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and CompliancePlugin for Reg Z, ECOA, and fair-lending guardrails. Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
+    'Mortgage, auto, BNPL, payday, and commercial lending share the same document-heavy intake problem: borrowers submit heterogeneous PDFs, underwriters re-ask for the same conditions, and API integrations sprawl across LOS, credit, and document vendors. Modularization v2.1 defines clawql-lending as five sub-verticals on one gateway — MortgagePlugin, AutoPlugin, BNPLPlugin, PaydayPlugin, and CommercialPlugin — plus shared UnderwritingPlugin and planned CompliancePlugin hooks that can support a lender’s Reg Z, ECOA, and fair-lending program (they do not make you compliant by themselves). Today you can run the lending Docker Compose stack and the shipped W-2 reference pack; full LOS tool registration ships with the vertical package.',
   painPoints: [
     {
       title: 'Spec dumps burn planning tokens',
-      body: 'Credit bureau, GSE, and LOS OpenAPI surfaces are enormous. search returns ranked operationIds; execute validates args server-side — so the spec stays in the MCP server, not the prompt.',
+      body: 'Credit bureau, GSE, and LOS OpenAPI surfaces are enormous. search returns ranked operationIds; execute validates args server-side — so the spec stays in the MCP server, not the prompt. Bearer tokens stay in gateway env/vault — never agent-held.',
     },
     {
       title: 'Context dies between underwriting sessions',
@@ -26,18 +26,29 @@ export const lendingIndustry: Industry = {
     },
   ],
   platformCapabilities: [
-    'IDP pipeline: pdf-inspector route + Docling, Tika, Gotenberg, Stirling, archive, Onyx, Coneshare',
+    'IDP pipeline: pdf-inspector route + Docling, Tika, Gotenberg, Stirling, archive, semantic search, Coneshare',
     'Vault memory with wikilinks for borrower files and underwriting decisions',
     'Argo Workflows suspend/resume integrated with Label Studio HITL',
     'Cosign-signed MCP images with Kyverno admission on Helm deploys',
-    'Optional Fabric consortium features via clawql-blockchain peer dependency',
+    'Optional Fabric consortium features via clawql-blockchain peer dependency (planned)',
   ],
   domainTools: [
-    { name: 'gse_validate', description: 'Validate loan data against agency guidelines indexed in Onyx.' },
+    {
+      name: 'gse_validate',
+      description:
+        'Advisory check of loan data against agency guidelines in semantic search indexes — a person confirms before any commitment decision.',
+    },
     { name: 'condition_clear', description: 'Record and recall underwriting conditions with vault threading.' },
-    { name: 'pii_redact', description: 'Strip borrower PII before documents enter search indexes.' },
+    {
+      name: 'pii_redact',
+      description: 'Strip borrower PII inside the IDP pipeline before documents enter archive or search indexes.',
+    },
     { name: 'loan_archive', description: 'Tag and archive loan packages in Paperless or the native archive layer.' },
-    { name: 'bnpl_decision / fraud_check', description: 'Sub-second decision loops for BNPL with Cuckoo dedup on doc batches.' },
+    {
+      name: 'bnpl_decision / fraud_check',
+      description:
+        'Planned assistive signals for BNPL review with Cuckoo dedup on doc batches — human decision-makers remain accountable; not automated credit decisioning.',
+    },
   ],
   documentTypes: [
     'W-2 and 1099 income forms',
@@ -61,7 +72,7 @@ export const lendingIndustry: Industry = {
     },
     {
       title: 'Compliance-aware automation',
-      body: 'Shared CompliancePlugin targets Reg Z, ECOA, and fair-lending checks. audit logs structured MCP events; dedicated managed hosting isolates tenant workloads for strict lenders.',
+      body: 'Planned CompliancePlugin hooks can support a lender’s Reg Z, ECOA, and fair-lending program — they do not certify compliance. MCP audit() is a session buffer; durable examiner trails use hash-chained write-once storage where Object Lock is configured. Managed isolation for strict lenders is planned.',
     },
   ],
   examples: [
@@ -87,7 +98,7 @@ export const lendingIndustry: Industry = {
         { label: 'Submit workflow', detail: 'workflow operation submits WorkflowTemplate clawql-lending-w2-ingest with confidence_threshold parameter.' },
         { label: 'Suspend', detail: 'Template hits suspend when classify confidence < threshold; the file waits in Argo rather than blocking chat context.' },
         { label: 'Human review', detail: 'Underwriter completes Label Studio task; webhook validates CLAWQL_HITL_WEBHOOK_TOKEN.' },
-        { label: 'Resume', detail: 'workflow resume continues to finalize step; audit captures correlation_id for the loan.' },
+        { label: 'Resume', detail: 'workflow resume continues to finalize step; durable audit captures correlation_id for the loan where configured.' },
       ],
     },
     {
@@ -98,7 +109,11 @@ export const lendingIndustry: Industry = {
       steps: [
         { label: 'Recall', detail: 'memory_recall query "borrower Smith conditions cleared 2026" with maxDepth for wikilink graph.' },
         { label: 'Discover APIs', detail: 'search finds LOS or credit APIs for status updates — no 9 MB spec in prompt.' },
-        { label: 'Execute', detail: 'execute updates condition status with validated args and bearer token from env.' },
+        {
+          label: 'Execute',
+          detail:
+            'execute updates condition status with validated args; bearer tokens come from gateway env/vault — never agent-held.',
+        },
         { label: 'Ingest outcome', detail: 'memory_ingest appends what changed with append: true on stable title.' },
       ],
     },
@@ -116,11 +131,11 @@ export const lendingIndustry: Industry = {
     },
   ],
   compliance: [
-    'PII redaction via Stirling in the IDP pipeline before archive and Onyx indexing',
-    'Structured audit ring buffer plus optional vault postmortems for examiner requests',
+    'PII redaction via Stirling inside the IDP pipeline before archive and semantic search indexes (pipeline scope only)',
+    'Hash-chained write-once trail where Object Lock is configured; MCP audit() is a session buffer only — pair with vault postmortems for examiner requests',
     'Vertical RLS and ATR scoping planned via clawql-auth — underwriter role bound to mortgage vertical',
     'Cosign-signed images and Kyverno verifyImages on self-hosted Helm',
-    'Fair-lending and Reg Z hooks in shared CompliancePlugin (modularization v2.1)',
+    'Planned CompliancePlugin hooks to support a lender’s fair-lending and Reg Z program — not a compliance certification',
   ],
   relatedResources: [
     { label: 'Lending W-2 sample pack', href: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/examples/idp/lending-w2' },
@@ -130,5 +145,5 @@ export const lendingIndustry: Industry = {
   ],
   docsHref: 'https://docs.clawql.com/vision/modularization',
   disclaimer:
-    'Lending compose stacks and W-2 samples use synthetic data only. Consult qualified legal, compliance, and underwriting professionals before production use.',
+    'Lending compose stacks and W-2 samples use synthetic data only. Consult qualified legal, compliance, and underwriting professionals before production use. ClawQL does not make a lender Reg Z / ECOA / fair-lending compliant.',
 }

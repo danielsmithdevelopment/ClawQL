@@ -15,7 +15,7 @@ const EGRESS_DELIVERABLES =
 export const metadata = pageMetadata({
   title: 'Governance',
   description:
-    "Rules your agents can't rewrite: ClawQL governs every tool call outside the agent — classify, check, approve, inject credentials, execute, label, and audit.",
+    'Rules your agents cannot rewrite: ClawQL can govern tool calls outside the agent — classify, check, approve, inject credentials, execute, label, and audit. Panguard ATR fail-closed enforcement is opt-in in self-hosted 8.0.',
   path: '/governance',
 })
 
@@ -24,7 +24,12 @@ export default function Page() {
     <DocumentCentered
       id="document"
       headline="Governance"
-      subheadline={<p>Rules your agents can&apos;t rewrite.</p>}
+      subheadline={
+        <p>
+          Rules your agents can&apos;t rewrite — when enforcement is enabled. Panguard ATR fail-closed is opt-in in
+          self-hosted 8.0 (<code>CLAWQL_PANGUARD_PROXY_PLUGIN=1</code>).
+        </p>
+      }
     >
       <p className="text-sm text-mist-600 dark:text-mist-400">
         Related:{' '}
@@ -46,9 +51,11 @@ export default function Page() {
         still use it, with real frequency.
       </p>
       <p>
-        ClawQL governs agents from outside the agent. Every tool call passes through ClawQL&apos;s gateway, which decides
-        what the agent may do using rules the agent cannot see, edit or argue with. The guarantees hold regardless of
-        which model you use, how it was prompted, or whether it has been manipulated.
+        ClawQL is designed to govern agents from outside the agent. Tool calls that pass through the gateway can be
+        decided by rules the agent cannot see, edit, or argue with — when ATR scoping and Panguard enforcement are
+        configured. In self-hosted 8.0, Panguard ATR fail-closed enforcement is opt-in (
+        <code>CLAWQL_PANGUARD_PROXY_PLUGIN=1</code>). Managed hosting defaults may differ; state them per deploy. The
+        guarantees apply to the enforced path regardless of which model you use or how it was prompted.
       </p>
       <p>Three principles run through everything below:</p>
       <ul>
@@ -105,8 +112,9 @@ export default function Page() {
           sensitive fields are redacted, and only the fields the agent asked for are returned.
         </li>
         <li>
-          <strong>Record.</strong> Every decision, approval and result is written to a hash-chained audit trail that
-          reveals any later change.
+          <strong>Record.</strong> Decisions, approvals, and results can be written to a hash-chained audit trail that
+          reveals later changes. Write-once needs Object Lock (or equivalent). The MCP <code>audit</code> tool is a
+          session ring buffer (append/list/clear) — not that trail.
         </li>
       </ol>
 
@@ -164,10 +172,10 @@ export default function Page() {
 
       <h3>A tamper-evident record</h3>
       <p>
-        Every decision, approval, denial and result is written to a hash-chained audit trail: changing, deleting or
-        reordering any entry breaks the chain, detectably. Where configured, entries are also stored write-once (for
-        example with S3 Object Lock in compliance mode), and batches can be anchored externally so the record can be
-        verified without trusting ClawQL.
+        When the durable audit path is enabled, decisions, approvals, denials, and results are written to a hash-chained
+        trail: changing, deleting, or reordering any entry breaks the chain, detectably. Write-once needs Object Lock (or
+        equivalent). External anchoring of audit roots is design unless a deploy enables it. The MCP{' '}
+        <code>audit</code> tool remains a session ring buffer agents can clear — not the examiner trail.
       </p>
 
       <h2>What we measured</h2>
@@ -274,6 +282,13 @@ export default function Page() {
             <tr>
               <td>Hash-chained audit with write-once storage</td>
               <td>Built; write-once requires S3 Object Lock configuration</td>
+            </tr>
+            <tr>
+              <td>Panguard ATR fail-closed enforcement</td>
+              <td>
+                Opt-in in self-hosted 8.0 (<code>CLAWQL_PANGUARD_PROXY_PLUGIN=1</code>). ATR scoping only limits agents
+                when configured and enforced.
+              </td>
             </tr>
             <tr>
               <td>Preview before approval, risk-tiered approval channels</td>

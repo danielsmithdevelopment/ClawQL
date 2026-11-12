@@ -2,13 +2,13 @@ export const site = {
   name: 'ClawQL',
   tagline: 'Agentic Infrastructure for Regulated Industries',
   description:
-    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a WORM audit trail on every action. Apache 2.0.',
+    'ClawQL is a governed MCP gateway for regulated work: search and execute APIs, vault memory, optional document pipelines, and a tamper-evident audit trail. Streams and clawql-tee are design/lab paths — labeled as such. Apache 2.0 packages in this repository.',
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:
-      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and tamper-evident audit (WORM with S3 Object Lock; optional TEE paths). Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting.',
+      'ClawQL is a governed MCP gateway — Protocol Fabric, vault memory, optional IDP, and tamper-evident audit (hash-chained; write-once where Object Lock is configured). Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting.',
     pricingNote:
-      'Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds semantic search across connected sources; IDP tiers (Starter $299+) activate document processing. Managed prices are early-access figures, subject to change.',
+      'Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting. One MCP endpoint on every tier. Managed prices are early-access figures, subject to change — see /pricing.',
   },
   waitlistPromise:
     'Request early access or self-host free with npx or Helm — Apache 2.0 packages in this repository, no license fee for those packages.',
