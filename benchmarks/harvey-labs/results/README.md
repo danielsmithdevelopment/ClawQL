@@ -30,3 +30,7 @@ bash benchmarks/harvey-labs/scripts/run-contiguous-001-025.sh
 ```
 
 Output: `results/ts-v2/aggregate-contiguous-001-025.json`
+
+## Right-sizing remeasure (A–D)
+
+Publishable cost/energy board after smoke gate: see [`docs/benchmarks/harvey-lab-rightsizing-remeasure-handoff.md`](../../../docs/benchmarks/harvey-lab-rightsizing-remeasure-handoff.md). Artifacts land under [`ts-v2/rightsizing/`](ts-v2/rightsizing/).

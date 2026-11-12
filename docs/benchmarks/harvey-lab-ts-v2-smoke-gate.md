@@ -2,6 +2,8 @@
 
 **Status:** Contiguous 001–025, Harvey outreach, training flywheel, and any publishable / PragmaticVectors LAB numbers are **blocked** until this gate is green.
 
+**Right-sizing remeasure:** after this gate is green per ClawQL arm, follow [`harvey-lab-rightsizing-remeasure-handoff.md`](./harvey-lab-rightsizing-remeasure-handoff.md) and [`harvey-lab-rightsizing-frozen-criteria.md`](./harvey-lab-rightsizing-frozen-criteria.md). Do not start scored A–D sweeps while this smoke is red.
+
 Architectural work (clawql-audit, agents specs, homelab docs, benchmark _design_) does **not** depend on this gate.
 
 ## Gate criterion (task 001)

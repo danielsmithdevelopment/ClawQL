@@ -1,8 +1,11 @@
 # Harvey LAB × ClawQL Results — firm-knowledge
 
-> **Stack reset (2026-08-20):** Pre-`ts-clawql-data-v2` numbers below used **Python DuckDB**
-> pre-ingest. They are **not** comparable to the current Node/`packages/clawql-data` stack.
-> See [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md). Legacy artifacts:
+> **QUARANTINED — do not cite as current ClawQL agent performance.**
+> Pre-`ts-clawql-data-v2` numbers below used **Python DuckDB** pre-ingest (wrong product
+> path). See [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md) · postmortem
+> [`harvey-lab-python-duckdb-postmortem.md`](harvey-lab-python-duckdb-postmortem.md).
+> **Publishable remeasure:** [`harvey-lab-rightsizing-remeasure-handoff.md`](harvey-lab-rightsizing-remeasure-handoff.md)
+> (frozen criteria committed before scored runs). Legacy artifacts:
 > [`../../benchmarks/harvey-labs/results/legacy/python-duckdb-v1/`](../../benchmarks/harvey-labs/results/legacy/python-duckdb-v1/).
 > **Rules:** ClawQL is an **agent-stack** arm (extra tools); publishable judge is
 > `claude-sonnet-4-6` — see [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md).

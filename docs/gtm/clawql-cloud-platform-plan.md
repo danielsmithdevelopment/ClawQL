@@ -2,7 +2,7 @@
 
 Nov 3, 2026 · @Daniel
 
-**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Network whitepaper (§11 runtime substrate): [`../vision/clawql-network-whitepaper-v0.2.md`](../vision/clawql-network-whitepaper-v0.2.md).
+**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Network whitepaper (§11 runtime substrate; §28A governed on-chain actions): [`../vision/clawql-network-whitepaper-v0.2.md`](../vision/clawql-network-whitepaper-v0.2.md).
 
 ## Status and summary
 
@@ -62,6 +62,8 @@ Durable agents get governance inside the runtime; containers get it only at the 
 - **Policy replay:** run a proposed policy over recorded traffic from the audit log and report what it would have blocked or allowed before enforcing it. This answers the false-block concern every buyer has.
 - **Shadow-mode intent allowlists:** observe an agent in shadow mode, propose a tool and intent allowlist from what it actually did, and have a person approve it. This makes the strict path the easy one.
 - **False blocks and false allows reported together** in benchmarks and dashboards, never one without the other.
+- **Preview before approval:** for any action that supports a dry run (APIs with preview modes, on-chain transactions through simulation), the approval screen shows the deterministic predicted effect, not just the agent's request. A model's plain-language summary may appear beside it, labeled untrusted whenever external content informed it.
+- **Governed on-chain actions (web3 vertical):** every on-chain write follows simulate, exact diff, approve, sign, journal-then-broadcast with the nonce as idempotency key, and finality tracking; autonomous agents get two independent limit layers (gateway mandates plus smart-account session keys enforced by the chain); signing keys never enter an agent. Full design in whitepaper [section 28A](../vision/clawql-network-whitepaper-v0.2.md#28a-governed-on-chain-actions). With tokenized assets moving onchain, this is positioned for regulated finance first. On-chain policy and consensus execution through Chainlink CRE are an optional trust layer, opt-in per deployment and never the default, because running gateway logic in a hardware enclave means proxying all of its network traffic and storage; the integration sits behind a pluggable trust-backend interface so other protocols can be added later.
 
 ## Model credentials
 
@@ -157,6 +159,20 @@ Every customer gets default dashboards on a multi-tenant LGTM stack (Loki, Grafa
 - **Agent-specific dashboards:** pending and expired approvals, blocked egress attempts, untrusted-label propagation, tool calls by outcome, token spend per agent, resume and replay counts. Container CPU and memory come standard as well.
 - **Telemetry is sensitive:** run the same redaction as agent traffic before ingestion, and enforce tenant isolation on queries as well as ingestion.
 - **Audit stays separate:** logs may be sampled or dropped; the hash-chained, WORM-capable audit log never is.
+
+### Edge and self-hosted telemetry
+
+Provider-network nodes and self-hosted installs run on networks ClawQL does not control, often on someone's home or office connection. Their telemetry follows the pattern large edge fleets use (Chick-fil-A runs it across about 2,800 restaurant clusters):
+
+- **One controlled egress path.** Nothing on a node ships telemetry directly to any cloud, including third-party tools and MCP servers that would otherwise phone home. Everything leaves through the node's own pipeline, under the same default-deny egress rule as everything else.
+- **Errors by default, detail on demand.** Nodes ship errors and first-class metrics; debug logs stay in rolling local storage. Raising a node to debug is a governed action: a person approves it with a time limit, it reverts on its own, and it is audited.
+- **Never degrade the owner's network.** The edge gateway caps its own bandwidth, so contributing compute can never slow the owner's connection. This is a condition of the provider network, enforced by the agent and backstopped at the operating-system level.
+- **Buffer offline, drain later.** Telemetry buffers to disk while offline and uploads when the connection returns.
+- **Redact before it leaves the machine,** with the same redaction rules as live traffic.
+
+**Agent: Vector.** Vector is an open-source observability pipeline written in Rust, licensed MPL-2.0 and maintained by Datadog's open-source team, with collection, in-flight filtering and redaction, disk buffers, and fan-out to many backends, including the Loki and Mimir stores in ClawQL's LGTM stack. MPL-2.0 is file-level copyleft: using and distributing Vector is fine for a hosted service, and only changes made to Vector's own files must be shared. Two limits: Vector's metrics support is still marked beta and traces are not yet supported, so traces go through an OpenTelemetry Collector to Tempo; and Vector is never the audit path.
+
+**The audit stream has its own pipeline.** Logs and metrics can be filtered, sampled and dropped; WORM entries cannot. On every node, audit entries are hash-chained locally, buffered through the outbox, never sampled or filtered, and drained in full.
 
 ## Pricing and unit economics
 
@@ -259,6 +275,8 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 - **2026-11-09:** customer-tailnet connectivity through Tailscale OAuth apps added to Connectors as a lighter alternative to BYOC.
 - **2026-11-09:** durability gate marked met: v4 authorized after the binary-identity remeasure, with results and open items recorded in the build order.
 - **2026-11-10:** in-repo canonical copy at `docs/gtm/clawql-cloud-platform-plan.md`; next durability board notes (keep `pause_failed` on availability; profile ≈17s recovery vs 3s lease) linked beside the met gate.
+- **2026-11-10:** edge and self-hosted telemetry added to Observability: one controlled egress path, time-boxed debug escalation, bandwidth caps for provider nodes, Vector as the agent, and a separate audit pipeline.
+- **2026-11-10:** preview-before-approval and governed on-chain actions added to governance features.
 
 ---
 
