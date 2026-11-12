@@ -8,9 +8,10 @@ export const site = {
     summary:
       'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and tamper-evident audit (WORM with S3 Object Lock; optional TEE paths). Self-host free on Apache 2.0, or request early access for managed hosting.',
     pricingNote:
-      'Self-host free forever on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
+      'Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds semantic search across connected sources; IDP tiers (Starter $299+) activate document processing. Managed prices are early-access figures, subject to change.',
   },
-  waitlistPromise: 'Request early access or self-host free with npx or Helm — full Apache 2.0 stack, no license fee.',
+  waitlistPromise:
+    'Request early access or self-host free with npx or Helm — Apache 2.0 packages in this repository, no license fee for those packages.',
   urls: {
     home: '/',
     docs: 'https://docs.clawql.com',
@@ -28,6 +29,8 @@ export const site = {
     ontology: '/ontology',
     /** Governance narrative — outside-the-agent controls + measured boards. */
     governance: '/governance',
+    /** ClawQL Cloud product narrative (early access + planned workloads). */
+    cloud: '/cloud',
     /** Defense-in-depth security stack (marketing). */
     security: '/security',
     /** Public status surface (gateway health + components). */
