@@ -37,6 +37,8 @@ export const site = {
     governance: '/governance',
     /** ClawQL Cloud product narrative (early access + planned workloads). */
     cloud: '/cloud',
+    /** Full integration catalog with verified statuses. */
+    integrations: '/integrations',
     /** Practical data-handling narrative (pairs with /privacy-policy). */
     dataHandling: '/data-handling',
     /** Defense-in-depth security stack (marketing). */

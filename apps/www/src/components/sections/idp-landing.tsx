@@ -26,7 +26,7 @@ const pipelineStages = [
   },
   {
     name: 'Archive',
-    stack: 'Onyx search',
+    stack: 'Semantic search',
     detail: 'Indexed for hybrid semantic search — agents cite source documents, not guesses.',
   },
   {
@@ -345,7 +345,7 @@ export function IdpLanding() {
               Natural-language control
             </p>
             <blockquote className="border-l-2 border-mist-950/20 pl-4 text-sm/7 text-mist-800 dark:border-white/20 dark:text-mist-200">
-              “Ingest the closing package from Nextcloud, redact SSNs, archive to Onyx, and open a ConeShare room for
+              “Ingest the closing package from Nextcloud, redact SSNs, archive for semantic search, and open a ConeShare room for
               counsel with watermarked PDFs.”
             </blockquote>
             <p className="text-sm/7 text-mist-700 dark:text-mist-300">
@@ -448,8 +448,9 @@ export function IdpLanding() {
         subheadline={
           <p>
             Replace a median ~$150K ABBYY-class contract and a per-page VDR invoice with a flat Starter subscription.
-            Self-host remains free forever on Apache 2.0. See <Link href={site.urls.pricing}>full pricing</Link> for
-            Business and Professional volume tiers.
+            Self-host remains free on the Apache 2.0 packages in this repository. See{' '}
+            <Link href={site.urls.pricing}>full pricing</Link> for Business and Professional volume tiers, and{' '}
+            <Link href={site.urls.integrations}>/integrations</Link> for the document-pipeline catalog.
           </p>
         }
       >
@@ -459,7 +460,7 @@ export function IdpLanding() {
             'ConeShare VDR — unlimited rooms, no per-page meter',
             'MCP-native agent orchestration',
             'Merkle audit trail per pipeline step',
-            'Onyx semantic search over the archive',
+            'Semantic search over the archive (engine under review)',
             'Early access waitlist · self-host free',
           ].map((line) => (
             <li key={line} className="flex gap-2">
