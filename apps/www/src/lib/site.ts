@@ -22,6 +22,8 @@ export const site = {
     about: '/about',
     /** Equal-arm multi-gateway + Cloudflare multiturn benchmarks. */
     benchmarks: '/benchmarks',
+    /** Crash durability narrative (lab v4 evidence) — full tables on /benchmarks#durability. */
+    durability: '/durability',
     /** Defense-in-depth security stack (marketing). */
     security: '/security',
     /** Public status surface (gateway health + components). */

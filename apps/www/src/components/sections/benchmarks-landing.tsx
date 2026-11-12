@@ -192,8 +192,14 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — N=1000 fleet kill · 0 duplicates · ~12s failover · outcome unknown
+                — N=1000 fleet kill · 0 duplicates · ~17s resume · outcome unknown · narrative at{' '}
               </span>
+              <a
+                href="/durability"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /durability
+              </a>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
@@ -793,6 +799,17 @@ export function BenchmarksLanding() {
         </div>
 
         <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          <li>
+            <a
+              href="/durability"
+              className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+            >
+              /durability narrative
+            </a>
+            <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">
+              crash story, open items, commit-pinned evidence
+            </span>
+          </li>
           {durabilityBenchmarkLinks.map((link) => (
             <li key={link.href}>
               <a
