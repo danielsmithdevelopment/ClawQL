@@ -103,6 +103,23 @@ Counsel review still recommended before paid campaigns on healthcare, lending, g
 - [x] Audit trail vs MCP `audit` ring buffer.
 - [x] Write-once / Object Lock and external anchoring qualified.
 
+## /benchmarks
+
+### Fix now — status (2026-11-12 PT)
+
+- [x] Durability section already carried v4 claim; deep links / dominance / governance blurbs updated from ~12s → ~17s resume; historical stock-TTL board labeled history; V4 artifacts linked first.
+- [x] Executor version language: no stable 2.0.0; β channel named; remasure after maintainer review.
+- [x] Ontologiql removed from public `program-density/STATUS.md` and docs/benchmarks README blurb (stealth).
+- [x] Panguard vault-write deep-board framing: fair columns (defaults 2/5 · best-config 5/5 invited) — not configured-vs-default peers.
+- [x] Category headline → fewest tokens among measured gateways on this fixture.
+- [x] Executor HTTP concurrency row labeled under review (#1480).
+- [x] Uber peer row → published techniques (search / projection / code mode).
+- [x] Bifrost / TrueFoundry vendor-reported figures labeled.
+- [x] Defaults 2/5 vs multi-attack 0/12 explained (deny list vs taint-and-park).
+- [x] Feature matrix: Onyx → engine under review; fair use; WORM Object Lock when configured.
+- [x] Corrections log section on `/benchmarks#corrections`.
+- [ ] Harvey LAB remesure row — placeholder only until the board runs.
+
 ## Next pages to audit
 
 1. rockyourlobster.com (TEE tier).

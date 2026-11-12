@@ -41,7 +41,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     id: 'bifrost',
     name: 'Bifrost (Maxim)',
     whyItMatters:
-      'Code Mode: 58–92.8% input-token reduction at 96–508 tools; 11 µs overhead @ 5k RPS; virtual-key tool scoping + audit logs.',
+      'Equal-arm tokens + governance measured here. Vendor-reported (not our board): Code Mode input-token reduction and ~11 µs overhead @ 5k RPS — verify against Maxim’s published docs before citing outside this page.',
     criteriaToBeat:
       'Multi-turn weighted tokens (incl. model-written), p99 concurrency under SLO, governance depth on the same fixture.',
     howToProve:
@@ -55,7 +55,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     id: 'truefoundry',
     name: 'TrueFoundry',
     whyItMatters:
-      'Enterprise governance (HITL approvals, per-user delegation, RBAC); ~3–4 ms latency; 350 RPS/core; strong observability.',
+      'Enterprise governance surfaces (HITL, delegation, RBAC). Latency and RPS/core figures elsewhere are vendor-reported — not measured on ClawQL’s equal-arm board.',
     criteriaToBeat: 'Token savings + concurrency vs their gateway, policy-bound writes, audit completeness.',
     howToProve:
       'Same multi-turn board with their MCP proxy; measure weighted tokens + p99 clients before SLO break; compare approval binding + trail.',
@@ -77,13 +77,13 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
       'Fan-out/join claim50v2 + plan.c on the CF board; finish blind dual-model (small arm) under frozen rules.',
   },
   {
-    id: 'uber-mcp-gateway',
-    name: 'Uber MCP Gateway',
+    id: 'published-gateway-techniques',
+    name: 'Published techniques: tool search · response projection · code mode',
     whyItMatters:
-      'Production scale (800+ servers / 5k tools); tool search + GraphQL-style response projection + Code Mode default.',
+      'Industry write-ups describe tool search, GraphQL-style response projection, and Code Mode as gateway leverage. Named as techniques — not as a head-to-head peer until measured on the shared fixture.',
     criteriaToBeat: 'Result projection + search efficiency on multi-turn; scale-out concurrency.',
     howToProve:
-      'Adapt their published techniques to the shared fixture; measure projection savings and session cost vs ClawQL JMESPath + known-ops.',
+      'Adapt the published techniques to the shared fixture; measure projection savings and session cost vs ClawQL JMESPath + known-ops.',
     status: 'not_on_board',
     statusLabel: 'Not on board',
     nextStep: 'Projection-technique bake-off once pets board can host a Code Mode peer.',
@@ -131,7 +131,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'measured',
     statusLabel: 'Tokens + cells · resume dominance',
     nextStep:
-      'Tokens/latency measured (v2 β 3.38×). Governance: pause cells tie 5/5; resume_auto_approve ClawQL 5/5 vs Executor 2/5 (model resume accept contaminates). Re-pin v2 when stable.',
+      'Tokens/latency measured (v2 β.15 → 3.38×). Governance: pause cells tie 5/5; resume_auto_approve ClawQL 5/5 vs Executor 2/5 (model resume accept contaminates). Remeasure on the current Executor beta tip after maintainer review — there is no stable 2.0.0.',
   },
   {
     id: 'celld-durability',
@@ -144,7 +144,7 @@ export const dominanceCompetitors: readonly DominanceCompetitor[] = [
     status: 'partial',
     statusLabel: 'Lab Yes · fleet Yes (R2)',
     nextStep:
-      'Public: /benchmarks#durability (N=1000, 0 dups, ~12s). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution.',
+      'Public: /benchmarks#durability (v4 N=1000, 0 correctness, ~17s resume p50). Dual-column ClawQL arms; Pi Durable/Golem pending invite. Not durable execution.',
   },
 ] as const
 
@@ -153,7 +153,7 @@ export const dominancePriorityOrder = [
   'cloudflare-code-mode',
   'celld-durability',
   'truefoundry',
-  'uber-mcp-gateway',
+  'published-gateway-techniques',
   'executor',
   'agentgateway',
   'obot',
