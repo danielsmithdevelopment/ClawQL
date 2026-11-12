@@ -1,7 +1,7 @@
 # Harvey LAB right-sizing — frozen criteria
 
 **Frozen:** 2026-11-10 (before any scored rightsizing run)  
-**Revision 2026-11-11:** Energy measurement method for local arms: `powermetrics` (software) is the approved method until a hardware logging meter is available (Daniel's decision, 2026-11-11). H1–H4, tolerances, and pass/publish rules are unchanged.  
+**Revision 2026-11-11:** (a) Energy measurement method for local arms: `powermetrics` (software) is the approved method until a hardware logging meter is available. (b) H2 tolerances explicitly confirmed: all-pass within **2 tasks** of C and aggregate CPR within **5 percentage points** — frozen defaults, not revised. (c) Local MLX model pinned for arms A and B: **`mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit`** (run-lab-local.sh default), recorded in run config. `powermetrics` runs with `sudo`. H1–H4, tolerances, and pass/publish rules are otherwise unchanged.  
 **Run order locked:** 2026-11-10 — Mac mini A/B → Opus C/D via Cursor after **2026-11-12** usage reset (not OpenRouter paid) → 5090 A/B only after Mac mini done  
 **Handoff:** [`harvey-lab-rightsizing-remeasure-handoff.md`](./harvey-lab-rightsizing-remeasure-handoff.md)  
 **Stack:** `ts-clawql-data-v2` only · legacy `python-duckdb-v1` quarantined

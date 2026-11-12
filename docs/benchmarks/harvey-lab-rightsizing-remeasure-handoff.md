@@ -114,8 +114,8 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 
 ## Open items before first scored run (Mac mini A/B)
 
-- [ ] Confirm the H2 tolerances (2 tasks, 5 points) or set different ones — defaults frozen as stated in criteria file.
-- [ ] Confirm MLX quantization for Nemotron. (Meter: `powermetrics` per 2026-11-11 decision; hardware meter later — no blocker.)
+- [x] H2 tolerances confirmed 2026-11-11: keep frozen defaults (all-pass within **2 tasks** of C; aggregate CPR within **5pp**). No revision before scored runs.
+- [x] MLX quantization confirmed 2026-11-11: pin **`mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit`** (`LAB_NEMOTRON_MODEL` / `CLAWQL_LAB_NEMOTRON_MODEL` default in `run-lab-local.sh`). Same string for arms A and B; recorded in run config. (Meter: `powermetrics` per 2026-11-11 decision — run it with `sudo`; hardware meter later — no blocker.)
 - [ ] Correct any public post still citing quarantined results.
 - [ ] Green task-001 product-path smoke on `ts-clawql-data-v2` for ClawQL arm **B**.
 
@@ -133,7 +133,7 @@ Aggregates per arm: all-pass count, aggregate CPR, mean per-task CPR, total and 
 
 ## Operator sequence
 
-1. Clear **Mac mini** open items; do not loosen frozen criteria.
+1. Clear **Mac mini** open items; do not loosen frozen criteria. (2026-11-11: H2 tolerances = frozen defaults; MLX model pinned `mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit`; meter = `powermetrics` under `sudo`.)
 2. **Mac mini:** arms A then B (batch 1), `powermetrics` energy logs + idle baselines.
 3. **Wait for Cursor usage reset (2026-11-12):** arms C then D via Cursor; disclose repeats.
 4. Blind judge with pinned Sonnet (or chosen judge string) as arms complete — local can be judged before Opus if desired.
