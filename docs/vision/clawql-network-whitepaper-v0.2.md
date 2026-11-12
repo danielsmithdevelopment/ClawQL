@@ -228,6 +228,16 @@ The combination — minimal input via `search`, minimal output via `execute`'s p
 
 This matters enormously once the network extends beyond conventional software APIs into the provenance and payment layers described later in this document. A notary's legacy desktop software, a hospital's HL7 FHIR interface, a supply chain's EDI messages, a blockchain's RPC endpoint — all of these become sources through the same adapter pattern, discoverable through the same `search` call, invokable through the same `execute` call, with the same output compression applied regardless of how verbose the underlying protocol naturally is.
 
+### Smithy: governance metadata from the spec itself
+
+*Status: design.*
+
+AWS describes its services in Smithy, an interface-definition format whose public models cover more than 200 AWS services. Smithy models carry metadata that most API descriptions lack, and a Smithy adapter for `mcp-api-adapter` turns it directly into governance:
+
+- **Deterministic classification.** Operations marked `@readonly` or `@idempotent` are classified as reads or safely repeatable writes straight from the model, never from a model's guess, which is exactly what ontology-backed policy requires.
+- **Automatic crash safety.** Request fields marked `@idempotencyToken` tell the gateway where an idempotency key belongs. The gateway fills the field from the journaled intent, so a retried AWS write after a crash is deduplicated by AWS itself, with no per-service code.
+- **Testing without risk.** AWS Emulator, released by AWS in November 2026 under a public-domain dedication (CC0) and built from the same Smithy models, runs more than 200 AWS services locally and offline. Governance scenarios, such as an agent attempting to delete a bucket, wipe a table or open a security group, can be exercised against it repeatedly with no cost and no risk. It emulates service behavior, not AWS's security infrastructure (instance metadata, IAM), so those attacks still need a real cloud lab.
+
 ## 8. Why This Compounds: Cost, Quality, and Cache
 
 Three independent effects stack on top of each other once both sides of the token budget are under control, and none of them is purely a cost story.
