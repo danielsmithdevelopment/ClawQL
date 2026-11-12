@@ -64,7 +64,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'audit',
-        help: 'In-process ring buffer of structured events — append, list, clear. Pair with memory_ingest when you need a durable operator trail.',
+        help: 'Agent-visible in-process session event buffer (append, list, clear) — not the tamper-evident trail. Agents cannot clear clawql-audit / WORM; see /audit and /governance.',
       },
       {
         name: 'cache',

@@ -65,6 +65,8 @@ export const site = {
     /** HTML contact page (agents: also /contact.md). */
     contact: '/contact',
     contactEmail: 'mailto:hello@clawql.com',
+    /** Tamper-evident audit trail narrative (distinct from MCP `audit` tool). */
+    audit: '/audit',
   },
   installCommand: 'npx clawql-mcp',
   /** Example providers — catalog is empty by default; opt in via CLAWQL_PROVIDER / providers.pack / CLAWQL_TIER. */
