@@ -200,6 +200,13 @@ export function BenchmarksLanding() {
               >
                 /durability
               </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">{' · typed map at '}</span>
+              <a
+                href="/ontology"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /ontology
+              </a>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}

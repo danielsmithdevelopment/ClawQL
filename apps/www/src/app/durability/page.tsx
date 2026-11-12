@@ -39,6 +39,8 @@ export default function Page() {
         Full measurement tables:{' '}
         <Link href={`${site.urls.benchmarks}#durability`}>/benchmarks § Durability</Link>
         {' · '}
+        Related: <Link href={site.urls.ontology}>/ontology</Link>
+        {' · '}
         Source draft:{' '}
         <Link href={DRAFT_DOC}>docs/gtm/clawql-durability-page-draft.md</Link>
       </p>
