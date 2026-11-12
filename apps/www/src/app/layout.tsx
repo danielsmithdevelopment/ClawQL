@@ -195,6 +195,7 @@ export default function RootLayout({
                   <FooterLink href={site.urls.benchmarks}>Benchmarks</FooterLink>
                   <FooterLink href={site.urls.durability}>Durability</FooterLink>
                   <FooterLink href={site.urls.ontology}>Ontology</FooterLink>
+                  <FooterLink href={site.urls.governance}>Governance</FooterLink>
                   <FooterLink href={site.urls.signup}>Sign up</FooterLink>
                   <FooterLink href={site.urls.status}>Status</FooterLink>
                   <FooterLink href={site.urls.docs}>Documentation</FooterLink>

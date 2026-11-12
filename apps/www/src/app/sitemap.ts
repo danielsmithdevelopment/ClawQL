@@ -14,6 +14,7 @@ const ROUTES: Array<{
   { path: '/benchmarks', changeFrequency: 'weekly', priority: 0.92 },
   { path: '/durability', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/ontology', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/governance', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/signup', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/signup/thanks', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.7 },

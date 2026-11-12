@@ -34,6 +34,8 @@ export default function Page() {
         Related:{' '}
         <Link href={site.urls.durability}>/durability</Link>
         {' · '}
+        <Link href={site.urls.governance}>/governance</Link>
+        {' · '}
         <Link href={site.urls.benchmarks}>/benchmarks</Link>
         {' · '}
         <Link href={`${WHITEPAPAPER}#20-clawql-memory-the-vault-and-the-ontology`}>whitepaper §20</Link>

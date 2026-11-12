@@ -207,6 +207,13 @@ export function BenchmarksLanding() {
               >
                 /ontology
               </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">{' · controls at '}</span>
+              <a
+                href="/governance"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /governance
+              </a>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}

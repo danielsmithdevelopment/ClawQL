@@ -26,6 +26,8 @@ export const site = {
     durability: '/durability',
     /** Typed ontology narrative — structured retrieval + policy status. */
     ontology: '/ontology',
+    /** Governance narrative — outside-the-agent controls + measured boards. */
+    governance: '/governance',
     /** Defense-in-depth security stack (marketing). */
     security: '/security',
     /** Public status surface (gateway health + components). */
