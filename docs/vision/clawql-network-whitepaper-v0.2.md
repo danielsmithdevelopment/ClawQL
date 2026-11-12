@@ -6,7 +6,7 @@
 
 **Daniel Smith · daniel@clawql.com · clawql.com**
 
-*Revision note: v0.2 adds section 28A, revises sections 10, 11, 14, 19, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
+*Revision note: v0.2 adds section 28A, revises sections 7, 10, 11, 14, 19, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
 
 
 **In-repo canonical copy** of Whitepaper v0.2 (draft). Crash-safety numbers in §11 are authorized on the lab build; evidence: [`docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Cloud plan: [`docs/gtm/clawql-cloud-platform-plan.md`](../gtm/clawql-cloud-platform-plan.md).
@@ -232,11 +232,50 @@ This matters enormously once the network extends beyond conventional software AP
 
 *Status: design.*
 
-AWS describes its services in Smithy, an interface-definition format whose public models cover more than 200 AWS services. Smithy models carry metadata that most API descriptions lack, and a Smithy adapter for `mcp-api-adapter` turns it directly into governance:
+Smithy is Amazon's Apache-2.0 interface-definition language for describing APIs independent of the wire protocol: resources, operations, inputs, outputs, and errors, with the protocol (JSON-over-HTTP, CBOR, and so on) attached separately. AWS's public models cover more than 200 services, and the SDKs in each language are generated from them. Where OpenAPI describes HTTP paths and verbs, Smithy describes the service shape; models can still be exported to OpenAPI when a consumer only speaks that.
+
+The useful part for ClawQL is traits — annotations tools can act on without asking a model to interpret the API. A Smithy adapter for `mcp-api-adapter` turns those traits into governance:
+
+| Trait | What ClawQL does with it |
+| --- | --- |
+| `@readonly` | Classify the operation as a read, deterministically |
+| `@idempotent` | Know a write is safe to repeat |
+| `@idempotencyToken` | Fill this field from the journaled intent for crash-safe retries |
+| `@sensitive` | Label and redact the field in logs and in model context |
+| `@paginated` | Page correctly and apply output projection per page |
 
 - **Deterministic classification.** Operations marked `@readonly` or `@idempotent` are classified as reads or safely repeatable writes straight from the model, never from a model's guess, which is exactly what ontology-backed policy requires.
 - **Automatic crash safety.** Request fields marked `@idempotencyToken` tell the gateway where an idempotency key belongs. The gateway fills the field from the journaled intent, so a retried AWS write after a crash is deduplicated by AWS itself, with no per-service code.
-- **Testing without risk.** AWS Emulator, released by AWS in November 2026 under a public-domain dedication (CC0) and built from the same Smithy models, runs more than 200 AWS services locally and offline. Governance scenarios, such as an agent attempting to delete a bucket, wipe a table or open a security group, can be exercised against it repeatedly with no cost and no risk. It emulates service behavior, not AWS's security infrastructure (instance metadata, IAM), so those attacks still need a real cloud lab.
+- **Ready-made sensitivity.** AWS uses `@sensitive` to mark data that must not appear in logs; ClawQL's labels and redaction treat it as a source of truth for every modeled AWS field.
+- **Ontology seeding.** Smithy is resource-oriented: a `resource` with identifiers and lifecycle operations (create, read, update, delete, list) is the same shape as Ontologiql asset types and ActionTypes. Importing Smithy models can seed the ontology for each AWS service with action types, read/write classification, and sensitivity already filled in from the spec rather than written by hand.
+- **Testing without risk.** AWS Emulator, released by AWS in November 2026 under a public-domain dedication (CC0) and built from the same Smithy models, runs more than 200 AWS services locally and offline. Governance scenarios, such as an agent attempting to delete a bucket, wipe a table or open a security group, can be exercised against it repeatedly with no cost and no risk. It emulates service behavior, not AWS's security infrastructure (instance metadata, IAM), so those attacks still need a real cloud lab. For ClawQL Cloud CI and the personal on-ramp, Emulator is the default AWS lab target because it can be redistributed and run commercially without a per-developer subscription; LocalStack's current image requires an account and paid commercial use, so it is used only when a customer already pays for it. Emulator fidelity varies by service; scenarios for the demos ClawQL actually ships (S3, DynamoDB, SQS, and so on) are verified against real AWS before any claim depends on them. Tests that need a real database engine rather than an emulated one can use MiniStack or equivalent MIT-licensed runners beside Emulator.
+
+OpenAPI remains first-class in `mcp-api-adapter`. Most third-party APIs ship OpenAPI; Smithy is an addition, not a replacement, and Smithy can export OpenAPI so ClawQL's own APIs stay usable by tools that only speak that format.
+
+#### ClawQL APIs and a published trait library
+
+*Status: design.*
+
+ClawQL defines its own APIs in Smithy as well, so gateway surfaces, Streams intents, and Cloud control-plane operations carry the same governance metadata AWS services do. Smithy also lets libraries define custom traits. A small ClawQL trait library, published as part of the open standard, makes governance part of the API language itself — for ClawQL's APIs and for any third party that wants to be governable out of the box:
+
+```smithy
+@trait(selector: "operation")
+structure consequential {}
+
+@trait(selector: "operation")
+structure actionType {
+    @required name: String
+}
+
+@trait(selector: "member")
+structure trustLabel {
+    @required value: String
+}
+```
+
+An API author annotates which operations are consequential (need approval under default policy), which Ontologiql ActionType each maps to, and which fields carry untrusted content. Adoption becomes "describe your API in Smithy with ClawQL traits," which is the kind of path a standard needs to spread.
+
+Practical constraints stay explicit. The Smithy CLI and build plugins are JVM-based and run only at build time, never in the runtime. TypeScript and Rust generators already exist; a thin Effect Schema generator can keep typed clients and validation in ClawQL's own idiom. Model validators enforce the safe path before anything ships — for example, every non-`@readonly` operation must declare an `actionType`, so an ungoverned write fails the build rather than production.
 
 ## 8. Why This Compounds: Cost, Quality, and Cache
 

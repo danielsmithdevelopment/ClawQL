@@ -123,7 +123,7 @@ AWS Emulator (public domain under CC0, 200+ AWS services, local and offline) is 
 | Crash-safe AWS writes | Kill the gateway between journaling and sending a write that has an `@idempotencyToken` field | The retry carries the same token; exactly one resource is created |
 | Injection through AWS data | Instructions planted in object contents, tags and queue messages | Labeled untrusted; no out-of-scope action follows |
 
-The emulator models service behavior, not AWS's security infrastructure: instance-metadata, IAM and network-boundary attacks stay with the real-cloud lab under the rules of engagement above.
+The emulator models service behavior, not AWS's security infrastructure: instance-metadata, IAM and network-boundary attacks stay with the real-cloud lab under the rules of engagement above. Emulator is the default AWS lab target for ClawQL because it is public domain and redistributable; LocalStack's current commercial image is used only when a customer already pays for it. Verify demo-critical services against real AWS before any claim depends on Emulator fidelity.
 
 ## Security gates per cloud phase
 
