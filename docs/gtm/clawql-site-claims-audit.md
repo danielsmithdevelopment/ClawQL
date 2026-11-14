@@ -108,6 +108,7 @@ Counsel review still recommended before paid campaigns on healthcare, lending, g
 ### Fix now — status (2026-11-12 PT)
 
 - [x] Durability section already carried v4 claim; deep links / dominance / governance blurbs updated from ~12s → ~17s resume; historical stock-TTL board labeled history; V4 artifacts linked first.
+- [x] Durability mode beside claim (2026-11-13): `CELLD_DURABILITY=fleet`, two nodes one host; disk-quorum ack (not always object-store); host-disk/AZ/region out of scope — see `DURABILITY_MODE.md`.
 - [x] Executor version language: no stable 2.0.0; β channel named; remasure after maintainer review.
 - [x] Ontologiql removed from public `program-density/STATUS.md` and docs/benchmarks README blurb (stealth).
 - [x] Panguard vault-write deep-board framing: fair columns (defaults 2/5 · best-config 5/5 invited) — not configured-vs-default peers.

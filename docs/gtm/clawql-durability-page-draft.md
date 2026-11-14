@@ -22,7 +22,7 @@ Most agent frameworks handle neither at the infrastructure level; they rely on e
 ## How ClawQL prevents them
 
 1. **Record the intent before acting.** Before any external call, the agent's intent is written to a durable journal. If the machine dies a moment later, the intent survives.
-2. **Never acknowledge before it's durable.** Nothing is confirmed until the write behind it is safely stored. Acknowledging too early is exactly how intents get lost.
+2. **Never acknowledge before it's durable.** Nothing is confirmed until a durability proof covers the write (disk quorum among fleet peers by default, or the object store in bucket mode). Acknowledging too early is exactly how intents get lost.
 3. **Attach an idempotency key to every external write.** The key is derived from the journaled intent, so if a call is retried after a crash, the receiving service recognizes it as the same request and performs it once.
 4. **One live owner per agent.** Each agent is owned by exactly one process at a time, through a lease. A process that falls behind is fenced off, so it cannot act on stale state.
 5. **Silence is not death.** A lease running out does not mean its owner is dead; a frozen process can wake up. ClawQL only treats an owner as gone when it can prove it (for example, the process no longer exists on that host) or when it has fenced the old owner out.
@@ -65,11 +65,16 @@ We publish failures alongside passes, because the failures are how the system go
 - **A grading bug.** Our own test harness once counted a timed-out status check as a lost intent. It now records those as unknown, and every reclassification is published side by side with the original.
 - **Earlier boards that failed** (versions 1 to 3) remain published with their results.
 
+## Durability mode on these boards
+
+The soak and crash trials ran celld's default **`fleet`** mode: two nodes on **one host**, with Cloudflare R2 as the fleet bucket. Acknowledgments waited for a **peer disk proof** (or a racing bucket proof), not for “already in the object store.” Background upload to R2 continues after ack. That covers process and node crashes while disks on that host remain. Losing the host's disks, a whole availability zone, or a region is **not** what these boards measured. Full record: [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md).
+
 ## Still open
 
 - **An unexplained result.** An earlier board with very short leases recorded 2 lost intents in 100 trials. One was later classified as a missed fault injection, based on the journal; the other remains unsettled.
 - **Recovery time.** 17 seconds is the honest cost of fencing, and we want it lower without giving up correctness.
 - **Scope.** These results are from one host, a lab build and a mock upstream service. Multi-host runs, the unmodified upstream runtime and real services are next.
+- **Fault scope.** Zone- and region-loss boards, plus an explicit `CELLD_DURABILITY=bucket` arm (higher object-store request cost), are not yet measured.
 - **What isn't covered.** Calls to services that don't accept idempotency keys can end with an unknown outcome that must be checked rather than retried. Containers' own internal state is not covered. ClawQL's own payment flows are not yet covered by these results.
 
 ## Beyond one machine

@@ -32,7 +32,7 @@ ClawQL Streams docs and labs assume **[celld v0.6.3](https://github.com/denoland
 
 ## 1. What this is
 
-This document specifies how ClawQL Streams runs on **[celld](https://celld.dev/)** — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and **LTX** replication to an operator-owned bucket (**RPO=0**).
+This document specifies how ClawQL Streams runs on **[celld](https://celld.dev/)** — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and **LTX** replication to an operator-owned bucket. Acknowledgments wait for a durability proof (**RPO=0** relative to that proof): default `fleet` mode uses peer disk quorum (bucket upload may follow); `bucket` mode waits for the object store. See [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md).
 
 ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for **Workers/DO API–compatible** self-hosted Durable Objects; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until a DO runtime is production-stable. The ClawQL-owned production runtime is **[`clawql-cellrt`](./clawql-cellrt.md)** (Rust + Wasmtime) — complementary to celld, not a Node rewrite.
 
@@ -44,13 +44,13 @@ ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `wo
 
 | Option                                | Effort                                     | API parity with CF DOs    | Replication / WORM           | Ops burden                                     | Verdict                      |
 | ------------------------------------- | ------------------------------------------ | ------------------------- | ---------------------------- | ---------------------------------------------- | ---------------------------- |
-| **celld**                             | Integrate + constrain bundle               | High (Workers DO surface) | Built-in LTX → bucket, RPO=0 | Install ~58 MB binary; fleet via bucket leases | **Adopt**                    |
+| **celld**                             | Integrate + constrain bundle               | High (Workers DO surface) | LTX → bucket; RPO=0 vs configured proof (fleet or bucket) | Install ~58 MB binary; fleet via bucket leases | **Adopt**                    |
 | Custom Node `worker_threads` + SQLite | Large (hibernation, ownership, WS, alarms) | Partial / drift-prone     | Homegrown                    | Own failure detector, placement, backup        | **Do not build**             |
 | Miniflare only                        | Low for CI                                 | Dev approximation         | Local                        | Not a production fleet                         | **CI / unit tests only**     |
 | Cloudflare only                       | Low for SaaS                               | Native                    | Platform                     | Vendor tenancy / pricing                       | **Hosted path**              |
 | K8s HPA only                          | Medium                                     | Different model           | Postgres / NATS              | Familiar regulated ops                         | **Regulated until celld GA** |
 
-**Facts of record:** Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · RPO=0 LTX · one application per fleet (alpha). **No ClawQL-owned $/cell-month figure** — see Streams §9.1.
+**Facts of record:** Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · LTX to operator bucket with RPO=0 vs the configured durability proof · one application per fleet (alpha). **No ClawQL-owned $/cell-month figure** — see Streams §9.1.
 
 ---
 
@@ -408,7 +408,7 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 | Concern          | Cloudflare Durable Objects | celld                                                                   |
 | ---------------- | -------------------------- | ----------------------------------------------------------------------- |
 | API              | Workers DO                 | Same core DO/Workers surface                                            |
-| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                                  |
+| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0 vs fleet/bucket proof)           |
 | Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)                    |
 | Pricing          | CF DO request/duration     | No ClawQL $/mo yet — cite hibernation **structure** only (Streams §9.1) |
 | Density          | Platform                   | Vendor hint ~1000 resident / 8 GB (re-measure)                          |

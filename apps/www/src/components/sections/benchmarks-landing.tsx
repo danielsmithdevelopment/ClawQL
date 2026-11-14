@@ -197,7 +197,7 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — N=1000 fleet kill · 0 duplicates · ~17s resume · outcome unknown · narrative at{' '}
+                — N=1000 · CELLD_DURABILITY=fleet · 0 duplicates · ~17s resume · outcome unknown · narrative at{' '}
               </span>
               <a
                 href="/durability"
