@@ -279,7 +279,7 @@ clawql-tee-verifier verify \
 1. Binary attestation (Cosign + SEV-SNP)
 2. WASM capability sandbox
 3. Attestation-gated virtual keys
-4. WORM audit (LTX, RPO=0)
+4. WORM audit (LTX; RPO=0 vs configured durability proof)
 5. QR air-gap transport          ← this document
 6. GPU confidential computing
 ```

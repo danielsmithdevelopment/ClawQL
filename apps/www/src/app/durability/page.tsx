@@ -77,8 +77,9 @@ export default function Page() {
           to a durable journal. If the machine dies a moment later, the intent survives.
         </li>
         <li>
-          <strong>Never acknowledge before it&apos;s durable.</strong> Nothing is confirmed until the write behind it is
-          safely stored. Acknowledging too early is exactly how intents get lost.
+          <strong>Never acknowledge before it&apos;s durable.</strong> Nothing is confirmed until a durability proof
+          covers the write (disk quorum among fleet peers by default, or the object store in bucket mode). Acknowledging
+          too early is exactly how intents get lost.
         </li>
         <li>
           <strong>Attach an idempotency key to every external write.</strong> The key is derived from the journaled
@@ -209,6 +210,15 @@ export default function Page() {
         </li>
       </ul>
 
+      <h2>Durability mode on these boards</h2>
+      <p>
+        The soak and crash trials ran celld&apos;s default <code>fleet</code> mode: two nodes on one host, with
+        Cloudflare R2 as the fleet bucket. Acknowledgments waited for a peer disk proof (or a racing bucket proof), not
+        for &quot;already in the object store.&quot; Background upload to R2 continues after ack. That covers process and
+        node crashes while disks on that host remain. Losing the host&apos;s disks, a whole availability zone, or a
+        region is not what these boards measured.
+      </p>
+
       <h2>Still open</h2>
       <ul>
         <li>
@@ -223,6 +233,10 @@ export default function Page() {
         <li>
           <strong>Scope.</strong> These results are from one host, a lab build and a mock upstream service. Multi-host
           runs, the unmodified upstream runtime and real services are next.
+        </li>
+        <li>
+          <strong>Fault scope.</strong> Zone- and region-loss boards, plus an explicit{' '}
+          <code>CELLD_DURABILITY=bucket</code> arm (higher object-store request cost), are not yet measured.
         </li>
         <li>
           <strong>What isn&apos;t covered.</strong> Calls to services that don&apos;t accept idempotency keys can end

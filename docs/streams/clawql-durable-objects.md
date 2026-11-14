@@ -22,7 +22,7 @@ Goals:
 3. **Three sidecars** — forensic audit, inference, training-data emission — without conflating them.
 4. **Parity path** — same session contract on K8s workers when DOs are unavailable (regulated / air-gapped).
 
-The Durable Objects API is the **session contract**. Cloudflare implements it on the edge; **celld** implements it on operator machines with SQLite + LTX replication to an S3-compatible bucket (RPO=0). Miniflare remains a **CI / local** approximation, not a production self-hosted fleet.
+The Durable Objects API is the **session contract**. Cloudflare implements it on the edge; **celld** implements it on operator machines with SQLite + LTX replication to an S3-compatible bucket (RPO=0 relative to the configured durability proof — fleet disk quorum by default, or bucket-before-ack). Miniflare remains a **CI / local** approximation, not a production self-hosted fleet.
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.**
 
@@ -50,7 +50,7 @@ AgentSessionDO
   └─ TrainingDataSidecar   → RTP turnSequence → OBT envelope → export
 ```
 
-Sidecars remain **logical concerns** (in-process modules or HTTP). Under **celld**, session bookkeeping maps to **`storage.put` on the cell SQLite**, which celld replicates as **LTX** to the fleet bucket (platform RPO=0). That LTX stream is **durable cell state**, not the compliance `clawql-audit` trail — AuditSidecar / Lab 5b dual-write consequential events to host [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md) (HTTP or process WORM). Under **Cloudflare**, the same `storage.put` API writes to platform DO storage. Under **Kubernetes**, bookkeeping may use Postgres/JSONL; the logical event schema is unchanged.
+Sidecars remain **logical concerns** (in-process modules or HTTP). Under **celld**, session bookkeeping maps to **`storage.put` on the cell SQLite**, which celld covers with a durability proof and replicates as **LTX** to the fleet bucket (platform RPO=0 vs that proof; see [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md)). That LTX stream is **durable cell state**, not the compliance `clawql-audit` trail — AuditSidecar / Lab 5b dual-write consequential events to host [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md) (HTTP or process WORM). Under **Cloudflare**, the same `storage.put` API writes to platform DO storage. Under **Kubernetes**, bookkeeping may use Postgres/JSONL; the logical event schema is unchanged.
 
 ### 3.1 AuditSidecar
 

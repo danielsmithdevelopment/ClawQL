@@ -2485,6 +2485,12 @@ async function main() {
       outputGate: OUTPUT_GATE_ON,
       fencedAck: FENCED_ACK_ON,
       allowUnfenced: ALLOW_UNFENCED,
+      /**
+       * celld default is fleet (disk quorum / racing bucket). Record explicitly
+       * so claims never imply bucket-before-ack without measuring it.
+       * See docs/benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md
+       */
+      celldDurability: process.env.CELLD_DURABILITY || "fleet",
       rustLog: process.env.RUST_LOG || process.env.CELLD_RUST_LOG || null,
       nodeCount: 2,
       storageProvider: "cloudflare-r2",
