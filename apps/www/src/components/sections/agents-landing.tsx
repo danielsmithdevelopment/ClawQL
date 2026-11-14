@@ -35,19 +35,19 @@ const loopSteps = [
     index: '03',
     title: 'Act',
     kit: 'Full ClawQL tool surface',
-    body: 'memory_recall pulls prior context. Structured ontology queries enumerate exact entities — no near-misses. execute acts on connected backends. Every action writes to the WORM trail before acknowledgment.',
+    body: 'memory_recall pulls prior context. Structured ontology queries enumerate exact entities — no near-misses. execute acts on connected backends. Hash-chained audit entries write when the audit path is enabled (write-once needs Object Lock configuration).',
   },
   {
     index: '04',
     title: 'Converge',
     kit: 'Ouroboros',
-    body: 'The Ouroboros loop iterates until Seed acceptance criteria are met. The agent does not stop because it ran out of turns. It stops when it is done.',
+    body: 'The Ouroboros loop iterates until Seed acceptance criteria are met or hard budgets (rounds, time, tokens, spend) are reached — including stagnation detection. Agents stop when done or when budgeted.',
   },
   {
     index: '05',
     title: 'Surface',
     kit: '/mcp-ui',
-    body: 'When a human decision is required, the agent scaffolds a browser interface for that moment — forms from the exact decision needed, HTMX, no frontend project. The choice is logged to WORM.',
+    body: 'When a human decision is required, the agent can use auto-generated tool forms and situation-specific HTMX surfaces. The choice is logged on the configured audit path.',
   },
 ] as const
 
@@ -58,97 +58,96 @@ const benchRows = [
 ] as const
 
 const teeRows = [
-  { layer: 'Cosign binary attestation', proves: 'Binary is exactly clawql-tee vX.Y, unmodified' },
-  { layer: 'WASM capability sandbox', proves: 'Tool code cannot access undeclared capabilities' },
-  { layer: 'Attestation-gated virtual keys', proves: 'Model API access only after hardware verification' },
-  { layer: 'WORM audit trail', proves: 'Every action recorded before acknowledgment, RPO=0' },
-  { layer: 'QR air-gap transport', proves: 'Audit reaches verifier via a channel the operator cannot influence' },
-  { layer: 'GPU confidential computing', proves: 'Model weights and inputs never exposed to the host' },
+  { layer: 'Cosign binary attestation', proves: 'Binary matches the signed clawql-tee digest (design)' },
+  { layer: 'WASM capability sandbox', proves: 'Tool code cannot access undeclared capabilities (design)' },
+  { layer: 'Attestation-gated virtual keys', proves: 'Model API access only after hardware verification (design)' },
+  {
+    layer: 'Hash-chained audit trail',
+    proves: 'Actions recorded on the configured trail; write-once needs Object Lock (partially shipped)',
+  },
+  { layer: 'QR air-gap transport', proves: 'Audit reaches verifier via optical channel (planned)' },
+  { layer: 'GPU confidential computing', proves: 'Weights and inputs stay in the enclave (design)' },
 ] as const
 
 const differentiators = [
   {
     index: '01',
-    title: 'Agents that initiate',
-    body: 'Managed platforms wait for a human to start a session. Streams wakes agents when events cross the significance threshold — compliance deadlines, staking drops, outcome divergence. Humans review decisions, not prompts.',
+    title: 'Event-driven sessions (design)',
+    body: 'Streams is designed so significance filters wake agents from events — humans review decisions, not prompts. Lab 5b is the opt-in coordination layer today; agent-facing stream_* tools are planned.',
   },
   {
     index: '02',
     title: 'Recall that closes sets',
-    body: 'Semantic similarity cannot enforce a predicate. CQE schemas and ontology.db structured filters enumerate exact sets — every match, no extras, O(1) at any corpus size.',
+    body: 'Semantic similarity cannot enforce a predicate. CQE schemas and ontology.db structured filters enumerate exact sets — every match, no extras. Indexed lookups scale with the index, not “O(1) at any corpus size.”',
   },
   {
     index: '03',
     title: 'Auditability you can prove',
-    body: 'Merkle-chained WORM, LTX replication with RPO=0, hardware attestation via clawql-tee, and QR export to an air-gapped examiner is not a log file. It is a verifiable record of what the agent decided and what the human chose.',
+    body: 'Hash-chained audit (write-once where Object Lock is configured) is the shipped trail path. clawql-tee attestation and QR export are design/planned — not a priced product you can buy today.',
   },
 ] as const
 
 const rylTiers = [
   {
     tier: 'Self-Serve Helm',
-    price: '$299/month',
-    detail: 'Helm chart, four agents, security defaults, configuration presets',
+    price: 'Early-access pricing — see /pricing',
+    detail: 'Helm chart and configuration presets for gateway + agents that ship today',
   },
   {
     tier: 'Managed Deployment',
-    price: '$999/month',
-    detail: 'ClawQL-managed infrastructure, direct support channel',
+    price: 'Early-access pricing — see /pricing',
+    detail: 'ClawQL-managed infrastructure when early access is available; names identify bundled agents, not endorsements',
   },
   {
-    tier: 'Enterprise TEE',
-    price: 'from $3,500/month',
-    detail: 'clawql-tee, hardware attestation, WORM audit, QR export, SLA, DPA/BAA',
+    tier: 'Enterprise TEE (planned)',
+    price: 'Not sold yet',
+    detail: 'clawql-tee, hardware attestation, and QR export are specifications — labeled planned until they ship',
   },
 ] as const
 
 const verticals = [
   {
     name: 'Legal',
-    body: 'Matter ontology, institutional knowledge enumeration, client preference reconstruction — OpenBench B-7 mechanism-proven',
+    body: 'Matter ontology and institutional knowledge enumeration — demonstrated on OpenBench mini-firm B-7 (3 tasks / 5 matters)',
   },
   {
     name: 'Government',
-    body: 'Outcome accountability, Arweave-anchored baselines, FOIA-ready document vault, state auditor API',
+    body: 'Planned vertical — outcome accountability and FOIA-oriented document vault patterns; see /industries/government',
   },
   {
     name: 'Lending',
-    body: 'Income doc processing, LOS updates, fair lending compliance audit trail',
+    body: 'Partial samples shipping — intake and HITL; CompliancePlugin and fair-lending checks are planned; see /industries/lending',
   },
   {
     name: 'Surveillance',
-    body: 'ALPR abuse pattern monitoring, chain of custody for footage, authentication challenge documentation',
-  },
-  {
-    name: 'Events',
-    body: 'Live event and concert management, ticket and venue agent automation',
+    body: 'Planned vertical — chain-of-custody patterns; see /industries/surveillance',
   },
 ] as const
 
 const securityItems = [
   {
-    title: 'Self-hosted or air-gapped',
-    body: 'Apache 2.0 core. Full agent stack on your cluster. No forced SaaS data plane.',
+    title: 'Self-hosted',
+    body: 'Apache 2.0 packages in this repository. Deploy the gateway and memory stack on your cluster.',
   },
   {
-    title: 'WORM audit per action',
-    body: 'Merkle-chained, LTX-replicated with RPO=0. Every tool call, inference call, and human decision.',
+    title: 'Hash-chained audit',
+    body: 'Tamper-evident trail when configured; write-once needs Object Lock. MCP audit is a session ring buffer (append/list/clear) — not the examiner trail. Scope of durability evidence: /durability.',
   },
   {
     title: 'ATR scoping',
-    body: 'Agents can only call tools declared in their scope. Panguard ATR fail-closed enforcement is opt-in in 8.0 (CLAWQL_PANGUARD_PROXY_PLUGIN=1).',
+    body: 'When scoped and enforced, agents can only call tools in scope. Panguard ATR fail-closed enforcement is opt-in in 8.0 (CLAWQL_PANGUARD_PROXY_PLUGIN=1).',
   },
   {
     title: 'Cosign-signed images',
-    body: 'Kyverno admission enforcement on the cluster. Unsigned images never run.',
+    body: 'Kyverno admission enforcement on the cluster when configured. Unsigned images are rejected at admit time.',
   },
   {
-    title: 'clawql-tee',
-    body: 'Hardware attestation for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. GPU confidential computing. QR air-gap audit export.',
+    title: 'clawql-tee (design)',
+    body: 'Specification for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. QR air-gap audit export is planned. Attestation still trusts chip-vendor root keys.',
   },
   {
     title: '32-module security curriculum',
-    body: 'Documented, reproducible, publicly available at docs.clawql.com/security.',
+    body: 'Documented at docs.clawql.com/security.',
   },
 ] as const
 
@@ -182,12 +181,13 @@ export function AgentsLanding() {
               Agents
             </h1>
             <p className="agents-hero__headline">
-              Agents that decide when to act. Interfaces they build for the moment. Audit trails that prove everything.
+              Governed gateway, memory, and audit for agents you run — with event-driven and TEE paths labeled as they
+              ship.
             </p>
             <p className="agents-hero__lede">
-              Agentic infrastructure for regulated production work — event-driven sessions, structured institutional
-              recall, hardware-verified execution, and a WORM trail on every action. Mechanism-proven on OpenBench
-              mini-firm Calderwood &amp; Harkness tasks (B-7).
+              What ships today: the MCP gateway, vault memory, structured ontology recall, hash-chained audit (write-once
+              where configured), and IDP. Streams event wakes and clawql-tee are design/planned. OpenBench mini-firm B-7
+              demonstrated structured recall on 3 tasks / 5 matters — not a production proof.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg" color="light">
@@ -208,12 +208,14 @@ export function AgentsLanding() {
         headline="Built for production, not demo loops"
         subheadline={
           <p>
-            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · Tamper-evident audit · optional TEE
+            Apache 2.0 packages · Gateway + memory shipped · Streams event wakes planned · OpenBench mini-firm measured
+            (3 tasks / 5 matters) · TEE design · Panguard opt-in in 8.0
           </p>
         }
       >
         <p className="max-w-3xl text-[1.05rem] leading-relaxed">
-          No human starts the session. No developer builds the interface. Everything is recorded.
+          Start with what runs today. Label event-driven wakes and hardware-verified execution as coming until the
+          packages ship.
         </p>
       </Section>
 
@@ -221,9 +223,13 @@ export function AgentsLanding() {
         id="loop"
         className="agents-surface"
         eyebrow="How it works"
-        headline="The agent loop that doesn’t wait for you"
+        headline="The agent loop — shipped pieces and planned wakes"
         subheadline={
-          <p>Every other agent platform requires a human to start the session. ClawQL agents start themselves.</p>
+          <p>
+            Lab 5b coordinates on celld today. Agent-facing stream_* tools and significance-driven wakes are planned —
+            many platforms already run agents from triggers; ClawQL&apos;s differentiator is ownership of the trail and
+            tools, not inventing event triggers.
+          </p>
         }
       >
         <ol className="grid max-w-4xl gap-2 md:gap-3">
@@ -280,7 +286,8 @@ export function AgentsLanding() {
 }`}
             </pre>
             <p className="mt-3 leading-relaxed">
-              Exact five-of-five. No near-misses. Two turns. O(1) at any corpus size.
+              Exact five-of-five on the mini-firm harness. No near-misses. Two turns. Indexed lookups scale with the
+              index — not constant-time at any corpus size.
             </p>
           </div>
         </div>
@@ -363,20 +370,19 @@ export function AgentsLanding() {
         id="tee"
         className="agents-section-band"
         eyebrow="The trust layer"
-        headline="clawql-tee — hardware-verified agent execution"
+        headline="clawql-tee — designed for hardware-verified execution"
         subheadline={
-          <p>For regulated environments where the operator itself cannot be trusted.</p>
+          <p>Specification for regulated environments where the operator itself cannot be trusted. Not shipping as a product tier yet.</p>
         }
       >
         <p className="mb-8 max-w-3xl text-[1.05rem] leading-relaxed">
-          Fully DO-compatible runtime supporting AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware attestation
-          proves what software is running. Vault releases secrets only after verification. GPU confidential computing
-          keeps weights and inputs away from the host. Audit leaves the TEE through a QR optical channel — fountain
-          codes, encryption, HMAC, Merkle verification.
+          clawql-tee is designed as a DO-compatible runtime for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware
+          attestation still requires trusting the chip vendor&apos;s root keys. The QR optical export channel is planned.
+          Do not treat this section as a buyable Enterprise TEE SKU.
         </p>
         <div className="-mx-6 overflow-x-auto px-6 sm:mx-0 sm:px-0">
           <table className="agents-compare min-w-[40rem]">
-            <caption>The complete zero-trust chain — no single link requires trusting any party.</caption>
+            <caption>Designed trust chain — each link still trusts named parties (chip vendor roots, Cosign keys, operator config).</caption>
             <thead>
               <tr>
                 <th scope="col">Layer</th>
@@ -404,8 +410,8 @@ export function AgentsLanding() {
       <Section
         id="differentiators"
         className="agents-surface"
-        eyebrow="Three things other agent platforms can’t do"
-        headline="What changes when the infrastructure is right"
+        eyebrow="What ClawQL emphasizes"
+        headline="Ownership of tools, recall, and the trail"
       >
         <ol className="grid max-w-4xl gap-2">
           {differentiators.map((item) => (
@@ -422,21 +428,19 @@ export function AgentsLanding() {
         id="rockyourlobster"
         className="agents-section-band"
         eyebrow="RockYourLobster"
-        headline="Enterprise agent deployments for regulated industries"
+        headline="Agent deployments for regulated industries"
         subheadline={
           <p>
-            Hardened OpenClaw, Hermes, Pi, and Goose agents — running in clawql-tee, preconfigured with ClawQL&apos;s
-            32-module security curriculum. Structured recall is mechanism-proven on OpenBench mini-firm (B-7); Harvey
-            LAB firm-knowledge remains the next evidence tier.
+            Founder / lab deployments and early-access packaging — not a roster of external production customers.
+            Bundled agent names identify software; they are not endorsements. TEE is planned. Structured recall was
+            demonstrated on OpenBench mini-firm (B-7); Harvey LAB firm-knowledge remains the next evidence tier. Full
+            catalog: <Link href={site.urls.integrations}>/integrations</Link>.
           </p>
         }
       >
-        <p className="mb-8 max-w-3xl text-[1.05rem] font-medium leading-relaxed" style={{ color: 'var(--agents-ink)' }}>
-          The security and advanced capabilities are only possible because of ClawQL.
-        </p>
         <div className="-mx-6 overflow-x-auto px-6 sm:mx-0 sm:px-0">
           <table className="agents-compare min-w-[40rem]">
-            <caption>RockYourLobster tiers — TEE deployments for regulated buyers.</caption>
+            <caption>RockYourLobster tiers — shipped packaging vs planned TEE.</caption>
             <thead>
               <tr>
                 <th scope="col">Tier</th>
@@ -464,18 +468,19 @@ export function AgentsLanding() {
         id="flywheel"
         className="agents-surface"
         eyebrow="The training flywheel"
-        headline="Every session makes the next one better"
+        headline="Our benchmark traces improve our next run"
         subheadline={
           <p>
-            Passing traces become SFT data. Paired pass/fail traces become DPO pairs. Verifiable rewards feed GRPO when
-            ground truth is automatic. Better sessions grow the dataset that fine-tunes the next run.
+            Customer content is never used for training without explicit opt-in — see{' '}
+            <Link href={site.urls.dataHandling}>/data-handling</Link>. Only ClawQL&apos;s own benchmark traces, or
+            traces from customers who opt in, become SFT/DPO/GRPO data.
           </p>
         }
       >
         <p className="max-w-3xl leading-relaxed">
-          OpenBench mini-firm traces already close a local loop: structured-predicate wins become preferred SFT/DPO
-          arms. When a Harvey LAB firm-knowledge ledger exists, that third-party scoreboard becomes the next ground
-          truth for the fine-tune that improves the next result — it is not published yet.
+          OpenBench mini-firm traces close a local loop on our harness: structured-predicate wins become preferred
+          SFT/DPO arms. When a Harvey LAB firm-knowledge ledger exists, that third-party scoreboard can become the next
+          ground truth — it is not published yet.
         </p>
         <p className="mt-4">
           <Link href={RUBRICS_ESSAY}>When Rubrics Become Rewards →</Link>
@@ -510,7 +515,11 @@ export function AgentsLanding() {
         eyebrow="Security and compliance"
         headline="Built for examiners"
         subheadline={
-          <p>Sovereignty and auditability are defaults — not a separate enterprise pack negotiated after the pilot.</p>
+          <p>
+            Hash-chained audit and ATR scoping depend on configuration. Managed tiers may sell a Sovereign Security Pack
+            for WORM Object Lock and related controls — see <Link href={site.urls.pricing}>/pricing</Link>. Self-hosted
+            Panguard enforcement is opt-in in 8.0.
+          </p>
         }
       >
         <ul className="agents-security max-w-4xl">
@@ -530,11 +539,11 @@ export function AgentsLanding() {
         id="pricing"
         className="agents-section-band"
         eyebrow="Pricing"
-        headline="$29/month to start. $3,500/month for enterprise TEE."
+        headline="Self-host free. Managed early-access pricing on /pricing."
         subheadline={
           <p>
-            Self-host free on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier —
-            same URL when you upgrade.
+            Apache 2.0 packages in this repository carry no license fee. Managed figures and any TEE tier live on{' '}
+            <Link href={site.urls.pricing}>/pricing</Link> — Enterprise TEE is planned, not sold.
           </p>
         }
       >

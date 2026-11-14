@@ -33,7 +33,7 @@ export const insuranceIndustry: Industry = {
   ],
   domainTools: [
     { name: 'claim_extract', description: 'Extract claimant, injury, and loss details from FNOL and adjuster reports.' },
-    { name: 'policy_analyze', description: 'Compare endorsements against master policy text indexed in Onyx.' },
+    { name: 'policy_analyze', description: 'Compare endorsements against master policy text in semantic search indexes.' },
     { name: 'loss_run_reconcile', description: 'Match carrier loss-run rows to internal policy and claim records.' },
     { name: 'fraud_flag', description: 'Score claims against pattern libraries and cross-claim signals.' },
     { name: 'payout_validate', description: 'Validate reserve and payment amounts against policy limits.' },
@@ -79,13 +79,13 @@ export const insuranceIndustry: Industry = {
     },
     {
       title: 'Policy endorsement review',
-      summary: 'Onyx-grounded diff against master policy.',
-      body: 'policy_analyze compares endorsement PDFs against master policy text indexed in Onyx; memory_ingest captures underwriter decisions.',
+      summary: 'Semantic-search-grounded diff against master policy.',
+      body: 'policy_analyze compares endorsement PDFs against master policy text in semantic search indexes; memory_ingest captures underwriter decisions.',
       tools: ['knowledge_search_onyx', 'policy_analyze', 'memory_ingest', 'search'],
       steps: [
-        { label: 'Index', detail: 'Master policy and prior endorsements indexed via IDP pipeline into Onyx.' },
+        { label: 'Index', detail: 'Master policy and prior endorsements indexed via IDP pipeline into semantic search.' },
         { label: 'Analyze', detail: 'policy_analyze diffs new endorsement limits and exclusions against master.' },
-        { label: 'Search', detail: 'knowledge_search_onyx retrieves conflicting clauses from prior renewals.' },
+        { label: 'Search', detail: 'Semantic search retrieves conflicting clauses from prior renewals.' },
         { label: 'Decide', detail: 'memory_ingest appends underwriter approval with wikilinks to policy note.' },
       ],
     },

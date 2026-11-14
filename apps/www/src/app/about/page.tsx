@@ -1,178 +1,168 @@
+import Link from 'next/link'
+
 import { ButtonLink, PlainButtonLink } from '@/components/elements/button'
-import { Link } from '@/components/elements/link'
-import { Section } from '@/components/elements/section'
-import { ChevronIcon } from '@/components/icons/chevron-icon'
-import { CallToActionSimple } from '@/components/sections/call-to-action-simple'
-import { CaseStudyCard, CaseStudyGrid, ToolTierSection } from '@/components/sections/clawql-marketing'
-import { HeroSimpleCentered } from '@/components/sections/hero-simple-centered'
-import { caseStudies, mcpToolTiers } from '@/lib/marketing'
+import { DocumentCentered } from '@/components/sections/document-centered'
+import { CallToActionSimpleCentered } from '@/components/sections/call-to-action-simple-centered'
+import { ArrowNarrowRightIcon } from '@/components/icons/arrow-narrow-right-icon'
 import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
+
+const GH = 'https://github.com/danielsmithdevelopment/ClawQL'
+const DRAFT_DOC = `${GH}/blob/main/docs/gtm/clawql-about-page-draft.md`
 
 export const metadata = pageMetadata({
   title: 'About',
   description:
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm.',
+    'Infrastructure that makes AI agents safe to put in front of real systems, and proves it. How ClawQL works, who builds it, and where we are.',
   path: '/about',
 })
 
 export default function Page() {
   return (
     <>
-      <HeroSimpleCentered
-        id="hero"
-        headline="ClawQL — the Agentic Gateway for Auditable Production AI"
+      <DocumentCentered
+        id="document"
+        headline="About ClawQL"
         subheadline={
-          <p>
-            ClawQL is the Foundational Platform where agents <strong>search</strong> APIs, <strong>execute</strong>{' '}
-            operations, <strong>recall</strong> vault knowledge, <strong>ingest</strong> documents, and{' '}
-            <strong>audit</strong> what happened — from multi-tenant Regional Hubs to Dedicated Virtual Gateways and
-            Edge Gateways on every laptop.
-          </p>
-        }
-      />
-
-      <Section
-        id="story"
-        eyebrow="Why ClawQL exists"
-        headline="Built from production agent work"
-        subheadline={
-          <p>
-            ClawQL started as the MCP layer behind real deployments: multi-provider DevOps workflows, document pipelines
-            for regulated industries, and cross-session memory that survives when you switch between Cursor, OpenClaw,
-            and Kubernetes. The open-source core ships what we run in production.
-          </p>
+          <p>Infrastructure that makes AI agents safe to put in front of real systems, and proves it.</p>
         }
       >
-        <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-2 lg:grid-cols-3 dark:text-mist-400">
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">ClawQL and See The Greens</h3>
-            <p className="mt-2">
-              See The Greens is a mortgage-first loan origination system powered by ClawQL — the same IDP pipeline,
-              vault memory, and HITL patterns documented on this site. ClawQL is the horizontal platform; See The Greens
-              is one vertical product built on it. Lenders can self-host ClawQL or build their own LOS on the same
-              stack.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">Current state</h3>
-            <p className="mt-2">
-              The open-source MCP server is production-ready and self-hostable today — npx, Helm, published case
-              studies, and a v7 operator for Kubernetes. Managed gateway hosting is early access (waitlist, then paid
-              tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on managed hosting;
-              the core product is shipping and in use.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">First buyers</h3>
-            <p className="mt-2">
-              Document-heavy teams of 20–200 people in legal, M&A diligence, healthcare operations, and lending — teams
-              that already spend $500–2k/mo on SaaS and need agent memory plus document intelligence.
-              Gateway-only developers evaluating MCP infrastructure start on Developer or Teams; IDP activates when they
-              need classify/extract and VDR.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">Early access, founder-led</h3>
-            <p className="mt-2">
-              Managed hosting onboarding is founder-led — not self-serve checkout. Hosted slots are limited while we
-              validate pipeline reliability under real workloads. Architecture earns trust over time; we do not claim
-              compliance certifications or decade-long references we do not have yet.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 sm:col-span-2 lg:col-span-1 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">What we publish</h3>
-            <p className="mt-2">
-              Case studies include tool traces, failure modes, fixes, and token measurements. The{' '}
-              <Link href={site.urls.releases}>GitHub release changelog</Link> tracks what ships each version; docs at{' '}
-              <Link href={site.urls.docs}>docs.clawql.com</Link> stay aligned with the codebase.
-            </p>
-          </div>
-        </div>
-      </Section>
+        <p className="text-sm text-mist-600 dark:text-mist-400">
+          Draft rewrite 2026-11-11 — Sand Dollar bio wording pending clearance. Related:{' '}
+          <Link href={site.urls.governance}>/governance</Link>
+          {' · '}
+          <Link href={site.urls.security}>/security</Link>
+          {' · '}
+          <Link href={site.urls.benchmarks}>/benchmarks</Link>
+          {' · '}
+          <Link href={site.urls.cloud}>/cloud</Link>
+          {' · '}
+          <Link href={site.urls.dataHandling}>/data-handling</Link>
+          {' · '}
+          Draft: <Link href={DRAFT_DOC}>docs/gtm/clawql-about-page-draft.md</Link>
+        </p>
 
-      <Section
-        id="philosophy"
-        eyebrow="What we build"
-        headline="Three problems — one platform, activated in layers"
-        subheadline={
-          <p>
-            Current agent systems lose context, burn tokens on API specs, and treat documents as afterthoughts. Plugin
-            bundles let you solve gateway and memory first; add IDP and sovereign inference only when your workload
-            needs them.
-          </p>
-        }
-      >
-        <div className="grid grid-cols-1 gap-6 text-sm/7 text-mist-700 sm:grid-cols-3 dark:text-mist-400">
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">Persistence gap</h3>
-            <p className="mt-2">
-              Context windows are ephemeral. <code className="text-sm">memory_ingest</code> and{' '}
-              <code className="text-sm">memory_recall</code> give agents institutional memory that survives restarts,
-              product switches, and new chat threads.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">Token efficiency</h3>
-            <p className="mt-2">
-              GitHub&apos;s bundled spec alone is ~2.28M planning tokens. <code className="text-sm">search</code>{' '}
-              returns ranked operation IDs in thousands of tokens — measured in our published GitHub provider case
-              study.
-            </p>
-          </div>
-          <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
-            <h3 className="font-semibold text-mist-950 dark:text-white">Document intelligence</h3>
-            <p className="mt-2">
-              Eight bundled IDP vendors compose intake through secure sharing. Agents orchestrate real document
-              pipelines — classify, extract, archive, search — built around purpose-built extraction tools rather than
-              one-off OCR prompts.
-            </p>
-          </div>
-        </div>
-      </Section>
+        <h2>Why ClawQL exists</h2>
+        <p>
+          Agents have become capable enough to send payments, file records and change production systems. The
+          infrastructure around them hasn&apos;t kept up: most agents lose context between sessions, spend their budget
+          reading API specifications, and act with whatever access they were handed, leaving no record anyone could
+          defend to an auditor.
+        </p>
+        <p>
+          ClawQL started as the layer behind our own agent work: multi-provider DevOps workflows, document pipelines for
+          regulated industries, and memory that carries across sessions and tools. It grew into a governed gateway: every
+          tool call passes through rules the agent can&apos;t change, every consequential action is recorded in a
+          tamper-evident trail, and crashes can&apos;t cause an agent to repeat or lose work.
+        </p>
+        <p className="text-sm text-mist-600 dark:text-mist-400">
+          Note on naming: the MCP <code className="text-sm">audit</code> tool is an agent-visible in-process session
+          event buffer (append / list / clear). The tamper-evident audit trail is a separate surface (
+          <Link href={site.urls.audit}>/audit</Link>, <code className="text-sm">clawql-audit</code>) — agents cannot
+          write to or clear it. See <Link href={site.urls.governance}>/governance</Link>.
+        </p>
 
-      <Section id="tools" headline="Tool surface">
-        <div className="flex flex-col gap-10">
-          <ToolTierSection {...mcpToolTiers.core} />
-          <ToolTierSection {...mcpToolTiers.memory} />
-          <ToolTierSection {...mcpToolTiers.automation} />
-          <ToolTierSection {...mcpToolTiers.idp} />
-        </div>
-      </Section>
+        <h2>How we work</h2>
+        <ul>
+          <li>
+            <strong>Measure before claiming.</strong> Every public number comes from a benchmark with criteria fixed
+            before it ran, and results are published with their raw data.
+          </li>
+          <li>
+            <strong>Publish failures.</strong> Failed benchmark boards, bugs we found in our own code and corrections
+            stay public alongside the passes.
+          </li>
+          <li>
+            <strong>Correct quickly.</strong> When we&apos;re shown to be wrong, we verify, fix it and say so.
+          </li>
+          <li>
+            <strong>Compare fairly.</strong> Comparisons with other products are measured on equal terms and offered to
+            their maintainers for review before we publish them.
+          </li>
+          <li>
+            <strong>Build in the open.</strong> The Apache 2.0 packages in this repository are open source and
+            self-hostable with no license fee for those packages. Some packages in the network whitepaper design table
+            remain private or BSL and are not on that self-host path.
+          </li>
+        </ul>
 
-      <CaseStudyGrid
-        id="case-studies"
-        headline="Evidence"
-        subheadline={
-          <p>
-            Case studies include tool traces, failure modes, fixes, and token measurements — the same detail we expect
-            from production engineering write-ups.
-          </p>
-        }
-      >
-        {caseStudies.slice(0, 3).map((study) => (
-          <CaseStudyCard key={study.slug} {...study} />
-        ))}
-      </CaseStudyGrid>
+        <h2>Founder</h2>
+        <p>
+          ClawQL is built by <strong>Daniel Smith</strong>. At IBM, Daniel designed the state machine for cross-border
+          transfers in the Sand Dollar, The Bahamas&apos; central bank digital currency, moving value between domestic
+          and international networks and back, with hash time-locked contracts that automatically refund a transfer if
+          currency conversion fails. That same discipline (explicit state machines, intents recorded before action,
+          automatic recovery when a step fails) runs through ClawQL.
+        </p>
+        <p className="text-sm text-mist-600 dark:text-mist-400">
+          Sand Dollar wording is draft pending clearance for public use. Contact:{' '}
+          <a href={`mailto:${site.emails.general}`}>{site.emails.general}</a>.
+        </p>
 
-      <CallToActionSimple
+        <h2>Where we are</h2>
+        <p>We&apos;d rather be precise than impressive:</p>
+        <ul>
+          <li>
+            <strong>The open-source gateway is shipping</strong> and self-hostable today, with{' '}
+            <code className="text-sm">{site.installCommand}</code>, a Helm chart and a Kubernetes operator (
+            <code className="text-sm">clawql-operator</code> / ClawQLInstance). Case studies and benchmarks on this site
+            reflect the founder&apos;s own deployments and lab evidence — not customer production use, which does not
+            exist yet.
+          </li>
+          <li>
+            <strong>Managed hosting is in early access,</strong> with founder-led onboarding, not self-serve checkout.
+            We do not claim IDP hosted tenants are actively onboarding until that is verified.
+          </li>
+          <li>
+            <strong>We are pre-revenue,</strong> and we don&apos;t claim compliance certifications or references we
+            don&apos;t have yet.
+          </li>
+          <li>
+            <strong>Some of our architecture is design, not shipping code</strong> — including the decentralized
+            Regional Hub / Dedicated Virtual Gateway / Edge swarm topology — and it is labeled that way everywhere we
+            describe it. See <Link href={site.urls.cloud}>/cloud</Link> for early-access vs planned Cloud workloads.
+          </li>
+        </ul>
+
+        <h2>Related products</h2>
+        <p>
+          <strong>See The Greens</strong> is a mortgage-first loan origination system built on ClawQL&apos;s document
+          pipeline, memory and human-review patterns. ClawQL is the horizontal platform; See The Greens is one vertical
+          product on it. <em>Status: in development</em> (planned <code className="text-sm">clawql-lending</code>{' '}
+          vertical — not a live customer product yet).
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          General: <a href={`mailto:${site.emails.general}`}>{site.emails.general}</a> ·{' '}
+          <Link href={site.urls.contact}>/contact</Link>
+          <br />
+          Security reports: <Link href={site.urls.security}>/security</Link> ·{' '}
+          <a href={`mailto:${site.emails.security}`}>{site.emails.security}</a>
+          <br />
+          Privacy: <Link href={site.urls.dataHandling}>/data-handling</Link> ·{' '}
+          <a href={`mailto:${site.emails.privacy}`}>{site.emails.privacy}</a>
+        </p>
+      </DocumentCentered>
+
+      <CallToActionSimpleCentered
         id="call-to-action"
-        headline="Read the case studies. Run the tools."
+        headline="Self-host free or request early access"
         subheadline={
           <p>
-            Self-host today or request early access for managed hosting. For the default product-led motion, see the{' '}
-            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>; for regulated / Palantir-facing
-            positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>. Full Apache 2.0
-            stack, no license fee.
+            Install with <code className="text-sm">{site.installCommand}</code>, or join the managed waitlist. Tool
+            surface and case studies live on the <Link href={site.urls.home}>home page</Link> and{' '}
+            <Link href={site.urls.docs}>docs</Link>; durability evidence on{' '}
+            <Link href={site.urls.benchmarks}>/benchmarks</Link>.
           </p>
         }
         cta={
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
               Request access
             </ButtonLink>
-            <PlainButtonLink href={`${site.urls.docs}/case-studies`} size="lg">
-              All case studies <ChevronIcon />
+            <PlainButtonLink href={site.urls.docs} size="lg">
+              Documentation <ArrowNarrowRightIcon />
             </PlainButtonLink>
           </div>
         }

@@ -6,7 +6,7 @@
 
 **Daniel Smith · daniel@clawql.com · clawql.com**
 
-*Revision note: v0.2 adds section 28A, revises sections 10, 11, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
+*Revision note: v0.2 adds section 28A, revises sections 7, 10, 11, 14, 19, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
 
 
 **In-repo canonical copy** of Whitepaper v0.2 (draft). Crash-safety numbers in §11 are authorized on the lab build; evidence: [`docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Cloud plan: [`docs/gtm/clawql-cloud-platform-plan.md`](../gtm/clawql-cloud-platform-plan.md).
@@ -228,6 +228,55 @@ The combination — minimal input via `search`, minimal output via `execute`'s p
 
 This matters enormously once the network extends beyond conventional software APIs into the provenance and payment layers described later in this document. A notary's legacy desktop software, a hospital's HL7 FHIR interface, a supply chain's EDI messages, a blockchain's RPC endpoint — all of these become sources through the same adapter pattern, discoverable through the same `search` call, invokable through the same `execute` call, with the same output compression applied regardless of how verbose the underlying protocol naturally is.
 
+### Smithy: governance metadata from the spec itself
+
+*Status: design.*
+
+Smithy is Amazon's Apache-2.0 interface-definition language for describing APIs independent of the wire protocol: resources, operations, inputs, outputs, and errors, with the protocol (JSON-over-HTTP, CBOR, and so on) attached separately. AWS's public models cover more than 200 services, and the SDKs in each language are generated from them. Where OpenAPI describes HTTP paths and verbs, Smithy describes the service shape; models can still be exported to OpenAPI when a consumer only speaks that.
+
+The useful part for ClawQL is traits — annotations tools can act on without asking a model to interpret the API. A Smithy adapter for `mcp-api-adapter` turns those traits into governance:
+
+| Trait | What ClawQL does with it |
+| --- | --- |
+| `@readonly` | Classify the operation as a read, deterministically |
+| `@idempotent` | Know a write is safe to repeat |
+| `@idempotencyToken` | Fill this field from the journaled intent for crash-safe retries |
+| `@sensitive` | Label and redact the field in logs and in model context |
+| `@paginated` | Page correctly and apply output projection per page |
+
+- **Deterministic classification.** Operations marked `@readonly` or `@idempotent` are classified as reads or safely repeatable writes straight from the model, never from a model's guess, which is exactly what ontology-backed policy requires.
+- **Automatic crash safety.** Request fields marked `@idempotencyToken` tell the gateway where an idempotency key belongs. The gateway fills the field from the journaled intent, so a retried AWS write after a crash is deduplicated by AWS itself, with no per-service code.
+- **Ready-made sensitivity.** AWS uses `@sensitive` to mark data that must not appear in logs; ClawQL's labels and redaction treat it as a source of truth for every modeled AWS field.
+- **Ontology seeding.** Smithy is resource-oriented: a `resource` with identifiers and lifecycle operations (create, read, update, delete, list) is the same shape as Ontologiql asset types and ActionTypes. Importing Smithy models can seed the ontology for each AWS service with action types, read/write classification, and sensitivity already filled in from the spec rather than written by hand.
+- **Testing without risk.** AWS Emulator, released by AWS in November 2026 under a public-domain dedication (CC0) and built from the same Smithy models, runs more than 200 AWS services locally and offline. Governance scenarios, such as an agent attempting to delete a bucket, wipe a table or open a security group, can be exercised against it repeatedly with no cost and no risk. It emulates service behavior, not AWS's security infrastructure (instance metadata, IAM), so those attacks still need a real cloud lab. For ClawQL Cloud CI and the personal on-ramp, Emulator is the default AWS lab target because it can be redistributed and run commercially without a per-developer subscription; LocalStack's current image requires an account and paid commercial use, so it is used only when a customer already pays for it. Emulator fidelity varies by service; scenarios for the demos ClawQL actually ships (S3, DynamoDB, SQS, and so on) are verified against real AWS before any claim depends on them. Tests that need a real database engine rather than an emulated one can use MiniStack or equivalent MIT-licensed runners beside Emulator.
+
+OpenAPI remains first-class in `mcp-api-adapter`. Most third-party APIs ship OpenAPI; Smithy is an addition, not a replacement, and Smithy can export OpenAPI so ClawQL's own APIs stay usable by tools that only speak that format.
+
+#### ClawQL APIs and a published trait library
+
+*Status: design.*
+
+ClawQL defines its own APIs in Smithy as well, so gateway surfaces, Streams intents, and Cloud control-plane operations carry the same governance metadata AWS services do. Smithy also lets libraries define custom traits. A small ClawQL trait library, published as part of the open standard, makes governance part of the API language itself — for ClawQL's APIs and for any third party that wants to be governable out of the box:
+
+```smithy
+@trait(selector: "operation")
+structure consequential {}
+
+@trait(selector: "operation")
+structure actionType {
+    @required name: String
+}
+
+@trait(selector: "member")
+structure trustLabel {
+    @required value: String
+}
+```
+
+An API author annotates which operations are consequential (need approval under default policy), which Ontologiql ActionType each maps to, and which fields carry untrusted content. Adoption becomes "describe your API in Smithy with ClawQL traits," which is the kind of path a standard needs to spread.
+
+Practical constraints stay explicit. The Smithy CLI and build plugins are JVM-based and run only at build time, never in the runtime. TypeScript and Rust generators already exist; a thin Effect Schema generator can keep typed clients and validation in ClawQL's own idiom. Model validators enforce the safe path before anything ships — for example, every non-`@readonly` operation must declare an `actionType`, so an ungoverned write fails the build rather than production.
+
 ## 8. Why This Compounds: Cost, Quality, and Cache
 
 Three independent effects stack on top of each other once both sides of the token budget are under control, and none of them is purely a cost story.
@@ -248,6 +297,17 @@ For most enterprise customers, ClawQL runs entirely inside their own perimeter. 
 
 This is deliberate and important. Frontier closed-weight models — the ones with the strongest raw capability — are, without exception, cloud APIs. They cannot be deployed inside an air-gapped facility, because using them requires sending data to a vendor's servers. Any organization with a hard data-residency requirement is excluded from using them at all, independent of how good the model is. For these organizations, the entire question is: how do you get frontier-grade *capability* out of a model you *can* run on your own hardware? The answer, in ClawQL's experience, is scaffolding — structured retrieval, typed memory, and audit infrastructure closes most of the gap between an open-weight model with nothing around it and a frontier model with nothing around it. This is the centralized deployment story: your hardware, your data, your compliance boundary, ClawQL's scaffolding.
 
+### Policy-routed virtual models
+
+*Status: design.*
+
+Scaffolding lets a small model do work that would otherwise need a large one, and routing makes that automatic. Personal agent harnesses already route each request between a small local model and larger remote ones by query complexity and machine load (Pi's virtual models are one example). ClawQL exposes the same idea as a virtual model behind its OpenRouter-compatible endpoint, with routing decided in two stages:
+
+1. **Hard constraints first.** Labels decide where a request may go at all: anything carrying protected health information or confidential data goes only to endpoints the policy allows (local models, attested capacity, or providers under the required agreements), however complex the request. The operator's model-provenance policy can rule model lineages in or out, and tenant budgets cap spend and energy.
+2. **Optimization second,** only among the endpoints that remain: estimated complexity, local load, cost, energy and latency.
+
+A complexity estimate can be gamed, so it never overrides a constraint; at worst, a crafted request is routed to a different allowed endpoint. Every routing decision (the endpoint, the model and its version, and the reason) is recorded in the WORM trail, so which model produced an output is part of its provenance. Where providers support provable inference (see Section 14), outputs from remote endpoints can also carry a proof that they came from the committed model weights, which detects a provider silently substituting a cheaper model. The routed configuration is measured on the same task boards as fixed models, on success rate, cost and energy per successful task.
+
 ## 10. The Decentralized Path: The Provider Network
 
 *Status: design. Not yet built. Depends on ClawQL Cloud billing.*
@@ -260,7 +320,19 @@ Work reaches nodes as typed intents with leases, not as broadcasts that every no
 
 Which nodes may receive which work is decided by policy, not by trust. Every request carries labels, and every market segment has a trust tier: community nodes, attested nodes running inside a hardware TEE, ClawQL-operated capacity, and providers covered by a BAA. Public, low-sensitivity work may run on community nodes. Confidential work runs only on attested or ClawQL-operated capacity. Protected health information runs only where a BAA applies. Apple Silicon nodes, which lack SEV-SNP, TDX, or Nitro-style confidential VMs, belong to the community tier: verified software, but a plaintext endpoint. Networks such as Darkbloom have shown that consumer hardware can serve inference at real scale and are candid that their providers see prompts in the clear. ClawQL's answer is not to ask anyone to trust that, but to route by policy so that only work allowed in the clear ever arrives there.
 
-Output from nodes without attestation is verified by sampling: a portion of community-node work is re-run on trusted capacity, and the results feed DAOS reputation (Section 12). Prices are set per market segment (model, trust tier, and latency class), with a base price that moves toward a target utilization at a capped rate. Providers set floors, consumers set ceilings, and ClawQL Cloud capacity at a fixed price is the backstop. Providers earn credits first; cash settlement (Part VIII) follows legal review. Every attempt, result, and acceptance is recorded in the WORM audit trail described in Part V.
+Output from nodes without attestation is verified by sampling: a portion of community-node work is re-run on trusted capacity, and the results feed DAOS reputation (Section 12). Nodes serving open-weight models can additionally be required to produce a provable-inference proof for randomly selected requests on demand (Section 14), so a node that substitutes a different model is caught cryptographically, not just statistically. Prices are set per market segment (model, trust tier, and latency class), with a base price that moves toward a target utilization at a capped rate. Providers set floors, consumers set ceilings, and ClawQL Cloud capacity at a fixed price is the backstop. Providers earn credits first; cash settlement (Part VIII) follows legal review. Every attempt, result, and acceptance is recorded in the WORM audit trail described in Part V.
+
+### Coordination and consensus
+
+*Status: design. Protocol selection by a frozen-criteria evaluation.*
+
+Public Virtual Gateways must agree on task claims, reputation updates and settlement records among operators ClawQL does not control. Crash-tolerant protocols such as Raft and Paxos assume nodes may fail but never lie, so they are not enough here: the network needs Byzantine fault tolerance, surviving up to a third of its validators acting maliciously, over internet links with unpredictable latency.
+
+- **Primary candidate: DAG-based asynchronous BFT.** Every validator proposes a block each round, and each block references at least two-thirds of the previous round's blocks, so the network builds a directed acyclic graph of what every validator had seen. Each node then orders that graph by the same deterministic rule, with no further messages. In the fully asynchronous designs (such as DAG-Rider and Tusk), the block that anchors each commit is chosen after the fact by shared randomness, so progress never depends on timeouts and no node ever has to guess whether another has failed. Production descendants (Bullshark, Mysticeti, Shoal) add a faster path under normal timing that reintroduces timeouts as an optimization only.
+- **Costs to accept:** several rounds per commit in the fully asynchronous mode; a known validator set with distributed key setup for the shared randomness, which suits identity-bound (proof-of-authority) membership rather than open membership; at least 3f+1 validators with signatures on everything, practical for tens to around a hundred validators. Mature implementations exist in Rust; reuse is preferred to writing consensus from scratch, subject to license review.
+- **TEE-assisted BFT.** When validators run attested enclaves (Section 14), trusted hardware can stop a node from equivocating, which reduces the replicas needed from 3f+1 to 2f+1. This turns attestation, which the network already requires for confidential work, into cheaper consensus, at the cost of making a TEE compromise a consensus risk (Section 45).
+- **Single-organization Virtual Gateways** need only crash tolerance. For those spanning wide-area links, leaderless designs such as QuePaxa, which avoid leader election and the timeouts it depends on, are the candidate.
+- **Ordering is not execution.** Consensus agrees on what happened and in what order; an irreversible external action still executes exactly once only through idempotency keys and the write-ahead rules in Part V.
 
 ## 11. clawql-cellrt: The Runtime Substrate
 
@@ -268,7 +340,7 @@ Output from nodes without attestation is verified by sampling: a portion of comm
 
 The coordination primitives beneath both deployment paths (cell lifecycle, single-owner leases, durable state) come from `celld`, an open-source runtime in the Durable Objects style. Its compare-and-swap leases give exactly one owner per piece of state at a time, and its output gate holds every external acknowledgment until the corresponding write is durable.
 
-That last property is not a detail. ClawQL's own crash-testing found that acknowledging a write before it was durable could lose a journaled intent when a node crashed at the wrong moment. Upstream `celld` 0.6.3 closed the gap with an always-on output gate, and ClawQL now builds on stock 0.6.3 rather than a fork. ClawQL's lab patches add same-host supersede of provably dead owners, a rule that lease expiry alone never counts as death, and lease deadlines measured on a clock that keeps counting while a host is suspended. On that build, a 1,000-cycle soak and a 1,000-trial crash board, proven inside their own artifacts to have run the same binary, recorded zero wrong outcomes. In 241 of 243 crashes during an external call, the journaled intent was visible on recovery; the other two never sent the call, and their effect ledgers confirm no effect and no lost intent. Eighteen of the 1,000 trials missed the recovery deadline, most of them from failures in the test's own fault injection, and recovery is slower than on earlier builds (a median of about 17 seconds) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. The board's open items are published alongside it, including an earlier short-lease board that recorded 2 lost intents in 100. ClawQL publishes latency and durability figures only from its own measured boards.
+That last property is not a detail. ClawQL's own crash-testing found that acknowledging a write before it was durable could lose a journaled intent when a node crashed at the wrong moment. Upstream `celld` 0.6.3 closed the gap with an always-on output gate, and ClawQL now builds on stock 0.6.3 rather than a fork. ClawQL's lab patches add same-host supersede of provably dead owners, a rule that lease expiry alone never counts as death, and lease deadlines measured on a clock that keeps counting while a host is suspended. On that build, a 1,000-cycle soak and a 1,000-trial crash board, proven inside their own artifacts to have run the same binary, recorded zero wrong outcomes. In 241 of 243 crashes during an external call, the journaled intent was visible on recovery; the other two never sent the call, and their effect ledgers confirm no effect and no lost intent. Eighteen of the 1,000 trials missed the recovery deadline, most of them from failures in the test's own fault injection, and recovery is slower than on earlier builds (a median of about 17 seconds) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. The board's open items are published alongside it, including an earlier short-lease board that recorded 2 lost intents in 100. Recovery time is the main open problem on this build: leases detect a failed owner by waiting, so recovery is bounded by timeouts. A research direction removes the timeout from the recovery path wherever idempotency allows. If every external write carries an idempotency key derived from the decided intent, any replica can execute it safely, because the upstream service discards duplicates, so recovery need not wait for a lease to expire; leases remain for services without such keys. This follows the leaderless, hedged approach of consensus algorithms such as QuePaxa, and it will be modeled in TLA+ before any implementation. ClawQL publishes latency and durability figures only from its own measured boards.
 
 `celld`'s maintainers are merging it into a broader runtime. ClawQL's approach is to track upstream and offer general improvements back, not to carry a long-lived fork. `clawql-cellrt` names the layers a regulated, decentralized network adds on top: a WebAssembly capability sandbox, so a cell's permissions are whatever capabilities it was structurally given; an eBPF security monitor; a hardware attestation path (Part IV); and credentials scoped to exactly a cell's lifetime. Where any of these is generally useful, the intent is to contribute it upstream.
 
@@ -301,6 +373,18 @@ Every claim this document makes about verifiability rests, ultimately, on one ca
 The mechanism is remote attestation. On startup, a trusted execution environment produces a signed report — rooted in a key that never leaves the processor's silicon — attesting to the exact hash of the code it is running. A verifier who trusts the hardware manufacturer's root key, but does not need to trust ClawQL, the node operator, or anyone else in the chain, can check that report and know with cryptographic certainty that a specific, unmodified binary produced a specific output. Anything the enclave computes, decrypts, or attests to inherits that guarantee.
 
 This is the foundation for the decentralized network's core trust problem. A public, opt-in network has no pre-existing relationships between participants — a homelab machine in one country and a data center node in another have never met and have no business relationship. Without hardware attestation, the network would have no way to distinguish a legitimate node running real ClawQL software from a malicious node fabricating results. With it, every attempt a node makes on a broadcast problem carries a `verifiable_execution_claim` that any other party — the coordinating VG, a competing node, an external auditor — can check independently.
+
+### Hardware attestation and zero-knowledge proofs
+
+Attestation is one of two ways to make a computation checkable by a party that trusts no one. The other is a zero-knowledge proof: a short proof that a computation produced a given result, which anyone can verify in milliseconds without seeing its private inputs. They trust different things and suit different work:
+
+|  | Hardware attestation | Zero-knowledge proofs |
+| --- | --- | --- |
+| What you trust | The hardware vendor, and that side channels are contained | Mathematics (plus a setup ceremony for some proof systems) |
+| Cost to produce | Close to normal execution speed | From tens of times slower (recent model-inference provers) to many orders of magnitude slower, depending on the workload |
+| Best for | Heavy computation, including model inference | Small, high-value checks |
+
+ClawQL uses each where it is strongest: heavy work runs in attested enclaves, and the decisions that matter most can additionally be proven in zero knowledge (Sections 19 and 28A). Proof systems differ: SNARKs such as Groth16 and PLONK give tiny proofs that are cheap to verify on-chain, Groth16 needing a setup per circuit and PLONK-style systems one universal setup; STARKs need no trusted setup and are believed resistant to quantum attacks, at the cost of much larger proofs. Zero-knowledge virtual machines prove the execution of ordinary programs, so ClawQL's checks can be written in Rust rather than as hand-built circuits. Proving sits behind ClawQL's trust-backend interface like every other backend. Proving model inference was long assumed to be out of reach, but that changed in November 2026: Anthropic open-sourced FlashProve, a research prototype that uses zkSNARKs to prove an output came from a specific set of committed weights without revealing them. On Meta's Llama 4 Maverick, a 400-billion-parameter mixture-of-experts model, a single H100 produced proofs at about 110 tokens per second, with a proof of about 19 MB per 1,024-token request, at 70 to 95 times the GPU time of normal inference; its key security guarantees are machine-checked in Lean. That cost suits audits and high-value requests rather than every call, so ClawQL uses provable inference selectively: to detect silent model substitution on remote endpoints (Section 9), and as an on-demand check for provider-network nodes (Section 10), alongside attestation and sampled re-execution.
 
 ## 15. Panguard: Scope Enforcement at the Infrastructure Layer
 
@@ -343,6 +427,12 @@ A **Merkle tree** solves a different problem: given a batch of entries, it lets 
 The two structures are complementary, not interchangeable: the hash chain is the mechanism for the log's internal integrity over time; the Merkle tree is the mechanism for cheap, selective, external verifiability of specific entries in bulk. `clawql-audit` implements both explicitly — a hash chain for every append, and periodic Merkle batching over ranges of that chain for anything destined for external anchoring — rather than using either structure to do the other's job, which is a conflation that shows up distressingly often in less careful implementations and quietly breaks the specific guarantee each structure is supposed to provide.
 
 Replication of the log itself follows a dual-acknowledgment pattern: an entry is committed locally and queued in a durable outbox within the same transaction, and a background process drains that outbox to remote storage — rather than requiring the caller to wait on a slow remote round-trip, or worse, silently succeeding locally while quietly failing to replicate. On restart, the chain's current tip is loaded from durable storage before any new entry is accepted, specifically to prevent a restarted process from forking the sequence by starting again from index zero.
+
+### Compliance attestations without exposing data
+
+*Status: design.*
+
+Merkle inclusion proofs already let anyone confirm that a specific entry is in an anchored batch. Zero-knowledge proofs (Section 14) add privacy: they can prove a property of the log without revealing the entries themselves. Examples: every consequential action in a period had a valid approval; no action exceeded a mandate's limits; every entry belonging to a deleted tenant was removed. A regulator or auditor verifies the proof against the anchored roots and learns that the property holds, without seeing protected health information or any other entry content. Large logs require batching and recursive proofs, so attestations are produced per period rather than per entry.
 
 ## 20. clawql-memory: The Vault and the Ontology
 
@@ -401,6 +491,23 @@ Refining individual memories keeps facts accurate and current, but contextual re
 - **Retrieval-driven focus:** consolidation concentrates on the paths behind good answers and on queries that returned nothing useful.
 
 Graph changes amplify, because one bad edge reaches every traversal through it, so consolidation follows strict rules. Trust flows along edges: an edge is only as trusted as its weakest evidence, and inferred edges built from untrusted evidence never reach always-loaded context. Each run is capped in how many edges it may add, remove or retype, and anything beyond the cap goes to review. Each run writes into a copy of the graph, which must pass the shape validation in Section 20.3 before it replaces the current version, so a bad run is a one-step rollback. And each run is journaled like any other durable job, so it never half-applies. Every run is measured on multi-hop accuracy before and after, the precision of a sample of inferred edges audited against sources, and retrieval latency.
+
+### 20.5 Shared graphs across parties
+
+*Status: design.*
+
+A tenant's private memory stays local to that tenant. Some customers, however, need a graph shared by parties that do not fully trust one another: a supply-chain consortium, a group of hospitals, or the provider network's own asset and reputation graph. For those, graph changes are ordered by Byzantine-tolerant consensus (Section 10), so every party's copy converges to the same state and no member can quietly rewrite shared knowledge.
+
+- **Graph changes as ordered transactions.** Adding a fact, adding an edge, or superseding a relation is a transaction. Every party applies the same ordered sequence and arrives at the same graph.
+- **The consensus history is itself provenance.** Each block in a DAG-based protocol records what its author had seen when it wrote, which is the "who knew what, and when" structure the memory layer needs for evidence and lineage.
+- **Consolidation across parties.** Consolidation is nondeterministic, because models propose merges and edges, so parties submit proposals as transactions. Consensus orders them, and every party applies the same deterministic shape validation (Section 20.3) to accept or reject each one. Shape validation thereby becomes the state-transition rule of the replicated graph, and all parties accept exactly the same proposals.
+- **Shared ontology governance.** Changing a shared ontology requires approval from a set threshold of member organizations, with the version hash committed through consensus and anchored (Part VII), so a consortium can govern a shared vocabulary without a central owner.
+- **Corroboration as a trust signal.** Every fact records which organization asserted it, and a fact asserted independently by several members earns more trust than one asserted by a single member. A reference in the consensus graph only means a block's author saw something, not that it agrees, so corroboration uses explicit attestations rather than graph references.
+- **Consistent snapshots for context.** Context is assembled from a committed prefix of the history, so it reflects one consistent state rather than a half-applied update, and the audit record of each context can include the committed round its facts came from.
+- **Offline nodes and CRDTs.** Conflict-free replicated data types merge concurrent edits without consensus and suit nodes that go offline, but they cannot enforce constraints such as uniqueness or shapes. Commutative annotations may use them; anything carrying an invariant goes through consensus.
+- **Content-addressed facts.** Facts stored as content-addressed nodes reference one another by hash, which gives deduplication and tamper evidence and matches the WORM hash chain and the IPFS layer (Part VI).
+
+Consensus adds latency and replicates data to every member, so it is used only for graphs that genuinely cross trust boundaries, never for a single tenant's private memory.
 
 ## 21. System Self-Knowledge: Seeding the Vault With ClawQL's Own Capabilities
 
@@ -519,6 +626,14 @@ A smart contract cannot call an off-chain API, hold a secret, or act on its own,
 
 **When to use it.** Consensus execution is slower and costs more per call than a direct gateway call, APIs whose responses vary between nodes need explicit aggregation rules, and only the confidential capabilities keep responses private from the network. It is therefore reserved for actions where no single operator should be trusted: high-value actions, actions shared between parties that do not trust each other, and the public Virtual Gateways of the provider network (Section 10). Everyday tool calls stay on the direct gateway path. **CRE execution is opt-in per deployment and never the default.** Running gateway logic in an enclave has real costs beyond consensus latency: a hardware enclave (as distinct from a hardware-isolated VM such as a Nitro Sandbox) has no direct network access or persistent storage, so every network call and every write must be proxied through its parent instance. CRE sits behind ClawQL's execution interface like every other backend.
 
+### Zero-knowledge policy proofs
+
+*Status: design.*
+
+For many on-chain actions, a cheaper alternative to consensus execution is to prove the policy decision itself. The gateway's policy check (the amount is under the limit, the recipient is on the allowlist, a valid approval signature from an authorized person exists) is written as an ordinary Rust program and run in a zero-knowledge virtual machine, which produces a proof that the check passed. The proof is wrapped into a small SNARK so it is cheap to verify on EVM chains, and the receiver contract executes the action only if the proof verifies.
+
+The contract then needs to trust neither the gateway nor any oracle network, and the private arguments (amounts, counterparties, the approver's identity) never appear on-chain. Approvers can also prove that they hold a required role without revealing who they are, using credentials with selective disclosure. Policy checks are small, which is the scale at which proving is practical today. Proof generation adds time to each action, so, like consensus execution, it is opt-in and reserved for actions where on-chain enforcement of private policy matters.
+
 ### What will be measured before any claim
 
 - **Injection through on-chain data:** a test suite of malicious token names, contract metadata and event payloads, with zero out-of-scope signed transactions as the pass condition.
@@ -527,6 +642,8 @@ A smart contract cannot call an off-chain API, hold a secret, or act on its own,
 - **Diff accuracy:** simulated effects compared with final on-chain results across a test set, with every divergence explained.
 
 * **Policy on-chain path:** every decision commitment posted on-chain matches the gateway's WORM record for that action, and no receiver contract executes a report that lacks a verified attestation.
+
+- **Zero-knowledge policy proofs:** every action whose private inputs violate policy fails verification and is rejected on-chain, and proving time per action is measured and published.
 
 # Part VIII — Payments
 

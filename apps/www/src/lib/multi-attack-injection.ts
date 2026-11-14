@@ -12,7 +12,7 @@ export const multiAttackSummary =
 
 /** Concrete claim shape from results-smoke.json (2026-10-19). */
 export const multiAttackHeadlineResult =
-  '0 / 12 attacks effectuated under ClawQL defaults (native park/IFC — not a tool-name deny) · 2 / 4 benign completed without a human (1 parked, 1 blocked by taint). Passthrough: 12 / 12. Category claim pending peer arms.'
+  '0 / 12 attacks effectuated under ClawQL defaults (native park/IFC — not a tool-name deny) · 2 / 4 benign completed without a human (1 parked, 1 blocked by taint). Passthrough: 12 / 12. Category claim pending peer arms. Compatible with governance defaults that contaminate at 2/5 on the vault-write fixture: that board lacks a tool-name deny; this suite stops via taint-and-park.'
 
 export const multiAttackMeta = {
   measuredAt: '2026-10-19',

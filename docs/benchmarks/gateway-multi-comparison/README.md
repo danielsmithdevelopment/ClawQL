@@ -1,6 +1,6 @@
 # Multi-gateway equal-arm comparison
 
-Publish posture: **most efficient governed gateway** — claims only what holds under equal topology, equal task success, and an honest path matrix. Numbers below are host-bound; re-run on a dedicated bench host before external publish.
+Publish posture: **fewest tokens among measured gateways on this fixture** (equal topology, equal task success, honest path matrix) — not a category-wide supremacy claim. Numbers below are host-bound; re-run on a dedicated bench host before external publish.
 
 | Artifact                                                                         | What it proves                                                              |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -22,7 +22,7 @@ Publish posture: **most efficient governed gateway** — claims only what holds 
 | **Latency competitive with the fastest aggregators while doing more per call**  | **Supported** — ClawQL best p50; tails host-bound (see 10k table)                             | Read with [path matrix](#path-matrix-what-each-arm-does)                                                                                                                                                                                                                                                                                                             |
 | **Scale-out concurrency win**                                                   | **Not claimed yet**                                                                           | Only after same-topology boards (1-instance **and** 4-replica behind LB) for every arm, pushed until break                                                                                                                                                                                                                                                           |
 
-Coherent publish line: **most efficient governed gateway** — output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
+Coherent publish line: **fewest I/O tokens among measured peers on this board**, driven in part by output projection at the gateway layer (`fields`/`where`), which live Executor does not provide (measured full REST pass-through; see blog + `executor-cmp-001.live.json`).
 
 Do **not** cite “135 vs 19” (ClawQL NATS 4-replica vs Executor process-per-client) as a same-board concurrency win.
 

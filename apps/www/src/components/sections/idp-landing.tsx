@@ -26,7 +26,7 @@ const pipelineStages = [
   },
   {
     name: 'Archive',
-    stack: 'Onyx search',
+    stack: 'Semantic search',
     detail: 'Indexed for hybrid semantic search — agents cite source documents, not guesses.',
   },
   {
@@ -58,7 +58,7 @@ const priceRows = [
   {
     vendor: 'ClawQL IDP (Starter)',
     model: `Flat ${pricing.starter.monthlyPrice}/mo`,
-    cost: '$3,588/year · unlimited documents · VDR included',
+    cost: '$3,588/year · 5,000 documents/mo included · VDR included (illustrative)',
     highlight: true,
   },
 ] as const
@@ -70,11 +70,11 @@ const differentiators = [
   },
   {
     title: 'Close the VDR loop',
-    body: 'Incumbent IDPs stop at the archive. ConeShare VDR is in the same subscription: trackable rooms for counsel, counterparties, and auditors — not a second six-figure contract.',
+    body: 'Incumbent IDPs stop at the archive. ConeShare VDR is packaged in the same subscription when license terms allow — trackable rooms for counsel, counterparties, and auditors. Confirm ConeShare license obligations before treating this as a hosted entitlement.',
   },
   {
     title: 'Prove it cryptographically',
-    body: 'Every pipeline step writes a Merkle-linked audit trail. Reconstruction is not a spreadsheet exercise — it is a hash chain you can show an examiner.',
+    body: 'Pipeline steps can write a Merkle-linked audit trail when configured. Write-once needs Object Lock. The MCP audit tool is a session ring buffer (append/list/clear) — not the examiner trail.',
   },
 ] as const
 
@@ -93,7 +93,7 @@ const documentTypes = [
   },
   {
     industry: 'Healthcare',
-    examples: 'EOBs, referral packets, intake forms (with PII redaction)',
+    examples: 'EOBs, referral packets, intake forms — pattern redaction inside the document pipeline; PHI handling: /data-handling (not a HIPAA certification)',
   },
   {
     industry: 'General ops',
@@ -121,39 +121,39 @@ const verticals = [
 
 const securityPoints = [
   {
-    title: 'Self-hosted or air-gapped',
-    body: 'Apache 2.0 core. Deploy the full IDP stack on your cluster — no forced SaaS data plane.',
+    title: 'Self-hosted',
+    body: 'Apache 2.0 packages in this repository. Deploy the IDP stack on your cluster — air-gapped only when you configure it that way.',
   },
   {
     title: 'Merkle audit per step',
-    body: 'WORM-style hash chaining across ingest, convert, redact, archive, and share events.',
+    body: 'Hash chaining across ingest, convert, redact, archive, and share when the audit path is enabled. Write-once needs Object Lock. Managed Sovereign Security Pack may bundle WORM controls — see /pricing.',
   },
   {
     title: 'PII redaction in-pipeline',
-    body: 'Stirling redaction before archive and search.',
+    body: 'Stirling pattern redaction before archive and semantic search inside run_idp_pipeline — not a guarantee on every memory_ingest path.',
   },
   {
     title: 'Istio mTLS mesh',
-    body: 'Service-to-service encryption and egress control for regulated tenants.',
+    body: 'Available for regulated tenants when configured — not a default for every IDP install.',
   },
 ] as const
 
 function TrustAnchors() {
   return (
     <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-mist-600 dark:text-mist-400">
-      <li>Apache 2.0 core</li>
+      <li>Apache 2.0 packages</li>
       <li aria-hidden className="text-mist-300 dark:text-mist-600">
         ·
       </li>
-      <li>1,000+ formats</li>
+      <li>Detects 1,000+ file types</li>
       <li aria-hidden className="text-mist-300 dark:text-mist-600">
         ·
       </li>
-      <li>Deploys in hours</li>
+      <li>Demo stack in hours</li>
       <li aria-hidden className="text-mist-300 dark:text-mist-600">
         ·
       </li>
-      <li>Merkle audit trail per step</li>
+      <li>Hash-chained audit when configured</li>
     </ul>
   )
 }
@@ -168,15 +168,16 @@ export function IdpLanding() {
         }
         headline={
           <>
-            Your IDP costs $150,000/year.
-            <br className="max-sm:hidden" /> Ours costs {pricing.starter.monthlyPrice}/month. And it does more.
+            Incumbent IDP often lands six figures a year.
+            <br className="max-sm:hidden" /> ClawQL Starter is {pricing.starter.monthlyPrice}/month early access —
+            verify the TCO table at procurement.
           </>
         }
         subheadline={
           <p>
-            ClawQL is the document processing platform that closes the full lifecycle — ingest, convert, OCR, redact,
-            archive, semantic search, and secure distribution — in a single system, orchestrated by AI agents, at a
-            price no incumbent can match.
+            ClawQL closes the document lifecycle — ingest, convert, OCR, redact, archive, semantic search, and secure
+            distribution — orchestrated by AI agents over MCP. Illustrative incumbent figures below; measure extraction
+            accuracy before claiming parity.
           </p>
         }
         cta={
@@ -229,8 +230,9 @@ export function IdpLanding() {
         headline="The pricing chasm is the product"
         subheadline={
           <p>
-            Extraction accuracy has converged across vendors. The battleground is deployment speed, pipeline depth, and
-            what you actually pay when volume grows. Illustrative benchmarks — verify at procurement.
+            Compare deployment speed, pipeline depth, and what you pay when volume grows. Incumbent figures below are
+            illustrative — add a source and date at procurement. ClawQL extraction accuracy is not yet published on a
+            public set.
           </p>
         }
       >
@@ -286,8 +288,8 @@ export function IdpLanding() {
           </table>
         </div>
         <p className="mt-4 text-xs text-mist-500">
-          Enterprise platforms typically require 3–12 months and dedicated implementation teams. ClawQL: one Helm chart,
-          hours.
+          Enterprise platforms often quote multi-month implementations (verify per vendor). The ClawQL demo stack with
+          synthetic data can come up in hours via Helm; production integrations take longer.
         </p>
       </Section>
 
@@ -318,11 +320,11 @@ export function IdpLanding() {
       <Section
         id="setup"
         eyebrow="Time to value"
-        headline="From zero to pipeline in one afternoon"
+        headline="Demo stack in an afternoon — production takes longer"
         subheadline={
           <p>
-            Self-host with Helm, or request early access for managed hosting. Agents drive the stack over MCP; you do
-            not write a custom integration layer first.
+            Self-host with Helm for a synthetic-data demo, or request early access for managed hosting. Agents drive the
+            stack over MCP; real LOS/CRM wiring is a separate project.
           </p>
         }
       >
@@ -345,12 +347,13 @@ export function IdpLanding() {
               Natural-language control
             </p>
             <blockquote className="border-l-2 border-mist-950/20 pl-4 text-sm/7 text-mist-800 dark:border-white/20 dark:text-mist-200">
-              “Ingest the closing package from Nextcloud, redact SSNs, archive to Onyx, and open a ConeShare room for
+              “Ingest the closing package from Nextcloud, redact SSNs, archive for semantic search, and open a ConeShare room for
               counsel with watermarked PDFs.”
             </blockquote>
             <p className="text-sm/7 text-mist-700 dark:text-mist-300">
-              Same MCP endpoint your agents already use — ClawQL is the only IDP that is also a native MCP server. See
-              the <Link href={`${site.urls.docs}/providers/idp-pipeline`}>IDP pipeline reference</Link> and{' '}
+              Same MCP endpoint your agents already use — ClawQL is an IDP that is also a native MCP server (other
+              document products ship MCP too). See the{' '}
+              <Link href={`${site.urls.docs}/providers/idp-pipeline`}>IDP pipeline reference</Link> and{' '}
               <Link href={`${site.urls.docs}/vision/idp-platform`}>IDP platform docs</Link>.
             </p>
             <div>
@@ -419,8 +422,9 @@ export function IdpLanding() {
         headline="Built for Examiners"
         subheadline={
           <p>
-            Sovereignty and auditability are product defaults for IDP tiers — not a separate “enterprise pack” you
-            negotiate after the pilot.
+            Hash-chained audit and Object Lock write-once depend on configuration. Managed tiers may sell a Sovereign
+            Security Pack for WORM and related controls — align with <Link href={site.urls.pricing}>/pricing</Link>, do
+            not claim both “defaults” and a paid pack.
           </p>
         }
       >
@@ -447,19 +451,21 @@ export function IdpLanding() {
         headline={`${pricing.starter.monthlyPrice}/month — pipeline, VDR, and agents included`}
         subheadline={
           <p>
-            Replace a median ~$150K ABBYY-class contract and a per-page VDR invoice with a flat Starter subscription.
-            Self-host remains free forever on Apache 2.0. See <Link href={site.urls.pricing}>full pricing</Link> for
-            Business and Professional volume tiers.
+            Early-access Starter includes 5,000 documents/month — not unlimited. Self-host remains free on the Apache
+            2.0 packages in this repository. See <Link href={site.urls.pricing}>full pricing</Link> for Business and
+            Professional volume tiers, and <Link href={site.urls.integrations}>/integrations</Link> for the
+            document-pipeline catalog.
           </p>
         }
       >
         <ul className="grid gap-3 text-sm/7 text-mist-800 sm:grid-cols-2 dark:text-mist-200">
           {[
             'Full document lifecycle (ingest → distribute)',
-            'ConeShare VDR — unlimited rooms, no per-page meter',
+            'Starter includes 5,000 documents/mo — see /pricing',
+            'ConeShare VDR when license terms allow — confirm before hosted entitlement',
             'MCP-native agent orchestration',
-            'Merkle audit trail per pipeline step',
-            'Onyx semantic search over the archive',
+            'Hash-chained audit when configured (Object Lock for write-once)',
+            'Semantic search over the archive (engine under review)',
             'Early access waitlist · self-host free',
           ].map((line) => (
             <li key={line} className="flex gap-2">

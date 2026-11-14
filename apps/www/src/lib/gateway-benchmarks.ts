@@ -72,13 +72,13 @@ export const gatewayTokenBoardProvenance = {
 } as const
 
 export const gatewayBenchmarkHeadline =
-  'Most efficient on our equal-arm board — measured among peers we actually ran.'
+  'Fewest tokens among the measured gateways on this fixture — equal task success.'
 
 export const gatewayBenchmarkSummary =
-  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151).'
+  'Equal-arm board: same multiturn harness, same 40-tool fat catalog, same task success. Full remasure 2026-10-17: ClawQL 8 866 combined @12 — ~4× leaner than aggregators / Obot / Bifrost classic, 2.25× leaner than Bifrost Code Mode, 3.38× leaner than Executor v2 β, 6× leaner than Executor v1.6.10, equal task success. vs fair direct-HTTP baseline: −26 136 (−75%). Interleaved n=10k: ClawQL best p50 e2e (1.02 ms) and gateway cost (0.70 ms). Topology-A chaos: ClawQL 79 · Executor HTTP 29 · MCPJungle still leads (151). Not a category-wide “most efficient governed MCP gateway” claim until roadmap peers clear the minimum set.'
 
 export const gatewayBenchmarkClaim =
-  'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β), same harness, equal task success.'
+  'Fewest I/O tokens among measured MCP aggregators and live Executor (v1 and v2 β channel), same harness, equal task success.'
 export type GatewayCompetitorColumn = 'ClawQL' | 'Executor' | 'MCPJungle' | 'agentgateway'
 
 export const gatewayCompetitorColumns: GatewayCompetitorColumn[] = ['ClawQL', 'Executor', 'MCPJungle', 'agentgateway']
@@ -144,21 +144,32 @@ export const gatewayFeatureRows: GatewayFeatureRow[] = [
   },
   {
     feature: 'Semantic enterprise search',
-    values: { ClawQL: 'Onyx', Executor: false, MCPJungle: false, agentgateway: false },
+    values: {
+      ClawQL: 'Shipped; engine under review',
+      Executor: false,
+      MCPJungle: false,
+      agentgateway: false,
+    },
   },
   {
-    feature: 'Tamper-evident audit (WORM + S3 Object Lock)',
+    feature: 'Tamper-evident audit (hash chain + Object Lock)',
     values: {
-      ClawQL: 'Tamper-evident; WORM with S3 Object Lock',
+      ClawQL: 'Hash-chained; write-once when Object Lock configured',
       Executor: 'Basic log',
       MCPJungle: false,
       agentgateway: false,
     },
-    footnote: 'Not a hardware TEE claim — optional TEE paths are separate from the default WORM trail.',
+    footnote:
+      'Hash chain ships; write-once needs Object Lock (or equivalent). Not default-on for every self-hosted install. Not a hardware TEE claim.',
   },
   {
-    feature: 'Unlimited executions (no meter)',
-    values: { ClawQL: true, Executor: 'Capped + overage', MCPJungle: 'Self-host', agentgateway: 'Self-host' },
+    feature: 'No per-execution meter (fair use)',
+    values: {
+      ClawQL: 'Fair use — not unlimited',
+      Executor: 'Capped + overage',
+      MCPJungle: 'Self-host',
+      agentgateway: 'Self-host',
+    },
   },
   {
     feature: '12-turn I/O tokens vs fair baseline',
@@ -437,15 +448,15 @@ export const latencyScorecardRows: LatencyScorecardRow[] = [
 export const gatewayBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'Fewest tokens among measured MCP aggregators, Bifrost (classic + Code Mode), Obot, and live Executor v1 + v2 β with equal task success — ClawQL 8 866 combined @12 (3.38× vs Executor v2). Best p50 e2e and governed gateway cost on the remasured n=10 000 interleaved board.',
+    body: 'Fewest tokens among measured MCP aggregators, Bifrost (classic + Code Mode), Obot, and live Executor v1 + v2 β with equal task success — ClawQL 8 866 combined @12 (3.38× vs Executor v2 β.15). Best p50 e2e and governed gateway cost on the remasured n=10 000 interleaved board.',
   },
   {
     title: 'What we do not claim',
-    body: 'Scale-out concurrency wins. Memory wins. p999 latency wins (tails moved up on the remasure host). Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until remaining roadmap peers (TrueFoundry, Uber technique, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost 2.25× / 3.95×, Obot 3.95×, and Executor v2 3.38× are measured.',
+    body: 'Scale-out concurrency wins. Memory wins. p999 latency wins (tails moved up on the remasure host). Mixing Executor v2 latency with ClawQL Bun stdio. Category-wide supremacy until remaining roadmap peers (TrueFoundry, published projection/search/code-mode techniques, …) clear the equal-arm minimum set — see /benchmarks#dominance. Bifrost 2.25× / 3.95×, Obot 3.95×, and Executor v2 β 3.38× are measured.',
   },
   {
     title: 'Executor version scope',
-    body: 'v1.6.10: fat return, +18 704 vs baseline (53 706 combined). v2 β.15 HTTP remasure: 29 927 combined (−5 075 vs baseline) — 3.38× vs ClawQL 8 866; compact envelope credited, ClawQL still leads. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
+    body: 'npm latest remains on the 1.x line (board used 1.6.10); there is no stable Executor 2.0.0 product release — tip installs are the 2.0.0-beta channel (board pinned β.15; tip was β.37 as of 2026-11-05). Remeasure on the current Executor release when maintainer review allows; name the exact build in the artifact. Topology-A Executor chaos: HTTP /mcp 29/30 (p99 110 ms); stdio remasure still blocked (daemon Unauthorized) — historical 23/24 retained.',
   },
   {
     title: 'ClawQL transport matrix',
@@ -470,7 +481,7 @@ export const gatewayBenchmarkLinks = [
   {
     label: 'Durability · crash boards',
     href: '/benchmarks/#durability',
-    detail: 'N=1000 fleet kill · 0 duplicates · outcome unknown · ~12s failover',
+    detail: 'N=1000 v4 identity remesure · 0 correctness · ~17s resume p50 · outcome unknown',
   },
   {
     label: 'Dominance roadmap',

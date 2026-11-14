@@ -177,11 +177,12 @@ export const cfHttpConcRows: CfConcRow[] = [
     peakRps: '476',
   },
   {
-    arm: 'Executor v2',
+    arm: 'Executor v2 (β.15 · under review)',
     at100: '2',
     at250: '10',
     at500: '22',
     peakRps: '73',
+    note: 'Under review pending maintainer invite (#1480). Tip channel is executor@beta (2.0.0-beta.x), not a stable 2.0.0. β.15 numbers retained until remasure or review date.',
   },
 ]
 
@@ -209,15 +210,15 @@ export const cfStdioConcRows: CfConcRow[] = [
 export const cfBenchmarkHonesty = [
   {
     title: 'What we claim',
-    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. Executor v2 is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 stable on the same mock is 8 236 tokens and ~535 MB — the beta excuse does not reverse the token story.',
+    body: 'On this Cloudflare board, ClawQL known-op has the fewest weighted tokens (1 710 after compact execute, −123 vs 1 833) with ~121 MB anon on the Node-256 fill. Executor v2 β is the promoted Executor peer (5 328 tokens, ~2.1 GB). Executor v1 on the same mock is 8 236 tokens and ~535 MB — the beta channel does not reverse the token story.',
   },
   {
     title: 'Two concurrency topologies',
-    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for Executor v1). Do not mix the cells.',
+    body: 'HTTP table = N clients sharing one Streamable HTTP server. Stdio table = one MCP process per client (fair for Executor v1). Do not mix the cells. Executor HTTP concurrency is labeled under review (#1480 maintainer invite) until remasured on the current tip build or the review window closes.',
   },
   {
     title: 'Session latency transports',
-    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Executor v1 ~84 ms is stdio. Executor v2 ~218 ms is HTTP. Label the transport when comparing.',
+    body: 'ClawQL known-op 24.6 ms and program 11.8 ms are HTTP board figures (2026-10-17 remasure). Executor v1 ~84 ms is stdio. Executor v2 β ~218 ms is HTTP. Label the transport when comparing.',
   },
 ] as const
 

@@ -2,7 +2,7 @@
 
 Nov 3, 2026 · @Daniel
 
-**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Network whitepaper (§11 runtime substrate; §28A governed on-chain actions): [`../vision/clawql-network-whitepaper-v0.2.md`](../vision/clawql-network-whitepaper-v0.2.md).
+**In-repo canonical copy** of the living Cloud plan (Claude artifact remains a working surface). Durability evidence: [`../benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Network whitepaper (§9 policy-routed models; §10 BFT coordination; §11 runtime substrate; §28A governed on-chain actions): [`../vision/clawql-network-whitepaper-v0.2.md`](../vision/clawql-network-whitepaper-v0.2.md).
 
 ## Status and summary
 
@@ -10,7 +10,45 @@ ClawQL Cloud is an agent-specific cloud that is governed by default, plus a simp
 
 The price edge comes from the density work: parked durable agents cost almost nothing to host. Everything except the container runtime stays agent-specific: approvals, untrusted labels, vault credentials, crash-safe writes, tamper-evident audit, and sandboxed execution.
 
-This is a living plan. Additions are recorded in the changelog at the end; the v2 and v3 tabs hold earlier amendments and still apply. **Durability gate: met (2026-11-09).** Revisit when unit costs are measured on a real host, when the Stripe idempotency fix lands, and when the next durability board profiles recovery time and injection reliability.
+This is a living plan. It is kept as one document, and additions are recorded in the changelog at the end. **Durability gate: met (2026-11-09).** Revisit it when unit costs are measured on a real host, and when the Stripe idempotency fix lands.
+
+## Positioning: from personal use to the enterprise
+
+Personal use is the adoption funnel into enterprise: developers adopt tools for their own problems, then ask for the same tools at work because they already know them. ClawQL targets both ends, and the differentiation is continuity, not market: the same tool, with the same guardrails, from a developer's laptop to their company. It is enterprise-grade and built for large scale, and equally meant for personal developers solving their own problems. (This was made explicit on 2026-11-05, prompted by Executor v2 repositioning as code-defined personal software with an MCP gateway as its entry point.)
+
+The differentiation is where authority lives:
+
+- **Rules the agent can't rewrite.** Convenience rules (for example, auto-approve actions in my own GitHub org) are as easy to set up as anywhere else, but a person authors them and the agent cannot edit them.
+- **The same property at work.** When a developer brings ClawQL into their company, the guarantee their security team needs is already there; nothing changes tools or habits.
+
+Tagline candidate: *convenience rules the agent can't rewrite.*
+
+### Personal on-ramp
+
+- Short path to value: npx, local, useful in minutes, with no enterprise setup visible until someone needs it.
+- Governance stays light by default for personal use, with stronger controls opt-in and the same mechanisms underneath.
+
+### Lead personal demo
+
+mcp-ui / htmx with mcp-api-adapter: build a custom frontend over any API added to ClawQL, or any site that exposes WebMCP tools. The demo covers common personal-software asks, each with the rule held outside the agent's reach:
+
+- Two accounts of one service at once (for example, company and personal Notion).
+- A conditional approval (auto-approve in my own org, otherwise ask me).
+- Skills pinned to a specific git SHA.
+
+Present it as ClawQL's own demo, not as a reply to any peer launch.
+
+### Competition notes
+
+- **Executor v2:** overlaps on the gateway and on personal software. Its approval policy is code inside apps an agent can write; ClawQL's design difference is authority outside the agent. Frame as a design difference, never as a flaw.
+- **Growing overlap:** Executor's triggers, workflows and storage approach ClawQL Cloud's webhook ingress and durable agents. The edge stays the same: governed by default, crash-safe writes, tamper-evident audit, self-hostable.
+- **Benchmarks:** compare where products overlap (gateway tokens, governance cells on each product's recommended v2 configuration). Whether the Executor HTTP concurrency row stays depends on whether its maintainer confirms multi-client serving is a supported v2 setup.
+
+### Open questions on positioning
+
+- [ ] Is there a free personal tier on shared durable agents, and what are its limits?
+- [ ] What is the default rule set for personal installs, and how does a user author and lock convenience rules?
+- [ ] Does the personal demo ship before or alongside the managed gateway (build phase 1)?
 
 ## Workload model
 
@@ -132,6 +170,14 @@ No decision yet. All three paths are evaluated against the same criteria, and th
 
 **Checks before choosing Nitro Sandboxes** (launched 2026-11-09): supported instance types, density and cold start measured on one real instance, and how its attestation fits with the ClawQL egress proxy and vault.
 
+**First independent results (Emir Beganovic, 2026-11-11; to be reproduced on our own instances):** Firecracker 1.18 runs through `/dev/nitro_enclaves` with no KVM in the instance, so on AWS it needs neither bare-metal instances nor nested virtualization. Nitro starts each microVM as a sibling of the instance: the instance provides its memory and runs its virtio backends, and Nitro runs its vCPUs. A cold boot to a finished command took about 319 ms on c8a (AMD) and 524 ms on c8i (Intel), with a tuned minimal guest kernel at 1 vCPU and 1 GiB. Current limits:
+
+- **No snapshots or pause:** every start is a cold boot, never a near-instant restore.
+- **No memory overcommit,** and CPU overcommit stops at 5×: an idle sandbox still holds all of its RAM.
+- **Confidential mode with attestation exists;** check how its I/O, which passes through the parent instance's virtio backends, fits the confidentiality boundary before relying on it.
+
+**What this means for ClawQL Cloud:** Nitro Sandboxes fit always-on containers and confidential workloads well, priced on reserved memory since nothing can be oversold. They fit poorly for bursty per-execution sandboxes, where cold boots add latency and warm pools hold idle RAM; for those, Firecracker over KVM (nested virtualization on some Intel instance types since February 2026, or bare metal) keeps snapshot and restore. ClawQL's density advantage stays in parked durable agents, not in containers.
+
 **Conditions before choosing Docker Sandboxes:** written terms for running customers' workloads as a paid service; an account model for customer sandboxes; supported headless server operation (KVM, keyring); a server-side orchestration path; and a story for BYOC. Docker's cloud sandboxes also cap each session at 24 hours, which rules them out for always-on containers.
 
 **Interface:** define a `SandboxRuntime` interface now (create, start, stop, snapshot, attach network policy, inject credentials through the proxy, destroy). Everything above it stays runtime-agnostic.
@@ -145,20 +191,47 @@ No decision yet. All three paths are evaluated against the same criteria, and th
 | Option | What you pay | Notes |
 | --- | --- | --- |
 | AWS Nitro Sandboxes | No additional charge; only the EC2 instances they run on | Cost per sandbox is the instance price divided by how many sandboxes it packs, so density sets the unit cost |
-| Firecracker or Kata | Nothing for the software; only the host compute | Check whether Nitro Sandboxes removes the need for bare-metal instances on AWS |
+| Firecracker or Kata | Nothing for the software; only the host compute | On AWS, Firecracker 1.18 runs through Nitro without bare-metal instances or nested virtualization; the KVM path (nested virtualization or bare metal) is what keeps snapshots |
 | Docker local sandboxes | Free, including commercial use, on your own machines | Hosting customers' workloads still needs written terms |
 | Docker Cloud Sandboxes | Per second: 1 vCPU / 2 GiB $0.07/h; 2 / 4 $0.14/h; 4 / 8 $0.28/h; 8 / 16 $0.56/h; 16 / 32 $1.12/h | Paused sandboxes cost nothing; 1 hour default and 24 hours maximum per session |
 
-**Market reference for ClawQL's container prices.** Managed agent sandboxes cluster around $0.05 per vCPU-hour plus about $0.016 per GiB-hour: E2B and Daytona both list $0.0504 per vCPU-hour and $0.0162 per GiB-hour, and Vercel Sandbox lists $0.128 per active vCPU-hour plus $0.0212 per GB-hour. Primcloud's long-running containers start at $5 per 512 MB per month. "Market rates" for ClawQL containers means pricing in this range; the margin comes from packing sandboxes densely onto instances, which is why density is measured before any price is published.
+**Market reference for ClawQL's container prices.** Managed agent sandboxes cluster around $0.05 per vCPU-hour plus about $0.016 per GiB-hour: E2B and Daytona both list $0.0504 per vCPU-hour and $0.0162 per GiB-hour, and Vercel Sandbox lists $0.128 per active vCPU-hour plus $0.0212 per GB-hour. Primcloud's long-running containers start at $5 per 512 MB per month. "Market rates" for ClawQL containers means pricing in this range; the margin comes from packing sandboxes densely onto instances, which is why density is measured before any price is published. AWS Lambda MicroVMs, which do offer snapshots and suspend and resume, were reported at about $0.11 per vCPU-plus-GiB-hour, roughly 3.5 times the cost of running Nitro Sandboxes yourself even half-empty (Emir Beganovic, 2026-11-11).
 
 ## Observability
 
-Every customer gets default dashboards on a multi-tenant LGTM stack (Loki, Grafana, Tempo, Mimir), separated by tenant ID and stored on object storage.
+Every customer gets default, agent-specific dashboards. How their telemetry is stored and isolated depends on their tier (see "Telemetry isolation by tier" below): paid customers get structural isolation, where leaking one customer's telemetry to another is impossible by construction, not merely prevented by configuration.
 
 - **Cardinality caps per tenant:** limits on series, ingestion rate and retention. Unique label combinations, not volume, drive cost. Retention length is a tier lever.
 - **Agent-specific dashboards:** pending and expired approvals, blocked egress attempts, untrusted-label propagation, tool calls by outcome, token spend per agent, resume and replay counts. Container CPU and memory come standard as well.
 - **Telemetry is sensitive:** run the same redaction as agent traffic before ingestion, and enforce tenant isolation on queries as well as ingestion.
 - **Audit stays separate:** logs may be sampled or dropped; the hash-chained, WORM-capable audit log never is.
+
+### Telemetry isolation by tier
+
+Two requirements drive this: it must be **structurally impossible** for one customer's telemetry to reach another, and deletion must be **provable**. Isolation by tenant ID alone is a policy boundary (one bug in a proxy or a cache key and data crosses), because a shared stack's processes and caches hold every tenant's data in the same memory. So shared stacks are limited to customers who accept logical isolation.
+
+| Tier | Architecture | Isolation |
+| --- | --- | --- |
+| Free and trial | Shared multi-tenant LGTM stack (Loki, Grafana, Tempo, Mimir) on object storage | Logical, by tenant ID, disclosed as such |
+| Paid (default) | Per-tenant data plane | Structural: credentials and keys make cross-tenant access impossible |
+| Full-isolation add-on (paid extra) | Dedicated LGTM stack with Grafana, high availability, its own compute and network | Complete |
+| ClawQL's own platform telemetry | Shared internal stack | Carries no customer data |
+
+**Free and trial: shared stack, with guardrails.** Loki, Mimir and Tempo separate tenants by the `X-Scope-OrgID` header and trust whatever value arrives, so an authenticating proxy sets the header from the caller's verified identity and strips any client-supplied value; nothing else can reach those APIs. Per-tenant limits on series, ingestion and retention apply, retention is short, and the free tier's terms state that isolation is logical and that regulated data (such as PHI) is not permitted. Upgrading moves a tenant's data to the paid architecture.
+
+**Paid: per-tenant data planes.**
+
+- **Storage and keys:** each tenant's telemetry goes to its own bucket, encrypted with its own key. Edge agents (Vector) write directly to it in a columnar format such as Parquet.
+- **Workers with tenant-only credentials:** queries and alert evaluation run in short-lived workers holding only that tenant's role, which can read only that tenant's bucket and decrypt only with that tenant's key. A bug in a worker cannot leak another tenant's data, because the worker has no permission to read it.
+- **Shared components route, never hold data:** a router authenticates the caller and starts a worker with the matching role; it never touches telemetry.
+- **Query engine:** DuckDB over the tenant's Parquet files, serving dashboards in ClawQL's own interface. Idle cost is storage alone, with compute only while someone is querying.
+- **Tradeoffs accepted:** a cold worker adds roughly a second of query latency (active tenants' workers are kept warm); alerts are evaluated at the edge for simple thresholds or by scheduled per-tenant workers; and it is more engineering than deploying a shared stack.
+
+**Full-isolation add-on.** A dedicated LGTM stack per customer for those who want the full Grafana experience, heavy high-cardinality workloads, or complete separation. A minimal single-instance stack is roughly 2 to 4 vCPUs and 4 to 8 GB of RAM (Grafana's own small-deployment minimum is 2 cores and 2 to 4 GB, before the Loki, Mimir and Tempo backends), and two to three times that with high availability, held whether idle or not. Priced as an add-on accordingly; measure before publishing a price.
+
+**Provable deletion (paid tiers).** Disable the tenant's key immediately (which blocks all access at once), schedule its destruction (AWS key deletion has a mandatory waiting period of days), and delete the bucket. Each step is recorded in the WORM trail. Once the key is destroyed, any surviving copy, in a backup or a cache, is unreadable.
+
+**Licensing.** Grafana, Loki, Tempo and Mimir are AGPLv3. Offering them in a hosted service is allowed, but modified versions must have their source made available to the users who interact with them over a network. Running them unmodified behind ClawQL's proxy avoids most of that; confirm with counsel before launch.
 
 ### Edge and self-hosted telemetry
 
@@ -197,15 +270,71 @@ Phases ship in order, and three gates block progress until their criteria are me
 
 **Build order:** seven phases with three blocking gates (diagram may live in the working Claude artifact). The density advantage first shows in phase 2, so that is where pricing is tested. Phase 7 is built only on demand. Phase 2 also opens schema work for the [Streams autonomous loop](../streams/clawql-streams-autonomous-loop.md) (workers as durable agents); phase 1 has no loop work.
 
-Each phase also has a security gate that is part of its definition of done. The gates live in the ClawQL security testing plan (working artifact).
+Each phase also has a security gate that is part of its definition of done. The gates live in the [ClawQL security testing plan](../security/clawql-security-testing-plan.md).
 
-**Durability gate status (2026-11-09): met.** v4 is authorized on ClawQL's lab build of celld (stock 0.6.3 plus the supersede and expiry fixes). The authorizing soak (1,000/1,000 cycles, no void) and the v4 board (N=1,000) ran the same binary, proven inside both artifacts: commit `36d53565`, matching SHA-256. Results: zero wrong outcomes; in 241 of 243 crashes during an external call the journaled intent was visible on recovery, and the other 2 never sent the call (settled through their effect ledgers as no effect and no lost intent — [`settle`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json)); 18 of 1,000 trials missed the recovery deadline (1.8%, under the 2% gate), 11 of them from failures in the harness's own fault injection. Recovery is slower than on the first v4 board (median about 17 seconds versus about 7) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. Open items stay beside the claim: an earlier 3-second-TTL board recorded 2 lost intents in 100 (one later classified as an injection miss on journal evidence, one unsettled), and forced-latency tests are in progress.
+**Durability gate status (2026-11-09): met.** v4 is authorized on ClawQL's lab build of celld (stock 0.6.3 plus the supersede and expiry fixes). The authorizing soak (1,000/1,000 cycles, no void) and the v4 board (N=1,000) ran the same binary, proven inside both artifacts: commit `36d53565`, matching SHA-256. Results: zero wrong outcomes; in 241 of 243 crashes during an external call the journaled intent was visible on recovery, and the other 2 never sent the call (settled through their effect ledgers as no effect and no lost intent — [`settle`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json)); 18 of 1,000 trials missed the recovery deadline (1.8%, under the 2% gate), 11 of them from failures in the harness's own fault injection. Recovery is slower than on the first v4 board (median about 17 seconds versus about 7) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. Open items stay beside the claim: an earlier 3-second-TTL board recorded 2 lost intents in 100 (one later classified as an injection miss on journal evidence, one unsettled), and forced-latency tests are in progress. See [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md).
 
-**Next durability board (locked beside the claim):** keep counting all `pause_failed` trials against availability; fix injection reliability before the run. Treat resume time as a product metric and profile the remesure ≈17s median against the 3s lease (excess over TTL is the open engineering question). See [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md).
+## Scale targets
+
+### Goal and claim discipline
+
+The internal goal is to beat the largest published agent-gateway deployments, with Uber as the reference point. Aim extremely high and prove it one piece at a time.
+
+The public claim is always the measured result, never a comparison to a company we have not measured head to head. Example of an acceptable claim: "100M governed calls in 24 hours, zero audit gaps." Never "beats Uber." Uber's name stays out of ClawQL marketing.
+
+### Targets from published figures
+
+| Published reference (Uber, 2026) | ClawQL target |
+| --- | --- |
+| ~100M model requests per day across 800+ projects (~1,150/s average) | An "Uber day": 100M governed calls in 24 hours, then 10x |
+| 800+ MCP servers and 5,000+ tools behind one gateway | Test catalog of 1,000 servers and 5,000+ tools |
+| 40%+ token savings from the gateway | Beat 40% on an equal-arm workload against the same baseline |
+| A production fleet | Scale-out with a measured efficiency curve at 1, 4 and 16+ instances |
+
+Source figures come from Uber's public engineering writing and talks (2026). Re-check them before any milestone is published.
+
+### Where we stand
+
+One instance on Bun sustained ~1,850 RPS at peak on a simple operation against a mock upstream, host-bound. Scale-out, governance enforcement under load, audit at volume, large catalogs, real upstreams and failover are not yet measured. The current safe claim is the single-instance figure with those limits stated.
+
+### Milestones
+
+1. **Single instance, governance and audit on.** Measure throughput and latency with enforcement, labels, approvals and hash-chained audit active. Answers early whether a single audit chain is a bottleneck (chains are sequential) and whether sharded chains are needed.
+2. **Topology B: four instances behind a load balancer.** Report scaling efficiency (throughput at 4 ÷ 4× throughput at 1).
+3. **5,000-tool catalog.** Confirm token savings, discovery cost and latency hold at catalog size.
+4. **Sixteen or more instances** at and above the Uber-average rate, with failure injection.
+5. **The Uber day.** 24 hours, 100M governed calls.
+
+### Uber-day pass criteria (draft, freeze before the run)
+
+- 100M governed calls completed in 24 hours.
+- Governance enforcement and audit on for every call; no benchmark bypass modes.
+- Failures injected during the run: instance kills, upstream outages, and slow or erroring upstreams.
+- Zero audit gaps: every call has an audit entry and every chain verifies end to end.
+- Zero duplicate side effects on consequential writes.
+- A stated p99 latency target for gateway-added latency, set before the run.
+- Same evidence rules as durability boards: frozen criteria, append-only logs, no overwrite, void only on monitored environment faults.
+
+### Open questions on scale
+
+- [ ] p99 gateway-added latency target for milestones 4 and 5.
+- [ ] Upstream model for realistic latency and error rates: mock with injected distributions, real public APIs, or AWS Emulator (released November 2026, public domain under CC0, 200+ AWS services running locally and offline; see whitepaper [§7 Smithy](../vision/clawql-network-whitepaper-v0.2.md#smithy-governance-metadata-from-the-spec-itself)), which gives real API behavior with no cost, no rate limits and no risk; real APIs remain necessary for realistic latency. Emulator is the default AWS lab/CI target (redistributable, free for commercial use); LocalStack only if a customer already pays for it; MiniStack or equivalent when a test needs a real database engine rather than an emulated one.
+- [ ] Source for the 5,000-tool catalog (for example, public OpenAPI collections) and how to keep it representative.
+- [ ] Token-savings baseline definition so the 40% comparison is like for like.
+- [ ] Hardware and cost budget for the 16-instance and 24-hour runs.
+- [ ] Whether each milestone is a ClawQL-only board or also invites peer arms.
 
 ## Distribution
 
 - **Docker Sandboxes + ClawQL setup guide:** the agent runs in a Docker sandbox whose network policy allows only the model provider and the ClawQL gateway, and every tool call goes through ClawQL. Isolation comes from Docker, governance from ClawQL. It is cheap to write, reaches Docker's user base, and complements their product.
+- **One-click personal agent harnesses: Hermes Agent and Pi.** Two of the most common personal agent harnesses can be enabled from the same ClawQL Cloud dashboard as everything else, already wired to ClawQL as their governed tool layer. Hermes users reach their agent from about thirty messaging platforms; Pi users get virtual-model routing. Both are the personal-to-enterprise funnel. What ClawQL adds to each:
+  - **Tool-level governance for chat.** Messages from anyone other than an admin carry untrusted labels, so a consequential tool call they drive needs an admin's approval, beyond any harness-level gating of slash commands.
+  - **Risk-tiered approval channels.** Low-risk approvals can be answered with a chat button; consequential ones require a stronger person-bound signature, such as a passkey, because a chat or SMS account can be taken over.
+  - **Channel identity checked, not assumed.** Senders on channels whose identity is easy to forge (email From headers, SMS sender IDs) are treated as untrusted unless verified (for example, by DKIM on email).
+  - **Policy-routed virtual models** behind ClawQL's endpoint, with labels as hard constraints on where a request may go (whitepaper [section 9](../vision/clawql-network-whitepaper-v0.2.md#9-the-centralized-path-enterprise-deployment)).
+  - **Honest outbound delivery.** Messages whose delivery is uncertain after a crash are resent with a visible "may be a duplicate" label, never silently, since chat platforms offer no idempotency keys.
+
+  Integrations are credited to their projects, and no comparison is attached.
 
 ## Funnel: the provider network
 
@@ -248,7 +377,7 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 
 - Crash-safety claims for the durable runtime are scoped to the authorized lab build and its measured numbers (v4 authorized 2026-11-09), and open items are always shown beside the claim.
 - No payment crash-safety or billing claims until the Stripe write-ahead fix lands and is measured.
-- No "denser than" or price-advantage claim until real-host unit costs are measured. Infinity history-memory board is ~29% (100k vs 77.5k under 2× latency), not full-stack density, and waits on maintainer review — see [Infinity + Nitro composition](./infinity-density-nitro-composition.md). Density and Nitro compose as **tenant VM × dense in-tenant runtime × per-execution sandbox**, not one agent per VM.
+- No "denser than" or price-advantage claim until real-host unit costs are measured. Infinity history-memory board is ~29% (100k vs 77.5k under 2× latency), not full-stack density, and waits on maintainer review — see [Infinity + Nitro composition](./infinity-density-nitro-composition.md). Density and Nitro compose as **tenant VM × dense in-tenant runtime × per-execution sandbox**, not one agent per VM. Independent Nitro Sandboxes cold-boot figures (Emir Beganovic, 2026-11-11) are recorded here for direction and must be reproduced on ClawQL-owned instances before any Cloud price or density claim cites them.
 - No runtime-detection promise on microVM tiers until in-guest sensors are confirmed.
 - Containers are never described as getting the same crash safety as durable agents.
 
@@ -262,122 +391,29 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 - [ ] Which compliance path first: BAA template, SOC 2 Type I, or both?
 - [ ] Acceptable use policy and abuse detection for customer containers (outbound scanning, crypto mining).
 - [ ] Container runtime: AWS Nitro Sandboxes, Docker Sandboxes, or self-built Firecracker/Kata, decided against the criteria above.
+- [ ] Recovery time: evaluate hedged execution of decided intents for upstream services that accept idempotency keys, so recovery does not wait for a lease to expire; model it in TLA+ first (whitepaper [section 11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate)).
+- [ ] Provider-network coordination: DAG-based asynchronous BFT versus TEE-assisted BFT for public Virtual Gateways, and QuePaxa for single-organization gateways over wide-area links (whitepaper [section 10](../vision/clawql-network-whitepaper-v0.2.md#10-the-decentralized-path-the-provider-network)).
 - [ ] Will Docker provide written terms for hosting third-party workloads on Sandboxes?
 
 ## Changelog
 
 - **2026-11-03:** plan frozen as v1.
-- **2026-11-05:** positioning update, personal-to-enterprise funnel (v2 · Positioning update).
-- **2026-11-05:** scale targets and the Uber-day milestone (v3 · Scale targets).
+- **2026-11-05:** positioning update, personal-to-enterprise funnel (now the "Positioning" section).
+- **2026-11-05:** scale targets and the Uber-day milestone (now the "Scale targets" section).
 - **2026-11-08:** container runtime marked under evaluation (Docker Sandboxes or Firecracker/Kata) with a `SandboxRuntime` interface; governance features (policy replay, shadow-mode intent allowlists); model-credential boundary; connectors plan; security gates linked to the build order; durability gate status; Docker Sandboxes distribution guide; two runtime open questions.
 - **2026-11-08:** provider-network funnel (providers earn credits, policy as router, conditions) and supply-and-demand pricing per market segment.
 - **2026-11-09:** AWS Nitro Sandboxes added as a third container-runtime path, with Firecracker as the likely common layer; runtime pricing and market reference prices added.
 - **2026-11-09:** customer-tailnet connectivity through Tailscale OAuth apps added to Connectors as a lighter alternative to BYOC.
 - **2026-11-09:** durability gate marked met: v4 authorized after the binary-identity remeasure, with results and open items recorded in the build order.
-- **2026-11-10:** in-repo canonical copy at `docs/gtm/clawql-cloud-platform-plan.md`; next durability board notes (keep `pause_failed` on availability; profile ≈17s recovery vs 3s lease) linked beside the met gate.
 - **2026-11-10:** edge and self-hosted telemetry added to Observability: one controlled egress path, time-boxed debug escalation, bandwidth caps for provider nodes, Vector as the agent, and a separate audit pipeline.
 - **2026-11-10:** preview-before-approval and governed on-chain actions added to governance features.
-
----
-
-# v2: Positioning update (frozen 2026-11-05)
-
-This version amends v1's positioning only. Everything in v1 not changed here still stands: workload model, isolation tiers, governance per workload, webhook ingress, container security, observability, pricing gates, build order and claims discipline.
-
-## What changed and why
-
-v1 implied a split between personal and enterprise markets. That was wrong. Personal use is the adoption funnel into enterprise: developers adopt tools for their own problems, then ask for the same tools at work because they already know them. ClawQL has always targeted both ends; v2 makes that explicit.
-
-The trigger was Executor v2's launch (2026-11-05), which repositions Executor as code-defined personal software (apps with skills, UI, tools, workflows, triggers and storage) with an MCP gateway as the entry point.
-
-## Positioning: continuity, not market
-
-ClawQL is the same tool, with the same guardrails, from a developer's laptop to their company. It is enterprise-grade and built for large scale, and equally meant for personal developers solving their own problems.
-
-The differentiation is where authority lives:
-
-- **Rules the agent can't rewrite.** Convenience rules (for example, auto-approve actions in my own GitHub org) are as easy to set up as anywhere else, but a person authors them and the agent cannot edit them.
-- **The same property at work.** When a developer brings ClawQL into their company, the guarantee their security team needs is already there; nothing changes tools or habits.
-
-Tagline candidate: *convenience rules the agent can't rewrite.*
-
-## Personal on-ramp
-
-- Short path to value: npx, local, useful in minutes, with no enterprise setup visible until someone needs it.
-- Governance stays light by default for personal use, with stronger controls opt-in and the same mechanisms underneath.
-
-## Lead personal demo
-
-mcp-ui / htmx with mcp-api-adapter: build a custom frontend over any API added to ClawQL, or any site that exposes WebMCP tools. The demo should cover common personal-software asks, each with the rule held outside the agent's reach:
-
-- Two accounts of one service at once (for example, company and personal Notion).
-- A conditional approval (auto-approve in my own org, otherwise ask me).
-- Skills pinned to a specific git SHA.
-
-Present it as ClawQL's own demo, not as a reply to any peer launch.
-
-## Competition notes
-
-- **Executor v2:** overlaps on the gateway and on personal software. Its approval policy is code inside apps an agent can write; ClawQL's design difference is authority outside the agent. Frame as a design difference, never as a flaw.
-- **Growing overlap:** Executor's triggers, workflows and storage approach ClawQL Cloud's webhook ingress and durable agents. The edge there stays the same: governed by default, crash-safe writes, tamper-evident audit, self-hostable.
-- **Benchmarks:** compare where products overlap (gateway tokens, governance cells on each product's recommended v2 configuration). Whether the Executor HTTP concurrency row stays depends on whether its maintainer confirms multi-client serving is a supported v2 setup.
-
-## Open questions added in v2
-
-- [ ] Is there a free personal tier on shared durable agents, and what are its limits?
-- [ ] What is the default rule set for personal installs, and how does a user author and lock convenience rules?
-- [ ] Does the personal demo ship before or alongside the managed gateway (build phase 1)?
-
----
-
-# v3: Scale targets (frozen 2026-11-05)
-
-This version adds scale targets. v1 and v2 still stand.
-
-## Goal and claim discipline
-
-The internal goal is to beat the largest published agent-gateway deployments, with Uber as the reference point. Aim extremely high and prove it one piece at a time.
-
-The public claim is always the measured result, never a comparison to a company we have not measured head to head. Example of an acceptable claim: "100M governed calls in 24 hours, zero audit gaps." Never "beats Uber." Uber's name stays out of ClawQL marketing.
-
-## Targets from published figures
-
-| Published reference (Uber, 2026) | ClawQL target |
-| --- | --- |
-| ~100M model requests per day across 800+ projects (~1,150/s average) | An "Uber day": 100M governed calls in 24 hours, then 10x |
-| 800+ MCP servers and 5,000+ tools behind one gateway | Test catalog of 1,000 servers and 5,000+ tools |
-| 40%+ token savings from the gateway | Beat 40% on an equal-arm workload against the same baseline |
-| A production fleet | Scale-out with a measured efficiency curve at 1, 4 and 16+ instances |
-
-Source figures come from Uber's public engineering writing and talks (2026). Re-check them before any milestone is published.
-
-## Where we stand today
-
-One instance on Bun sustained ~1,850 RPS at peak on a simple operation against a mock upstream, host-bound. Scale-out, governance enforcement under load, audit at volume, large catalogs, real upstreams and failover are not yet measured. The current safe claim is the single-instance figure with those limits stated.
-
-## Milestones
-
-1. **Single instance, governance and audit on.** Measure throughput and latency with enforcement, labels, approvals and hash-chained audit active. Answers early whether a single audit chain is a bottleneck (chains are sequential) and whether sharded chains are needed.
-2. **Topology B: four instances behind a load balancer.** Report scaling efficiency (throughput at 4 ÷ 4× throughput at 1).
-3. **5,000-tool catalog.** Confirm token savings, discovery cost and latency hold at catalog size.
-4. **Sixteen or more instances** at and above the Uber-average rate, with failure injection.
-5. **The Uber day.** 24 hours, 100M governed calls.
-
-## Uber-day pass criteria (draft, freeze before the run)
-
-- 100M governed calls completed in 24 hours.
-- Governance enforcement and audit on for every call; no benchmark bypass modes.
-- Failures injected during the run: instance kills, upstream outages, and slow or erroring upstreams.
-- Zero audit gaps: every call has an audit entry and every chain verifies end to end.
-- Zero duplicate side effects on consequential writes.
-- A stated p99 latency target for gateway-added latency, set before the run.
-- Same evidence rules as durability boards: frozen criteria, append-only logs, no overwrite, void only on monitored environment faults.
-
-## Open questions
-
-- [ ] p99 gateway-added latency target for milestones 4 and 5.
-- [ ] Upstream model for realistic latency and error rates (mock with injected distributions, or real public APIs).
-- [ ] Source for the 5,000-tool catalog (for example, public OpenAPI collections) and how to keep it representative.
-- [ ] Token-savings baseline definition so the 40% comparison is like for like.
-- [ ] Hardware and cost budget for the 16-instance and 24-hour runs.
-- [ ] Whether each milestone is a ClawQL-only board or also invites peer arms.
+- **2026-11-10:** in-repo canonical copy at `docs/gtm/clawql-cloud-platform-plan.md`; next durability board notes linked beside the met gate.
+- **2026-11-11:** first independent Nitro Sandboxes results recorded (Firecracker 1.18 without KVM, cold-boot times, no snapshots or memory overcommit), with the fit for always-on versus bursty sandboxes and a Lambda MicroVMs price reference.
+- **2026-11-11:** telemetry isolation by tier: shared stack for free and trial only, per-tenant data planes with structural isolation for paid customers, a dedicated-stack add-on, and provable deletion.
+- **2026-11-11:** two open questions added: hedged execution to cut recovery time, and the consensus choice for provider-network coordination.
+- **2026-11-11:** Hermes Agent and Pi added as one-click harnesses on the dashboard, with tool-level chat governance, risk-tiered approval channels, channel identity checks, policy-routed virtual models, and labeled ambiguous resends.
+- **2026-11-11:** the positioning and scale-target tabs merged into this single document; their content is unchanged.
+- **2026-11-11:** AWS Emulator added as an upstream option for scale testing.
+- **2026-11-11:** security testing plan landed in-repo (`docs/security/clawql-security-testing-plan.md`) with on-chain, telemetry-isolation, and AWS Emulator destructive-action gates.
+- **2026-11-11:** AWS Emulator preferred over LocalStack for ClawQL CI and on-ramp (CC0 / redistributable); LocalStack only when a customer already pays for it.
+- **2026-11-11:** whitepaper §7 extended with ClawQL Smithy APIs and a published ClawQL trait library as part of the open standard.

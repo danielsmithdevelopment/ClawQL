@@ -14,7 +14,6 @@ import {
 } from '@/components/sections/clawql-marketing'
 import { FAQsTwoColumnAccordion, Faq } from '@/components/sections/faqs-two-column-accordion'
 import { HeroTwoColumnWithPhoto } from '@/components/sections/hero-two-column-with-photo'
-import { Plan, PricingMultiTier } from '@/components/sections/pricing-multi-tier'
 import { SecuritySection } from '@/components/sections/security-section'
 import {
   clawqlTeeSummary,
@@ -63,9 +62,10 @@ export default function Page() {
         headline="Anything to MCP. MCP to anything."
         subheadline={
           <p>
-            ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven
-            agents. Structured institutional knowledge recall. Hardware-verified trusted execution. A WORM audit trail
-            on every action — before every acknowledgment.
+            ClawQL is a governed MCP gateway for regulated work: search and execute APIs, vault memory, an optional
+            document pipeline, and a tamper-evident audit trail (hash-chained; write-once where Object Lock is
+            configured). Event-driven Streams and clawql-tee hardware attestation are lab/design paths — labeled as such
+            on <Link href={site.urls.streams}>/streams</Link> and the tee specification.
           </p>
         }
         cta={
@@ -131,13 +131,11 @@ export default function Page() {
         headline="Agents that don't wait for you."
         subheadline={
           <p>
-            Every other agent platform requires a human to start the session. Streams points a subscription at any event
-            source — WebSocket, NATS, webhook, cron, polled API, or QR stream. When an event crosses the significance
-            threshold, an agent session spawns (Lab 5b on celld today; the{' '}
-            <code className="text-sm">stream_subscribe</code> MCP package is{' '}
-            <strong>not shipped</strong> — planned). Memory recall, tool execution, and multi-turn inference run under a
-            bind-on-create virtual key; humans review via <code className="text-sm">/mcp-ui</code>. The decision lands
-            in the WORM trail.
+            Streams is the design for waking agents from event sources — WebSocket, NATS, webhook, cron, polled API, or
+            a planned QR stream. Lab 5b exercises coordination on celld today; the agent-facing{' '}
+            <code className="text-sm">stream_*</code> MCP package is <strong>not shipped</strong> (planned). See{' '}
+            <Link href={site.urls.streams}>/streams</Link> and <Link href={site.urls.durability}>/durability</Link> for
+            measured scope.
           </p>
         }
         cta={
@@ -213,11 +211,15 @@ export default function Page() {
         subheadline={
           <p>
             Core discovery and execution — plus skills_list / skills_get — are always on. Memory and documents are
-            default on (opt out). Schedule, notify, workflow, Onyx, sandbox, and IDP tools opt in when you need them —
-            compose with CLAWQL_INSTANCE_SPEC / CLAWQL_TIER in 8.0. Same surface in Cursor, OpenClaw, or your Kubernetes
-            cluster. Document workflows (Nextcloud → OCR → redaction → Onyx → VDR) live on the{' '}
+            default on (opt out). Schedule, notify, workflow, sandbox, semantic search, and IDP tools opt in when you
+            need them — compose with CLAWQL_INSTANCE_SPEC / CLAWQL_TIER in 8.0. Panguard ATR enforcement is opt-in (
+            <code className="text-sm">CLAWQL_PANGUARD_PROXY_PLUGIN=1</code>). Document workflows live on the{' '}
             <Link href={site.urls.idp} className="font-medium underline underline-offset-2">
               IDP page
+            </Link>
+            ; full catalog on{' '}
+            <Link href={site.urls.integrations} className="font-medium underline underline-offset-2">
+              /integrations
             </Link>
             . {site.providersNote}
           </p>
@@ -234,12 +236,13 @@ export default function Page() {
       <SecuritySection
         id="security"
         eyebrow="Security & TEE"
-        headline="Documented, reproducible — and TEE-ready."
+        headline="Documented, reproducible — TEE paths are design."
         subheadline={
           <p>
             ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission
-            — plus a 32-module curriculum for agentic AI deployments. ATR scoping limits what each agent can call.
-            Panguard fail-closed enforcement is opt-in in 8.0 (set CLAWQL_PANGUARD_PROXY_PLUGIN=1) — not default-on.
+            — plus a 32-module curriculum for agentic AI deployments. ATR scoping limits what each agent can call when
+            configured. Panguard fail-closed enforcement is opt-in in 8.0 (
+            <code className="text-sm">CLAWQL_PANGUARD_PROXY_PLUGIN=1</code>) — not default-on for self-hosted installs.
           </p>
         }
         cta={
@@ -265,15 +268,15 @@ export default function Page() {
       <Section
         id="tee"
         eyebrow="clawql-tee"
-        headline="Hardware-verified agent execution."
+        headline="Hardware-verified execution — specification."
         subheadline={<p>{clawqlTeeSummary.body}</p>}
         cta={
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
             <Link href={clawqlTeeSummary.href}>
               clawql-tee specification <ArrowNarrowRightIcon />
             </Link>
-            <Link href="https://rockyourlobster.com">
-              RockYourLobster deployments <ArrowNarrowRightIcon />
+            <Link href={site.urls.agents}>
+              Agents landing <ArrowNarrowRightIcon />
             </Link>
           </div>
         }
@@ -283,27 +286,27 @@ export default function Page() {
         <Faq
           id="faq-1"
           question="What's the difference between cache, audit, and memory_*?"
-          answer="cache is ephemeral LRU scratch for the active session — gone on restart. audit is an in-process ring buffer for structured operator events. memory_ingest and memory_recall persist Markdown in your Obsidian vault with wikilinks — durable institutional knowledge across sessions. Structured ontology filters on memory_recall close exact entity sets instead of approximating with semantic search."
+          answer="cache is ephemeral LRU for the active session. The MCP audit tool is an agent-visible in-process session event buffer (append/list/clear) — not the tamper-evident trail. clawql-audit / WORM is separate; agents cannot clear it. memory_ingest and memory_recall persist vault Markdown across sessions. See /audit and /governance."
         />
         <Faq
           id="faq-2"
           question="What's the difference between Developer, Teams, and Starter?"
-          answer={`Developer (${pricing.developer.monthlyPrice}/mo) is MCP gateway + memory — no IDP. Teams (${pricing.teams.monthlyPrice}/mo) adds full Onyx search. Starter (${pricing.starter.monthlyPrice}/mo) activates the IDP plugin bundle. Gateway-only buyers should not pay for document processing they do not use.`}
+          answer="See /pricing for current early-access tiers. Developer is gateway + memory; Teams adds semantic search; Starter activates the IDP bundle. Managed prices are subject to change until unit costs are measured."
         />
         <Faq
           id="faq-3"
           question="How is this different from managed agent platforms?"
-          answer="Managed platforms wait for a human to start a session and keep audit on their side. ClawQL Streams wakes agents from event sources, Protocol Fabric connects any protocol via MCP, and the WORM trail stays on your bucket or cluster. Self-host on Apache 2.0, or use clawql-tee when the operator itself cannot be in the trust model."
+          answer="ClawQL is a self-hostable governed MCP gateway: Protocol Fabric connects APIs via MCP, vault memory persists context, and the hash-chained audit trail stays on infrastructure you control (write-once where Object Lock is configured). Streams event wake-ups and clawql-tee are lab/design paths — see /streams and the tee specification. Many platforms already run agents from triggers; we don't claim exclusivity there."
         />
         <Faq
           id="faq-4"
           question="Do you offer enterprise contracts?"
-          answer={`Yes — Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} for dedicated nodes, custom fine-tuning, multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms. Hardened agent deployments with TEE are also available via RockYourLobster.`}
+          answer={`Enterprise starts from ${pricing.enterprise.priceFrom}${pricing.enterprise.period} (early-access figure) for dedicated isolation (planned), custom fine-tuning, multi-region, DPA/BAA, and a dedicated CSM. Contact sales to scope annual terms.`}
         />
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="The open-source MCP core is production-ready today — npx, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or request early access for managed hosting. Managed IDP hosting is early access with founder-led onboarding."
+          answer="The open-source MCP core ships today — npx, Helm, and a Kubernetes operator. Case studies reflect founder deployments and lab evidence, not customer production use. Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting."
         />
         <Faq
           id="faq-6"
@@ -312,77 +315,25 @@ export default function Page() {
         />
       </FAQsTwoColumnAccordion>
 
-      <PricingMultiTier
+      <CallToActionSimple
         id="pricing"
         headline="Pricing"
         subheadline={
-          <p className="text-center text-sm/7 text-mist-600 dark:text-mist-400">{site.earlyAccess.pricingNote}</p>
+          <p>
+            Self-host free on the Apache 2.0 packages in this repository, or request early access for managed hosting.
+            Managed figures are early-access pricing subject to change — details live on{' '}
+            <Link href={site.urls.pricing}>/pricing</Link> so this page cannot drift.
+          </p>
         }
-        plans={
-          <>
-            <Plan
-              name={pricing.selfHosted.name}
-              price={pricing.selfHosted.price}
-              period={pricing.selfHosted.period}
-              subheadline={<p>{pricing.selfHosted.subheadline}</p>}
-              features={pricing.selfHosted.features.slice(0, 4)}
-              cta={
-                <ButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
-                  Quick start
-                </ButtonLink>
-              }
-            />
-            <Plan
-              name={pricing.developer.name}
-              price={pricing.developer.monthlyPrice}
-              period={pricing.developer.period}
-              subheadline={<p>{pricing.developer.subheadline}</p>}
-              badge={pricing.developer.badge}
-              features={pricing.developer.features.slice(0, 4)}
-              cta={
-                <ButtonLink href={site.urls.signup} size="lg">
-                  Request access
-                </ButtonLink>
-              }
-            />
-            <Plan
-              name={pricing.teams.name}
-              price={pricing.teams.monthlyPrice}
-              period={pricing.teams.period}
-              subheadline={<p>{pricing.teams.subheadline}</p>}
-              badge={pricing.teams.badge}
-              features={pricing.teams.features.slice(0, 4)}
-              cta={
-                <ButtonLink href={site.urls.signup} size="lg">
-                  Request early access
-                </ButtonLink>
-              }
-            />
-            <Plan
-              name={pricing.starter.name}
-              price={pricing.starter.monthlyPrice}
-              period={pricing.starter.period}
-              subheadline={<p>{pricing.starter.subheadline}</p>}
-              badge={pricing.starter.badge}
-              features={pricing.starter.features.slice(0, 4)}
-              cta={
-                <PlainButtonLink href={site.urls.pricing} size="lg">
-                  All tiers & limits <ArrowNarrowRightIcon />
-                </PlainButtonLink>
-              }
-            />
-          </>
-        }
-      />
-
-      <CallToActionSimple
-        id="enterprise-pricing"
-        headline={`Enterprise from ${pricing.enterprise.priceFrom}${pricing.enterprise.period}`}
-        subheadline={<p>{pricing.enterprise.subheadline}</p>}
         cta={
-          <ButtonLink href={site.urls.contact} size="lg">
-            Contact sales
-          </ButtonLink>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <ButtonLink href={site.urls.pricing} size="lg">
+              See /pricing
+            </ButtonLink>
+            <PlainButtonLink href={site.urls.signup} size="lg">
+              Request access <ArrowNarrowRightIcon />
+            </PlainButtonLink>
+          </div>
         }
       />
       <CallToActionSimple
@@ -390,8 +341,8 @@ export default function Page() {
         headline="Request early access or self-host free"
         subheadline={
           <p>
-            Gateway from {pricing.developer.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo. Full
-            Apache 2.0 stack, no license fee.
+            Install with <code className="text-sm">{site.installCommand}</code>. Apache 2.0 packages in this repository
+            — no license fee for those packages.
           </p>
         }
         cta={
