@@ -1564,7 +1564,8 @@ export function BenchmarksLanding() {
           </tbody>
         </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {cfBenchmarkMeta.artifactHttp}. Executor v1 is not in this table (stdio MCP).
+          Artifact: {cfBenchmarkMeta.artifactHttp}. Executor v1 is not in this table (stdio MCP). The Executor v2
+          β HTTP row is under review pending maintainer confirmation of the recommended concurrent-HTTP setup.
         </p>
       </Section>
 

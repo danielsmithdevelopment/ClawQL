@@ -1,0 +1,40 @@
+{
+  "measured_at": "2026-11-06T05:01:03.326Z",
+  "binary": "executor@beta 2.0.0-beta.37",
+  "mcp_url": "http://127.0.0.1:4312/mcp",
+  "clients": 16,
+  "duration_ms": 12000,
+  "ops": 612,
+  "errors": 0,
+  "rps": 51,
+  "latency_ms": {
+    "p50": 272.3,
+    "p99": 1001.6,
+    "n": 612
+  },
+  "cores": [
+    {
+      "core": 0,
+      "peak_busy_pct": 100,
+      "mean_busy_pct": 73.6
+    },
+    {
+      "core": 1,
+      "peak_busy_pct": 100,
+      "mean_busy_pct": 74.6
+    },
+    {
+      "core": 2,
+      "peak_busy_pct": 100,
+      "mean_busy_pct": 75
+    },
+    {
+      "core": 3,
+      "peak_busy_pct": 96,
+      "mean_busy_pct": 62.5
+    }
+  ],
+  "saturated_cores": 0,
+  "reading": "multi_core_busy",
+  "sample_count": 49
+}
