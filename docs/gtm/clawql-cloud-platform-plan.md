@@ -102,6 +102,8 @@ Durable agents get governance inside the runtime; containers get it only at the 
 - **False blocks and false allows reported together** in benchmarks and dashboards, never one without the other.
 - **Preview before approval:** for any action that supports a dry run (APIs with preview modes, on-chain transactions through simulation), the approval screen shows the deterministic predicted effect, not just the agent's request. A model's plain-language summary may appear beside it, labeled untrusted whenever external content informed it.
 - **Governed on-chain actions (web3 vertical):** every on-chain write follows simulate, exact diff, approve, sign, journal-then-broadcast with the nonce as idempotency key, and finality tracking; autonomous agents get two independent limit layers (gateway mandates plus smart-account session keys enforced by the chain); signing keys never enter an agent. Full design in whitepaper [section 28A](../vision/clawql-network-whitepaper-v0.2.md#28a-governed-on-chain-actions). With tokenized assets moving onchain, this is positioned for regulated finance first. On-chain policy and consensus execution through Chainlink CRE are an optional trust layer, opt-in per deployment and never the default, because running gateway logic in a hardware enclave means proxying all of its network traffic and storage; the integration sits behind a pluggable trust-backend interface so other protocols can be added later.
+- **Advanced security with hardware keys:** an opt-in tier modeled on OpenAI's Advanced Account Security (April 2026): every approver enrolls at least two FIDO2 keys or passkeys, one usable across devices, and weaker recovery paths are removed. Consequential approvals are WebAuthn assertions whose challenge is the action's digest, so each signature proves a specific person approved exactly that action and cannot be reused or applied to another one; because a security key has no screen, the approval page always shows the exact effect. Any FIDO2 key works; ClawQL links to several makers, discloses any affiliate arrangement, and considers a co-branded bundle (as OpenAI and Yubico did, $68 for two keys) only once volume justifies it. ClawQL's own admins use hardware keys for policy, ontology and release-signing changes.
+- **Independent co-signer and guided quorum setup:** for the highest-stakes actions, an execution quorum of two of three parties: the customer's approver, ClawQL's gateway, and an independent co-signer that ClawQL cannot override. The co-signer is a smart contract for on-chain actions, a threshold-signing network with programmable conditions, or a customer-owned attested device or enclave holding a key share. It checks only deterministic rules (a valid approval signature over the action digest, spending caps, allowlisted counterparties, rate limits, time locks), runs open-source, reproducibly built and attested code, and changes its rules only with the customer's key. Setup is guided: enroll keys, choose the quorum and the actions it covers, deploy the customer's gateway or co-signer into their own account with one click and automatic attestation, exchange keys, run a drill in which one action collects the quorum and another is refused, and set recovery so that replacing a lost key needs other quorum members plus a time delay. Full design in whitepaper [section 11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate).
 
 ## Model credentials
 
@@ -268,13 +270,22 @@ The price edge applies to parked durable agents only. In the measured offloaded 
 
 Phases ship in order, and three gates block progress until their criteria are met. Billing on any tier waits on the Stripe fix, and no public price ships before real-host costs are measured.
 
-**Build order:** seven phases with three blocking gates (diagram may live in the working Claude artifact). The density advantage first shows in phase 2, so that is where pricing is tested. Phase 7 is built only on demand. Phase 2 also opens schema work for the [Streams autonomous loop](../streams/clawql-streams-autonomous-loop.md) (workers as durable agents); phase 1 has no loop work.
+| Phase | Scope | Notes |
+| --- | --- | --- |
+| 1 · Managed gateway | Approvals, labels, vault, audit, tenant isolation | Personal demo timing open (positioning) |
+| 2 · Durable agents + webhooks | celld runtime, webhook ingress, density pricing test | Opens [Streams autonomous loop](../streams/clawql-streams-autonomous-loop.md) schema work; phase 1 has no loop work |
+| Billing (gate) | Stripe write-ahead / idempotency | Blocks paid tiers until measured |
+| 3 · Dedicated agents | Own runtime nodes, database and keys | |
+| 4 · Shared containers | microVMs, egress, supply chain | Runtime under evaluation (`SandboxRuntime`) |
+| 5 · Dedicated containers | Phase 4 on dedicated hosts | |
+| 6 · BYOC | Operate in the customer's cloud account | |
+| 7 · Hardened (TEE) | Confidential VMs with attestation | Built only on demand |
+
+The density advantage first shows in phase 2, so that is where pricing is tested. Phase 7 is built only on demand.
 
 Each phase also has a security gate that is part of its definition of done. The gates live in the [ClawQL security testing plan](../security/clawql-security-testing-plan.md).
 
-**Durability gate status (2026-11-09): met.** v4 is authorized on ClawQL's lab build of celld (stock 0.6.3 plus the supersede and expiry fixes). The authorizing soak (1,000/1,000 cycles, no void) and the v4 board (N=1,000) ran the same binary, proven inside both artifacts: commit `36d53565`, matching SHA-256. Results: zero wrong outcomes; in 241 of 243 crashes during an external call the journaled intent was visible on recovery, and the other 2 never sent the call (settled through their effect ledgers as no effect and no lost intent — [`settle`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json)); 18 of 1,000 trials missed the recovery deadline (1.8%, under the 2% gate), 11 of them from failures in the harness's own fault injection. Recovery is slower than on the first v4 board (median about 17 seconds versus about 7) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. Open items stay beside the claim: an earlier 3-second-TTL board recorded 2 lost intents in 100 (one later classified as an injection miss on journal evidence, one unsettled), and forced-latency tests are in progress. See [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md).
-
-**Durability mode on that gate (2026-11-13 clarification):** boards ran default **`CELLD_DURABILITY=fleet`**, two nodes on one host, R2 as the fleet bucket. Acknowledgments wait for a fleet disk proof (or racing bucket proof), not always for object-store durability. Host-disk / AZ / region loss and an explicit `bucket`-mode arm are open. Canonical note: [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md).
+**Durability gate status (2026-11-09): met.** v4 is authorized on ClawQL's lab build of celld (stock 0.6.3 plus the supersede and expiry fixes), in celld's default **fleet** durability mode: acknowledged on a quorum of disks (two nodes on one host), with the upload to the R2 fleet bucket allowed to finish afterward. It covers process and node crashes with the host's disks intact, not loss of the host's disks, a zone or a region. The authorizing soak (1,000/1,000 cycles, no void) and the v4 board (N=1,000) ran the same binary, proven inside both artifacts: commit `36d53565`, matching SHA-256. Results: zero wrong outcomes; in 241 of 243 crashes during an external call the journaled intent was visible on recovery, and the other 2 never sent the call (settled through their effect ledgers as no effect and no lost intent — [`settle`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json)); 18 of 1,000 trials missed the recovery deadline (1.8%, under the 2% gate), 11 of them from failures in the harness's own fault injection. Recovery is slower than on the first v4 board (median about 17 seconds versus about 7) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. Open items stay beside the claim: an earlier 3-second-TTL board recorded 2 lost intents in 100 (one later classified as an injection miss on journal evidence, one unsettled), and forced-latency tests are in progress. See [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md). Canonical mode note: [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md). Host-disk / AZ / region loss and an explicit `bucket`-mode arm remain open.
 
 ### Runtime evaluation (OpenOrange peer arm)
 
@@ -382,6 +393,39 @@ Consumers and providers meet on a price that moves with supply and demand. Exces
 - [ ] Size and funding of the base reward pool.
 - [ ] Whether to route to Darkbloom as an upstream before building ClawQL's own provider side.
 
+### Contribution tiers
+
+People join the network by contributing what their hardware can offer, through the same Edge Gateway software and the same dashboard, earning credits at every tier. Each tier asks more of the node than the one before, so the dashboard can invite people one step further over time.
+
+| Tier | What the node contributes | Typical hardware |
+| --- | --- | --- |
+| 1. Seed models | Downloads, verifies and seeds models from the open-model preservation set | Any always-on machine or NAS |
+| 2. Storage | Encrypted shards for the community storage network | A NAS or a machine with spare disk |
+| 3. Compute | Sandboxes running arbitrary code: CI jobs, batch processing, evaluations, low-sensitivity agent sandboxes | A machine with spare CPU and memory, able to run microVMs |
+| 4. Inference | Model serving, which combines compute with storing models locally | A GPU or a large-memory Apple Silicon machine |
+
+**Tier 1: open-model preservation.** The dashboard lists models whose licenses allow redistribution (Apache 2.0, MIT and similar), each shown with its license; gated and custom-licensed models are excluded. A node downloads a chosen model, verifies every file against the permanent hash index, and seeds it over BitTorrent and IPFS. The index (publisher, repository, commit, file hashes, license, capture date, torrent and IPFS identifiers) is anchored on Arweave, which also holds a curated core set as the copy of last resort. Arweave storage costs roughly $3–16 per GB one-time depending on the token price, so the core set is prioritized: the most-used mid-size models in full precision, and one high-quality quantization of each large model. A published inclusion policy governs what enters the permanent archive, and counsel reviews it first.
+
+**Tier 2: community storage.**
+
+- **Client-side encryption** with keys held by the data owner (per-tenant keys for ClawQL tenants), so nodes only hold ciphertext; destroying a tenant's key deletes its data everywhere.
+- **Erasure coding:** each object split into n shards, any k of which rebuild it, placed so no single operator holds k shards.
+- **Repair** when nodes go offline; home nodes churn heavily, and repair bandwidth is the cost that decides whether the network is viable.
+- **Audits:** random challenges prove each node still holds its shards; credits are paid only for passed audits; limits stop one operator from running many fake nodes.
+- **Cold storage only:** backups, archives, model distribution and cold telemetry, never latency-sensitive data.
+- **Regulated data excluded, by label.** Encryption does not take home operators outside regulation (HHS has said a cloud provider storing encrypted health data is a business associate even without the key), and data-residency laws restrict where shards may go. Community storage accepts only data classes that allow it; never PHI or residency-bound data. Counsel confirms the policy before launch.
+- **Build on existing work:** study Storj (open source, the reference design for encrypted, erasure-coded storage on independent nodes, with audits and repair), Garage and IPFS Cluster before building, checking each license against hosted use.
+
+**Tier 3: compute nodes.** Running other people's code on a stranger's machine needs protection in both directions.
+
+- **Protect the node's owner:** every workload runs in a microVM (Firecracker or Kata on Linux; the virtualization framework on macOS) with no access to the host's files, strict CPU, memory, disk and bandwidth limits, and no route to the owner's local network.
+- **Protect the owner's internet address:** workload traffic leaves through ClawQL's egress gateways, never from the owner's home connection, so abuse (scanning, spam, attacks, mining) cannot be traced to the owner. Default-deny egress, the acceptable use policy and abuse detection apply as in ClawQL Cloud.
+- **Protect the customer:** without a hardware enclave, the node can see the code and data and could return wrong results, so compute nodes take only non-sensitive work, routed by labels, and results are verified by re-running a sample on trusted capacity or by deterministic checks, with outcomes feeding reputation.
+
+**Tier 4: inference nodes** follow the existing provider-network rules above: policy decides which trust tier may receive each request, and untrusted output is verified by sampling or by provable-inference proofs.
+
+**Sequencing:** model seeding first (small: a torrent and IPFS client in the Edge Gateway, the hash index and a dashboard picker); then inference, as planned; then compute nodes and community storage once ClawQL Cloud's core is live and the abuse and isolation controls are proven.
+
 ## Claims discipline and open questions
 
 Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim only what is measured.
@@ -402,6 +446,9 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 - [ ] Which compliance path first: BAA template, SOC 2 Type I, or both?
 - [ ] Acceptable use policy and abuse detection for customer containers (outbound scanning, crypto mining).
 - [ ] Container runtime: AWS Nitro Sandboxes, Docker Sandboxes, or self-built Firecracker/Kata, decided against the criteria above.
+- [ ] Zone and region durability: what ClawQL Cloud claims beyond single-host crash safety. Zone loss needs acknowledgment after a copy exists in another zone; region loss needs either synchronous cross-region replication (a cross-country round trip added to every durable write) or a published, measured loss window. Boards and tools are planned in the [homelab and workloads overview](../homelab/homelab-and-workloads-overview.md), section 4.1.
+- [ ] Durable runtime peer: evaluate OpenOrange (Rivet) beside celld behind a `DurableRuntime` interface, on crash boards at every fault scope and on object-store requests per agent lifecycle. Open question for Rivet: how its packing of many actors into shared objects works with per-tenant storage, keys and key-destruction deletion. See [Runtime evaluation](#runtime-evaluation-openorange-peer-arm) above.
+- [ ] Durability by write class: give effect-critical writes (intents, approval consumption, outcomes) a strong tier acknowledged only after they exist in more than one zone, through a small replicated log (default candidate: NATS JetStream, three replicas in three zones, syncing to disk), while other writes keep the cheaper batched path; region-level durability for effect-critical writes opt-in. Measure latency per tier, request and cross-zone costs per agent lifecycle, partition behavior and loss per fault scope against celld and OpenOrange (whitepaper [section 11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate)).
 - [ ] Recovery time: evaluate hedged execution of decided intents for upstream services that accept idempotency keys, so recovery does not wait for a lease to expire; model it in TLA+ first (whitepaper [section 11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate)).
 - [ ] Provider-network coordination: DAG-based asynchronous BFT versus TEE-assisted BFT for public Virtual Gateways, and QuePaxa for single-organization gateways over wide-area links (whitepaper [section 10](../vision/clawql-network-whitepaper-v0.2.md#10-the-decentralized-path-the-provider-network)).
 - [ ] Will Docker provide written terms for hosting third-party workloads on Sandboxes?
@@ -428,3 +475,8 @@ Marketing for ClawQL Cloud follows the same standard as the benchmarks: claim on
 - **2026-11-11:** security testing plan landed in-repo (`docs/security/clawql-security-testing-plan.md`) with on-chain, telemetry-isolation, and AWS Emulator destructive-action gates.
 - **2026-11-11:** AWS Emulator preferred over LocalStack for ClawQL CI and on-ramp (CC0 / redistributable); LocalStack only when a customer already pays for it.
 - **2026-11-11:** whitepaper §7 extended with ClawQL Smithy APIs and a published ClawQL trait library as part of the open standard.
+- **2026-11-13:** open questions added for zone and region durability, and for OpenOrange as a durable runtime peer.
+- **2026-11-13:** advanced security with hardware keys, and an independent co-signer with guided quorum setup, added to governance features.
+- **2026-11-14:** contribution tiers added to the provider network (model seeding, community storage, compute nodes, inference), with the open-model preservation design and the rules for encrypted storage and sandboxed compute.
+- **2026-11-13:** durability gate status corrected to state celld's fleet durability mode and what it covers, after Rivet's note that fleet mode acknowledges before the bucket upload completes, confirmed against ClawQL's own artifacts ([`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md)).
+- **2026-11-15:** in-repo sync of the living plan through contribution tiers; build-order table spelled out; cross-links to the [homelab overview](../homelab/homelab-and-workloads-overview.md) §4.1 for multi-scope boards.

@@ -365,7 +365,7 @@ Aligned with [`clawql-network` v0.2 §4](../specs/network/clawql-network-v0.2.md
 
 #### Planned: durability across nodes, zones and regions
 
-The v4 board proves crash safety against process and node failures on one host. The next boards extend it to larger failures, first rehearsed in the homelab, then run in a dedicated cloud account.
+The v4 board proves crash safety against process and node failures on one host. The next boards extend it to larger failures, first rehearsed in the homelab, then run in a dedicated cloud account. Cloud claims and open questions for zone/region scope and the `DurableRuntime` peer arm live in the [ClawQL Cloud platform plan](../gtm/clawql-cloud-platform-plan.md).
 
 **The claim at each scope** is decided before choosing tools:
 
