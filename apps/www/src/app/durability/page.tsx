@@ -39,6 +39,10 @@ export default function Page() {
         Full measurement tables:{' '}
         <Link href={`${site.urls.benchmarks}#durability`}>/benchmarks § Durability</Link>
         {' · '}
+        Related: <Link href={site.urls.ontology}>/ontology</Link>
+        {' · '}
+        <Link href={site.urls.governance}>/governance</Link>
+        {' · '}
         Source draft:{' '}
         <Link href={DRAFT_DOC}>docs/gtm/clawql-durability-page-draft.md</Link>
       </p>
@@ -74,7 +78,8 @@ export default function Page() {
         </li>
         <li>
           <strong>Never acknowledge before it&apos;s durable.</strong> Nothing is confirmed until the write behind it is
-          safely stored. Acknowledging too early is exactly how intents get lost.
+          stored on a quorum of disks. In celld&apos;s default fleet mode, the copy to object storage can finish
+          afterward. Acknowledging too early is exactly how intents get lost.
         </li>
         <li>
           <strong>Attach an idempotency key to every external write.</strong> The key is derived from the journaled
@@ -100,7 +105,8 @@ export default function Page() {
       <h2>What we measured</h2>
       <p>
         On ClawQL&apos;s lab build of the <code>celld</code> runtime (version 0.6.3 plus ClawQL&apos;s fixes), on one
-        host, against a mock upstream service:
+        host, in celld&apos;s default fleet durability mode (two nodes with disk replicas on that host, Cloudflare R2 as
+        the fleet bucket), against a mock upstream service:
       </p>
       <div className="overflow-x-auto">
         <table>
@@ -217,8 +223,9 @@ export default function Page() {
           up correctness.
         </li>
         <li>
-          <strong>Scope.</strong> These results are from one host, a lab build and a mock upstream service. Multi-host
-          runs, the unmodified upstream runtime and real services are next.
+          <strong>Scope.</strong> These results are from one host, a lab build and a mock upstream service. They cover
+          process and node crashes with the host&apos;s disks intact, not the loss of the host&apos;s disks, a zone or a
+          region. Multi-host runs, the unmodified upstream runtime and real services are next.
         </li>
         <li>
           <strong>What isn&apos;t covered.</strong> Calls to services that don&apos;t accept idempotency keys can end

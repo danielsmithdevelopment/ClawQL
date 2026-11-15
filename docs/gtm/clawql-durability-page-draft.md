@@ -1,6 +1,6 @@
 # Durability page draft (`clawql.com/durability`)
 
-**Status:** Draft for marketing site. Prepared 2026-11-11. Live route: [`apps/www/src/app/durability/page.tsx`](../../apps/www/src/app/durability/page.tsx). Numbers checked against evidence files on this date (see verification table).
+**Status:** Draft for marketing site. Prepared 2026-11-11; fleet-mode copy folded into body 2026-11-14. Live route: [`apps/www/src/app/durability/page.tsx`](../../apps/www/src/app/durability/page.tsx). Numbers checked against evidence files (see verification table). Mode record: [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md).
 
 **Related:** full tables on [`/benchmarks#durability`](https://clawql.com/benchmarks#durability); design wedges in [network whitepaper](../vision/clawql-network-whitepaper-v0.2.md) §§10–11, 28A.
 
@@ -22,7 +22,7 @@ Most agent frameworks handle neither at the infrastructure level; they rely on e
 ## How ClawQL prevents them
 
 1. **Record the intent before acting.** Before any external call, the agent's intent is written to a durable journal. If the machine dies a moment later, the intent survives.
-2. **Never acknowledge before it's durable.** Nothing is confirmed until the write behind it is safely stored. Acknowledging too early is exactly how intents get lost.
+2. **Never acknowledge before it's durable.** Nothing is confirmed until the write behind it is stored on a quorum of disks. In celld's default fleet mode, the copy to object storage can finish afterward. Acknowledging too early is exactly how intents get lost.
 3. **Attach an idempotency key to every external write.** The key is derived from the journaled intent, so if a call is retried after a crash, the receiving service recognizes it as the same request and performs it once.
 4. **One live owner per agent.** Each agent is owned by exactly one process at a time, through a lease. A process that falls behind is fenced off, so it cannot act on stale state.
 5. **Silence is not death.** A lease running out does not mean its owner is dead; a frozen process can wake up. ClawQL only treats an owner as gone when it can prove it (for example, the process no longer exists on that host) or when it has fenced the old owner out.
@@ -30,7 +30,7 @@ Most agent frameworks handle neither at the infrastructure level; they rely on e
 
 ## What we measured
 
-On ClawQL's lab build of the `celld` runtime (version 0.6.3 plus ClawQL's fixes), on one host, against a mock upstream service:
+On ClawQL's lab build of the `celld` runtime (version 0.6.3 plus ClawQL's fixes), on one host, in celld's default fleet durability mode (two nodes with disk replicas on that host, Cloudflare R2 as the fleet bucket), against a mock upstream service:
 
 | Measurement | Result |
 | --- | --- |
@@ -69,7 +69,7 @@ We publish failures alongside passes, because the failures are how the system go
 
 - **An unexplained result.** An earlier board with very short leases recorded 2 lost intents in 100 trials. One was later classified as a missed fault injection, based on the journal; the other remains unsettled.
 - **Recovery time.** 17 seconds is the honest cost of fencing, and we want it lower without giving up correctness.
-- **Scope.** These results are from one host, a lab build and a mock upstream service. Multi-host runs, the unmodified upstream runtime and real services are next.
+- **Scope.** These results are from one host, a lab build and a mock upstream service. They cover process and node crashes with the host's disks intact, not the loss of the host's disks, a zone or a region. Multi-host runs, the unmodified upstream runtime and real services are next.
 - **What isn't covered.** Calls to services that don't accept idempotency keys can end with an unknown outcome that must be checked rather than retried. Containers' own internal state is not covered. ClawQL's own payment flows are not yet covered by these results.
 
 ## Beyond one machine
@@ -99,6 +99,7 @@ Everything above is reproducible from the public repository (links pinned to the
 - [x] Confirm the status of the payments write-ahead fix: **not landed** as of 2026-11-11 (`docs/gtm/clawql-cloud-platform-plan.md` still gates on Stripe write-ahead). Keep the "What isn't covered" payments line.
 - [x] Cross-link from `/benchmarks`, and link back to it for the full tables.
 - [x] "Beyond one machine" links to whitepaper §§10, 11, 28A.
+- [x] Fleet-mode / ack-scope wording folded into body (2026-11-14) — no separate mode section; matches Rivet-thread correction.
 
 ### Number verification (2026-11-11)
 
@@ -112,5 +113,6 @@ Everything above is reproducible from the public repository (links pinned to the
 | Median recovery ~17s | settle · `okFenceResumeMsP50=17067` (successful self-fence resume p50); earlier board ~6.7s | yes |
 | Rule-of-three ≤0.3% at N=1000 | standard 3/N upper bound | yes |
 | Payments not covered | cloud platform plan: Stripe write-ahead still open | yes |
+| Fleet mode, two nodes, one host | harness default `CELLD_DURABILITY=fleet`; remesure `nodeCount=2`, soak host mac-mini-colima — [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md) | yes |
 
 Binary identity (lab celld): commit `36d53565c8ffa6d31bb9dd39b6bcbac317c0629b`, sha256 `5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f`.
