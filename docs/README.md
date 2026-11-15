@@ -90,6 +90,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **LangExtract onboarding** ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)): [`providers/langextract-onboarding.md`](providers/langextract-onboarding.md)
 - **Fine-tuned classifier runbook**: [`runbooks/fine-tuned-classifier.md`](runbooks/fine-tuned-classifier.md)
 
+- **Homelab and workloads overview:** [`homelab/homelab-and-workloads-overview.md`](homelab/homelab-and-workloads-overview.md) — machines, network cutover runbook, what runs where, durability/Harvey LAB hosts, fine-tuning plan (Headscale on VPS §3.7)
 - **Personal agent (Hermes/Ornith + Cline/Ornith)** on Mac Mini: [`homelab/personal-agent-hermes-cline.md`](homelab/personal-agent-hermes-cline.md) — both agents default to Ornith; Nemotron is smoke fallback; ATR scopes, WORM hooks (not the multi-channel OpenClaw path)
 - **WORM packages:** [`audit/README.md`](audit/README.md) (`clawql-merkle` / `clawql-audit`) · [`agents/README.md`](agents/README.md) (`clawql-agents` Cline adapter)
 - `openclaw/using-openclaw-with-clawql.md` — **full guide:** OpenClaw CLI + ClawQL MCP (install, `openclaw mcp set`, HTTP/stdio, validation, remote); website **`/openclaw`**

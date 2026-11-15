@@ -10,7 +10,7 @@
 
 ## 1. Overview
 
-This document describes the personal AI agent assistant on the Mac Mini M4 Pro, in the context of the locked homelab topology (Mini control plane, MS-A2 GPU IDP, N5 Pro storage/enrich).
+This document describes the personal AI agent assistant on the Mac Mini M4 Pro, in the context of the locked homelab topology (Mini control plane, MS-A2 GPU IDP, N5 Pro storage/enrich). Machine inventory, network cutover, and where services run: [`homelab-and-workloads-overview.md`](./homelab-and-workloads-overview.md).
 
 **Hermes** (Ornith-1.5-35B-A3B) is the orchestrator — goals, decomposition, delegation, evaluation, skill library, Telegram.
 
