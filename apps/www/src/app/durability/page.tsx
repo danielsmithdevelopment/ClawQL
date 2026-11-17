@@ -5,14 +5,10 @@ import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
 const GH = 'https://github.com/danielsmithdevelopment/ClawQL'
-const EVIDENCE_BOARD =
-  `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`
-const EVIDENCE_SOAK =
-  `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json`
-const EVIDENCE_SETTLE =
-  `${GH}/blob/de237c7681f87bdbcbef8e9dac0aa813ed8d9148/docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`
-const EVIDENCE_DIR =
-  `${GH}/tree/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill`
+const EVIDENCE_BOARD = `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`
+const EVIDENCE_SOAK = `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json`
+const EVIDENCE_SETTLE = `${GH}/blob/de237c7681f87bdbcbef8e9dac0aa813ed8d9148/docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`
+const EVIDENCE_DIR = `${GH}/tree/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill`
 const FORMAL_TLA = `${GH}/tree/cadb0a4bcb7dd312663b9eea59ec1e49ff6c6ba6/formal/tla`
 const WHITEPAPAPER = `${GH}/blob/main/docs/vision/clawql-network-whitepaper-v0.2.md`
 const DRAFT_DOC = `${GH}/blob/main/docs/gtm/clawql-durability-page-draft.md`
@@ -36,11 +32,9 @@ export default function Page() {
       }
     >
       <p className="text-sm text-mist-600 dark:text-mist-400">
-        Full measurement tables:{' '}
-        <Link href={`${site.urls.benchmarks}#durability`}>/benchmarks § Durability</Link>
+        Full measurement tables: <Link href={`${site.urls.benchmarks}#durability`}>/benchmarks § Durability</Link>
         {' · '}
-        Source draft:{' '}
-        <Link href={DRAFT_DOC}>docs/gtm/clawql-durability-page-draft.md</Link>
+        Source draft: <Link href={DRAFT_DOC}>docs/gtm/clawql-durability-page-draft.md</Link>
       </p>
 
       <p>
@@ -169,8 +163,8 @@ export default function Page() {
           are made ambiguous, the conditions under which ownership bugs appear.
         </li>
         <li>
-          <strong>Ground truth outside the system.</strong> Every trial keeps an independent record of what the receiving
-          service actually did, so results never depend on the system grading itself.
+          <strong>Ground truth outside the system.</strong> Every trial keeps an independent record of what the
+          receiving service actually did, so results never depend on the system grading itself.
         </li>
         <li>
           <strong>Criteria fixed in advance.</strong> Pass and fail criteria are frozen before a board runs and never
@@ -190,17 +184,17 @@ export default function Page() {
       <p>We publish failures alongside passes, because the failures are how the system got here.</p>
       <ul>
         <li>
-          <strong>Lost intents.</strong> Early boards found that acknowledging a write before it was durable could lose a
-          recorded intent in a crash. The upstream runtime fixed this with an always-on output gate, and ClawQL moved to
-          that release.
+          <strong>Lost intents.</strong> Early boards found that acknowledging a write before it was durable could lose
+          a recorded intent in a crash. The upstream runtime fixed this with an always-on output gate, and ClawQL moved
+          to that release.
         </li>
         <li>
           <strong>Expiry treated as death.</strong> A lease running out was once enough to recover an owner&apos;s work,
           even while that owner was frozen rather than dead. The rule is now that expiry is never proof of death.
         </li>
         <li>
-          <strong>A grading bug.</strong> Our own test harness once counted a timed-out status check as a lost intent. It
-          now records those as unknown, and every reclassification is published side by side with the original.
+          <strong>A grading bug.</strong> Our own test harness once counted a timed-out status check as a lost intent.
+          It now records those as unknown, and every reclassification is published side by side with the original.
         </li>
         <li>
           <strong>Earlier boards that failed</strong> (versions 1 to 3) remain published with their results.
@@ -250,8 +244,8 @@ export default function Page() {
         </li>
         <li>
           <strong>On-chain actions.</strong> A blockchain transaction&apos;s nonce can land only once, so it serves as a
-          natural idempotency key: ClawQL journals the signed transaction before broadcasting and checks the chain before
-          ever resending. Finality is tracked explicitly, including chain reorganizations.
+          natural idempotency key: ClawQL journals the signed transaction before broadcasting and checks the chain
+          before ever resending. Finality is tracked explicitly, including chain reorganizations.
         </li>
         <li>
           <strong>An independent witness, optionally.</strong> For customers who want proof that does not depend on

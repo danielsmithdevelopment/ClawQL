@@ -37,22 +37,6 @@ import {
   durabilityTtlRows,
 } from '@/lib/durability-benchmarks'
 import {
-  programDensityBenchmarkLinks,
-  programDensityChips,
-  programDensityClaim,
-  programDensityFitRows,
-  programDensityHeadline,
-  programDensityHonestyNotes,
-  programDensityLatencyNote,
-  programDensityLatencyRows,
-  programDensityMeta,
-  programDensityOffloadRows,
-  programDensityReclaimRows,
-  programDensitySlopeNote,
-  programDensitySlopeRows,
-  programDensitySummary,
-} from '@/lib/program-density-benchmarks'
-import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -98,6 +82,22 @@ import {
   multiAttackPublishGate,
   multiAttackSummary,
 } from '@/lib/multi-attack-injection'
+import {
+  programDensityBenchmarkLinks,
+  programDensityChips,
+  programDensityClaim,
+  programDensityFitRows,
+  programDensityHeadline,
+  programDensityHonestyNotes,
+  programDensityLatencyNote,
+  programDensityLatencyRows,
+  programDensityMeta,
+  programDensityOffloadRows,
+  programDensityReclaimRows,
+  programDensitySlopeNote,
+  programDensitySlopeRows,
+  programDensitySummary,
+} from '@/lib/program-density-benchmarks'
 import {
   securitySuiteBuildFirst,
   securitySuiteCredibility,
@@ -468,8 +468,8 @@ export function BenchmarksLanding() {
             Pause cells use Executor&apos;s stock destructiveHint pause (fair default). The third cell is{' '}
             <strong className="font-medium text-mist-900 dark:text-mist-100">harness-driven</strong>{' '}
             <code className="text-xs">resume accept</code> after poison — it simulates agent self-approval; it is not
-            Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Measured on Executor v2
-            β — remeasure on 2.0.0 in progress. Via <code className="text-xs">ci-executor-peer.sh</code>.
+            Executor&apos;s out-of-box auto-approve. Configured ClawQL has no resume surface. Measured on Executor v2 β
+            — remeasure on 2.0.0 in progress. Via <code className="text-xs">ci-executor-peer.sh</code>.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {governanceExecutorCells.map((cell) => (
@@ -1080,8 +1080,7 @@ export function BenchmarksLanding() {
         </ul>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
           Artifacts: {programDensityMeta.artifactClawqlFit} · {programDensityMeta.artifactInfinityFit} ·{' '}
-          {programDensityMeta.artifactHarness} · {programDensityMeta.artifactOffload} ·{' '}
-          {programDensityMeta.boardReadme}
+          {programDensityMeta.artifactHarness} · {programDensityMeta.artifactOffload} · {programDensityMeta.boardReadme}
         </p>
       </Section>
 
@@ -1357,8 +1356,8 @@ export function BenchmarksLanding() {
           </tbody>
         </ComparisonTable>
         <p className="mt-4 text-xs/6 text-mist-600 dark:text-mist-400">
-          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 β is the promoted Executor column
-          (remeasure on 2.0.0 in progress); v1.6.10 is the historical second column on the same mock.
+          Artifact: {cfBenchmarkMeta.artifactBoard}. Executor v2 β is the promoted Executor column (remeasure on 2.0.0
+          in progress); v1.6.10 is the historical second column on the same mock.
         </p>
       </Section>
 

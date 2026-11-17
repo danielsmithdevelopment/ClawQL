@@ -32,14 +32,14 @@ Most agent frameworks handle neither at the infrastructure level; they rely on e
 
 On ClawQL's lab build of the `celld` runtime (version 0.6.3 plus ClawQL's fixes), on one host, in celld's default fleet durability mode (two nodes with disk replicas on that host, Cloudflare R2 as the fleet bucket), against a mock upstream service:
 
-| Measurement | Result |
-| --- | --- |
-| Soak: repeated node restarts | 1,000 of 1,000 cycles, no failed readiness, no self-fencing |
-| Crash trials, killed at every phase of an action | 1,000 trials |
-| Wrong outcomes (repeated or lost actions) | **0** |
+| Measurement                                                              | Result                                                                         |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Soak: repeated node restarts                                             | 1,000 of 1,000 cycles, no failed readiness, no self-fencing                    |
+| Crash trials, killed at every phase of an action                         | 1,000 trials                                                                   |
+| Wrong outcomes (repeated or lost actions)                                | **0**                                                                          |
 | Crashes during an external call where the intent was visible on recovery | 241 of 243; the other 2 never sent the call, confirmed by their effect records |
-| Trials that missed the recovery deadline | 18 of 1,000 (1.8%, under our 2% limit) |
-| Median recovery time | About 17 seconds |
+| Trials that missed the recovery deadline                                 | 18 of 1,000 (1.8%, under our 2% limit)                                         |
+| Median recovery time                                                     | About 17 seconds                                                               |
 
 Zero wrong outcomes in 1,000 trials means the true rate is at most about 0.3%, with 95% confidence. It does not mean never, and we say so.
 
@@ -74,7 +74,7 @@ We publish failures alongside passes, because the failures are how the system go
 
 ## Beyond one machine
 
-*Design work, not yet built or measured.* Whitepaper cross-links: [§10](../vision/clawql-network-whitepaper-v0.2.md#10-the-decentralized-path-the-provider-network), [§11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate), [§28A](../vision/clawql-network-whitepaper-v0.2.md#28a-governed-on-chain-actions).
+_Design work, not yet built or measured._ Whitepaper cross-links: [§10](../vision/clawql-network-whitepaper-v0.2.md#10-the-decentralized-path-the-provider-network), [§11](../vision/clawql-network-whitepaper-v0.2.md#11-clawql-cellrt-the-runtime-substrate), [§28A](../vision/clawql-network-whitepaper-v0.2.md#28a-governed-on-chain-actions).
 
 - **Faster recovery without guessing.** When a service accepts idempotency keys, any replica could safely carry out an agent's recorded intent, so recovery would no longer wait for a lease to expire. This follows leaderless consensus designs such as QuePaxa, and will be modeled formally before it is built.
 - **Agreement among parties who don't trust each other.** For networks of independently operated nodes, consensus that tolerates malicious participants: asynchronous DAG-based protocols that never depend on timeouts, and designs that use attested hardware to need fewer replicas.
@@ -103,16 +103,16 @@ Everything above is reproducible from the public repository (links pinned to the
 
 ### Number verification (2026-11-11)
 
-| Claim | Source | Match |
-| --- | --- | --- |
-| Soak 1000/1000, 0 ready fails, 0 self-fences | `node-soak-lab-authorizing-mac-mini-identity-remeasure.json` · `cyclesCompleted=1000`, `readyFails=0`, `selfFences=0` | yes |
-| Same binary soak↔board | both files · `celldLabGitCommit=36d53565…`, `celldSha256=5abb5d06…` | yes |
-| Crash N=1000, 0 duplicates | remesure JSON · `n=1000`, `zeroDuplicates=true`, `gates.correctness.failures=0` | yes |
-| During-call 241/243 intent visible; 2 never sent | remesure · `duringCallVerifiedSent=241`, `duringCallN=243`; settle JSON · both `call_never_sent`, `lost_midflight_intent=false` | yes |
-| Availability 18/1000 (1.8%) | remesure · `gates.availability.failures=18`, `failureRate=0.018` | yes |
-| Median recovery ~17s | settle · `okFenceResumeMsP50=17067` (successful self-fence resume p50); earlier board ~6.7s | yes |
-| Rule-of-three ≤0.3% at N=1000 | standard 3/N upper bound | yes |
-| Payments not covered | cloud platform plan: Stripe write-ahead still open | yes |
-| Fleet mode, two nodes, one host | harness default `CELLD_DURABILITY=fleet`; remesure `nodeCount=2`, soak host mac-mini-colima — [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md) | yes |
+| Claim                                            | Source                                                                                                                                                                         | Match |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| Soak 1000/1000, 0 ready fails, 0 self-fences     | `node-soak-lab-authorizing-mac-mini-identity-remeasure.json` · `cyclesCompleted=1000`, `readyFails=0`, `selfFences=0`                                                          | yes   |
+| Same binary soak↔board                           | both files · `celldLabGitCommit=36d53565…`, `celldSha256=5abb5d06…`                                                                                                            | yes   |
+| Crash N=1000, 0 duplicates                       | remesure JSON · `n=1000`, `zeroDuplicates=true`, `gates.correctness.failures=0`                                                                                                | yes   |
+| During-call 241/243 intent visible; 2 never sent | remesure · `duringCallVerifiedSent=241`, `duringCallN=243`; settle JSON · both `call_never_sent`, `lost_midflight_intent=false`                                                | yes   |
+| Availability 18/1000 (1.8%)                      | remesure · `gates.availability.failures=18`, `failureRate=0.018`                                                                                                               | yes   |
+| Median recovery ~17s                             | settle · `okFenceResumeMsP50=17067` (successful self-fence resume p50); earlier board ~6.7s                                                                                    | yes   |
+| Rule-of-three ≤0.3% at N=1000                    | standard 3/N upper bound                                                                                                                                                       | yes   |
+| Payments not covered                             | cloud platform plan: Stripe write-ahead still open                                                                                                                             | yes   |
+| Fleet mode, two nodes, one host                  | harness default `CELLD_DURABILITY=fleet`; remesure `nodeCount=2`, soak host mac-mini-colima — [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md) | yes   |
 
 Binary identity (lab celld): commit `36d53565c8ffa6d31bb9dd39b6bcbac317c0629b`, sha256 `5abb5d06c3a4bd2f53b71475fa0d05574242978c60f830dc5e55edf52c86c47f`.
