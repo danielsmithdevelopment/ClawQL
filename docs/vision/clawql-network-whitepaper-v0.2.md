@@ -6,10 +6,10 @@
 
 **Daniel Smith · daniel@clawql.com · clawql.com**
 
-*Revision note: v0.2 revises sections 10, 11, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
+*Revision note: v0.2 adds section 28A, revises sections 10, 11, 20, 22, 24, 35, 36, 38, 44, 46 and 47, adds a glossary entry for trust tiers, and updates the `clawql-cellrt` row of the package reference. All other text is unchanged from v0.1 (August 2026).*
 
 
-**In-repo canonical copy** of Whitepaper v0.2 (draft). Crash-safety numbers in §11 are authorized on the lab build; evidence: [`docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Cloud plan (durability gate met): [`docs/gtm/clawql-cloud-platform-plan.md`](../gtm/clawql-cloud-platform-plan.md).
+**In-repo canonical copy** of Whitepaper v0.2 (draft). Crash-safety numbers in §11 are authorized on the lab build; evidence: [`docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md) · during-call settle [`v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json). Cloud plan: [`docs/gtm/clawql-cloud-platform-plan.md`](../gtm/clawql-cloud-platform-plan.md).
 
 ---
 
@@ -72,7 +72,7 @@ This document covers the full architecture: the protocol fabric that makes any t
 25. clawql-web3: Publish Once, Anchor Everywhere
 26. Chain Selection and the Tribalism Problem
 27. Relay Layers: Axelar, LayerZero, Wormhole, CCIP
-28. Provenance as a Service: Beyond AI
+28. Provenance as a Service: Beyond AI · 28A. Governed On-Chain Actions
 
 **Part VIII — Payments**
 
@@ -473,6 +473,61 @@ A notary uses it to timestamp a signed document without exposing the document's 
 
 This is, in the most literal sense, the same infrastructure used to make an AI agent's actions auditable, offered as a standalone service to any industry that has ever needed to prove something happened without asking anyone to simply take its word for it.
 
+## 28A. Governed On-Chain Actions
+
+*Status: design.*
+
+Provenance is the network's oldest relationship with blockchains: proving that something happened. Increasingly, agents also act on chains directly: moving funds, granting token allowances, swapping, deploying and calling contracts. As tokenized assets move onchain (the New York Stock Exchange has selected Avalanche as the ledger for clearing tokenized equities on its planned trading platform, pending regulatory approval), those actions become consequential, regulated and irreversible. A blockchain transaction cannot be recalled once it is final, so governance has to happen before signing, and the record has to be complete afterward. This section applies everything above to that case.
+
+### Reads are untrusted input
+
+Everything read from a chain is external content: token names, contract metadata, event logs, NFT attributes and verified-source comments can all carry instructions aimed at an agent. On-chain reads enter the agent with untrusted labels like any other external data, and a context built from them is untrusted. An agent that has read a malicious token's metadata cannot then approve its own transfer on the strength of that reading.
+
+### Every write follows one path
+
+&#91;embedded content: on-chain write path · gateway and chain enforce independently\]
+
+1. **Typed intent.** Every on-chain action is classified into an ActionType (transfer, allowance grant, swap, deploy, contract call) by decoding the transaction against the contract's ABI and function selector, deterministically, never by a model's reading. Calls to unverified contracts, whose functions cannot be decoded, fall to a person.
+2. **Simulate.** The transaction runs against live chain state before anything is signed. Risk signals (screened addresses, known-malicious contracts, unlimited allowance grants, unusual value) are attached as inputs to the decision, never as its authority.
+3. **Show the exact diff.** The approval screen shows the deterministic result of simulation: which balances change and by how much, which allowances are granted to whom, which contracts are called, and the fee. A model may add a plain-language explanation, but it is shown beside the diff, never instead of it, and it is labeled untrusted whenever on-chain content informed it.
+4. **Approve.** A person approves, bound to their identity, under the same mandate rules as every other consequential action. Autonomous agents act only within limits a person set in advance.
+5. **Sign.** Keys never enter an agent's context. A person signs in their own wallet, or an autonomous agent signs through a smart account whose session keys are held in the vault or inside an attested enclave.
+6. **Journal, then broadcast.** The signed transaction and its nonce are written ahead to the journal before broadcast. A given nonce can land on a chain only once, so the nonce is a natural idempotency key: after a crash, recovery checks the chain for that nonce and transaction hash before anything is rebroadcast, and a transfer can never be sent twice.
+7. **Confirm and record.** Inclusion and finality are tracked as explicit states (pending, included, finalized, reorganized out), with a chain-specific confirmation depth before an action counts as done. Intent, simulation, approval, signature, transaction hash and finality all go into the WORM trail and are anchored with the next batch (Section 25).
+
+### Two independent enforcement layers
+
+For autonomous agents, limits are enforced twice, by systems that do not share a failure mode. The gateway enforces mandates, scope and approvals before signing. The chain itself enforces the smart account's session-key policy: spend caps per transaction and per period, allowed contracts and function selectors, and an expiry, using account-abstraction standards such as ERC-4337 and EIP-7702. If the gateway were bypassed or compromised, the chain would still refuse anything outside the session key's policy. Revoking a session key is itself a governed, audited action, and a key's limits are always narrower than the mandate that authorized it.
+
+### Simulation is not a guarantee
+
+Chain state can change between simulation and inclusion, through ordinary activity or deliberate front-running. Writes therefore carry their own bounds (slippage limits, deadlines, and minimum received amounts) so a transaction that would land outside what was approved reverts instead of executing. Where available, transactions go through private submission channels to reduce front-running, and a material difference between the simulated and the final on-chain result is recorded and flagged for review.
+
+### Policy over types
+
+Because every action is typed, policy is written over types rather than addresses or strings, through the same ontology-backed policy described in Section 20: for example, "any allowance grant above a set amount, or any unlimited allowance, requires a person", or "this agent may swap only between these assets, up to this value per day". A rule written this way cannot be dodged by routing the same action through a different-looking call.
+
+### Policy on-chain, execution through CRE
+
+A smart contract cannot call an off-chain API, hold a secret, or act on its own, and every call on a public chain is visible to everyone. So the gateway itself does not move on-chain. Its authority does:
+
+- **On-chain:** the policy registry (mandates, scopes, limits and revocations, readable by anyone and changeable by no single operator, ClawQL included), multi-party approvals (for example two of three named signers for a high-risk action), settlement, and commitments of every decision.
+- **Execution through the Chainlink Runtime Environment.** CRE runs workflow logic across a decentralized oracle network that reaches consensus on results. ClawQL's gateway logic (policy check, redaction, labels and projection) runs as a confidential workflow inside an attested enclave, whose attestation the network verifies before any result is signed. Tool calls that touch secrets, private data or side effects go through CRE's Confidential HTTP capability, which decrypts credentials only inside the enclave and supports requests that must execute exactly once, such as payments. Public reads use regular HTTP, where each node fetches independently and the network agrees on the result.
+- **Back on-chain:** a signed report is written only after consensus and attestation checks pass, and a receiver contract executes it under the on-chain policy.
+
+**Trigger, check, perform.** This follows the upkeep model that Chainlink Automation (formerly Chainlink Keepers) established: a trigger (a schedule, an on-chain event, or a `clawql-streams` event) starts the workflow; the check (ClawQL's policy evaluation, the role `checkUpkeep` played) decides whether anything should happen; and the perform step writes the approved action on-chain, the role `performUpkeep` played. As with upkeeps, the perform step must be idempotent, which the write-ahead journal and nonce rules above guarantee. Chainlink retired Automation in 2026 (v1.x on June 30 and v2.1 on July 31) in favor of CRE, which maps upkeeps directly onto workflows, so ClawQL builds on CRE rather than on Automation registries.
+
+**When to use it.** Consensus execution is slower and costs more per call than a direct gateway call, APIs whose responses vary between nodes need explicit aggregation rules, and only the confidential capabilities keep responses private from the network. It is therefore reserved for actions where no single operator should be trusted: high-value actions, actions shared between parties that do not trust each other, and the public Virtual Gateways of the provider network (Section 10). Everyday tool calls stay on the direct gateway path. **CRE execution is opt-in per deployment and never the default.** Running gateway logic in an enclave has real costs beyond consensus latency: a hardware enclave (as distinct from a hardware-isolated VM such as a Nitro Sandbox) has no direct network access or persistent storage, so every network call and every write must be proxied through its parent instance. CRE sits behind ClawQL's execution interface like every other backend.
+
+### What will be measured before any claim
+
+- **Injection through on-chain data:** a test suite of malicious token names, contract metadata and event payloads, with zero out-of-scope signed transactions as the pass condition.
+- **Defense in depth, proven:** the on-chain layer tested with the gateway deliberately disabled, showing the session-key policy alone blocks out-of-limit writes.
+- **Crash safety:** kill tests at every step of the write path, with zero duplicate transactions as the pass condition, in the same style as the durability boards.
+- **Diff accuracy:** simulated effects compared with final on-chain results across a test set, with every divergence explained.
+
+* **Policy on-chain path:** every decision commitment posted on-chain matches the gateway's WORM record for that action, and no receiver contract executes a report that lacks a verified attestation.
+
 # Part VIII — Payments
 
 ## 29. clawql-payments: Settlement Without a Single Rail
@@ -505,7 +560,7 @@ This generalizes cleanly to the same protocol-agnostic principle that governs th
 
 ## 33. Comparison to Chainlink CRE
 
-Chainlink's Runtime Environment solves a closely related problem — off-chain conditions triggering on-chain smart contract execution — and solves it well within its scope. It is, deliberately, EVM-centric: its execution model is JavaScript-based serverless compute, its decentralized oracle network reaches consensus specifically to deliver verified data onto EVM-compatible chains, and its strongest integrations are with exactly the kind of institutional financial workflows described in its own public case studies — national statistical agencies publishing economic data, market-data providers, cross-border settlement pilots.
+Chainlink's Runtime Environment solves a closely related problem — off-chain conditions triggering on-chain smart contract execution — and solves it well within its scope. It is, deliberately, EVM-centric: its workflows are written in Go or TypeScript and compiled to WebAssembly, its decentralized oracle network reaches consensus specifically to deliver verified data onto EVM-compatible chains, and its strongest integrations are with exactly the kind of institutional financial workflows described in its own public case studies — national statistical agencies publishing economic data, market-data providers, cross-border settlement pilots. CRE also succeeded Chainlink Automation, the earlier keeper network for scheduled and event-triggered on-chain work, which was retired in 2026, and it now offers confidential execution inside attested enclaves (Section 28A).
 
 `clawql-streams` solves the general case CRE is a specific instance of. Where CRE's trigger conditions and its actions both live on or near an EVM chain, `clawql-streams`'s triggers and actions can each independently be any protocol the fabric supports — REST, GraphQL, gRPC, WebSocket, CLI, native MCP, or any blockchain's RPC interface, including but not limited to the EVM family CRE targets natively. Where they overlap — an off-chain condition triggering an EVM-chain action — `clawql-web3`'s CRE integration, described in Part VII, is the practical implementation, and the two systems are complementary rather than competing: CRE remains the right tool specifically for EVM-native automation, and `clawql-streams` is the layer that extends the same automation pattern to everything CRE doesn't reach.
 

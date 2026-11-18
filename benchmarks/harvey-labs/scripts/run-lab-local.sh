@@ -96,12 +96,13 @@ if [[ "${CLAWQL_LAB_SKIP_CLONE:-0}" == "1" ]]; then
   fi
 else
   mkdir -p "$(dirname "${HARVEY_LABS}")"
+  HREF="${CLAWQL_LAB_HARVEY_REF:-7f9b1ee19f9224576a5a5143c4e6f75842ac7020}"
   if [[ ! -d "${HARVEY_LABS}/.git" ]]; then
-    git clone --depth 1 https://github.com/harveyai/harvey-labs.git "${HARVEY_LABS}"
-  else
-    git -C "${HARVEY_LABS}" fetch --depth 1 origin HEAD
-    git -C "${HARVEY_LABS}" reset --hard FETCH_HEAD
+    git clone https://github.com/harveyai/harvey-labs.git "${HARVEY_LABS}"
   fi
+  git -C "${HARVEY_LABS}" fetch origin "${HREF}"
+  git -C "${HARVEY_LABS}" checkout --detach "${HREF}"
+  echo "harvey-labs pinned: $(git -C "${HARVEY_LABS}" rev-parse HEAD)"
 fi
 echo "::endgroup::"
 
@@ -229,7 +230,7 @@ run_and_eval() {
   export CLAWQL_LAB_ARM="${arm}"
   export CLAWQL_LAB_OPENROUTER_OPENAI_BASE_URL="${AGENT_BASE}"
   set +e
-  uv run python -m harness.run \
+  uv run python -m lab_core.harness.run \
     --model "${model_flag}" \
     --task "${TASK}" \
     --max-turns "${MAX_TURNS}" \

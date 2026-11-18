@@ -82,6 +82,13 @@ export class LabMcpClient {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
     };
+    // Auth: ClawQL MCP may run with a static API key (auth-ON). Read from
+    // env only — never from Keychain, never logged.
+    const apiKey =
+      process.env.CLAWQL_MCP_API_KEY ?? process.env.CLAWQL_API_KEY ?? "";
+    if (apiKey) {
+      this.sessionHeaders["x-api-key"] = apiKey;
+    }
     this._rpcId = 0;
     this._sessionReady = false;
   }
