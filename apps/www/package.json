@@ -22,10 +22,8 @@
     ]
   },
   "dependencies": {
-    "@hono/node-server": "^2.1.6",
     "@tailwindplus/elements": "0.0.0-insiders.98ea4bc",
     "clsx": "^2.1.1",
-    "hono": "^4.13.16",
     "next": "16.4.5",
     "react": "^19",
     "react-dom": "^19",
