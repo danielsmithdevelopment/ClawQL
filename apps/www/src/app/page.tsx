@@ -303,7 +303,7 @@ export default function Page() {
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="The open-source MCP core is production-ready today — npx, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or request early access for managed hosting. Managed IDP hosting is early access with founder-led onboarding."
+          answer="The open-source MCP core is production-ready today — npx, Helm, case studies, and an optional operator scaffold. Self-host free on Apache 2.0, or request early access for managed hosting. Managed IDP hosting is early access with founder-led onboarding."
         />
         <Faq
           id="faq-6"

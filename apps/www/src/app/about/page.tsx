@@ -58,9 +58,9 @@ export default function Page() {
             <h3 className="font-semibold text-mist-950 dark:text-white">Current state</h3>
             <p className="mt-2">
               The open-source MCP server is production-ready and self-hostable today — npx, Helm, published case
-              studies, and a v7 operator for Kubernetes. Managed gateway hosting is early access (waitlist, then paid
-              tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on managed hosting;
-              the core product is shipping and in use.
+              studies, and an optional operator scaffold for Kubernetes. Managed gateway hosting is early access
+              (waitlist, then paid tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue
+              on managed hosting; the core product is shipping and in use.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">

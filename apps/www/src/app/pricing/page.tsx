@@ -448,12 +448,12 @@ export default function Page() {
         <Faq
           id="faq-3"
           question="How does ClawQL compare to executor.sh?"
-          answer={`executor.sh is a tool — it routes MCP calls well and has a head start on developer marketing. ClawQL covers the same Layer 1 search/execute pattern, plus compounding efficiency layers (shipped and planned), persistent vault memory, Onyx search, unlimited executions (no meter), and optional IDP from ${pricing.starter.monthlyPrice}/mo. At gateway tiers, ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) deliver more for less than executor.sh Team ($150/mo + overage). Buyers deserve an honest infrastructure evaluation against measured, equal-arm results.`}
+          answer={`executor.sh is a tool — it routes MCP calls well and has a head start on developer marketing. ClawQL covers the same Layer 1 search/execute pattern, plus compounding efficiency layers (shipped and planned), persistent vault memory, Onyx search, unlimited executions (no meter), and optional IDP from ${pricing.starter.monthlyPrice}/mo. At gateway tiers, ClawQL Developer (${pricing.developer.monthlyPrice}/mo) and Teams (${pricing.teams.monthlyPrice}/mo) can be compared on measured equal-arm results — see /benchmarks. Buyers deserve an honest infrastructure evaluation against those measurements.`}
         />
         <Faq
           id="faq-3b"
           question="Are MCP executions really unlimited?"
-          answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. executor.sh is the outlier with execution caps and overage billing."
+          answer="Yes. Every hosted tier — Developer through Enterprise — includes unlimited MCP executions. We price on hosting model, storage, and plugin bundles because those drive real infrastructure cost — not per-call metering or egress on memory recall. Gateway tiers scale at the global edge; taxing executions or recall only encourages customers to throttle their agents. Some gateways meter executions or add overage billing; ClawQL prices hosting, storage, and plugin bundles instead."
         />
         <Faq
           id="faq-payments-p2p"

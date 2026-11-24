@@ -349,7 +349,7 @@ export function IdpLanding() {
               counsel with watermarked PDFs.”
             </blockquote>
             <p className="text-sm/7 text-mist-700 dark:text-mist-300">
-              Same MCP endpoint your agents already use — ClawQL is the only IDP that is also a native MCP server. See
+              Same MCP endpoint your agents already use — MCP-native IDP pipeline on the gateway. See
               the <Link href={`${site.urls.docs}/providers/idp-pipeline`}>IDP pipeline reference</Link> and{' '}
               <Link href={`${site.urls.docs}/vision/idp-platform`}>IDP platform docs</Link>.
             </p>

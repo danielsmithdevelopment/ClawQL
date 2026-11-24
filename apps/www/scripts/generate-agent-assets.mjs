@@ -191,7 +191,7 @@ function buildAuthMd() {
           'Operator creates account or self-hosts; MCP URL and tokens configured in the client.',
       },
     ],
-    identity_types_supported: ['anonymous', 'identity_assertion'],
+    identity_types_supported: ['unauthenticated', 'identity_assertion'],
     identity_assertion: {
       assertion_types_supported: [
         'urn:ietf:params:oauth:token-type:id-jag',

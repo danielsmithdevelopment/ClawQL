@@ -17,7 +17,7 @@ const FABRIC_DOCS = protocolFabricSurfaces.docsHref
 const modes = [
   {
     name: 'Reactive',
-    detail: 'Every event writes to WORM immediately — compliance-grade recording whether an agent wakes or not.',
+    detail: 'Every event writes to hash-chained WORM immediately — tamper-evident recording whether an agent wakes or not.',
   },
   {
     name: 'Ambient',

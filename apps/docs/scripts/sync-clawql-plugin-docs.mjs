@@ -32,10 +32,12 @@ const JOBS = [
   },
 ]
 
-function findRepoRootWithDocs() {
+function findRepoRootWithDocs(srcRelative) {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
+    // Prefer monorepo root that holds the specific source file — apps/docs may
+    // itself have a `docs/` directory that is not the canonical tree.
+    if (fs.existsSync(path.join(dir, srcRelative))) {
       return dir
     }
     const parent = path.dirname(dir)
@@ -69,9 +71,8 @@ function rewritePluginDocAnchors(body) {
 
 fs.mkdirSync(dstDir, { recursive: true })
 
-const repoRoot = findRepoRootWithDocs()
-
 for (const job of JOBS) {
+  const repoRoot = findRepoRootWithDocs(job.srcRelative)
   const src = repoRoot ? path.join(repoRoot, job.srcRelative) : null
   if (!src || !fs.existsSync(src)) {
     if (fs.existsSync(job.dst)) {

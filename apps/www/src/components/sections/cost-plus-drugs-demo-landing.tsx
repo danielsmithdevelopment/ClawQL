@@ -84,9 +84,9 @@ const steps = [
   {
     title: 'Everything lands in the audit trail',
     action:
-      'Price reads, mandate park, and resume finalize append to the MCP audit ring. With CLAWQL_WORM_ENABLED=1 the gateway dual-writes a hash-chained, tamper-evident trail to durable storage (sqlite/postgres + optional S3). Storage-level WORM retention is separate: enable S3/MinIO Object Lock in compliance mode (verified by tests that refuse deletion of locked versions). Offline demo JSONL is a walkthrough stand-in. Audit payloads use hashes/refs — not raw patient fields.',
+      'Price reads, mandate park, and resume finalize append to the MCP audit ring. Local hash-chained WORM is on by default (sqlite/postgres). Remote Object Lock (S3/MinIO compliance mode) defaults on for Cloud paid and regulated tiers; self-host remote Object Lock is opt-in. Offline demo JSONL is a walkthrough stand-in. Audit payloads use hashes/refs — not raw patient fields.',
     result:
-      'Tamper-evident dual-write (opt-in) · WORM via S3 Object Lock when configured · hash-chained seq 1→N',
+      'Local hash-chained WORM by default · remote Object Lock on Cloud paid/regulated · self-host remote opt-in',
   },
 ] as const
 

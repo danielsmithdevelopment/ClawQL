@@ -475,7 +475,7 @@ export function IndustryPage({ industry }: { industry: Industry }) {
           headline="Example agent workflows"
           subheadline={
             <p>
-              Representative MCP tool sequences with step-by-step detail — production deployments add tenant
+              Representative MCP tool sequences with step-by-step detail — regulated or multi-tenant operators typically add tenant
               classifiers, RBAC, and your compliance policies on top.
             </p>
           }

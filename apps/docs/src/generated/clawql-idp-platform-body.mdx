@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP GTM strategy & landing brief](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](/learn/document-pipeline) · [Requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [OpenBench advanced specs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-advanced-specs.md) · [Master enablement guide](/architecture) · [Deployment guide](/deployment/operations-guide)
+**Related:** [IDP GTM strategy & landing brief](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) · [Go-to-market playbook (zero → shared tenancy)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md) · [IDP pipeline hub](/learn/document-pipeline) · [Requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [OpenBench advanced specs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-advanced-specs.md) · [OpenBench results ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md) (live A/B evidence) · [Master enablement guide](/architecture) · [Deployment guide](/deployment/operations-guide)
 
 ---
 
@@ -43,22 +43,22 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 - **End-to-end IDP pipeline:** ingest → convert → redact → archive → semantically index → share — one Helm chart.
 - **Durable cross-session agent memory** (Markdown, local, portable). OKF v0.2 trust signals (`generated`, `verified`, `stale_after`, `status`, `superseded_by`) in vault entries. `memory_ingest` / `memory_recall` tools. See [`okf.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf.md).
 - **PorTAL** (Ramp Labs, Apache 2.0): Portable Task-specific Adapter Learning via `--format portal-bundle` in the flywheel export pipeline. See [`portal-flywheel.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/portal-flywheel.md).
-- **Sovereign multi-model inference fleet:** fine-tuned Qwen3.6-27B + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
+- **Sovereign multi-model inference fleet:** tenant-bound fine-tuned open model (current plan bases: Qwen3.8-27B / Qwen3.6-35B-A3B) + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
 - **Defense-in-depth security:** Kata container VM isolation, WORM Merkle audit logs, Panguard ATR fail-closed, model weight integrity verification. Documented at [defense-in-depth](https://docs.clawql.com/security/defense-in-depth).
 
 ---
 
 ## Business Value at a Glance
 
-| Value Driver                | Detail                                                                                                                                                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Token efficiency**        | Twelve compounding layers. ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste. |
-| **Cost reduction**          | Replaces $8,000–15,000+/month incumbent stacks. ClawQL Dedicated + Sovereign Security Pack: **$799/month** maximum (indicative GTM).                                                                        |
-| **Data sovereignty**        | Provable at the infrastructure layer. Istio AuthorizationPolicies enforce egress blocks — not only a contractual claim.                                                                                     |
-| **Persistent agent memory** | Unique among IDP / VDR / MCP gateway competitors: cross-session vault memory with OKF trust signals.                                                                                                        |
-| **AI readiness**            | MCP-native from day one. Improves as models improve. Token layers mean agent cost drops as usage scales.                                                                                                    |
-| **VDR market entry**        | Coneshare delivers VDR capabilities at a fraction of incumbent pricing, with full pipeline integration.                                                                                                     |
-| **Hosted revenue**          | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core.                                                                                                              |
+| Value Driver                | Detail                                                                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Token efficiency**        | Compounding token-efficiency layers (shipped and planned). ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste. |
+| **Cost reduction**          | Replaces $8,000–15,000+/month incumbent stacks. ClawQL Dedicated + Sovereign Security Pack: **$799/month** maximum (indicative GTM).                                                                                                        |
+| **Data sovereignty**        | Provable at the infrastructure layer. Istio AuthorizationPolicies enforce egress blocks — not only a contractual claim.                                                                                                                     |
+| **Persistent agent memory** | Unique among IDP / VDR / MCP gateway competitors: cross-session vault memory with OKF trust signals.                                                                                                                                        |
+| **AI readiness**            | MCP-native from day one. Improves as models improve. Token layers mean agent cost drops as usage scales.                                                                                                                                    |
+| **VDR market entry**        | Coneshare delivers VDR capabilities at a fraction of incumbent pricing, with full pipeline integration.                                                                                                                                     |
+| **Hosted revenue**          | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core.                                                                                                                                              |
 
 ---
 
@@ -74,7 +74,7 @@ ClawQL is available in configurations that run identical pipeline logic.
 
 The GPL-3.0 Paperless-ngx dependency is **removed from the hosted stack**. The ClawQL-native archive layer (Nextcloud + Postgres + Onyx) replaces it. Self-hosted operators who prefer Paperless-ngx can enable it via feature toggle. See [Licensing Summary](#licensing-summary).
 
-Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles) and [IDP GTM](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md).
+Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles), [IDP GTM](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md), and the [GTM playbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md).
 
 ---
 
@@ -93,22 +93,22 @@ ClawQL's IDP platform automates the full document lifecycle: ingestion, classifi
 
 ### Component Map
 
-| Component                    | Role in Platform                                                                  |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| **ClawQL Core**              | MCP server, token-efficiency engine, AI orchestration (TypeScript, Apache 2.0)    |
-| **ClawQL Inference Gateway** | Policy-driven model routing; `/v1/chat/completions`; NSV/SGDOP; Layer 8+          |
-| **Apache Tika**              | Universal parsing and metadata (1,000+ formats)                                   |
-| **Gotenberg**                | Document-to-PDF (LibreOffice + Chromium)                                          |
-| **Stirling-PDF**             | PDF ops, PII redaction, OCR, Merkle audit generation                              |
-| **ClawQL Archive Layer**     | Nextcloud + Postgres metadata + Onyx. GPL-free. Replaces Paperless-ngx on hosted. |
-| **Onyx**                     | Semantic search + 40+ connectors                                                  |
-| **Obsidian Vault**           | Durable cross-session agent memory (Markdown)                                     |
-| **Nextcloud**                | Human file storage, collaboration, archive UI                                     |
-| **Coneshare**                | Secure sharing, VDRs, engagement analytics (MIT)                                  |
-| **Qwen3.6-27B (fine-tuned)** | Core document worker; vLLM NVFP4; L4 GPU                                          |
-| **Ornith 1.0 35B MoE**       | Coding specialist; serve as-is (MIT, DeepReinforce AI)                            |
-| **Phi-4 14B (fine-tuned)**   | Utility / memory worker                                                           |
-| **Langfuse**                 | Trace capture, datasets, flywheel observability (LGTM+)                           |
+| Component                              | Role in Platform                                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| **ClawQL Core**                        | MCP server, token-efficiency engine, AI orchestration (TypeScript, Apache 2.0)    |
+| **ClawQL Inference Gateway**           | Policy-driven model routing; `/v1/chat/completions`; NSV/SGDOP; Layer 8+          |
+| **Apache Tika**                        | Universal parsing and metadata (1,000+ formats)                                   |
+| **Gotenberg**                          | Document-to-PDF (LibreOffice + Chromium)                                          |
+| **Stirling-PDF**                       | PDF ops, PII redaction, OCR, Merkle audit generation                              |
+| **ClawQL Archive Layer**               | Nextcloud + Postgres metadata + Onyx. GPL-free. Replaces Paperless-ngx on hosted. |
+| **Onyx**                               | Semantic search + 40+ connectors                                                  |
+| **Obsidian Vault**                     | Durable cross-session agent memory (Markdown)                                     |
+| **Nextcloud**                          | Human file storage, collaboration, archive UI                                     |
+| **Coneshare**                          | Secure sharing, VDRs, engagement analytics (MIT)                                  |
+| **Tenant-bound fine-tuned open model** | Core document worker; vLLM NVFP4; L4 GPU                                          |
+| **Ornith 1.0 35B MoE**                 | Coding specialist; serve as-is (MIT, DeepReinforce AI)                            |
+| **Phi-4 14B (fine-tuned)**             | Utility / memory worker                                                           |
+| **Langfuse**                           | Trace capture, datasets, flywheel observability (LGTM+)                           |
 
 ---
 
@@ -127,7 +127,7 @@ A single agent prompt — _“Process Q1 invoices, redact PII, cross-reference o
 
 ### Twelve-Layer Token Efficiency Architecture
 
-Most agent frameworks reduce cost at one point in the lifecycle. ClawQL addresses **twelve** points. Layers 1–8 are the MCP/gateway stack described below; Layers 9–12 are inference-gateway extensions ([canonical reference](/architecture/token-efficiency)). The nearest MCP gateway competitor (executor.sh) implements Layer 1 only.
+Most agent frameworks reduce cost at one point in the lifecycle. ClawQL addresses **twelve** points. Layers 1–8 are the MCP/gateway stack described below; Layers 9–12 are inference-gateway extensions ([canonical reference](/architecture/token-efficiency)). Equal-arm gateway measurements live on [the public benchmarks page](https://clawql.com/benchmarks) — cite those, not competitor jabs.
 
 | Layer                                 | Mechanism and measured impact                                                                                                                         |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -334,35 +334,22 @@ Full cryptographic trail from step 1 through 10.
 
 ## Competitive Positioning, Pricing, and Verticals
 
-### MCP Gateway: executor.sh — One Layer vs Twelve
+### MCP gateway comparisons
 
-| ClawQL capability               | executor.sh                                 |
-| ------------------------------- | ------------------------------------------- |
-| 12-layer token efficiency       | Layer 1 only                                |
-| Layers 2–12                     | None                                        |
-| Persistent vault memory         | None                                        |
-| Onyx semantic search            | None                                        |
-| Full IDP + Merkle audit         | None                                        |
-| Coneshare VDR                   | None                                        |
-| Sovereign LLM fleet             | None                                        |
-| NSV/SGDOP ensemble coordination | None                                        |
-| Defense-in-depth docs           | Secrets + basic policy; no equivalent depth |
-| GitHub stars                    | Ahead on adoption timing — not capability   |
-
-executor.sh is a **stateless tool router**. ClawQL is a **stateful agent operating system**.
+Compare gateways only with **measured, equal-arm** results ([`/benchmarks`](https://clawql.com/benchmarks) · [`openbench-results-ledger.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md)). Do not treat marketing layer-count claims as evidence.
 
 ### Hosted Plan Pricing (July 2026 — plugin bundles)
 
-| Tier                    | Price          | Notes                                                                                             |
-| ----------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
-| Self-hosted             | $0             | Full OSS; self-managed                                                                            |
-| Developer (planned)     | $29–99/mo      | Gateway + memory (+ Onyx on Teams); no IDP/GPU                                                    |
-| Shared                  | $299/mo        | Full IDP + Onyx + VDR + vault                                                                     |
-| Dedicated               | $599/mo        | Single-tenant; sovereign AI bundle; SSO/RBAC                                                      |
-| Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                        |
-| Sovereign Security Pack | +$200/mo       | Kata, weight integrity, WORM Merkle, Panguard, YubiKey signing, Presidio pre-log, monthly posture |
+| Tier                    | Price          | Notes                                                                                                                                                                      |
+| ----------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted             | $0             | Full OSS; self-managed                                                                                                                                                     |
+| Developer (planned)     | $29–99/mo      | Gateway + memory (+ Onyx on Teams); no IDP/GPU                                                                                                                             |
+| Shared                  | $299/mo        | Full IDP + Onyx + VDR + vault                                                                                                                                              |
+| Dedicated               | $599/mo        | Single-tenant; sovereign AI bundle; SSO/RBAC                                                                                                                               |
+| Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                                                                                                 |
+| Sovereign Security Pack | +$200/mo       | Kata, weight integrity, Panguard fail-closed, YubiKey signing, Presidio pre-log, monthly posture (base local WORM is on by default; Object Lock on Cloud paid / regulated) |
 
-> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) for Starter/Business ladder variants.
+> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) for Starter/Business ladder variants and [clawql-gtm-playbook.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md) for corrected bootstrap burn and shared-tenancy economics.
 
 ### Full Stack Replacement Value
 
@@ -381,16 +368,46 @@ Representative: 25 users, 25k docs/mo, VDR + compliance.
 
 **Real estate / Keller Williams Command + Drive:** MCP + memory + Onyx at Teams price; Coneshare for disclosure packages; classify/extract for TC workflows.
 
-**Software / technology:** One gateway for GitHub/Linear/Jira/Sentry/Slack; vault for eng decisions; Onyx over Notion/Confluence; Panguard + audit for governed tool use. Competes with executor.sh Team while adding memory + security depth.
+**Software / technology:** One gateway for GitHub/Linear/Jira/Sentry/Slack; vault for eng decisions; Onyx over Notion/Confluence; Panguard + audit for governed tool use.
+
+### Empirically verified platform claims (OpenBench A/B)
+
+Several properties previously stated only as architecture are now **live A/B-verified** on GitHub Actions with a frugal model (`openrouter/deepseek/deepseek-chat`), graders that require real `tool:clawql_*` evidence (not prompt guessing), and hard spend caps. Canonical scoreboard: [`docs/benchmarks/openbench-results-ledger.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md).
+
+| Platform claim                                                | What the cell proves                                                                                | Best on / off                                                          | Evidence run                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ouroboros stops strategy thrash**                           | On converges; off thrashs (latency/cost, not just “nice loop”)                                      | **1.0** (5 turns, ~78s) / **0.0** (~167s) — also with `doom_loop=deny` | [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642); deny [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277); replicated [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) |
+| **Vault memory under pressure**                               | ingest→recall; recall after seed removal; nested recipe under token budget                          | **1.0/0.0**, **1.0/0.333**, **1.0/0.0**                                | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516); token-pressure [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)                                                                                            |
+| **Search-first discovery (efficiency Layer 1 behavior)**      | Agent must call `clawql_search`; instruction-only guesses fail the grader                           | **1.0 / 0.0**                                                          | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)                                                                                                                                                                                                     |
+| **Panguard fail-closed at runtime**                           | Denied execute surfaces policy block; on writes evidence trail                                      | **1.0 / 0.0**                                                          | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)                                                                                                                                                                                                     |
+| **Cache scratch handoff**                                     | `clawql_cache` set/get assembles secret across turns                                                | **1.0 / 0.0**                                                          | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)                                                                                                                                                                                                     |
+| **PageIndex long-doc Q&A**                                    | build_tree + synthesize finds buried code without stuffing full text                                | **1.0 / 0.0**                                                          | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)                                                                                                                                                                                                     |
+| **Codegraph + schedule + external ingest + hybrid PageIndex** | Structural index, synthetic dry_run monitors, bulk MD ingest→recall, handbook via PageIndex         | **1.0 / 0.0** each                                                     | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377); ingest [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038); hybrid [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)   |
+| **Notify + sandbox + composed safe-rollout (P2)**             | Stubbed Slack `notify`; Docker `sandbox_exec` trusted token; search→dry_run×2→audit→ingest sequence | **1.0 / 0.0** each                                                     | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)                                                                                                                                                                                                     |
+| **Onyx knowledge + vault wikilink hop (P2.5)**                | Stubbed `knowledge_search_onyx` cite; `memory_recall` follows `[[wikilinks]]` to linked fact        | **1.0 / 0.0** each                                                     | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)                                                                                                                                                                                                     |
+
+**Still unproven / honest gaps** (do not overclaim): most headline cells are still **n=1–2** (expand to n=3–5 before statistical confidence language); live Onyx / live Slack / Argo / R2 sync remain ops-integration (not PR OpenBench); earlier OpenRouter **402 credit** hangs were infra, not claim regressions — see the [results ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md).
+
+### Shipped vs roadmap (honest scope)
+
+| Capability                                                | Status                                                                                                                                                                     |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ClawQL Core (search, execute, audit, cache)               | **Shipped** — open source, case studies                                                                                                                                    |
+| Vault memory, Onyx search, IDP pipeline                   | **Shipped** — self-host and early hosted tenants                                                                                                                           |
+| Ouroboros evolutionary loop library                       | **Shipped** — `clawql-ouroboros` package                                                                                                                                   |
+| DAOS swarm coordination (NSV, SGDOP, Diversity Dividends) | **Roadmap** — specified in [DAOS build plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-build-plan-v2.7.1.md); not production-hardened |
+| Tenant-bound fine-tuned models (Qwen3.6 family)           | **Early** — deliberate bet; newer than incumbent cloud APIs; name maturity risk in regulated evaluations                                                                   |
+
+ClawQL's MCP-native architecture benefits from improvements in frontier model capabilities. Tenant-bound fine-tunes are a differentiation bet with explicit maturity risk — regulated buyers should weigh architecture against reference history.
 
 ### Where Competitors Have Genuine Advantages
 
-| Gap                             | Honest assessment                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| Certifications (SOC 2, FedRAMP) | Controls architecturally present; audit process remaining.                     |
-| Pre-trained skill libraries     | ABBYY’s catalog is larger; ClawQL vertical adapters are deeper where shipped.  |
-| M&A brand                       | Intralinks embedded in IB relationships — references required.                 |
-| executor.sh DX / stars          | Strong developer experience; answer is Developer/Teams tier + memory/security. |
+| Gap                                 | Honest assessment                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Compliance reports (SOC 2, FedRAMP) | ClawQL holds **no** SOC 2 Type II report and **no** FedRAMP authorization; self-hosted agency patterns only. |
+| Pre-trained skill libraries         | ABBYY’s catalog is larger; ClawQL vertical adapters are deeper where shipped.                                |
+| M&A brand                           | Intralinks embedded in IB relationships — references required.                                               |
+| Peer gateway awareness              | Some tools have earlier developer mindshare; answer with measured evidence and shipped depth.                |
 
 ---
 
@@ -435,7 +452,7 @@ Hosted Dedicated/Enterprise run a sovereign fleet inside the tenant boundary. Ha
 
 | Model                  | Role                                                      |
 | ---------------------- | --------------------------------------------------------- |
-| Qwen3.6-27B FT (NVFP4) | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
+| Open-model FT (NVFP4)  | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
 | Ornith 35B MoE (as-is) | Coding specialist — do **not** LoRA away self-scaffolding |
 | Phi-4 14B FT           | Utility / memory / metadata                               |
 | Gemma 4 31B            | NSV/SGDOP diversity only                                  |
@@ -487,7 +504,29 @@ Infrastructure timeouts (OpenCode hang, no tools) are noise, not claim failures.
 
 ### Reasoning Trace Protocol (RTP)
 
-OpenBenchTrace (outer envelope) + RTP (inner reasoning structure) are complementary. NSV/SGDOP used for schema governance in RTP and runtime ensemble coordination in ClawQL — same math, two scales.
+OpenBenchTrace and RTP solve adjacent problems and compose rather than compete.
+
+| Layer              | Role                                                                                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenBenchTrace** | Collection / publish envelope — run_id, arm, task_id, grader verdict, spend caps, clawql_version, scrub provenance, Hugging Face–citable batch  |
+| **RTP**            | Domain-agnostic reasoning schema — Intent → Retrieval → Reasoning → Execution → Delta → Verdict, with consent provenance and turn hash chaining |
+
+Every passing OpenBench trial should also be a valid RTP session: OpenBenchTrace wraps RTP. Outer fields carry benchmark metadata RTP need not know about; inner agent behavior maps to RTP’s six-node sequence:
+
+| Agent step             | RTP node  | Notes                                                      |
+| ---------------------- | --------- | ---------------------------------------------------------- |
+| Task prompt            | Intent    | rawPrompt + parsedGoal                                     |
+| memory_recall / search | Retrieval | queries + sources                                          |
+| Pre-tool chain         | Reasoning | seedChain + selectedTool                                   |
+| Tool call              | Execution | toolName + payload                                         |
+| State change           | Delta     | stateBeforeHash / stateAfterHash                           |
+| OpenBench grader       | Verdict   | Tier 1 deterministic (e.g. policy-deny) or Tier 2 semantic |
+
+Practical design rule: serialize `messages` / `tool_calls` into an RTP-compatible `turnSequence`; map grader → RTP verdict; Merkle / content hashes ↔ RTP turn chaining. Publish as OpenBenchTrace (narrow, OpenBench-specific) and as RTP-compatible traces (broad, any fine-tune pipeline).
+
+**Consent:** RTP requires a consent token before the session. Writers mint (or accept) a gateway JWT with `community_model` + `dataset_licensing` scopes at collect time — set `CLAWQL_OPENBENCH_CONSENT_TOKEN` or `CLAWQL_RTP_CONSENT_SECRET`. See [openbench-trace-collection.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md#rtp-alignment).
+
+NSV/SGDOP: same mathematics at two scales — RTP schema governance (coverage of reasoning concepts) and ClawQL ensemble coordination (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model.
 
 ---
 
@@ -515,7 +554,7 @@ Hosted plan avoids GPL dependencies. Legal review of AGPL network clauses recomm
 
 - Hosted beta: Developer/Teams on Cloudflare Workers; 14-day trial.
 - Inference Gateway v1 + pdf-inspector Stage 0 + Docling + LangExtract + HITL Label Studio.
-- Qwen3.6-27B ClawQL-general fine-tune v1 + Istio egress + Presidio.
+- Open-model ClawQL-general fine-tune v1 + Istio egress + Presidio.
 - `mcp-api-adapter` 0.5.x line (shipped).
 - OpenBench expansion — advanced Phase 1 packs landed; live cells next.
 
