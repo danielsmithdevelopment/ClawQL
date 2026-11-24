@@ -137,6 +137,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "bin",
     "README.md"
   ],

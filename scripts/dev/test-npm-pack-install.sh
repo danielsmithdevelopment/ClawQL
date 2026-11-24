@@ -10,8 +10,16 @@ echo "Building workspace packages before pack smoke..."
 npm run build >/dev/null
 
 INSTALL_ROOT="$(mktemp -d)"
-PACK_DIR="$(mktemp -d)"
-trap 'rm -rf "${INSTALL_ROOT}" "${PACK_DIR}"' EXIT
+# Optional: CLAWQL_PACK_KEEP_DIR preserves tarballs for artifact release gates.
+if [[ -n "${CLAWQL_PACK_KEEP_DIR:-}" ]]; then
+  PACK_DIR="${CLAWQL_PACK_KEEP_DIR}"
+  rm -rf "${PACK_DIR}"
+  mkdir -p "${PACK_DIR}"
+  trap 'rm -rf "${INSTALL_ROOT}"' EXIT
+else
+  PACK_DIR="$(mktemp -d)"
+  trap 'rm -rf "${INSTALL_ROOT}" "${PACK_DIR}"' EXIT
+fi
 
 node scripts/release/pack-workspace-packages.mjs "${PACK_DIR}"
 

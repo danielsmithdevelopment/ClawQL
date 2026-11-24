@@ -39,5 +39,12 @@ export {
   resolveSecretStore,
   resolveSecretStoreKind,
   resolveSecretStoreKindEffect,
+  wrapSecretStoreWithVaultTransit,
   type ResolveSecretStoreOptions,
+  type WrapSecretStoreWithVaultTransitOptions,
 } from "./resolve.js";
+export {
+  TransitEncryptedSecretStore,
+  createTransitEncryptedSecretStore,
+  type TransitEncryptedSecretStoreOptions,
+} from "./transit-encrypted.js";

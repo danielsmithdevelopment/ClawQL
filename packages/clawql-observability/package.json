@@ -57,6 +57,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "alloy",
     "alerts",
     "dashboards",

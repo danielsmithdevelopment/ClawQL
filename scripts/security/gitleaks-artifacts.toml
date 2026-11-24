@@ -1,0 +1,14 @@
+# Gitleaks config for *packed release artifacts* (npm tarballs).
+# Unlike .gitleaks.toml, this does NOT allowlist dist/ — dist is what customers install.
+# providers/ stay allowlisted (vendor OpenAPI / Discovery examples with placeholder JWTs).
+
+title = "ClawQL release artifacts"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Vendor OpenAPI/Discovery specs bundled in clawql-mcp packs; not repository secrets."
+paths = [
+  '''(^|/)providers/''',
+]

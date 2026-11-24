@@ -162,6 +162,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "README.md"
   ],
   "engines": {

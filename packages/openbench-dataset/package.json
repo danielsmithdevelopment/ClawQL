@@ -30,6 +30,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "schema",
     "bin",
     "README.md"
