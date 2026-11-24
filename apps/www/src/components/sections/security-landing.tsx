@@ -150,7 +150,12 @@ export function SecurityLanding() {
         subheadline={
           <p>
             Golden-image pipelines, admission enforcement, and the agentic AI curriculum live on docs — this page is the
-            stack map.
+            stack map. Report vulnerabilities to{' '}
+            <a className="underline" href={`mailto:${site.emails.security}`}>
+              {site.emails.security}
+            </a>{' '}
+            · <Link href={site.urls.securityTxt}>security.txt</Link> · data practices on{' '}
+            <Link href={site.urls.dataHandling}>/data-handling</Link>.
           </p>
         }
         cta={

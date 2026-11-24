@@ -9,11 +9,11 @@ export const legalIndustry: Industry = {
   packageName: 'clawql-legal',
   status: 'planned',
   overview:
-    'Law firms and in-house teams drown in PDF data rooms, discovery productions, and contract versions — while ethical walls and privilege rules forbid casual indexing of client material. clawql-legal registers clause_extract, risk_flag, precedent_search, redact_privilege, timeline_generate, brief_draft, motion_draft, and filing_validate on the shared Agentic Gateway. Documents pass Stirling and redact_privilege before archive or knowledge_search_onyx; memory_recall with graph depth surfaces prior matter notes without cross-contaminating walled teams. Human attorneys remain in the loop — agents handle retrieval, first-pass organization, and citation gathering.',
+    'Law firms and in-house teams drown in PDF data rooms, discovery productions, and contract versions — while ethical walls and privilege rules forbid casual indexing of client material. clawql-legal registers clause_extract, risk_flag, precedent_search, redact_privilege, timeline_generate, brief_draft, motion_draft, and filing_validate on the shared Agentic Gateway. Documents pass Stirling and redact_privilege before archive or semantic search indexes; memory_recall with graph depth surfaces prior matter notes without cross-contaminating walled teams. Human attorneys remain in the loop — agents handle retrieval, first-pass organization, and citation gathering.',
   painPoints: [
     {
       title: 'Privilege leaks into enterprise search',
-      body: 'Indexing full productions without redact_privilege risks attorney-client exposure. IDP redaction runs before Onyx or Paperless; ethical-wall scoping planned via vertical RLS.',
+      body: 'Indexing full productions without redact_privilege risks attorney-client exposure. IDP redaction runs before archive or semantic search indexes; ethical-wall scoping planned via vertical RLS.',
     },
     {
       title: 'Associates re-read every exhibit',
@@ -27,7 +27,7 @@ export const legalIndustry: Industry = {
   platformCapabilities: [
     'Clause extraction and risk_flag scoring with provenance citations',
     'Privilege redaction before archive and hybrid search',
-    'Precedent search across vault notes and Onyx firm index',
+    'Precedent search across vault notes and firm semantic search indexes',
     'HITL review queues for privilege and extraction confidence',
     'Immutable audit trails for agent actions on client documents',
   ],
@@ -80,14 +80,14 @@ export const legalIndustry: Industry = {
     },
     {
       title: 'Precedent search across matters',
-      summary: 'Vault graph + Onyx for grounded citations.',
-      body: 'memory_recall with elevated graph depth surfaces prior vault notes on similar clauses; knowledge_search_onyx queries the firm index — agents cite paths and snippets.',
+      summary: 'Vault graph + semantic search for grounded citations.',
+      body: 'memory_recall with elevated graph depth surfaces prior vault notes on similar clauses; semantic search queries the firm index — agents cite paths and snippets.',
       tools: ['memory_recall', 'knowledge_search_onyx', 'precedent_search', 'audit'],
       steps: [
         { label: 'Recall', detail: 'memory_recall "change of control indemnity cap 2024" with maxDepth for wikilinks.' },
-        { label: 'Search index', detail: 'knowledge_search_onyx queries firm corpus for matching language.' },
+        { label: 'Search index', detail: 'Semantic search queries firm corpus for matching language.' },
         { label: 'Precedent', detail: 'precedent_search ranks prior matters with outcome notes.' },
-        { label: 'Audit', detail: 'audit logs matter access for ethical-wall compliance.' },
+        { label: 'Audit', detail: 'MCP audit() is a session buffer; durable matter-access trails use hash-chained write-once storage where configured.' },
       ],
     },
     {

@@ -691,6 +691,22 @@ writeJson(path.join(publicDir, '.well-known/payments.json'), {
   },
 })
 
+/** RFC 9116 — matches SECURITY.md (daniel@clawql.com). Regenerated on every prebuild. */
+writeText(
+  path.join(publicDir, '.well-known/security.txt'),
+  [
+    'Contact: mailto:daniel@clawql.com',
+    `Contact: ${origin}/security`,
+    'Contact: https://github.com/danielsmithdevelopment/ClawQL/security/policy',
+    'Expires: 2027-11-12T00:00:00.000Z',
+    'Preferred-Languages: en',
+    `Canonical: ${origin}/.well-known/security.txt`,
+    'Policy: https://github.com/danielsmithdevelopment/ClawQL/blob/main/SECURITY.md',
+    'Acknowledgments: https://github.com/danielsmithdevelopment/ClawQL/security/advisories',
+    '',
+  ].join('\n'),
+)
+
 writeJson(path.join(publicDir, '.well-known/ucp'), {
   ucp: {
     version: '2026-04-08',
@@ -861,6 +877,9 @@ writeText(
 
 /.well-known/payments.json
   Content-Type: application/json; charset=utf-8
+
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8
 
 /.well-known/acp.json
   Content-Type: application/json; charset=utf-8

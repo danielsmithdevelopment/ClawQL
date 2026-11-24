@@ -39,6 +39,11 @@ import {
   durabilityTtlRows,
 } from '@/lib/durability-benchmarks'
 import {
+  benchmarkCorrections,
+  benchmarkCorrectionsHeadline,
+  benchmarkCorrectionsSummary,
+} from '@/lib/benchmark-corrections'
+import {
   BENCHMARK_VIDEO_META,
   BENCHMARK_VIDEO_SRC,
   gatewayBenchmarkClaim,
@@ -192,8 +197,28 @@ export function BenchmarksLanding() {
               </a>
               <span className="font-normal text-mist-600 dark:text-mist-400">
                 {' '}
-                — N=1000 fleet kill · 0 duplicates · ~12s failover · outcome unknown
+                — N=1000 fleet kill · 0 duplicates · ~17s resume · outcome unknown · narrative at{' '}
               </span>
+              <a
+                href="/durability"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /durability
+              </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">{' · typed map at '}</span>
+              <a
+                href="/ontology"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /ontology
+              </a>
+              <span className="font-normal text-mist-600 dark:text-mist-400">{' · controls at '}</span>
+              <a
+                href="/governance"
+                className="font-semibold text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+              >
+                /governance
+              </a>
             </p>
             <p className="text-xs/6 text-mist-600 dark:text-mist-400">
               Jump:{' '}
@@ -486,7 +511,7 @@ export function BenchmarksLanding() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {governanceBenchmarkHonesty.map((item) => (
             <div key={item.title}>
               <h3 className="text-sm font-semibold tracking-wide text-mist-950 uppercase dark:text-white">
@@ -793,6 +818,17 @@ export function BenchmarksLanding() {
         </div>
 
         <ul className="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+          <li>
+            <a
+              href="/durability"
+              className="text-sm font-medium text-mist-950 underline decoration-mist-400/60 underline-offset-2 hover:decoration-mist-950 dark:text-white dark:hover:decoration-white"
+            >
+              /durability narrative
+            </a>
+            <span className="ml-2 text-xs text-mist-600 dark:text-mist-500">
+              crash story, open items, commit-pinned evidence
+            </span>
+          </li>
           {durabilityBenchmarkLinks.map((link) => (
             <li key={link.href}>
               <a
@@ -1692,6 +1728,32 @@ export function BenchmarksLanding() {
             </div>
           ))}
         </div>
+      </Section>
+
+      <Section
+        id="corrections"
+        eyebrow="Credibility"
+        headline={benchmarkCorrectionsHeadline}
+        subheadline={<p>{benchmarkCorrectionsSummary}</p>}
+      >
+        <ul className="flex flex-col gap-4">
+          {benchmarkCorrections.map((row) => (
+            <li
+              key={`${row.dated}-${row.claim.slice(0, 48)}`}
+              className="rounded-xl bg-mist-950/2.5 p-5 dark:bg-white/5"
+            >
+              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase dark:text-mist-400">
+                {row.dated}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-mist-950 dark:text-white">{row.claim}</p>
+              <p className="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">{row.action}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-xs/6 text-mist-600 dark:text-mist-400">
+          Harvey LAB rightsizing remesure lands here with a quarantine note for earlier numbers once that board runs —
+          see docs/benchmarks/harvey-lab-rightsizing-remeasure-handoff.md.
+        </p>
       </Section>
 
       <Section

@@ -286,7 +286,11 @@ export const governanceBenchmarkHonesty = [
   },
   {
     title: 'What we do not claim',
-    body: 'That configured-ClawQL vs default-Obot/Bifrost is a governance advantage. That resume_auto_approve is Executor’s stock auto-approve. That a single OVERRIDE fixture is “0 of 50.” That TrueFoundry is measured.',
+    body: 'That configured-ClawQL vs default-Obot/Bifrost is a governance advantage. That resume_auto_approve is Executor’s stock auto-approve. That a single OVERRIDE fixture is “0 of 50.” That TrueFoundry is measured. Fair summary for deep links: defaults tied at 2/5; best-config ClawQL 5/5 with peers invited — not “Panguard vault-write deny: ClawQL 5/5 vs Obot 2/5.”',
+  },
+  {
+    title: 'Defaults look contradictory next to multi-attack — they are not',
+    body: 'Vault-write defaults contaminate at 2/5 because stock ClawQL has no tool-name deny on that fixture. Multi-attack smoke stops 0/12 under defaults via native park / IFC taint — a different mechanism than a deny list. Both results describe what is on by default; they answer different questions.',
   },
   {
     title: 'How peers land best-config',
@@ -318,7 +322,7 @@ export const governanceBenchmarkLinks = [
   {
     label: 'Durability boards',
     href: '/benchmarks/#durability',
-    detail: 'N=1000 fleet kill · 0 duplicates · ~12s failover',
+    detail: 'N=1000 v4 identity remesure · 0 correctness · ~17s resume p50',
   },
   {
     label: 'Security suite roadmap',

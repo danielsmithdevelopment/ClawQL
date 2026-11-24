@@ -17,53 +17,17 @@ const FABRIC_DOCS = protocolFabricSurfaces.docsHref
 const modes = [
   {
     name: 'Reactive',
-    detail: 'Every event writes to WORM immediately — compliance-grade recording whether an agent wakes or not.',
+    detail:
+      'Every event is recorded on a hash-chained trail (write-once where Object Lock is configured) whether an agent wakes or not.',
   },
   {
     name: 'Ambient',
-    detail: 'Events buffer in NATS and surface on the next MCP tool call — awareness without spawning a subprocess.',
+    detail:
+      'Events buffer in NATS and surface on the next MCP tool call labeled untrusted — awareness without spawning a subprocess.',
   },
   {
     name: 'Autonomous',
     detail: 'A significance filter escalates only what matters into a full agent session with ClawQL tools and budget.',
-  },
-] as const
-
-const compareRows = [
-  {
-    axis: 'Sovereignty',
-    stripe: 'Internal only',
-    anthropic: 'Anthropic-hosted',
-    openai: 'Managed runtime',
-    clawql: 'Self-host or Cloudflare',
-  },
-  {
-    axis: 'Triggers',
-    stripe: 'Slack reactions',
-    anthropic: 'Cron / API',
-    openai: 'Pipeline / API',
-    clawql: 'WebSocket · NATS · webhook · cron',
-  },
-  {
-    axis: 'Tools',
-    stripe: 'Custom Toolshed',
-    anthropic: 'Built-in + custom',
-    openai: 'Built-in + custom',
-    clawql: 'Any MCP surface via Protocol Fabric',
-  },
-  {
-    axis: 'Audit',
-    stripe: 'Internal',
-    anthropic: 'Provider logs',
-    openai: 'Provider logs',
-    clawql: 'Operator-owned WORM Merkle trail',
-  },
-  {
-    axis: 'Scale',
-    stripe: 'Custom',
-    anthropic: 'Session hours',
-    openai: 'Managed',
-    clawql: 'celld · Cloudflare DO · K8s HPA',
   },
 ] as const
 
@@ -106,12 +70,12 @@ export function StreamsLanding() {
               <span>ClawQL</span>
               Streams
             </h1>
-            <p className="streams-hero__headline">
-              Event-driven autonomous agents you own — not a metered lab runtime.
-            </p>
+            <p className="streams-hero__headline">Event-driven autonomous agents you own.</p>
             <p className="streams-hero__lede">
-              World events enter. WORM records everything. Significance filters decide when agents wake — with full MCP
-              tools, virtual-key budgets, and Durable Object scale.
+              <strong>Status:</strong> Lab 5b is an opt-in coordination layer on celld today. Agent-facing{' '}
+              <code className="font-mono text-[0.9em]">stream_*</code> MCP tools are planned — not shipped. World events
+              enter; hash-chained audit records (write-once where configured); significance filters are the design for
+              when agents wake.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={STREAMS_SPEC} size="lg" color="light">
@@ -198,13 +162,15 @@ export function StreamsLanding() {
         id="scale"
         className="streams-section-band"
         eyebrow="Builds on celld · Cloudflare · Kubernetes"
-        headline="Infinite session scale without losing the audit trail"
+        headline="Session density without losing the audit trail"
         subheadline={
           <p>
-            Streams is built on <Link href={CELLD_SPEC}>celld</Link> — Deno&apos;s self-hosted Durable Objects runtime
-            with LTX replication to your own bucket — or Cloudflare&apos;s hosted DOs. Regulated tenants keep{' '}
-            <Link href={DO_SPEC}>Kubernetes HPA</Link> until celld is production-stable. Slim Core search/execute runs
-            in-isolate via CoreToolsDO by default; Bun host MCP remains the escape for full catalog and vault.
+            Streams builds on <Link href={CELLD_SPEC}>celld</Link> (stock 0.6.3 plus ClawQL lab fixes — see{' '}
+            <Link href={site.urls.durability}>/durability</Link>) with LTX replication to your own bucket, or
+            Cloudflare&apos;s hosted Durable Objects. celld is joining Cloudflare&apos;s workerd path; ClawQL runs the
+            lab build documented on the durability page. Regulated tenants keep <Link href={DO_SPEC}>Kubernetes HPA</Link>{' '}
+            until celld is production-stable. Density and crash-safety numbers are measured on one host — not
+            &quot;infinite.&quot;
           </p>
         }
       >
@@ -237,40 +203,15 @@ export function StreamsLanding() {
         id="compare"
         className="streams-surface"
         eyebrow="Positioning"
-        headline="The pattern labs built for themselves — as a platform"
+        headline="Ownership first — comparisons when sourced"
         subheadline={
           <p>
-            Stripe Minions, Anthropic Managed Agents, and OpenAI Agents SDK all implement event → context → reason →
-            tools → audit. ClawQL Streams is that pattern with operator-owned infrastructure.
+            Streams optimizes for operator-owned infrastructure: your keys, your trail, your deploy target. Head-to-head
+            tables against other products stay off this page until every cell has a source, a date, a ClawQL status
+            label, and maintainer review.
           </p>
         }
-      >
-        <div className="-mx-6 overflow-x-auto px-6 sm:mx-0 sm:px-0">
-          <table className="streams-compare min-w-[44rem]">
-            <caption>ClawQL Streams compared to managed agent runtimes</caption>
-            <thead>
-              <tr>
-                <th scope="col">Capability</th>
-                <th scope="col">Stripe Minions</th>
-                <th scope="col">Managed Agents</th>
-                <th scope="col">Agents SDK</th>
-                <th scope="col">ClawQL Streams</th>
-              </tr>
-            </thead>
-            <tbody>
-              {compareRows.map((row) => (
-                <tr key={row.axis}>
-                  <th scope="row">{row.axis}</th>
-                  <td>{row.stripe}</td>
-                  <td>{row.anthropic}</td>
-                  <td>{row.openai}</td>
-                  <td>{row.clawql}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
+      />
 
       <Section
         id="specs"
@@ -280,8 +221,9 @@ export function StreamsLanding() {
         subheadline={
           <p>
             Lab 5b (celld + CoreToolsDO path) ships today as an opt-in coordination layer over packages you already
-            deploy — inference, payments, NATS, and WORM memory. Agent-facing <code>stream_*</code> MCP tools remain
-            planned.
+            deploy — inference, NATS, and hash-chained audit/memory paths. Payment flows are not yet covered by the
+            crash-safety evidence on <Link href={site.urls.durability}>/durability</Link>. Agent-facing{' '}
+            <code>stream_*</code> MCP tools remain planned.
           </p>
         }
       >
@@ -298,8 +240,8 @@ export function StreamsLanding() {
             deploy
           </li>
           <li>
-            <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> — five (plus WebSocket) surfaces that complete the Protocol
-            Fabric
+            <Link href={ADAPTER_DOCS}>mcp-api-adapter</Link> — adapter surfaces that complete the Protocol Fabric
+            (count and status on the home protocol section)
           </li>
         </ul>
       </Section>
@@ -311,7 +253,7 @@ export function StreamsLanding() {
         subheadline={
           <p>
             Request early access on the Agentic Gateway today. Lab 5b already runs on the same MCP endpoint, vault, and
-            WORM trail — Streams coordination is not a second product.
+            hash-chained audit path — Streams coordination is not a second product.
           </p>
         }
         cta={

@@ -158,8 +158,15 @@ function PlannedIndustryStub({ industry }: { industry: Industry }) {
   )
 }
 
+function isRichIndustryPage(industry: Industry) {
+  return Boolean(industry.audiences?.length || industry.auditEvents?.length || industry.marketContext)
+}
+
 export function IndustryPage({ industry }: { industry: Industry }) {
-  if (industry.status === 'planned') {
+  // Planned verticals without a full narrative stay on the roadmap stub.
+  // Rich planned pages (audiences / audit catalog / market context) still render
+  // so claim-disciplined copy remains visible under a Planned badge.
+  if (industry.status === 'planned' && !isRichIndustryPage(industry)) {
     return <PlannedIndustryStub industry={industry} />
   }
 
@@ -303,10 +310,13 @@ export function IndustryPage({ industry }: { industry: Industry }) {
       {industry.demoPitch ? (
         <Section
           id="demo-pitch"
-          eyebrow="Forward to your team"
+          eyebrow={industry.demoPitchEyebrow ?? 'Forward to your team'}
           headline="One-paragraph pitch"
           subheadline={
-            <p>Copy and send this to transaction coordinators, team leads, or tech evaluators before a demo.</p>
+            <p>
+              {industry.demoPitchHint ??
+                'Copy and send this to transaction coordinators, team leads, or tech evaluators before a demo.'}
+            </p>
           }
         >
           <blockquote className="max-w-3xl rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 text-sm/7 text-mist-700 dark:border-white/10 dark:bg-white/5 dark:text-mist-300">

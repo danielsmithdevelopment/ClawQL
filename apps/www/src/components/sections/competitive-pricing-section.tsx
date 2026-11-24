@@ -6,8 +6,7 @@ import {
   competitiveSummary,
   competitorColumns,
   competitorFeatureRows,
-  executorBenchmark,
-  executorComparisonRows,
+  gatewayOnlyNote,
   realEstateVertical,
   stackReplacementSummary,
   tcoBenchmarks,
@@ -70,57 +69,13 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         </div>
 
         <div className="mt-10 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
-          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">ClawQL vs {executorBenchmark.name}</h3>
-          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{executorBenchmark.positioning}</p>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">
-                {executorBenchmark.name} pricing
-              </p>
-              <ul className="mt-2 space-y-1 text-sm/7 text-mist-700 dark:text-mist-400">
-                {executorBenchmark.pricing.map((row) => (
-                  <li key={row.tier}>
-                    <span className="font-medium text-mist-950 dark:text-white">{row.tier}</span> {row.price} —{' '}
-                    {row.includes}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-medium tracking-wide text-mist-600 uppercase">ClawQL gateway tiers</p>
-              <p className="mt-2 text-sm font-semibold text-mist-950 dark:text-white">
-                {executorBenchmark.clawqlResponse.tiers}
-              </p>
-              <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">
-                {executorBenchmark.clawqlResponse.advantage}
-              </p>
-              <p className="mt-2 text-sm/7 font-medium text-mist-800 dark:text-mist-200">
-                {executorBenchmark.clawqlResponse.closing}
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm/5">
-              <thead>
-                <tr>
-                  <th className="py-3 pr-4 font-medium text-mist-950 dark:text-white">Dimension</th>
-                  <th className="px-3 py-3 font-medium text-mist-950 dark:text-white">{executorBenchmark.name}</th>
-                  <th className="px-3 py-3 font-medium text-mist-950 dark:text-white">ClawQL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {executorComparisonRows.map((row) => (
-                  <tr key={row.dimension} className="border-t border-mist-950/5 dark:border-white/10">
-                    <th scope="row" className="py-3 pr-4 font-normal text-mist-700 dark:text-mist-400">
-                      {row.dimension}
-                    </th>
-                    <td className="px-3 py-3 text-mist-600 dark:text-mist-600">{row.executor}</td>
-                    <td className="px-3 py-3 text-mist-700 dark:text-mist-400">{row.clawql}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <h3 className="text-xl font-semibold text-mist-950 dark:text-white">{gatewayOnlyNote.title}</h3>
+          <p className="mt-2 text-sm/7 text-mist-700 dark:text-mist-400">{gatewayOnlyNote.body}</p>
+          <p className="mt-4 text-sm/7 text-mist-600 dark:text-mist-400">
+            Head-to-head feature tables against named gateway-only products are paused until they are re-verified against
+            current releases and offered for maintainer review. Product plan:{' '}
+            <Link href="/cloud">/cloud</Link>.
+          </p>
         </div>
 
         <div className="mt-6 rounded-xl border border-mist-950/10 bg-mist-950/2.5 p-6 sm:p-8 dark:border-white/10 dark:bg-white/5">
@@ -175,7 +130,7 @@ export function CompetitivePricingSection({ className, ...props }: ComponentProp
         subheadline={
           <p>
             Competitors typically sell IDP or VDR as separate products. ClawQL IDP tiers bundle both plus semantic
-            search, MCP gateway, and agent memory. Gateway-only tiers are compared against executor.sh above.
+            search, MCP gateway, and agent memory. For gateway-only needs, see the note above.
           </p>
         }
       >

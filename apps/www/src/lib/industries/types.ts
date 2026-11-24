@@ -63,6 +63,10 @@ export type Industry = {
   marketSubheadline?: string
   /** One-paragraph pitch for forwarding to prospects or partners. */
   demoPitch?: string
+  /** Override the demo-pitch section eyebrow (default: "Forward to your team"). */
+  demoPitchEyebrow?: string
+  /** Override the demo-pitch section hint under the headline. */
+  demoPitchHint?: string
   /** Dual-audience targeting — e.g. brokerages vs FSBO sellers on the same vertical page. */
   audiences?: readonly IndustryAudience[]
   audiencesHeadline?: string

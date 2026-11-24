@@ -291,7 +291,7 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
   },
   {
     title: 'Outcome unknown vs lost intent',
-    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry. Tip stock celld 0.6.3 always-on gate closed the pretends-journaled-intent path on wedged + stale-owner boards; the stock-TTL N=1000 confirmation must finish green before the stronger mechanism sentence is restored. When the API supports keys or lookup-by-reference, resolve automatically (keyed resend / check-then-decide); person only when neither exists.',
+    body: 'When a cell dies mid-call with a durable write intent, success and “never arrived” look the same from ClawQL’s side — we record outcome unknown and do not blind-retry. Tip stock celld 0.6.3 always-on gate closed the pretends-journaled-intent path on wedged + stale-owner boards. Lab v4 (TTL 3s, N=1000 identity remesure, 2026-11-09 authorize / 2026-11-10 publish) restored the scoped mechanism claim — keep October stock-TTL (~12s failover) boards as history. When the API supports keys or lookup-by-reference, resolve automatically (keyed resend / check-then-decide); person only when neither exists.',
   },
   {
     title: 'Keys and lookup (measured on file-journal)',
@@ -305,14 +305,24 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
 
 export const durabilityBenchmarkLinks: readonly { href: string; label: string; detail: string }[] = [
   {
+    href: `${GH}/docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`,
+    label: 'V4_CLAIM.md',
+    detail: 'Authorizing identity remesure — current public claim',
+  },
+  {
+    href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`,
+    label: 'v4 N=1000 identity remesure',
+    detail: '0 correctness · 18/1000 availability · ~17s resume p50',
+  },
+  {
     href: `${GH}/docs/benchmarks/durability-proof/STATUS.md`,
     label: 'STATUS — proof ladder',
     detail: 'Tiers A–F, scoped claim, tip 0.6.3 boards',
   },
   {
     href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-evidence.json`,
-    label: 'phased-evidence.json',
-    detail: 'Published Tier C N=1000 board',
+    label: 'phased-evidence.json (historical)',
+    detail: 'Earlier Tier C N=1000 / ~12s stock-TTL board — keep as history',
   },
   {
     href: `${GH}/docs/benchmarks/program-cell-fleet-kill/phased-n100-wedge-upstream-0.6.3.json`,

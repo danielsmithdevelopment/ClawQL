@@ -55,7 +55,7 @@ Ontologiql defines what exists and how it relates; ClawQL enforces what may happ
 
 ### Conditions for this to be safe
 
-- **Deterministic classification.** A model never decides an action's type. OpenAPI specs give the method, path and resource of every operation exactly. Anything unmapped goes to a person.
+- **Deterministic classification.** A model never decides an action's type. OpenAPI specs give the method, path and resource of every operation exactly. Anything unmapped goes to a person. Smithy models, which describe more than 200 AWS services, go further: operations marked `@readonly` or `@idempotent` classify themselves, and request fields marked `@idempotencyToken` show where the gateway should place an idempotency key filled from the journaled intent, making retried AWS writes crash-safe without per-service code (whitepaper [section 7](../vision/clawql-network-whitepaper-v0.2.md#smithy-governance-metadata-from-the-spec-itself)).
 - **People own the ontology.** Models may propose types or relations; changing the policy vocabulary is a governed change, like scope.
 
 ### Hook rules

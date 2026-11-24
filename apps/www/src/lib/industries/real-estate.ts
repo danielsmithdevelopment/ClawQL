@@ -10,24 +10,24 @@ export const realEstateIndustry: Industry = {
   status: 'partial',
   statusLabel: 'Title + PSA + FSBO offer workflows · CRM-agnostic',
   productionReference:
-    'Shipped reference workflows mirror the lending W-2 pattern used for See The Greens LOS — parse, classify, extract, HITL, vault recall — applied to transaction coordinators at brokerages and to FSBO sellers comparing multiple offers without a coordinator seat.',
+    'Shipped reference workflows mirror the lending W-2 pattern — parse, classify, extract, HITL, vault recall — applied to transaction coordinators at brokerages and to FSBO sellers comparing multiple offers. See The Greens LOS integration is in development.',
   marketContext:
-    'Major brokerages standardize on different CRM operating systems — Keller Williams (Command), eXp (BoldTrail/kvCORE), Compass and Anywhere brands (Home Platform), and thousands of high-volume teams on Follow Up Boss — but none of them classify title commitments, extract Schedule B exceptions with citations, or answer cross-deal diligence questions from indexed transaction files. FSBO sellers on Houzeo, Beycome, or DIY MLS listings face the same gap at smaller scale: multiple buyer offers arrive as PDFs with no semantic index. AI investment in 2026 skews toward lead gen, listing copy, and routing; the document layer — where deals actually close — still runs on Drive folders and manual re-reads. Teams and sellers that add intelligent document processing first compress hours per file; those that wait inherit a compounding disadvantage.',
+    'Major brokerages standardize on different CRM operating systems, and high-volume teams use a range of pipeline tools — but CRM/pipeline systems typically do not replace document IDP: classifying title commitments, extracting Schedule B exceptions with citations, or answering cross-deal diligence questions from indexed transaction files. FSBO sellers on flat-fee or DIY MLS listings face the same gap at smaller scale: multiple buyer offers arrive as PDFs with no semantic index. AI investment often skews toward lead gen, listing copy, and routing; the document layer — where deals actually close — still runs on Drive folders and manual re-reads. Teams and sellers that add intelligent document processing can reduce repetitive re-reads; this is not a promise that every file closes in a fixed number of hours.',
   demoPitch:
-    'Every major brokerage runs a CRM for contacts and pipeline, a transaction tool for e-sign and compliance, and Google Drive or Dropbox for transaction folders — but nothing connects them intelligently. When a title commitment or PSA lands in a deal folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so teams stop re-reading the same 200-page diligence folder. Your CRM keeps contacts and compliance; your storage keeps the files; ClawQL is the layer that understands what is in the documents and remembers it across deals. Works alongside Command, BoldTrail, Follow Up Boss, Compass, Dotloop, or SkySlope. Live demo uses synthetic data only; early access includes founder-led setup.',
+    'Every major brokerage runs a CRM for contacts and pipeline, a transaction tool for e-sign and compliance, and Google Drive or Dropbox for transaction folders — but nothing connects them with document IDP. When a title commitment or PSA lands in a deal folder, ClawQL classifies it, extracts purchase price and Schedule B exceptions with citations, routes low-confidence reads to a coordinator for review, and indexes everything for semantic search — so teams stop re-reading the same diligence folder. Your CRM keeps contacts and compliance; your storage keeps the files; ClawQL is the layer that understands what is in the documents and remembers it across deals. Works alongside common CRM, storage, and e-sign stacks. Live demo uses synthetic data only; early access includes founder-led setup. Always have an attorney read the contract before you rely on extractions fields.',
   audiences: [
     {
       id: 'brokerage',
       name: 'Brokerages & transaction teams',
-      headline: 'Document intelligence alongside Command, BoldTrail, FUB, and Dotloop.',
+      headline: 'Document intelligence alongside your CRM and transaction stack.',
       overview:
-        'Transaction coordinators re-read PDFs because CRMs track pipeline, not document content. ClawQL adds inspect_pdf → Docling (when needed) → classify → extract → HITL → vault on top of your existing stack — the same pattern as the shipped title and PSA reference packs.',
+        'Transaction coordinators re-read PDFs because CRMs track pipeline, not document content. ClawQL adds inspect_pdf → Docling (when needed) → classify → extract → HITL → vault on top of your existing stack — the same pattern as the shipped title and PSA reference packs. CRM/pipeline systems typically do not replace this document IDP layer.',
       demoPitch:
-        'Forward this to your TC lead: ClawQL sits on top of Drive and your CRM. When a title commitment lands, we extract Schedule B exceptions with citations and route ambiguous reads to Label Studio. Synthetic demo in 15 minutes.',
+        'Forward this to your TC lead: ClawQL sits on top of Drive and your CRM. When a title commitment lands, we extract Schedule B exceptions with citations and route ambiguous reads to Label Studio. Synthetic demo in 15 minutes. Have counsel review anything you act on.',
       stackPlacement: [
         {
           system: 'Brokerage CRM',
-          role: 'Contacts, pipeline — Command, BoldTrail/kvCORE, Follow Up Boss, Compass, Lofty.',
+          role: 'Contacts, pipeline — whatever CRM your brokerage already runs.',
         },
         {
           system: 'Cloud storage',
@@ -35,7 +35,7 @@ export const realEstateIndustry: Industry = {
         },
         {
           system: 'Transaction / e-sign',
-          role: 'Dotloop, SkySlope, DocuSign Rooms — forms, signatures, broker compliance.',
+          role: 'Forms, signatures, broker compliance — Dotloop, SkySlope, DocuSign Rooms, and similar.',
         },
         {
           system: 'ClawQL',
@@ -62,13 +62,13 @@ export const realEstateIndustry: Industry = {
       name: 'FSBO sellers',
       headline: 'Understand offers and title docs without re-reading every PDF.',
       overview:
-        'For Sale By Owner sellers receive competing offers and title commitments with no transaction coordinator. ClawQL extracts price, earnest money, and contingencies with citations so you can compare offers side by side — complementary to Houzeo or Beycome for MLS and forms.',
+        'For Sale By Owner sellers receive competing offers and title commitments with no transaction coordinator. ClawQL extracts price, earnest money, and contingencies with citations so you can compare offers side by side — complementary to flat-fee MLS/forms platforms. Always have an attorney read the full contract before accepting or rejecting an offer.',
       demoPitch:
-        'Selling your home without an agent? When buyer offers arrive, ClawQL reads each PDF and surfaces price, closing date, and contingencies in plain language — "Offer 2 is cash with no appraisal contingency." Same engine brokerages use for title commitments. Per-transaction pricing fits one sale; no $299/mo coordinator seat required.',
+        'Selling your home without an agent? When buyer offers arrive, ClawQL reads each PDF and surfaces price, closing date, and contingencies in plain language — for example, which offer appears cash with no appraisal contingency. Same engine brokerages use for title commitments. Extractions assist comparison; they do not replace reading the contract with an attorney.',
       stackPlacement: [
         {
           system: 'Flat-fee / FSBO platform',
-          role: 'Houzeo, Beycome, ISoldMyHouse — MLS listing, forms, optional coordination.',
+          role: 'MLS listing, forms, optional coordination — whatever FSBO platform you use.',
         },
         {
           system: 'Title / escrow',
@@ -82,7 +82,7 @@ export const realEstateIndustry: Industry = {
       useCases: [
         {
           title: 'Compare multiple offers',
-          body: 'Extract financing, inspection, appraisal, and sale-of-home contingencies — ask which offer closes soonest.',
+          body: 'Extract financing, inspection, appraisal, and sale-of-home contingencies — ask which offer closes soonest. Confirm with your attorney before acting.',
         },
         {
           title: 'Title commitment review',
@@ -98,7 +98,7 @@ export const realEstateIndustry: Industry = {
   stackPlacement: [
     {
       system: 'Brokerage CRM',
-      role: 'Contacts, pipeline, lead routing — Command, BoldTrail/kvCORE, Follow Up Boss, Compass Home Platform, Lofty, etc. ClawQL does not replace your CRM.',
+      role: 'Contacts, pipeline, lead routing — ClawQL does not replace your CRM. CRM/pipeline systems typically do not replace document IDP.',
     },
     {
       system: 'Cloud storage',
@@ -110,11 +110,11 @@ export const realEstateIndustry: Industry = {
     },
     {
       system: 'ClawQL',
-      role: 'Classify, extract, redact PII, semantic search, vault memory, Coneshare VDR — the document intelligence layer no CRM ships today.',
+      role: 'Classify, extract, redact PII, semantic search, vault memory, Coneshare VDR — the document intelligence layer alongside your CRM and storage.',
     },
   ],
   overview:
-    'Residential transactions generate dozens of PDFs per deal — purchase agreements, buyer offers, title commitments, appraisals, HOA disclosures — often split across a brokerage CRM (pipeline), cloud storage (folders), and a transaction platform (e-sign). FSBO sellers get the same PDFs without a coordinator. ClawQL is the intelligent document layer: shipped reference packs for title commitments, PSAs, and FSBO buyer offers demonstrate parse → classify → extract → HITL → vault threading with deal_id metadata. Financed purchases can reuse clawql-lending mortgage tools; Coneshare VDR closes the loop when external parties access sensitive files.',
+    'Residential transactions generate dozens of PDFs per deal — purchase agreements, buyer offers, title commitments, appraisals, HOA disclosures — often split across a brokerage CRM (pipeline), cloud storage (folders), and a transaction platform (e-sign). FSBO sellers get the same PDFs without a coordinator. ClawQL is the intelligent document layer: shipped reference packs for title commitments, PSAs, and FSBO buyer offers demonstrate parse → classify → extract → HITL → vault threading with deal_id metadata. Financed purchases can reuse clawql-lending mortgage tools; Coneshare VDR closes the loop when external parties access sensitive files. See The Greens LOS integration is in development.',
   painPoints: [
     {
       title: 'CRM knows the deal — folders hold the files',
@@ -122,7 +122,7 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'FSBO sellers compare offers by re-reading PDFs',
-      body: 'Multiple buyer offers differ on price, contingencies, and closing dates — Houzeo and flat-fee tools help list, but nothing extracts and compares offer terms with citations. One missed contingency clause costs more than the software.',
+      body: 'Multiple buyer offers differ on price, contingencies, and closing dates — flat-fee tools help list, but nothing extracts and compares offer terms with citations. One missed contingency clause costs more than the software. Extractions assist; an attorney should still read the contract.',
     },
     {
       title: 'Schedule B exceptions need human judgment',
@@ -135,10 +135,10 @@ export const realEstateIndustry: Industry = {
   ],
   platformCapabilities: [
     'Shipped title commitment + PSA + FSBO buyer offer reference workflows',
-    'CRM-agnostic — works with Command, BoldTrail, Follow Up Boss, Compass, or custom stacks',
+    'CRM-agnostic — works alongside common CRM and transaction stacks',
     'classify_document labels: title_commitment, purchase_agreement, buyer_offer, appraisal, hoa_disclosure',
     'extract_document presets: title_commitment, purchase_agreement, buyer_offer (contingencies + PSA fields)',
-    'Eight-vendor IDP pipeline — Gotenberg normalization, Stirling PII redaction, Onyx search',
+    'IDP pipeline — Gotenberg normalization, Stirling PII redaction inside the pipeline, semantic search indexes',
     'Coneshare VDR share links with viewer activity webhooks for external counsel and lenders',
   ],
   domainTools: [
@@ -164,11 +164,11 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'PSA field extraction',
-      body: 'Extract purchase price, earnest money, closing date, and parties from purchase agreements — cross-check against title policy amount via memory_recall before closing.',
+      body: 'Extract purchase price, earnest money, closing date, and parties from purchase agreements — cross-check against title policy amount via memory_recall before closing. Have counsel confirm before you rely on the fields.',
     },
     {
       title: 'FSBO offer comparison',
-      body: 'Extract buyer_offer contingencies from multiple PDFs — compare financing, inspection, appraisal, and sale-of-home terms from grounded fields rather than reading each contract line by line.',
+      body: 'Extract buyer_offer contingencies from multiple PDFs — compare financing, inspection, appraisal, and sale-of-home terms from grounded fields rather than reading each contract line by line. Always have an attorney read the full contract before deciding.',
     },
     {
       title: 'CRM + storage with semantic search',
@@ -176,7 +176,7 @@ export const realEstateIndustry: Industry = {
     },
     {
       title: 'Secure external sharing',
-      body: 'After redaction, Coneshare VDR share links with viewer webhooks notify Slack when buyer\'s attorney or lender opens the title package — coordinators follow up in real time.',
+      body: 'After redaction inside the IDP pipeline, Coneshare VDR share links with viewer webhooks notify Slack when buyer\'s attorney or lender opens the title package — coordinators follow up in real time.',
     },
   ],
   examples: [
@@ -207,7 +207,7 @@ export const realEstateIndustry: Industry = {
     {
       title: 'FSBO — compare two buyer offers',
       summary: 'Shipped reference path — buyer_offer preset with contingency extraction.',
-      body: 'The real-estate-fsbo pack extracts competing offers so sellers (or advisors) compare price, closing date, and contingencies from grounded fields — not manual PDF review.',
+      body: 'The real-estate-fsbo pack extracts competing offers so sellers (or advisors) compare price, closing date, and contingencies from grounded fields — not a substitute for an attorney reading each contract.',
       tools: ['execute', 'classify_document', 'extract_document', 'memory_ingest', 'memory_recall'],
       steps: [
         { label: 'Parse offers', detail: 'docling_convert_file on synthetic-buyer-offer.txt and synthetic-buyer-offer-alt.txt.' },
@@ -219,13 +219,17 @@ export const realEstateIndustry: Industry = {
     {
       title: 'Argo suspend / resume for coordinator HITL',
       summary: 'Production-style workflow templates with explicit suspend step.',
-      body: 'Same pattern as lending W-2: workflow hits suspend at hitl-review; coordinators complete Label Studio; webhook auto-resumes.',
+      body: 'Same pattern as lending W-2: workflow hits suspend at hitl-review; coordinators complete Label Studio; webhook auto-resumes. MCP audit() is a session buffer; durable examiner trails use hash-chained write-once storage where Object Lock is configured.',
       tools: ['workflow', 'hitl_enqueue_label_studio', 'audit'],
       steps: [
         { label: 'Submit', detail: 'clawql-realestate-title-ingest or clawql-realestate-psa-ingest with confidence_threshold.' },
         { label: 'Suspend', detail: 'Template waits at hitl-gate — deal state preserved in Argo, not chat context.' },
         { label: 'Review', detail: 'Coordinator completes Label Studio task; CLAWQL_HITL_WEBHOOK_TOKEN validates webhook.' },
-        { label: 'Finalize', detail: 'workflow resume writes title-result.json or psa-result.json artifact with deal_id.' },
+        {
+          label: 'Finalize',
+          detail:
+            'workflow resume writes title-result.json or psa-result.json artifact with deal_id. audit() here is the MCP session buffer — not the WORM trail.',
+        },
       ],
     },
     {
@@ -242,8 +246,8 @@ export const realEstateIndustry: Industry = {
     },
   ],
   compliance: [
-    'PII redaction via Stirling before documents enter Onyx or archive indexes',
-    'Merkle audit trail on agent processing steps',
+    'PII redaction via Stirling inside the IDP pipeline before archive or semantic search indexes (pipeline scope only)',
+    'Hash-chained write-once trail where Object Lock is configured; MCP audit() is a session buffer only',
     'Self-hosted option keeps transaction docs on your infrastructure',
     'Synthetic fixtures only in reference packs — no real client data in demos',
     'VDR viewer webhooks for external access audit alongside broker compliance workflows',
@@ -258,5 +262,5 @@ export const realEstateIndustry: Industry = {
   ],
   docsHref: 'https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/examples/idp/real-estate',
   disclaimer:
-    'Reference packs and demos use synthetic data only. This is not legal, title, or brokerage advice. Third-party CRM, storage, transaction, and FSBO listing products are independent of ClawQL; ClawQL operates as an intelligent document layer alongside them.',
+    'Reference packs and demos use synthetic data only. This is not legal, title, or brokerage advice — have an attorney read the contract before you act on extractions fields. Third-party CRM, storage, transaction, and FSBO listing products are independent of ClawQL; ClawQL operates as an intelligent document layer alongside them. See The Greens LOS integration is in development. Pricing is on /pricing — this page does not quote per-transaction or coordinator-seat fees.',
 }
