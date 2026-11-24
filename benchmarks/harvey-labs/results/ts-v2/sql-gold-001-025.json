@@ -1,7 +1,7 @@
 {
   "stack_version": "ts-clawql-data-v2",
   "pipeline": "sql-gold-001-025 path-detectors + IDP fill (no inference)",
-  "mattersRoot": "/tmp/harvey-labs-fresh/tasks/firm-knowledge/dms/matters",
+  "mattersRoot": "${HARVEY_LABS_MATTERS_ROOT}",
   "dbPath": "/tmp/harvey-lab-sql-gold-v2.duckdb",
   "fillPath": "/workspace/benchmarks/harvey-labs/results/ts-v2/idp-matters-fill.json",
   "matterCount": 266,

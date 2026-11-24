@@ -60,8 +60,15 @@ async function flushBulkMarkdownDocs(mcpClient, documents) {
       }
       return;
     } catch (exc) {
-      console.log(
-        `ClawQL pre-ingest: bulk ingest failed (${exc}); falling back to per-matter memory_ingest`
+      const allowFallback = (process.env.CLAWQL_LAB_INGEST_FALLBACK ?? "0").trim() === "1";
+      if (!allowFallback) {
+        throw new Error(
+          `ClawQL pre-ingest: bulk ingest_external_knowledge failed (${exc}). ` +
+            `Set CLAWQL_LAB_INGEST_FALLBACK=1 to allow per-matter memory_ingest fallback.`
+        );
+      }
+      console.error(
+        `ClawQL pre-ingest: bulk ingest failed (${exc}); CLAWQL_LAB_INGEST_FALLBACK=1 — per-matter memory_ingest`
       );
     }
   }

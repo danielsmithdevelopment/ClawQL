@@ -797,7 +797,7 @@ async function runChecks(store) {
 
 async function main() {
   const mattersRoot = resolve(
-    process.argv[2] || "/tmp/harvey-labs-fresh/tasks/firm-knowledge/dms/matters"
+    process.argv[2] || process.env.HARVEY_LABS_MATTERS_ROOT || "./benchmarks/harvey-labs/fixtures/matters"
   );
   const dbPath = resolve(process.argv[3] || "/tmp/harvey-lab-sql-gold-v2.duckdb");
   const outJson = resolve(
