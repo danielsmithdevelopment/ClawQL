@@ -2,7 +2,9 @@
 
 Nov 24, 2026 · static review against main tip after Pass 0 merge (`ebb1c167b` / #1508).
 
-**Scope:** `apps/www` (`src/lib`, components, app routes, sitemap, footer). Not `apps/docs` / `apps/docs-astro` (those remain for a follow-on website pass if needed).
+**Canonical IDs in the combined audit:** this companion’s local `9.01`–`9.16` map to **`9.15`–`9.30`** in [`codebase-section-audit-2026-11-24.md`](./codebase-section-audit-2026-11-24.md) (docs dual-site took `9.01`–`9.14`).
+
+**Scope:** `apps/www` (`src/lib`, components, app routes, sitemap, footer). Docs sites: [`codebase-section-audit-pass-9-docs-2026-11-24.md`](./codebase-section-audit-pass-9-docs-2026-11-24.md).
 
 **Method:** Wrong · Outdated · Fragmented · Exposed · Default mismatch · Dead · Improve.
 
