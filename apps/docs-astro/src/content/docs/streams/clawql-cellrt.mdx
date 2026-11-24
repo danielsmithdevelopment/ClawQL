@@ -69,7 +69,7 @@ clawql-cellrt binary (Rust, static, ~50–80 MB target)
 │
 ├─ Fleet coordinator (Tokio async)
 │    ├─ S3/R2 bucket as coordinator (compare-and-swap ownership leases)
-│    ├─ LTX replication (SQLite WAL segments → bucket, RPO=0)
+│    ├─ LTX replication (SQLite WAL segments → bucket, disk quorum ack (bucket follows))
 │    ├─ Peer authentication (HMAC-SHA256, WireGuard-compatible)
 │    ├─ Node discovery (bucket-based, no membership protocol)
 │    └─ Fault recovery (ownership lease expiry → another node acquires)
@@ -365,7 +365,7 @@ The type system enforces one-way lifecycle: `Active` → `BudgetExhausted` | `Ex
 
 ## 7. LTX replication and WORM
 
-Every SQLite write is a WORM write because LTX replication acknowledges only after the WAL segment is durable in the bucket (**RPO=0**).
+Every SQLite write is a WORM write because LTX replication acknowledges only after the WAL segment is durable in the bucket (**disk quorum ack (bucket follows)**).
 
 ```text
 storage.put / worm_append

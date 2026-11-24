@@ -72,7 +72,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 | `clawql-healthcare`    | To ship | FHIR/HL7, DICOM, EHR structuring, HIPAA de-identification                                                |
 | `clawql-insurance`     | To ship | Claims, policy ingestion, underwriting automation, fraud flagging                                        |
 | `clawql-supplychain`   | To ship | Procurement-to-payment, logistics docs, ERP connectors, trade compliance                                 |
-| `clawql-government`    | To ship | Permitting, FOIA, tax forms, procurement, FedRAMP-ready defaults                                         |
+| `clawql-government`    | To ship | Permitting, FOIA, tax forms, procurement, self-hosted agency defaults (no FedRAMP authorization)         |
 | `clawql-manufacturing` | To ship | Production docs, QC, MES/ERP, BOM validation, traceability                                               |
 | `clawql-education`     | To ship | LMS connectors (Canvas/Moodle/Blackboard), content generation, adaptive learning                         |
 | `clawql-engineering`   | To ship | MATLAB MCP Core + Simulink Agentic Toolkit (**requires licensed MATLAB on host**)                        |
@@ -621,7 +621,7 @@ Use cases:   Manufacturing, logistics, retail — procurement-to-payment
 ```
 Tools:       permit_classify, foia_route, tax_form_extract, bid_analyze,
              record_redact, audit_generate, citizen_service_route
-Compliance:  FOIA, data sovereignty, FedRAMP-ready defaults, jurisdiction standards
+Compliance:  FOIA, data sovereignty, self-hosted agency defaults (no FedRAMP authorization), jurisdiction standards
 Use cases:   Federal/state/local agencies — intake, permitting, records management
 ```
 

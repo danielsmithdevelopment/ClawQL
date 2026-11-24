@@ -265,7 +265,7 @@ export const programDensityBenchmarkLinks: readonly { href: string; label: strin
   {
     href: `${GH}/docs/benchmarks/program-density/STATUS.md`,
     label: 'program-density STATUS',
-    detail: 'Paused Ontologiql arm · Infinity board pointer',
+    detail: 'Paused ontology-layer arm · Infinity board pointer',
   },
   {
     href: 'https://github.com/hydro-project/infinity',

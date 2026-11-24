@@ -42,11 +42,18 @@ export const ObservabilityGovernanceSinkLiveFromProcessWorm = Layer.succeed(
   }
 );
 
-/** Resolve governance sink Layer from env (`CLAWQL_WORM_ENABLED=1` → process WORM bridge). */
+function wormEnabledFromEnvSync(env: NodeJS.ProcessEnv): boolean {
+  const raw = env.CLAWQL_WORM_ENABLED?.trim().toLowerCase();
+  if (!raw) return true;
+  if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+  return true;
+}
+
+/** Resolve governance sink Layer from env (WORM default on; `CLAWQL_WORM_ENABLED=0` disables). */
 export const resolveObservabilityGovernanceSinkLayer = (
   env: NodeJS.ProcessEnv = process.env
 ): Layer.Layer<ObservabilityGovernanceSink> =>
-  env.CLAWQL_WORM_ENABLED?.trim() === "1"
+  wormEnabledFromEnvSync(env)
     ? ObservabilityGovernanceSinkLiveFromProcessWorm
     : Layer.succeed(ObservabilityGovernanceSink, {
         append: () => Effect.void,

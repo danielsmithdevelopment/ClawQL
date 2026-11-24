@@ -27,7 +27,7 @@ spent” for **gateway-mediated** catalog / mock refill writes (#1459). Do **not
 claim Cost Plus payments ride the same patient-approval path, and frame any
 wire-transfer explainer as an outside payments API through the gateway catalog —
 not `clawql-payments` rails. Canonical scope:
-[`docs/gtm/claim-holds-mandate-resume-and-payments.md`](../../gtm/claim-holds-mandate-resume-and-payments.md).
+[`docs/security/claim-holds-mandate-resume-and-payments.md`](../../security/claim-holds-mandate-resume-and-payments.md).
 
 ## Quick smoke (offline)
 

@@ -147,7 +147,7 @@ Full B-7 narrative + upstream links: [`openbench-b7-calderwood.md`](./openbench-
 
 ## Phase 2–3 — Fine-tuning flywheel (B-1) — blocked
 
-**Blocked on:** Qwen3.6-27B ClawQL-general LoRA v1 registered (e.g. `tier-map.json` / inference finetune path).
+**Blocked on:** Open-model ClawQL-general LoRA v1 registered (e.g. `tier-map.json` / inference finetune path).
 
 **Unblocked (collection):** GHA now writes `CLAWQL_INFERENCE_STORE=jsonl` under each OpenBench artifact and packages grader session labels — see [`openbench-trace-collection.md`](./openbench-trace-collection.md). Keep collecting while FT v1 lands.
 

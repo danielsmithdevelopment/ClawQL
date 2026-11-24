@@ -4,7 +4,7 @@ Static Astro rebuild of **[docs.clawql.com](https://docs.clawql.com)** per [ADR 
 
 **No Next.js / OpenNext / RSC flight URLs** — `output: 'static'` for Cloudflare Pages (or any static host).
 
-Until DNS cutover, production may still point at [`apps/docs`](../docs/) (Next Worker). This package is the cutover target.
+Until DNS cutover, production may still point at [`apps/docs`](../docs/) (Next Worker). This package is the cutover target. **Pass 0 / pass 9:** do not grow long-lived duplicate prose in both trees — edit `apps/docs` (or `docs/`) and re-import; retire the Next Worker docs app after Astro cutover, not this package.
 
 ## Dev
 

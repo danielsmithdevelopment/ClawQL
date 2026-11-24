@@ -59,7 +59,7 @@ const metaArms = existsSync(metaArmsPath)
 const serialFsyncs = ceiling?.serial?.fsyncsPerSec ?? null;
 const probeSyncP50 = ceiling?.serial?.fsyncLatencyMs?.p50Ms ?? null;
 
-/** Best journal config on this host (disclose; Ontologiql may differ). */
+/** Best journal config on this host (disclose; ontology-layer peer may differ). */
 function pickBestJournalPolicy() {
   const arms = metaArms?.compare ?? metaArms?.arms ?? [];
   let best = null;
@@ -73,7 +73,7 @@ function pickBestJournalPolicy() {
     void label;
   }
   // ClawQL cloud host: arms were within ~3% — keep board default fsync append.
-  // Prefer prealloc only if it lifted ≥15% (Ontologiql-class win).
+  // Prefer prealloc only if it lifted ≥15% (ontology-layer peer-class win).
   const baseline = arms.find((a) => a.label === "fsync_append");
   const prealloc = arms.find((a) => a.label === "fdatasync_prealloc");
   if (
@@ -618,7 +618,7 @@ const payload = {
     note:
       withinError
         ? "Sustained equals drain within measurement error — writer is fully the limit. Report mean ± spread from the same 3-rep campaign; sync p99 beside p50."
-        : "Steady-state ramp in a same-campaign 3-rep protocol. If drain ≫ sustained → latency limit; if ranges overlap → writer-bound within error. Sync p99 recorded. Ontologiql: remeasure sustained after ack+dbuf; hit rate vs concurrency.",
+        : "Steady-state ramp in a same-campaign 3-rep protocol. If drain ≫ sustained → latency limit; if ranges overlap → writer-bound within error. Sync p99 recorded. ontology-layer peer: remeasure sustained after ack+dbuf; hit rate vs concurrency.",
     boardColumns: {
       durableRecordsPerSec: drainSummary.mean,
       rateSustainableWithinOneSecondSla: sustainedSummary.mean,

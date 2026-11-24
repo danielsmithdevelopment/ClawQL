@@ -120,12 +120,12 @@ clawql.honesty = [
   `Burst drain ~${report.burst.arrivalRatePerSec}/s → ${report.burst.pctWithinSla}% met / excess p99 ${report.burst.excessOverTickP99Ms} ms.`,
   `sustainablePerSec=${publishedSustainable} (typed_arrays + group_commit; 3-rep floor=median=max ${typedSustainable.reps.join("/")}; fsync_each ≈ ${compare.fsync_each.sustainablePerSec}).`,
   "Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded. v8 ~293 ms steady tail was GC under object_entries — superseded by typed default.",
-  "Provisional vs Ontologiql until shared flush policy + crash test + schedule-shape disclosure. No win copy.",
+  "Provisional vs ontology-layer peer until shared flush policy + crash test + schedule-shape disclosure. No win copy.",
 ].join(" ");
 
 const ont = evidence.rows.find((r) => r.systemId === "ontologiql-rust");
 ont.honesty =
-  "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); schedule-shape disclosure (Rust has no JS GC equivalent); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.";
+  "Ontology-layer peer (Rust) fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); schedule-shape disclosure (Rust has no JS GC equivalent); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.";
 
 evidence.clawqlRun.residentAccounting = {
   ...evidence.clawqlRun.residentAccounting,

@@ -3,8 +3,8 @@
  *
  * Static `import "clawql-audit"` from execute-live / panguard / risk / pending
  * pulls cbor/qrcode/raptorq/S3 into every listen graph. Process WORM is env-gated
- * (`CLAWQL_WORM_ENABLED=1`); skip the dynamic import entirely when disabled so
- * equal-arm tool-call Ready never evaluates the package.
+ * (default on; `CLAWQL_WORM_ENABLED=0` disables). Skip the dynamic import when
+ * disabled so equal-arm tool-call Ready never evaluates the package.
  */
 
 import { Effect } from "effect";
@@ -12,9 +12,12 @@ import { Effect } from "effect";
 export type ClawqlAuditModule = typeof import("clawql-audit");
 export type ProcessWormInput = Parameters<ClawqlAuditModule["appendProcessWormEffect"]>[0];
 
-/** Cheap sync mirror of clawql-audit `wormEnabledFromEnv` (ENABLED must be exactly `1`). */
+/** Cheap sync mirror of clawql-audit `wormEnabledFromEnv` (default on; `0`/`false`/`off`/`no` disable). */
 export function processWormEnvLikelyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.CLAWQL_WORM_ENABLED?.trim() === "1";
+  const raw = env.CLAWQL_WORM_ENABLED?.trim().toLowerCase();
+  if (!raw) return true;
+  if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+  return true;
 }
 
 /** Dynamic-import clawql-audit (once per process; ESM caches the module). */

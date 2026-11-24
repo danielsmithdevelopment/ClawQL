@@ -400,7 +400,7 @@ const payload = {
   reading: {
     ...reading,
     bothSystems:
-      "Ontologiql must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound. Both sides should also compare under-load sync latency to the probe and trial fdatasync+prealloc if latency is inflated.",
+      "The ontology-layer peer must run the same serial_board_matched probe (one writer, one sync in flight, batch-then-fsync) on the shared host before claiming disk-bound. Both sides should also compare under-load sync latency to the probe and trial fdatasync+prealloc if latency is inflated.",
     priorMistake:
       "An earlier probe that looked like ~40k fsync/s was overwrite-same-offset / parallel-capable and overstated single-writer capacity. Retracted as the group_commit ceiling.",
   },

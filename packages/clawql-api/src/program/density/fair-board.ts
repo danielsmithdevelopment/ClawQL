@@ -120,7 +120,7 @@ export type FairBoardOptions = {
   /** Skip SIGKILL crash-recovery proof for the flush policy. */
   readonly skipDeadlineCrashTest?: boolean;
   /**
-   * SHARED_HOST scaled bursts (default: Ontologiql sizes when not skipped).
+   * SHARED_HOST scaled bursts (default: ontology-layer peer sizes when not skipped).
    * Smoke tests should pass a tiny ladder; full board opts into DEFAULT sizes.
    */
   readonly skipScaledBursts?: boolean;
@@ -145,15 +145,16 @@ const DEFAULT_RAMP: readonly number[] = [
 ];
 
 /**
- * Ontologiql public claim (publishable) — mirrored for the comparison table.
- * Deadline lab closed in Ontologiql #144 (group_commit); shared-host campaign protocol next.
+ * Ontology-layer peer public claim (publishable) — mirrored for the comparison table.
+ * Deadline lab closed in peer #144 (group_commit); shared-host campaign protocol next.
+ * systemId `ontologiql-rust` is retained for evidence JSON compatibility (early working name).
  */
 export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   systemId: "ontologiql-rust",
   status: "publishable",
-  hostLabel: "stable-host (Ontologiql published)",
+  hostLabel: "stable-host (ontology-layer peer published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB). Deadline lab (#144): after ack~2.2µs + dbuf, drain~320k but sustained~185k (ratio~0.58) — scheduler-bound; apply pop-all-due + coalesce + no-idle-while-busy. ClawQL done on this host: 3-rep drain≈sustained~312k (within error; writer-bound). Board paused; shared-host can wait; Infinity-on-Pi is time-sensitive. No win copy.",
+    "Ontology-layer peer (Rust): capacity/wake publishable (200k @ ≤512 MiB). Deadline lab (#144): after ack~2.2µs + dbuf, drain~320k but sustained~185k (ratio~0.58) — scheduler-bound; apply pop-all-due + coalesce + no-idle-while-busy. ClawQL done on this host: 3-rep drain≈sustained~312k (within error; writer-bound). Board paused; shared-host can wait; Infinity-on-Pi is time-sensitive. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",
@@ -847,7 +848,7 @@ export function runFairDensityBoardEffect(
             : async (entry: { agentId: string; deadlineMs: number }): Promise<void> => {
                 await journal!.record(entry.agentId, entry.deadlineMs);
               };
-        // Full Ontologiql-sized ladder is opt-in (measure-shared-host-deadline.mjs /
+        // Full peer-sized ladder is opt-in (measure-shared-host-deadline.mjs /
         // skipScaledBursts:false). Smoke passes a tiny scaledBurstSizes array.
         const runScaled =
           options.scaledBurstSizes !== undefined
@@ -1175,7 +1176,7 @@ export function runFairDensityBoardEffect(
       hostLabel,
       honesty:
         limitHit && deadlineScheduleRetainedAtLimit
-          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). ${deadlineNote}. ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs Ontologiql until shared-host + Ontologiql deadline remeasure under the same fired definition + arrival-rate ramp. No win copy.`
+          ? `ClawQL TypeScript fair-v2 bags with **wake-deadline schedule retained** (${schedule.size()} = agentsAtLimit). Limit = first resource exhausted (**${limitResource}** at ${agentsAtLimit}). ${deadlineNote}. ${coldSpreadNote}. Warm p99=${warmBoard.p99} ms. Trim of id/path records likely makes both systems disk-bound (bag size ~30 vs ~32.8 KiB); deadline state is the real resident. Provisional vs ontology-layer peer until shared-host + ontology-layer peer deadline remeasure under the same fired definition + arrival-rate ramp. No win copy.`
           : !deadlineScheduleRetainedAtLimit
             ? `ClawQL TypeScript — **methodology_pending**: deadline schedule not retained for every counted agent (schedule=${schedule.size()}, agentsAtLimit=${agentsAtLimit}).`
             : "ClawQL TypeScript — agents-at-limit unknown (no resource exhausted; deadline schedule retained). No win copy.",

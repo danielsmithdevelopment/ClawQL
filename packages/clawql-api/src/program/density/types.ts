@@ -49,7 +49,7 @@ export type BoardColumns = {
   /** First resource that ran out at that N (disk | rss | latency). */
   readonly limitResource: LimitResource;
   /**
-   * Total process RSS / agents (KiB) — same RSS ceiling definition as Ontologiql
+   * Total process RSS / agents (KiB) — same RSS ceiling definition as ontology-layer peer
    * (total process RSS, not RSS-delta).
    */
   readonly residentKiBPerAgent: number;
@@ -192,7 +192,7 @@ export type HeapSnapshot = {
 };
 
 export type ResidentAccounting = {
-  /** Total process RSS / N (board column definition; matches Ontologiql ceiling). */
+  /** Total process RSS / N (board column definition; matches ontology-layer peer ceiling). */
   readonly totalRssKiBPerAgent: number;
   /** heapUsed after forced GC / N — GC-runtime check on RSS. */
   readonly heapUsedKiBPerAgentAfterGc: number;

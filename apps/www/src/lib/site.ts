@@ -2,7 +2,7 @@ export const site = {
   name: 'ClawQL',
   tagline: 'Agentic Infrastructure for Regulated Industries',
   description:
-    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a WORM audit trail on every action. Apache 2.0.',
+    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a hash-chained WORM audit trail on every action (local trail on by default; remote durable copies default on Cloud paid tiers and the regulated profile). Apache 2.0.',
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:
@@ -28,22 +28,23 @@ export const site = {
     security: '/security',
     /** Public status surface (gateway health + components). */
     status: '/status',
-    /** X / Twitter — GTM Phase 1 footer checklist. */
+    /** X / Twitter. */
     twitter: 'https://x.com/clawql',
-    /** Default / primary GTM motion — Agentic Gateway as Foundational Platform for Auditable Production AI. */
-    inferenceGtm: '/inference/gtm',
-    /** Public IDP-first marketing landing (ops / compliance buyers). */
+    /** Public IDP (intelligent document processing) marketing landing. */
     idp: '/idp',
-    /** IDP-first GTM playbook — strategy source of truth for the IDP motion. */
+    /**
+     * Former GTM playbook routes — pages now return a public “not published” stub
+     * (noindex; removed from sitemap). Kept as URL constants so old links resolve.
+     */
+    inferenceGtm: '/inference/gtm',
     idpGtm: '/idp/gtm',
+    enterpriseGtm: '/enterprise/gtm',
     /** ClawQL Streams — event-driven agents + Protocol Fabric (see #fabric). */
     streams: '/streams',
     /** Protocol Fabric canonical marketing URL (section on Streams). */
     protocolFabric: '/streams#fabric',
     /** Agentic Platform marketing landing — Streams + ontology + /mcp-ui + TEE. */
     agents: '/agents',
-    /** Secondary enterprise / Palantir-facing GTM motion. */
-    enterpriseGtm: '/enterprise/gtm',
     privacy: '/privacy-policy',
     /** HTML contact page (agents: also /contact.md). */
     contact: '/contact',

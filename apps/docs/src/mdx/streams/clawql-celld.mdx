@@ -64,7 +64,7 @@ Upgrade from v0.3.0: stop every v0.3.0 node before starting v0.4.0 — peer tunn
 
 1. What this is
 
-This document specifies how ClawQL Streams runs on celld — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and LTX replication to an operator-owned bucket (RPO=0).
+This document specifies how ClawQL Streams runs on celld — Deno's self-hosted, S3-backed Durable Objects runtime. celld exposes the same Workers / Durable Object JavaScript API as Cloudflare, with SQLite per cell and LTX replication to an operator-owned bucket (disk quorum ack; bucket follows).
 
 ClawQL's decision (Streams v0.2): do not build a custom DO runtime on Node worker_threads. Adopt celld for Workers/DO API–compatible self-hosted Durable Objects; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until a DO runtime is production-stable. The ClawQL-owned production runtime is clawql-cellrt (Rust + Wasmtime) — complementary to celld, not a Node rewrite.
 
@@ -88,7 +88,7 @@ Integrate + constrain bundle
 
 High (Workers DO surface)
 
-Built-in LTX → bucket, RPO=0
+Built-in LTX → bucket, disk quorum ack (bucket follows)
 
 Install ~58 MB binary; fleet via bucket leases
 
@@ -142,7 +142,7 @@ Familiar regulated ops
 
 Regulated until celld GA
 
-Facts of record: Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · RPO=0 LTX · one application per fleet (alpha). No ClawQL-owned $/cell-month figure — see Streams §9.1.
+Facts of record: Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · disk quorum ack (bucket follows) LTX · one application per fleet (alpha). No ClawQL-owned $/cell-month figure — see Streams §9.1.
 
 2. Runtime constraints
 
@@ -746,7 +746,7 @@ State
 
 Platform SQLite
 
-SQLite + LTX → your bucket (RPO=0)
+SQLite + LTX → your bucket (disk quorum ack; bucket follows)
 
 Hibernation
 

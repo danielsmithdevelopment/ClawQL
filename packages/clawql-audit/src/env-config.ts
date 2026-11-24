@@ -1,7 +1,8 @@
 /**
  * Env → WORM trail config. Effect-primary; null when durable WORM is disabled.
  *
- * CLAWQL_WORM_ENABLED=1 enables the process trail.
+ * Hash-chained local WORM is on by default. Set CLAWQL_WORM_ENABLED=0 to disable
+ * (writes a final signed WORM_DISABLED entry first when a trail was active).
  * CLAWQL_WORM_LOCAL=memory|sqlite|postgres (default: sqlite when path set, else memory)
  * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
  * CLAWQL_WORM_MEMORY_MAX_ENTRIES — ring cap for memory backend (default 10000; 0 = unbounded)
@@ -43,8 +44,14 @@ function parseIntEnv(env: NodeJS.ProcessEnv, key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/** True unless explicitly disabled (`0` / `false` / `off` / `no`). */
 export const wormEnabledFromEnv = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
-  Effect.sync(() => envTrim(env, "CLAWQL_WORM_ENABLED") === "1");
+  Effect.sync(() => {
+    const raw = envTrim(env, "CLAWQL_WORM_ENABLED")?.toLowerCase();
+    if (raw === undefined) return true;
+    if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+    return true;
+  });
 
 export const defaultWormSessionId = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<string> =>
   Effect.sync(
@@ -130,7 +137,7 @@ function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, Audit
 }
 
 /**
- * Build trail config from env, or `null` when `CLAWQL_WORM_ENABLED` is not `1`.
+ * Build trail config from env, or `null` when WORM is explicitly disabled.
  */
 export const createWormTrailConfigFromEnvEffect = (
   env: NodeJS.ProcessEnv = process.env

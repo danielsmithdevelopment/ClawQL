@@ -6,7 +6,7 @@
 import { Effect, Schema, SchemaIssue } from "effect";
 
 export const AUDIT_OPERATION_DESCRIPTION =
-  "append — record a redacted hash-chained audit line; list — recent events; verify — check the retained-window hash chain; clear — empty buffer and start a new chain (operator/test).";
+  "append — record a redacted hash-chained audit line; list — recent events; verify — check the retained-window hash chain; clear — empty only this agent's in-memory view (never the durable WORM chain).";
 
 export const AUDIT_CATEGORY_DESCRIPTION =
   "For append: short category (e.g. tool_call, payment, policy).";

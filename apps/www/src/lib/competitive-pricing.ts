@@ -5,7 +5,7 @@ import { businessAllInMonthly, pricing, unlimitedExecutionsTagline } from './pri
 export const competitiveHeadline = 'Plugin bundles — price each layer against the right incumbent.'
 
 export const competitiveSummary =
-  'ClawQL is an operating system for agents. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory, Onyx semantic search, twelve compounding token-efficiency layers, and unlimited executions. Starter through Professional compete with IDP and VDR incumbents — only when you opt into document processing. Gateway buyers pay for gateway; document processing activates separately.'
+  'ClawQL is an operating system for agents. Developer and Teams tiers replace stateless MCP routers like executor.sh with a global edge gateway, persistent vault memory, Onyx semantic search, compounding token-efficiency layers, and unlimited executions. Starter through Professional compete with IDP and VDR incumbents — only when you opt into document processing. Gateway buyers pay for gateway; document processing activates separately.'
 
 /** MCP gateway competitor — executor.sh (direct competitor to ClawQL gateway layer). */
 export const executorBenchmark = {
@@ -25,7 +25,7 @@ export const executorBenchmark = {
   clawqlResponse: {
     tiers: `Developer ${pricing.developer.monthlyPrice}/mo · Teams ${pricing.teams.monthlyPrice}/mo`,
     advantage:
-      'executor.sh routes tool calls well. ClawQL covers the same Layer 1 search/execute pattern and adds seven additional efficiency layers, persistent vault memory, Onyx semantic search, defense-in-depth security, and an optional full IDP platform behind one MCP endpoint.',
+      'executor.sh routes tool calls well. ClawQL covers the same Layer 1 search/execute pattern and adds compounding token-efficiency layers (shipped and planned — see inference docs), persistent vault memory, Onyx semantic search, defense-in-depth security, and an optional full IDP platform behind one MCP endpoint.',
     closing:
       'executor.sh has real advantages in developer mindshare and go-to-market velocity — YC backing, community growth, and brand recognition in the MCP gateway category. On memory, security architecture, token efficiency, document pipeline, and sovereign inference, ClawQL is a different category of product.',
   },
@@ -49,13 +49,13 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
     dimension: 'Developer adoption',
     executor: 'Head start: strong developer marketing, YC backing, and growing community mindshare',
     clawql:
-      'Later entrant with deeper stack — published case studies, open-source core, self-host evaluation path, and production deployments',
+      'Later entrant with deeper stack — published case studies, open-source core, and a self-host evaluation path',
   },
   {
     dimension: 'Token efficiency architecture',
     executor: 'One layer: search-and-execute pattern only',
     clawql:
-      'Twelve compounding layers — Code Mode through response trimming, caching, model escalation, gateway refinements, and the fine-tuning flywheel on top of search/execute',
+      'Compounding token-efficiency layers on top of search/execute — Code Mode, response trimming, caching, model escalation, and gateway refinements shipped; fine-tuning flywheel planned',
   },
   {
     dimension: 'Agent memory',
@@ -88,7 +88,7 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
     dimension: 'Sovereign LLM inference',
     executor: 'None — all inference routes to external APIs',
     clawql:
-      'Fine-tuned Qwen3.6-27B inside tenant boundary — Istio egress block, no tokens leave the namespace. Vertical adapters are early; we name maturity risk openly',
+      'Tenant-bound fine-tuned open model inside the boundary — Istio egress block, no tokens leave the namespace. Vertical adapters are early; we name maturity risk openly',
   },
   {
     dimension: 'Execution pricing',
@@ -255,10 +255,6 @@ export const competitiveHonestyNotes = [
     body: 'Developer mindshare and go-to-market velocity — YC backing, community growth, and brand recognition in the MCP gateway category. Technical depth, security architecture, persistent memory, and platform breadth are where ClawQL competes.',
   },
   {
-    title: 'Collaboration before comparison',
-    body: 'Before publishing head-to-head comparisons, we approached executor.sh about collaboration and shared MCP ecosystem work. Those overtures were not engaged. We document our positioning for buyers making infrastructure decisions.',
-  },
-  {
     title: 'Focus: plugin bundles',
     body: 'The surface area is large — gateway, IDP, VDR, sovereign inference, and DAOS coordination on the roadmap. Sales focus follows plugin bundles: Developer/Teams for agent builders connecting tools; Starter+ for document-heavy teams in legal, M&A, healthcare, and lending who opt into IDP explicitly. You only pay for the heavy stack when you activate it.',
   },
@@ -268,7 +264,7 @@ export const competitiveHonestyNotes = [
   },
   {
     title: 'Sovereign inference maturity',
-    body: 'Tenant-bound fine-tuned models (Qwen3.6 family and vertical adapters) are a deliberate differentiation bet. Base weights and adapter tooling are newer than incumbent cloud APIs — we name that risk for regulated buyers who need references and compliance history.',
+    body: 'Tenant-bound fine-tuned open models and vertical adapters are a deliberate differentiation bet. Base weights and adapter tooling are newer than incumbent cloud APIs — we name that risk for regulated buyers who need references and compliance history.',
   },
   {
     title: 'Unlimited executions — deliberate pricing',

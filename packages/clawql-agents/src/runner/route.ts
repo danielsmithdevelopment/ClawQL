@@ -2,7 +2,7 @@
  * ADR 0017 routing: prefer Agent Client Protocol when the coding agent speaks it;
  * fall back to native clawql-agents adapters otherwise.
  *
- * Ontologiql / ClawQL runners should call {@link resolveCodingAgentRouteEffect}
+ * ontology layer / ClawQL runners should call {@link resolveCodingAgentRouteEffect}
  * before opening a new native-adapter design.
  */
 import { Effect } from "effect";
@@ -58,7 +58,7 @@ const DEFAULT_ACP_SPAWN: Record<Exclude<AcpCapableAgentId, "custom">, AcpSpawnCo
   "cursor-cli": {
     command: "agent",
     args: ["acp"],
-    clientInfo: { name: "clawql-ontologiql-runner", version: "0.1.0" },
+    clientInfo: { name: "clawql-coding-agent-runner", version: "0.1.0" },
   },
 };
 
@@ -123,7 +123,7 @@ export const resolveCodingAgentRouteEffect = (
           : {
               command: input.acpSpawn?.command ?? "agent",
               args: input.acpSpawn?.args ?? ["acp"],
-              clientInfo: { name: "clawql-ontologiql-runner", version: "0.1.0" },
+              clientInfo: { name: "clawql-coding-agent-runner", version: "0.1.0" },
             };
       return {
         kind: "acp",
@@ -171,7 +171,7 @@ export const resolveCodingAgentRouteEffect = (
           {
             command: input.acpSpawn?.command ?? name,
             args: input.acpSpawn?.args ?? ["acp"],
-            clientInfo: { name: "clawql-ontologiql-runner", version: "0.1.0" },
+            clientInfo: { name: "clawql-coding-agent-runner", version: "0.1.0" },
           },
           "custom"
         ),

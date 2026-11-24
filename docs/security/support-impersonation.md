@@ -30,5 +30,5 @@ Cookie `clawql-support-impersonation` binds the browser to the active record (ht
 ## Follow-ups
 
 - Dual-write to process WORM when dashboard shares a host with `CLAWQL_WORM_ENABLED=1`.
-- Live IdP role claims instead of fixture role strings.
+- Live identity provider role claims instead of fixture role strings.
 - Time-boxed auto-expiry (e.g. 30 minutes) with audit on expiry.

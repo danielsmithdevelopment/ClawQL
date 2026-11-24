@@ -19,7 +19,7 @@ describe("fair-agent payload", () => {
     expect(Date.parse(agent.wakeDeadlineAt)).toBeGreaterThan(Date.parse(agent.parkedAt) - 1);
 
     const bytes = await Effect.runPromise(fairAgentEncodedBytesEffect(agent));
-    // ~30 KiB disk target band (Ontologiql public claim ~30 KiB/agent).
+    // ~30 KiB disk target band (Ontology-layer peer public claim ~30 KiB/agent).
     expect(bytes).toBeGreaterThan(20 * 1024);
     expect(bytes).toBeLessThan(50 * 1024);
   });

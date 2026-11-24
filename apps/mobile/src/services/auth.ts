@@ -1,6 +1,6 @@
 /**
  * Browser-based sign-in with app / universal link return — no localhost.
- * Fixture / reviewer-demo paths support Maestro + App Store review without IdP.
+ * Fixture / reviewer-demo paths support Maestro + App Store review without an identity provider.
  */
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
@@ -45,7 +45,7 @@ export function buildAuthorizeUrlEffect(
 }
 
 /**
- * Opens the system browser for OAuth / IdP. Returns to clawql:// or https://cloud.clawql.com/app/…
+ * Opens the system browser for OAuth / identity provider. Returns to clawql:// or https://cloud.clawql.com/app/…
  * In fixture mode, does not hit the network.
  */
 export function signInWithBrowserEffect(): Effect.Effect<

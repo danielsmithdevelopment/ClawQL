@@ -7,7 +7,7 @@ Silent rejection of invalid ATR is unsafe for operations: prefer **structured WO
 
 ## Goal
 
-Every MCP tool request must pass through a **single chokepoint** that validates **cryptographically bound scope** (JWT carrying **ATR** — Access-Task-Resource claims). The agent **cannot** widen its own claims; only the identity gateway / IdP path can issue or refresh tokens.
+Every MCP tool request must pass through a **single chokepoint** that validates **cryptographically bound scope** (JWT carrying **ATR** — Access-Task-Resource claims). The agent **cannot** widen its own claims; only the identity gateway / identity provider path can issue or refresh tokens.
 
 ClawQL **`clawql-mcp-http`** remains the MCP workload; the proxy sits **in front** of it on the data path.
 
@@ -15,7 +15,7 @@ ClawQL **`clawql-mcp-http`** remains the MCP workload; the proxy sits **in front
 
 North–south order (conceptual):
 
-1. **Ingress / Istio `Gateway`** — TLS termination, optional JWT issuance or forwarding per your IdP integration.
+1. **Ingress / Istio `Gateway`** — TLS termination, optional JWT issuance or forwarding per your identity provider integration.
 2. **MCP policy proxy** (e.g. **Panguard** or equivalent) — validates JWT signature + ATR claims **per request**, enforces tool allowlists / OWASP Agentic patterns, synchronous allow/deny.
 3. **`Service/clawql-mcp-http`** — Streamable HTTP MCP on **`/mcp`** (and optional gRPC on **50051**).
 
@@ -49,17 +49,17 @@ With Helm **`mcpProxy.enabled`** and default **`fullnameOverride`**, set **`CLAW
 
 ## `clawql-panguard-mcp-bridge` optional JWT gate
 
-The bridge image can enforce a **second line** of JWT verification **at the gateway** (HTTP `Authorization: Bearer …` and gRPC `authorization` metadata). This is **off by default** and is **not** a substitute for Istio / IdP / Panguard when those already validate every request; enable it when you need an explicit chokepoint on the gateway process.
+The bridge image can enforce a **second line** of JWT verification **at the gateway** (HTTP `Authorization: Bearer …` and gRPC `authorization` metadata). This is **off by default** and is **not** a substitute for Istio / identity provider / Panguard when those already validate every request; enable it when you need an explicit chokepoint on the gateway process.
 
-| Variable                                 | Meaning                                                                                                                                                            |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`CLAWQL_MCP_JWT_ENABLED`**             | Set **`1`** / **`true`** to enable verification on MCP HTTP routes and gRPC MCP RPCs (**not** **`/healthz`**; **`grpc.health.v1.Health`** is exempt).              |
-| **`CLAWQL_MCP_JWT_JWKS_URL`**            | HTTPS URL for OIDC JWKS (RS256 tokens). Mutually exclusive with PEM / HS256 below (pick one mechanism).                                                            |
-| **`CLAWQL_MCP_JWT_PUBLIC_KEY_PEM_PATH`** | Filesystem path to an SPKI / PEM **public** key used to verify RS256 JWTs.                                                                                         |
-| **`CLAWQL_MCP_JWT_HS256_SECRET`**        | **Tests / development only.** Shared secret for HS256 verification; avoid in production.                                                                           |
-| **`CLAWQL_MCP_JWT_ISSUER`**              | Optional JWT `iss` check.                                                                                                                                          |
-| **`CLAWQL_MCP_JWT_AUDIENCE`**            | Optional `aud` check (comma-separated list).                                                                                                                       |
-| **`CLAWQL_MCP_JWT_ATR_CLAIM`**           | Claim name that must be present and be a JSON **object or array** (default **`atr`**). Used as a minimal ATR-shaped binding signal; adjust to your IdP claim path. |
+| Variable                                 | Meaning                                                                                                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_MCP_JWT_ENABLED`**             | Set **`1`** / **`true`** to enable verification on MCP HTTP routes and gRPC MCP RPCs (**not** **`/healthz`**; **`grpc.health.v1.Health`** is exempt).                            |
+| **`CLAWQL_MCP_JWT_JWKS_URL`**            | HTTPS URL for OIDC JWKS (RS256 tokens). Mutually exclusive with PEM / HS256 below (pick one mechanism).                                                                          |
+| **`CLAWQL_MCP_JWT_PUBLIC_KEY_PEM_PATH`** | Filesystem path to an SPKI / PEM **public** key used to verify RS256 JWTs.                                                                                                       |
+| **`CLAWQL_MCP_JWT_HS256_SECRET`**        | **Tests / development only.** Shared secret for HS256 verification; avoid in production.                                                                                         |
+| **`CLAWQL_MCP_JWT_ISSUER`**              | Optional JWT `iss` check.                                                                                                                                                        |
+| **`CLAWQL_MCP_JWT_AUDIENCE`**            | Optional `aud` check (comma-separated list).                                                                                                                                     |
+| **`CLAWQL_MCP_JWT_ATR_CLAIM`**           | Claim name that must be present and be a JSON **object or array** (default **`atr`**). Used as a minimal ATR-shaped binding signal; adjust to your identity provider claim path. |
 
 **HTTP failure:** **`401`** with JSON-RPC body `error.code` **`-32001`** and a message prefix **`Unauthorized:`**. **gRPC failure:** status **`UNAUTHENTICATED`** with details from verification.
 

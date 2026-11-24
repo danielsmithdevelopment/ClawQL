@@ -1,5 +1,5 @@
 /**
- * Directory / IdP sync for Cloud E2E (SCIM-shaped + Keycloak realm groups).
+ * Directory / identity-provider sync for Cloud E2E (SCIM-shaped + Keycloak realm groups).
  * Production-shaped POST /sync/directory and POST /sync/scim.
  * Pass-when for SI-07/08 remains /decision or CDP approve + /audit.
  */

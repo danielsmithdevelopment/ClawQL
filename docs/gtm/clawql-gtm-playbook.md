@@ -105,23 +105,23 @@ Unchanged from the Karpenter architecture. Full IDP pipeline, Onyx, Nextcloud, C
 | r7i.2xlarge (bootstrap)          | 8 / 64 GB     | $386          | **$280** — IDP baseline |
 | r7i.4xlarge (2–4 shared)         | 16 / 128 GB   | $772          | $559                    |
 | r7i.8xlarge (6–8 shared)         | 32 / 256 GB   | $1,544        | $1,118                  |
-| g6.xlarge (Qwen3.6-27B L4)       | 4 / 24 GB GPU | $386          | ~$280 Savings Plan      |
+| g6.xlarge (open-model L4)        | 4 / 24 GB GPU | $386          | ~$280 Savings Plan      |
 | g6e.xlarge (Ornith 35B MoE L40S) | 4 / 48 GB GPU | $763          | ~$580 Savings Plan      |
 
 ### Revised bootstrap monthly burn
 
-| Cost item                      | Monthly          | Notes                               |
-| ------------------------------ | ---------------- | ----------------------------------- |
-| Cloudflare Workers paid        | $5               | All Developer/Teams tenants.        |
-| R2 storage (all tiers)         | ~$3–30           | Scales with document volume.        |
-| r7i.2xlarge 1yr reserved       | $280             | Only when first IDP customer signs. |
-| EBS gp3 200 GB                 | $16              | OS, K3s, Postgres, Onyx indexes.    |
-| EKS control plane              | $73              | When EKS is active.                 |
-| Qwen3.6-27B GPU (L4, deferred) | ~$280            | When sovereign LLM required.        |
-| LGTM+                          | $0               | Self-hosted on IDP node.            |
-| **Cloudflare-only launch**     | **~$8–35/mo**    | Validate PMF before AWS.            |
-| **First IDP customer**         | **~$380–410/mo** | r7i.2xlarge + EBS.                  |
-| **Full fleet (with GPU)**      | **~$660–700/mo** | Add GPU when needed.                |
+| Cost item                     | Monthly          | Notes                               |
+| ----------------------------- | ---------------- | ----------------------------------- |
+| Cloudflare Workers paid       | $5               | All Developer/Teams tenants.        |
+| R2 storage (all tiers)        | ~$3–30           | Scales with document volume.        |
+| r7i.2xlarge 1yr reserved      | $280             | Only when first IDP customer signs. |
+| EBS gp3 200 GB                | $16              | OS, K3s, Postgres, Onyx indexes.    |
+| EKS control plane             | $73              | When EKS is active.                 |
+| Open-model GPU (L4, deferred) | ~$280            | When sovereign LLM required.        |
+| LGTM+                         | $0               | Self-hosted on IDP node.            |
+| **Cloudflare-only launch**    | **~$8–35/mo**    | Validate PMF before AWS.            |
+| **First IDP customer**        | **~$380–410/mo** | r7i.2xlarge + EBS.                  |
+| **Full fleet (with GPU)**     | **~$660–700/mo** | Add GPU when needed.                |
 
 Launching Cloudflare-first is not only cost optimization — it is the correct GTM sequence. Developer/Teams customers onboard before any AWS spend. The first Shared subscription ($299/mo) more than covers spinning up the AWS node.
 
@@ -339,12 +339,12 @@ Density on one reserved node ≈ **15–20 shared tenants** (Onyx+Nextcloud memo
 
 Sovereign multi-model fleet; no external LLM API calls on Dedicated+ sovereign path. Fine-tune only where reliability gains are clear.
 
-| Model / role                                        | GTM relevance                                                                                                                                           |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Qwen3.6-27B** (fine-tuned) — core document worker | Primary for document processing, PII redaction, Onyx, archive, Coneshare. Fine-tuned on Langfuse tool traces. Sovereignty claim rests here (shared L4). |
-| **Ornith 1.0 35B MoE** — coding specialist (as-is)  | MIT; DeepReinforce; June 25, 2026. No fine-tune — scaffold behavior is the value. Prefer LangGraph.                                                     |
-| **Phi-4 14B** (lightly fine-tuned) — utility        | Metadata, vault indexing, summarization, Onyx pre-process. Offloads Qwen.                                                                               |
-| **Gemma 4 31B** — diversity only                    | Hermes MoA fan-out when NSV drops; no fine-tune investment.                                                                                             |
+| Model / role                                                  | GTM relevance                                                                                                                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tenant-bound fine-tuned open model** — core document worker | Primary for document processing, PII redaction, Onyx, archive, Coneshare. Fine-tuned on Langfuse tool traces. Sovereignty claim rests here (shared L4). |
+| **Ornith 1.0 35B MoE** — coding specialist (as-is)            | MIT; DeepReinforce; June 25, 2026. No fine-tune — scaffold behavior is the value. Prefer LangGraph.                                                     |
+| **Phi-4 14B** (lightly fine-tuned) — utility                  | Metadata, vault indexing, summarization, Onyx pre-process. Offloads Qwen.                                                                               |
+| **Gemma 4 31B** — diversity only                              | Hermes MoA fan-out when NSV drops; no fine-tune investment.                                                                                             |
 
 Independent validation: NousResearch Hermes MoA (June 19, 2026) showed ensemble gains vs single frontier models. ClawQL Agent Coordination is **drift-triggered** (NSV/SGDOP; ensemble when `combined_drift` > 0.3), not always-on — cost-appropriate.
 
@@ -354,16 +354,16 @@ Original DAOS included Mistral Devstral 2 (123B, ~240 GB VRAM, $3k–5k/mo GPU).
 
 ### Revised infra cost with GPU fleet
 
-| Component                     | Cost/mo           | Notes                       |
-| ----------------------------- | ----------------- | --------------------------- |
-| EKS reserved pool             | ~$560–700         | r7i; scales with tenants    |
-| Spot processing pool          | ~$50–150          | Near-zero between workloads |
-| Qwen3.6-27B (L4 g6.xlarge SP) | ~$360             | Shared across tenants       |
-| Ornith 35B MoE (L40S g6e SP)  | ~$763             | coding-specialist only      |
-| Phi-4 14B                     | $0–360            | $0 if co-located            |
-| Cloudflare R2 + EKS CP        | ~$88–123          | R2 + $73 EKS                |
-| **Total (separate Phi-4)**    | **~$1,821–2,096** | Full fleet                  |
-| **Total (co-located Phi-4)**  | **~$1,461–1,736** | Preferred if VRAM allows    |
+| Component                    | Cost/mo           | Notes                       |
+| ---------------------------- | ----------------- | --------------------------- |
+| EKS reserved pool            | ~$560–700         | r7i; scales with tenants    |
+| Spot processing pool         | ~$50–150          | Near-zero between workloads |
+| Open model (L4 g6.xlarge SP) | ~$360             | Shared across tenants       |
+| Ornith 35B MoE (L40S g6e SP) | ~$763             | coding-specialist only      |
+| Phi-4 14B                    | $0–360            | $0 if co-located            |
+| Cloudflare R2 + EKS CP       | ~$88–123          | R2 + $73 EKS                |
+| **Total (separate Phi-4)**   | **~$1,821–2,096** | Full fleet                  |
+| **Total (co-located Phi-4)** | **~$1,461–1,736** | Preferred if VRAM allows    |
 
 Ornith is the largest single line item but low invocation frequency early — consider spot after 30 days of Langfuse measurement.
 
@@ -397,7 +397,7 @@ Every export writes a TrainingLineage WORM manifest. No manifest → no producti
 
 | Stage                     | GPU fleet                                                                   |
 | ------------------------- | --------------------------------------------------------------------------- |
-| Bootstrap (0–1)           | Qwen3.6-27B on L4 only; coding via fallback. ~$860–1,000/mo.                |
+| Bootstrap (0–1)           | open model on L4 only; coding via fallback. ~$860–1,000/mo.                 |
 | Early scale (2–5)         | Add Phi-4 (co-locate if possible). Measure Ornith demand. ~$1,000–1,400/mo. |
 | Growth (5+)               | Ornith on L40S if justified, else spot burst. ~$1,500–1,800/mo.             |
 | Scale (10+, 3+ Dedicated) | Evaluate Qwen3.6-35B-A3B MoE; margins → 60–66%.                             |

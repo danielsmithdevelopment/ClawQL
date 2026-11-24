@@ -199,10 +199,10 @@ const payload = {
   reading: {
     diagnosis,
     note:
-      "Both ClawQL and Ontologiql pump profiles show a fast producer; residual is the durable write path. If under-load sync p50 is 2–4× the probe, growing-file metadata is the likely culprit. Report sustained rate + fsyncs/sec before/after — not doubleBufferHits alone. Ontologiql label: double_buffer_candidate_unverified.",
+      "Both ClawQL and ontology-layer peer pump profiles show a fast producer; residual is the durable write path. If under-load sync p50 is 2–4× the probe, growing-file metadata is the likely culprit. Report sustained rate + fsyncs/sec before/after — not doubleBufferHits alone. ontology-layer peer label: double_buffer_candidate_unverified.",
     next: closedMostOfGap
       ? "Prefer the winning sync path on both systems for the shared-host campaign so each is near the disk's real limit."
-      : "Keep board on fsync append for campaign fairness unless Ontologiql adopts the same experimental path; re-run on the dedicated host.",
+      : "Keep board on fsync append for campaign fairness unless ontology-layer peer adopts the same experimental path; re-run on the dedicated host.",
   },
 };
 

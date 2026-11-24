@@ -1,7 +1,7 @@
-# Ontologiql runner × ClawQL (combined)
+# Coding-agent runner × ClawQL (combined)
 
 **Status:** In-repo driver in `clawql-agents`  
-**ADRs:** [0017 ACP-first](../adr/0017-agent-client-protocol-first-adapters.md) · [0015 Ontologiql-shaped split](../adr/0015-program-mode-alongside-search-execute.md)  
+**ADRs:** [0017 ACP-first](../adr/0017-agent-client-protocol-first-adapters.md) · [0015 ontology-layer open-source split](../adr/0015-program-mode-alongside-search-execute.md)  
 **Related:** [Cursor Agent SDK](../integrations/cursor-agent-sdk.md) · [agents spec](./clawql-agents-spec-v0.1.md)
 
 ## Planes (do not collapse)
@@ -13,7 +13,7 @@
 | Compliance audit      | Tamper-evident WORM                                         | `clawql-audit` (shared by runner + Agent SDK hooks)  |
 | Cursor Agent SDK bots | Versioned bots with MCP + hooks + evals                     | `docs/examples/agent-sdk/`                           |
 
-Publishable Ontologiql-shaped runtime may speak **ACP**. Mandates, IFC, risk, and WORM **stay ClawQL**.
+Publishable ontology-layer runtime may speak **ACP**. Mandates, IFC, risk, and WORM **stay ClawQL**.
 
 ## Combined API
 

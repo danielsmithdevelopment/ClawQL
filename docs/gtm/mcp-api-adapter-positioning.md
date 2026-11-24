@@ -14,7 +14,7 @@
 
 ## One-liner
 
-Call MCP tools by name over HTTP **or GraphQL**. Production deployments use **`mcp-grpc-transport`** — the only production TypeScript gRPC transport for MCP. Wrap **any-language** MCP upstream; the adapter runtime is TypeScript.
+Call MCP tools by name over HTTP **or GraphQL**. Deployments that need binary framing can use **`mcp-grpc-transport`** (TypeScript gRPC transport for MCP). Wrap **any-language** MCP upstream; the adapter runtime is TypeScript.
 
 **Protocol Fabric:** together with ClawQL Core (APIs → MCP), this is MCP as the common IR both directions — see [`protocol-fabric.md`](./protocol-fabric.md).
 

@@ -49,7 +49,7 @@ Not using IBM Carbon (enterprise web) — wrong fit for Expo native.
 | Profile keys, revoke, delete-account UI | ✅ |
 | Signed-in sessions + sign out elsewhere | ✅ |
 | Session kill writes fixture Audit (`session.end_others`) | ✅ Profile |
-| Settings IdP abuse / AI enforcement / restore / no view-as copy | ✅ `/settings` |
+| Settings identity-provider abuse / AI enforcement / restore / no view-as copy | ✅ `/settings` |
 | Audit + Team note: support view-as console-only | ✅ |
 | Local push simulate (no APNs/EAS) | ✅ |
 | Push device registration (fixture Expo token) | ✅ Profile |

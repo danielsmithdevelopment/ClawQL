@@ -13,7 +13,7 @@ export function getAuthMdContent(): string {
 You are an agent. **ClawQL** supports agentic registration for MCP and API access. Follow these steps in order.
 
 **Resource server:** \`${origin}/\`  
-**Authorization server:** \`${origin}/\` (discovery metadata; production tokens may be issued by your configured IdP)
+**Authorization server:** \`${origin}/\` (discovery metadata; production tokens may be issued by your configured identity provider)
 
 ## Step 1 — Discover
 

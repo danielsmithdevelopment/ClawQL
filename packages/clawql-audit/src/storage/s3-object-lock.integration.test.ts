@@ -1,12 +1,15 @@
 /**
- * Live S3 Object Lock integration (LocalStack in CI; MinIO locally if available).
+ * Live S3 Object Lock integration (LocalStack in CI; MinIO locally if pullable).
  *
  * Skips unless CLAWQL_WORM_S3_IT_ENDPOINT (or legacy CLAWQL_WORM_MINIO_ENDPOINT) is set.
  *
+ * CI uses LocalStack because anonymous pulls of minio/minio (Docker Hub) and
+ * quay.io/minio/minio fail on GHA runners. Prefer MinIO locally when available:
+ *
  *   docker compose -f packages/clawql-audit/docker-compose.minio-object-lock.yml up -d
- *   export CLAWQL_WORM_S3_IT_ENDPOINT=http://127.0.0.1:4566
- *   export CLAWQL_WORM_S3_IT_ACCESS_KEY=test
- *   export CLAWQL_WORM_S3_IT_SECRET_KEY=test
+ *   export CLAWQL_WORM_S3_IT_ENDPOINT=http://127.0.0.1:9000
+ *   export CLAWQL_WORM_S3_IT_ACCESS_KEY=minioadmin
+ *   export CLAWQL_WORM_S3_IT_SECRET_KEY=minioadmin
  *   npm test -w clawql-audit -- src/storage/s3-object-lock.integration.test.ts
  *
  * Governance: full protection probe (cleanup with BypassGovernanceRetention when supported).

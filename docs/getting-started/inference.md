@@ -265,5 +265,5 @@ GTM narrative: [Inference-first GTM](https://clawql.com/inference/gtm) · Archit
 - [clawql-inference reference](/inference/clawql-inference) — policy schema, cache, flywheel, entitlements
 - [Inference providers](/plugins/inference-providers) — OpenRouter + BYOK builtins
 - [Agent setup](/agent-setup) — MCP + memory onboarding
-- [Token efficiency](/architecture/token-efficiency) — twelve compounding layers
+- [Token efficiency](/architecture/token-efficiency) — compounding token-efficiency layers (shipped and planned)
 - [Getting started overview](/getting-started)

@@ -9,13 +9,13 @@
  *   5. deadline restart (rebuild + overdue catch-up + scheduleFormat)
  *
  * Protocol (SHARED_HOST.md): measure fsync ceiling first; use 3-rep floor for
- * headlines; alternate ClawQL/Ontologiql across reps on one idle host.
+ * headlines; alternate ClawQL/ontology-layer peer across reps on one idle host.
  *
  *   CLAWQL_DENSITY_REPS=3 \
  *   CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.json \
  *   npm run benchmark:program-density-shared-host
  *
- *   CLAWQL_DENSITY_PEER_JSON=/path/to/ontologiql-five-arms.json ...
+ *   CLAWQL_DENSITY_PEER_JSON=/path/to/ontology-peer-five-arms.json ...
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -216,7 +216,7 @@ const clawql = await Effect.runPromise(
               phase: "clawql_rep_done",
               rep,
               reps,
-              hint: "Alternate: run Ontologiql for this same rep before ClawQL's next rep (SHARED_HOST.md).",
+              hint: "Alternate: run ontology-layer peer for this same rep before ClawQL's next rep (SHARED_HOST.md).",
               firstBurstMiss: scaledBursts.firstMissSize,
               sustainablePerSec: ramp.sustainablePerSec,
               flushStats: {
@@ -342,7 +342,7 @@ const payload = {
   protocol: {
     headlineRule: "three_rep_floor",
     requiredReps: 3,
-    alternation: "clawql_then_ontologiql_each_rep",
+    alternation: "clawql_then_peer_each_rep",
     fsyncCeilingFirst: true,
     idleHost: true,
     sameAgentsAtLimit: true,
@@ -357,7 +357,7 @@ const payload = {
     headlineNote:
       "Board headlines use min of 3 reps per system. Never compare one system's single run to the other's floor.",
     alternationNote:
-      "Interleave systems across reps (ClawQL₁ → Ontologiql₁ → …). Do not run all of one then all of the other.",
+      "Interleave systems across reps (ClawQL₁ → ontology-layer peer₁ → …). Do not run all of one then all of the other.",
     winCopy: false,
     sharedHostComplete,
     completeGates: {

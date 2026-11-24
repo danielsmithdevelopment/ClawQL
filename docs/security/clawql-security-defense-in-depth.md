@@ -180,10 +180,10 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 
 ## Single sign-on (SSO) and machine identity
 
-- Central **IdP** for **human** access to **Grafana**, **Kiali**, **OpenClaw**, **PagerDuty** consoles, and **K8s** **API** (via your chosen integration).
+- Central **identity provider** for **human** access to **Grafana**, **Kiali**, **OpenClaw**, **PagerDuty** consoles, and **K8s** **API** (via your chosen integration).
 - **Machine** identities: **K8s** **ServiceAccounts**, **SPIFFE** IDs in mesh, **AWS/GCP** workload identity for external connectors (if any).
 
-**ClawQL** does not replace your **IdP**; it **consumes** **OAuth**/**OIDC** or static tokens you configure.
+**ClawQL** does not replace your **identity provider**; it **consumes** **OAuth**/**OIDC** or static tokens you configure.
 
 ---
 
@@ -390,7 +390,7 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 
 - **No** single **control** is **enough**; **layers** **reinforce** each other.
 - **Threat** **modeling** **first**; **IaC** **always**; **immutability** **+** **detect** **+** **recover** **+** **learn**.
-- **ClawQL** gives you a **MCP**-centric, **Merkle**-audited, **mesh**-ready, **scanned** **Helm** platform—**your** **IdP**, **HSM**, **EDR**, and **SIEM** still **own** the **perimeter** **around** it.
+- **ClawQL** gives you a **MCP**-centric, **Merkle**-audited, **mesh**-ready, **scanned** **Helm** platform—**your** **identity provider**, **HSM**, **EDR**, and **SIEM** still **own** the **perimeter** **around** it.
 
 ---
 

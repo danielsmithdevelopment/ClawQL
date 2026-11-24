@@ -178,6 +178,7 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 - **`clawql-observability@0.1.0`** — first npm release: LGTM+ through Phase 5 (Faro, registry, Alloy, query, host wiring, Langfuse/Panguard, security sensors, alerting)
 - **`clawql-merkle` + `clawql-audit`** wedge + WORM dual-write
+- **Process WORM default-on** — `CLAWQL_WORM_ENABLED` defaults to on; set `0` to disable (regulated tier refuses off). Measured in-process **memory dual-ack** overhead vs disabled: **~179 µs/append** (n=500; `node scripts/dev/worm-overhead-bench.mjs`). SQLite / S3 Object Lock paths are higher; publish those before claiming regulated SLOs.
 - **`clawql-tee`** simulated TEE
 
 ### Network / analytics / ontology

@@ -1,5 +1,5 @@
 /**
- * Ontologiql / ClawQL coding-agent session runner over Agent Client Protocol.
+ * ontology layer / ClawQL coding-agent session runner over Agent Client Protocol.
  *
  * Thin orchestration on top of {@link AgentClientProtocol}: spike checklist
  * (initialize → authenticate → session/new → prompt → cancel/close).
@@ -85,7 +85,7 @@ export const CodingAgentRunnerLive = Layer.succeed(
   })
 );
 
-/** Spawn-backed ACP + runner (production Ontologiql path). */
+/** Spawn-backed ACP + runner (production ontology-layer peer path). */
 export const makeCodingAgentRunnerLayer = (spawn: AcpSpawnConfig) =>
   Layer.merge(makeAgentClientProtocolLayer(spawn), CodingAgentRunnerLive);
 

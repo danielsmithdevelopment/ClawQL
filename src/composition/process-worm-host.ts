@@ -1,10 +1,18 @@
 /**
  * Boot process clawql-audit WORM + register host sinks (memory; auth sink exported).
- * Call once at MCP/HTTP process start when CLAWQL_WORM_ENABLED=1.
+ * Call once at MCP/HTTP process start. Hash-chained local WORM is on by default;
+ * set `CLAWQL_WORM_ENABLED=0` to disable.
  *
  * `clawql-audit` is dynamic-imported so WORM-off Ready (equal-arm) never evaluates
  * cbor/qrcode/raptorq/S3.
  */
+
+function wormEnabledFromEnvSync(env: NodeJS.ProcessEnv): boolean {
+  const raw = env.CLAWQL_WORM_ENABLED?.trim().toLowerCase();
+  if (!raw) return true;
+  if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+  return true;
+}
 
 import { createRequire } from "node:module";
 import { Effect } from "effect";
@@ -32,15 +40,32 @@ async function loadAudit(): Promise<ClawqlAudit> {
  */
 export function ensureProcessWormHostBootedEffect(
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<void> {
+): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
     if (booted) return;
-    booted = true;
-    if (env.CLAWQL_WORM_ENABLED?.trim() !== "1") return;
+    if (!wormEnabledFromEnvSync(env)) {
+      process.stderr.write(
+        "[clawql] WARNING: process WORM disabled (CLAWQL_WORM_ENABLED=0). " +
+          "Hash-chained audit trail is off for this process.\n"
+      );
+      const tier = env.CLAWQL_TIER?.trim().toLowerCase();
+      if (tier === "regulated") {
+        // Do not set `booted` — operator can fix env and retry.
+        return yield* Effect.fail(
+          new Error(
+            "CLAWQL_TIER=regulated refuses to start with WORM disabled. " +
+              "Unset CLAWQL_WORM_ENABLED=0 or leave the regulated profile."
+          )
+        );
+      }
+      booted = true;
+      return;
+    }
     const audit = yield* Effect.promise(() => loadAudit());
     const svc = yield* audit
       .bootProcessWormFromEnvEffect(env)
       .pipe(Effect.catch(() => Effect.succeed(null)));
+    booted = true;
     if (!svc) return;
     try {
       const { registerMemoryWormSink } = requireFromHere(

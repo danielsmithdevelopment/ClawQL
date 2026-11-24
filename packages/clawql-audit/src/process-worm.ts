@@ -1,5 +1,5 @@
 /**
- * Process-scoped durable WORM trail. Env-gated (`CLAWQL_WORM_ENABLED=1`).
+ * Process-scoped durable WORM trail. On by default; set `CLAWQL_WORM_ENABLED=0` to disable.
  * Appends are best-effort — never fail domain callers.
  */
 
@@ -121,6 +121,18 @@ export const appendProcessWormEffect = (input: WORMAppendInput): Effect.Effect<W
 export const stopProcessWormEffect = (): Effect.Effect<void> =>
   Effect.gen(function* () {
     const svc = trailSvc;
+    const sem = appendSem;
+    if (svc && sem && bootState === "ready") {
+      const body = yield* withProcessWormDefaults({
+        type: "WORM_DISABLED",
+        timestamp: new Date().toISOString(),
+        sessionId: defaultSession,
+        metadata: { reason: "process_worm_stop" },
+      });
+      yield* sem
+        .withPermits(1)(svc.append(body))
+        .pipe(Effect.catch(() => Effect.void));
+    }
     trailSvc = null;
     appendSem = null;
     bootFiber = null;

@@ -5,7 +5,8 @@
 export type AnalyticsPageviewPayload = {
   path: string
   referrer?: string
-  sessionId: string
+  /** Pseudonymous ID only when consent is granted; omit otherwise. */
+  sessionId?: string
   timestamp: string
   properties?: Record<string, unknown>
 }

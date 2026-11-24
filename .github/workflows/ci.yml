@@ -332,8 +332,9 @@ jobs:
 
       - name: Start LocalStack S3 for Object Lock integration
         run: |
-          # Official MinIO images are not anonymously pullable here (Docker Hub gone /
-          # quay.io unauthorized). LocalStack provides S3 Object Lock on Docker Hub.
+          # Pass 0 prefers MinIO (OSS Object Lock), but Docker Hub no longer serves
+          # minio/minio anonymously and quay.io/minio returns 401 on GHA runners
+          # (see a2b1ce8f1). LocalStack remains the pullable Object Lock stand-in.
           docker run -d --name clawql-audit-localstack \
             -p 4566:4566 \
             -e SERVICES=s3 \
@@ -355,6 +356,7 @@ jobs:
           CLAWQL_WORM_S3_IT_ENDPOINT: http://127.0.0.1:4566
           CLAWQL_WORM_S3_IT_ACCESS_KEY: test
           CLAWQL_WORM_S3_IT_SECRET_KEY: test
+          CLAWQL_WORM_S3_IT_FORCE_PATH_STYLE: "1"
         run: npx vitest run packages/clawql-audit/src/storage/s3-object-lock.integration.test.ts
 
   # Streams celld evidence / smoke / full-stack live in streams-celld.yml

@@ -593,7 +593,7 @@ operator:
   status          List ClawQLInstance CRs and tier-spec ConfigMaps (requires kubeconfig)
 
 onboard:
-  End-to-end first run: init → write MCP config (cursor) → doctor --smoke
+  End-to-end first run: init → doctor --smoke (MCP write opt-in via --write-mcp=cursor)
   Same flags as init plus --skip-smoke and --skip-mcp-write
 
 init:
@@ -712,7 +712,7 @@ async function main(): Promise<void> {
   }
 
   if (cmd === "onboard") {
-    const writeMcp = flags.skipMcpWrite ? false : parseWriteTarget(flags.writeMcp ?? "cursor");
+    const writeMcp = flags.skipMcpWrite ? false : parseWriteTarget(flags.writeMcp);
     const result = await runOnboard({
       yes: Boolean(flags.yes),
       interactive: Boolean(flags.interactive),

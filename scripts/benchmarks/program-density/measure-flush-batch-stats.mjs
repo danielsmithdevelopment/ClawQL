@@ -180,7 +180,7 @@ const payload = {
     latencyRatioVsProbeP50: latencyRatioVsProbe,
     diagnosis,
     note:
-      "Compare focus fsyncLatencyMs.p50/p99 to serial probe. If 2–4× slower with a fast producer, growing-file metadata is the likely gap — trial fdatasync + preallocate (npm run benchmark:program-density-fsync-metadata-arms). Ontologiql: double_buffer_candidate_unverified; producer also fast.",
+      "Compare focus fsyncLatencyMs.p50/p99 to serial probe. If 2–4× slower with a fast producer, growing-file metadata is the likely gap — trial fdatasync + preallocate (npm run benchmark:program-density-fsync-metadata-arms). ontology-layer peer: double_buffer_candidate_unverified; producer also fast.",
   },
 };
 

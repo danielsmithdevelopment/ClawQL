@@ -255,7 +255,7 @@ function SignInSection() {
       >
         <h2 className="text-sm font-semibold text-slate-900">Login rate limits and lockouts</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Human password / SSO login abuse controls live on the <strong>IdP</strong> (Okta / Entra / Supabase Auth),
+          Human password / SSO login abuse controls live on the <strong>identity provider</strong> (Okta / Entra / Supabase Auth),
           not inside ClawQL. MCP OAuth token endpoints are rate-limited separately (
           <code className="text-xs">CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN</code>). Ownership matrix:{' '}
           <span className="font-mono text-xs">docs/security/idp-login-abuse-ownership.md</span>.

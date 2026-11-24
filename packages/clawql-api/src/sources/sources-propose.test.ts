@@ -43,7 +43,7 @@ describe("sources propose / approve", () => {
   afterEach(() => {
     resetProcessWormForTests();
     delete process.env.CLAWQL_HOME;
-    delete process.env.CLAWQL_WORM_ENABLED;
+    process.env.CLAWQL_WORM_ENABLED = "0";
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_SOURCES_ALLOW_HTTP;

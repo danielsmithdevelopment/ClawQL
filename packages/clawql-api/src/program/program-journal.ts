@@ -12,7 +12,7 @@
  * ignores it and the next append truncates it away.
  *
  * celld-shaped stand-in: once the pinned celld build hosts the isolate, the
- * journal moves into the cell's SQLite (LTX, RPO=0) behind this same service.
+ * journal moves into the cell's SQLite (LTX; disk quorum ack, bucket follows) behind this same service.
  * One writer per program: {@link ProgramJournalApi.withLease} is process-wide;
  * across processes, one runner per journal directory (same posture as the file
  * pending store). Journals hold call results — files are 0600 in a 0700 directory

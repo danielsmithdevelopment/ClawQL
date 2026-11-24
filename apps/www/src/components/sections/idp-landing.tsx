@@ -437,7 +437,7 @@ export function IdpLanding() {
         </ul>
         <p className="mt-8 text-sm text-mist-600 dark:text-mist-400">
           Deep dive: <Link href={`${site.urls.docs}/security/defense-in-depth`}>defense-in-depth</Link> ·{' '}
-          <Link href={site.urls.enterpriseGtm}>enterprise GTM</Link>
+          <Link href={site.urls.docs}>docs</Link>
         </p>
       </Section>
 
@@ -485,7 +485,7 @@ export function IdpLanding() {
           <p>
             Ops and compliance teams: start with IDP. When you are ready, the same endpoint is also an inference gateway
             and memory system — without a second vendor conversation. Strategy detail:{' '}
-            <Link href={site.urls.idpGtm}>IDP GTM playbook</Link>.
+            <Link href={`${site.urls.docs}/providers/idp-pipeline`}>IDP pipeline docs</Link>.
           </p>
         }
         cta={

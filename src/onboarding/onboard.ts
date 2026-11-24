@@ -34,7 +34,8 @@ export type OnboardResult = {
 export async function runOnboard(options: OnboardOptions = {}): Promise<OnboardResult> {
   const steps: OnboardStep[] = [];
   const interactive = options.interactive ?? !options.yes;
-  const writeMcp = options.writeMcp === false ? undefined : (options.writeMcp ?? "cursor");
+  // Opt-in only — do not write ~/.cursor/mcp.json unless --write-mcp=cursor|claude-desktop.
+  const writeMcp = options.writeMcp === false ? undefined : options.writeMcp;
   const runSmoke = options.smoke !== false;
 
   console.log("\nClawQL onboard — vault-first first run\n");

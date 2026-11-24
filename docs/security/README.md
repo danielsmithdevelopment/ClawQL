@@ -16,11 +16,11 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **Deploy-time** Cosign enforcement (Kyverno policy fields, digest pins, forks): [`image-signature-enforcement.md`](image-signature-enforcement.md)
 - **Runtime containment** (Kata vs gVisor, **`security.kata`**, Kyverno **`runtimeClassPolicy`**, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)): [`runtime-class-containment.md`](runtime-class-containment.md)
 - **Local Privacy Filter** (gateway backup after Presidio, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)): [`privacy-filter-local.md`](privacy-filter-local.md)
-- **clawql-auth OIDC consumer + step-up** (not a full IdP): [`clawql-auth-oidc-stepup.md`](clawql-auth-oidc-stepup.md)
+- **clawql-auth OIDC consumer + step-up** (not a full identity provider): [`clawql-auth-oidc-stepup.md`](clawql-auth-oidc-stepup.md)
 - **clawql-auth package spec + shipped OAuth/API-key slice:** [`clawql-auth-package-spec.md`](clawql-auth-package-spec.md) — issued `cqk_` keys (org/team), mutex outbound refresh; inbound MCP OAuth 2.1 still roadmap
 - **MCP proxy JWT ATR** (mesh / Panguard chokepoint): [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md)
 - **HTTP security headers** (CSP / HSTS on MCP + dashboard; managed API org-spoof IDOR guard): [`http-security-headers.md`](http-security-headers.md)
-- **Email `+` normalization** (IdP owns login; opt-in ClawQL directory keys): [`email-plus-normalization.md`](email-plus-normalization.md)
+- **Email `+` normalization** (identity provider owns login; opt-in ClawQL directory keys): [`email-plus-normalization.md`](email-plus-normalization.md)
 - **Security ↔ ontology knowledge loop** (ATR gates as grammar-adversarial validation, `SecurityEvent` / `FailedStrategy`, capability Gate 3, one loop with WORM): [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md)
 - **Harness² × authority outside the harness** (self-improving harnesses strengthen the case for gateway policy; adversarial gate benchmark spec): [`../vision/harness2-authority-outside.md`](../vision/harness2-authority-outside.md) · [`../benchmarks/harness2-gate-adversarial/SPEC.md`](../benchmarks/harness2-gate-adversarial/SPEC.md)
 

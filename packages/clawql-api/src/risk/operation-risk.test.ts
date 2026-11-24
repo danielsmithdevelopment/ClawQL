@@ -153,7 +153,7 @@ describe("classifyOperationRisk defaults by source kind", () => {
 describe("operation-risk overrides + WORM", () => {
   afterEach(async () => {
     await Effect.runPromise(resetProcessWormForTests());
-    delete process.env.CLAWQL_WORM_ENABLED;
+    process.env.CLAWQL_WORM_ENABLED = "0";
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;
