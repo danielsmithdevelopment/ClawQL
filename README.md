@@ -16,7 +16,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp` (**8.0.0** tree — Agentic Gateway entry; empty-by-default catalog, vault-first onboarding — [`RELEASE_NOTES_v8.0.0.md`](docs/release/RELEASE_NOTES_v8.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)). Latest published npm remains **7.2.0** until the 8.0.0 cut.  
+Primary package: `clawql-mcp` (**8.0.0** tree — Agentic Gateway entry; empty-by-default catalog, vault-first onboarding — [`RELEASE_NOTES_v8.0.0.md`](docs/release/RELEASE_NOTES_v8.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)). Latest published npm remains **7.2.0** until the 8.0.0 cut.
 
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 

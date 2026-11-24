@@ -78,11 +78,11 @@ Until then, publicly: **a comparison is underway; configurations sent to both te
 
 ## 3. Safe to cite as _their_ claims (linked)
 
-| Source              | Their statement (paraphrase — link the original)                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source              | Their statement (paraphrase — link the original)                                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Golem docs / stream | Interrupted outside request acts at most once; exactly once only where the API honors its idempotency key and that path is shipped; at least once otherwise. Remote side that doesn’t participate described as unsolvable on their end. |
-| Pi Durable          | Tools marked safe are rerun after a crash; others reported interrupted for the agent to decide.                                                                                             |
-| Infinity            | At-least-once delivery with input dedup; event provenance listed as open.                                                                                                                   |
+| Pi Durable          | Tools marked safe are rerun after a crash; others reported interrupted for the agent to decide.                                                                                                                                         |
+| Infinity            | At-least-once delivery with input dedup; event provenance listed as open.                                                                                                                                                               |
 
 Never present these as your measurements.
 
@@ -90,13 +90,13 @@ Never present these as your measurements.
 
 ## 4. Never claim (yet, or at all)
 
-| Forbidden                                                 | Say instead                                                                                                                                                                                          |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forbidden                                                 | Say instead                                                                                                                                                                                                                  |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | “Exactly once” in general / “durable execution”           | “At most once” / “never repeats a write,” plus exactly once _per API type_ only where keyed resend is shipped. Path to a named durable-execution level: [durable-execution-claim-path.md](./durable-execution-claim-path.md) |
-| “Provably correct”                                        | “Model-checked under bounds”                                                                                                                                                                         |
-| “Beats / safer / denser than” Golem, Pi Durable, Infinity | Wait for reviewed full comparisons                                                                                                                                                                   |
-| Mid-step resumption / unmodified-agent durable processes  | Designs, not measurements                                                                                                                                                                            |
-| Any Ontologiql numbers                                    | Private                                                                                                                                                                                              |
+| “Provably correct”                                        | “Model-checked under bounds”                                                                                                                                                                                                 |
+| “Beats / safer / denser than” Golem, Pi Durable, Infinity | Wait for reviewed full comparisons                                                                                                                                                                                           |
+| Mid-step resumption / unmodified-agent durable processes  | Designs, not measurements                                                                                                                                                                                                    |
+| Any Ontologiql numbers                                    | Private                                                                                                                                                                                                                      |
 
 ---
 

@@ -12,9 +12,9 @@ Evidence: [`drain-vs-sustained.json`](./drain-vs-sustained.json) · PR [#1433](h
 
 ## Converged characterization (different hosts)
 
-| System                              | Sustained   | Drain       | Ratio                | Bound                          |
-| ----------------------------------- | ----------- | ----------- | -------------------- | ------------------------------ |
-| **ClawQL** (3-rep same campaign)    | **~312k**/s | **~312k**/s | **1.01** (0.87–1.19) | **writer** — done on this host |
+| System                                       | Sustained   | Drain       | Ratio                | Bound                          |
+| -------------------------------------------- | ----------- | ----------- | -------------------- | ------------------------------ |
+| **ClawQL** (3-rep same campaign)             | **~312k**/s | **~312k**/s | **1.01** (0.87–1.19) | **writer** — done on this host |
 | **Ontology-layer peer** (20k, 30s, conc 256) | **185k**/s  | **320k**/s  | **~0.58**            | **scheduler** (post ack+dbuf)  |
 
 Ack costs now match (~2.2–2.5 µs). If the peer applies pop-all-due + ≤1ms coalesce + no idle-sleep while writers busy, sustained should meet drain (~310–320k each) pending shared-host.

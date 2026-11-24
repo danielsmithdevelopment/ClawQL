@@ -77,17 +77,17 @@ Cursor is building toward **agent governance** inside its harness: security-revi
 
 ## Implementation backlog
 
-| Item                                               | Status                                                                               |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Docs + ADR 0017                                    | Done                                                                                 |
-| Example `mcp-connections/clawql.ts` + README       | Done — [`docs/examples/agent-sdk/`](../examples/agent-sdk/)                          |
-| Hook → `clawql-audit` (required = loud fail)       | Done — example + `clawql-agents` mappers                                             |
-| Injection eval template                            | Done — `evals/injection.eval.ts` (smoke; not a published board)                      |
-| Shared Agent Client Protocol client                | Done — `clawql-agents` `AgentClientProtocol`                                         |
-| Coding-agent runner wiring (ACP-first route + spike) | Done — `resolveCodingAgentRoute` / `CodingAgentRunner`                               |
-| Combined drive (ACP + native + WORM)               | Done — `CodingAgentDrive` / [`coding-agent-runner.md`](../agents/coding-agent-runner.md) |
-| Optional npm pack `@clawql/agent-sdk-*`            | Follow-on if copy-paste friction stays high                                          |
-| Host-connection cookbook                           | Follow-on                                                                            |
+| Item                                                 | Status                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Docs + ADR 0017                                      | Done                                                                                     |
+| Example `mcp-connections/clawql.ts` + README         | Done — [`docs/examples/agent-sdk/`](../examples/agent-sdk/)                              |
+| Hook → `clawql-audit` (required = loud fail)         | Done — example + `clawql-agents` mappers                                                 |
+| Injection eval template                              | Done — `evals/injection.eval.ts` (smoke; not a published board)                          |
+| Shared Agent Client Protocol client                  | Done — `clawql-agents` `AgentClientProtocol`                                             |
+| Coding-agent runner wiring (ACP-first route + spike) | Done — `resolveCodingAgentRoute` / `CodingAgentRunner`                                   |
+| Combined drive (ACP + native + WORM)                 | Done — `CodingAgentDrive` / [`coding-agent-runner.md`](../agents/coding-agent-runner.md) |
+| Optional npm pack `@clawql/agent-sdk-*`              | Follow-on if copy-paste friction stays high                                              |
+| Host-connection cookbook                             | Follow-on                                                                                |
 
 ## See also
 

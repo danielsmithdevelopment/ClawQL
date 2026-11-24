@@ -17,9 +17,9 @@
 
 Public arguments over “Pi runs durably” usually mix two claims. Both can be true:
 
-| Kind                     | Meaning                                                                                               | Who owns it                                                                                                                                                             |
-| ------------------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Execution durability** | The program survives a crash and continues where it left off (replay / VM / journal of control flow). | Runtimes like **Golem** (code + in-Golem tools/DBs). John is right that off-the-shelf Pi + tools-on-Golem can get this “automatically.”                                 |
+| Kind                     | Meaning                                                                                                                                          | Who owns it                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Execution durability** | The program survives a crash and continues where it left off (replay / VM / journal of control flow).                                            | Runtimes like **Golem** (code + in-Golem tools/DBs). John is right that off-the-shelf Pi + tools-on-Golem can get this “automatically.”                                 |
 | **Effect durability**    | What the program did to the **outside world** happens at most once (exactly once only where upstream keys are honored and that path is shipped). | **Not** any runtime alone for arbitrary remote POSTs. Needs upstream idempotency (or a governance layer). The other side of the thread is right that this is not magic. |
 
 John agrees he would never claim every remote tool is made durable automatically. ClawQL lives in that agreed gap: it does **not** make remote calls durable either. It **governs** them:

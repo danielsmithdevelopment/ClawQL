@@ -42,13 +42,13 @@ ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `wo
 
 ### Why celld vs build-own
 
-| Option                                | Effort                                     | API parity with CF DOs    | Replication / WORM           | Ops burden                                     | Verdict                      |
-| ------------------------------------- | ------------------------------------------ | ------------------------- | ---------------------------- | ---------------------------------------------- | ---------------------------- |
+| Option                                | Effort                                     | API parity with CF DOs    | Replication / WORM                                      | Ops burden                                     | Verdict                      |
+| ------------------------------------- | ------------------------------------------ | ------------------------- | ------------------------------------------------------- | ---------------------------------------------- | ---------------------------- |
 | **celld**                             | Integrate + constrain bundle               | High (Workers DO surface) | Built-in LTX → bucket (disk quorum ack; bucket follows) | Install ~58 MB binary; fleet via bucket leases | **Adopt**                    |
-| Custom Node `worker_threads` + SQLite | Large (hibernation, ownership, WS, alarms) | Partial / drift-prone     | Homegrown                    | Own failure detector, placement, backup        | **Do not build**             |
-| Miniflare only                        | Low for CI                                 | Dev approximation         | Local                        | Not a production fleet                         | **CI / unit tests only**     |
-| Cloudflare only                       | Low for SaaS                               | Native                    | Platform                     | Vendor tenancy / pricing                       | **Hosted path**              |
-| K8s HPA only                          | Medium                                     | Different model           | Postgres / NATS              | Familiar regulated ops                         | **Regulated until celld GA** |
+| Custom Node `worker_threads` + SQLite | Large (hibernation, ownership, WS, alarms) | Partial / drift-prone     | Homegrown                                               | Own failure detector, placement, backup        | **Do not build**             |
+| Miniflare only                        | Low for CI                                 | Dev approximation         | Local                                                   | Not a production fleet                         | **CI / unit tests only**     |
+| Cloudflare only                       | Low for SaaS                               | Native                    | Platform                                                | Vendor tenancy / pricing                       | **Hosted path**              |
+| K8s HPA only                          | Medium                                     | Different model           | Postgres / NATS                                         | Familiar regulated ops                         | **Regulated until celld GA** |
 
 **Facts of record:** Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · LTX with disk-quorum ack (bucket replication follows; zone/region loss not yet measured) · one application per fleet (alpha). **No ClawQL-owned $/cell-month figure** — see Streams §9.1.
 
