@@ -65,7 +65,7 @@ clawql-network/
 
 ## 4. Headscale: persistent mesh
 
-Standard Headscale deployment on whichever always-on node fits (the homelab documentation runs it on the Mac Mini). `clawql-network join` wraps registration so no manual Headscale CLI work is needed.
+Standard Headscale deployment on whichever always-on node fits (for the homelab, a small VPS, so the home network needs no inbound access; see the homelab and workloads overview, section 3.7). `clawql-network join` wraps registration so no manual Headscale CLI work is needed.
 
 - **Pin Headscale 0.29.x.** That release line added Tailscale-style grants alongside ACLs, policy tests that reject a policy change when a test fails, and approval flows for SSH checks. Use grants and policy tests for ClawQL's mesh policy.
 - **Client version floor:** Headscale 0.29.1 raised the minimum supported Tailscale client to v1.80.0.
@@ -120,7 +120,7 @@ export async function connectViaTailcat(
 ): Promise<TailcatConnection>
 ```
 
-Both functions take a `GateContext` and run the scope gate themselves (§7), so no caller can reach Tailcat without it.
+Both functions take a `GateContext` and run the scope gate themselves (§8), so no caller can reach Tailcat without it.
 
 ## 6. Customer tailnets through Tailscale OAuth apps
 
