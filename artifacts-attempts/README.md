@@ -2,7 +2,7 @@
 
 **Cloudflare Artifacts competition entry** — a task forks into parallel agent attempts, evidence decides the winner, and the merge becomes an immutable Arweave release anyone can verify.
 
-Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
+Apache-2.0. Nothing personal goes into a release.
 
 ## What it does
 

@@ -2,7 +2,7 @@ export const site = {
   name: 'ClawQL',
   tagline: 'Agentic Infrastructure for Regulated Industries',
   description:
-    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a WORM audit trail on every action. Apache 2.0.',
+    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a hash-chained WORM audit trail on every action (local trail on by default; remote durable copies default on Cloud paid tiers and the regulated profile). Apache 2.0.',
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:

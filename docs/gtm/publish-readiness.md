@@ -39,7 +39,7 @@ True by design and covered by tests — safe as product description:
     (no public retract; permanent scope).
 - A write interrupted mid-flight is **never retried blindly** — resolved by the API’s own mechanism where one exists, or marked **outcome unknown** for a person.
 - Automatic resolution by API type:
-  - **Idempotency keys:** key derived from the approval is resent → exactly once at the API.
+  - **Idempotency keys:** key derived from the approval is resent → at most once at the API (exactly once only where the upstream honors keys and that path is shipped).
   - **Lookup by reference:** after a crash, check whether the write landed, then done or safely resend.
   - **Neither:** never repeated; marked unknown.
 - Race safety: a “not found” lookup counts only when one of three named server guarantees says the original can no longer land — never on a client timeout.
@@ -80,7 +80,7 @@ Until then, publicly: **a comparison is underway; configurations sent to both te
 
 | Source              | Their statement (paraphrase — link the original)                                                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Golem docs / stream | Interrupted outside request acts exactly once where the API honors its idempotency key; at least once otherwise. Remote side that doesn’t participate described as unsolvable on their end. |
+| Golem docs / stream | Interrupted outside request acts at most once; exactly once only where the API honors its idempotency key and that path is shipped; at least once otherwise. Remote side that doesn’t participate described as unsolvable on their end. |
 | Pi Durable          | Tools marked safe are rerun after a crash; others reported interrupted for the agent to decide.                                                                                             |
 | Infinity            | At-least-once delivery with input dedup; event provenance listed as open.                                                                                                                   |
 
@@ -92,7 +92,7 @@ Never present these as your measurements.
 
 | Forbidden                                                 | Say instead                                                                                                                                                                                          |
 | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| “Exactly once” in general / “durable execution”           | “Never repeats a write,” plus exactly once _per API type_ where keys or lookups exist. Path to a named durable-execution level: [durable-execution-claim-path.md](./durable-execution-claim-path.md) |
+| “Exactly once” in general / “durable execution”           | “At most once” / “never repeats a write,” plus exactly once _per API type_ only where keyed resend is shipped. Path to a named durable-execution level: [durable-execution-claim-path.md](./durable-execution-claim-path.md) |
 | “Provably correct”                                        | “Model-checked under bounds”                                                                                                                                                                         |
 | “Beats / safer / denser than” Golem, Pi Durable, Infinity | Wait for reviewed full comparisons                                                                                                                                                                   |
 | Mid-step resumption / unmodified-agent durable processes  | Designs, not measurements                                                                                                                                                                            |

@@ -18,7 +18,7 @@ describe("atomic mandate consume", () => {
     resetPendingSqliteCacheForTests();
     delete process.env.CLAWQL_HOME;
     delete process.env.CLAWQL_PENDING_STORE;
-    delete process.env.CLAWQL_WORM_ENABLED;
+    process.env.CLAWQL_WORM_ENABLED = "0";
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;

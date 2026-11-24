@@ -3,7 +3,7 @@
  *
  * Child records triggers and ACKs each counted fire on stdout only after
  * durable flush. Parent SIGKILLs mid-drain, then verifies every ACK'd fire
- * is on disk exactly once.
+ * is present on disk once.
  */
 
 import { spawn } from "node:child_process";
@@ -134,7 +134,7 @@ export function runTriggerJournalCrashTestEffect(args: {
       missingFromDisk: missing,
       duplicateOnDisk: duplicates,
       note: ok
-        ? `SIGKILL after ${acks.size} durable acks; all counted fires present on disk exactly once (journal=${journalPath}).`
+        ? `SIGKILL after ${acks.size} durable acks; all counted fires present on disk once (journal=${journalPath}).`
         : `Crash proof failed: missing=${missing}, duplicates=${duplicates}, acks=${acks.size}, onDisk=${onDisk.length}, killed=${killed}. stderr=${stderr.slice(0, 300)}`,
     };
   });

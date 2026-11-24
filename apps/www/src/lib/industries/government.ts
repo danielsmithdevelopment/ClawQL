@@ -75,7 +75,7 @@ export const governmentIndustry: Industry = {
   ],
   painPointsHeadline: 'Problems clawql-government solves',
   painPointsSubheadline:
-    'These are the structural gaps the vertical targets — on top of ClawQL Core WORM audit, Arweave anchoring, document IDP, FOIA-oriented redaction, and FedRAMP-ready deployment patterns.',
+    'These are the structural gaps the vertical targets — on top of ClawQL Core WORM audit, Arweave anchoring, document IDP, FOIA-oriented redaction, and self-hosted deployment patterns for agencies (no FedRAMP authorization).',
   painPoints: [
     {
       title: 'Spending trails exist; outcome trails do not',
@@ -214,7 +214,7 @@ export const governmentIndustry: Industry = {
     'External immutable anchoring — Arweave transaction IDs publicly accessible without agency cooperation on every request',
     'Model authorization alignment — measurable outcomes, baselines, WORM storage, public verify API, standing auditor verification',
     'FOIA / public records tooling — classify, redact, route with structured audit events',
-    'FedRAMP-ready deployment posture — self-hosted Helm/K8s patterns; Cosign + SBOM via clawql-release',
+    'Self-hosted Helm/K8s patterns for agencies — Cosign + SBOM via clawql-release; no FedRAMP authorization',
     'Jurisdiction-aware defaults — data sovereignty and role scoping planned via clawql-auth vertical RLS',
   ],
   relatedResources: [

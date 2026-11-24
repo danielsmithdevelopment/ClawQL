@@ -18,7 +18,7 @@ import {
 describe("process WORM boot + append", () => {
   afterEach(async () => {
     await Effect.runPromise(resetProcessWormForTests());
-    delete process.env.CLAWQL_WORM_ENABLED;
+    process.env.CLAWQL_WORM_ENABLED = "0";
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;
@@ -26,8 +26,8 @@ describe("process WORM boot + append", () => {
     delete process.env.CLAWQL_WORM_TEE_PLATFORM;
   });
 
-  it("no-ops when CLAWQL_WORM_ENABLED is unset", async () => {
-    delete process.env.CLAWQL_WORM_ENABLED;
+  it("no-ops when CLAWQL_WORM_ENABLED=0", async () => {
+    process.env.CLAWQL_WORM_ENABLED = "0";
     const svc = await bootProcessWormFromEnv();
     expect(svc).toBeNull();
     expect(await Effect.runPromise(processWormBootState())).toBe("disabled");

@@ -17,7 +17,7 @@ Governance integrity: a single approval must never drive more than one native
 side effect. Fixed on #1459 before any public npm/Helm/managed release carried
 the vulnerable resume path.
 
-- **Advisory:** [`docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md`](../security/advisories/2026-11-03-native-mandate-resume-double-use.md)
+- **Advisory:** [`docs/security/advisories/2026-11-03-native-mandate-resume-double-use.md`](./advisories/2026-11-03-native-mandate-resume-double-use.md)
 - **npm:** latest published **7.2.0** predates the bug (intro 2026-10-19 on `main`).
 - **Public retract:** **none** — no released channel shipped the vulnerable path.
 - Still publish a GHSA when the fix lands on `main` / 8.0 so operators who ran

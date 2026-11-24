@@ -145,15 +145,16 @@ const DEFAULT_RAMP: readonly number[] = [
 ];
 
 /**
- * Ontologiql public claim (publishable) — mirrored for the comparison table.
- * Deadline lab closed in Ontologiql #144 (group_commit); shared-host campaign protocol next.
+ * Ontology-layer peer public claim (publishable) — mirrored for the comparison table.
+ * Deadline lab closed in peer #144 (group_commit); shared-host campaign protocol next.
+ * systemId `ontologiql-rust` is retained for evidence JSON compatibility (early working name).
  */
 export const ONTOLOGIQL_PUBLISHABLE_ROW: DensitySystemRow = {
   systemId: "ontologiql-rust",
   status: "publishable",
-  hostLabel: "stable-host (Ontologiql published)",
+  hostLabel: "stable-host (ontology-layer peer published)",
   honesty:
-    "Ontologiql Rust: capacity/wake publishable (200k @ ≤512 MiB). Deadline lab (#144): after ack~2.2µs + dbuf, drain~320k but sustained~185k (ratio~0.58) — scheduler-bound; apply pop-all-due + coalesce + no-idle-while-busy. ClawQL done on this host: 3-rep drain≈sustained~312k (within error; writer-bound). Board paused; shared-host can wait; Infinity-on-Pi is time-sensitive. No win copy.",
+    "Ontology-layer peer (Rust): capacity/wake publishable (200k @ ≤512 MiB). Deadline lab (#144): after ack~2.2µs + dbuf, drain~320k but sustained~185k (ratio~0.58) — scheduler-bound; apply pop-all-due + coalesce + no-idle-while-busy. ClawQL done on this host: 3-rep drain≈sustained~312k (within error; writer-bound). Board paused; shared-host can wait; Infinity-on-Pi is time-sensitive. No win copy.",
   boardColumns: {
     agentsAtLimit: 200_000,
     limitResource: "rss",

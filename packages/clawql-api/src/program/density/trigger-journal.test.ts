@@ -151,7 +151,7 @@ describe("trigger journal flush policy", () => {
     }
   });
 
-  it("SIGKILL crash test: every counted fire is on disk exactly once", async () => {
+  it("SIGKILL crash test: every counted fire is present on disk once", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-tj-crash-"));
     const result = await Effect.runPromise(
       runTriggerJournalCrashTestEffect({

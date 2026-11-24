@@ -1,5 +1,5 @@
 /**
- * Process-scoped durable WORM trail. Env-gated (`CLAWQL_WORM_ENABLED=1`).
+ * Process-scoped durable WORM trail. On by default; set `CLAWQL_WORM_ENABLED=0` to disable.
  * Appends are best-effort — never fail domain callers.
  */
 

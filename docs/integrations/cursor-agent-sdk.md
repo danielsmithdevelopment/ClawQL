@@ -53,13 +53,13 @@ For deployments that keep MCP on the host (not Cursor-cloud egress), document wi
 
 **Shipped:** [`docs/examples/agent-sdk/evals/injection.eval.ts`](../examples/agent-sdk/evals/injection.eval.ts) (+ `evals.config.ts`). Honesty: cite existing boards under `docs/benchmarks/security-suite/` — do not invent AgentDojo claims ([agentready](../proposals/agentready-act-safely.md)). Pair with `clawql security inject` for in-process Panguard drills.
 
-## 2. Adapter shortcut (Ontologiql runner)
+## 2. Adapter shortcut (coding-agent runner)
 
 Driving **coding agents** (edit/run loops) is a different plane from MCP tools. Prefer **Agent Client Protocol** as the runner’s primary adapter interface; native adapters only when ACP cannot express a required capability. Full decision: **[ADR 0017](../adr/0017-agent-client-protocol-first-adapters.md)**.
 
 **Shipped:** `clawql-agents` `AgentClientProtocol` + `makeAgentClientProtocolLayer` / duplex test pair (`initialize` → `authenticate` → `session/new` → `session/prompt` → permission/update handlers). Stdio NDJSON JSON-RPC aligned with Cursor `agent acp`.
 
-**Runner wiring:** `resolveCodingAgentRoute` / `CodingAgentRunner` / combined **`CodingAgentDrive`** + `prepareCodingAgentStackEffect` (ACP turn or native session + shared WORM). Prefer ACP for `cursor-cli`; catalog agents (`goose`, `cline`, …) stay on native adapters until they expose ACP. See [`docs/agents/ontologiql-runner.md`](../agents/ontologiql-runner.md).
+**Runner wiring:** `resolveCodingAgentRoute` / `CodingAgentRunner` / combined **`CodingAgentDrive`** + `prepareCodingAgentStackEffect` (ACP turn or native session + shared WORM). Prefer ACP for `cursor-cli`; catalog agents (`goose`, `cline`, …) stay on native adapters until they expose ACP. See [`docs/agents/coding-agent-runner.md`](../agents/coding-agent-runner.md).
 
 Do **not** confuse Agent Client Protocol with payments **ACP** (`CLAWQL_ACP_*`).
 
@@ -84,8 +84,8 @@ Cursor is building toward **agent governance** inside its harness: security-revi
 | Hook → `clawql-audit` (required = loud fail)       | Done — example + `clawql-agents` mappers                                             |
 | Injection eval template                            | Done — `evals/injection.eval.ts` (smoke; not a published board)                      |
 | Shared Agent Client Protocol client                | Done — `clawql-agents` `AgentClientProtocol`                                         |
-| Ontologiql runner wiring (ACP-first route + spike) | Done — `resolveCodingAgentRoute` / `CodingAgentRunner`                               |
-| Combined drive (ACP + native + WORM)               | Done — `CodingAgentDrive` / [`ontologiql-runner.md`](../agents/ontologiql-runner.md) |
+| Coding-agent runner wiring (ACP-first route + spike) | Done — `resolveCodingAgentRoute` / `CodingAgentRunner`                               |
+| Combined drive (ACP + native + WORM)               | Done — `CodingAgentDrive` / [`coding-agent-runner.md`](../agents/coding-agent-runner.md) |
 | Optional npm pack `@clawql/agent-sdk-*`            | Follow-on if copy-paste friction stays high                                          |
 | Host-connection cookbook                           | Follow-on                                                                            |
 

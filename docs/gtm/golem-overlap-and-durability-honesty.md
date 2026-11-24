@@ -20,7 +20,7 @@ Public arguments over “Pi runs durably” usually mix two claims. Both can be 
 | Kind                     | Meaning                                                                                               | Who owns it                                                                                                                                                             |
 | ------------------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Execution durability** | The program survives a crash and continues where it left off (replay / VM / journal of control flow). | Runtimes like **Golem** (code + in-Golem tools/DBs). John is right that off-the-shelf Pi + tools-on-Golem can get this “automatically.”                                 |
-| **Effect durability**    | What the program did to the **outside world** happens exactly once.                                   | **Not** any runtime alone for arbitrary remote POSTs. Needs upstream idempotency (or a governance layer). The other side of the thread is right that this is not magic. |
+| **Effect durability**    | What the program did to the **outside world** happens at most once (exactly once only where upstream keys are honored and that path is shipped). | **Not** any runtime alone for arbitrary remote POSTs. Needs upstream idempotency (or a governance layer). The other side of the thread is right that this is not magic. |
 
 John agrees he would never claim every remote tool is made durable automatically. ClawQL lives in that agreed gap: it does **not** make remote calls durable either. It **governs** them:
 
@@ -194,7 +194,7 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 **Message John directly**, using his own distinction:
 
-> Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once where idempotency keys exist. Here are the crash-test numbers. Want to check our setup and show the combination together?
+> Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once only where idempotency keys exist and that path is shipped. Here are the crash-test numbers. Want to check our setup and show the combination together?
 
 Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys shipped + check-then-decide lookup still planned (not overclaimed).
 

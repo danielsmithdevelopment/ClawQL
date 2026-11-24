@@ -52,7 +52,7 @@ Read top-to-bottom once, then dive into the runtime that matches your deployment
 - Workers API parity path (Apache 2.0, Deno celld)
 - **Baseline: celld v0.4.0** — `celld dev`, KV/Queues/R2 bindings, versioned peer tunnel
 - Bundle constraints (64 MiB, no `child_process`, `setAlarm` not `setInterval`)
-- **LTX bucket = durable DO SQLite** on the celld path (platform RPO=0) — **not** a substitute for host [`clawql-audit`](https://docs.clawql.com) `WORMAuditTrail`; Lab 5b dual-writes compliance events via `CLAWQL_AUDIT_WORM_URL`
+- **LTX bucket = durable DO SQLite** on the celld path (platform disk quorum ack (bucket follows)) — **not** a substitute for host [`clawql-audit`](https://docs.clawql.com) `WORMAuditTrail`; Lab 5b dual-writes compliance events via `CLAWQL_AUDIT_WORM_URL`
 
 ### 3b. [Bursty Streams on AWS](/streams/aws-celld-burst) (draft)
 

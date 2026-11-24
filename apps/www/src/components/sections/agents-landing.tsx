@@ -61,7 +61,10 @@ const teeRows = [
   { layer: 'Cosign binary attestation', proves: 'Binary is exactly clawql-tee vX.Y, unmodified' },
   { layer: 'WASM capability sandbox', proves: 'Tool code cannot access undeclared capabilities' },
   { layer: 'Attestation-gated virtual keys', proves: 'Model API access only after hardware verification' },
-  { layer: 'WORM audit trail', proves: 'Every action recorded before acknowledgment, RPO=0' },
+  {
+    layer: 'WORM audit trail',
+    proves: 'Hash-chained local trail on by default; fleet celld acks after disk quorum (bucket replication follows)',
+  },
   { layer: 'QR air-gap transport', proves: 'Audit reaches verifier via a channel the operator cannot influence' },
   { layer: 'GPU confidential computing', proves: 'Model weights and inputs never exposed to the host' },
 ] as const
@@ -80,7 +83,7 @@ const differentiators = [
   {
     index: '03',
     title: 'Auditability you can prove',
-    body: 'Merkle-chained WORM, LTX replication with RPO=0, hardware attestation via clawql-tee, and QR export to an air-gapped examiner is not a log file. It is a verifiable record of what the agent decided and what the human chose.',
+    body: 'Merkle-chained WORM, LTX replication that acknowledges after a disk quorum on the fleet (bucket upload follows; zone and region loss not yet measured), hardware attestation via clawql-tee, and QR export to an air-gapped examiner is not a log file. It is a verifiable record of what the agent decided and what the human chose.',
   },
 ] as const
 
@@ -132,7 +135,7 @@ const securityItems = [
   },
   {
     title: 'WORM audit per action',
-    body: 'Merkle-chained, LTX-replicated with RPO=0. Every tool call, inference call, and human decision.',
+    body: 'Merkle-chained local WORM on by default. Fleet LTX acks after disk quorum; bucket replication follows. Every tool call, inference call, and human decision.',
   },
   {
     title: 'ATR scoping',

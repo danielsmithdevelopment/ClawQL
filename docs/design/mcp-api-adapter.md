@@ -64,7 +64,7 @@ not MCP JSON-RPC / Streamable HTTP session semantics.
 
 ### 2.3 Positioning (one line)
 
-> Call MCP tools by name over HTTP. Production deployments use our gRPC transport — the only production TypeScript gRPC transport for MCP.
+> Call MCP tools by name over HTTP. Deployments that need binary framing can use our TypeScript gRPC transport for MCP (`mcp-grpc-transport`).
 
 Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, docs links, large-payload guidance).
 

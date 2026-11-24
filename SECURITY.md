@@ -35,4 +35,4 @@ That page is fed by CI artifacts and an append-only publish job — not hand-edi
 - [Security overview (docs)](https://docs.clawql.com/security)
 - [Golden image pipeline](docs/security/golden-image-pipeline.md)
 - [npm supply chain](docs/security/npm-supply-chain.md)
-- [Claim holds — mandate resume + payments](docs/gtm/claim-holds-mandate-resume-and-payments.md)
+- [Claim holds — mandate resume + payments](docs/security/claim-holds-mandate-resume-and-payments.md)

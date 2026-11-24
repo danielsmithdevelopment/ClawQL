@@ -150,7 +150,7 @@ export class PendingOrderStore {
   }
 
   /**
-   * Atomic-ish consume: only an approved mandate may execute exactly once.
+   * Atomic-ish consume: only an approved mandate may execute at most once.
    * @param {{ executionId: string, executor: (args: Record<string, unknown>) => Promise<Record<string, unknown>> }} input
    */
   async consumeAndExecute(input) {
