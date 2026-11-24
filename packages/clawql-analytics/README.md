@@ -62,7 +62,7 @@ Logged: provider add/remove/config change, raw data access, export, access grant
 
 ## Site wiring (docs + marketing)
 
-Both **docs.clawql.com** and **clawql.com** fire anonymous pageviews through a shared collector:
+Both **docs.clawql.com** and **clawql.com** fire pageviews through a shared collector. Persistent session IDs are **pseudonymous** and only stored after the visitor sets `localStorage.clawql_analytics_consent=1`; otherwise counts go without a stored ID:
 
 | Site      | Client                                         | Collector                                  |
 | --------- | ---------------------------------------------- | ------------------------------------------ |

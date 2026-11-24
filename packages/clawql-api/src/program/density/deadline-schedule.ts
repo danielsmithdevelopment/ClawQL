@@ -264,7 +264,7 @@ export type DeadlineArmResult = {
   readonly failReason?: string | null;
 };
 
-/** Ontologiql-aligned burst sizes for SHARED_HOST scaled-burst ladder. */
+/** peer-aligned burst sizes for SHARED_HOST scaled-burst ladder. */
 export const DEFAULT_SCALED_BURST_SIZES: readonly number[] = [
   512, 10_000, 100_000, 250_000, 500_000, 1_000_000,
 ];
@@ -1158,7 +1158,7 @@ export function padResidentHeap(
 }
 
 /**
- * SHARED_HOST scaled bursts: fire N co-timed deadlines at Ontologiql sizes
+ * SHARED_HOST scaled bursts: fire N co-timed deadlines at ontology-layer peer sizes
  * (512, 10k, 100k, …). Report the first size that misses the 1s SLA target.
  */
 export function runScaledBurstLadderEffect(args: {
@@ -1284,7 +1284,7 @@ export function runDeadlineAccuracyEffect(args: {
     const scheduleShape = args.scheduleShape ?? "typed_arrays";
     const ids = [...args.agentIds];
     const residentHeapSize = Math.max(0, args.residentHeapSize ?? 0);
-    // Opt-in: full Ontologiql-sized ladder is multi-minute under group_commit.
+    // Opt-in: full peer-sized ladder is multi-minute under group_commit.
     const skipScaledBursts =
       args.skipScaledBursts !== false && args.scaledBurstSizes === undefined
         ? true

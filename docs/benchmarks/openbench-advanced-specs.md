@@ -52,19 +52,19 @@ Central flywheel claim: a fine-tuned small model on ClawQL tool-call traces outp
 
 | Field         | Value                                                                                                                                                             |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Product claim | Fine-tuned Qwen3.6-27B produces more reliable ClawQL tool-call sequences than base Qwen3.6-27B on the same tasks                                                  |
-| Arms          | `arm-base`: Qwen3.6-27B base (NVFP4, no adapter). `arm-ft`: Qwen3.6-27B + ClawQL-general LoRA                                                                     |
+| Product claim | Tenant-bound fine-tuned open model (current plan bases: Qwen3.8-27B / Qwen3.6-35B-A3B) produces more reliable ClawQL tool-call sequences than base tenant-bound open model on the same tasks                                                  |
+| Arms          | `arm-base`: open-model base (NVFP4, no adapter). `arm-ft`: open-model + ClawQL-general LoRA                                                                     |
 | Task IDs      | `ft-search-first-discovery`, `ft-execute-verify-loop`, `ft-memory-roundtrip`, `ft-audit-checkpoints`, `ft-policy-deny-execute`, `ft-ouroboros-oscillation-escape` |
 | Grader        | Identical to proven claims; record score, retry count, turns per arm                                                                                              |
 | Spend cap     | 50 turns / 180s / 8,000 tokens                                                                                                                                    |
 | Expected      | `arm-ft` ≥ `arm-base` on all six; primary signal = lower retries/turns on search-first, execute-verify, Ouroboros                                                 |
-| Status        | **Blocked** on Qwen3.6-27B ClawQL-general fine-tune v1 in `tier-map.json`                                                                                         |
+| Status        | **Blocked** on Open-model ClawQL-general fine-tune v1 in `tier-map.json`                                                                                         |
 
 ### B-1.2 — Fine-tuned small model vs frontier without tools
 
 | Field         | Value                                                                                                                               |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Product claim | Fine-tuned Qwen3.6-27B + ClawQL tools scores higher on ClawQL-specific classes than GPT-4o / Claude Sonnet **without** ClawQL tools |
+| Product claim | Tenant-bound fine-tuned open model (current plan bases: Qwen3.8-27B / Qwen3.6-35B-A3B) + ClawQL tools scores higher on ClawQL-specific classes than GPT-4o / Claude Sonnet **without** ClawQL tools |
 | Arms          | `arm-ft-clawql` vs `arm-frontier-bare`                                                                                              |
 | Task IDs      | Same six as B-1.1 + `ft-multi-provider-vault-scaffold`                                                                              |
 | Expected      | Memory-dependent tasks 1.0 vs 0.0 by construction; win or tie on stateless tasks                                                    |

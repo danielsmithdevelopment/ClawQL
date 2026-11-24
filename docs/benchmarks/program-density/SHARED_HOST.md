@@ -1,7 +1,7 @@
 # Shared-host contract — durable-agent density
 
 Run both systems on **one host**, same agent shape, same columns, before any win copy.
-Methodology is aligned on both sides (ClawQL PR #1433; Ontologiql #144 + compact-array rebuild). Evidence below is still **different hosts** until the shared run.
+Methodology is aligned on both sides (ClawQL PR #1433; ontology-layer peer #144 + compact-array rebuild). Evidence below is still **different hosts** until the shared run.
 
 ## Shared-host campaign protocol (required before merge)
 
@@ -17,7 +17,7 @@ Settle these **before** either system’s deadline arms on the shared host. Resu
 
 ### 2. Single-writer fsync ceiling first (both systems, same probe)
 
-Before ClawQL or Ontologiql runs:
+Before ClawQL or ontology-layer peer runs:
 
 ```bash
 npm run benchmark:program-density-fsync-ceiling
@@ -31,7 +31,7 @@ The artifact keeps **two** modes:
 | **`serial` (PRIMARY)**    | One writer; write a `batchMax` NDJSON batch; `fsync`; wait; repeat | Ceiling for this flush policy. `theoreticalMaxGroupCommitPerSec = serial.fsyncsPerSec × batchMax` |
 | **`parallel` (headroom)** | Several writers with fsync each                                    | What a multi-writer design could use — **not** the board ceiling                                  |
 
-**Ontologiql must run the same serial probe** on the shared host. An earlier ~40k fsync/s figure came from overwrite/parallel-capable probing and **overstated** single-writer capacity — retracted as the group_commit ceiling.
+**The ontology-layer peer must run the same serial probe** on the shared host. An earlier ~40k fsync/s figure came from overwrite/parallel-capable probing and **overstated** single-writer capacity — retracted as the group_commit ceiling.
 
 #### Serial-ceiling honesty (power-loss vs process crash)
 
@@ -56,13 +56,13 @@ During each system’s ramp (same window as the rate arms), record:
 
 ClawQL surfaces these as `flushStats` (`npm run benchmark:program-density-flush-stats`) plus a pump profile (`npm run benchmark:program-density-pump-profile`).
 
-**Reading after both pump profiles:** producers are fast on both sides (ClawQL noop ~1.3M/s; Ontologiql producer ~0.46 µs/rec). Double-buffer hits alone do not prove an idle-writer fix (ClawQL fsync rate flat; Ontologiql = `double_buffer_candidate_unverified`).
+**Reading after both pump profiles:** producers are fast on both sides (ClawQL noop ~1.3M/s; ontology-layer peer producer ~0.46 µs/rec). Double-buffer hits alone do not prove an idle-writer fix (ClawQL fsync rate flat; ontology-layer peer = `double_buffer_candidate_unverified`).
 
 **Under-load sync latency vs probe (required):** record each sync’s p50/p99 during the focus window and compare to the serial probe. If run latency is **2–4×** the probe, growing-file metadata (size/blocks on every `fsync`) is the likely gap — trial **`fdatasync` + preallocated segments** and report before/after **sustained rate + fsyncs/sec** (not hit rate).
 
 **ClawQL (done on this host):** same-campaign 3-rep drain **~312k** ≈ sustained **~312k** (ratio **1.01**, ranges overlap) — `sustained_equals_drain_within_measurement_error`. Sync p50/p99 ~129/**679** µs; ack ~2.5 µs.
 
-**Ontologiql (post ack+dbuf):** drain **320k**, sustained only **185k** (ratio ~0.58) — **scheduler-bound**, same signature ClawQL fixed with pop-all-due + ≤1ms coalesce + no idle-sleep while busy. Conc 256 maximized drain; hit ~35%.
+**Ontology-layer peer (post ack+dbuf):** drain **320k**, sustained only **185k** (ratio ~0.58) — **scheduler-bound**, same signature ClawQL fixed with pop-all-due + ≤1ms coalesce + no idle-sleep while busy. Conc 256 maximized drain; hit ~35%.
 
 **Board pause:** shared-host deadline run can wait. Infinity harness v2 under `infinity-on-pi/` (`publishable: true` with host disclosed; Pi deferred as extra column).
 
@@ -85,12 +85,12 @@ Coarse ladders (e.g. 192k→256k or 256k→384k) only place the limit in a **33�
 | Agent count | Same `agentsAtLimit` (or agreed shared N) for both                           |
 | Disk        | Same volume the **serial** fsync ceiling was measured on                     |
 | Host        | Otherwise idle                                                               |
-| Order       | **Alternate** across reps: ClawQL₁ → Ontologiql₁ → … → ClawQL₃ → Ontologiql₃ |
+| Order       | **Alternate** across reps: ClawQL₁ → ontology-layer peer₁ → … → ClawQL₃ → ontology-layer peer₃ |
 
 ### 5. Merge only after both sides
 
 ```bash
-CLAWQL_DENSITY_PEER_JSON=/path/to/ontologiql-five-arms.json \
+CLAWQL_DENSITY_PEER_JSON=/path/to/ontology-peer-five-arms.json \
 CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.json \
   npm run benchmark:program-density-shared-host
 ```
@@ -117,7 +117,7 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Methodology status
 
-| Gate                 | ClawQL                                                                                 | Ontologiql                                                                           |
+| Gate                 | ClawQL                                                                                 | ontology-layer peer                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Flush + crash test   | group_commit 64/10ms; pass; async-fsync double-buffer active                           | group_commit 64/10ms; pass (#144). Prior os_buffer ~400k/s superseded                |
 | Scaled bursts        | first miss **250k** @ 2.5e6                                                            | first miss **200k** @ 200k (N ≤ agentsAtLimit)                                       |
@@ -132,13 +132,13 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ### Serial ceiling — not the old parallel/overwrite number
 
-Do not treat ClawQL 256k vs Ontologiql 192k as “disk-shaped” until both fractions of the **same serial** ceiling are known on one host. If serial ≈ 4k fsync/s, theo max ≈ 256k and the board is at the real ceiling. If serial is still much higher, profile drain CPU on both sides.
+Do not treat ClawQL 256k vs ontology-layer peer 192k as “disk-shaped” until both fractions of the **same serial** ceiling are known on one host. If serial ≈ 4k fsync/s, theo max ≈ 256k and the board is at the real ceiling. If serial is still much higher, profile drain CPU on both sides.
 
 ### RebuildMs
 
-Compact-array on Ontologiql (~2–3 ms) closes the prior format gap vs ClawQL ~40–55 ms @ 2.5e6. Still disclose `scheduleFormat` on both rows.
+Compact-array on ontology-layer peer (~2–3 ms) closes the prior format gap vs ClawQL ~40–55 ms @ 2.5e6. Still disclose `scheduleFormat` on both rows.
 
-## Lab mirror (Ontologiql — different host; not a public deadline claim)
+## Lab mirror (ontology-layer peer — different host; not a public deadline claim)
 
 | Field                             | Value                                           |
 | --------------------------------- | ----------------------------------------------- |
@@ -155,7 +155,7 @@ Compact-array on Ontologiql (~2–3 ms) closes the prior format gap vs ClawQL ~4
 | noLoss / noDuplicate              | true                                            |
 | overdue prompt                    | 1.0                                             |
 
-## Peer artifact (Ontologiql → merge)
+## Peer artifact (ontology-layer peer → merge)
 
 Emit JSON matching ClawQL’s `clawql` object, including:
 
@@ -169,7 +169,7 @@ npm run benchmark:program-density-fsync-ceiling
 CLAWQL_DENSITY_REPS=3 \
 CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.json \
   npm run benchmark:program-density-shared-host
-# Alternate Ontologiql each rep (same serial ceiling, refined ramp), then merge peer JSON.
+# Alternate ontology-layer peer each rep (same serial ceiling, refined ramp), then merge peer JSON.
 ```
 
 Next: interleaved 3-rep campaign on the **dedicated** host with write-cache recorded → peer merge. Publish **durableRecordsPerSec** and **rateSustainableWithinOneSecondSla** for both; disclose each side’s best journal config. No win copy until `sharedHostComplete=true`.

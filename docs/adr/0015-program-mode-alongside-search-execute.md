@@ -225,7 +225,7 @@ OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interprete
 3. **Inside a cell:** no `fetch`, no ambient network — **tools only**.
 4. **CPU watchdog** — terminate runaway isolates if the pinned celld build does not enforce CPU time; verify against the pinned version before claiming.
 
-**Open-source vs keep (Ontologiql-shaped split):**
+**Open-source vs keep (ontology-layer split):**
 
 | Publish (runtime)                                             | Keep (ClawQL)                                  |
 | ------------------------------------------------------------- | ---------------------------------------------- |

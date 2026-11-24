@@ -32,7 +32,7 @@ Draw / attach your deployment diagram covering at least:
 
 | Surface         | Typical components                                                          | Notes                                    |
 | --------------- | --------------------------------------------------------------------------- | ---------------------------------------- |
-| Human console   | `apps/dashboard`, Supabase Auth / customer IdP                              | ClawQL is **not** the human password IdP |
+| Human console   | `apps/dashboard`, Supabase Auth / customer identity provider                              | ClawQL is **not** the human password identity provider |
 | Agent MCP       | `clawql-mcp` Helm, optional MCP proxy / Panguard                            | ATR / JWT at chokepoint                  |
 | Memory / vault  | Obsidian / team sync (R2/S3), optional WORM (`clawql-audit`)                | Ring-buffer `audit` MCP ≠ WORM           |
 | Documents / IDP | Docling, Onyx, Paperless (opt-in)                                           | PHI labels must not land in metrics      |
@@ -42,13 +42,13 @@ Draw / attach your deployment diagram covering at least:
 
 ## Trust Services Criteria → ClawQL checklist
 
-Use this as a **control inventory**. Mark each row for your environment: **In place** / **Partial** / **N/A (IdP/customer)** / **Gap**.
+Use this as a **control inventory**. Mark each row for your environment: **In place** / **Partial** / **N/A (identity provider/customer)** / **Gap**.
 
 ### CC6 — Logical access
 
 | Control theme           | ClawQL / ops evidence                                                                         | Check |
 | ----------------------- | --------------------------------------------------------------------------------------------- | ----- |
-| Human SSO / MFA         | Customer IdP or Supabase Auth; [`idp-login-abuse-ownership.md`](idp-login-abuse-ownership.md) | ☐     |
+| Human SSO / MFA         | Customer identity provider or Supabase Auth; [`idp-login-abuse-ownership.md`](idp-login-abuse-ownership.md) | ☐     |
 | Machine / agent auth    | API keys (`cqk_`), MCP OAuth, ATR — `packages/clawql-auth`                                    | ☐     |
 | Least privilege pods    | Helm `podSecurityContext` / `securityContext` — see `values-soc2-hardening.example.yaml`      | ☐     |
 | Support view-as audited | [`support-impersonation.md`](support-impersonation.md) + JSONL / Audit                        | ☐     |
@@ -112,7 +112,7 @@ Use this as a **control inventory**. Mark each row for your environment: **In pl
 | ----------------------------------------------------------------------------- | ---------------------- | ----- |
 | BAA with every data-path vendor (cloud, Vault host, model APIs if applicable) | Legal / GRC            | ☐     |
 | 6-year minimum audit retention for PHI tenants (WORM policy)                  | Security               | ☐     |
-| Inactivity / session timeouts                                                 | IdP + console settings | ☐     |
+| Inactivity / session timeouts                                                 | identity provider + console settings | ☐     |
 | Breach Risk Assessment process (PICERL → BRA)                                 | Security               | ☐     |
 | PHI never in metrics / free-form logs                                         | Eng + ops              | ☐     |
 | Healthcare vertical flags only when intended                                  | Ops                    | ☐     |
@@ -144,7 +144,7 @@ Profile intent:
 | Cadence                 | Artifact                                                      | Where it lives                                                                           |
 | ----------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Every merge (prod path) | CI supply-chain + CodeQL + secret scan                        | GitHub Actions retention + export to evidence store                                      |
-| Weekly                  | Access / offboard sample (SCIM events)                        | IdP + ClawQL audit export                                                                |
+| Weekly                  | Access / offboard sample (SCIM events)                        | identity provider + ClawQL audit export                                                                |
 | Monthly                 | Patch / image digest report                                   | Cosign / GHCR digests                                                                    |
 | Quarterly               | Security review + **restore drill** with RTO/RPO              | [`restore-drill.md`](../deployment/restore-drill.md) record table                        |
 | Quarterly               | Evidence package (Panguard decisions, WORM roots, review PDF) | Encrypted to compliance mailbox / WORM bucket                                            |

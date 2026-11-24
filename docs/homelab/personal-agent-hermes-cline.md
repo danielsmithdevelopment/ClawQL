@@ -651,10 +651,10 @@ cline server --port 8095 --acp-enabled
     "allowedOrchestrators": ["hermes"]
   },
   "workspace": {
-    "root": "/Users/danielsmith/ClawQL-harvey-lab",
+    "root": "~/ClawQL-harvey-lab",
     "allowedPaths": [
-      "/Users/danielsmith/ClawQL-harvey-lab",
-      "/Users/danielsmith/ClawQL",
+      "~/ClawQL-harvey-lab",
+      "~/ClawQL",
       "/tmp/harvey-labs-work2"
     ]
   },
@@ -1316,7 +1316,7 @@ spec:
             - name: cline-config
               mountPath: /root/.cline
             - name: workspace
-              mountPath: /Users/danielsmith/ClawQL-harvey-lab
+              mountPath: ~/ClawQL-harvey-lab
           resources:
             requests:
               memory: "2Gi"
@@ -1336,7 +1336,7 @@ spec:
             name: cline-config
         - name: workspace
           hostPath:
-            path: /Users/danielsmith/ClawQL-harvey-lab
+            path: ~/ClawQL-harvey-lab
             type: Directory
 ---
 apiVersion: v1

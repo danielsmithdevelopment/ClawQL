@@ -24,8 +24,8 @@ export type {
 export {
   CodingAgentDrive,
   CodingAgentDriveLive,
-  makeOntologiqlAcpDuplexStackLayer,
-  makeOntologiqlAcpStackLayer,
+  makeontology-layer peerAcpDuplexStackLayer,
+  makeontology-layer peerAcpStackLayer,
   prepareCodingAgentStackEffect,
   runCombinedAcpTurnEffect,
   startCombinedNativeEffect,

@@ -7,7 +7,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Token efficiency — twelve layers',
   description:
-    'Why context bloat hurts accuracy (Lost in the Middle, length-alone degradation) and how twelve compounding layers cut cost ~99.8% while improving reasoning.',
+    'Why context bloat hurts accuracy (Lost in the Middle, length-alone degradation) and how compounding token-efficiency layers (shipped and planned) cut cost ~99.8% while improving reasoning.',
   path: '/architecture/token-efficiency',
   ogType: 'article',
 })

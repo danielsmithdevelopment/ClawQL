@@ -43,7 +43,7 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 - **End-to-end IDP pipeline:** ingest → convert → redact → archive → semantically index → share — one Helm chart.
 - **Durable cross-session agent memory** (Markdown, local, portable). OKF v0.2 trust signals (`generated`, `verified`, `stale_after`, `status`, `superseded_by`) in vault entries. `memory_ingest` / `memory_recall` tools. See [`okf.md`](../memory/okf.md).
 - **PorTAL** (Ramp Labs, Apache 2.0): Portable Task-specific Adapter Learning via `--format portal-bundle` in the flywheel export pipeline. See [`portal-flywheel.md`](../inference/portal-flywheel.md).
-- **Sovereign multi-model inference fleet:** fine-tuned Qwen3.6-27B + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
+- **Sovereign multi-model inference fleet:** tenant-bound fine-tuned open model (current plan bases: Qwen3.8-27B / Qwen3.6-35B-A3B) + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
 - **Defense-in-depth security:** Kata container VM isolation, WORM Merkle audit logs, Panguard ATR fail-closed, model weight integrity verification. Documented at [defense-in-depth](https://docs.clawql.com/security/defense-in-depth).
 
 ---
@@ -52,7 +52,7 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 
 | Value Driver                | Detail                                                                                                                                                                                                      |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Token efficiency**        | Twelve compounding layers. ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste. |
+| **Token efficiency**        | Compounding token-efficiency layers (shipped and planned). ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste. |
 | **Cost reduction**          | Replaces $8,000–15,000+/month incumbent stacks. ClawQL Dedicated + Sovereign Security Pack: **$799/month** maximum (indicative GTM).                                                                        |
 | **Data sovereignty**        | Provable at the infrastructure layer. Istio AuthorizationPolicies enforce egress blocks — not only a contractual claim.                                                                                     |
 | **Persistent agent memory** | Unique among IDP / VDR / MCP gateway competitors: cross-session vault memory with OKF trust signals.                                                                                                        |
@@ -105,7 +105,7 @@ ClawQL's IDP platform automates the full document lifecycle: ingestion, classifi
 | **Obsidian Vault**           | Durable cross-session agent memory (Markdown)                                     |
 | **Nextcloud**                | Human file storage, collaboration, archive UI                                     |
 | **Coneshare**                | Secure sharing, VDRs, engagement analytics (MIT)                                  |
-| **Qwen3.6-27B (fine-tuned)** | Core document worker; vLLM NVFP4; L4 GPU                                          |
+| **Tenant-bound fine-tuned open model** | Core document worker; vLLM NVFP4; L4 GPU                                          |
 | **Ornith 1.0 35B MoE**       | Coding specialist; serve as-is (MIT, DeepReinforce AI)                            |
 | **Phi-4 14B (fine-tuned)**   | Utility / memory worker                                                           |
 | **Langfuse**                 | Trace capture, datasets, flywheel observability (LGTM+)                           |
@@ -389,7 +389,7 @@ Representative: 25 users, 25k docs/mo, VDR + compliance.
 | -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Category             | Tool — routes MCP calls, injects secrets, meters usage | Foundational Platform — Agentic Gateway, memory, search, security, IDP, sovereign inference                                                                                                                                                                                             |
 | Developer adoption   | Head start on marketing and community mindshare        | Later entrant; deeper stack, open-source core, published case studies                                                                                                                                                                                                                   |
-| Token efficiency     | One layer: search-and-execute only                     | Twelve compounding layers on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md))                                                                                                                 |
+| Token efficiency     | One layer: search-and-execute only                     | Compounding token-efficiency layers (shipped and planned) on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md))                                                                                                                 |
 | Agent memory         | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0)                                                                                                                        |
 | Semantic search      | None                                                   | Onyx — 40+ connectors, citations; **OpenBench-verified** stubbed `knowledge_search_onyx` 1.0/0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189))                                                                                             |
 | Security             | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth                                                                                                                                      |
@@ -485,7 +485,7 @@ Hosted Dedicated/Enterprise run a sovereign fleet inside the tenant boundary. Ha
 
 | Model                  | Role                                                      |
 | ---------------------- | --------------------------------------------------------- |
-| Qwen3.6-27B FT (NVFP4) | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
+| Open-model FT (NVFP4) | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
 | Ornith 35B MoE (as-is) | Coding specialist — do **not** LoRA away self-scaffolding |
 | Phi-4 14B FT           | Utility / memory / metadata                               |
 | Gemma 4 31B            | NSV/SGDOP diversity only                                  |
@@ -587,7 +587,7 @@ Hosted plan avoids GPL dependencies. Legal review of AGPL network clauses recomm
 
 - Hosted beta: Developer/Teams on Cloudflare Workers; 14-day trial.
 - Inference Gateway v1 + pdf-inspector Stage 0 + Docling + LangExtract + HITL Label Studio.
-- Qwen3.6-27B ClawQL-general fine-tune v1 + Istio egress + Presidio.
+- Open-model ClawQL-general fine-tune v1 + Istio egress + Presidio.
 - `mcp-api-adapter` 0.5.x line (shipped).
 - OpenBench expansion — advanced Phase 1 packs landed; live cells next.
 

@@ -64,7 +64,7 @@ export const mcpToolTiers = {
       },
       {
         name: 'audit',
-        help: 'In-process ring buffer of structured events — append, list, clear. Pair with memory_ingest when you need a durable operator trail.',
+        help: 'In-process ring buffer of structured events — append, list, clear (clears only this view, never the durable WORM chain). Pair with process WORM (on by default) and memory_ingest for durable trails.',
       },
       {
         name: 'cache',

@@ -9,7 +9,7 @@ import { makeAgentWormLayer } from "../shared/worm.js";
 import { CodingAgentRunnerLive } from "./acp-session.js";
 import { CodingAgentDrive, CodingAgentDriveLive, prepareCodingAgentStackEffect } from "./drive.js";
 
-describe("CodingAgentDrive (combined Ontologiql stack)", () => {
+describe("CodingAgentDrive (combined ontology-layer peer stack)", () => {
   let dir = "";
 
   afterEach(async () => {

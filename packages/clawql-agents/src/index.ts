@@ -223,7 +223,7 @@ export type {
   AcpUpdateHandler,
 } from "./acp/index.js";
 
-/** Ontologiql / runner: ACP-first route + combined drive stack. */
+/** coding-agent / runner: ACP-first route + combined drive stack. */
 export {
   ACP_SPIKE_CHECKLIST,
   CodingAgentDrive,
@@ -232,8 +232,8 @@ export {
   CodingAgentRunnerLive,
   makeCodingAgentRunnerDuplexLayer,
   makeCodingAgentRunnerLayer,
-  makeOntologiqlAcpDuplexStackLayer,
-  makeOntologiqlAcpStackLayer,
+  makeontology-layer peerAcpDuplexStackLayer,
+  makeontology-layer peerAcpStackLayer,
   prepareCodingAgentStackEffect,
   resolveCodingAgentRoute,
   resolveCodingAgentRouteEffect,

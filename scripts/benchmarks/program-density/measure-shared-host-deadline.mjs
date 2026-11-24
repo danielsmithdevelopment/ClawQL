@@ -1,5 +1,5 @@
 /**
- * SHARED_HOST deadline arms: scaled bursts (Ontologiql sizes) + deadline restart
+ * SHARED_HOST deadline arms: scaled bursts (ontology-layer peer sizes) + deadline restart
  * at full-scale capacity. Writes JSON to --out=.
  *
  *   node --expose-gc --import tsx scripts/benchmarks/program-density/measure-shared-host-deadline.mjs
@@ -90,7 +90,7 @@ const payload = await Effect.runPromise(
         firstMissSize: scaledBursts?.firstMissSize ?? null,
         restartOk: deadlineRestart?.ok ?? null,
         rebuildMs: deadlineRestart?.rebuildMs ?? null,
-        note: "SHARED_HOST ClawQL arms — compare to Ontologiql once flush policy is disclosed + crash-tested on the same host.",
+        note: "SHARED_HOST ClawQL arms — compare to ontology-layer peer once flush policy is disclosed + crash-tested on the same host.",
       },
     };
   })

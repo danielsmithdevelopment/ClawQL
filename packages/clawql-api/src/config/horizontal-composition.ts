@@ -54,7 +54,7 @@ const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional()
 /** Loose instance body for flag resolution (providers schema validated elsewhere). */
 const instanceBodyForFlagsSchema = z
   .object({
-    tier: z.enum(["local", "standard", "enterprise"]).optional(),
+    tier: z.enum(["local", "standard", "enterprise", "regulated"]).optional(),
     memory: toggle,
     documents: z
       .object({
@@ -105,7 +105,7 @@ const instanceBodyForFlagsSchema = z
 type InstanceBodyForFlags = z.infer<typeof instanceBodyForFlagsSchema>;
 
 const TIER_PRESET_HORIZONTAL: Record<
-  "local" | "standard" | "enterprise",
+  "local" | "standard" | "enterprise" | "regulated",
   ClawQLHorizontalTierSpec
 > = {
   local: {
@@ -137,6 +137,27 @@ const TIER_PRESET_HORIZONTAL: Record<
     ouroboros: { enabled: false },
   },
   enterprise: {
+    memory: { enabled: true },
+    documents: {
+      enabled: true,
+      onyx: { enabled: true },
+      idpPipeline: { enabled: true },
+      idpClassifier: { enabled: false },
+      langextract: { enabled: false },
+    },
+    automation: {
+      schedule: { enabled: true },
+      notify: { enabled: true },
+      workflow: { enabled: true },
+      argocd: { enabled: false },
+      hitlLabelStudio: { enabled: false },
+    },
+    sandbox: { enabled: false },
+    data: { enabled: false },
+    ouroboros: { enabled: false },
+  },
+  /** Regulated profile: enterprise horizontal defaults; process WORM must stay on (host refuses CLAWQL_WORM_ENABLED=0). */
+  regulated: {
     memory: { enabled: true },
     documents: {
       enabled: true,
@@ -348,9 +369,11 @@ function transportFromEnv(
   };
 }
 
-function tierFromEnv(env: NodeJS.ProcessEnv): "local" | "standard" | "enterprise" {
+function tierFromEnv(env: NodeJS.ProcessEnv): "local" | "standard" | "enterprise" | "regulated" {
   const raw = env.CLAWQL_TIER?.trim().toLowerCase();
-  if (raw === "local" || raw === "standard" || raw === "enterprise") return raw;
+  if (raw === "local" || raw === "standard" || raw === "enterprise" || raw === "regulated") {
+    return raw;
+  }
   return "standard";
 }
 

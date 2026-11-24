@@ -7718,7 +7718,7 @@ Additional requirements:
 
 SOC 2 Type II: Control Mapping
 
-SOC 2 Type II requires evidence that controls operated effectively over the audit period. Our platform produces that evidence continuously.
+SOC 2 Type II requires evidence that controls operated effectively over the audit period. With the regulated profile enabled, the platform can produce that evidence continuously. ClawQL holds no SOC 2 Type II report today.
 
 Key mappings:
 
@@ -7782,7 +7782,7 @@ Key Takeaways (Memorize These!)
 
 - HIPAA adds inactivity timeouts, 6-year retention, BAA requirements, and a documented BRA process — all of which must be explicitly verified, not assumed.
 
-- SOC 2 Type II evidence is produced continuously by the infrastructure already built; the compliance task is collecting and retaining it correctly.
+- With the regulated profile enabled, SOC 2 Type II–style evidence can be produced continuously by the infrastructure already built; ClawQL holds no SOC 2 Type II report today. The compliance task is collecting and retaining evidence correctly.
 
 - Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble.
 

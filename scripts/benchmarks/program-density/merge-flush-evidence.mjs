@@ -83,12 +83,12 @@ clawql.honesty = [
   `Burst drain ~${report.burst.arrivalRatePerSec}/s → ${report.burst.pctWithinSla}% met.`,
   `sustainablePerSec=${publishedSustainable} (conservative 3-rep floor under group_commit; median ${compare.group_commit.sustainablePerSecMedian}; fsync_each ≈ ${compare.fsync_each.sustainablePerSec}).`,
   "Prior ~1.2e6 was os_buffer/page-cache — not crash-durable; superseded.",
-  "Provisional vs Ontologiql until shared flush policy + crash test. No win copy.",
+  "Provisional vs ontology-layer peer until shared flush policy + crash test. No win copy.",
 ].join(" ");
 
 const ont = evidence.rows.find((r) => r.systemId === "ontologiql-rust");
 ont.honesty =
-  "Ontologiql Rust fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.";
+  "Ontology-layer peer (Rust) fair row is publishable on the pre-deadline contract. **deadlineAccuracy not yet measured** — invite to fair-v2: identical fired definition (durable_trigger_record); identical flush policy (or disclose); arrival-rate ramp; SIGKILL crash test (counted fires on disk, no duplicates). Do not read cold-wake gaps until shared-host.";
 
 evidence.clawqlRun.deadlineAccuracy = deadlineAccuracy;
 writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);

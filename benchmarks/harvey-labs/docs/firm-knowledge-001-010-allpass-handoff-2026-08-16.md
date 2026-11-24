@@ -10,7 +10,7 @@
 **Arm:** `nemotron-clawql` only  
 **Agent:** `openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit` via clawql-inference `:8091` → MLX `:8081`  
 **Judge:** `ollama/qwen3.6:35b` via same gateway  
-**Checkout:** harvey worktree `/Users/danielsmith/ClawQL-harvey-lab` · harvey-labs `/tmp/harvey-labs-work2/harvey-labs`
+**Checkout:** harvey worktree `~/ClawQL-harvey-lab` · harvey-labs `/tmp/harvey-labs-work2/harvey-labs`
 
 ---
 

@@ -121,6 +121,18 @@ export const appendProcessWormEffect = (input: WORMAppendInput): Effect.Effect<W
 export const stopProcessWormEffect = (): Effect.Effect<void> =>
   Effect.gen(function* () {
     const svc = trailSvc;
+    const sem = appendSem;
+    if (svc && sem && bootState === "ready") {
+      const body = yield* withProcessWormDefaults({
+        type: "WORM_DISABLED",
+        timestamp: new Date().toISOString(),
+        sessionId: defaultSession,
+        metadata: { reason: "process_worm_stop" },
+      });
+      yield* sem
+        .withPermits(1)(svc.append(body))
+        .pipe(Effect.catch(() => Effect.void));
+    }
     trailSvc = null;
     appendSem = null;
     bootFiber = null;

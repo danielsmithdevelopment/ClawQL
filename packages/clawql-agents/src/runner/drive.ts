@@ -1,5 +1,5 @@
 /**
- * Combined Ontologiql / ClawQL coding-agent drive surface (ADR 0015 + 0017).
+ * Combined ontology layer / ClawQL coding-agent drive surface (ADR 0015 + 0017).
  *
  * One entry point that:
  * 1. Resolves ACP vs native ({@link resolveCodingAgentRouteEffect})
@@ -104,7 +104,7 @@ const appendAcpLifecycle = (
       sessionId,
       agentName: `acp:${route.id}`,
       metadata: {
-        plane: "ontologiql-runner",
+        plane: "coding-agent-runner",
         routeKind: "acp",
         reason: route.reason,
         spawnCommand: route.spawn.command,
@@ -180,15 +180,15 @@ export const CodingAgentDriveLive = Layer.succeed(
 );
 
 /** ACP duplex (tests) + runner + drive + WORM. */
-export const makeOntologiqlAcpDuplexStackLayer = (duplex: AcpDuplexConfig, wormDbPath: string) =>
+export const makeontology-layer peerAcpDuplexStackLayer = (duplex: AcpDuplexConfig, wormDbPath: string) =>
   Layer.mergeAll(
     makeCodingAgentRunnerDuplexLayer(duplex),
     CodingAgentDriveLive,
     makeAgentWormLayer(wormDbPath)
   );
 
-/** Spawn-backed ACP + runner + drive + WORM (production Ontologiql path). */
-export const makeOntologiqlAcpStackLayer = (
+/** Spawn-backed ACP + runner + drive + WORM (production ontology-layer peer path). */
+export const makeontology-layer peerAcpStackLayer = (
   route: Extract<CodingAgentRoute, { kind: "acp" }>,
   wormDbPath: string
 ) =>
@@ -209,7 +209,7 @@ export const prepareCodingAgentStackEffect = (
     if (route.kind === "acp") {
       return {
         route,
-        layer: makeOntologiqlAcpStackLayer(
+        layer: makeontology-layer peerAcpStackLayer(
           route,
           input.wormDbPath
         ) as PreparedCodingAgentStack["layer"],

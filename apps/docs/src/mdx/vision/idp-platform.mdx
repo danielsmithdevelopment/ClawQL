@@ -48,7 +48,7 @@ Durable cross-session agent memory (Markdown, local, portable). OKF v0.2 trust s
 
 PorTAL (Ramp Labs, Apache 2.0): Portable Task-specific Adapter Learning via --format portal-bundle in the flywheel export pipeline. See portal-flywheel.md.
 
-Sovereign multi-model inference fleet: fine-tuned Qwen3.6-27B + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
+Sovereign multi-model inference fleet: tenant-bound fine-tuned open model (current plan bases: Qwen3.8-27B / Qwen3.6-35B-A3B) + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
 
 Defense-in-depth security: Kata container VM isolation, WORM Merkle audit logs, Panguard ATR fail-closed, model weight integrity verification. Documented at defense-in-depth.
 
@@ -60,7 +60,7 @@ Detail
 
 Token efficiency
 
-Twelve compounding layers. ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste.
+Compounding token-efficiency layers (shipped and planned). ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste.
 
 Cost reduction
 
@@ -174,7 +174,7 @@ Coneshare
 
 Secure sharing, VDRs, engagement analytics (MIT)
 
-Qwen3.6-27B (fine-tuned)
+Tenant-bound fine-tuned open model
 
 Core document worker; vLLM NVFP4; L4 GPU
 
@@ -716,7 +716,7 @@ Model
 
 Role
 
-Qwen3.6-27B FT (NVFP4)
+Open-model FT (NVFP4)
 
 Document worker — tool sequencing, Ouroboros, Merkle, VDR
 
@@ -880,7 +880,7 @@ Hosted beta: Developer/Teams on Cloudflare Workers; 14-day trial.
 
 Inference Gateway v1 + pdf-inspector Stage 0 + Docling + LangExtract + HITL Label Studio.
 
-Qwen3.6-27B ClawQL-general fine-tune v1 + Istio egress + Presidio.
+Open-model ClawQL-general fine-tune v1 + Istio egress + Presidio.
 
 mcp-api-adapter 0.5.x line (shipped).
 

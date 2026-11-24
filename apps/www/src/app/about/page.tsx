@@ -160,10 +160,7 @@ export default function Page() {
         headline="Read the case studies. Run the tools."
         subheadline={
           <p>
-            Self-host today or request early access for managed hosting. For the default product-led motion, see the{' '}
-            <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>; for regulated / Palantir-facing
-            positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>. Full Apache 2.0
-            stack, no license fee.
+            Self-host today or request early access for managed hosting. Full Apache 2.0 stack, no license fee.
           </p>
         }
         cta={

@@ -528,6 +528,9 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   app.get("/healthz", async (_req, res) => {
+    const wormRaw = process.env.CLAWQL_WORM_ENABLED?.trim().toLowerCase();
+    const wormEnabled =
+      !wormRaw || (wormRaw !== "0" && wormRaw !== "false" && wormRaw !== "off" && wormRaw !== "no");
     const base: Record<string, unknown> = {
       status: "ok",
       transport: "streamable-http",
@@ -536,6 +539,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       mcp_sessions: transports.size,
       session_idle_ms: sessionIdleMs,
       session_max: sessionMax,
+      worm: {
+        enabled: wormEnabled,
+        tier: process.env.CLAWQL_TIER?.trim() || "standard",
+      },
     };
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();

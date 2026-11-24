@@ -282,7 +282,7 @@ const fractionOfSerial =
 const reading = {
   diagnosis: "double_buffer_active_fsync_rate_unchanged_producer_bound_under_investigation",
   summary:
-    "Double-buffer works (hits≈100%) but fsyncs/sec stayed ~3.2–3.3k (~40% of serial). Sustained durable drain ≈ producer path limit. Profile stages to see heap pop / encode / await-durable split. Ontologiql at ~24% of serial may be the same — profile before double-buffer there.",
+    "Double-buffer works (hits≈100%) but fsyncs/sec stayed ~3.2–3.3k (~40% of serial). Sustained durable drain ≈ producer path limit. Profile stages to see heap pop / encode / await-durable split. ontology-layer peer at ~24% of serial may be the same — profile before double-buffer there.",
   note:
     "Do not label as idle-writer-fixed. Relabel: double-buffer active; fsync rate unchanged; producer-bound under investigation.",
 };
