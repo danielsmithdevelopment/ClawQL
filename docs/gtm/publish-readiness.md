@@ -96,7 +96,7 @@ Never present these as your measurements.
 | “Provably correct”                                        | “Model-checked under bounds”                                                                                                                                                                                                 |
 | “Beats / safer / denser than” Golem, Pi Durable, Infinity | Wait for reviewed full comparisons                                                                                                                                                                                           |
 | Mid-step resumption / unmodified-agent durable processes  | Designs, not measurements                                                                                                                                                                                                    |
-| Any Ontology-layer peer numbers                                    | Private                                                                                                                                                                                                                      |
+| Any Ontology-layer peer numbers                           | Private                                                                                                                                                                                                                      |
 
 ---
 

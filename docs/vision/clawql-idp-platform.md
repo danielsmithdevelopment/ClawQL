@@ -50,15 +50,15 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 
 ## Business Value at a Glance
 
-| Value Driver                | Detail                                                                                                                                                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Value Driver                | Detail                                                                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Token efficiency**        | Compounding token-efficiency layers (shipped and planned). ~99.8% average input reduction on Layer 1 alone. Layers 2–12 reduce output, prose, cache cost, repeated calls, history growth, per-task model cost, and flywheel training waste. |
-| **Cost reduction**          | Replaces $8,000–15,000+/month incumbent stacks. ClawQL Dedicated + Sovereign Security Pack: **$799/month** maximum (indicative GTM).                                                                        |
-| **Data sovereignty**        | Provable at the infrastructure layer. Istio AuthorizationPolicies enforce egress blocks — not only a contractual claim.                                                                                     |
-| **Persistent agent memory** | Unique among IDP / VDR / MCP gateway competitors: cross-session vault memory with OKF trust signals.                                                                                                        |
-| **AI readiness**            | MCP-native from day one. Improves as models improve. Token layers mean agent cost drops as usage scales.                                                                                                    |
-| **VDR market entry**        | Coneshare delivers VDR capabilities at a fraction of incumbent pricing, with full pipeline integration.                                                                                                     |
-| **Hosted revenue**          | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core.                                                                                                              |
+| **Cost reduction**          | Replaces $8,000–15,000+/month incumbent stacks. ClawQL Dedicated + Sovereign Security Pack: **$799/month** maximum (indicative GTM).                                                                                                        |
+| **Data sovereignty**        | Provable at the infrastructure layer. Istio AuthorizationPolicies enforce egress blocks — not only a contractual claim.                                                                                                                     |
+| **Persistent agent memory** | Unique among IDP / VDR / MCP gateway competitors: cross-session vault memory with OKF trust signals.                                                                                                                                        |
+| **AI readiness**            | MCP-native from day one. Improves as models improve. Token layers mean agent cost drops as usage scales.                                                                                                                                    |
+| **VDR market entry**        | Coneshare delivers VDR capabilities at a fraction of incumbent pricing, with full pipeline integration.                                                                                                                                     |
+| **Hosted revenue**          | Managed hosted plan creates recurring SaaS revenue on top of the open-source self-hosted core.                                                                                                                                              |
 
 ---
 
@@ -93,22 +93,22 @@ ClawQL's IDP platform automates the full document lifecycle: ingestion, classifi
 
 ### Component Map
 
-| Component                    | Role in Platform                                                                  |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| **ClawQL Core**              | MCP server, token-efficiency engine, AI orchestration (TypeScript, Apache 2.0)    |
-| **ClawQL Inference Gateway** | Policy-driven model routing; `/v1/chat/completions`; NSV/SGDOP; Layer 8+          |
-| **Apache Tika**              | Universal parsing and metadata (1,000+ formats)                                   |
-| **Gotenberg**                | Document-to-PDF (LibreOffice + Chromium)                                          |
-| **Stirling-PDF**             | PDF ops, PII redaction, OCR, Merkle audit generation                              |
-| **ClawQL Archive Layer**     | Nextcloud + Postgres metadata + Onyx. GPL-free. Replaces Paperless-ngx on hosted. |
-| **Onyx**                     | Semantic search + 40+ connectors                                                  |
-| **Obsidian Vault**           | Durable cross-session agent memory (Markdown)                                     |
-| **Nextcloud**                | Human file storage, collaboration, archive UI                                     |
-| **Coneshare**                | Secure sharing, VDRs, engagement analytics (MIT)                                  |
+| Component                              | Role in Platform                                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| **ClawQL Core**                        | MCP server, token-efficiency engine, AI orchestration (TypeScript, Apache 2.0)    |
+| **ClawQL Inference Gateway**           | Policy-driven model routing; `/v1/chat/completions`; NSV/SGDOP; Layer 8+          |
+| **Apache Tika**                        | Universal parsing and metadata (1,000+ formats)                                   |
+| **Gotenberg**                          | Document-to-PDF (LibreOffice + Chromium)                                          |
+| **Stirling-PDF**                       | PDF ops, PII redaction, OCR, Merkle audit generation                              |
+| **ClawQL Archive Layer**               | Nextcloud + Postgres metadata + Onyx. GPL-free. Replaces Paperless-ngx on hosted. |
+| **Onyx**                               | Semantic search + 40+ connectors                                                  |
+| **Obsidian Vault**                     | Durable cross-session agent memory (Markdown)                                     |
+| **Nextcloud**                          | Human file storage, collaboration, archive UI                                     |
+| **Coneshare**                          | Secure sharing, VDRs, engagement analytics (MIT)                                  |
 | **Tenant-bound fine-tuned open model** | Core document worker; vLLM NVFP4; L4 GPU                                          |
-| **Ornith 1.0 35B MoE**       | Coding specialist; serve as-is (MIT, DeepReinforce AI)                            |
-| **Phi-4 14B (fine-tuned)**   | Utility / memory worker                                                           |
-| **Langfuse**                 | Trace capture, datasets, flywheel observability (LGTM+)                           |
+| **Ornith 1.0 35B MoE**                 | Coding specialist; serve as-is (MIT, DeepReinforce AI)                            |
+| **Phi-4 14B (fine-tuned)**             | Utility / memory worker                                                           |
+| **Langfuse**                           | Trace capture, datasets, flywheel observability (LGTM+)                           |
 
 ---
 
@@ -389,7 +389,7 @@ Representative: 25 users, 25k docs/mo, VDR + compliance.
 | -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Category             | Tool — routes MCP calls, injects secrets, meters usage | Foundational Platform — Agentic Gateway, memory, search, security, IDP, sovereign inference                                                                                                                                                                                             |
 | Developer adoption   | Head start on marketing and community mindshare        | Later entrant; deeper stack, open-source core, published case studies                                                                                                                                                                                                                   |
-| Token efficiency     | One layer: search-and-execute only                     | Compounding token-efficiency layers (shipped and planned) on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md))                                                                                                                 |
+| Token efficiency     | One layer: search-and-execute only                     | Compounding token-efficiency layers (shipped and planned) on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md))                                                                                 |
 | Agent memory         | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0)                                                                                                                        |
 | Semantic search      | None                                                   | Onyx — 40+ connectors, citations; **OpenBench-verified** stubbed `knowledge_search_onyx` 1.0/0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189))                                                                                             |
 | Security             | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth                                                                                                                                      |
@@ -485,7 +485,7 @@ Hosted Dedicated/Enterprise run a sovereign fleet inside the tenant boundary. Ha
 
 | Model                  | Role                                                      |
 | ---------------------- | --------------------------------------------------------- |
-| Open-model FT (NVFP4) | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
+| Open-model FT (NVFP4)  | Document worker — tool sequencing, Ouroboros, Merkle, VDR |
 | Ornith 35B MoE (as-is) | Coding specialist — do **not** LoRA away self-scaffolding |
 | Phi-4 14B FT           | Utility / memory / metadata                               |
 | Gemma 4 31B            | NSV/SGDOP diversity only                                  |

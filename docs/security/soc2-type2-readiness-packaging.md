@@ -30,15 +30,15 @@ Managed hosting (`clawql.com`) and self-hosted operators share the **same contro
 
 Draw / attach your deployment diagram covering at least:
 
-| Surface         | Typical components                                                          | Notes                                    |
-| --------------- | --------------------------------------------------------------------------- | ---------------------------------------- |
-| Human console   | `apps/dashboard`, Supabase Auth / customer identity provider                              | ClawQL is **not** the human password identity provider |
-| Agent MCP       | `clawql-mcp` Helm, optional MCP proxy / Panguard                            | ATR / JWT at chokepoint                  |
-| Memory / vault  | Obsidian / team sync (R2/S3), optional WORM (`clawql-audit`)                | Ring-buffer `audit` MCP ≠ WORM           |
-| Documents / IDP | Docling, Onyx, Paperless (opt-in)                                           | PHI labels must not land in metrics      |
-| Secrets         | HashiCorp Vault + External Secrets (chart default)                          | No long-lived `.env` in prod             |
-| Money           | Stripe webhooks + cents ledger                                              | Idempotency; no P2P on managed           |
-| Evidence        | CI (OSV/Trivy/CodeQL/Gitleaks), restore drills, support impersonation JSONL | Retain for observation window            |
+| Surface         | Typical components                                                          | Notes                                                  |
+| --------------- | --------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Human console   | `apps/dashboard`, Supabase Auth / customer identity provider                | ClawQL is **not** the human password identity provider |
+| Agent MCP       | `clawql-mcp` Helm, optional MCP proxy / Panguard                            | ATR / JWT at chokepoint                                |
+| Memory / vault  | Obsidian / team sync (R2/S3), optional WORM (`clawql-audit`)                | Ring-buffer `audit` MCP ≠ WORM                         |
+| Documents / IDP | Docling, Onyx, Paperless (opt-in)                                           | PHI labels must not land in metrics                    |
+| Secrets         | HashiCorp Vault + External Secrets (chart default)                          | No long-lived `.env` in prod                           |
+| Money           | Stripe webhooks + cents ledger                                              | Idempotency; no P2P on managed                         |
+| Evidence        | CI (OSV/Trivy/CodeQL/Gitleaks), restore drills, support impersonation JSONL | Retain for observation window                          |
 
 ## Trust Services Criteria → ClawQL checklist
 
@@ -46,14 +46,14 @@ Use this as a **control inventory**. Mark each row for your environment: **In pl
 
 ### CC6 — Logical access
 
-| Control theme           | ClawQL / ops evidence                                                                         | Check |
-| ----------------------- | --------------------------------------------------------------------------------------------- | ----- |
+| Control theme           | ClawQL / ops evidence                                                                                       | Check |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- | ----- |
 | Human SSO / MFA         | Customer identity provider or Supabase Auth; [`idp-login-abuse-ownership.md`](idp-login-abuse-ownership.md) | ☐     |
-| Machine / agent auth    | API keys (`cqk_`), MCP OAuth, ATR — `packages/clawql-auth`                                    | ☐     |
-| Least privilege pods    | Helm `podSecurityContext` / `securityContext` — see `values-soc2-hardening.example.yaml`      | ☐     |
-| Support view-as audited | [`support-impersonation.md`](support-impersonation.md) + JSONL / Audit                        | ☐     |
-| Session kill            | Console / mobile **end-others**                                                               | ☐     |
-| Offboard                | SCIM / directory sync + key revoke                                                            | ☐     |
+| Machine / agent auth    | API keys (`cqk_`), MCP OAuth, ATR — `packages/clawql-auth`                                                  | ☐     |
+| Least privilege pods    | Helm `podSecurityContext` / `securityContext` — see `values-soc2-hardening.example.yaml`                    | ☐     |
+| Support view-as audited | [`support-impersonation.md`](support-impersonation.md) + JSONL / Audit                                      | ☐     |
+| Session kill            | Console / mobile **end-others**                                                                             | ☐     |
+| Offboard                | SCIM / directory sync + key revoke                                                                          | ☐     |
 
 ### CC7 — System operations / change
 
@@ -108,14 +108,14 @@ Use this as a **control inventory**. Mark each row for your environment: **In pl
 
 ## HIPAA companion (when ePHI is in scope)
 
-| Item                                                                          | Owner                  | Check |
-| ----------------------------------------------------------------------------- | ---------------------- | ----- |
-| BAA with every data-path vendor (cloud, Vault host, model APIs if applicable) | Legal / GRC            | ☐     |
-| 6-year minimum audit retention for PHI tenants (WORM policy)                  | Security               | ☐     |
+| Item                                                                          | Owner                                | Check |
+| ----------------------------------------------------------------------------- | ------------------------------------ | ----- |
+| BAA with every data-path vendor (cloud, Vault host, model APIs if applicable) | Legal / GRC                          | ☐     |
+| 6-year minimum audit retention for PHI tenants (WORM policy)                  | Security                             | ☐     |
 | Inactivity / session timeouts                                                 | identity provider + console settings | ☐     |
-| Breach Risk Assessment process (PICERL → BRA)                                 | Security               | ☐     |
-| PHI never in metrics / free-form logs                                         | Eng + ops              | ☐     |
-| Healthcare vertical flags only when intended                                  | Ops                    | ☐     |
+| Breach Risk Assessment process (PICERL → BRA)                                 | Security                             | ☐     |
+| PHI never in metrics / free-form logs                                         | Eng + ops                            | ☐     |
+| Healthcare vertical flags only when intended                                  | Ops                                  | ☐     |
 
 ## Helm hardening profile
 
@@ -144,7 +144,7 @@ Profile intent:
 | Cadence                 | Artifact                                                      | Where it lives                                                                           |
 | ----------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Every merge (prod path) | CI supply-chain + CodeQL + secret scan                        | GitHub Actions retention + export to evidence store                                      |
-| Weekly                  | Access / offboard sample (SCIM events)                        | identity provider + ClawQL audit export                                                                |
+| Weekly                  | Access / offboard sample (SCIM events)                        | identity provider + ClawQL audit export                                                  |
 | Monthly                 | Patch / image digest report                                   | Cosign / GHCR digests                                                                    |
 | Quarterly               | Security review + **restore drill** with RTO/RPO              | [`restore-drill.md`](../deployment/restore-drill.md) record table                        |
 | Quarterly               | Evidence package (Panguard decisions, WORM roots, review PDF) | Encrypted to compliance mailbox / WORM bucket                                            |

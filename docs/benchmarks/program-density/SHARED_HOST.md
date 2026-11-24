@@ -80,11 +80,11 @@ Coarse ladders (e.g. 192k→256k or 256k→384k) only place the limit in a **33�
 
 ### 4. Same conditions + alternating systems
 
-| Constraint  | Rule                                                                         |
-| ----------- | ---------------------------------------------------------------------------- |
-| Agent count | Same `agentsAtLimit` (or agreed shared N) for both                           |
-| Disk        | Same volume the **serial** fsync ceiling was measured on                     |
-| Host        | Otherwise idle                                                               |
+| Constraint  | Rule                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| Agent count | Same `agentsAtLimit` (or agreed shared N) for both                                             |
+| Disk        | Same volume the **serial** fsync ceiling was measured on                                       |
+| Host        | Otherwise idle                                                                                 |
 | Order       | **Alternate** across reps: ClawQL₁ → ontology-layer peer₁ → … → ClawQL₃ → ontology-layer peer₃ |
 
 ### 5. Merge only after both sides
@@ -117,7 +117,7 @@ CLAWQL_DENSITY_FSYNC_CEILING_JSON=docs/benchmarks/program-density/fsync-ceiling.
 
 ## Methodology status
 
-| Gate                 | ClawQL                                                                                 | ontology-layer peer                                                                           |
+| Gate                 | ClawQL                                                                                 | ontology-layer peer                                                                  |
 | -------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Flush + crash test   | group_commit 64/10ms; pass; async-fsync double-buffer active                           | group_commit 64/10ms; pass (#144). Prior os_buffer ~400k/s superseded                |
 | Scaled bursts        | first miss **250k** @ 2.5e6                                                            | first miss **200k** @ 200k (N ≤ agentsAtLimit)                                       |

@@ -11,7 +11,8 @@ const CONSENT_STORAGE_KEY = 'clawql_analytics_consent'
 function readConsentedSessionId(): string | undefined {
   if (typeof window === 'undefined') return undefined
   try {
-    if (window.localStorage.getItem(CONSENT_STORAGE_KEY) !== '1') return undefined
+    if (window.localStorage.getItem(CONSENT_STORAGE_KEY) !== '1')
+      return undefined
     const existing = window.localStorage.getItem(SESSION_STORAGE_KEY)
     if (existing) return existing
     const id = crypto.randomUUID()

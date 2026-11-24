@@ -652,11 +652,7 @@ cline server --port 8095 --acp-enabled
   },
   "workspace": {
     "root": "~/ClawQL-harvey-lab",
-    "allowedPaths": [
-      "~/ClawQL-harvey-lab",
-      "~/ClawQL",
-      "/tmp/harvey-labs-work2"
-    ]
+    "allowedPaths": ["~/ClawQL-harvey-lab", "~/ClawQL", "/tmp/harvey-labs-work2"]
   },
   "approvals": {
     "fileWrite": "auto",
