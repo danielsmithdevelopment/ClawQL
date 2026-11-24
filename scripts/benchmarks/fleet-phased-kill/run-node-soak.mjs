@@ -637,6 +637,7 @@ async function runOnce({ attempt = 1 } = {}) {
       readyFails,
       maxUniqueNodeIds: maxUnique,
       celldTtlMs: CELLD_TTL_MS,
+      celldDurability: process.env.CELLD_DURABILITY || "fleet",
       samples,
       bucketRedacted: true,
     };
@@ -729,6 +730,7 @@ async function runOnce({ attempt = 1 } = {}) {
     freshNodeIds: FRESH,
     stableNodeIds: FRESH ? null : STABLE,
     celldTtlMs: CELLD_TTL_MS,
+    celldDurability: process.env.CELLD_DURABILITY || "fleet",
     requireProgram: REQUIRE_PROGRAM,
     maxUniqueNodeIds: maxUnique,
     selfFences,

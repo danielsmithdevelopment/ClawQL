@@ -206,7 +206,7 @@ See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`, `submit_p
 
 ### Durable code mode on celld (program mode step 2 — not a me-too)
 
-OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interpreter; their README leaves durable pause/resume, replay, and exactly-once to the host. ClawQL’s advantage is not a second hand-written subset interpreter — it is **ordinary JavaScript in a celld V8 isolate**, with the program journal in the cell’s **SQLite** (LTX → operator bucket, **RPO=0**: celld does not ack a durable write until it reaches the bucket). That solves OpenCode non-goals by construction.
+OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interpreter; their README leaves durable pause/resume, replay, and exactly-once to the host. ClawQL’s advantage is not a second hand-written subset interpreter — it is **ordinary JavaScript in a celld V8 isolate**, with the program journal in the cell’s **SQLite** (LTX → operator bucket; **RPO=0** relative to the configured durability proof — fleet disk quorum by default, or `bucket` mode before object-store ack; see [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md)). That solves OpenCode non-goals by construction.
 
 **Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode,” and **not** “ClawQL is a durable execution engine” ([Golem overlap & claim honesty](../gtm/golem-overlap-and-durability-honesty.md)). Until the fleet three-arm / LTX gate passes, public copy stays at **lab** / **Partial**.
 

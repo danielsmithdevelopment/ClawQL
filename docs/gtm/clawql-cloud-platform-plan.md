@@ -274,6 +274,17 @@ Each phase also has a security gate that is part of its definition of done. The 
 
 **Durability gate status (2026-11-09): met.** v4 is authorized on ClawQL's lab build of celld (stock 0.6.3 plus the supersede and expiry fixes). The authorizing soak (1,000/1,000 cycles, no void) and the v4 board (N=1,000) ran the same binary, proven inside both artifacts: commit `36d53565`, matching SHA-256. Results: zero wrong outcomes; in 241 of 243 crashes during an external call the journaled intent was visible on recovery, and the other 2 never sent the call (settled through their effect ledgers as no effect and no lost intent — [`settle`](../benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json)); 18 of 1,000 trials missed the recovery deadline (1.8%, under the 2% gate), 11 of them from failures in the harness's own fault injection. Recovery is slower than on the first v4 board (median about 17 seconds versus about 7) because a stalled owner is now fenced rather than presumed dead, a deliberate trade of speed for correctness. Open items stay beside the claim: an earlier 3-second-TTL board recorded 2 lost intents in 100 (one later classified as an injection miss on journal evidence, one unsettled), and forced-latency tests are in progress. See [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md).
 
+**Durability mode on that gate (2026-11-13 clarification):** boards ran default **`CELLD_DURABILITY=fleet`**, two nodes on one host, R2 as the fleet bucket. Acknowledgments wait for a fleet disk proof (or racing bucket proof), not always for object-store durability. Host-disk / AZ / region loss and an explicit `bucket`-mode arm are open. Canonical note: [`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md).
+
+### Runtime evaluation (OpenOrange peer arm)
+
+Rivet's OpenOrange vs celld S3 request-cost bench ([repo](https://github.com/rivet-dev/celld-vs-openorange-bench)) is a good methodology peer (pinned versions, raw data, stated limits). It measures **request costs only** under high-churn 60s agents; celld is cheaper at very small concurrency and the gap grows with churn. Implications for ClawQL Cloud:
+
+- Cost lever is **cells created per program / park-wake**, not “pick OpenOrange and forget.” Homelab MinIO is unaffected; Cloud on S3/R2 is where request economics matter.
+- Packing many actors into shared objects conflicts with paid-tier **per-tenant storage and keys** unless packing is per-tenant or uses per-tenant encryption inside shared objects — first question for Rivet.
+- Run OpenOrange as a **peer arm behind `DurableRuntime`**, measuring cost per agent lifecycle beside correctness, with Rivet invited to review config.
+- Multi-scope durability boards (process → node → zone → region) with frozen loss-window claims and an effect ledger outside the blast radius; same board on celld and OpenOrange. Region-scope must state sync vs async replication and the latency budget.
+
 ## Scale targets
 
 ### Goal and claim discipline

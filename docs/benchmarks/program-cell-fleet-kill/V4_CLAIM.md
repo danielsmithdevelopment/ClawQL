@@ -21,11 +21,19 @@ Authorizing evidence: [`node-soak-lab-authorizing-mac-mini-identity-remeasure.js
 | Identity | commit+sha match soak↔board |
 | Forensic | prior binary mtime 2026-11-06T20:51:40Z predates original soak capture; sha matches remesure |
 
+## Durability mode (required beside every claim)
+
+Authorizing soak and v4 remesure ran **`CELLD_DURABILITY=fleet`** (celld default; harness did not override), **two nodes on one Mac mini host**, output gate on, Cloudflare R2 as the fleet bucket. In fleet mode the output gate waits for a **disk quorum proof** (follower fsync) or a racing bucket proof — not “always durable in the object store.” Background LTX upload to R2 continues after ack. See [`DURABILITY_MODE.md`](./DURABILITY_MODE.md).
+
+**In scope:** process / node crash with peer disks on that host still available.  
+**Out of scope until measured:** host-disk loss, AZ loss, region loss, and an explicit `CELLD_DURABILITY=bucket` arm (higher object-store request cost).
+
 ## Honest caveats beside the claim
 
 - Remesure availability **1.8%** is looser than the first Mac mini board’s **0.2%** (still under gate).
 - During-call was **241× effects0** (in-flight before write commit) — do not imply both effect outcomes; `after_call_before_journal` covers write-landed-not-journaled.
 - TTL3s published **2/100** remains open beside this claim; remesure does not close it.
+- Durability mode was not recorded in the remesure JSON fields (inferred from harness + celld default); harness now records `celldDurability` going forward.
 
 ## Next board (frozen criteria + product metric)
 

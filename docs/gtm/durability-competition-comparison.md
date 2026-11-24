@@ -22,7 +22,11 @@ In what we have found, the major engines publish adoption figures, architecture 
 
 Independent researchers are starting to probe this too: academic security teams published studies in August 2026 documenting real conformance violations and rollback attacks in agent checkpoint systems. That makes published, independently checkable crash evidence more valuable, not less.
 
-ClawQL's authorizing remesure (2026-11-09): N=1000, identity-matched soak↔board, correctness 0, during-call intent settled against effect ledgers, open items kept beside the claim — see [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md).
+ClawQL's authorizing remesure (2026-11-09): N=1000, identity-matched soak↔board, correctness 0, during-call intent settled against effect ledgers, open items kept beside the claim — see [`V4_CLAIM.md`](../benchmarks/program-cell-fleet-kill/V4_CLAIM.md). Durability mode: **`CELLD_DURABILITY=fleet`**, two nodes on one host ([`DURABILITY_MODE.md`](../benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md)) — not AZ/region loss, not unqualified “acked only after S3.”
+
+### OpenOrange / Rivet (runtime peer, not Temporal-class)
+
+Rivet's published celld-vs-OpenOrange request-cost bench is narrow (S3 request $, high-churn agents) and useful. Treat it as a **Cloud unit-economics + DurableRuntime peer**, not a crash-board substitute. Invite Rivet onto the same multi-scope durability board; do not debate “AZ fault tolerance” in public threads when crash boards can answer.
 
 ## Where ClawQL may be ahead on substance: external writes
 

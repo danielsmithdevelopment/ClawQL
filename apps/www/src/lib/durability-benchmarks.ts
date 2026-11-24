@@ -12,11 +12,11 @@ const GH = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 export const durabilityBenchmarkHeadline = 'Programs survive a crash — without repeating writes'
 
 export const durabilityBenchmarkSummary =
-  'Journaled programs on a two-node celld fleet (Cloudflare R2) resume after SIGKILL with zero duplicate side effects. Lab Mac mini v4 identity remesure (TTL 3s, N=1000) authorized: soak and board share celldLabGitCommit 36d53565… and celldSha256 5abb5d06…; correctness 0; during-call intent visible 241/243; availability 18/1000 (1.8%). Stock celld 0.6.3 tip boards (wedged N=100, stale N=40) remain supporting. An earlier TTL 3s wedge board’s 2/100 lost intents stay open beside the claim. Interrupted in-flight writes with durable intent are marked outcome unknown — never blind-retried. Not a durable execution engine; not exactly-once delivery over HTTP.'
+  'Journaled programs on a two-node celld fleet (CELLD_DURABILITY=fleet default; Cloudflare R2 as fleet bucket; both nodes on one host) resume after SIGKILL with zero duplicate side effects. Lab Mac mini v4 identity remesure (TTL 3s, N=1000) authorized: soak and board share celldLabGitCommit 36d53565… and celldSha256 5abb5d06…; correctness 0; during-call intent visible 241/243; availability 18/1000 (1.8%). Fleet-mode acks wait for disk quorum (or racing bucket proof), not always for object-store durability — host-disk / AZ / region loss not claimed. Stock celld 0.6.3 tip boards (wedged N=100, stale N=40) remain supporting. An earlier TTL 3s wedge board’s 2/100 lost intents stay open beside the claim. Interrupted in-flight writes with durable intent are marked outcome unknown — never blind-retried. Not a durable execution engine; not exactly-once delivery over HTTP.'
 
 /** Scoped lab claim — numbers from authorizing identity remesure (CELLD_TTL_MS=3000). */
 export const durabilityBenchmarkClaim =
-  'Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL’s lab build of celld (0.6.3 plus supersede and expiry fixes), on one host, with a 3-second lease TTL. Soak and board share the same celld commit and sha256 in-artifact. During-call: 241/243 intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent — availability, not durability. Availability: 18 of 1,000 trials (1.8%, under the 2% ceiling). Duplicates: 0.'
+  'Zero wrong outcomes in 1,000 crash trials. Measured on ClawQL’s lab build of celld (0.6.3 plus supersede and expiry fixes), CELLD_DURABILITY=fleet (default), two nodes on one host, R2 as fleet bucket, 3-second lease TTL. Acks wait for disk quorum (or a racing bucket proof) — not always for object-store durability; host-disk / AZ / region loss not claimed. Soak and board share the same celld commit and sha256 in-artifact. During-call: 241/243 intent visible; 2 call_never_sent (egress never left the node), settled via effect ledger as no effect and no lost intent — availability, not durability. Availability: 18 of 1,000 trials (1.8%, under the 2% ceiling). Duplicates: 0.'
 
 /** Open items sit beside the restored lab claim — not a footnote. */
 export const durabilityBenchmarkClaimCaveat =
@@ -25,11 +25,12 @@ export const durabilityBenchmarkClaimCaveat =
 export const durabilityBenchmarkMeta = {
   measuredAt: '2026-11-10',
   boardLabel: 'lab-v4-identity-remeasure',
-  measuredLabel: 'N=1000 · 0 correctness · TTL 3s · R2 · identity-matched',
+  measuredLabel: 'N=1000 · 0 correctness · TTL 3s · fleet mode · R2 · identity-matched',
   tipRuntime: 'celld-lab',
   tipRuntimeVersion: '0.6.3+supersede+expiry',
-  tipPackageLabel: 'ClawQL lab celld · Mac mini Colima · N=1000',
+  tipPackageLabel: 'ClawQL lab celld · Mac mini Colima · N=1000 · CELLD_DURABILITY=fleet',
   storageProvider: 'cloudflare-r2',
+  celldDurability: 'fleet',
   nodeCount: 2,
   celldTtlMs: 3_000,
   n: 1000,
@@ -304,6 +305,11 @@ export const durabilityHonestyNotes: readonly { title: string; body: string }[] 
 ] as const
 
 export const durabilityBenchmarkLinks: readonly { href: string; label: string; detail: string }[] = [
+  {
+    href: `${GH}/docs/benchmarks/program-cell-fleet-kill/DURABILITY_MODE.md`,
+    label: 'DURABILITY_MODE.md',
+    detail: 'fleet vs bucket · ack scope · what v4 measured',
+  },
   {
     href: `${GH}/docs/benchmarks/program-cell-fleet-kill/V4_CLAIM.md`,
     label: 'V4_CLAIM.md',
