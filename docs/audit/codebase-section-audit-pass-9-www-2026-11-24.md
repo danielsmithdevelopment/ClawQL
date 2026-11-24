@@ -1,0 +1,63 @@
+# ClawQL codebase audit — Pass 9 (`apps/www` only)
+
+Nov 24, 2026 · static review against main tip after Pass 0 merge (`ebb1c167b` / #1508).
+
+**Scope:** `apps/www` (`src/lib`, components, app routes, sitemap, footer). Not `apps/docs` / `apps/docs-astro` (those remain for a follow-on website pass if needed).
+
+**Method:** Wrong · Outdated · Fragmented · Exposed · Default mismatch · Dead · Improve.
+
+**Do not re-report Pass 0/#1508 fixes unless still present.** Verified cleared on www for: Ontologiql public labels, RPO=0 in listed paths, GTM public page stubs + sitemap removal, anonymous→pseudonymous analytics ID wording, audit-clear marketing wording, Qwen3.6-27B on pricing, executor overtures passage, FedRAMP-ready phrasing (mostly — residual below).
+
+---
+
+## Findings
+
+| ID | Severity | Location | Problem | Change | Effort |
+| --- | --- | --- | --- | --- | --- |
+| 9.01 | Fix now | `apps/www/src/components/sections/cost-plus-drugs-demo-landing.tsx` 87–89 | Demo walkthrough still says `With CLAWQL_WORM_ENABLED=1` and result chip **“Tamper-evident dual-write (opt-in)”** — contradicts Pass 0 decision / #1508 that process WORM is **on by default** (`CLAWQL_WORM_ENABLED=0` disables). Object Lock still framed only as “when configured,” with no Cloud paid / regulated default | Rewrite: local/process WORM on by default; remote Object Lock default on Cloud paid + regulated; self-host remote remains opt-in. Drop opt-in dual-write chip | S |
+| 9.02 | Fix now | `apps/www/src/lib/industries/government.ts` 109 | Platform capability still lists **“FedRAMP-oriented defaults”** on the public `/industries/government` page. Pass 0 scrubbed “FedRAMP-ready” elsewhere; this residual still implies FedRAMP posture without authorization evidence (lines 78 / 217 correctly say “no FedRAMP authorization”) | Replace with neutral wording (e.g. “self-hosted Helm/K8s patterns for agencies that cannot put program data in unmanaged SaaS”) — drop FedRAMP adjective | S |
+| 9.03 | Fix now | `apps/www/src/components/sections/idp-landing.tsx` 352 | Absolute claim **“ClawQL is the only IDP that is also a native MCP server”** with no measured survey — Pass 0 already killed similar “the only” / unverified absolutes | Soften to “native MCP server for the IDP pipeline” or “MCP-native IDP”; no exclusivity without evidence | S |
+| 9.04 | Fix now | `apps/www/src/components/analytics/ClawqlAnalyticsPageview.tsx` 8–23, 51–64; privacy `apps/www/src/app/privacy-policy/page.tsx` 16–27, 53–57 | Consent key `clawql_analytics_consent` is read but **no UI/API in www sets it**. When `NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED=1`, pageviews still POST (path/referrer/hostname) with `identity: anonymous_no_id`. Privacy policy last updated **August 5, 2026**, never mentions consent, pseudonymous IDs, or **no product telemetry when self-hosted** | Ship a consent control (or disable collector until consent); update privacy policy; state clearly that self-hosted ClawQL does not phone home; never call residual pageviews “anonymous” if any network beacon fires | M |
+| 9.05 | Before regulated | `apps/www/src/components/sections/streams-landing.tsx` 20 | Reactive mode: **“compliance-grade recording”** — compliance-grade without named framework / evidence; overclaims vs measured WORM | Say “hash-chained WORM recording” (or “tamper-evident”); reserve compliance language for regulated-profile caveats | S |
+| 9.06 | Before regulated | `apps/www/src/lib/pricing.ts` 79–92 (`sovereignSecurityPack`); pricing page consumers | **Sovereign Security Pack ($200/mo)** sells “WORM Merkle audit logs” as a paid add-on while process WORM is now default-on and remote Object Lock defaults on Cloud paid + regulated — **default mismatch** that implies WORM is optional paid | Split pack copy: WORM defaults (local on; remote Object Lock on Cloud paid/regulated) vs paid extras (Kata, weight verification, monthly posture reports, etc.) | S |
+| 9.07 | Before regulated | `apps/www/src/lib/site.ts` 5 vs homepage hero `apps/www/src/app/page.tsx` 66–69; `/audit` `apps/www/src/app/audit/page.tsx` (no default/Object Lock section); `/security` stack `apps/www/src/lib/security-stack.ts` 126–130 | **Fragmented WORM story:** `site.description` correctly mentions local-on-by-default + remote durable on Cloud paid/regulated, but hero only says “WORM audit trail on every action,” `/audit` never states defaults or Object Lock, security stack tag is just “WORM log.” Pass 0 decision requires **Object Lock** named accurately for remote | One canonical blurb reused by hero, site description, `/audit`, `/security`: local hash-chained WORM on by default; remote Object Lock default on Cloud paid + regulated; self-host remote opt-in | M |
+| 9.08 | Before regulated | `apps/www/src/app/about/page.tsx` 60–61; `apps/www/src/app/page.tsx` 306 | “production-ready … and a **v7 operator** for Kubernetes” / “Kubernetes operator.” `packages/clawql-operator` README: **opt-in Phase 1 scaffold**; chart tracked at **8.0.0 / 0.3.0** — not a production operator, not “v7” | Say “Helm chart + optional operator **scaffold** (not a full production operator)”; drop “v7”; keep OSS MCP self-host honesty separate from operator maturity | S |
+| 9.09 | Before regulated | `apps/www/src/app/auth/page.tsx` 104–111, 182–186; `apps/www/src/lib/security-stack.ts` 62 | Public marketing still uses **“IdP”** for identity provider next to site-wide **IDP = intelligent document processing**. Pass 0.15: public UI/docs should write “identity provider” | Spell out “identity provider” on `/auth` and security stack tags; keep code identifiers if needed | S |
+| 9.10 | Before regulated | `apps/www/src/lib/industries/healthcare.ts` 6, 30–32, 118–121; `apps/www/src/lib/industries/insurance.ts` 8, 31, 118–121 | **HIPAA-aware / HIPAA-oriented / HIPAA and SOC2-oriented** headlines and capability lists on public industry pages. Healthcare has a footer disclaimer; insurance softer. Easy to read as certification / readiness | Keep “oriented” only with explicit “not HIPAA certified / no SOC 2 report held”; move certification language off headlines | S |
+| 9.11 | Before regulated | `apps/www/src/app/pricing/page.tsx` 450–456; `apps/www/src/lib/competitive-pricing.ts` 8, 28, 107–109, 251–271 | Residual **competitor jab tone**: “deliver more for less than executor.sh Team,” “executor.sh is the outlier,” category put-downs. Pass 0 removed overtures; pricing FAQ still editorializes | Keep measured equal-arm facts; drop “more for less” / “outlier” framing; point to `/benchmarks` for numbers | S |
+| 9.12 | Cleanup | `apps/www/src/components/sections/{enterprise,idp,inference}-gtm-playbook.tsx` (~2.5k lines); **zero imports** after GTM route stubs | **Dead** internal GTM playbooks still in the marketing app tree with FedRAMP / SOC 2–ready / “architecture targets Moderate” copy (`enterprise-gtm-playbook.tsx` 654, 686; `inference-gtm-playbook.tsx` 1093). Routes are stubs, but source remains searchable / shippable in the www package | Delete the three components (or move under a private non-published path outside `apps/www`); keep stubs. Canonical GTM prose lives under `docs/gtm/` / `docs/vision/` for pass 10b | M |
+| 9.13 | Cleanup | `apps/www/src/lib/agent-discovery.ts` 345 | Auth.md JSON still advertises `"identity_types_supported": ["anonymous", …]` after analytics/privacy scrub toward pseudonymous language | Prefer `unauthenticated` / omit, or document as protocol enum not privacy claim | S |
+| 9.14 | Cleanup | `apps/www/src/app/layout.tsx` footer 186–227 vs `sitemap.ts` | Footer Product links omit `/audit` and `/auth` (sitemap includes both at 26–27). Agents find them via discovery; humans less so | Add Audit Trail + Auth under Product or Developers | S |
+| 9.15 | Cleanup | `apps/www/src/components/sections/industry-page.tsx` 478–479 | Subhead “**production deployments** add tenant classifiers…” — generic, but audit rule flags the phrase without evidence | Prefer “regulated / production tenants typically add…” or “operators add…” | S |
+| 9.16 | Improve | Homepage / agents OpenBench + competitor narrative; `agents-landing.tsx` 257–260, 432 | Harvey failure-mode citation is mechanism storytelling (OK if attributed); ensure no quarantined board numbers surface as current elsewhere (benchmarks honesty notes look OK for celld/Executor β) | Keep mechanism claims; when citing peer products, attribute + link evidence; never promote paused/quarantined cells as current wins | S |
+
+---
+
+## Consolidation notes (`apps/www` vs `docs`)
+
+1. **WORM defaults (single source of truth).** Pass 0 decision + `CHANGELOG` / `docs/release/RELEASE_NOTES_v8.0.0.md` already state: local WORM on by default; remote Object Lock on Cloud paid + regulated. **www must import that blurb** into `site.ts`, hero, `/audit`, `/security`, Cost Plus demo, and Sovereign Security Pack — stop freelancing per page (9.01, 9.06, 9.07).
+
+2. **GTM quarantine.** Public routes are stubs (good). Dead playbook TSX in `apps/www` (9.12) duplicates `docs/gtm/*` and `docs/vision/clawql-idp-gtm.md`. **Winner:** `docs/gtm` (private narrative) + marketing landings that only claim shipped product. Delete www playbook components.
+
+3. **IDP naming.** Marketing IDP = intelligent document processing is consistent on `/idp`, nav, pricing. **Collision:** `/auth` + security stack still use IdP for identity (9.09). Docs security Pass 0 scrubbed public IdP; finish www.
+
+4. **Competitive / pricing.** `competitive-pricing.ts` + pricing FAQs still carry June/July 2026 GTM illustrative bands and executor editorial (9.11). **Winner for numbers:** `/benchmarks` measured boards; pricing page should link there instead of “more for less.”
+
+5. **Industry verticals.** Content in `apps/www/src/lib/industries/*.ts` is the live marketing source; modularization vision docs describe the same packages as planned. Keep www as the buyer-facing copy; docs as status/scaffold — but align HIPAA/SOC/FedRAMP caveats (9.02, 9.10).
+
+6. **Analytics / privacy.** www + docs share `ClawqlAnalyticsPageview` pattern; consent UX and privacy policy must match `packages/clawql-analytics` README and the “no telemetry when self-hosted” rule (9.04). Product MCP self-host ≠ marketing-site pageviews.
+
+7. **Operator claims.** www “v7 / production operator” vs `packages/clawql-operator` scaffold + `docs/deployment/clawql-operator-helm.md` (9.08). Docs win for maturity; www must not oversell.
+
+8. **Out of this pass (explicit):** `apps/docs` / `apps/docs-astro` dual-site cutover, committed generated MDX, curriculum five-way copies — still Pass 9 plan siblings / Pass 10b, not claimed fixed here.
+
+---
+
+## Explicit non-findings (www after Pass 0)
+
+- GTM routes `/inference/gtm`, `/idp/gtm`, `/enterprise/gtm` are noindex stubs; removed from sitemap.
+- No `Ontologiql` string under `apps/www`.
+- No `RPO=0` / “exactly once” as a current claim on www marketing surfaces (durability boards correctly prefer at-most-once).
+- `agents-landing` / streams celld wording uses disk-quorum ack; zones/regions “not yet measured.”
+- Cost Plus demo correctly rejects “HIPAA certified” marketing (line 216) — keep that, fix only WORM opt-in (9.01).
+- Sitemap does not list GTM stubs; includes `/audit` and `/auth`.
