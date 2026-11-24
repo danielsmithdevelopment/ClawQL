@@ -1,53 +1,53 @@
 # ClawQL
 
-**ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
+**ClawQL is agentic infrastructure for production work in regulated industries.**
 
-The Agentic Gateway is an MCP + OpenAI-compatible control plane for API discovery and execution with a token-efficient `search -> execute` workflow over **OpenAPI**, **Google Discovery**, and optional **native GraphQL** and **gRPC** sources (see **`CLAWQL_GRAPHQL_URL`** / **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** in `.env.example` and [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md)). GraphQL-only vendors (e.g. Linear) need no OpenAPI spec: use **`CLAWQL_PROVIDER=linear`** (bundled SDL under **`providers/linear/`** + **`LINEAR_API_KEY`**), or point **`CLAWQL_GRAPHQL_URL`** at their HTTP endpoint and auth headers, or load **`search`** from **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** (or per-source **`schemaPath`** / **`introspectionPath`**) when upstream introspection is disabled — without **`CLAWQL_SPEC_*`** / **`CLAWQL_PROVIDER`**, the default bundled REST specs are not loaded.
+Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a hash-chained WORM audit trail on every action — local trail on by default; remote durable copies default on Cloud paid tiers and the regulated profile. Apache 2.0. Self-host with no product telemetry ([privacy](https://clawql.com/privacy-policy)).
 
-Enterprise topology: [Zero-Trust Agentic Fabric](docs/architecture/zero-trust-agentic-fabric.md) (Regional Hubs · Dedicated Virtual Gateways · Edge Gateways).
+Four rules the gateway enforces:
+
+1. A person confirms scope before destructive or high-risk writes leave the host.
+2. Every outside action goes through the gateway (`search` → `execute` and related tools).
+3. Untrusted content stays labeled (taint) so it cannot silently become policy.
+4. Agents cannot rewrite those rules.
+
+**On by default:** hash-chained local WORM (sqlite under `$CLAWQL_HOME/worm`), parked destructive writes pending human resume, and taint labeling. **Opt-in:** Panguard fail-closed enforcement, remote S3 Object Lock (default on Cloud paid / regulated when configured), sandbox, schedule, notify.
+
+Primary package: `clawql-mcp` (**8.0.0** tree — empty-by-default catalog, vault-first onboarding — [`RELEASE_NOTES_v8.0.0.md`](docs/release/RELEASE_NOTES_v8.0.0.md)). Latest published npm remains **7.2.0** until the 8.0.0 cut.
+
+Repo: https://github.com/danielsmithdevelopment/ClawQL
+
+Multi-protocol GraphQL / gRPC configuration, feature tiers, and env detail: [`docs/readme/configuration.md`](docs/readme/configuration.md) · [ADR 0002](docs/adr/0002-multi-protocol-supergraph.md) · enterprise topology: [Zero-Trust Agentic Fabric](docs/architecture/zero-trust-agentic-fabric.md).
 
 ## What You Get
 
 Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql-feature-tiers.png) — details in [`docs/readme/configuration.md`](docs/readme/configuration.md#feature-tiers-architecture-diagram)):
 
-- **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — same band in the diagram; ring-buffer semantics for `audit` and LRU semantics for `cache` in [`docs/mcp/enterprise-mcp-tools.md`](docs/mcp/enterprise-mcp-tools.md) and [`docs/mcp/cache-tool.md`](docs/mcp/cache-tool.md).
+- **ClawQL Core (always on — no opt-out):** `search`, `execute`, `audit`, `cache` — `audit` is the agent's **view** over the process WORM trail (`clear` empties only that view); LRU for `cache` in [`docs/mcp/enterprise-mcp-tools.md`](docs/mcp/enterprise-mcp-tools.md) and [`docs/mcp/cache-tool.md`](docs/mcp/cache-tool.md).
 - **Default on — opt out:** `memory_ingest` / `memory_recall`, and the **document** stack (`ingest_external_knowledge`, plus `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`). Use `CLAWQL_ENABLE_MEMORY=0` or `CLAWQL_ENABLE_DOCUMENTS=0` to hide; vault path still required for real disk I/O on memory / ingest.
 - **Default off — opt in:** `sandbox_exec` (**`CLAWQL_ENABLE_SANDBOX=1`**), `schedule`, `notify`, `knowledge_search_onyx` (needs `CLAWQL_ENABLE_ONYX=1` and documents on), `ouroboros_*` — see [`docs/mcp/mcp-tools.md`](docs/mcp/mcp-tools.md). When enabled, **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge.
 - Stdio and HTTP MCP server modes
-- Bundled provider specs for offline lookup and multi-provider workflows
-
-Primary package: `clawql-mcp` (**8.0.0** tree — Agentic Gateway entry; empty-by-default catalog, vault-first onboarding — [`RELEASE_NOTES_v8.0.0.md`](docs/release/RELEASE_NOTES_v8.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)). Latest published npm remains **7.2.0** until the 8.0.0 cut.
-
-Repo: https://github.com/danielsmithdevelopment/ClawQL
+- Bundled provider specs for offline lookup and multi-provider workflows (catalog empty until `CLAWQL_PROVIDER` / `providers.pack` / `CLAWQL_TIER`)
 
 ### Container images on GHCR (Docker / Helm)
 
-Prebuilt images live on **GitHub Container Registry** under **`ghcr.io/danielsmithdevelopment/`** (**`clawql-mcp`**, **`clawql-website`**, **`clawql-dashboard`**, **`clawql-panguard-mcp-bridge`**). They are **supposed to be public** so anyone can **`docker pull`** without credentials and Kubernetes defaults (Kyverno) can verify signatures. If **`docker pull`** returns **denied**, the registry package is still private — see **[`docker/README.md`](docker/README.md) § GHCR visibility** (checklist + **`make ghcr-packages-public`** for maintainers).
+Prebuilt images live on **GitHub Container Registry** under **`ghcr.io/danielsmithdevelopment/`** (**`clawql-mcp`**, **`clawql-website`**, **`clawql-dashboard`**, **`clawql-panguard-mcp-bridge`**). Prefer anonymous **`docker pull`**. Verify signatures with **cosign** (see **[`docker/README.md`](docker/README.md)** § verify). Maintainers: **`make ghcr-packages-public`** if a package is still private.
 
 ## Quick Start
-
-Install:
-
-```bash
-npm install clawql-mcp
-```
-
-Run with a **slim** server (no bundled OpenAPI catalog loaded). Opt into the curated pack when you want it:
 
 ```bash
 npx -p clawql-mcp clawql init --interactive   # vault-first onboarding
 npx -p clawql-mcp clawql mcp-config           # MCP JSON for Cursor
-# Optional curated pack (CF + GitHub + Slack + Linear + Notion + Onyx):
-CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}' npx -p clawql-mcp clawql-mcp
-# Or: CLAWQL_PROVIDER=default npx -p clawql-mcp clawql-mcp
-npx -p clawql-mcp clawql-mcp
+npx -p clawql-mcp clawql-mcp                  # slim server (empty catalog)
 ```
 
-For every bundled vendor plus Google top-50 and AWS top-50:
+Optional curated pack (CF + GitHub + Slack + Linear + Notion + Onyx):
 
 ```bash
-CLAWQL_PROVIDER=all-providers npx clawql-mcp
+CLAWQL_PROVIDER=default npx -p clawql-mcp clawql-mcp
 ```
+
+Optional local install: `npm install clawql-mcp`. For every bundled vendor plus Google top-50 and AWS top-50: `CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp`.
 
 Then configure your MCP client (Cursor/Claude Desktop) to connect — or paste the [agent setup prompt](docs/getting-started/agent-setup-prompt.md) into your agent.
 

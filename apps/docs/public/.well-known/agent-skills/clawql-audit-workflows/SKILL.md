@@ -22,4 +22,4 @@ description: >-
 
 ## Guardrail
 
-- Audit is not durable/compliance storage.
+- The MCP `audit` tool is the agent's **view** over the process WORM trail. `clear` empties only that view — never the hash-chained WORM store (sqlite/postgres + optional S3 Object Lock).

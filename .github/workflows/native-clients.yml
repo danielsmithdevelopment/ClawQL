@@ -18,6 +18,9 @@ concurrency:
   group: native-clients-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   mobile:
     name: Mobile test + store-check
