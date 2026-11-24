@@ -243,11 +243,12 @@ function clawqlEnv(measureHome, specPath, apiBase, governance) {
   if (governance) {
     env.CLAWQL_WORM_ENABLED = "1";
     env.CLAWQL_WORM_LOCAL = "memory";
-    delete env.CLAWQL_WORM_REMOTE;
+    env.CLAWQL_WORM_REMOTE = "memory";
   } else {
-    delete env.CLAWQL_WORM_ENABLED;
-    delete env.CLAWQL_WORM_LOCAL;
-    delete env.CLAWQL_WORM_REMOTE;
+    // Product default is sqlite WORM; equal-arm benches need memory (Bun lacks node:sqlite).
+    env.CLAWQL_WORM_ENABLED = "1";
+    env.CLAWQL_WORM_LOCAL = "memory";
+    env.CLAWQL_WORM_REMOTE = "memory";
   }
   return env;
 }

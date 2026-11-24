@@ -169,9 +169,10 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     CLAWQL_ENABLE_GOOGLE: "0",
     CLAWQL_ENABLE_AWS: "0",
   };
-  delete env.CLAWQL_WORM_ENABLED;
-  delete env.CLAWQL_WORM_LOCAL;
-  delete env.CLAWQL_WORM_REMOTE;
+  // Product default is sqlite WORM; equal-arm benches need memory (Bun lacks node:sqlite).
+  env.CLAWQL_WORM_ENABLED = "1";
+  env.CLAWQL_WORM_LOCAL = "memory";
+  env.CLAWQL_WORM_REMOTE = "memory";
   for (const key of [
     "CLAWQL_PROVIDER",
     "CLAWQL_BUNDLED_PROVIDERS",
