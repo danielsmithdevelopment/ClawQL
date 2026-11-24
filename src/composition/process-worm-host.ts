@@ -40,10 +40,9 @@ async function loadAudit(): Promise<ClawqlAudit> {
  */
 export function ensureProcessWormHostBootedEffect(
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<void> {
+): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
     if (booted) return;
-    booted = true;
     if (!wormEnabledFromEnvSync(env)) {
       process.stderr.write(
         "[clawql] WARNING: process WORM disabled (CLAWQL_WORM_ENABLED=0). " +
@@ -51,6 +50,7 @@ export function ensureProcessWormHostBootedEffect(
       );
       const tier = env.CLAWQL_TIER?.trim().toLowerCase();
       if (tier === "regulated") {
+        // Do not set `booted` — operator can fix env and retry.
         return yield* Effect.fail(
           new Error(
             "CLAWQL_TIER=regulated refuses to start with WORM disabled. " +
@@ -58,12 +58,14 @@ export function ensureProcessWormHostBootedEffect(
           )
         );
       }
+      booted = true;
       return;
     }
     const audit = yield* Effect.promise(() => loadAudit());
     const svc = yield* audit
       .bootProcessWormFromEnvEffect(env)
       .pipe(Effect.catch(() => Effect.succeed(null)));
+    booted = true;
     if (!svc) return;
     try {
       const { registerMemoryWormSink } = requireFromHere(

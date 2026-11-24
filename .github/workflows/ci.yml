@@ -337,7 +337,7 @@ jobs:
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            minio/minio:RELEASE.2024-12-18T13-15-44Z server /data --console-address ":9001"
+            quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z server /data --console-address ":9001"
           for _ in $(seq 1 90); do
             if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
               echo "MinIO ready"
