@@ -180,7 +180,7 @@ export const CodingAgentDriveLive = Layer.succeed(
 );
 
 /** ACP duplex (tests) + runner + drive + WORM. */
-export const makeontology-layer peerAcpDuplexStackLayer = (duplex: AcpDuplexConfig, wormDbPath: string) =>
+export const makeOntologyLayerAcpDuplexStackLayer = (duplex: AcpDuplexConfig, wormDbPath: string) =>
   Layer.mergeAll(
     makeCodingAgentRunnerDuplexLayer(duplex),
     CodingAgentDriveLive,
@@ -188,7 +188,7 @@ export const makeontology-layer peerAcpDuplexStackLayer = (duplex: AcpDuplexConf
   );
 
 /** Spawn-backed ACP + runner + drive + WORM (production ontology-layer peer path). */
-export const makeontology-layer peerAcpStackLayer = (
+export const makeOntologyLayerAcpStackLayer = (
   route: Extract<CodingAgentRoute, { kind: "acp" }>,
   wormDbPath: string
 ) =>
@@ -209,7 +209,7 @@ export const prepareCodingAgentStackEffect = (
     if (route.kind === "acp") {
       return {
         route,
-        layer: makeontology-layer peerAcpStackLayer(
+        layer: makeOntologyLayerAcpStackLayer(
           route,
           input.wormDbPath
         ) as PreparedCodingAgentStack["layer"],
