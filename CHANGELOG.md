@@ -31,7 +31,6 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
   --set providers.pack=default
 ```
 
-
 ### Changed (folded from former Unreleased)
 
 - **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only.

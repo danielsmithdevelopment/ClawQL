@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-| Version | Supported                          |
-| ------- | ---------------------------------- |
-| 8.x     | Yes (current development line)     |
+| Version | Supported                           |
+| ------- | ----------------------------------- |
+| 8.x     | Yes (current development line)      |
 | 7.x     | Security fixes until **2026-12-31** |
-| &lt; 7  | No                                 |
+| &lt; 7  | No                                  |
 
 Published npm latest remains **7.2.0** until the 8.0.0 cut; the monorepo tree is **8.0.0-unreleased**.
 
