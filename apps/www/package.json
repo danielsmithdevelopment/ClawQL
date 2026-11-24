@@ -22,9 +22,11 @@
     ]
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.6",
     "@tailwindplus/elements": "0.0.0-insiders.98ea4bc",
     "clsx": "^2.1.1",
-    "next": "16.4.2",
+    "hono": "^4.13.16",
+    "next": "16.4.5",
     "react": "^19",
     "react-dom": "^19",
     "tailwindcss": "^4.3.1"
@@ -42,11 +44,11 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@hono/node-server": "2.1.5",
+    "@hono/node-server": "2.1.6",
     "brace-expansion": "5.0.12",
     "browserslist": "4.28.7",
     "fast-uri": "3.1.8",
-    "hono": "4.13.12",
+    "hono": "4.13.16",
     "js-yaml": "4.3.2",
     "body-parser": "2.3.0",
     "sharp": "0.35.5",
