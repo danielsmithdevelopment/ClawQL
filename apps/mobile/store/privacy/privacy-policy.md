@@ -29,7 +29,7 @@ In the app: **Profile → Delete account**. That starts the cascade that removes
 
 ## Sharing
 
-Data stays within your ClawQL tenant and subprocessors required to run the service (hosting, IdP, push). We do not share data for advertising.
+Data stays within your ClawQL tenant and subprocessors required to run the service (hosting, identity provider, push). We do not share data for advertising.
 
 ## Retention
 

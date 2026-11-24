@@ -6,7 +6,7 @@ ClawQL PhoneApprove is the phone client for ClawQL Cloud: review exact-change re
 
 ## Sign-in for reviewers
 
-Use the **App Store reviewer demo** button on the Sign-in screen (or ask for the `org_clawql_reviewer_demo` credentials once live IdP is wired).
+Use the **App Store reviewer demo** button on the Sign-in screen (or ask for the `org_clawql_reviewer_demo` credentials once a live identity provider is wired).
 
 That org is deliberately allowed to approve with **device biometrics** because reviewers cannot present a YubiKey. Every such approval is audit-tagged `device_biometric_reviewer_demo` and cannot be used for production orgs.
 

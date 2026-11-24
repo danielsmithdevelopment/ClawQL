@@ -292,7 +292,7 @@ export default function ProfileScreen() {
         <Meta testID="profile-session-kill-help">
           Lost or shared phone? Sign out everywhere else — that kills other
           device sessions for your account. Login throttling / lockout still
-          lives on your IdP (not in this app). Support “View as” is
+          lives on your identity provider (not in this app). Support “View as” is
           console-only and audited; this screen never starts it.
         </Meta>
         <Meta testID="profile-session-expiry">

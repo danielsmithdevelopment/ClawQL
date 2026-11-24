@@ -31,7 +31,7 @@ CI can use Stripe **test mode** keys when secrets are present; harness signs wit
 - Keycloak Compose + realm import: `e2e-cloud/compose/keycloak/`  
 - Live arrange: `helpers/keycloak.ts` (Admin API) → `/sync/scim`  
 - CI smoke: `compose/smoke-compose.sh` + workflow `cloud-e2e-compose.yml`  
-- Catalog titles still say “Okta”; Keycloak is the local IdP stand-in  
+- Catalog titles still say “Okta”; Keycloak is the local identity-provider stand-in  
 
 ## Multi-instance / outages (RES-*)
 

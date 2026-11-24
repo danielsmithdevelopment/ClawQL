@@ -1,12 +1,12 @@
 # clawql-auth: OIDC consumer + shared step-up
 
 **Status:** shipped in `clawql-auth` (gateway `oidc` mode, policy hooks, TOTP/WebAuthn interfaces).  
-**Non-goal:** ClawQL does **not** become a full IdP (no login UI, user directory, or token issuance).
+**Non-goal:** ClawQL does **not** become a full identity provider (no login UI, user directory, or token issuance).
 
 ## Layering
 
 ```
-Customer IdP (Okta / Entra / Auth0 / …)
+Customer identity provider (Okta / Entra / Auth0 / …)
         │  issues JWT (optional acr/amr for MFA)
         ▼
 Istio / Panguard / mcp-proxy JWT ATR   ← optional mesh chokepoint
@@ -20,7 +20,7 @@ High-impact tools (payments, …)
   • createFileStepUpStore + TOTP       ← transaction step-up (not SSO)
 ```
 
-Login MFA and phishing-resistant passkeys remain **IdP** concerns. Payments still use **stage → confirm** plus optional TOTP for “move money now.”
+Login MFA and phishing-resistant passkeys remain **identity provider** concerns. Payments still use **stage → confirm** plus optional TOTP for “move money now.”
 
 ## Gateway OIDC
 
@@ -106,7 +106,7 @@ buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
 
 #### Where to invest
 
-1. **Sign-in — mostly configuration.** Prefer the customer IdP (Okta / Entra) for human SSO; those already enforce hardware keys when the org requires them. Managed Supabase Auth passkeys (beta) and supabase-js WebAuthn MFA (experimental) can cover self-hosted console login — **pin versions** while those APIs stabilize. Prefer IdP passkeys when available; use ClawQL helpers when a host wires `@simplewebauthn/server` for primary passkey / operator pairing.
+1. **Sign-in — mostly configuration.** Prefer the customer identity provider (Okta / Entra) for human SSO; those already enforce hardware keys when the org requires them. Managed Supabase Auth passkeys (beta) and supabase-js WebAuthn MFA (experimental) can cover self-hosted console login — **pin versions** while those APIs stabilize. Prefer identity provider passkeys when available; use ClawQL helpers when a host wires `@simplewebauthn/server` for primary passkey / operator pairing.
 
 2. **Step-up for high-risk actions — the strongest product use.** Require a fresh authenticator ceremony to approve a mandate, approve a proposed source, delete an account, or issue an API key. Unlike phone push, a physical key touch resists phishing and approval fatigue. **Bind the WebAuthn challenge to the hash of the exact change** (same argument-binding idea as mandates). The authenticator signs _that_ approval; the WORM trail keeps a hardware-attested record of who approved what. TOTP must not satisfy these gates (phishable under real-time relay). Binding rules: [below](#challenge-bound-step-up-binding-build).
 

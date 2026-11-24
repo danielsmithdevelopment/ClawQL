@@ -294,7 +294,7 @@ export async function getUsage() {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
-/** IdP directory sync — prefer SCIM (`scimDirectorySync`) for SI-07/08. */
+/** Identity-provider directory sync — prefer SCIM (`scimDirectorySync`) for SI-07/08. */
 export async function directorySync(input: {
   removeJordanFromSupport?: boolean
   deactivatePriya?: boolean

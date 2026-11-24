@@ -92,7 +92,7 @@ export default function SettingsScreen() {
       <SurfaceCard testID="settings-login-abuse">
         <Body>Login rate limits & lockouts</Body>
         <Meta color={brand.inkFaint}>
-          Human password / SSO abuse controls live on your IdP (Okta / Entra /
+          Human password / SSO abuse controls live on your identity provider (Okta / Entra /
           Supabase Auth) — not inside this app. Mobile sign-in uses the same
           issuer as the cloud console. MCP OAuth token limits are separate
           (`CLAWQL_MCP_OAUTH_RATE_LIMIT_PER_MIN`). See

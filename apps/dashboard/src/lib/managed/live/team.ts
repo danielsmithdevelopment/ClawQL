@@ -108,7 +108,7 @@ export const listManagedTeamEffect = (
             keysReady: false,
             lastActive: "Live org member",
             canApproveSummary: "From org spend roster",
-            keysLabel: "Managed via IdP",
+            keysLabel: "Managed via identity provider",
           };
         });
         return people;

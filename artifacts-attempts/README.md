@@ -1,5 +1,7 @@
 # artifacts-attempts
 
+> **Split pending:** this tree is a Pass 0 fragmentation finding. Keep it in-tree for Day 1–18 evidence until a dedicated public repo exists; do not grow new product surfaces here. Extraction checklist: [`docs/STANDALONE.md`](./docs/STANDALONE.md).
+
 **Cloudflare Artifacts competition entry** — a task forks into parallel agent attempts, evidence decides the winner, and the merge becomes an immutable Arweave release anyone can verify.
 
 Apache-2.0. Nothing personal goes into a release.

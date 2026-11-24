@@ -61,7 +61,7 @@ In-app typed + TTS voice assistant ships without this list (`docs/specs/mobile/v
 
 | # | Owner | Item | Done when |
 | - | ----- | ---- | --------- |
-| 22 | human | Confirm IdP login rate limits / lockout for mobile SSO | Same matrix as `docs/security/idp-login-abuse-ownership.md` |
+| 22 | human | Confirm identity-provider login rate limits / lockout for mobile SSO | Same matrix as `docs/security/idp-login-abuse-ownership.md` |
 | 23 | human | Confirm gateway AI enforcement on for the org mobile talks to | `docs/security/ai-enforcement-default-posture.md` — no `CLAWQL_ALLOW_NO_ENFORCEMENT=1` |
 | 24 | agent/human | Quarterly restore drill recorded | `docs/deployment/restore-drill.md` (mobile does not run restores) |
 | 25 | agent | Support view-as stays console-only | PhoneApprove Settings / Team / Audit copy — no start API on mobile |
