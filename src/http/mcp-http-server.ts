@@ -243,7 +243,7 @@ function createClawqlMcpExpressApp(
 export type CreateMcpHttpAppOptions = {
   /** Override MCP route (default `process.env.MCP_PATH` or `/mcp`). */
   mcpPath?: string;
-  /** Express / DNS rebinding host (default `process.env.MCP_HOST` or `0.0.0.0`). */
+  /** Express / DNS rebinding host (default `process.env.MCP_HOST` or `127.0.0.1`). */
   host?: string;
   /** Skip spec preload (tests that mock `loadSpec` upstream). */
   skipSpecPreload?: boolean;
@@ -307,7 +307,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const sessionIdle = Effect.runSync(startSessionIdleWatcher(transports, sessionIdleMs));
 
   const app = createClawqlMcpExpressApp({
-    host: options.host || process.env.MCP_HOST || "0.0.0.0",
+    host: options.host || process.env.MCP_HOST?.trim() || "127.0.0.1",
   });
 
   app.use(applySecurityHeadersMiddleware);
@@ -503,10 +503,18 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     })();
   }
 
-  const skipGraphqlFromEnv = envFlagOn("CLAWQL_HTTP_SKIP_GRAPHQL");
-  if (!options.skipGraphqlAttach && !skipGraphqlFromEnv) {
+  // GraphQL is opt-in (audit 2.02). Legacy CLAWQL_HTTP_SKIP_GRAPHQL=1 still skips.
+  const enableGraphql =
+    envFlagOn("CLAWQL_HTTP_GRAPHQL") && !envFlagOn("CLAWQL_HTTP_SKIP_GRAPHQL");
+  const tierRaw = process.env.CLAWQL_TIER?.trim().toLowerCase();
+  if (enableGraphql && tierRaw === "regulated") {
+    throw new Error(
+      "CLAWQL_HTTP_GRAPHQL is refused in the regulated tier — GraphQL bypasses execute-core governance"
+    );
+  }
+  if (!options.skipGraphqlAttach && enableGraphql) {
     const { attachGraphqlHttpToMcpApp } = await import("./graphql-http-attach.js");
-    await attachGraphqlHttpToMcpApp(app);
+    await attachGraphqlHttpToMcpApp(app, { auth: applyGatewayAuth });
   }
 
   if (httpMetricsEnabledForHttp()) {
@@ -695,12 +703,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   // WebMCP draft bound execute — browser publish scripts POST here (§6).
+  // Audit 2.03: never accept caller-supplied bindings (SSRF via formAction).
   app.post("/webmcp-draft/bound-execute", applyGatewayAuth, async (req, res) => {
     try {
       const body = (req.body ?? {}) as {
         toolName?: string;
         args?: Record<string, unknown>;
-        bindings?: import("clawql-core").BoundOperation[];
         versionId?: string;
       };
       const toolName = String(body.toolName ?? "");
@@ -716,21 +724,27 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         executeBoundOperation,
         findBinding,
       } = await import("clawql-core");
+      const { assertSafeSourceFetchUrl } = await import("clawql-api");
       const result = await Effect.runPromise(
         Effect.gen(function* () {
-          let binding = body.bindings ? findBinding(body.bindings, toolName) : undefined;
-          if (!binding) {
-            const store = yield* DraftStoreService;
-            const version = body.versionId
-              ? yield* store.getVersion(String(body.versionId))
-              : yield* store.getActiveVersion();
-            if (!version) {
-              return yield* Effect.fail(new Error("no active published WebMCP version"));
-            }
-            binding = findBinding(version.bindings, toolName);
+          const store = yield* DraftStoreService;
+          const version = body.versionId
+            ? yield* store.getVersion(String(body.versionId))
+            : yield* store.getActiveVersion();
+          if (!version) {
+            return yield* Effect.fail(new Error("no active published WebMCP version"));
           }
+          const binding = findBinding(version.bindings, toolName);
           if (!binding) {
             return yield* Effect.fail(new Error(`no binding for tool ${toolName}`));
+          }
+          // Egress guard on forms bindings before any fetch.
+          if (binding.formAction) {
+            try {
+              assertSafeSourceFetchUrl(binding.formAction);
+            } catch {
+              return yield* Effect.fail(new Error("bound execute target is not allowed"));
+            }
           }
           return yield* executeBoundOperation(binding, body.args ?? {});
         }).pipe(Effect.provide(Layer.mergeAll(DraftStoreLive, BoundOperationInvokerHostLive)))
@@ -738,9 +752,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       res.status(200).json(result);
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /webmcp-draft/bound-execute error:", err);
-      const message = err instanceof Error ? err.message : String(err);
       if (!res.headersSent) {
-        res.status(400).json({ ok: false, error: message });
+        res.status(400).json({ ok: false, error: "bound execute failed" });
       }
     }
   });
@@ -1010,6 +1023,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   return app;
 }
 
+function isLoopbackBindHost(host: string): boolean {
+  const h = host.trim().toLowerCase();
+  return h === "127.0.0.1" || h === "localhost" || h === "::1";
+}
+
 export async function startMcpHttpServer(): Promise<void> {
   const { maybeInitOtelTracing } = await import("../observability/otel-tracing.js");
   await maybeInitOtelTracing();
@@ -1029,7 +1047,27 @@ export async function startMcpHttpServer(): Promise<void> {
   await maybeConfigureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");
   await ensureProcessWormHostBooted();
-  const app = await createMcpHttpApp();
+
+  const listenHost = process.env.MCP_HOST?.trim() || "127.0.0.1";
+  const tier = process.env.CLAWQL_TIER?.trim().toLowerCase() || "standard";
+  const { Effect } = await import("effect");
+  const { resolveAuthMode } = await import("clawql-auth/gateway");
+  const authMode = await Effect.runPromise(resolveAuthMode());
+  if (authMode === "noAuth") {
+    if (tier === "regulated") {
+      throw new Error(
+        "CLAWQL_TIER=regulated refuses CLAWQL_AUTH_MODE=noAuth — set apiKey or oidc"
+      );
+    }
+    if (!isLoopbackBindHost(listenHost) && !envFlagOn("CLAWQL_ALLOW_UNAUTHENTICATED")) {
+      throw new Error(
+        `CLAWQL_AUTH_MODE=noAuth refused on non-loopback bind ${listenHost}; ` +
+          "set MCP_HOST=127.0.0.1, enable apiKey/oidc, or set CLAWQL_ALLOW_UNAUTHENTICATED=1"
+      );
+    }
+  }
+
+  const app = await createMcpHttpApp({ host: listenHost });
   const { logStartupSummary } = await import("../host/startup-summary.js");
   await logStartupSummary();
   const { maybeStartGrpcMcpServer } = await import("mcp-grpc-transport");
@@ -1037,10 +1075,10 @@ export async function startMcpHttpServer(): Promise<void> {
     createMcpServer: () => createRegisteredMcpServer(),
   });
 
-  app.listen(PORT, () => {
+  app.listen(PORT, listenHost, () => {
     const path = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
     console.error(
-      `[clawql-mcp-http] Streamable HTTP MCP listening on http://0.0.0.0:${PORT}${path}`
+      `[clawql-mcp-http] Streamable HTTP MCP listening on http://${listenHost}:${PORT}${path}`
     );
   });
 

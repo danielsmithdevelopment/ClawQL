@@ -71,6 +71,32 @@ const submitForm = (
   const method = (binding.formMethod ?? "POST").toUpperCase();
   return Effect.tryPromise({
     try: async () => {
+      // Defense in depth: refuse obvious private/loopback targets. Full egress
+      // validation (DNS resolve, redirects) lives in clawql-api assertSafeSourceFetchUrl
+      // and is applied by the HTTP bound-execute route before invoke (audit 2.03).
+      let parsed: URL;
+      try {
+        parsed = new URL(action);
+      } catch {
+        throw new Error("bound execute target is not allowed");
+      }
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        throw new Error("bound execute target is not allowed");
+      }
+      const host = parsed.hostname.toLowerCase();
+      if (
+        !host ||
+        host === "localhost" ||
+        host.endsWith(".localhost") ||
+        host === "metadata.google.internal" ||
+        host === "127.0.0.1" ||
+        host === "::1" ||
+        host.startsWith("10.") ||
+        host.startsWith("192.168.") ||
+        host.startsWith("169.254.")
+      ) {
+        throw new Error("bound execute target is not allowed");
+      }
       const body = new URLSearchParams();
       for (const [k, v] of Object.entries(args)) {
         if (v === undefined || v === null) continue;
@@ -78,16 +104,17 @@ const submitForm = (
       }
       const init: RequestInit =
         method === "GET"
-          ? { method: "GET" }
+          ? { method: "GET", redirect: "manual" }
           : {
               method,
               headers: { "content-type": "application/x-www-form-urlencoded" },
               body,
+              redirect: "manual",
             };
       const url =
         method === "GET"
-          ? `${action}${action.includes("?") ? "&" : "?"}${body.toString()}`
-          : action;
+          ? `${parsed.href}${parsed.href.includes("?") ? "&" : "?"}${body.toString()}`
+          : parsed.href;
       const res = await fetch(url, init);
       const text = await res.text();
       return {

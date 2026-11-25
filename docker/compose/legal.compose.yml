@@ -21,9 +21,12 @@ services:
     container_name: clawql-legal-mcp
     restart: unless-stopped
     ports:
-      - "${CLAWQL_HOST_PORT:-8280}:8080"
+      - "127.0.0.1:${CLAWQL_HOST_PORT:-8280}:8080"
     environment:
       PORT: "8080"
+      MCP_HOST: "0.0.0.0"
+      CLAWQL_AUTH_MODE: apiKey
+      CLAWQL_API_KEY: ${CLAWQL_API_KEY:-change-me-local-dev-only}
       NODE_ENV: development
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       CLAWQL_ENABLE_HITL_LABEL_STUDIO: "1"
