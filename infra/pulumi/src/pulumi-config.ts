@@ -96,6 +96,8 @@ export function loadProvisionInputs(): ProvisionInputs {
     ebsVolumeSizeGb: cfg.getNumber("ebsVolumeSizeGb") ?? 200,
     sshCidrBlocks: parseCsv(cfg.get("sshCidrBlocks")),
     apiCidrBlocks: parseCsv(cfg.get("apiCidrBlocks")),
+    mcpHttpCidrBlocks: parseCsv(cfg.get("mcpHttpCidrBlocks")),
+    allowPublicMcp: cfg.getBoolean("allowPublicMcp") ?? false,
     gitopsRepoUrl: cfg.get("gitopsRepoUrl") ?? undefined,
 
     eksClusterName: cfg.get("eksClusterName") ?? undefined,

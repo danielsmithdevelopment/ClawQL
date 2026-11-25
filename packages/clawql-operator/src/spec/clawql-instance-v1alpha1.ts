@@ -12,7 +12,7 @@ const tierToggleSchema = z
 
 export const clawqlInstanceSpecV1Alpha1Schema = z
   .object({
-    tier: z.enum(["local", "standard", "enterprise"]).optional(),
+    tier: z.enum(["local", "standard", "enterprise", "regulated"]).optional(),
     /**
      * Bundled OpenAPI/GraphQL catalog selection — available in the image, loaded only when opted in.
      * Prefer this over `CLAWQL_PROVIDER` / `CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`.

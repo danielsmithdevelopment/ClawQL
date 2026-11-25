@@ -156,6 +156,9 @@ spec:
             # Authoritative plugin + provider composition (ClawQLInstance).
             - name: CLAWQL_INSTANCE_SPEC
               value: {{ include "clawql-mcp.instanceSpecJson" . | quote }}
+            {{- /* Runtime security tier (payments/inference fail-closed) — audit 7.06 */ -}}
+            - name: CLAWQL_TIER
+              value: {{ .Values.pluginTiers.tier | default "standard" | quote }}
             {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
             {{- if $enableGrpc }}
             - name: ENABLE_GRPC

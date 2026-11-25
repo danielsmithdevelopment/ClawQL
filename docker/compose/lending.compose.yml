@@ -127,11 +127,11 @@ services:
     container_name: clawql-lending-label-studio
     restart: unless-stopped
     ports:
-      - "${LABEL_STUDIO_HOST_PORT:-8095}:8080"
+      - "127.0.0.1:${LABEL_STUDIO_HOST_PORT:-8095}:8080"
     environment:
       LABEL_STUDIO_HOST: ${LABEL_STUDIO_PUBLIC_URL:-http://localhost:8095}
       LABEL_STUDIO_USERNAME: ${LABEL_STUDIO_USERNAME:-admin@localhost}
-      LABEL_STUDIO_PASSWORD: ${LABEL_STUDIO_PASSWORD:-changeme}
+      LABEL_STUDIO_PASSWORD: ${LABEL_STUDIO_PASSWORD:?set LABEL_STUDIO_PASSWORD}
     volumes:
       - label-studio-data:/label-studio/data
 

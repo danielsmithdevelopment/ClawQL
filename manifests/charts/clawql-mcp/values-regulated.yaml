@@ -1,0 +1,56 @@
+# Regulated-tier Helm overlay (audit 7.06 / 7.13).
+#
+# Usage:
+#   helm upgrade --install clawql ./manifests/charts/clawql-mcp \
+#     -n clawql --create-namespace \
+#     -f manifests/charts/clawql-mcp/values-regulated.yaml \
+#     -f path/to/hosts-and-secret-refs.yaml
+#
+# Pair with values-soc2-hardening.example.yaml when you need Cosign/Kyverno/NetworkPolicy extras.
+# Do NOT set devAllowWeakSecrets. Do NOT commit production secrets here.
+
+pluginTiers:
+  tier: regulated
+
+devAllowWeakSecrets: false
+
+service:
+  type: ClusterIP
+
+gatewayAuth:
+  mode: apiKey
+  # Must point at a Vault-synced or operator-managed Secret:
+  # existingSecret: clawql-mcp-auth
+
+# Runtime tier flag consumed by payments/inference fail-closed paths (Pass 6).
+extraEnv:
+  - name: CLAWQL_TIER
+    value: regulated
+  - name: CLAWQL_WORM_REQUIRED
+    value: "1"
+  - name: CLAWQL_INFERENCE_LOCAL_ONLY
+    value: "1"
+  - name: CLAWQL_INFERENCE_KEYS_ENABLED
+    value: "1"
+  - name: CLAWQL_PANGUARD_PROXY_PLUGIN
+    value: "1"
+  - name: CLAWQL_PANGUARD_IN_PROCESS
+    value: "1"
+
+# Prefer JWT/ATR edge when the cluster runs the managed gateway / MCP proxy.
+mcpProxy:
+  enabled: true
+
+managedGateway:
+  networkPolicy:
+    enabled: true
+
+# Document pipeline / Onyx stay opt-in with existingSecret — no chart passwords.
+documentPipeline:
+  enabled: false
+
+onyx:
+  enabled: false
+
+secretSourcing:
+  requireVaultBackedSecrets: true

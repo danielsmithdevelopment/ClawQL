@@ -56,6 +56,28 @@ export const TIER_PRESET_SPECS: Record<
     data: { enabled: false },
     ouroboros: { enabled: false },
   },
+  /** Audit 7.06 — regulated preset: same surface as enterprise; runtime env sets CLAWQL_TIER=regulated via Helm. */
+  regulated: {
+    tier: "regulated",
+    memory: { enabled: true },
+    documents: {
+      enabled: true,
+      onyx: { enabled: true },
+      idpPipeline: { enabled: true },
+      idpClassifier: { enabled: false },
+      langextract: { enabled: false },
+    },
+    automation: {
+      schedule: { enabled: true },
+      notify: { enabled: true },
+      workflow: { enabled: true },
+      argocd: { enabled: false },
+      hitlLabelStudio: { enabled: false },
+    },
+    sandbox: { enabled: false },
+    data: { enabled: false },
+    ouroboros: { enabled: false },
+  },
 };
 
 function mergeToggleSection<T extends { enabled?: boolean }>(

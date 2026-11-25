@@ -7,6 +7,20 @@
 
 fullnameOverride: clawql-mcp-http
 
+# Lab-only: allow chart-managed demo passwords / local Onyx creds (audit 7.01/7.05/7.11).
+devAllowWeakSecrets: true
+
+# docker.sock sandbox needs root in the MCP container (audit 7.12 lab path) — override chart non-root defaults.
+podSecurityContext:
+  runAsNonRoot: false
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
 # Single-node: never run two MCP pods during upgrade (avoids Insufficient memory while RollingUpdate overlaps).
 # If upgrading from a cluster that already had this Deployment with RollingUpdate, delete the Deployment once
 # so Helm does not three-way-merge stale rollingUpdate with type Recreate (invalid).
@@ -104,6 +118,8 @@ onyx:
         memory: 1Gi
   opensearch:
     javaOpts: "-Xms256m -Xmx256m"
+    auth:
+      adminPassword: "StrongPassword123!"
     persistence:
       enabled: true
     resources:
@@ -126,6 +142,9 @@ onyx:
         cpu: "2"
         memory: 3Gi
   minio:
+    auth:
+      rootUser: minioadmin
+      rootPassword: minioadmin
     persistence:
       enabled: true
     resources:
@@ -455,6 +474,8 @@ documentPipeline:
 
 stores:
   postgres:
+    auth:
+      password: "change-me"
     resources:
       requests:
         cpu: 25m

@@ -50,9 +50,19 @@ export type ProvisionInputs = {
 
   // --- idp-k3s ---
   ebsVolumeSizeGb?: number;
+  /** Required for idp-k3s (audit 7.51). Must not include 0.0.0.0/0. */
   sshCidrBlocks?: string[];
+  /** Required for idp-k3s (audit 7.51). Must not include 0.0.0.0/0. */
   apiCidrBlocks?: string[];
   gitopsRepoUrl?: string;
+
+  /**
+   * Golden-host MCP HTTP SG CIDRs (audit 7.52). Required — no public 0.0.0.0/0 default.
+   * Example: ["10.0.0.0/8"] or a private ALB SG peer CIDR.
+   */
+  mcpHttpCidrBlocks?: string[];
+  /** Escape hatch for deliberate public MCP demos (requires mcpHttpCidrBlocks including 0.0.0.0/0). */
+  allowPublicMcp?: boolean;
 
   // --- eks ---
   eksClusterName?: string;

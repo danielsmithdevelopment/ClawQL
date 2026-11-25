@@ -7,10 +7,10 @@ metadata:
   namespace: argocd
 spec:
   description: ClawQL IDP + MCP + Argo Workflows (.cqw)
+  # Audit 7.53: pin org repo only (no fork "*").
   sourceRepos:
     - https://github.com/danielsmithdevelopment/ClawQL.git
     - https://github.com/danielsmithdevelopment/ClawQL
-    - "*" # allow forks — tighten in production
   destinations:
     - namespace: clawql
       server: https://kubernetes.default.svc
@@ -30,6 +30,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: tenant-*
       server: https://kubernetes.default.svc
+  # Resource kind "*" is still needed for CRD/operator bootstrap; pin sources above (audit 7.53).
+  # Regulated clusters should replace these with an explicit kind allowlist.
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

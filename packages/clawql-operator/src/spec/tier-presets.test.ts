@@ -23,6 +23,10 @@ describe("applyTierPreset", () => {
   });
 
   it("enterprise enables workflow and onyx", () => {
+    const regulated = applyTierPreset({ tier: "regulated" });
+    expect(regulated.tier).toBe("regulated");
+    expect(regulated.documents?.onyx?.enabled).toBe(true);
+
     const merged = applyTierPreset({ tier: "enterprise" });
     expect(merged.documents?.onyx?.enabled).toBe(true);
     expect(merged.automation?.workflow?.enabled).toBe(true);

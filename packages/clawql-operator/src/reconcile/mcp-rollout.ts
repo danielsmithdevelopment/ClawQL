@@ -14,7 +14,14 @@ export function resolveMcpRolloutTarget(
   const mcp = spec.mcp;
   if (!mcp?.rolloutOnTierSpecChange) return undefined;
   const deploymentName = mcp.deploymentName?.trim() || "clawql-mcp-http";
-  const namespace = mcp.namespace?.trim() || instanceNamespace;
+  const requested = mcp.namespace?.trim();
+  // Audit 7.04: never roll Deployments outside the ClawQLInstance namespace.
+  if (requested && requested !== instanceNamespace) {
+    throw new Error(
+      `mcp.namespace "${requested}" must match ClawQLInstance namespace "${instanceNamespace}" (audit 7.04)`
+    );
+  }
+  const namespace = instanceNamespace;
   return { deploymentName, namespace };
 }
 

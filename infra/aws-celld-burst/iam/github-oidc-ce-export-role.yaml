@@ -82,7 +82,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${GitHubRepo}:*"
+                # Audit 7.60: narrow to main (not every ref/PR in the repo).
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${GitHubRepo}:ref:refs/heads/main"
       Policies:
         - PolicyName: clawql-section13-ce-read
           PolicyDocument:
