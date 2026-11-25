@@ -119,7 +119,7 @@ Tools registered when `CLAWQL_GOVERNMENT_ENABLED=1`:
 | `baseline_verify`            | Verify baseline against Arweave anchor — detects retroactive adjustment            |
 | `document_ingest`            | Ingest a government document with hash, classification, and chain of custody       |
 | `document_retrieve`          | Retrieve a document with full provenance proof                                     |
-| `document_export_foia`       | Export documents in FOIA-compliant format with chain of custody                    |
+| `document_export_foia`       | Export FOIA response packages with chain of custody (planned tool)                 |
 | `contract_ingest`            | Ingest a vendor contract with outcome requirements extracted                       |
 | `contract_monitor`           | Monitor vendor contract compliance against outcome requirements                    |
 | `audit_log_query`            | Query the immutable audit log for a program, agency, or time range                 |
@@ -500,7 +500,7 @@ A city contracts with a surveillance camera vendor promising crime reduction out
 
 The Oak Park outcome — three years of operation, zero meaningful crime investigations — would have been visible at the end of year one rather than discovered at contract renewal.
 
-### FOIA-compliant document management
+### FOIA response packages (planned)
 
 A state agency receives a FOIA request for documents related to a bond-funded program:
 

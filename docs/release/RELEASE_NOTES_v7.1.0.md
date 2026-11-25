@@ -12,7 +12,7 @@
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.** 7.0 shipped that as the install story; **7.1** ships the rails operators asked for next: schema’d Ontology, prepaid agent economics, and typed Effect services end-to-end.
 
-→ Announcement drafts: [`docs/announcements/announcement-drafts-v7.1.0.md`](../announcements/announcement-drafts-v7.1.0.md) · Prior major: [`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)
+→ Announcement drafts: [`docs/announcements/archive/announcement-drafts-v7.1.0.md`](../announcements/archive/announcement-drafts-v7.1.0.md) · Prior major: [`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md)
 
 ---
 

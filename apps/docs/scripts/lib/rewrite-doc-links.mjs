@@ -159,7 +159,7 @@ export function escapeMdxCurlyOutsideFences(body) {
 
 /**
  * @param {string} body
- * @param {string} sourceDocPathFromRepoRoot e.g. `docs/presentations/clawql-slides.md`
+ * @param {string} sourceDocPathFromRepoRoot e.g. `docs/presentations/archive/clawql-slides.md`
  */
 export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
   const sourceDir = path.posix.dirname(

@@ -39,7 +39,7 @@ else
   bad "unexpected stack_version=${STACK}"
 fi
 
-HARVEY="${HARVEY_LABS:-/tmp/harvey-labs-work2/harvey-labs}"
+HARVEY="${HARVEY_LABS:?Set HARVEY_LABS to your harvey-labs checkout}"
 if [[ -f "${HARVEY}/pyproject.toml" ]] || [[ -d "${HARVEY}/.git" ]]; then
   ok "harvey-labs at ${HARVEY}"
   if [[ -d "${HARVEY}/tasks/firm-knowledge/dms/matters" ]] || [[ -d "${HARVEY}/tasks/firm-knowledge/tasks/001" ]]; then

@@ -1,5 +1,7 @@
 # Onyx Explained: Open-Source Enterprise Search and AI Assistant Infrastructure
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 Onyx is an open-source AI platform focused on enterprise knowledge retrieval and assistant workflows. At a high level, it connects to internal systems, indexes documents with metadata and permissions, and makes that knowledge available to both search and chat experiences.
 
 - **Website:** https://onyx.app

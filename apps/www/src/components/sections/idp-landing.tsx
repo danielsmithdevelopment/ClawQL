@@ -58,10 +58,10 @@ const priceRows = [
   {
     vendor: 'ClawQL IDP (Starter)',
     model: `Flat ${pricing.starter.monthlyPrice}/mo`,
-    cost: '$3,588/year · unlimited documents · VDR included',
+    cost: `$${Number(pricing.starter.monthlyPrice.replace(/[^0-9.]/g, '')) * 12}/year · ${pricing.starter.features.find((f) => /documents\/month/i.test(f)) ?? '5,000 documents/month'} · VDR included`,
     highlight: true,
   },
-] as const
+]
 
 const differentiators = [
   {

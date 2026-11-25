@@ -7,7 +7,7 @@
 | **Version**   | June 2026                                                                                                                                                                                                                                                                                                                                         |
 | **Alignment** | [ClawQL IDP Platform](../vision/clawql-idp-platform.md) (v2 / July 2026 refresh)                                                                                                                                                                                                                                                                  |
 | **Audience**  | Founders · operators · finance · GTM                                                                                                                                                                                                                                                                                                              |
-| **Related**   | [IDP GTM landing brief](../vision/clawql-idp-gtm.md) · [Hosted live bootstrap (Pulumi + Argo CD)](../deployment/hosted-live-bootstrap.md) · [MCP API adapter positioning](./mcp-api-adapter-positioning.md) · [Protocol Fabric](./protocol-fabric.md) · [Defense-in-depth](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) |
+| **Related**   | [IDP GTM landing brief](./clawql-idp-gtm.md) · [Hosted live bootstrap (Pulumi + Argo CD)](../deployment/hosted-live-bootstrap.md) · [MCP API adapter positioning](./mcp-api-adapter-positioning.md) · [Protocol Fabric](./protocol-fabric.md) · [Defense-in-depth](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) |
 
 > Internal strategy document. Do not distribute externally without review. Canonical path: `docs/gtm/clawql-gtm-playbook.md`.
 
@@ -793,6 +793,6 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 |                 |                                                                                              |
 | --------------- | -------------------------------------------------------------------------------------------- |
 | Status          | Canonical internal GTM playbook                                                              |
-| Companion       | [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md) (IDP landing/narrative brief) |
+| Companion       | [`docs/gtm/clawql-idp-gtm.md`](./clawql-idp-gtm.md) (IDP landing/narrative brief) |
 | Platform        | [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md)                     |
 | Confidentiality | Internal — June 2026                                                                         |

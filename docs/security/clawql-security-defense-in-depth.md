@@ -4,7 +4,7 @@
 **Zero Trust · Immutability · Cryptographic Controls · Incident Response**
 **Making Unauthorized Persistence Structurally Difficult**
 
-**April 2026** — Comprehensive reference (aligns with **ClawQL** security slides **§08** in `../presentations/clawql-slides.md`).
+**April 2026** — Comprehensive reference (aligns with **ClawQL** security slides **§08** in `../presentations/archive/clawql-slides.md`).
 
 **Auditable engineering matrix:** **[`clawql-security-defense-deliverables.md`](clawql-security-defense-deliverables.md)** — maps each control area to **status** (shipped / partial / planned / customer), **GitHub issues**, and **Helm / CI / docs** artifacts. Tracked as **[#164](https://github.com/danielsmithdevelopment/ClawQL/issues/164)**.
 
@@ -400,4 +400,4 @@ The **chicken-and-egg** of first trust: **HSM** / **air-gapped** **ceremony** fo
 
 _End of document — `docs/security/clawql-security-defense-in-depth.md` — April 2026_
 
-_For slide summaries, see **§08** in `docs/presentations/clawql-slides.md`._
+_For slide summaries, see **§08** in `docs/presentations/archive/clawql-slides.md`._

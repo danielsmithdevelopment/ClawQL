@@ -1,5 +1,7 @@
 # Announcing `clawql-ouroboros`: Bringing Self-Healing, Specification-First AI Workflows to the TypeScript Ecosystem
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 We are excited to introduce `clawql-ouroboros`, a new open-source npm package that brings the powerful ideas behind the Ouroboros system into Node.js and TypeScript environments. Designed for developers building AI-powered tools, agents, and platforms, this library makes advanced self-correcting workflows accessible without the overhead of a full standalone application.
 
 - **GitHub:** https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-ouroboros
@@ -117,13 +119,13 @@ The library maintains a lightweight ontology graph (entities, relations, confide
 - Middleware hooks for pre/post execution transformations
 - Pluggable persistence (Postgres by default, in-memory for testing)
 
-This architecture remains lightweight while delivering production-grade reliability and auditability.
+This architecture remains lightweight while delivering hardened reliability and auditability.
 
 ## Who Should Use `clawql-ouroboros`?
 
 - AI tool builders integrating self-healing loops into IDE extensions, web apps, or backend services
 - Agent framework developers who want specification-first execution without rebuilding evaluation and reflection logic
-- Teams using ClawQL or MCP that need production-ready orchestration primitives
+- Teams using ClawQL or MCP that need orchestration (Ouroboros agent tools are opt-in as of 8.0) primitives
 - Developers who want Ouroboros-style behavior in a native TypeScript package
 
 If you want a turnkey terminal power tool, use the Python version. If you are building AI-powered developer experiences in Node.js, use `clawql-ouroboros`.

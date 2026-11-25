@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL consolidated slide deck',
   description:
-    'Full ~80-slide ClawQL ecosystem deck (§01–§08): MCP, document pipeline, Onyx, memory, Web3/Fabric, security, Helm — same Markdown as docs/presentations/clawql-slides.md.',
+    'Full ~80-slide ClawQL ecosystem deck (§01–§08): MCP, document pipeline, Onyx, memory, Web3/Fabric, security, Helm — same Markdown as docs/presentations/archive/clawql-slides.md.',
   path: '/vision/slide-deck',
   ogType: 'article',
 })
@@ -28,26 +28,16 @@ export default function VisionSlideDeckPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Source:</strong> This page is generated from{' '}
+          <strong>Archived (pre-8.0).</strong> This deck is historical and is
+          not regenerated on docs prebuild. Source:{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/presentations/clawql-slides.md"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/presentations/archive/clawql-slides.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/presentations/clawql-slides.md
-          </a>{' '}
-          on <code className="font-mono text-xs">main</code> — edit there, then
-          run{' '}
-          <code className="font-mono text-xs">
-            node scripts/sync-clawql-slides-doc.mjs
-          </code>{' '}
-          from <code className="font-mono text-xs">apps/docs/</code> (also runs
-          on <code className="font-mono text-xs">prebuild</code> /{' '}
-          <code className="font-mono text-xs">dev</code>). The deck body is
-          included in the{' '}
-          <strong>static HTML for this URL at build time</strong> (no
-          Suspense/streaming shell) so search engines and link-preview bots can
-          read the content without executing client JavaScript. Related case
-          study:{' '}
+            docs/presentations/archive/clawql-slides.md
+          </a>
+          . Claims here may not match current defaults (WORM on by default,
+          Ouroboros tools opt-in, empty provider catalog). Related case study:{' '}
           <a
             href="/case-studies/slide-deck-github-parity-cache-memory-recall-2026-04"
             className="font-medium text-inherit underline underline-offset-2"

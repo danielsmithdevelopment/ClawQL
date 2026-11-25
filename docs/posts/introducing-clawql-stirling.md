@@ -1,5 +1,7 @@
 # Stirling-PDF Explained: Self-Hosted PDF Operations at Scale
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 Stirling-PDF is a locally hosted, open-source PDF toolkit with a broad set of tools for document transformation, cleanup, and security workflows.
 
 - **Docs:** https://docs.stirlingpdf.com

@@ -47,7 +47,7 @@
 | Remaining inline historical `onRegister` bullets under banners | Optional polish                                    |
 | Contributor §1.1 deep code samples                             | Banner + Before You Start done; full rewrite later |
 | `docs/gtm/mcp-api-adapter-positioning.md`                      | GTM essay version/surface count                    |
-| `docs/presentations/clawql-slides.md`                          | Deck auto-load slides                              |
+| `docs/presentations/archive/clawql-slides.md`                          | Deck auto-load slides                              |
 | `docs/mcp/mcp-tools.md` L7 framing                             | Partial                                            |
 | QR / cellrt surface-count wording in draft specs               | Lower risk                                         |
 | Harvey LAB / government / surveillance                         | Intentionally draft                                |
