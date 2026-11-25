@@ -48,7 +48,7 @@ export function attachOutboundApproveRoutes(
       }
       const tenantId =
         (typeof body.tenantId === "string" && body.tenantId.trim()) ||
-        claims.tenantId?.trim() ||
+        claims?.tenantId?.trim() ||
         "default";
       try {
         const approval = await Effect.runPromise(

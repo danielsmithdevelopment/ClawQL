@@ -1,7 +1,7 @@
 import { Context, Effect, Result, Layer } from "effect";
 import { PaymentsConfigService } from "../config/payments-config-service.js";
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
-import { ConfigError, X402Error } from "../errors/payment-errors.js";
+import { ConfigError, PaymentError, X402Error } from "../errors/payment-errors.js";
 import { buildX402PaymentFailedEntry, buildX402PaymentReceivedEntry } from "../audit/events.js";
 import { Ap2MandateService } from "../ap2/ap2-mandate-service.js";
 import { isAp2Enabled, isAp2Required } from "../ap2/config.js";
@@ -78,14 +78,14 @@ export class X402EnforcementService extends Context.Service<
   {
     readonly enforceGate: (
       input: EnforceX402GateInput
-    ) => Effect.Effect<X402EnforceResult, ConfigError | X402Error>;
+    ) => Effect.Effect<X402EnforceResult, ConfigError | X402Error | PaymentError>;
     readonly reconcileSettlement: (input: {
       tenantId: string;
       resource: string;
       amountUsdc: number;
       proof: X402PaymentProof;
       correlationId?: string;
-    }) => Effect.Effect<X402Settlement, never>;
+    }) => Effect.Effect<X402Settlement, PaymentError>;
   }
 >()("clawql/X402EnforcementService") {}
 

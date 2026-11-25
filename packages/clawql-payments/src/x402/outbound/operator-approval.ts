@@ -74,10 +74,10 @@ async function withApprovalsLock<T>(home: string, fn: () => Promise<T>): Promise
           ? String((err as { code?: string }).code)
           : "";
       if (code !== "EEXIST") {
-        throw err instanceof Error ? err : new Error(String(err));
+        throw err instanceof Error ? err : new Error(String(err), { cause: err });
       }
       if (Date.now() > deadline) {
-        throw new Error("outbound operator approval store lock timeout");
+        throw new Error("outbound operator approval store lock timeout", { cause: err });
       }
       await new Promise((r) => setTimeout(r, 25));
     }
