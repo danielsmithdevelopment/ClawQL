@@ -5,10 +5,10 @@
 
 ## Claim wording
 
-| Path                             | Wording               | When it holds                                                                                                                      |
-| -------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Console / OIDC with step-up (Z1) | **human-approved**    | JWT has dedicated approve audience (recommended) **or** recent `auth_time`; role `operator`\|`admin` (or scope `payments:approve`) |
-| Dedicated operator key (hashed)  | **operator-approved** | Server stores `CLAWQL_OPERATOR_APPROVE_KEY_HASH` only; operator pastes key from a password manager                                 |
+| Path                             | Wording               | When it holds                                                                                                                |
+| -------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Console / OIDC with step-up (Z1) | **human-approved**    | JWT has dedicated `CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE` (required); role `operator`\|`admin` (or scope `payments:approve`) |
+| Dedicated operator key (hashed)  | **operator-approved** | Server stores `CLAWQL_OPERATOR_APPROVE_KEY_HASH` only; operator pastes key from a password manager                           |
 
 Do **not** call the key path “human-approved.” Do **not** claim either path until the matching row above is true in the deployment.
 
@@ -27,16 +27,17 @@ Passes 2–6 and their follow-ups (including Y/Z payment approve) are closed for
 
 Long-lived OIDC tokens used for MCP (same admin signed the agent client in) must not approve payments.
 
-**Primary (recommended):** dedicated approve audience. Configure the IdP to issue short-lived tokens for this audience only for the console approve flow — the gateway’s MCP token (`aud=clawql-mcp`) cannot approve.
+**Required:** dedicated approve audience. The IdP issues short-lived tokens for this audience only for the console approve flow — the gateway’s MCP token (`aud=clawql-mcp`) cannot approve. `auth_time`-only is **refused** (it left a post-sign-in window where the MCP token could still approve).
 
 ```bash
+# Must differ from CLAWQL_AUTH_OIDC_AUDIENCE
 export CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE=clawql-payments-approve
 ```
 
-**Fallback only:** recent interactive sign-in via OIDC `auth_time` (default ≤ 300s). This leaves a short window after a fresh sign-in during which an MCP token that also carries a fresh `auth_time` can still approve. Prefer the dedicated audience above; keep the fallback for IdPs that cannot mint a separate approve audience yet.
+Optional extra step-up (in addition to audience, not instead of it):
 
 ```bash
-# Used only when CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE is unset
+export CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME=1
 export CLAWQL_OPERATOR_APPROVE_AUTH_TIME_MAX_SEC=300
 ```
 

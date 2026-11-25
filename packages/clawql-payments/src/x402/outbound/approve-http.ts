@@ -3,7 +3,7 @@
  *
  * Auth is intentionally separate from /mcp:
  * - Dedicated operator key verified against CLAWQL_OPERATOR_APPROVE_KEY_HASH, or
- * - OIDC with role operator|admin, approve audience and/or recent auth_time (Z1).
+ * - OIDC with role operator|admin and dedicated approve audience (Z1; auth_time-only refused).
  * Tenant always from claims / CLAWQL_TENANT_ID — never the body (Y2).
  * Principal from CLAWQL_OPERATOR_ID only on the key path (Z3).
  */
@@ -127,7 +127,9 @@ export async function resolveOutboundApproveOperator(
     };
   }
 
-  // Path B — human-approved via OIDC with step-up (Z1).
+  // Path B — human-approved via OIDC with dedicated approve audience (Z1).
+  // Dedicated audience is required — auth_time alone left a post-sign-in window
+  // where the MCP session token could still approve.
   if (authMode === "oidc" || authMode === "oauth2") {
     try {
       const { loadOidcAuthConfig, verifyOidcBearerTokenEffect } = await import("clawql-auth");
@@ -137,10 +139,29 @@ export async function resolveOutboundApproveOperator(
       }
       const base = loadOidcAuthConfig(env);
       const approveAud = env.CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE?.trim();
+      if (!approveAud) {
+        return {
+          ok: false,
+          status: 403,
+          error:
+            "outbound approve requires CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE (dedicated aud) — auth_time-only is refused so MCP session tokens cannot approve (audit Z1)",
+        };
+      }
+      const mcpAud = base.audience;
+      const mcpAudConflict =
+        (typeof mcpAud === "string" && mcpAud === approveAud) ||
+        (Array.isArray(mcpAud) && mcpAud.includes(approveAud));
+      if (mcpAudConflict) {
+        return {
+          ok: false,
+          status: 403,
+          error:
+            "CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE must differ from CLAWQL_AUTH_OIDC_AUDIENCE — shared aud reopens the MCP-token approve window (audit Z1)",
+        };
+      }
       const oidcConfig = {
         ...base,
-        // Separate audience for payment approve when configured (Z1).
-        audience: approveAud || base.audience,
+        audience: approveAud,
       };
       const { claims, payload } = await Effect.runPromise(
         verifyOidcBearerTokenEffect(token, oidcConfig)
@@ -152,35 +173,42 @@ export async function resolveOutboundApproveOperator(
           error: "outbound approve refuses virtual keys (audit Y1)",
         };
       }
-      // Z1: separate approve audience OR recent auth_time (blocks long-lived MCP tokens).
       const aud = (payload.aud ?? claims.audience) as string | string[] | undefined;
-      const audOk = Boolean(approveAud) && audienceIncludes(aud, approveAud!);
-      if (approveAud && !audOk) {
+      if (!audienceIncludes(aud, approveAud)) {
         return {
           ok: false,
           status: 403,
           error: `outbound approve requires JWT aud=${approveAud} (audit Z1)`,
         };
       }
-      const maxSec = operatorApproveAuthTimeMaxSec(env);
-      const authTime =
-        typeof payload.auth_time === "number"
-          ? payload.auth_time
-          : typeof claims.authTime === "number"
-            ? claims.authTime
-            : undefined;
-      const ageSec = authTime === undefined ? undefined : Math.floor(Date.now() / 1000) - authTime;
-      const authTimeOk =
-        authTime !== undefined && ageSec !== undefined && ageSec >= 0 && ageSec <= maxSec;
-      if (!audOk && !authTimeOk) {
-        return {
-          ok: false,
-          status: 403,
-          error:
-            authTime === undefined
-              ? "outbound approve requires CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE or recent OIDC auth_time — MCP long-lived tokens are refused (audit Z1)"
-              : `outbound approve requires auth_time within ${maxSec}s (got age=${ageSec}s) or approve audience — re-authenticate (audit Z1)`,
-        };
+      // Optional extra step-up when auth_time is present (does not replace audience).
+      const requireAuthTime =
+        env.CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME?.trim() === "1" ||
+        env.CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME?.trim()?.toLowerCase() === "true";
+      if (requireAuthTime) {
+        const maxSec = operatorApproveAuthTimeMaxSec(env);
+        const authTime =
+          typeof payload.auth_time === "number"
+            ? payload.auth_time
+            : typeof claims.authTime === "number"
+              ? claims.authTime
+              : undefined;
+        if (authTime === undefined) {
+          return {
+            ok: false,
+            status: 403,
+            error:
+              "outbound approve requires OIDC auth_time when CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME=1 (audit Z1)",
+          };
+        }
+        const ageSec = Math.floor(Date.now() / 1000) - authTime;
+        if (ageSec < 0 || ageSec > maxSec) {
+          return {
+            ok: false,
+            status: 403,
+            error: `outbound approve requires auth_time within ${maxSec}s (got age=${ageSec}s) — re-authenticate (audit Z1)`,
+          };
+        }
       }
       const role = (claims.role ?? "").toLowerCase();
       const scopes = claims.scope ?? [];

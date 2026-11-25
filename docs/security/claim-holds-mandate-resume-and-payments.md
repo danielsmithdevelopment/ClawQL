@@ -62,7 +62,7 @@ Y1–Y4 (#1547) + Z1–Z4 (#1548) close passes 2–6 payment-approve follow-ups 
 
 | Wording               | Holds when                                                                                                                                      |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **human-approved**    | OIDC console path with Z1 — prefer dedicated `CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE`; `auth_time` is fallback only                              |
+| **human-approved**    | OIDC console path with Z1 — dedicated `CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE` required (≠ MCP aud); `auth_time`-only refused                    |
 | **operator-approved** | Key verified against `CLAWQL_OPERATOR_APPROVE_KEY_HASH` (via `clawql payments operator-key generate`); principal from `CLAWQL_OPERATOR_ID` (Z3) |
 
 Z4 (harness marker advisory) means single-user unsandboxed agents can still reach disk — prefer a separate approve session/device. Full operator guide: [`outbound-payment-approve.md`](./outbound-payment-approve.md).

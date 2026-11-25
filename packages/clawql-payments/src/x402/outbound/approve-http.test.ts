@@ -133,7 +133,7 @@ describe("resolveOutboundApproveOperator (audit Y1/Y2/Z1–Z3)", () => {
     if (!result.ok) expect(result.error).toMatch(/MCP OAuth/);
   });
 
-  it("accepts OIDC with recent auth_time (Z1 human-approved path)", async () => {
+  it("refuses OIDC without dedicated approve audience even with fresh auth_time (Z1 window closed)", async () => {
     const authTime = Math.floor(Date.now() / 1000) - 60;
     const token = await mintOidcToken({ authTime, aud: "clawql-mcp" });
     const result = await resolveOutboundApproveOperator(
@@ -144,15 +144,11 @@ describe("resolveOutboundApproveOperator (audit Y1/Y2/Z1–Z3)", () => {
         CLAWQL_AUTH_OIDC_AUDIENCE: "clawql-mcp",
       }
     );
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.identity.channel).toBe("oidc");
-      expect(result.identity.principal).toBe("operator:human-1");
-      expect(result.identity.tenantId).toBe("acme");
-    }
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE/);
   });
 
-  it("accepts OIDC with dedicated approve audience even without auth_time (Z1)", async () => {
+  it("accepts OIDC with dedicated approve audience (Z1 human-approved path)", async () => {
     const token = await mintOidcToken({ aud: "clawql-payments-approve" });
     const result = await resolveOutboundApproveOperator(
       fakeReq({ authorization: `Bearer ${token}` }),
@@ -164,25 +160,30 @@ describe("resolveOutboundApproveOperator (audit Y1/Y2/Z1–Z3)", () => {
       }
     );
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.identity.channel).toBe("oidc");
+    if (result.ok) {
+      expect(result.identity.channel).toBe("oidc");
+      expect(result.identity.principal).toBe("operator:human-1");
+      expect(result.identity.tenantId).toBe("acme");
+    }
   });
 
-  it("refuses OIDC MCP-audience token without recent auth_time (Z1)", async () => {
-    const token = await mintOidcToken({ aud: "clawql-mcp" }); // no auth_time
+  it("refuses when approve audience equals MCP audience (Z1 misconfig)", async () => {
+    const token = await mintOidcToken({ aud: "clawql-mcp" });
     const result = await resolveOutboundApproveOperator(
       fakeReq({ authorization: `Bearer ${token}` }),
       {
         CLAWQL_AUTH_MODE: "oidc",
         CLAWQL_AUTH_OIDC_HS256_SECRET: HS_SECRET,
         CLAWQL_AUTH_OIDC_AUDIENCE: "clawql-mcp",
+        CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE: "clawql-mcp",
       }
     );
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error).toMatch(/auth_time|AUDIENCE|Z1/);
+    if (!result.ok) expect(result.error).toMatch(/must differ|MCP-token/);
   });
 
-  it("refuses OIDC with stale auth_time (Z1)", async () => {
-    const authTime = Math.floor(Date.now() / 1000) - 3600;
+  it("refuses MCP-audience token when approve audience is configured (Z1)", async () => {
+    const authTime = Math.floor(Date.now() / 1000) - 30;
     const token = await mintOidcToken({ authTime, aud: "clawql-mcp" });
     const result = await resolveOutboundApproveOperator(
       fakeReq({ authorization: `Bearer ${token}` }),
@@ -190,6 +191,27 @@ describe("resolveOutboundApproveOperator (audit Y1/Y2/Z1–Z3)", () => {
         CLAWQL_AUTH_MODE: "oidc",
         CLAWQL_AUTH_OIDC_HS256_SECRET: HS_SECRET,
         CLAWQL_AUTH_OIDC_AUDIENCE: "clawql-mcp",
+        CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE: "clawql-payments-approve",
+      }
+    );
+    // jwtVerify fails on wrong aud → 401 from catch, or explicit 403
+    expect(result.ok).toBe(false);
+  });
+
+  it("enforces auth_time when CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME=1", async () => {
+    const authTime = Math.floor(Date.now() / 1000) - 3600;
+    const token = await mintOidcToken({
+      authTime,
+      aud: "clawql-payments-approve",
+    });
+    const result = await resolveOutboundApproveOperator(
+      fakeReq({ authorization: `Bearer ${token}` }),
+      {
+        CLAWQL_AUTH_MODE: "oidc",
+        CLAWQL_AUTH_OIDC_HS256_SECRET: HS_SECRET,
+        CLAWQL_AUTH_OIDC_AUDIENCE: "clawql-mcp",
+        CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE: "clawql-payments-approve",
+        CLAWQL_OPERATOR_APPROVE_REQUIRE_AUTH_TIME: "1",
         CLAWQL_OPERATOR_APPROVE_AUTH_TIME_MAX_SEC: "300",
       }
     );
