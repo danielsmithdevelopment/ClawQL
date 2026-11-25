@@ -64,9 +64,12 @@ function startEchoReceiver(opts?: { failChallenge?: boolean; statusOnEvent?: num
 
 describe("clawql-mcp-events", () => {
   const prevLocal = process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST;
+  const prevOpen = process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS;
   afterEach(() => {
     if (prevLocal === undefined) delete process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST;
     else process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = prevLocal;
+    if (prevOpen === undefined) delete process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS;
+    else process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = prevOpen;
   });
 
   it("canonicalJson is order-independent", () => {
@@ -110,8 +113,34 @@ describe("clawql-mcp-events", () => {
     expect(result.events.every((e) => e.delivery.includes("webhook"))).toBe(true);
   });
 
+  it("denies subscribe by default (audit 5.04)", async () => {
+    process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    delete process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS;
+    const receiver = await startEchoReceiver();
+    const secret = generateWhsecSecretSync();
+    try {
+      await expect(
+        runMcpEventsEffect(
+          Effect.gen(function* () {
+            const svc = yield* McpEventsService;
+            return yield* svc.subscribe({
+              principal: "alice",
+              name: "notification.sent",
+              arguments: { channel: "demo" },
+              delivery: { mode: "webhook", url: receiver.url, secret },
+            });
+          }),
+          { store: createMemorySubscriptionStore() }
+        )
+      ).rejects.toMatchObject({ message: expect.stringMatching(/not authorized/i) });
+    } finally {
+      await receiver.close();
+    }
+  });
+
   it("subscribes, delivers, and unsubscribes idempotently", async () => {
     process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const receiver = await startEchoReceiver();
     const secret = generateWhsecSecretSync();
     const store = createMemorySubscriptionStore();
@@ -197,6 +226,7 @@ describe("clawql-mcp-events", () => {
 
   it("returns -32015 on challenge failure", async () => {
     process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const receiver = await startEchoReceiver({ failChallenge: true });
     const secret = generateWhsecSecretSync();
     try {
@@ -227,6 +257,7 @@ describe("clawql-mcp-events", () => {
 
   it("blocks private callback URLs without localhost allow", async () => {
     delete process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST;
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const secret = generateWhsecSecretSync();
     const rpc = await Effect.runPromise(
       handleMcpEventsJsonRpc(
@@ -256,6 +287,7 @@ describe("clawql-mcp-events", () => {
 
   it("does not retry on HTTP 410", async () => {
     process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const receiver = await startEchoReceiver({ statusOnEvent: 410 });
     const secret = generateWhsecSecretSync();
     const store = createMemorySubscriptionStore();
@@ -376,6 +408,7 @@ describe("clawql-mcp-events", () => {
 
   it("survives store round-trip across “restart” (memory → new service same store)", async () => {
     process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const receiver = await startEchoReceiver();
     const secret = generateWhsecSecretSync();
     const store = createMemorySubscriptionStore();

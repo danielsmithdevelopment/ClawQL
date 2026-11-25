@@ -31,13 +31,7 @@ spec:
           env:
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
-            {{- if .Values.nats.url }}
-            - name: CLAWQL_NATS_URL
-              value: {{ .Values.nats.url | quote }}
-            {{- else if .Values.nats.enabled }}
-            - name: CLAWQL_NATS_URL
-              value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
-            {{- end }}
+            {{- include "clawql-mcp.natsClientEnv" . | nindent 12 }}
             {{- if and .Values.nats.enabled .Values.nats.jetStream.enabled }}
             - name: CLAWQL_NATS_JETSTREAM
               value: "1"

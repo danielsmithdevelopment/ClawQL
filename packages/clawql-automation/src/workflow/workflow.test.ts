@@ -12,6 +12,7 @@ function enableWorkflowEnv(): void {
   process.env.CLAWQL_ENABLE_WORKFLOW = "1";
   process.env.CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST = "clawql";
   process.env.CLAWQL_WORKFLOW_DEFAULT_NAMESPACE = "clawql";
+  process.env.CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME = "1";
 }
 
 function clearWorkflowEnv(): void {
@@ -21,6 +22,7 @@ function clearWorkflowEnv(): void {
   delete process.env.CLAWQL_WORKFLOW_ALLOW_DELETE;
   delete process.env.CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL;
   delete process.env.CLAWQL_WORKFLOW_NOTIFY_CHANNEL;
+  delete process.env.CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME;
 }
 
 function mockClients(handlers: {
@@ -450,6 +452,19 @@ describe("handleWorkflowToolInput", () => {
     const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
     expect(body.ok).toBe(false);
     expect(body.error).toMatch(/name/i);
+  });
+
+  it("refuses agent resume without CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME (audit 5.02)", async () => {
+    enableWorkflowEnv();
+    delete process.env.CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME;
+    const { handleWorkflowToolInput } = await import("./workflow.js");
+    const res = await handleWorkflowToolInput({
+      operation: "resume",
+      name: "clawql-xyz",
+    });
+    const body = JSON.parse(res.content[0]!.text) as { ok?: boolean; error?: string };
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/refused for agents|ALLOW_AGENT_RESUME/i);
   });
 
   it("submit_cron creates CronWorkflow", async () => {

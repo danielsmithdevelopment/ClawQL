@@ -151,7 +151,11 @@ describe("inbound webhooks", () => {
       deliveries.push(parsed);
       return new Response("ok", { status: 200 });
     };
-    const layer = McpEventsServiceLayer({ store, webhookFetch });
+    const layer = McpEventsServiceLayer({
+      store,
+      webhookFetch,
+      accessCheck: () => true,
+    });
     const run = <A, E>(program: Effect.Effect<A, E, McpEventsService>) =>
       Effect.runPromise(program.pipe(Effect.provide(layer)));
     const secret = generateWhsecSecretSync();
@@ -232,7 +236,7 @@ describe("HTTP / MCP subscription store parity", () => {
       deliveries.push({ url, body: parsed });
       return new Response("ok", { status: 200 });
     };
-    const config = { store, webhookFetch };
+    const config = { store, webhookFetch, accessCheck: () => true };
     const layer = McpEventsServiceLayer(config);
     const run = <A, E>(program: Effect.Effect<A, E, McpEventsService>): Promise<A> =>
       Effect.runPromise(program.pipe(Effect.provide(layer)));

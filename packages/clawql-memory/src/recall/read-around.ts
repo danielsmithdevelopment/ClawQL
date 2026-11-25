@@ -264,9 +264,7 @@ export function executeReadAroundEffect(
         } satisfies ReadAroundResult;
       }
       // Audit 4.01 / U2: realpath-check, then read the resolved absolute path (not the input).
-      const checked = yield* memoryFromPromise(() =>
-        assertSafeVaultMemoryRead(vault, input.path!)
-      );
+      const checked = yield* memoryFromPromise(() => assertSafeVaultMemoryRead(vault, input.path!));
       markdown = yield* memoryFromPromise(() =>
         readVaultTextFileAtAbsolute(vault, checked.absolutePath)
       );

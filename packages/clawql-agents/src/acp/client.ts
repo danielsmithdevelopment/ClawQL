@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import { PassThrough } from "node:stream";
 import { Context, Deferred, Effect, Layer, Ref } from "effect";
+import { filterAcpChildEnv } from "./child-env.js";
 import { AcpError } from "./errors.js";
 import {
   attachAcpReader,
@@ -197,9 +198,11 @@ export const makeAgentClientProtocolLayer = (
   Layer.effect(
     AgentClientProtocol,
     Effect.sync(() => {
+      // Audit 5.05: never pass the full process env (secrets) into ACP children.
+      const childEnv = filterAcpChildEnv(process.env, config.env ?? {});
       const child = spawn(config.command, [...(config.args ?? ["acp"])], {
         cwd: config.cwd,
-        env: config.env ?? process.env,
+        env: childEnv,
         stdio: ["pipe", "pipe", "inherit"],
       });
       const stdin = child.stdin;

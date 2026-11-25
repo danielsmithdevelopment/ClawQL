@@ -15,12 +15,7 @@ const SECRET_REL_PREFIXES = [
   ".clawql/",
 ] as const;
 
-const SECRET_BASENAMES = new Set([
-  "clawql.env",
-  "providers.json",
-  "api-keys.json",
-  "sources.json",
-]);
+const SECRET_BASENAMES = new Set(["clawql.env", "providers.json", "api-keys.json", "sources.json"]);
 
 function normalizeRel(p: string): string {
   return p.replace(/\\/g, "/").replace(/^\/+/, "");

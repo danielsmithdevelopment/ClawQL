@@ -121,4 +121,43 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+---
+# Audit W1: in-cluster NATS is plain nats:// + ALLOW_INSECURE — limit who can dial it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clawql-mcp.natsName" . }}
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: nats
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app: {{ include "clawql-mcp.fullname" . }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: nats-worker
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: nats-agent-bridge
+      ports:
+        - protocol: TCP
+          port: {{ .Values.nats.service.clientPort | int }}
+        - protocol: TCP
+          port: {{ .Values.nats.service.monitorPort | int }}
 {{- end }}

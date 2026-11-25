@@ -6,6 +6,7 @@ import {
   type HitlWorkflowRef,
 } from "../workflow/suspend-resume.js";
 import type { WorkflowEventEnvelope } from "./envelope.js";
+import { assertHitlCompletedMayResumeEffect } from "./hitl-resume-auth.js";
 
 export function workflowRefFromEnvelope(
   envelope: WorkflowEventEnvelope
@@ -34,6 +35,12 @@ export function dispatchHitlCompletedEventEffect(
     const ref = workflowRefFromEnvelope(envelope);
     if (!ref) {
       return { ok: true };
+    }
+
+    // Audit 5.02: require human approve + resume token before Argo resume.
+    const auth = yield* assertHitlCompletedMayResumeEffect(envelope);
+    if (!auth.ok) {
+      return { ok: false, error: auth.error };
     }
 
     const hitlPayload = envelope.payload?.clawql_hitl ?? { workflow: ref };

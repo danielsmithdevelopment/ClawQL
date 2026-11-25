@@ -90,12 +90,20 @@ spec:
           args:
             {{- $cdpArgs := .Values.webBrowser.chromium.args }}
             {{- if not $cdpArgs }}
-            {{- $cdpArgs = list "--remote-debugging-address=0.0.0.0" "--remote-debugging-port=9222" "--headless=new" "--no-sandbox" "--disable-gpu" }}
+            {{/* Audit 5.01: CDP must not be cluster-wide open; NetworkPolicy below limits peers.
+                 Prefer a non-root sandbox over --no-sandbox when the image allows it. */}}
+            {{- $cdpArgs = list "--remote-debugging-address=0.0.0.0" "--remote-debugging-port=9222" "--headless=new" "--disable-gpu" "--disable-dev-shm-usage" }}
             {{- end }}
             {{- toYaml $cdpArgs | nindent 12 }}
           ports:
             - name: cdp
               containerPort: {{ .Values.webBrowser.chromium.port | default 9222 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
           resources:
             {{- toYaml (.Values.webBrowser.chromium.resources | default dict) | nindent 12 }}
           readinessProbe:
@@ -112,6 +120,7 @@ metadata:
     {{- include "clawql-mcp.labels" . | nindent 4 }}
     app.kubernetes.io/component: chromium
 spec:
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
@@ -120,4 +129,56 @@ spec:
     - name: cdp
       port: {{ .Values.webBrowser.chromium.port | default 9222 }}
       targetPort: cdp
+---
+# Audit 5.01 / W2: only the MCP app pod may reach Chromium CDP; egress blocks RFC1918.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-chromium
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chromium
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: chromium
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app: {{ include "clawql-mcp.fullname" . }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.webBrowser.chromium.port | default 9222 }}
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Public HTTP(S) only — exclude private / link-local / loopback (audit W2).
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 127.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
 {{- end }}

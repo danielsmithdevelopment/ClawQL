@@ -64,6 +64,14 @@ export function workflowDeleteAllowed(): boolean {
   return envTruthy(process.env.CLAWQL_WORKFLOW_ALLOW_DELETE);
 }
 
+/**
+ * Audit 5.02: agent `workflow` resume is refused unless explicitly enabled.
+ * HITL resume should come from Label Studio webhook / signed NATS, not the agent tool.
+ */
+export function workflowAgentResumeAllowed(): boolean {
+  return envTruthy(process.env.CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME);
+}
+
 export function workflowTerminalNotifyEnabled(): boolean {
   return envTruthy(process.env.CLAWQL_WORKFLOW_NOTIFY_ON_TERMINAL);
 }

@@ -1,21 +1,29 @@
+import { readFileSync } from "node:fs";
 import {
   AckPolicy,
   connect,
+  credsAuthenticator,
   DeliverPolicy,
   RetentionPolicy,
   StringCodec,
+  type ConnectionOptions,
   type JetStreamClient,
   type NatsConnection,
 } from "nats";
 import { Effect } from "effect";
 import {
+  natsAllowInsecure,
   natsConeshareFollowupConsumerDurable,
+  natsCredsFile,
   natsDocumentSubjectRoot,
   natsHitlResumeConsumerDurable,
   natsIdpPipelineConsumerDurable,
   natsJetStreamEnabled,
+  natsPass,
   natsStreamName,
+  natsToken,
   natsUrl,
+  natsUser,
   natsWorkflowSubjectRoot,
   natsConfiguredForPublish,
   natsHitlConsumerConfigured,
@@ -34,11 +42,47 @@ let connectionPromise: Promise<NatsConnection> | undefined;
 let jetStreamClient: JetStreamClient | undefined;
 let streamsEnsured = false;
 
+/** Audit 5.02: require credentials + TLS unless CLAWQL_NATS_ALLOW_INSECURE=1. */
+export function buildNatsConnectOptions(url: string): ConnectionOptions {
+  const user = natsUser();
+  const pass = natsPass();
+  const token = natsToken();
+  const credsFile = natsCredsFile();
+  const hasCreds = Boolean((user && pass) || token || credsFile);
+  const insecure = natsAllowInsecure();
+  if (!hasCreds && !insecure) {
+    throw new Error(
+      "NATS credentials required (set CLAWQL_NATS_USER+CLAWQL_NATS_PASS, CLAWQL_NATS_TOKEN, " +
+        "or CLAWQL_NATS_CREDS_FILE). For local demos only: CLAWQL_NATS_ALLOW_INSECURE=1."
+    );
+  }
+
+  if (!insecure && !(url.startsWith("tls://") || url.startsWith("wss://"))) {
+    throw new Error(
+      "NATS URL must use tls:// or wss:// (audit 5.02). For local demos only: CLAWQL_NATS_ALLOW_INSECURE=1."
+    );
+  }
+
+  const opts: ConnectionOptions = { servers: url };
+  if (user && pass) {
+    opts.user = user;
+    opts.pass = pass;
+  } else if (token) {
+    opts.token = token;
+  } else if (credsFile) {
+    opts.authenticator = credsAuthenticator(new Uint8Array(readFileSync(credsFile)));
+  }
+  if (url.startsWith("tls://") || url.startsWith("wss://")) {
+    opts.tls = {};
+  }
+  return opts;
+}
+
 async function getConnection(): Promise<NatsConnection> {
   if (!connectionPromise) {
     const url = natsUrl();
     if (!url) throw new Error("CLAWQL_NATS_URL is not set");
-    connectionPromise = connect({ servers: url });
+    connectionPromise = connect(buildNatsConnectOptions(url));
   }
   return connectionPromise;
 }

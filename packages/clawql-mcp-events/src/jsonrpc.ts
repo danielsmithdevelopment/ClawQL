@@ -44,13 +44,15 @@ function asRecord(v: unknown): Record<string, unknown> {
  */
 export function handleMcpEventsJsonRpc(
   body: JsonRpcRequest,
-  principal: string
+  principal: string,
+  opts?: { readonly claimsTenant?: string }
 ): Effect.Effect<JsonRpcSuccess | JsonRpcFailure, never, McpEventsService> {
   return Effect.gen(function* () {
     const id = body.id ?? null;
     const method = body.method ?? "";
     const params = asRecord(body.params);
     const svc = yield* McpEventsService;
+    const claimsTenant = opts?.claimsTenant?.trim() || undefined;
 
     try {
       if (method === "events/list") {
@@ -84,6 +86,7 @@ export function handleMcpEventsJsonRpc(
                 ? params.ttlMs
                 : undefined,
           principal,
+          claimsTenant,
         };
         const result = yield* svc.subscribe(subParams);
         return { jsonrpc: "2.0" as const, id, result };

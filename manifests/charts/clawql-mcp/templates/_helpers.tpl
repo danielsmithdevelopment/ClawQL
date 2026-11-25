@@ -290,6 +290,35 @@ app.kubernetes.io/component: goose
 {{- if or .Values.nats.enabled .Values.nats.url }}1{{- end }}
 {{- end }}
 
+{{/*
+Audit W1: plain nats:// (in-cluster default) requires CLAWQL_NATS_ALLOW_INSECURE=1.
+External tls:// / wss:// URLs do not. Override with nats.allowInsecure.
+*/}}
+{{- define "clawql-mcp.natsAllowInsecure" -}}
+{{- if kindIs "bool" .Values.nats.allowInsecure -}}
+{{- if .Values.nats.allowInsecure }}1{{- end -}}
+{{- else if .Values.nats.url -}}
+{{- if or (hasPrefix "nats://" .Values.nats.url) (hasPrefix "ws://" .Values.nats.url) }}1{{- end -}}
+{{- else if .Values.nats.enabled -}}
+1
+{{- end -}}
+{{- end }}
+
+{{/* Shared env fragment for NATS clients (MCP / worker / bridge / bootstrap). */}}
+{{- define "clawql-mcp.natsClientEnv" -}}
+{{- if .Values.nats.url }}
+- name: CLAWQL_NATS_URL
+  value: {{ .Values.nats.url | quote }}
+{{- else if .Values.nats.enabled }}
+- name: CLAWQL_NATS_URL
+  value: "nats://{{ include "clawql-mcp.natsName" . }}:{{ .Values.nats.service.clientPort }}"
+{{- end }}
+{{- if eq (include "clawql-mcp.natsAllowInsecure" .) "1" }}
+- name: CLAWQL_NATS_ALLOW_INSECURE
+  value: "1"
+{{- end }}
+{{- end }}
+
 {{- define "clawql-mcp.vaultServiceUrl" -}}
 {{- printf "http://%s-hashicorpvault.%s.svc.cluster.local:8200" .Release.Name .Release.Namespace }}
 {{- end }}

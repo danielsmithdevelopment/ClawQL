@@ -1,3 +1,6 @@
+import { timingSafeEqual } from "node:crypto";
+import { dirname, resolve as resolvePath } from "node:path";
+
 import { Effect } from "effect";
 
 import { applyAlloyConfigEffect } from "../alloy/apply.js";
@@ -11,6 +14,7 @@ import { signTelemetryJwtWithResolvedKeyEffect } from "../telemetry-token.js";
 import { readObservabilityHostConfigEffect } from "../host/config.js";
 import { runObservabilityHostEffect } from "../host/runtime.js";
 import { resolveObservabilitySessionForRuntimeEffect } from "../host/session-context.js";
+import { packagePaths } from "../paths.js";
 import { ObservabilityQueryService } from "../query/federation.js";
 import type {
   LogQueryRequest,
@@ -19,6 +23,43 @@ import type {
   TraceQueryRequest,
 } from "../query/types.js";
 import { ObservabilityAuthError } from "../scopes.js";
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
+
+/**
+ * Audit 5.03 / W5: alloy apply may only write the configured river file or
+ * another `.river` file in that same directory (not anywhere under the package).
+ */
+export function assertSafeAlloyOutputPath(
+  requested: string,
+  configuredDefault: string
+): Effect.Effect<string, ObservabilityError> {
+  return Effect.gen(function* () {
+    const resolved = resolvePath(requested);
+    const allowedFiles = new Set([
+      resolvePath(configuredDefault),
+      resolvePath(packagePaths.alloyConfig),
+      resolvePath(packagePaths.alloySecuritySensors),
+    ]);
+    const allowedDirs = new Set([...allowedFiles].map((f) => dirname(f)));
+    const ok =
+      allowedFiles.has(resolved) ||
+      (resolved.endsWith(".river") && allowedDirs.has(dirname(resolved)));
+    if (!ok) {
+      return yield* Effect.fail(
+        new ObservabilityError({
+          reason: `alloy outputPath refused (must be a .river under the configured alloy dir): ${requested}`,
+        })
+      );
+    }
+    return resolved;
+  });
+}
 
 export type ObservabilityHttpRequest = {
   readonly method: string;
@@ -44,13 +85,39 @@ const parseUrl = (url: string): { pathname: string } => {
   return { pathname: u.pathname };
 };
 
+const observabilityAllowUnauthenticated = (env: NodeJS.ProcessEnv): boolean => {
+  const raw = env.CLAWQL_OBSERVABILITY_ALLOW_UNAUTHENTICATED?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+};
+
+/**
+ * Audit 5.03: observability HTTP is fail-closed when CLAWQL_OBSERVABILITY_API_KEY
+ * is unset (except health probes). Opt out only with
+ * CLAWQL_OBSERVABILITY_ALLOW_UNAUTHENTICATED=1 for local demos.
+ */
 export const authorizeObservabilityApiKeyEffect = (
   headers: ObservabilityHttpRequest["headers"],
-  expected: string | undefined
+  expected: string | undefined,
+  opts: { pathname?: string; env?: NodeJS.ProcessEnv } = {}
 ): Effect.Effect<void, ObservabilityAuthError> =>
   Effect.gen(function* () {
-    if (!expected) {
+    const pathname = opts.pathname ?? "";
+    const env = opts.env ?? process.env;
+    // Liveness/readiness may stay open for kube probes.
+    if (pathname === "/observability/health") {
       return;
+    }
+    if (!expected) {
+      if (observabilityAllowUnauthenticated(env)) {
+        return;
+      }
+      return yield* Effect.fail(
+        new ObservabilityAuthError({
+          scope: "observability:configure",
+          reason:
+            "CLAWQL_OBSERVABILITY_API_KEY is required (or set CLAWQL_OBSERVABILITY_ALLOW_UNAUTHENTICATED=1 for local demos only)",
+        })
+      );
     }
     const raw = headers.authorization ?? headers.Authorization;
     const value = Array.isArray(raw) ? raw[0] : raw;
@@ -63,7 +130,7 @@ export const authorizeObservabilityApiKeyEffect = (
       );
     }
     const presented = value.slice("ApiKey ".length).trim();
-    if (presented !== expected) {
+    if (!timingSafeEqualString(presented, expected)) {
       return yield* Effect.fail(
         new ObservabilityAuthError({
           scope: "observability:configure",
@@ -89,7 +156,11 @@ export const handleObservabilityHttpRequestEffect = (
 ): Effect.Effect<ObservabilityHttpResponse> =>
   Effect.gen(function* () {
     const config = yield* readObservabilityHostConfigEffect(env);
-    const authErr = yield* authorizeObservabilityApiKeyEffect(req.headers, config.httpApiKey).pipe(
+    const { pathname } = parseUrl(req.url);
+    const authErr = yield* authorizeObservabilityApiKeyEffect(req.headers, config.httpApiKey, {
+      pathname,
+      env,
+    }).pipe(
       Effect.as(null as string | null),
       Effect.catchIf(
         (err): err is ObservabilityAuthError => err instanceof ObservabilityAuthError,
@@ -100,7 +171,6 @@ export const handleObservabilityHttpRequestEffect = (
       return json(401, { error: authErr });
     }
 
-    const { pathname } = parseUrl(req.url);
     const session = yield* resolveObservabilitySessionForRuntimeEffect(env);
 
     if (req.method === "GET" && pathname === "/observability/health") {
@@ -243,7 +313,8 @@ export const handleObservabilityHttpRequestEffect = (
 
     if (req.method === "POST" && pathname === "/observability/alloy/apply") {
       const body = (req.body ?? {}) as { outputPath?: string };
-      const outputPath = body.outputPath?.trim() || config.alloyOutputPath;
+      const requested = body.outputPath?.trim() || config.alloyOutputPath;
+      const outputPath = yield* assertSafeAlloyOutputPath(requested, config.alloyOutputPath);
       const result = yield* Effect.tryPromise({
         try: () =>
           runObservabilityHostEffect(

@@ -183,7 +183,7 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
         .split(/[,\s]+/)
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean);
-      let host = "";
+      let host: string;
       try {
         host = new URL(baseUrl).hostname.toLowerCase();
       } catch {

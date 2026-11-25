@@ -428,9 +428,10 @@ export function AgentsLanding() {
         headline="Enterprise agent deployments for regulated industries"
         subheadline={
           <p>
-            Hardened OpenClaw, Hermes, Pi, and Goose agents — running in clawql-tee, preconfigured with ClawQL&apos;s
-            32-module security curriculum. Structured recall is mechanism-proven on OpenBench mini-firm (B-7); Harvey
-            LAB firm-knowledge remains the next evidence tier.
+            Hardened OpenClaw, Hermes, Pi, and Goose agents — designed for clawql-tee (software-simulated today;
+            hardware attestation planned), preconfigured with ClawQL&apos;s 32-module security curriculum. Structured
+            recall is mechanism-proven on OpenBench mini-firm (B-7); Harvey LAB firm-knowledge remains the next
+            evidence tier.
           </p>
         }
       >

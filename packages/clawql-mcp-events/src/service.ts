@@ -1,5 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import { EventPayloadId, name } from "clawql-gdp";
+import { defaultMcpEventsAccessCheck } from "./access-check.js";
 import { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
 import { screenAndRedactForPublishEffect } from "./proofs/payload-redacted.js";
 import { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
@@ -147,10 +148,8 @@ export function makeMcpEventsService(
   const webhookFetch = config.webhookFetch ?? makeWebhookFetch();
   const verificationCache = config.verificationCache ?? createVerificationCache();
   const feedback = config.feedback ?? defaultFeedbackLoopDetector;
-  const accessCheck =
-    config.accessCheck ??
-    ((_input: { principal: string; eventName: string; arguments: Record<string, unknown> }) =>
-      true);
+  // Audit 5.04: default deny — open access only via CLAWQL_MCP_EVENTS_OPEN_ACCESS=1.
+  const accessCheck = config.accessCheck ?? defaultMcpEventsAccessCheck;
   const wormAppend = config.wormAppend;
   const defaultTtlMs = config.defaultTtlMs ?? DEFAULT_TTL_MS;
   const allowNonExpiring = config.allowNonExpiring ?? false;
@@ -320,11 +319,20 @@ export function makeMcpEventsService(
         const safeUrl = yield* assertSafeCallbackUrl(params.delivery.url, policy);
         yield* assertCallbackAllowlisted(safeUrl, enterprise.callbackAllowlist);
 
+        const claimsTenant = params.claimsTenant?.trim() || undefined;
+        // W3: strip client-supplied tenant filters; bind verified claims tenant instead.
+        const { tenant_id: _tid, tenant: _t, ...safeArgs } = args;
+        void _tid;
+        void _t;
+        if (claimsTenant) {
+          (safeArgs as Record<string, unknown>).tenant_id = claimsTenant;
+        }
+
         const id = deriveSubscriptionId({
           principal: params.principal,
           url: params.delivery.url,
           name: params.name,
-          arguments: args,
+          arguments: safeArgs,
         });
 
         const existing = yield* store.findByIdentity(id);
@@ -355,7 +363,7 @@ export function makeMcpEventsService(
           id,
           principal: params.principal,
           name: params.name,
-          arguments: args,
+          arguments: safeArgs,
           url: params.delivery.url,
           secret,
           previousSecret,
@@ -365,6 +373,7 @@ export function makeMcpEventsService(
           verified: false,
           createdAt: existing?.createdAt ?? now.toISOString(),
           updatedAt: now.toISOString(),
+          claimsTenant,
         };
 
         yield* verifyCallbackChallenge(sub, webhookFetch, verificationCache);
@@ -460,7 +469,11 @@ export function makeMcpEventsService(
           const matches: StoredSubscription[] = [];
           for (const s of all) {
             if (!s.verified || s.name !== screened.name) continue;
-            if (yield* matchesEventFiltersEffect(s.arguments, redactedData)) matches.push(s);
+            if (
+              yield* matchesEventFiltersEffect(s.arguments, redactedData, s.claimsTenant)
+            ) {
+              matches.push(s);
+            }
           }
 
         const outcomes: DeliveryOutcome[] = [];

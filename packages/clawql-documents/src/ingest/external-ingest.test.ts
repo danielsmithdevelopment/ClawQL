@@ -16,6 +16,7 @@ describe("external-ingest", () => {
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
   const savedAllowKw = process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
   const savedVec = process.env.CLAWQL_VECTOR_BACKEND;
+  const savedLoopback = process.env.CLAWQL_WEB_ALLOW_LOOPBACK;
 
   beforeEach(() => {
     delete process.env.CLAWQL_EXTERNAL_INGEST;
@@ -23,6 +24,7 @@ describe("external-ingest", () => {
     delete process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     delete process.env.CLAWQL_MERKLE_ENABLED;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
+    delete process.env.CLAWQL_WEB_ALLOW_LOOPBACK;
     // Avoid HuggingFace MiniLM downloads (429) in CI unit tests.
     process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     process.env.CLAWQL_VECTOR_BACKEND = "off";
@@ -43,6 +45,8 @@ describe("external-ingest", () => {
     else process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = savedAllowKw;
     if (savedVec === undefined) delete process.env.CLAWQL_VECTOR_BACKEND;
     else process.env.CLAWQL_VECTOR_BACKEND = savedVec;
+    if (savedLoopback === undefined) delete process.env.CLAWQL_WEB_ALLOW_LOOPBACK;
+    else process.env.CLAWQL_WEB_ALLOW_LOOPBACK = savedLoopback;
     resetMemoryDbArtifactCachesForTests();
   });
 
@@ -148,6 +152,8 @@ describe("external-ingest", () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-ext-"));
     process.env.CLAWQL_EXTERNAL_INGEST = "1";
     process.env.CLAWQL_EXTERNAL_INGEST_FETCH = "1";
+    // Audit 4.06: loopback URL ingest requires an explicit test allow flag.
+    process.env.CLAWQL_WEB_ALLOW_LOOPBACK = "1";
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
     await mkdir(join(dir, "Memory"), { recursive: true });
 

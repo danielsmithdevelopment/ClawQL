@@ -481,7 +481,11 @@ describe("createEventsRouter", () => {
   });
 
   it("parity: MCP subscribe appears under /events and HTTP subscribe is on the same store", async () => {
+    const prevOpen = process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS;
+    const prevLocal = process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST;
     process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    // Audit 5.04: fail-closed unless open access or an explicit accessCheck.
+    process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = "1";
     const store = createMemorySubscriptionStore();
     const deliveries: Record<string, unknown>[] = [];
     const webhookFetch = async (_url: string, init: RequestInit) => {
@@ -492,8 +496,8 @@ describe("createEventsRouter", () => {
       deliveries.push(parsed);
       return new Response("ok", { status: 200 });
     };
-    const svc = makeMcpEventsService({ store, webhookFetch });
-    const layer = McpEventsServiceLayer({ store, webhookFetch });
+    const svc = makeMcpEventsService({ store, webhookFetch, accessCheck: () => true });
+    const layer = McpEventsServiceLayer({ store, webhookFetch, accessCheck: () => true });
     const secret = generateWhsecSecretSync();
     const run = <A, E>(program: Effect.Effect<A, E, McpEventsService>) =>
       Effect.runPromise(program.pipe(Effect.provide(layer)));
@@ -588,6 +592,10 @@ describe("createEventsRouter", () => {
       expect(deliveries[0]).toEqual(deliveries[1]);
     } finally {
       await closeHttpServer(server);
+      if (prevOpen === undefined) delete process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS;
+      else process.env.CLAWQL_MCP_EVENTS_OPEN_ACCESS = prevOpen;
+      if (prevLocal === undefined) delete process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST;
+      else process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = prevLocal;
     }
   });
 });

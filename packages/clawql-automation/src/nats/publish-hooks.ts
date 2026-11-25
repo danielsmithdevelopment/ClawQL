@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import type { HitlWorkflowRef } from "../workflow/suspend-resume.js";
 import { publishDocumentEventEffect, publishWorkflowEventEffect } from "./client.js";
 import { buildDocumentEvent, buildWorkflowEvent } from "./envelope.js";
+import { signHitlResume } from "./hitl-resume-auth.js";
 
 export function publishHitlEnqueuedEventEffect(fields: {
   correlation_id?: string;
@@ -36,16 +37,36 @@ export function publishHitlCompletedEventEffect(fields: {
   workflow_ref?: HitlWorkflowRef;
   clawql_hitl?: unknown;
   source?: string;
+  /** Human decision — defaults to approve for authenticated Label Studio webhooks. */
+  decision?: "approve" | "decline" | "reject";
+  /**
+   * HMAC signing secret (audit W4). Defaults to CLAWQL_NATS_HITL_RESUME_TOKEN.
+   * The secret is never placed in the JetStream payload — only `resume_sig`.
+   */
+  resume_token?: string;
 }): Effect.Effect<boolean> {
-  const payload: Record<string, unknown> = {};
+  const decision = fields.decision ?? "approve";
+  const payload: Record<string, unknown> = { decision };
   if (fields.clawql_hitl !== undefined) {
     payload.clawql_hitl = fields.clawql_hitl;
+  }
+  const secret =
+    fields.resume_token?.trim() || process.env.CLAWQL_NATS_HITL_RESUME_TOKEN?.trim() || undefined;
+  const ts = new Date().toISOString();
+  if (secret) {
+    const workflow =
+      fields.workflow_ref?.namespace && fields.workflow_ref?.name
+        ? `${fields.workflow_ref.namespace}/${fields.workflow_ref.name}`
+        : fields.correlation_id?.trim() || "";
+    payload.resume_sig = signHitlResume(secret, workflow, decision, ts);
   }
   return publishWorkflowEventEffect(
     buildWorkflowEvent("hitl.completed", fields.source ?? "hitl-label-studio-webhook", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
-      payload: Object.keys(payload).length > 0 ? payload : undefined,
+      payload,
+      // Same ts as resume_sig (audit W4).
+      ts: secret ? ts : undefined,
     })
   );
 }
@@ -56,6 +77,8 @@ export async function publishHitlCompletedEvent(fields: {
   workflow_ref?: HitlWorkflowRef;
   clawql_hitl?: unknown;
   source?: string;
+  decision?: "approve" | "decline" | "reject";
+  resume_token?: string;
 }): Promise<boolean> {
   return Effect.runPromise(publishHitlCompletedEventEffect(fields));
 }

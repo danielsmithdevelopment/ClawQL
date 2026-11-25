@@ -32,6 +32,11 @@ export type SubscribeParams = {
   ttlMs?: number | null;
   /** Authenticated principal (ATR sub / API key id). */
   principal: string;
+  /**
+   * Verified tenant from ATR / virtual-key claims (audit W3).
+   * Never taken from subscription filter arguments alone.
+   */
+  claimsTenant?: string;
 };
 
 export type UnsubscribeParams = {
@@ -84,6 +89,8 @@ export type StoredSubscription = {
   updatedAt: string;
   /** Optional access fingerprint for rechecks. */
   accessToken?: string;
+  /** Verified claims tenant bound at subscribe (audit W3). */
+  claimsTenant?: string;
 };
 
 export type DeliveryOutcome = {

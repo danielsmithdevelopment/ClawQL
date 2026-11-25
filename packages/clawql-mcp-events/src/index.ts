@@ -11,6 +11,10 @@ export {
   verifyCallbackChallenge,
   MAX_EVENT_BODY_BYTES,
 } from "./delivery.js";
+export {
+  defaultMcpEventsAccessCheck,
+  mcpEventsOpenAccessEnabled,
+} from "./access-check.js";
 export { isMcpEventsEnabled, isMcpEventsEnabledSync } from "./enabled.js";
 export {
   assertCallbackAllowlisted,

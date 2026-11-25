@@ -19,12 +19,7 @@ export const CLAWQL_SECRET_REL_PREFIXES = [
   ".clawql/",
 ] as const;
 
-const SECRET_BASENAMES = new Set([
-  "clawql.env",
-  "providers.json",
-  "api-keys.json",
-  "sources.json",
-]);
+const SECRET_BASENAMES = new Set(["clawql.env", "providers.json", "api-keys.json", "sources.json"]);
 
 const ALLOWED_VAULT_READ_EXTS = new Set([".md", ".cqk"]);
 
@@ -90,10 +85,9 @@ export async function assertSafeVaultMemoryRead(
   }
   const ext = extname(rel).toLowerCase();
   if (!ALLOWED_VAULT_READ_EXTS.has(ext)) {
-    throw Object.assign(
-      new Error(`Vault reads allow only .md and .cqk files: ${relativePath}`),
-      { code: "bad_extension" as const }
-    );
+    throw Object.assign(new Error(`Vault reads allow only .md and .cqk files: ${relativePath}`), {
+      code: "bad_extension" as const,
+    });
   }
 
   const rootReal = await realpath(resolve(vaultRoot));
@@ -119,10 +113,9 @@ export async function assertSafeVaultMemoryRead(
 
   const memPrefix = memoryReal.endsWith(sep) ? memoryReal : memoryReal + sep;
   if (fileReal !== memoryReal && !fileReal.startsWith(memPrefix)) {
-    throw Object.assign(
-      new Error(`Vault read symlink escape refused: ${relativePath}`),
-      { code: "symlink_escape" as const }
-    );
+    throw Object.assign(new Error(`Vault read symlink escape refused: ${relativePath}`), {
+      code: "symlink_escape" as const,
+    });
   }
 
   const st = await stat(fileReal);

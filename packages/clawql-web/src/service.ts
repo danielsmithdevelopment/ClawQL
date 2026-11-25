@@ -15,9 +15,22 @@ import type {
   WebSearchProvider,
 } from "./interfaces.js";
 import { browserAsSearch } from "./providers/fallback-search.js";
-import { fetchRawUrl } from "./providers/browser/raw-fetch.js";
+import { assertSafeWebUrlResolved, fetchRawUrl } from "./providers/browser/raw-fetch.js";
 import { resolveBrowserProvider } from "./providers/browser/resolve.js";
 import { resolveSearchProvider } from "./providers/search/resolve.js";
+
+/** Audit 5.01 / W2: sync gate + DNS resolve before Chromium navigate. */
+async function assertSafeBrowserUrl(url: string): Promise<void> {
+  await assertSafeWebUrlResolved(url);
+}
+
+async function assertSafeBrowserSteps(steps: BrowserStep[]): Promise<void> {
+  for (const step of steps) {
+    if (step.action === "navigate") {
+      await assertSafeBrowserUrl(step.url);
+    }
+  }
+}
 
 export type WebService = {
   config: WebConfig;
@@ -183,6 +196,7 @@ export function createWebService(
         }
       }
 
+      await assertSafeBrowserUrl(url);
       const browser = requireBrowser(browserProvider, "web_fetch");
       requireCapability(browser, "fetch", "web_fetch");
       try {
@@ -210,6 +224,7 @@ export function createWebService(
     },
 
     async screenshot(url: string, options?: FetchOptions): Promise<Uint8Array> {
+      await assertSafeBrowserUrl(url);
       const browser = requireBrowser(browserProvider, "web_screenshot");
       requireCapability(browser, "screenshot", "web_screenshot");
       const buf = await browser.screenshot!(url, options);
@@ -228,6 +243,8 @@ export function createWebService(
       steps: BrowserStep[],
       options?: FetchOptions
     ): Promise<PageContent> {
+      await assertSafeBrowserUrl(url);
+      await assertSafeBrowserSteps(steps);
       const browser = requireBrowser(browserProvider, "web_interact");
       requireCapability(browser, "interact", "web_interact");
       const page = await browser.interact!(url, steps, options);
