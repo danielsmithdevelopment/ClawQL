@@ -422,6 +422,11 @@ export function buildHarnessChildEnv(
   if (!childEnv.CLAWQL_OBSIDIAN_VAULT_PATH?.trim()) {
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = home;
   }
+  // Audit Y4 / R12: mark agent shells so `clawql payments approve` (and similar) refuse.
+  childEnv.CLAWQL_IN_HARNESS = "1";
+  if (!childEnv.CLAWQL_HARNESS_ID?.trim()) {
+    childEnv.CLAWQL_HARNESS_ID = "clawql-harness";
+  }
   return childEnv;
 }
 

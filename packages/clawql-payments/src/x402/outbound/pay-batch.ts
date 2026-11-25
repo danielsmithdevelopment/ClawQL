@@ -10,7 +10,10 @@ import { Effect, Layer } from "effect";
 import { X402Error } from "../../errors/payment-errors.js";
 import { resolveFacilitatorEndpoint } from "../x402-runtime-config-service.js";
 import { OutboundSpendCounterService, utcDayKey, type SpendCounterKey } from "./counters.js";
-import { consumeOutboundOperatorApprovalEffect } from "./operator-approval.js";
+import {
+  consumeOutboundOperatorApprovalEffect,
+  parkOutboundPendingQuoteEffect,
+} from "./operator-approval.js";
 import { OutboundPolicyStoreService } from "./policy-store.js";
 import { computeQuoteDigest, quoteFromTerms } from "./quote.js";
 import { X402SignerService } from "./signer-service.js";
@@ -321,6 +324,19 @@ export function runOutboundX402PayBatchEffect(
     });
 
     if (evaluated.decision.decision === "hitl") {
+      // Y3: park quote so operators see amount/asset/payee/resource before approve.
+      const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
+      yield* parkOutboundPendingQuoteEffect({
+        home,
+        quoteDigest: digest,
+        amount: quote.amountUsdc,
+        asset: terms.asset,
+        payee: terms.payTo,
+        resourceUrl: input.resourceUrl,
+        network: terms.network,
+        tenantId: input.tenantId,
+        env,
+      }).pipe(Effect.catch(() => Effect.void));
       return failResult(
         mkBatch({ success: false, payment: paymentStub() }),
         "hitl_required",

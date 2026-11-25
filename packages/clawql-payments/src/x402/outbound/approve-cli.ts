@@ -1,15 +1,20 @@
 /**
  * `clawql payments approve <quoteDigest>` — record a one-shot outbound payment
- * operator approval (audit X1). Refused under CLAWQL_TIER=regulated.
+ * operator approval. Refused under regulated, and when running inside a harness
+ * agent shell (audit Y4 / R12).
  */
 
 import { userInfo } from "node:os";
 import { join } from "node:path";
 import { Effect } from "effect";
-import { recordOutboundOperatorApprovalEffect } from "./operator-approval.js";
+import {
+  getOutboundPendingQuoteEffect,
+  recordOutboundOperatorApprovalEffect,
+} from "./operator-approval.js";
 
 export type PaymentsOutboundApproveOptions = {
   quoteDigest?: string;
+  /** Ignored for binding — tenant comes from CLAWQL_TENANT_ID only (audit Y2). */
   tenantId?: string;
   principal?: string;
   home?: string;
@@ -31,15 +36,21 @@ function resolvePrincipal(env: NodeJS.ProcessEnv, explicit?: string): string {
   throw new Error("Cannot resolve operator principal — set CLAWQL_OPERATOR_ID");
 }
 
+/** True when CLI runs inside a harness/agent shell (audit Y4). */
+export function isPaymentsApproveBlockedInHarness(env: NodeJS.ProcessEnv = process.env): boolean {
+  const flag = env.CLAWQL_IN_HARNESS?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "yes" || flag === "on") return true;
+  if (env.CLAWQL_HARNESS_ID?.trim()) return true;
+  return false;
+}
+
 export async function runPaymentsOutboundApprove(
   options: PaymentsOutboundApproveOptions = {}
 ): Promise<number> {
   const env = options.env ?? process.env;
   const digest = options.quoteDigest?.trim();
   if (!digest) {
-    console.error(
-      "Usage: clawql payments approve <quoteDigest> [--tenant ID] [--principal operator:name]"
-    );
+    console.error("Usage: clawql payments approve <quoteDigest> [--principal operator:name]");
     return 1;
   }
 
@@ -50,14 +61,50 @@ export async function runPaymentsOutboundApprove(
     return 1;
   }
 
+  if (isPaymentsApproveBlockedInHarness(env)) {
+    console.error(
+      "clawql payments approve is refused inside a harness/agent shell (audit Y4). " +
+        "Approve from an operator terminal or POST /payments/outbound/approve with CLAWQL_OPERATOR_APPROVE_KEY / OIDC."
+    );
+    return 1;
+  }
+
+  // Y2: never take tenant from CLI args for binding — env only.
+  const tenantId = env.CLAWQL_TENANT_ID?.trim() || "default";
+
   try {
+    const home = resolveHome(env, options.home);
+    const pending = await Effect.runPromise(
+      getOutboundPendingQuoteEffect({
+        home,
+        quoteDigest: digest,
+        tenantId,
+      })
+    );
+    if (!pending) {
+      console.error(
+        "No parked quote for this digest (or wrong tenant / expired). " +
+          "Re-run the payment so HITL parks amount/asset/payee/resource first (audit Y3)."
+      );
+      return 1;
+    }
+
+    if (!options.json) {
+      console.log("Pending quote:");
+      console.log(`  amount:   ${pending.amount} ${pending.asset}`);
+      console.log(`  payee:    ${pending.payee}`);
+      console.log(`  resource: ${pending.resourceUrl}`);
+      if (pending.network) console.log(`  network:  ${pending.network}`);
+      console.log(`  tenant:   ${pending.tenantId}`);
+    }
+
     const principal = resolvePrincipal(env, options.principal);
     const approval = await Effect.runPromise(
       recordOutboundOperatorApprovalEffect({
-        home: resolveHome(env, options.home),
+        home,
         quoteDigest: digest,
         principal,
-        tenantId: options.tenantId?.trim() || env.CLAWQL_TENANT_ID?.trim() || "default",
+        tenantId,
         env,
       })
     );
