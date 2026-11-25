@@ -958,6 +958,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             : [...claimScope];
       } else if (claimScope?.includes("*")) {
         atrScopeTokens = trustedProxyForScope && headerTokens?.length ? headerTokens : ["*"];
+      } else if (claimsForScope) {
+        // Authenticated with no scope claim → deny tools (empty list), not fail-open.
+        atrScopeTokens =
+          trustedProxyForScope && headerTokens?.length ? headerTokens : [];
       } else if (trustedProxyForScope && headerTokens?.length) {
         atrScopeTokens = headerTokens;
       } else {
@@ -1120,14 +1124,19 @@ export async function startMcpHttpServer(): Promise<void> {
               ? value.toString("utf8")
               : String(value);
       }
-      const result = await Effect.runPromise(
+      return Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(headers, grpcAuthConfig).pipe(
-          Effect.map(() => true as const),
+          Effect.map((claims) => ({
+            ok: true as const,
+            scope: claims.scope,
+            tenantId: claims.tenantId,
+            sub: claims.sub,
+          })),
           Effect.catch(() => Effect.succeed(false as const))
         )
       );
-      return result;
     },
+    runWithAuthContext: (ctx, fn) => runWithMcpRequestContext(ctx, () => fn()),
   });
 
   app.listen(PORT, listenHost, () => {

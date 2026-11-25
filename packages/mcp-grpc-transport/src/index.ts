@@ -14,7 +14,13 @@ export {
   PROTOBUF_MCP_SERVICE_FQN,
   MCP_TRANSPORT_SESSION_SERVICE_FQN,
 } from "./server.js";
-export type { GrpcMcpServerOptions, McpMessageContextHook, StartedGrpcServer } from "./server.js";
+export type {
+  GrpcAuthContext,
+  GrpcAuthorizeResult,
+  GrpcMcpServerOptions,
+  McpMessageContextHook,
+  StartedGrpcServer,
+} from "./server.js";
 export {
   callToolServerStreamingGrpc,
   lastNonEmptyCallToolText,

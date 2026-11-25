@@ -110,15 +110,43 @@ export type GrpcMcpServerOptions = {
   /** Bind address host:port (default `process.env.GRPC_BIND` or `127.0.0.1:${GRPC_PORT}`). */
   bindAddress?: string;
   /**
-   * Host-supplied gateway auth. When set, every Session stream and unary MCP call
+   * Host-supplied gateway auth. When set, every Session stream and protobuf MCP call
    * must pass; when unset, plaintext loopback remains open for local tests only.
+   * Prefer returning claims so the host can bind ATR scope for tool calls (S2).
    */
-  authorizeMetadata?: (metadata: grpc.Metadata) => Promise<boolean> | boolean;
+  authorizeMetadata?: (
+    metadata: grpc.Metadata
+  ) =>
+    | Promise<boolean | GrpcAuthorizeResult>
+    | boolean
+    | GrpcAuthorizeResult;
+  /**
+   * Run an authorized protobuf handler inside the host's request context
+   * (ALS for ATR scope / tenant). Required for per-tool scope on gRPC.
+   */
+  runWithAuthContext?: <T>(
+    ctx: GrpcAuthContext,
+    fn: () => Promise<T>
+  ) => Promise<T>;
   /**
    * Passed to `grpc.Server` (e.g. `interceptors` for OpenTelemetry / metadata, see
    * [Google Cloud gRPC + MCP](https://cloud.google.com/blog/products/networking/grpc-as-a-native-transport-for-mcp)).
    */
   grpcServerOptions?: grpc.ServerOptions;
+};
+
+/** Successful gRPC auth — scope/tenant feed MCP request context. */
+export type GrpcAuthorizeResult = {
+  readonly ok: true;
+  readonly scope?: readonly string[];
+  readonly tenantId?: string;
+  readonly sub?: string;
+};
+
+export type GrpcAuthContext = {
+  readonly sessionId?: string;
+  readonly atrScopeTokens?: readonly string[];
+  readonly tenantId?: string;
 };
 
 export type StartedGrpcServer = {
@@ -465,10 +493,74 @@ async function maybeStartGrpcMcpServerImpl(
   const protobufTaskRegistry = new TaskCancellationRegistry();
 
   const authorize = options.authorizeMetadata;
+  const runWithAuthContext = options.runWithAuthContext;
 
-  /** Wrap every unary/server-streaming handler so protobuf MCP is not an open door. */
+  function methodIsResponseStream(
+    serviceDef: grpc.ServiceDefinition,
+    methodName: string
+  ): boolean {
+    const direct = serviceDef[methodName] as { responseStream?: boolean } | undefined;
+    if (direct && typeof direct.responseStream === "boolean") return direct.responseStream;
+    const camel = methodName.charAt(0).toLowerCase() + methodName.slice(1);
+    const alt = serviceDef[camel] as { responseStream?: boolean } | undefined;
+    if (alt && typeof alt.responseStream === "boolean") return alt.responseStream;
+    // CallTool is server-streaming in mcp.proto — never treat as unary.
+    if (methodName === "CallTool" || camel === "callTool") return true;
+    return false;
+  }
+
+  async function resolveAuthorize(
+    metadata: grpc.Metadata
+  ): Promise<GrpcAuthorizeResult | false> {
+    if (!authorize) return { ok: true };
+    const raw = await authorize(metadata);
+    if (raw === false || raw == null) return false;
+    if (raw === true) return { ok: true };
+    if (typeof raw === "object" && raw.ok === true) return raw;
+    return false;
+  }
+
+  function authContextFromResult(result: GrpcAuthorizeResult): GrpcAuthContext {
+    const scope = result.scope;
+    let atrScopeTokens: string[] | undefined;
+    if (scope && scope.length > 0) {
+      atrScopeTokens = scope.includes("*") ? ["*"] : [...scope];
+    } else if (scope && scope.length === 0) {
+      atrScopeTokens = [];
+    } else {
+      // Boolean-true auth with no claims: unrestricted (tests / noAuth).
+      atrScopeTokens = ["*"];
+    }
+    return {
+      sessionId: result.sub ? `grpc:${result.sub}` : "grpc",
+      atrScopeTokens,
+      tenantId: result.tenantId,
+    };
+  }
+
+  function rejectStreamingCall(
+    call: { emit: (ev: string, err: unknown) => void; end?: () => void },
+    message: string
+  ): void {
+    try {
+      call.emit("error", {
+        code: grpc.status.UNAUTHENTICATED,
+        message,
+      });
+    } catch {
+      /* already closed */
+    }
+    try {
+      call.end?.();
+    } catch {
+      /* already closed */
+    }
+  }
+
+  /** Wrap every handler so protobuf MCP is not an open door (S1: streaming-safe). */
   function wrapServiceWithAuth(
-    impl: grpc.UntypedServiceImplementation
+    impl: grpc.UntypedServiceImplementation,
+    serviceDef: grpc.ServiceDefinition
   ): grpc.UntypedServiceImplementation {
     if (!authorize) return impl;
     const wrapped: grpc.UntypedServiceImplementation = {};
@@ -477,29 +569,68 @@ async function maybeStartGrpcMcpServerImpl(
         wrapped[method] = handler;
         continue;
       }
-      wrapped[method] = (
-        call: grpc.ServerUnaryCall<unknown, unknown>,
-        callback: grpc.sendUnaryData<unknown>
-      ) => {
-        void (async () => {
-          try {
-            const ok = await authorize(call.metadata);
-            if (!ok) {
-              callback({
-                code: grpc.status.UNAUTHENTICATED,
-                message: "gRPC MCP authentication failed",
-              });
-              return;
+      const streaming = methodIsResponseStream(serviceDef, method);
+      if (streaming) {
+        wrapped[method] = (
+          call: grpc.ServerWritableStream<unknown, unknown>
+        ) => {
+          void (async () => {
+            try {
+              const result = await resolveAuthorize(call.metadata);
+              if (!result) {
+                rejectStreamingCall(call, "gRPC MCP authentication failed");
+                return;
+              }
+              const ctx = authContextFromResult(result);
+              const run = async () => {
+                (handler as (c: typeof call) => void)(call);
+              };
+              if (runWithAuthContext) await runWithAuthContext(ctx, run);
+              else await run();
+            } catch (err: unknown) {
+              rejectStreamingCall(
+                call,
+                err instanceof Error ? err.message : "gRPC MCP authentication failed"
+              );
             }
-            (handler as grpc.handleUnaryCall<unknown, unknown>)(call, callback);
-          } catch (err: unknown) {
-            callback({
-              code: grpc.status.UNAUTHENTICATED,
-              message: err instanceof Error ? err.message : "gRPC MCP authentication failed",
-            });
-          }
-        })();
-      };
+          })();
+        };
+      } else {
+        wrapped[method] = (
+          call: grpc.ServerUnaryCall<unknown, unknown>,
+          callback: grpc.sendUnaryData<unknown>
+        ) => {
+          void (async () => {
+            try {
+              const result = await resolveAuthorize(call.metadata);
+              if (!result) {
+                callback({
+                  code: grpc.status.UNAUTHENTICATED,
+                  message: "gRPC MCP authentication failed",
+                });
+                return;
+              }
+              const ctx = authContextFromResult(result);
+              const invoke = () =>
+                Promise.resolve(
+                  (handler as grpc.handleUnaryCall<unknown, unknown>)(call, callback)
+                );
+              if (runWithAuthContext) await runWithAuthContext(ctx, invoke);
+              else await invoke();
+            } catch (err: unknown) {
+              try {
+                callback({
+                  code: grpc.status.UNAUTHENTICATED,
+                  message:
+                    err instanceof Error ? err.message : "gRPC MCP authentication failed",
+                });
+              } catch {
+                /* callback missing or already settled — never rethrow (S1) */
+              }
+            }
+          })();
+        };
+      }
     }
     return wrapped;
   }
@@ -513,17 +644,9 @@ async function maybeStartGrpcMcpServerImpl(
       });
       void (async () => {
         if (authorize) {
-          const ok = await authorize(call.metadata);
-          if (!ok) {
-            call.emit("error", {
-              code: grpc.status.UNAUTHENTICATED,
-              message: "gRPC MCP authentication failed",
-            });
-            try {
-              call.end();
-            } catch {
-              /* already closed */
-            }
+          const result = await resolveAuthorize(call.metadata);
+          if (!result) {
+            rejectStreamingCall(call, "gRPC MCP authentication failed");
             return;
           }
         }
@@ -549,7 +672,8 @@ async function maybeStartGrpcMcpServerImpl(
   server.addService(
     protobufMcpServiceDef,
     wrapServiceWithAuth(
-      createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry)
+      createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry),
+      protobufMcpServiceDef
     )
   );
   server.addService(mcpDef, sessionImpl);

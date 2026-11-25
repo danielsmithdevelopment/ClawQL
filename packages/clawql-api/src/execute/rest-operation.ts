@@ -385,9 +385,18 @@ async function executeRestOperationImpl(
       const nextUrl = new URL(location, url);
       const sameOrigin = nextUrl.protocol === url.protocol && nextUrl.host === url.host;
       if (!sameOrigin && isWrite) {
+        // S5: the write may already have been applied; do not report a plain
+        // failure (that invites a retry and a second write).
         return {
-          ok: false,
-          error: `REST HTTP ${status}: refusing cross-origin redirect for ${originalMethod}`,
+          ok: true,
+          data: {
+            outcome: "outcome_unknown",
+            status,
+            location: nextUrl.href,
+            message:
+              `Upstream returned HTTP ${status} with a cross-origin Location after ${originalMethod}; ` +
+              "the write may have been applied; refusing to follow (at-most-once).",
+          },
         };
       }
       if (!sameOrigin) {

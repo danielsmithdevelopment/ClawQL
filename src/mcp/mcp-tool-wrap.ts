@@ -8,7 +8,8 @@ import {
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "../observability/otel-tracing.js";
-import { getMcpRequestContext } from "./mcp-request-context.js";
+import { getMcpRequestContext, tenantScopedSessionId } from "./mcp-request-context.js";
+import { decideAtrToolScope } from "./atr-tool-scope.js";
 
 /** Meta tools — ring buffer only; skip durable WORM to avoid noise/recursion. */
 export const WORM_AUDIT_SKIP_TOOLS = new Set(["audit", "cache"]);
@@ -144,26 +145,14 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   return wrapMcpToolHandler(toolName, async (...args: TArgs): Promise<TResult> => {
     await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
 
-    const scopeDenied = (() => {
-      const tokens = getMcpRequestContext()?.atrScopeTokens;
-      if (!tokens || tokens.length === 0 || tokens.includes("*")) return null;
-      const family =
-        toolName === "execute" || toolName.startsWith("execute_")
-          ? "execute"
-          : toolName === "search" || toolName.startsWith("search_")
-            ? "search"
-            : toolName.startsWith("memory_")
-              ? "memory"
-              : toolName.startsWith("audit")
-                ? "audit"
-                : toolName;
-      if (tokens.includes(family) || tokens.includes(toolName)) return null;
-      return `Tool "${toolName}" is outside session ATR scope [${tokens.join(", ")}]`;
-    })();
-    if (scopeDenied) {
-      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, scopeDenied));
+    const scopeDecision = decideAtrToolScope(
+      toolName,
+      getMcpRequestContext()?.atrScopeTokens
+    );
+    if (!scopeDecision.allow) {
+      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, scopeDecision.reason));
       return {
-        content: [{ type: "text" as const, text: scopeDenied }],
+        content: [{ type: "text" as const, text: scopeDecision.reason }],
         isError: true,
       } as TResult;
     }
@@ -173,6 +162,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       await runMcpProxyBeforeCallTool(toolName, args[0], {
         sessionId: mcpCtx?.sessionId,
         atrScopeTokens: mcpCtx?.atrScopeTokens,
+        tenantId: mcpCtx?.tenantId,
       });
     } catch (err: unknown) {
       const errDetail =
@@ -204,7 +194,8 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           emitHookBlocked({
             tool: toolName,
             reason: blocked,
-            session_id: mcpCtxBlocked?.sessionId,
+            session_id: tenantScopedSessionId(mcpCtxBlocked),
+            ...(mcpCtxBlocked?.tenantId ? { tenant_id: mcpCtxBlocked.tenantId } : {}),
           });
         } catch {
           /* mcp-events optional at edge */
@@ -229,7 +220,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       const decision = await gateNativeToolBeforeInvoke({
         toolName,
         args: args[0],
-        sessionId: mcpCtxGate?.sessionId,
+        sessionId: tenantScopedSessionId(mcpCtxGate),
       });
       if (decision.blocked) {
         const nativeBlock = decision.errorResult;
@@ -260,7 +251,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
         accumulateNativeToolReadAfterSuccess({
           toolName,
           success: true,
-          sessionId: mcpCtxAfter?.sessionId,
+          sessionId: tenantScopedSessionId(mcpCtxAfter),
         });
       }
       await Effect.runPromise(
