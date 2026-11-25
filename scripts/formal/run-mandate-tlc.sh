@@ -12,10 +12,7 @@ cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
 if [[ -z "$JAR" ]]; then
-  JAR="$WORKDIR/tla2tools.jar"
-  echo "Downloading tla2tools.jar…"
-  curl -fsSL -o "$JAR" \
-    "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
 fi
 
 cp "$DIR/MandateLifecycle.tla" \

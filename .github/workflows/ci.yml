@@ -377,6 +377,20 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.2 \
             detect --source /repo --no-git --verbose --no-banner --redact
 
+  # Audit 11.04 — credential-shaped content in published benchmark evidence.
+  evidence-secret-scan:
+    name: Evidence secret scan
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Self-test + scan docs/benchmarks and benchmarks results
+        run: |
+          node scripts/benchmarks/check-evidence-no-secrets.mjs --self-test
+          node scripts/benchmarks/check-evidence-no-secrets.mjs
+
   supply-chain:
     name: Supply chain (OSV + Trivy + SBOM)
     needs: [lint, workflow-scripts]

@@ -3,10 +3,10 @@
 set -euo pipefail
 
 WT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-LOG="${LOG:-/tmp/harvey-lab-local-fail-v3.log}"
+if [ -z "${HARVEY_LABS:-}" ]; then echo "Set HARVEY_LABS to your harvey-labs checkout (do not rely on a machine-local /tmp path)." >&2; exit 1; fi
+LOG="${LOG:-$HARVEY_LABS/harvey-lab-local-fail-v3.log}"
 AGG="${AGG:-${WT}/benchmarks/harvey-labs/results/aggregate-fail-v3.json}"
 
-if [ -z "${HARVEY_LABS:-}" ]; then echo "Set HARVEY_LABS to your harvey-labs checkout (do not rely on a machine-local /tmp path)." >&2; exit 1; fi
 export HARVEY_LABS
 export CLAWQL_LAB_SKIP_CLONE=1
 export CLAWQL_LAB_PODMAN_VIA_DOCKER=1

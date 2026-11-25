@@ -55,9 +55,7 @@ jobs:
       - name: Run event-delivery TLC dual configs
         run: |
           set -euo pipefail
-          JAR=/tmp/tla2tools.jar
-          curl -fsSL -o "$JAR" \
-            "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+          JAR="$(bash scripts/formal/ensure-tla2tools.sh)"
           WORK=$(mktemp -d)
           cp formal/tla/events/* "$WORK/"
           cd "$WORK"

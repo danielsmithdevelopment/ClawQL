@@ -43,7 +43,6 @@ export const DOC_SITE_ROUTES = {
   'docs/mcp/mcp-api-adapter.md': '/mcp/mcp-api-adapter',
   'docs/mcp/mcp-ui.md': '/mcp/mcp-ui',
   'docs/mcp/protocol-fabric.md': '/mcp/protocol-fabric',
-  'docs/gtm/protocol-fabric.md': '/mcp/protocol-fabric',
   'docs/design/protocol-fabric-loop-benchmark.md':
     '/mcp/protocol-fabric#proven-end-to-end-loop',
   'docs/mcp/workflow-tool.md': '/learn/schedule-notify-workflows',

@@ -263,7 +263,6 @@ await startMcpApiAdapter({ upstream, listTraceCalls /* … */ });
 
 - User guide: [`mcp-api-adapter.md`](./mcp-api-adapter.md)
 - Design: [`../design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
-- Essay draft: [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
 - Protocol Fabric: [`protocol-fabric.md`](./protocol-fabric.md)
 - QR (8th surface, planned): [`../streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
 

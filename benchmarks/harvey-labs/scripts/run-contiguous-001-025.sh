@@ -4,11 +4,11 @@ set -euo pipefail
 
 WT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 STACK_VERSION="$(node "${WT}/benchmarks/harvey-labs/scripts/lab-stack-version.mjs" | python3 -c 'import json,sys; print(json.load(sys.stdin)["stack_version"])')"
-LOG="${LOG:-/tmp/harvey-lab-contiguous-001-025-${STACK_VERSION}.log}"
+if [ -z "${HARVEY_LABS:-}" ]; then echo "Set HARVEY_LABS to your harvey-labs checkout (do not rely on a machine-local /tmp path)." >&2; exit 1; fi
+LOG="${LOG:-$HARVEY_LABS/harvey-lab-contiguous-001-025-${STACK_VERSION}.log}"
 AGG="${AGG:-${WT}/benchmarks/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json}"
 VAULT_ROOT="${CLAWQL_LAB_VAULT_ROOT:-${CLAWQL_HOME:-$HOME/.ClawQL}/HarveyLABVault}"
 
-if [ -z "${HARVEY_LABS:-}" ]; then echo "Set HARVEY_LABS to your harvey-labs checkout (do not rely on a machine-local /tmp path)." >&2; exit 1; fi
 export HARVEY_LABS
 export CLAWQL_LAB_SKIP_CLONE=1
 export CLAWQL_LAB_PODMAN_VIA_DOCKER="${CLAWQL_LAB_PODMAN_VIA_DOCKER:-1}"

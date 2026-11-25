@@ -2,7 +2,7 @@
 
 **Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (in-repo; first npm publish targets `0.1.0` with 8.0 workspace release)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
-**Essay:** [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md))  
+**Essay:** [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/)  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **Example:** [`docs/examples/mcp-api-adapter/`](../../docs/examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
@@ -349,10 +349,9 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 
 ## Further reading
 
-- Essay: [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) · draft [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
+- Essay: [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/)
 - Package README: [`packages/mcp-api-adapter/README.md`](../../packages/mcp-api-adapter/README.md)
 - Design & non-goals: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
-- GTM positioning: [`docs/gtm/mcp-api-adapter-positioning.md`](../gtm/mcp-api-adapter-positioning.md)
 - Protocol Fabric (proven loop): [`docs/mcp/protocol-fabric.md`](./protocol-fabric.md)
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
 - QR stream transport (draft, 8th surface): [`docs/streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)

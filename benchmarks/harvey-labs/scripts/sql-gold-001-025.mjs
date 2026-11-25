@@ -799,7 +799,16 @@ async function main() {
   const mattersRoot = resolve(
     process.argv[2] || process.env.HARVEY_LABS_MATTERS_ROOT || "./benchmarks/harvey-labs/fixtures/matters"
   );
-  const dbPath = resolve(process.argv[3] || "/tmp/harvey-lab-sql-gold-v2.duckdb");
+  const harveyRoot = process.env.HARVEY_LABS?.trim();
+  if (!harveyRoot && !process.argv[3]) {
+    console.error(
+      "Set HARVEY_LABS to your harvey-labs checkout (or pass an explicit db path as argv[3])."
+    );
+    process.exit(1);
+  }
+  const dbPath = resolve(
+    process.argv[3] || join(harveyRoot!, "harvey-lab-sql-gold-v2.duckdb")
+  );
   const outJson = resolve(
     process.argv[4] ||
       new URL("../results/ts-v2/sql-gold-001-025.json", import.meta.url).pathname
