@@ -28,7 +28,7 @@ print("helm-operator-template-tests OK")
 PY
 
 helm template test manifests/charts/clawql-mcp --namespace clawql \
-  --set envFromSecret=clawql-lint-provider-env \
+  -f manifests/charts/clawql-mcp/values-lint.yaml \
   --set instanceSpec.enabled=true \
   --set instanceSpec.configMapName=clawql-tier-spec \
   | grep -q 'CLAWQL_INSTANCE_SPEC_FILE'

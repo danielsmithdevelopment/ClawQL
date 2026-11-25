@@ -57,9 +57,22 @@ export function createAwsGoldenHost(inputs: ProvisionInputs): AwsGoldenHostOutpu
     role: role.name,
   });
 
+  // Audit 7.52: refuse world-open MCP by default.
+  const mcpCidrs = inputs.mcpHttpCidrBlocks?.filter((c) => c.trim().length > 0) ?? [];
+  if (mcpCidrs.length === 0) {
+    throw new Error(
+      'clawql:mcpHttpCidrBlocks is required for golden-host (audit 7.52). Example: "10.0.0.0/8" — not 0.0.0.0/0.'
+    );
+  }
+  if (mcpCidrs.includes("0.0.0.0/0") && inputs.allowPublicMcp !== true) {
+    throw new Error(
+      "clawql:mcpHttpCidrBlocks must not include 0.0.0.0/0 unless clawql:allowPublicMcp=true (audit 7.52)."
+    );
+  }
+
   const sg = new aws.ec2.SecurityGroup("clawql-mcp-sg", {
     description: "ClawQL MCP HTTP",
-    ingress: [{ protocol: "tcp", fromPort: 8080, toPort: 8080, cidrBlocks: ["0.0.0.0/0"] }],
+    ingress: [{ protocol: "tcp", fromPort: 8080, toPort: 8080, cidrBlocks: mcpCidrs }],
     egress: [{ protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] }],
     tags: clawqlTags(inputs),
   });

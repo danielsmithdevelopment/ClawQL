@@ -9,7 +9,7 @@ TMP_DISABLED="$(mktemp)"
 TMP_IDP="$(mktemp)"
 trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}" "${TMP_IDP}"' EXIT
 
-_LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
+_LINT_SECRET=(-f manifests/charts/clawql-mcp/values-lint.yaml)
 
 helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \

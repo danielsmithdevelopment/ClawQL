@@ -13,6 +13,14 @@ describe("resolveMcpRolloutTarget", () => {
       })
     ).toEqual({ deploymentName: "clawql-mcp-http", namespace: "clawql" });
   });
+
+  it("refuses mcp.namespace outside the ClawQLInstance namespace (audit 7.04)", () => {
+    expect(() =>
+      resolveMcpRolloutTarget("clawql", "inst", {
+        mcp: { rolloutOnTierSpecChange: true, namespace: "other-ns" },
+      })
+    ).toThrow(/must match ClawQLInstance namespace/);
+  });
 });
 
 describe("rolloutMcpDeployment", () => {

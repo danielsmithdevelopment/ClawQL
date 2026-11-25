@@ -1,0 +1,38 @@
+{{/*
+  Audit Pass 7 — refuse insecure chart defaults outside explicit lab overlays.
+  Set values.devAllowWeakSecrets=true only in local overlays (e.g. values-docker-desktop).
+*/}}
+{{- if not .Values.devAllowWeakSecrets }}
+{{- /* 7.05 — no plaintext CLAWQL_API_KEY from Helm values (Vault/envFromSecret is the prod path) */ -}}
+{{- if and (not .Values.gatewayAuth.existingSecret) .Values.gatewayAuth.apiKey }}
+{{- fail "gatewayAuth.apiKey plaintext is refused (audit 7.05). Set gatewayAuth.existingSecret or inject CLAWQL_API_KEY via envFromSecret (Vault). Labs: devAllowWeakSecrets=true" }}
+{{- end }}
+{{- $hasEnvFrom := or .Values.envFromSecret .Values.envFromSecrets }}
+{{- if and (eq (.Values.gatewayAuth.mode | default "apiKey") "apiKey") (not .Values.gatewayAuth.existingSecret) (not .Values.gatewayAuth.apiKey) (not $hasEnvFrom) }}
+{{- fail "gatewayAuth.existingSecret (or envFromSecret / Vault-synced secret containing CLAWQL_API_KEY) is required when gatewayAuth.mode=apiKey" }}
+{{- end }}
+
+{{- /* 7.01 — refuse placeholder Postgres password for document-pipeline stores */ -}}
+{{- if and .Values.documentPipeline.enabled .Values.stores.postgres.enabled (not .Values.stores.postgres.auth.existingSecret) }}
+{{- $pw := .Values.stores.postgres.auth.password | default "" }}
+{{- if or (eq $pw "") (eq $pw "change-me") }}
+{{- fail "stores.postgres.auth.existingSecret (or a non-placeholder password with devAllowWeakSecrets=true) is required when documentPipeline+stores.postgres are enabled" }}
+{{- end }}
+{{- end }}
+
+{{- /* 7.11 — refuse Onyx demo credentials */ -}}
+{{- if .Values.onyx.enabled }}
+{{- if and (not .Values.onyx.postgres.auth.existingSecret) (or (eq (.Values.onyx.postgres.auth.password | default "") "") (eq .Values.onyx.postgres.auth.password "change-me")) }}
+{{- fail "onyx.postgres.auth.existingSecret (or a non-placeholder password with devAllowWeakSecrets=true) is required when onyx.enabled=true" }}
+{{- end }}
+{{- if or (eq (.Values.onyx.userAuthSecret | default "") "") (eq .Values.onyx.userAuthSecret "change-me-onyx-user-auth-secret") }}
+{{- fail "onyx.userAuthSecret must be set to a non-placeholder value when onyx.enabled=true (or use devAllowWeakSecrets=true)" }}
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.opensearch.auth.existingSecret) (or (eq (.Values.onyx.opensearch.auth.adminPassword | default "") "") (eq .Values.onyx.opensearch.auth.adminPassword "StrongPassword123!")) }}
+{{- fail "onyx.opensearch.auth.existingSecret (or a non-demo adminPassword with devAllowWeakSecrets=true) is required when onyx.fullVectorStack=true" }}
+{{- end }}
+{{- if and .Values.onyx.fullVectorStack (not .Values.onyx.minio.auth.existingSecret) (or (eq (.Values.onyx.minio.auth.rootUser | default "") "") (eq (.Values.onyx.minio.auth.rootPassword | default "") "") (eq .Values.onyx.minio.auth.rootUser "minioadmin") (eq .Values.onyx.minio.auth.rootPassword "minioadmin")) }}
+{{- fail "onyx.minio.auth.existingSecret (or non-demo root credentials with devAllowWeakSecrets=true) is required when onyx.fullVectorStack=true" }}
+{{- end }}
+{{- end }}
+{{- end }}

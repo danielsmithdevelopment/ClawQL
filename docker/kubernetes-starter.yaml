@@ -3,18 +3,9 @@ kind: Namespace
 metadata:
   name: clawql
 ---
-# Create before applying the Deployment:
-#   kubectl -n clawql create secret generic clawql-mcp-auth --from-literal=api-key="$(openssl rand -hex 32)"
-apiVersion: v1
-kind: Secret
-metadata:
-  name: clawql-mcp-auth
-  namespace: clawql
-type: Opaque
-stringData:
-  # Replace before production use — kubectl create/apply will not rotate this placeholder.
-  api-key: "replace-me-before-production"
----
+# Create the auth Secret before applying the Deployment (audit 7.05 — no committed api-key material):
+#   kubectl -n clawql create secret generic clawql-mcp-auth \
+#     --from-literal=api-key="$(openssl rand -hex 32)"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -32,10 +23,26 @@ spec:
       labels:
         app: clawql-mcp-http
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: clawql-mcp-http
           image: clawql-mcp:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
               name: http
@@ -93,8 +100,12 @@ spec:
           volumeMounts:
             - name: obsidian-vault
               mountPath: /vault
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: obsidian-vault
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
 ---
 apiVersion: v1
@@ -105,8 +116,8 @@ metadata:
   labels:
     app: clawql-mcp-http
 spec:
-  # Switch to Ingress if your cluster standardizes on that.
-  type: LoadBalancer
+  # ClusterIP by default (audit 7.02). Expose via Ingress/Gateway + TLS, or set type: LoadBalancer for labs.
+  type: ClusterIP
   selector:
     app: clawql-mcp-http
   ports:

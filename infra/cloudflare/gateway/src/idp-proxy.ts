@@ -24,6 +24,20 @@ export function resolveIdpProxyOrigin(
   return fromEnv ? fromEnv.replace(/\/$/, "") : undefined;
 }
 
+/** Strip client-supplied trust headers so only the gateway can set them (audit 7.08). */
+function stripClientTrustHeaders(headers: Headers): void {
+  const toDelete: string[] = [];
+  for (const key of headers.keys()) {
+    const lower = key.toLowerCase();
+    if (lower.startsWith("x-clawql-") || lower === "x-correlation-id") {
+      toDelete.push(key);
+    }
+  }
+  for (const key of toDelete) {
+    headers.delete(key);
+  }
+}
+
 /** Build RequestInit for reverse-proxying an IDP tenant to K3s/EKS ingress. */
 export function buildIdpProxyInit(
   request: Request,
@@ -31,6 +45,7 @@ export function buildIdpProxyInit(
 ): RequestInit {
   const headers = new Headers(request.headers);
   headers.delete("host");
+  stripClientTrustHeaders(headers);
   headers.set("X-Correlation-Id", opts.correlationId);
   headers.set("X-Forwarded-Proto", "https");
   if (opts.tenantId) {

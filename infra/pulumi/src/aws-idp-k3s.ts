@@ -57,6 +57,25 @@ export function createAwsIdpK3s(inputs: ProvisionInputs): AwsIdpK3sOutputs {
     role: role.name,
   });
 
+  // Audit 7.51: never default SSH / K8s API to the world — require explicit CIDRs.
+  const sshCidrs = inputs.sshCidrBlocks?.filter((c) => c.trim().length > 0) ?? [];
+  const apiCidrs = inputs.apiCidrBlocks?.filter((c) => c.trim().length > 0) ?? [];
+  if (sshCidrs.length === 0) {
+    throw new Error(
+      'clawql:sshCidrBlocks is required for idp-k3s (audit 7.51). Prefer SSM Session Manager; if SSH is needed, set e.g. "203.0.113.0/32" — not 0.0.0.0/0.'
+    );
+  }
+  if (apiCidrs.length === 0) {
+    throw new Error(
+      'clawql:apiCidrBlocks is required for idp-k3s (audit 7.51). Set your admin egress CIDR(s); do not use 0.0.0.0/0.'
+    );
+  }
+  if (sshCidrs.includes("0.0.0.0/0") || apiCidrs.includes("0.0.0.0/0")) {
+    throw new Error(
+      "clawql:sshCidrBlocks / apiCidrBlocks must not include 0.0.0.0/0 (audit 7.51). Prefer SSM over public SSH."
+    );
+  }
+
   const sg = new aws.ec2.SecurityGroup("clawql-idp-k3s-sg", {
     description: "ClawQL IDP K3s — API, HTTPS ingress, NodePorts",
     ingress: [
@@ -64,13 +83,13 @@ export function createAwsIdpK3s(inputs: ProvisionInputs): AwsIdpK3sOutputs {
         protocol: "tcp",
         fromPort: 22,
         toPort: 22,
-        cidrBlocks: inputs.sshCidrBlocks ?? ["0.0.0.0/0"],
+        cidrBlocks: sshCidrs,
       },
       {
         protocol: "tcp",
         fromPort: 6443,
         toPort: 6443,
-        cidrBlocks: inputs.apiCidrBlocks ?? ["0.0.0.0/0"],
+        cidrBlocks: apiCidrs,
       },
       { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
       { protocol: "tcp", fromPort: 443, toPort: 443, cidrBlocks: ["0.0.0.0/0"] },

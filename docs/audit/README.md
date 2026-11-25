@@ -9,3 +9,5 @@ Two different things share the word “audit”:
 | [`clawql-audit-cbor-serialization-v0.1.md`](clawql-audit-cbor-serialization-v0.1.md) | **Addition.** CBOR (RFC 8949) hash dialect for WORM entries; chain mechanics unchanged; `ChainMetadata` for JSON→CBOR migration.                        |
 
 **Related:** [MCP `audit` tool](../mcp/mcp-tools.md) · [Enterprise MCP tools](../mcp/enterprise-mcp-tools.md) · [TEE air-gap QR](../streams/clawql-tee-airgap-audit.md) · [celld LTX WORM](../streams/clawql-celld.md) · [clawql-agents spec](../agents/clawql-agents-spec-v0.1.md)
+
+**Codebase section audit (Nov 2026):** [Pass 7 ops/deploy findings](codebase-section-audit-pass-7-ops-2026-11-25.md).

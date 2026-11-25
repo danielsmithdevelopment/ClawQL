@@ -23,6 +23,14 @@ config:
     description: edge profile — deploy health/IDP-stub WorkersScript (true/false)
   clawql:ebsVolumeSizeGb:
     description: idp-k3s data volume size (default 200)
+  clawql:sshCidrBlocks:
+    description: idp-k3s SSH allowlist CIDRs (required; no 0.0.0.0/0 — audit 7.51)
+  clawql:apiCidrBlocks:
+    description: idp-k3s Kubernetes API allowlist CIDRs (required; no 0.0.0.0/0 — audit 7.51)
+  clawql:mcpHttpCidrBlocks:
+    description: golden-host MCP :8080 allowlist CIDRs (required; no 0.0.0.0/0 unless allowPublicMcp — audit 7.52)
+  clawql:allowPublicMcp:
+    description: golden-host escape hatch for public MCP demos (true/false)
   clawql:eksClusterName:
     description: eks profile cluster name
   clawql:subnetIds:

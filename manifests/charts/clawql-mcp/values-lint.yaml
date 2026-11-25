@@ -1,3 +1,9 @@
-# Used by `make helm-lint` so `helm lint` can render with secret-sourcing guard enabled.
-# Not for production — satisfies `secretSourcing.requireVaultBackedSecrets` during validation only.
+# Used by `make helm-lint` so `helm lint` / `helm template` can render with secret-sourcing
+# and Pass 7 weak-secret guards satisfied. Not for production.
 envFromSecret: clawql-lint-provider-env
+
+# documentPipeline + stores.postgres are on by default — provide a Secret ref for lint renders.
+stores:
+  postgres:
+    auth:
+      existingSecret: clawql-lint-postgres

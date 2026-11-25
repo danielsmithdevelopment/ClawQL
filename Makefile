@@ -7,39 +7,40 @@ helm-lint:
 	@helm dependency update manifests/charts/clawql-idp >/dev/null
 	@helm lint manifests/charts/clawql-idp
 	@helm template test manifests/charts/clawql-falco --namespace monitoring >/dev/null
-	@helm template test manifests/charts/clawql-mcp --namespace clawql --set envFromSecret=clawql-lint-provider-env >/dev/null
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-lint.yaml >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		-f manifests/charts/clawql-mcp/values-docker-desktop.yaml \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		-f manifests/charts/clawql-mcp/values-lint.yaml >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
 		--set documentPipeline.enabled=true \
 		--set stores.postgres.enabled=true \
 		--set stores.dragonfly.enabled=true \
-		--set stores.postgres.auth.password=devpass \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		--set stores.postgres.auth.password=devpass >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
-		--set kyverno.imageSignaturePolicy.enabled=false \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		-f manifests/charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml \
-		--set kyverno.imageSignaturePolicy.enabled=false \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		-f manifests/charts/clawql-mcp/test-values-mcp-proxy-custom.yaml \
-		--set kyverno.imageSignaturePolicy.enabled=false \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
 		--set openclaw.enabled=true \
 		--set dashboard.enabled=true \
 		--set-string openclaw.gatewayToken=helm-lint-test-token \
-		--set kyverno.imageSignaturePolicy.enabled=false \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-lint.yaml \
 		--set goose.enabled=true \
 		--set goose.replicaCount=1 \
 		--set-string goose.openaiApiKey=helm-lint-test \
-		--set kyverno.imageSignaturePolicy.enabled=false \
-		--set envFromSecret=clawql-lint-provider-env >/dev/null
+		--set kyverno.imageSignaturePolicy.enabled=false >/dev/null
 	@echo "helm-lint OK"
 
 # After applying docs/deployment/vault-istio-authorizationpolicy*.yaml to a live cluster

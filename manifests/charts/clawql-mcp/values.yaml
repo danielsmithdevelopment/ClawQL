@@ -14,8 +14,13 @@ deploymentStrategy: {}
 
 image:
   repository: ghcr.io/danielsmithdevelopment/clawql-mcp
-  tag: latest
+  # Empty → templates use Chart.AppVersion (audit 7.05). Avoid floating `latest`.
+  tag: ""
   pullPolicy: IfNotPresent
+
+# Runtime security tier (`CLAWQL_TIER`). Override to `regulated` via values-regulated.yaml.
+pluginTiers:
+  tier: standard
 
 imagePullSecrets: []
 
@@ -30,8 +35,25 @@ podAnnotations: {}
 # Extra labels on the MCP pod template (e.g. Istio: sidecar.istio.io/inject).
 podLabels: {}
 
-podSecurityContext: {}
-securityContext: {}
+# Least-privilege defaults (SOC2 overlay used to be the only place these lived — audit 7.03).
+# Local docker.sock overlays may override via `runAsRootForDockerSocket` / values-docker-desktop.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 # VM-level containment for MCP + sandbox workloads (#274). When enabled, the MCP Deployment pod sets
 # spec.runtimeClassName — you must install a matching cluster RuntimeClass (e.g. kata-deploy → kata-qemu).
@@ -42,7 +64,8 @@ security:
     runtimeClassName: kata-qemu
 
 service:
-  type: LoadBalancer
+  # ClusterIP by default (audit 7.02). Use Ingress/Gateway + TLS for north-south; LoadBalancer only in local overlays.
+  type: ClusterIP
   # Service port for HTTP (MCP + health + GraphQL). Base Kustomize uses 80 → container 8080.
   http:
     port: 80
@@ -96,11 +119,14 @@ mcpHost: "0.0.0.0"
 # Gateway auth — required when mcpHost is non-loopback (noAuth is refused).
 gatewayAuth:
   mode: apiKey
-  # Prefer an existing Secret (key defaults to api-key).
+  # Prefer an existing Secret (key defaults to api-key). Required unless devAllowWeakSecrets.
   existingSecret: ""
   existingSecretKey: api-key
-  # Dev-only plaintext; leave empty in production and set existingSecret.
+  # Dev-only plaintext; leave empty in production and set existingSecret (audit 7.05).
   apiKey: ""
+
+# When true, chart may embed demo passwords / plaintext apiKey (local overlays only — audit 7.01/7.05/7.11).
+devAllowWeakSecrets: false
 # Host MCP process in this Deployment (celld is preferred isolate deploy via Streams/Workers).
 # Product ladder: celld → Bun (default host) → Node (legacy minority).
 # Default image (`ghcr.io/.../clawql-mcp`) is Bun distroless with ENTRYPOINT `bun --smol`.
@@ -447,7 +473,8 @@ onyx:
   service:
     port: 8080
   authType: basic
-  userAuthSecret: "change-me-onyx-user-auth-secret"
+  # Empty by default — set a real secret (or enable with values-docker-desktop + devAllowWeakSecrets).
+  userAuthSecret: ""
   # S3 / MinIO object store (full stack).
   s3:
     fileStoreBucketName: onyx-file-store-bucket
@@ -481,7 +508,8 @@ onyx:
     # Do not set DISABLE_INSTALL_DEMO_CONFIG=true with OPENSEARCH_INITIAL_ADMIN_PASSWORD:
     # the security plugin then loads without demo TLS and fails ("No SSL configuration found").
     auth:
-      adminPassword: "StrongPassword123!"
+      # Empty by default — require existingSecret or set with devAllowWeakSecrets (audit 7.11).
+      adminPassword: ""
       existingSecret: ""
       existingSecretPasswordKey: password
     persistence:
@@ -529,8 +557,9 @@ onyx:
       apiPort: 9000
       consolePort: 9001
     auth:
-      rootUser: minioadmin
-      rootPassword: minioadmin
+      # Empty by default — require existingSecret or set with devAllowWeakSecrets (audit 7.11).
+      rootUser: ""
+      rootPassword: ""
       existingSecret: ""
       existingSecretUserKey: root-user
       existingSecretPasswordKey: root-password
@@ -581,7 +610,8 @@ onyx:
     auth:
       database: onyx
       username: onyx
-      password: "change-me"
+      # Empty by default — require existingSecret or set with devAllowWeakSecrets (audit 7.11).
+      password: ""
       existingSecret: ""
     persistence:
       enabled: false
@@ -905,7 +935,8 @@ stores:
     auth:
       database: paperless
       username: paperless
-      password: "change-me"
+      # Empty by default — set existingSecret, or a strong password with devAllowWeakSecrets for labs (audit 7.01).
+      password: ""
       existingSecret: ""
     persistence:
       enabled: true
@@ -1721,6 +1752,7 @@ kyverno:
     background: false
     failurePolicy: Fail
     webhookTimeoutSeconds: 30
+    # Default off so shared/dev clusters without Cosign stay installable; values-regulated turns these on (audit 7.05).
     verifyDigest: false
     mutateDigest: false
     excludeNamespaces:
@@ -1740,7 +1772,8 @@ kyverno:
     # `CLAWQL_GHCR_PULL_USERNAME` if not using `GITHUB_ACTOR`).
     imageRegistrySecretNames: []
     cosign:
-      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
+      # Pin to docker-publish on main / version tags — not every workflow on any ref (audit 7.05).
+      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/\\.github/workflows/docker-publish\\.yml@refs/(heads/main|tags/v.*)$"
       issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
       rekorUrl: "https://rekor.sigstore.dev"
   # Optional ClusterPolicy: require spec.runtimeClassName per namespace lists (Kata vs gVisor tiers).

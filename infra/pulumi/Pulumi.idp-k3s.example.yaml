@@ -17,5 +17,6 @@ config:
   clawql:ebsVolumeSizeGb: "200"
   clawql:region: us-east-1
   clawql:gitopsRepoUrl: https://github.com/danielsmithdevelopment/ClawQL.git
-  # clawql:sshCidrBlocks: 203.0.113.0/32
-  # clawql:apiCidrBlocks: 203.0.113.0/32
+  # Required (audit 7.51) — no 0.0.0.0/0 default. Prefer SSM Session Manager over SSH.
+  clawql:sshCidrBlocks: 203.0.113.0/32
+  clawql:apiCidrBlocks: 203.0.113.0/32

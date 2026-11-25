@@ -32,8 +32,8 @@
 #   CLAWQL_LOAD_DOTENV=0 bash scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh   # do not source .env
 #
 # CORS (CLAWQL_CORS_ALLOW_ORIGIN on clawql-mcp-http — see server-http.ts):
-#   Default: *  (Gallery / iPhone webview, Cloudflare Tunnel, etc.)
-#   Override: CLAWQL_CORS_ALLOW_ORIGIN=https://your.app
+#   Default: unset (no wildcard — audit 7.61). Set CLAWQL_CORS_ALLOW_ORIGIN=https://your.app
+#   Wildcard: CLAWQL_CORS_ALLOW_ORIGIN=* requires CLAWQL_ALLOW_CORS_STAR=1 (lab only)
 #   Opt out:  CLAWQL_SKIP_CORS=1  (removes CLAWQL_CORS_ALLOW_ORIGIN from the deployment)
 #
 set -euo pipefail
@@ -185,14 +185,20 @@ attach_secret_env "$DEPLOY_MCP"
 if [[ "${CLAWQL_SKIP_CORS:-}" == "1" ]]; then
   echo "==> Removing CLAWQL_CORS_ALLOW_ORIGIN from deployment/$DEPLOY_MCP (CLAWQL_SKIP_CORS=1)"
   kc -n "$NAMESPACE" set env "deployment/$DEPLOY_MCP" CLAWQL_CORS_ALLOW_ORIGIN- 2>/dev/null || true
-else
-  CORS_ORIGIN="${CLAWQL_CORS_ALLOW_ORIGIN:-*}"
+elif [[ -n "${CLAWQL_CORS_ALLOW_ORIGIN:-}" ]]; then
+  CORS_ORIGIN="${CLAWQL_CORS_ALLOW_ORIGIN}"
+  if [[ "${CORS_ORIGIN}" == "*" && "${CLAWQL_ALLOW_CORS_STAR:-}" != "1" ]]; then
+    echo "ERROR: CLAWQL_CORS_ALLOW_ORIGIN=* requires CLAWQL_ALLOW_CORS_STAR=1 (audit 7.61 — lab only)."
+    exit 1
+  fi
   if kc -n "$NAMESPACE" get "deployment/$DEPLOY_MCP" >/dev/null 2>&1; then
     echo "==> Setting CLAWQL_CORS_ALLOW_ORIGIN=$CORS_ORIGIN on deployment/$DEPLOY_MCP"
     kc -n "$NAMESPACE" set env "deployment/$DEPLOY_MCP" \
       CLAWQL_CORS_ALLOW_ORIGIN="$CORS_ORIGIN" \
       --overwrite
   fi
+else
+  echo "==> Leaving CLAWQL_CORS_ALLOW_ORIGIN unset (set explicitly for browser clients; audit 7.61)"
 fi
 
 echo "==> Restarting deployment $DEPLOY_MCP"
