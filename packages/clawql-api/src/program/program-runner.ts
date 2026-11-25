@@ -399,7 +399,7 @@ export function runProgramEffect(
   input: ExecuteProgramInput,
   host: ProgramHost,
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<ExecuteProgramResult> {
+): Effect.Effect<ExecuteProgramResult, Error> {
   return Effect.gen(function* () {
     const started = Date.now();
     const programId = yield* newProgramIdEffect();
@@ -440,7 +440,7 @@ export function runProgramEffect(
 export function runProgramPlanEffect<E = never>(
   input: ProgramPlanRunInput<E>,
   host: ProgramHost
-): Effect.Effect<ExecuteProgramResult, E> {
+): Effect.Effect<ExecuteProgramResult, E | Error> {
   return Effect.gen(function* () {
     const started = input.startedAtMs ?? Date.now();
     const { programId, plan, timeoutMs, maxOutputBytes, hooks } = input;
@@ -463,7 +463,7 @@ export function runProgramPlanEffect<E = never>(
 
     const gatedHost = yield* programIfcHostEffect(plan, host, env);
 
-    const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
+    const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, Error> =>
       Effect.gen(function* () {
         if (call.tool === "sleep") {
           yield* appendProcessWormGatedEffect({
@@ -870,7 +870,7 @@ export function runProgramPlanEffect<E = never>(
         return { record, value };
       });
 
-    const step = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, E> =>
+    const step = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, E | Error> =>
       hooks === undefined
         ? runOne(call, index)
         : Effect.gen(function* () {
@@ -1071,7 +1071,7 @@ export class ProgramRunnerService extends Context.Service<
       input: ExecuteProgramInput,
       host: ProgramHost,
       env?: NodeJS.ProcessEnv
-    ) => Effect.Effect<ExecuteProgramResult>;
+    ) => Effect.Effect<ExecuteProgramResult, Error>;
   }
 >()("clawql/ProgramRunnerService") {}
 

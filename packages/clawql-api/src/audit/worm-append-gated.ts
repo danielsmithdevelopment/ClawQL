@@ -18,14 +18,18 @@ export function wormAppendRequired(env: NodeJS.ProcessEnv = process.env): boolea
 }
 
 /**
- * Append to the process trail. When required, failures propagate; otherwise
- * they are swallowed so domain callers stay best-effort.
+ * Append to the process trail. When required, failures propagate as `Error`;
+ * otherwise they are swallowed so domain callers stay best-effort.
  */
 export function appendProcessWormGatedEffect(
   input: WORMAppendInput,
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<WORMEntry | null, AuditError> {
-  const write = appendProcessWormEffect(input);
+): Effect.Effect<WORMEntry | null, Error> {
+  const write = appendProcessWormEffect(input).pipe(
+    Effect.mapError(
+      (err: AuditError) => new Error(err.reason || "process WORM append failed")
+    )
+  );
   if (wormAppendRequired(env)) return write;
   return write.pipe(Effect.catch(() => Effect.succeed(null)));
 }

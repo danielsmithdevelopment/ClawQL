@@ -39,7 +39,11 @@ const appendGovernanceEvent = (event: AnalyticsGovernanceEvent): Effect.Effect<v
       scope: event.scope,
       detail: event.detail,
     },
-  }).pipe(Effect.asVoid);
+  }).pipe(
+    Effect.asVoid,
+    // Best-effort governance dual-write — never fail analytics callers.
+    Effect.catch(() => Effect.void)
+  );
 
 export const logProviderAddedEffect = (input: {
   actorId: string;
