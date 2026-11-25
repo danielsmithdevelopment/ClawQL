@@ -63,8 +63,9 @@ export async function runPaymentsOutboundApprove(
 
   if (isPaymentsApproveBlockedInHarness(env)) {
     console.error(
-      "clawql payments approve is refused inside a harness/agent shell (audit Y4). " +
-        "Approve from an operator terminal or POST /payments/outbound/approve with CLAWQL_OPERATOR_APPROVE_KEY / OIDC."
+      "clawql payments approve is refused inside a harness/agent shell (audit Y4/Z4). " +
+        "CLAWQL_IN_HARNESS is advisory — approve from a separate operator session/device " +
+        "(console OIDC, or POST /payments/outbound/approve with CLAWQL_OPERATOR_APPROVE_KEY_HASH)."
     );
     return 1;
   }

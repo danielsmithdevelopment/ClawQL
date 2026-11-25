@@ -423,6 +423,8 @@ export function buildHarnessChildEnv(
     childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = home;
   }
   // Audit Y4 / R12: mark agent shells so `clawql payments approve` (and similar) refuse.
+  // Z4: this marker is advisory — an agent can unset it; prefer approving from a
+  // separate session/device (console OIDC) or a sandbox that cannot read CLAWQL_HOME.
   childEnv.CLAWQL_IN_HARNESS = "1";
   if (!childEnv.CLAWQL_HARNESS_ID?.trim()) {
     childEnv.CLAWQL_HARNESS_ID = "clawql-harness";

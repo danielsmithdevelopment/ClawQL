@@ -85,11 +85,56 @@ export async function runDoctor(
   const envFile = getClawqlEnvFilePath(home);
   if (existsSync(envFile)) {
     checks.push({ level: "ok", message: `Config: ${envFile}` });
+    // Audit Z2: plaintext operator approve key on disk is readable by same-user agent shells.
+    try {
+      const { readFileSync } = await import("node:fs");
+      const { clawqlEnvContainsPlaintextOperatorKey } = await import(
+        "clawql-payments/x402"
+      );
+      const envContents = readFileSync(envFile, "utf8");
+      if (clawqlEnvContainsPlaintextOperatorKey(envContents)) {
+        checks.push({
+          level: "warn",
+          message: "clawql.env contains plaintext CLAWQL_OPERATOR_APPROVE_KEY (audit Z2)",
+          detail:
+            "Store CLAWQL_OPERATOR_APPROVE_KEY_HASH (sha256 hex) instead; enter the key from a password manager at approve time. Remove CLAWQL_OPERATOR_APPROVE_KEY from clawql.env.",
+        });
+      }
+    } catch {
+      // payments package unavailable in some install layouts — skip quietly
+    }
   } else {
     checks.push({
       level: "warn",
       message: "clawql.env not found",
       detail: "Run: npx clawql init",
+    });
+  }
+
+  // Audit Z2: process env still holds plaintext approve key without hash.
+  if (
+    process.env.CLAWQL_OPERATOR_APPROVE_KEY?.trim() &&
+    !process.env.CLAWQL_OPERATOR_APPROVE_KEY_HASH?.trim()
+  ) {
+    checks.push({
+      level: "warn",
+      message: "CLAWQL_OPERATOR_APPROVE_KEY set without CLAWQL_OPERATOR_APPROVE_KEY_HASH (audit Z2)",
+      detail:
+        "Prefer hash-only server config. Set CLAWQL_ALLOW_OPERATOR_APPROVE_KEY_PLAINTEXT=1 only for migration.",
+    });
+  }
+
+  // Audit Z4: harness marker is advisory — remind when outbound approve is configured.
+  if (
+    process.env.CLAWQL_OPERATOR_APPROVE_KEY_HASH?.trim() ||
+    process.env.CLAWQL_OPERATOR_APPROVE_KEY?.trim() ||
+    process.env.CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE?.trim()
+  ) {
+    checks.push({
+      level: "warn",
+      message: "Outbound payment approve: CLAWQL_IN_HARNESS is advisory (audit Z4)",
+      detail:
+        "An unsandboxed agent can unset the marker and read CLAWQL_HOME. Prefer human-approved OIDC from a separate session/device (console), or sandbox agent shells so they cannot see the ClawQL folder.",
     });
   }
 

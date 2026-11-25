@@ -55,6 +55,17 @@ and look up by metadata after Stripe’s ~24h window. If metadata search is
 unavailable after TTL, refuse to create (fail closed). Formal invariant:
 `AtMostOneCharge`.
 
+## 4. Outbound payment approve wording (Y/Z)
+
+Outbound x402 HITL approve is **not** the same as gateway mandate resume.
+
+| Wording | Holds when |
+| ------- | ---------- |
+| **human-approved** | OIDC console path with Z1 step-up (dedicated approve audience **or** recent `auth_time`) |
+| **operator-approved** | Dedicated operator key verified against `CLAWQL_OPERATOR_APPROVE_KEY_HASH` (Z2); principal from `CLAWQL_OPERATOR_ID` (Z3) |
+
+Y1–Y4 (#1547) are prerequisites. Z4 (harness marker advisory) means single-user unsandboxed agents can still reach disk — prefer a separate approve session/device. Full operator guide: [`outbound-payment-approve.md`](./outbound-payment-approve.md).
+
 ## Formal / product queue (not claim blockers)
 
 1. celld lease/supersede (PR #1456 vendor lab)
