@@ -13,7 +13,7 @@ export function anydocToolEnabled(): boolean {
 
 /**
  * Allowed directory prefixes for `path` input (colon/comma/newline separated).
- * Falls back to `CLAWQL_PDF_INSPECTOR_FILE_ROOTS`, then process cwd.
+ * Falls back to `CLAWQL_PDF_INSPECTOR_FILE_ROOTS`. Unset → path reads refuse (audit 4.03).
  */
 export function anydocFileRootsEnv(): string | undefined {
   return (

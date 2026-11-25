@@ -28,6 +28,7 @@ import { deletePostgresChunkVectorsByPaths } from "../vector/pgvector.js";
 import { deleteOntologyRowsByVaultNotePath } from "../ontology/ontology-erase.js";
 import {
   appendErasureDenyEffect,
+  appendErasureTombstoneEffect,
   deletePathMapEntry,
   destroyNoteKey,
   extractNoteIdFromEnvelope,
@@ -86,7 +87,50 @@ type EraseLockState = {
   cryptoKeyDestroyed: boolean;
   pathMapDeleted: boolean;
   pathId?: string;
+  /** True when the on-disk note was a crypto-shred envelope before erase. */
+  wasEncryptedEnvelope: boolean;
+  /**
+   * True when git history for this path contains a non-envelope (plaintext) blob
+   * (audit U3 — crypto-shred enabled after a plaintext commit).
+   */
+  gitHistoryHadPlaintext: boolean;
+  memoryDbErased: boolean;
+  pgvectorErased: boolean;
+  ontologyErased: boolean;
 };
+
+/** Probe git history for any plaintext (non-envelope) revision of `rel` (audit U3). */
+async function gitHistoryHadPlaintextBlob(vault: string, rel: string): Promise<boolean> {
+  try {
+    const { execFile } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const execFileAsync = promisify(execFile);
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", vault, "log", "--all", "--pretty=format:%H", "--", rel],
+      { maxBuffer: 4 * 1024 * 1024 }
+    );
+    const shas = stdout
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const sha of shas) {
+      try {
+        const { stdout: blob } = await execFileAsync(
+          "git",
+          ["-C", vault, "show", `${sha}:${rel}`],
+          { maxBuffer: 8 * 1024 * 1024 }
+        );
+        if (blob && !isEncryptedVaultEnvelope(blob)) return true;
+      } catch {
+        /* blob missing at this revision */
+      }
+    }
+  } catch {
+    /* not a git vault */
+  }
+  return false;
+}
 
 function causeMessage(cause: Cause.Cause<unknown>): string {
   const squashed = Cause.squash(cause);
@@ -119,11 +163,15 @@ async function eraseUnderVaultLock(
   try {
     const raw = await readVaultFileRaw(vault, rel);
     if (isEncryptedVaultEnvelope(raw)) {
+      state.wasEncryptedEnvelope = true;
       state.noteId = state.noteId ?? extractNoteIdFromEnvelope(raw);
     }
   } catch {
     /* missing */
   }
+
+  // U3: inspect history before unlink — plaintext commits survive crypto-shred.
+  state.gitHistoryHadPlaintext = await gitHistoryHadPlaintextBlob(vault, rel);
 
   const mapped = await lookupPathMapByPath(vault, rel);
   state.pathId = mapped?.pathId;
@@ -157,9 +205,24 @@ async function eraseUnderVaultLock(
   state.pathMapDeleted = Boolean(removed);
   if (removed?.pathId) state.pathId = removed.pathId;
 
-  await deleteDocumentFromMemoryDb(vault, rel);
-  await deletePostgresChunkVectorsByPaths([rel]);
-  await deleteOntologyRowsByVaultNotePath(vault, rel);
+  try {
+    await deleteDocumentFromMemoryDb(vault, rel);
+    state.memoryDbErased = true;
+  } catch {
+    state.memoryDbErased = false;
+  }
+  try {
+    await deletePostgresChunkVectorsByPaths([rel]);
+    state.pgvectorErased = true;
+  } catch {
+    state.pgvectorErased = false;
+  }
+  try {
+    await deleteOntologyRowsByVaultNotePath(vault, rel);
+    state.ontologyErased = true;
+  } catch {
+    state.ontologyErased = false;
+  }
 }
 
 /**
@@ -194,6 +257,11 @@ export function executeMemoryEraseCoreEffect(
       vaultErased: false,
       cryptoKeyDestroyed: false,
       pathMapDeleted: false,
+      wasEncryptedEnvelope: false,
+      gitHistoryHadPlaintext: false,
+      memoryDbErased: false,
+      pgvectorErased: false,
+      ontologyErased: false,
     };
 
     const lockExit = yield* Effect.exit(
@@ -231,6 +299,21 @@ export function executeMemoryEraseCoreEffect(
       }
     }
 
+    // Audit 4.07: tombstone so home-sync pull deletes the note instead of restoring it.
+    yield* Effect.exit(
+      appendErasureTombstoneEffect(vault, {
+        path: rel,
+        pathId: state.pathId,
+        contentHash: state.contentHash,
+      })
+    );
+
+    // U3: only claim ciphertext-only history when every git blob was an envelope.
+    const gitHistoryRetainsCiphertextOnly =
+      state.wasEncryptedEnvelope &&
+      state.cryptoKeyDestroyed === true &&
+      !state.gitHistoryHadPlaintext;
+
     const wormExit = yield* Effect.exit(
       emitMemoryWormEventEffect({
         kind: "MEMORY_RETRACTED",
@@ -239,11 +322,21 @@ export function executeMemoryEraseCoreEffect(
         correlationId: input.correlationId,
         wormRef: state.contentHash ? `sha256:${state.contentHash}` : null,
         detail: {
-          erasedStores: ["vault", "memory.db", "pgvector", "ontology.db", "note-key", "path-map"],
+          erasedStores: {
+            vault: state.vaultErased,
+            memoryDb: state.memoryDbErased,
+            pgvector: state.pgvectorErased,
+            ontology: state.ontologyErased,
+            cryptoKey: state.cryptoKeyDestroyed,
+            pathMap: state.pathMapDeleted,
+          },
           contentHash: state.contentHash ?? null,
           noteId: state.noteId ?? null,
           cryptoShred: state.cryptoKeyDestroyed,
-          gitHistoryRetainsCiphertextOnly: memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
+          gitHistoryRetainsCiphertextOnly,
+          gitBackend: memoryGitBackendEnabled(),
+          cryptoShredConfigured: memoryCryptoShredEnabled(),
+          teamSyncTombstone: true,
         },
       })
     );
@@ -264,15 +357,15 @@ export function executeMemoryEraseCoreEffect(
       noteId: state.noteId,
       erased: {
         vault: state.vaultErased,
-        memoryDb: true,
-        pgvector: true,
-        ontology: true,
+        memoryDb: state.memoryDbErased,
+        pgvector: state.pgvectorErased,
+        ontology: state.ontologyErased,
         cryptoKey: state.cryptoKeyDestroyed,
         pathMap: state.pathMapDeleted,
       },
       denyListUpdated: Boolean(state.contentHash && state.pathId),
       exportNote:
-        "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
+        "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. An erasure tombstone was written locally and the next home-sync push publishes it to the shared manifest and deletes the bucket object. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
     };
   });
 }

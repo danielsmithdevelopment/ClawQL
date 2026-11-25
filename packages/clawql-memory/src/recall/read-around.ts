@@ -6,7 +6,8 @@
 import { Context, Effect, Layer } from "effect";
 import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { MemoryError } from "../effect/memory-errors.js";
-import { readVaultTextFile } from "../vault/utils.js";
+import { assertSafeVaultMemoryRead } from "../vault/read-guard.js";
+import { readVaultTextFileAtAbsolute } from "../vault/utils.js";
 
 export type DocSection = {
   /** Stable id: slug path (e.g. sec-protocols) or heading slug. */
@@ -262,7 +263,15 @@ export function executeReadAroundEffect(
           error: "vault_not_configured",
         } satisfies ReadAroundResult;
       }
-      markdown = yield* memoryFromPromise(() => readVaultTextFile(vault, input.path!));
+      // Audit 4.01 / U2: realpath-check, then read the resolved absolute path (not the input).
+      const checked = yield* memoryFromPromise(() =>
+        assertSafeVaultMemoryRead(vault, input.path!)
+      );
+      markdown = yield* memoryFromPromise(() =>
+        readVaultTextFileAtAbsolute(vault, checked.absolutePath)
+      );
+      const result = yield* Effect.sync(() => readAroundFromMarkdown(markdown!, input));
+      return { ...result, path: checked.relativePath };
     }
     if (!markdown) {
       return { ok: false, error: "path_or_markdown_required" } satisfies ReadAroundResult;

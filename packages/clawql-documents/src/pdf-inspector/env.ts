@@ -21,7 +21,7 @@ export function pdfInspectorLocalMarkdownMinConfidence(): number {
 
 /**
  * Allowed directory prefixes for `path` input (colon/comma/newline separated).
- * Default: process cwd realpath.
+ * Unset → path reads refuse (no cwd default; audit 4.03).
  */
 export function pdfInspectorFileRootsEnv(): string | undefined {
   return process.env.CLAWQL_PDF_INSPECTOR_FILE_ROOTS?.trim() || undefined;

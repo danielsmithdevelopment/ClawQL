@@ -41,6 +41,20 @@ services:
       timeout: 3s
       retries: 5
 
+  # Audit U4: LangExtract live backend is ollama — run the runtime in-compose.
+  ollama:
+    image: ollama/ollama:0.6.5
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
   langextract:
     build:
       context: ../../docs/examples/idp/langextract-http
@@ -48,12 +62,19 @@ services:
       - "8090:8090"
     environment:
       LANGEXTRACT_MODE: demo
-      LANGEXTRACT_BACKEND: openrouter
-      LANGEXTRACT_MODEL_ID: deepseek/deepseek-chat
-      LANGEXTRACT_ARTIFACTS_DIR: /tmp/langextract-artifacts
-      # Live mode: set LANGEXTRACT_MODE=live and OPENROUTER_API_KEY (or LANGEXTRACT_BACKEND=ollama)
+      LANGEXTRACT_BACKEND: ollama
+      LANGEXTRACT_MODEL_ID: llama3.2
+      OLLAMA_BASE_URL: http://ollama:11434
+      LANGEXTRACT_ARTIFACTS_DIR: /vault/langextract-artifacts
+      # Live mode: set LANGEXTRACT_MODE=live (demo mode does not call Ollama).
+    depends_on:
+      ollama:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
       interval: 15s
       timeout: 3s
       retries: 5
+
+volumes:
+  ollama-data:

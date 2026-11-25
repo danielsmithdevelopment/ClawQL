@@ -20,9 +20,13 @@ export function memoryCryptoShredEnabled(env: NodeJS.ProcessEnv = process.env): 
   const raw = env.CLAWQL_MEMORY_CRYPTO_SHRED?.trim().toLowerCase();
   if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
   if (raw === "1" || raw === "true" || raw === "on" || raw === "yes") return true;
-  // Default on when the vault is git-backed (history otherwise retains plaintext forever).
+  // Default on when git history or team sync would otherwise retain plaintext (audit 4.07).
   const backend = env.CLAWQL_MEMORY_BACKEND?.trim().toLowerCase();
-  return backend === "git";
+  if (backend === "git") return true;
+  const commitOn = env.CLAWQL_MEMORY_GIT_COMMIT_ON?.trim().toLowerCase();
+  if (commitOn && commitOn !== "off" && commitOn !== "0" && commitOn !== "false") return true;
+  if (env.CLAWQL_SYNC_BUCKET?.trim() || env.CLAWQL_SYNC_ENABLED?.trim() === "1") return true;
+  return false;
 }
 
 export function clawqlMetaDir(vaultRoot: string): string {
@@ -457,4 +461,65 @@ export function loadErasureDenyHashesEffect(vaultRoot: string): Effect.Effect<Re
   return loadErasureDenyHashesEffectInner(vaultRoot).pipe(
     Effect.orElseSucceed(() => new Set<string>())
   );
+}
+
+function tombstoneListPath(vaultRoot: string): string {
+  return join(clawqlMetaDir(vaultRoot), "erasure-tombstones.json");
+}
+
+export type ErasureTombstoneEntry = {
+  path: string;
+  pathId?: string;
+  contentHash?: string;
+  erasedAt: string;
+};
+
+export type ErasureTombstoneFile = {
+  version: 1;
+  entries: ErasureTombstoneEntry[];
+};
+
+/** Record a vault-relative path so home-sync pull deletes it instead of restoring it (audit 4.07). */
+export function appendErasureTombstoneEffect(
+  vaultRoot: string,
+  entry: Omit<ErasureTombstoneEntry, "erasedAt"> & { erasedAt?: string }
+): Effect.Effect<ErasureTombstoneFile, Error> {
+  return Effect.gen(function* () {
+    yield* fromPromise(() =>
+      mkdir(clawqlMetaDir(vaultRoot), { recursive: true }).then(() => undefined)
+    );
+    yield* ensureClawqlMetaGitignoredEffect(vaultRoot);
+    const file = yield* readJsonFileEffect<ErasureTombstoneFile>(tombstoneListPath(vaultRoot), {
+      version: 1,
+      entries: [],
+    });
+    const next: ErasureTombstoneEntry = {
+      path: entry.path.replace(/\\/g, "/"),
+      pathId: entry.pathId,
+      contentHash: entry.contentHash,
+      erasedAt: entry.erasedAt ?? new Date().toISOString(),
+    };
+    file.entries = [...file.entries.filter((e) => e.path !== next.path), next];
+    yield* fromPromise(() =>
+      writeFile(tombstoneListPath(vaultRoot), `${JSON.stringify(file, null, 2)}\n`, "utf8")
+    );
+    return file;
+  });
+}
+
+export async function appendErasureTombstone(
+  vaultRoot: string,
+  entry: Omit<ErasureTombstoneEntry, "erasedAt"> & { erasedAt?: string }
+): Promise<ErasureTombstoneFile> {
+  return Effect.runPromise(appendErasureTombstoneEffect(vaultRoot, entry));
+}
+
+export async function loadErasureTombstonePaths(vaultRoot: string): Promise<ReadonlySet<string>> {
+  try {
+    const raw = await readFile(tombstoneListPath(vaultRoot), "utf8");
+    const parsed = JSON.parse(raw) as ErasureTombstoneFile;
+    return new Set((parsed.entries ?? []).map((e) => e.path.replace(/\\/g, "/")));
+  } catch {
+    return new Set();
+  }
 }

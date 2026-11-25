@@ -78,6 +78,7 @@ export function vectorBackend(): VectorBackend {
 }
 
 let warnedPostgresFallbackToSqlite = false;
+let warnedEmbeddingProvider = false;
 
 /**
  * **Runtime** vector store: same as {@link vectorBackend} except when env requests **postgres**
@@ -156,8 +157,8 @@ export function vectorSqliteBackendEnabled(): boolean {
 
 /**
  * Resolve embedding config.
- * - **local** (default when no API key): in-process MiniLM — no third-party daemon.
- * - **http**: OpenAI-compatible `/embeddings` when `CLAWQL_EMBEDDING_API_KEY` / `OPENAI_API_KEY` set.
+ * - **local** / **auto** (default): in-process MiniLM — never inferred from `OPENAI_API_KEY` (audit 4.04).
+ * - **http**: OpenAI-compatible `/embeddings` only when `CLAWQL_EMBEDDING_PROVIDER=http`.
  */
 export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   const b = vectorBackend();
@@ -168,22 +169,48 @@ export function resolveEmbeddingConfig(): EmbeddingConfig | null {
   const mode = embeddingProviderMode();
   if (mode === "off") return null;
 
-  const apiKey =
-    process.env.CLAWQL_EMBEDDING_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || "";
-
-  const preferHttp = mode === "http" || (mode === "auto" && Boolean(apiKey));
-  if (preferHttp) {
+  if (mode === "http") {
+    const apiKey =
+      process.env.CLAWQL_EMBEDDING_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || "";
     if (!apiKey) return null;
     const baseUrl = (process.env.CLAWQL_EMBEDDING_BASE_URL?.trim() || DEFAULT_HTTP_BASE).replace(
       /\/$/,
       ""
     );
+    const tier = process.env.CLAWQL_TIER?.trim().toLowerCase();
+    if (tier === "regulated") {
+      const allow = (process.env.CLAWQL_EMBEDDING_HTTP_ALLOWLIST ?? "")
+        .split(/[,\s]+/)
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+      let host = "";
+      try {
+        host = new URL(baseUrl).hostname.toLowerCase();
+      } catch {
+        return null;
+      }
+      if (!allow.includes(host)) {
+        console.warn(
+          `[clawql-mcp] CLAWQL_TIER=regulated refuses HTTP embeddings at ${host}; ` +
+            "set CLAWQL_EMBEDDING_HTTP_ALLOWLIST or use CLAWQL_EMBEDDING_PROVIDER=local"
+        );
+        return null;
+      }
+    }
     const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_HTTP_MODEL;
+    if (!warnedEmbeddingProvider) {
+      warnedEmbeddingProvider = true;
+      console.error(`[clawql-mcp] embedding provider=http model=${model} base=${baseUrl}`);
+    }
     return { provider: "http", baseUrl, model, apiKey };
   }
 
-  // local (explicit) or auto without API key — mandatory default path
+  // local (explicit) or auto — never leave the machine unless provider=http
   const model = process.env.CLAWQL_EMBEDDING_MODEL?.trim() || DEFAULT_LOCAL_EMBEDDING_MODEL;
+  if (!warnedEmbeddingProvider) {
+    warnedEmbeddingProvider = true;
+    console.error(`[clawql-mcp] embedding provider=local model=${model}`);
+  }
   return {
     provider: "local",
     baseUrl: "",

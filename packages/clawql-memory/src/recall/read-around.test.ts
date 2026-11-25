@@ -1,5 +1,10 @@
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
+  executeReadAroundEffect,
   formatSectionEvidence,
   isArtifactHeadingTitle,
   readAroundFromMarkdown,
@@ -135,5 +140,36 @@ Validation steps follow.
     const r = readAroundFromMarkdown(DOC, { chunkText: "orchid-77" });
     expect(r.ok).toBe(true);
     expect(r.section_id).toBe("sec-protocols");
+  });
+
+  it("executeReadAroundEffect refuses vault/providers.json (4.01)", async () => {
+    const root = await mkdtemp(join(tmpdir(), "clawql-ra-secret-"));
+    await mkdir(join(root, "vault"), { recursive: true });
+    await writeFile(join(root, "vault", "providers.json"), '{"token":"x"}\n', "utf8");
+    const err = await Effect.runPromise(
+      executeReadAroundEffect(root, { path: "vault/providers.json" }).pipe(Effect.flip)
+    );
+    const cause = (err as { cause?: unknown }).cause;
+    const text = [
+      (err as { reason?: string }).reason,
+      cause instanceof Error ? cause.message : String(cause ?? ""),
+    ].join(" ");
+    expect(text).toMatch(/secret|non-note|Memory|Vault read/i);
+  });
+
+  it("reads the realpath-checked absolute file (U2)", async () => {
+    const root = await mkdtemp(join(tmpdir(), "clawql-ra-u2-"));
+    await mkdir(join(root, "Memory"), { recursive: true });
+    await writeFile(join(root, "Memory", "note.md"), DOC, "utf8");
+    const r = await Effect.runPromise(
+      executeReadAroundEffect(root, {
+        path: "Memory/note.md",
+        sectionId: "sec-protocols",
+        tokenBudget: 200,
+      })
+    );
+    expect(r.ok).toBe(true);
+    expect(r.path).toBe("Memory/note.md");
+    expect(r.content).toMatch(/orchid-77/);
   });
 });

@@ -26,6 +26,11 @@
       "import": "./dist/vault/utils.js",
       "require": "./dist/vault/utils.cjs"
     },
+    "./vault/read-guard": {
+      "types": "./dist/vault/read-guard.d.ts",
+      "import": "./dist/vault/read-guard.js",
+      "require": "./dist/vault/read-guard.cjs"
+    },
     "./vault/slug-index": {
       "types": "./dist/vault/slug-index.d.ts",
       "import": "./dist/vault/slug-index.js",

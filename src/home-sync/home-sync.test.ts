@@ -195,4 +195,27 @@ describe("mergeManifestFiles", () => {
       "Memory/a.md": { sha256: "d".repeat(64), size: 1, mtimeMs: 1 },
     });
   });
+
+  it("drops erasure-tombstoned paths from the shared index (U1)", async () => {
+    const { mergeManifestFiles, mergeErasureTombstones } = await import("./engine.js");
+    const local = new Map([
+      ["Memory/keep.md", { sha256: "a".repeat(64), size: 1, mtimeMs: 1 }],
+      ["Memory/erased.md", { sha256: "b".repeat(64), size: 2, mtimeMs: 2 }],
+    ]);
+    const remote = {
+      version: 1 as const,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      files: {
+        "Memory/keep.md": { sha256: "a".repeat(64), size: 1, mtimeMs: 1 },
+        "Memory/erased.md": { sha256: "b".repeat(64), size: 2, mtimeMs: 2 },
+        "Memory/teammate-erased.md": { sha256: "c".repeat(64), size: 3, mtimeMs: 3 },
+      },
+      erasureTombstones: ["Memory/teammate-erased.md"],
+    };
+    const tombs = mergeErasureTombstones(new Set(["Memory/erased.md"]), remote);
+    expect(tombs.has("Memory/erased.md")).toBe(true);
+    expect(tombs.has("Memory/teammate-erased.md")).toBe(true);
+    const merged = mergeManifestFiles(local, remote, tombs);
+    expect(Object.keys(merged).sort()).toEqual(["Memory/keep.md"]);
+  });
 });

@@ -6,13 +6,13 @@
  * @see packages/clawql-documents/src/ingest/external-ingest.ts
  */
 
-import { isPrivateOrLoopbackIp } from "clawql-api";
+import { isIP } from "node:net";
+import { assertSafeSourceFetchUrl, isPrivateOrLoopbackIp } from "clawql-api";
 import { Effect } from "effect";
 
 const MAX_URL_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_URL_REDIRECTS = 5;
 const DEFAULT_TIMEOUT_MS = 60_000;
-const BLOCKED_HOSTNAMES = new Set(["metadata.google.internal", "metadata.google"]);
 
 const DEFAULT_UA =
   "Mozilla/5.0 (compatible; clawql-web/1.0; +https://github.com/danielsmithdevelopment/ClawQL)";
@@ -25,29 +25,65 @@ export type RawFetchResult = {
   provider: "raw-http";
 };
 
-/** SSRF gate — same posture as IDP external ingest. */
+function loopbackAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.CLAWQL_WEB_ALLOW_LOOPBACK?.trim() === "1";
+}
+
+function isLoopbackHostname(host: string): boolean {
+  const h = host.replace(/^\[|\]$/g, "").toLowerCase();
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "::1" ||
+    h === "0:0:0:0:0:0:0:1" ||
+    h.endsWith(".localhost")
+  );
+}
+
+/**
+ * SSRF gate for web ingest (audit 4.06).
+ * Sync hostname/IP checks via shared source helper; loopback refused unless
+ * `CLAWQL_WEB_ALLOW_LOOPBACK=1` (tests). Fetch path also resolves DNS.
+ */
 export function assertSafeWebUrl(urlStr: string): URL {
-  let u: URL;
+  let parsed: URL;
   try {
-    u = new URL(urlStr);
+    parsed = new URL(urlStr);
   } catch {
     throw new Error("invalid url");
   }
-  if (u.protocol !== "https:" && u.protocol !== "http:") {
-    throw new Error("only http and https URLs are allowed");
+  const host = parsed.hostname.trim().toLowerCase();
+  if (isLoopbackHostname(host)) {
+    if (!loopbackAllowed()) {
+      throw new Error(
+        "URL must not target loopback (set CLAWQL_WEB_ALLOW_LOOPBACK=1 for local tests only)"
+      );
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("only http and https URLs are allowed");
+    }
+    return parsed;
   }
-  const host = u.hostname.trim().toLowerCase();
-  const isLoopbackHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
-  if (u.protocol === "http:" && !isLoopbackHost) {
-    throw new Error("http is only allowed for localhost; use https");
+  // Public hosts: same rules as source fetch (blocks private IP literals, metadata hosts).
+  return assertSafeSourceFetchUrl(urlStr);
+}
+
+async function assertSafeWebUrlResolved(urlStr: string): Promise<URL> {
+  const sync = assertSafeWebUrl(urlStr);
+  if (isLoopbackHostname(sync.hostname) && loopbackAllowed()) {
+    return sync;
   }
-  if (BLOCKED_HOSTNAMES.has(host) || host.endsWith(".localhost")) {
-    throw new Error("URL host is not allowed");
+  let host = sync.hostname.toLowerCase();
+  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+  if (isIP(host)) return sync;
+  const { lookup } = await import("node:dns/promises");
+  const results = await lookup(host, { all: true });
+  for (const r of results) {
+    if (isPrivateOrLoopbackIp(r.address)) {
+      throw new Error("URL must not resolve to private or loopback addresses");
+    }
   }
-  if (!isLoopbackHost && isPrivateOrLoopbackIp(host)) {
-    throw new Error("URL must not target private or link-local addresses");
-  }
-  return u;
+  return sync;
 }
 
 async function fetchRawUrlImpl(
@@ -60,7 +96,7 @@ async function fetchRawUrlImpl(
     /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
     userAgent?: string;
   } = {}
-): Promise<RawFetchResult>  {
+): Promise<RawFetchResult> {
   if (options.dryRun) {
     const text = `dry-run raw bytes for ${urlStr}`;
     return {
@@ -76,7 +112,7 @@ async function fetchRawUrlImpl(
   const maxBytes = options.maxBytes ?? MAX_URL_RESPONSE_BYTES;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const userAgent = options.userAgent?.trim() || DEFAULT_UA;
-  let current = assertSafeWebUrl(urlStr).href;
+  let current = (await assertSafeWebUrlResolved(urlStr)).href;
 
   for (let hop = 0; hop <= MAX_URL_REDIRECTS; hop += 1) {
     const res = await fetchImpl(current, {
@@ -92,7 +128,7 @@ async function fetchRawUrlImpl(
       if (!loc?.trim()) {
         throw new Error(`HTTP ${res.status} redirect without Location`);
       }
-      current = assertSafeWebUrl(new URL(loc, current).href).href;
+      current = (await assertSafeWebUrlResolved(new URL(loc, current).href)).href;
       continue;
     }
     if (!res.ok) {
@@ -126,7 +162,6 @@ export function fetchRawUrlEffect(
     maxBytes?: number;
     dryRun?: boolean;
     fetchImpl?: typeof fetch;
-    /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
     userAgent?: string;
   } = {}
 ): Effect.Effect<RawFetchResult, Error> {
@@ -144,9 +179,8 @@ export async function fetchRawUrl(
     maxBytes?: number;
     dryRun?: boolean;
     fetchImpl?: typeof fetch;
-    /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
     userAgent?: string;
   } = {}
-): Promise<RawFetchResult>  {
+): Promise<RawFetchResult> {
   return Effect.runPromise(fetchRawUrlEffect(urlStr, options));
 }

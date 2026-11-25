@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -18,6 +19,8 @@ export type ObjectStorageClient = {
   putJson(key: string, body: unknown): Promise<void>;
   getBytes(key: string): Promise<Buffer | null>;
   putBytes(key: string, body: Buffer, contentType?: string): Promise<void>;
+  /** Audit U1: remove a tombstoned note from the shared bucket. */
+  deleteObject(key: string): Promise<void>;
 };
 
 function asError(cause: unknown): Error {
@@ -104,6 +107,18 @@ export function createObjectStorageClient(config: ResolvedHomeSyncConfig): Objec
           ContentType: contentType,
         })
       );
+    },
+    async deleteObject(key: string): Promise<void> {
+      try {
+        await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: key }));
+      } catch (e: unknown) {
+        const name = (e as { name?: string })?.name;
+        const code = (e as { Code?: string })?.Code;
+        const status = (e as { $metadata?: { httpStatusCode?: number } })?.$metadata
+          ?.httpStatusCode;
+        if (name === "NoSuchKey" || code === "NoSuchKey" || status === 404) return;
+        throw e;
+      }
     },
   };
 }

@@ -40,8 +40,8 @@ services:
       CLASSIFIER_BASE_URL: http://classifier:8080
       CLASSIFIER_MIN_CONFIDENCE: ${CLASSIFIER_MIN_CONFIDENCE:-0.85}
       LANGEXTRACT_BASE_URL: http://langextract:8090
-      CLAWQL_PDF_INSPECTOR_FILE_ROOTS: /fixtures:/vault
-      CLAWQL_ANYDOC_FILE_ROOTS: /fixtures:/vault
+      CLAWQL_PDF_INSPECTOR_FILE_ROOTS: /fixtures:/vault/Memory
+      CLAWQL_ANYDOC_FILE_ROOTS: /fixtures:/vault/Memory
       CLAWQL_LABEL_STUDIO_URL: http://label-studio:8080
       CLAWQL_LABEL_STUDIO_API_TOKEN: ${CLAWQL_LABEL_STUDIO_API_TOKEN}
       CLAWQL_HITL_WEBHOOK_TOKEN: ${CLAWQL_HITL_WEBHOOK_TOKEN}
@@ -88,6 +88,20 @@ services:
       timeout: 3s
       retries: 5
 
+  # Audit U4: LangExtract live backend is ollama — run the runtime in-compose.
+  ollama:
+    image: ollama/ollama:0.6.5
+    ports:
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
   langextract:
     build:
       context: ../../docs/examples/idp/langextract-http
@@ -95,9 +109,13 @@ services:
       - "${LANGEXTRACT_HOST_PORT:-8290}:8090"
     environment:
       LANGEXTRACT_MODE: demo
-      LANGEXTRACT_BACKEND: openrouter
-      LANGEXTRACT_MODEL_ID: deepseek/deepseek-chat
-      LANGEXTRACT_ARTIFACTS_DIR: /tmp/langextract-artifacts
+      LANGEXTRACT_BACKEND: ollama
+      LANGEXTRACT_MODEL_ID: llama3.2
+      OLLAMA_BASE_URL: http://ollama:11434
+      LANGEXTRACT_ARTIFACTS_DIR: /vault/langextract-artifacts
+    depends_on:
+      ollama:
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8090/health"]
       interval: 15s
@@ -119,3 +137,4 @@ services:
 
 volumes:
   label-studio-data:
+  ollama-data:

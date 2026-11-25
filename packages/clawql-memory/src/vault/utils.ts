@@ -112,9 +112,32 @@ export function readVaultTextFileEffect(
   });
 }
 
+/**
+ * Read a realpath-checked absolute file under the vault (audit U2).
+ * Callers must pass the `absolutePath` from {@link assertSafeVaultMemoryRead}.
+ */
+export function readVaultTextFileAtAbsoluteEffect(
+  vaultRoot: string,
+  absolutePath: string
+): Effect.Effect<string, Error> {
+  return Effect.gen(function* () {
+    assertInsideVault(vaultRoot, absolutePath);
+    const raw = yield* fromPromise(() => readFile(absolutePath, "utf8"));
+    return yield* maybeDecryptVaultReadEffect(vaultRoot, raw);
+  });
+}
+
 /** Promise façade. */
 export async function readVaultTextFile(vaultRoot: string, relativePath: string): Promise<string> {
   return Effect.runPromise(readVaultTextFileEffect(vaultRoot, relativePath));
+}
+
+/** Promise façade for realpath-checked absolute reads. */
+export async function readVaultTextFileAtAbsolute(
+  vaultRoot: string,
+  absolutePath: string
+): Promise<string> {
+  return Effect.runPromise(readVaultTextFileAtAbsoluteEffect(vaultRoot, absolutePath));
 }
 
 /**

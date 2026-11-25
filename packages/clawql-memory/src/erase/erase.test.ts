@@ -4,7 +4,7 @@
  */
 
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -150,6 +150,8 @@ describe("runMemoryErase", () => {
     expect(retracted!.path).toBeUndefined();
     expect(retracted!.pathId).toBe(erased.pathId);
     expect(retracted!.wormRef).toBe(`sha256:${erased.contentHash}`);
+    const detail = retracted!.detail as { gitHistoryRetainsCiphertextOnly?: boolean };
+    expect(detail.gitHistoryRetainsCiphertextOnly).toBe(true);
     const wormJson = JSON.stringify(retracted);
     expect(wormJson).not.toContain(needle);
     expect(wormJson).not.toContain(path);
@@ -223,6 +225,65 @@ describe("runMemoryErase", () => {
     expect(retracted?.path).toBeUndefined();
     expect(retracted?.pathId).toBe(erased.pathId);
     expect(JSON.stringify(retracted)).not.toContain(path);
+  });
+
+  it("U3: plaintext git history clears gitHistoryRetainsCiphertextOnly", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "clawql-erase-u3-"));
+    await gitInit(dir);
+
+    stash("CLAWQL_OBSIDIAN_VAULT_PATH");
+    stash("CLAWQL_VECTOR_BACKEND");
+    stash("CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY");
+    stash("CLAWQL_MEMORY_DB");
+    stash("CLAWQL_ONTOLOGY_DB");
+    stash("CLAWQL_MEMORY_BACKEND");
+    stash("CLAWQL_MEMORY_CRYPTO_SHRED");
+    stash("CLAWQL_MEMORY_GIT_COMMIT_ON");
+    stash("CLAWQL_MEMORY_GIT_PUSH_MODE");
+    process.env.CLAWQL_OBSIDIAN_VAULT_PATH = dir;
+    process.env.CLAWQL_VECTOR_BACKEND = "none";
+    process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
+    process.env.CLAWQL_MEMORY_BACKEND = "fs";
+    process.env.CLAWQL_MEMORY_CRYPTO_SHRED = "0";
+    process.env.CLAWQL_MEMORY_GIT_COMMIT_ON = "off";
+    process.env.CLAWQL_MEMORY_GIT_PUSH_MODE = "off";
+    delete process.env.CLAWQL_MEMORY_DB;
+    delete process.env.CLAWQL_ONTOLOGY_DB;
+
+    const needle = `U3_PLAINTEXT_${Date.now()}`;
+    const path = "Memory/team/u3-plain-then-shred.md";
+    await mkdir(join(dir, "Memory", "team"), { recursive: true });
+    await writeFile(join(dir, path), `# U3\n\n${needle}\n`, "utf8");
+    await execFileAsync("git", ["-C", dir, "add", "-A"]);
+    await execFileAsync("git", ["-C", dir, "commit", "-m", "plaintext before shred"]);
+
+    // Switch on crypto-shred and re-ingest so the working tree becomes an envelope.
+    process.env.CLAWQL_MEMORY_CRYPTO_SHRED = "1";
+    process.env.CLAWQL_MEMORY_BACKEND = "git";
+    process.env.CLAWQL_MEMORY_GIT_COMMIT_ON = "ingest";
+    const ingest = await runMemoryIngest({
+      title: "U3 Plain Then Shred",
+      folder: "team",
+      insights: `rotated body without ${needle}`,
+      type: "context",
+      append: false,
+    });
+    expect(ingest.ok).toBe(true);
+    expect(ingest.path).toBe(path);
+    const raw = await readVaultFileRaw(dir, path);
+    expect(raw).toContain("CLAWQL_ENCRYPTED_V1:");
+
+    const wormEvents: MemoryWormEvent[] = [];
+    const unreg = registerMemoryWormSink((e) => wormEvents.push(e));
+    const erased = await runMemoryErase({ path, correlationId: "u3-test" });
+    unreg();
+    expect(erased.ok).toBe(true);
+
+    const retracted = wormEvents.find((e) => e.kind === "MEMORY_RETRACTED");
+    expect(retracted).toBeTruthy();
+    const detail = retracted!.detail as { gitHistoryRetainsCiphertextOnly?: boolean };
+    // Plaintext commit remains in git history → must not claim ciphertext-only.
+    expect(detail.gitHistoryRetainsCiphertextOnly).toBe(false);
   });
 });
 
