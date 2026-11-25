@@ -20,6 +20,7 @@ import {
   getWorkflowLogTailMax,
   isNamespaceAllowed,
   isTemplateAllowed,
+  workflowAgentResumeAllowed,
   workflowDeleteAllowed,
   WORKFLOW_CORRELATION_LABEL,
 } from "./env.js";
@@ -586,6 +587,17 @@ async function runWorkflowParsedOperationImpl(
         });
       }
       case "resume": {
+        // Audit 5.02: agents must not skip human approval via workflow resume
+        // (same class of bug as mandate MCP resume — Pass 2.01).
+        if (!workflowAgentResumeAllowed()) {
+          return jsonResponse({
+            ok: false,
+            error:
+              "workflow resume is refused for agents (audit 5.02). " +
+              "Resume via Label Studio webhook / signed NATS hitl.completed, " +
+              "or set CLAWQL_WORKFLOW_ALLOW_AGENT_RESUME=1 for operator-driven demos only.",
+          });
+        }
         const nsCheck = requireNamespace(parsed.namespace);
         if (!nsCheck.ok) return jsonResponse({ ok: false, error: nsCheck.error });
         const result = await resumeWorkflow(

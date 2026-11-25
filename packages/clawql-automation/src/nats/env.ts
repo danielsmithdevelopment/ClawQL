@@ -128,3 +128,34 @@ export function natsMcpHttpUrl(): string {
     "http://127.0.0.1:8080/mcp"
   );
 }
+
+/** Local/dev only — skip NATS TLS + credential requirements (audit 5.02). */
+export function natsAllowInsecure(): boolean {
+  return envTruthy(process.env.CLAWQL_NATS_ALLOW_INSECURE);
+}
+
+export function natsUser(): string | undefined {
+  return process.env.CLAWQL_NATS_USER?.trim() || undefined;
+}
+
+export function natsPass(): string | undefined {
+  return process.env.CLAWQL_NATS_PASS?.trim() || undefined;
+}
+
+export function natsToken(): string | undefined {
+  return process.env.CLAWQL_NATS_TOKEN?.trim() || undefined;
+}
+
+export function natsCredsFile(): string | undefined {
+  return process.env.CLAWQL_NATS_CREDS_FILE?.trim() || undefined;
+}
+
+/** Shared secret required on hitl.completed before Argo resume (audit 5.02). */
+export function natsHitlResumeToken(): string | undefined {
+  return process.env.CLAWQL_NATS_HITL_RESUME_TOKEN?.trim() || undefined;
+}
+
+/** Local/dev only — allow unsigned hitl.completed resume when token unset. */
+export function natsHitlAllowUnsignedResume(): boolean {
+  return envTruthy(process.env.CLAWQL_NATS_HITL_ALLOW_UNSIGNED_RESUME);
+}

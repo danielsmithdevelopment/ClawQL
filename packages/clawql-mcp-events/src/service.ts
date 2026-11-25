@@ -1,5 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import { EventPayloadId, name } from "clawql-gdp";
+import { defaultMcpEventsAccessCheck } from "./access-check.js";
 import { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
 import { screenAndRedactForPublishEffect } from "./proofs/payload-redacted.js";
 import { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
@@ -147,10 +148,8 @@ export function makeMcpEventsService(
   const webhookFetch = config.webhookFetch ?? makeWebhookFetch();
   const verificationCache = config.verificationCache ?? createVerificationCache();
   const feedback = config.feedback ?? defaultFeedbackLoopDetector;
-  const accessCheck =
-    config.accessCheck ??
-    ((_input: { principal: string; eventName: string; arguments: Record<string, unknown> }) =>
-      true);
+  // Audit 5.04: default deny — open access only via CLAWQL_MCP_EVENTS_OPEN_ACCESS=1.
+  const accessCheck = config.accessCheck ?? defaultMcpEventsAccessCheck;
   const wormAppend = config.wormAppend;
   const defaultTtlMs = config.defaultTtlMs ?? DEFAULT_TTL_MS;
   const allowNonExpiring = config.allowNonExpiring ?? false;

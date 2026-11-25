@@ -36,16 +36,27 @@ export function publishHitlCompletedEventEffect(fields: {
   workflow_ref?: HitlWorkflowRef;
   clawql_hitl?: unknown;
   source?: string;
+  /** Human decision — defaults to approve for authenticated Label Studio webhooks. */
+  decision?: "approve" | "decline" | "reject";
+  /** Shared secret for NATS consumers (audit 5.02); defaults to CLAWQL_NATS_HITL_RESUME_TOKEN. */
+  resume_token?: string;
 }): Effect.Effect<boolean> {
-  const payload: Record<string, unknown> = {};
+  const payload: Record<string, unknown> = {
+    decision: fields.decision ?? "approve",
+  };
   if (fields.clawql_hitl !== undefined) {
     payload.clawql_hitl = fields.clawql_hitl;
+  }
+  const token =
+    fields.resume_token?.trim() || process.env.CLAWQL_NATS_HITL_RESUME_TOKEN?.trim() || undefined;
+  if (token) {
+    payload.resume_token = token;
   }
   return publishWorkflowEventEffect(
     buildWorkflowEvent("hitl.completed", fields.source ?? "hitl-label-studio-webhook", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
-      payload: Object.keys(payload).length > 0 ? payload : undefined,
+      payload,
     })
   );
 }
@@ -56,6 +67,8 @@ export async function publishHitlCompletedEvent(fields: {
   workflow_ref?: HitlWorkflowRef;
   clawql_hitl?: unknown;
   source?: string;
+  decision?: "approve" | "decline" | "reject";
+  resume_token?: string;
 }): Promise<boolean> {
   return Effect.runPromise(publishHitlCompletedEventEffect(fields));
 }

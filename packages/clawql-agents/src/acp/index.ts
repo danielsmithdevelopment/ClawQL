@@ -1,3 +1,4 @@
+export { filterAcpChildEnv } from "./child-env.js";
 export { AcpError } from "./errors.js";
 export {
   AgentClientProtocol,

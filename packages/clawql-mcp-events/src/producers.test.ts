@@ -215,7 +215,11 @@ describe("MCP Events producers (no vapor)", () => {
         redactPii: false,
         coalesceIntervalMs: 0,
       };
-      const layer = McpEventsServiceLayer({ store, enterprise });
+      const layer = McpEventsServiceLayer({
+        store,
+        enterprise,
+        accessCheck: () => true,
+      });
 
       setMcpEventsProcessEmitter(async (event) =>
         Effect.runPromise(
@@ -237,7 +241,7 @@ describe("MCP Events producers (no vapor)", () => {
               delivery: { mode: "webhook", url: receiver.url, secret },
             });
           }),
-          { store, enterprise }
+          { store, enterprise, accessCheck: () => true }
         );
 
         if (c.name === "document.processed") {
@@ -284,6 +288,7 @@ describe("MCP Events producers (no vapor)", () => {
           }),
           {
             store: createMemorySubscriptionStore(),
+            accessCheck: () => true,
             enterprise: {
               callbackAllowlist: ["chatgpt.com", "*.oaiusercontent.com"],
               maxSubscriptionsPerPrincipal: 25,

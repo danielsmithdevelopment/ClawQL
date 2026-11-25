@@ -196,6 +196,7 @@ export type {
 export {
   AcpError,
   AgentClientProtocol,
+  filterAcpChildEnv,
   makeAgentClientProtocolDuplexLayer,
   makeAgentClientProtocolLayer,
   makeAcpTestPair,

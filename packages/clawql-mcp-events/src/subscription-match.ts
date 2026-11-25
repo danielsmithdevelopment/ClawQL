@@ -44,6 +44,32 @@ export const subscriptionAllowsInboundEffect = (
     return filterValueMatches(want, got);
   });
 
+/**
+ * Audit 5.04: tenant-scoped events must not fan out to subscriptions that
+ * omit a matching tenant_id filter (standing cross-tenant exfiltration).
+ */
+export const tenantFilterAllowsEffect = (
+  filters: Record<string, unknown>,
+  data: Record<string, unknown>
+): Effect.Effect<boolean> =>
+  Effect.sync(() => {
+    const eventTenant =
+      typeof data.tenant_id === "string"
+        ? data.tenant_id.trim()
+        : typeof data.tenant === "string"
+          ? data.tenant.trim()
+          : "";
+    if (!eventTenant) return true;
+    const filterTenant =
+      typeof filters.tenant_id === "string"
+        ? filters.tenant_id.trim()
+        : typeof filters.tenant === "string"
+          ? filters.tenant.trim()
+          : "";
+    if (!filterTenant) return false;
+    return filterValueMatches(filterTenant, eventTenant);
+  });
+
 export const matchesEventFiltersEffect = (
   filters: Record<string, unknown>,
   data: Record<string, unknown>
@@ -51,6 +77,9 @@ export const matchesEventFiltersEffect = (
   Effect.gen(function* () {
     const inboundOk = yield* subscriptionAllowsInboundEffect(filters, data);
     if (!inboundOk) return false;
+
+    const tenantOk = yield* tenantFilterAllowsEffect(filters, data);
+    if (!tenantOk) return false;
 
     const filterSource =
       typeof filters.source === "string" && filters.source.trim().startsWith("inbound:");
