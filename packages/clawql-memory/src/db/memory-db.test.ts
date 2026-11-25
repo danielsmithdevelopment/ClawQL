@@ -19,6 +19,7 @@ describe("memory-db", () => {
   const savedDbOff = process.env.CLAWQL_MEMORY_DB;
   const savedVector = process.env.CLAWQL_VECTOR_BACKEND;
   const savedKey = process.env.CLAWQL_EMBEDDING_API_KEY;
+  const savedProvider = process.env.CLAWQL_EMBEDDING_PROVIDER;
   const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
   const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
   const savedCuckooMetrics = process.env.CLAWQL_CUCKOO_METRICS;
@@ -33,6 +34,7 @@ describe("memory-db", () => {
     process.env.CLAWQL_VECTOR_BACKEND = "off";
     process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY = "1";
     delete process.env.CLAWQL_EMBEDDING_API_KEY;
+    delete process.env.CLAWQL_EMBEDDING_PROVIDER;
     delete process.env.CLAWQL_CUCKOO_ENABLED;
     delete process.env.CLAWQL_MERKLE_ENABLED;
     delete process.env.CLAWQL_CUCKOO_METRICS;
@@ -48,6 +50,8 @@ describe("memory-db", () => {
     else process.env.CLAWQL_VECTOR_BACKEND = savedVector;
     if (savedKey === undefined) delete process.env.CLAWQL_EMBEDDING_API_KEY;
     else process.env.CLAWQL_EMBEDDING_API_KEY = savedKey;
+    if (savedProvider === undefined) delete process.env.CLAWQL_EMBEDDING_PROVIDER;
+    else process.env.CLAWQL_EMBEDDING_PROVIDER = savedProvider;
     if (savedCuckoo === undefined) delete process.env.CLAWQL_CUCKOO_ENABLED;
     else process.env.CLAWQL_CUCKOO_ENABLED = savedCuckoo;
     if (savedMerkle === undefined) delete process.env.CLAWQL_MERKLE_ENABLED;
@@ -118,7 +122,10 @@ describe("memory-db", () => {
 
   it("syncMemoryDbFromDocuments stores embeddings when vector backend + mock API", async () => {
     process.env.CLAWQL_VECTOR_BACKEND = "sqlite";
+    // Audit 4.04: HTTP embeddings are opt-in; API key alone no longer selects http.
+    process.env.CLAWQL_EMBEDDING_PROVIDER = "http";
     process.env.CLAWQL_EMBEDDING_API_KEY = "test-key";
+    delete process.env.CLAWQL_ALLOW_KEYWORD_ONLY_MEMORY;
 
     const dim = 8;
     vi.stubGlobal(
