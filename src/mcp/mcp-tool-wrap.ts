@@ -145,10 +145,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   return wrapMcpToolHandler(toolName, async (...args: TArgs): Promise<TResult> => {
     await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
 
-    const scopeDecision = decideAtrToolScope(
-      toolName,
-      getMcpRequestContext()?.atrScopeTokens
-    );
+    const scopeDecision = decideAtrToolScope(toolName, getMcpRequestContext()?.atrScopeTokens);
     if (!scopeDecision.allow) {
       await Effect.runPromise(appendMcpToolResultEffect(toolName, false, scopeDecision.reason));
       return {

@@ -960,8 +960,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         atrScopeTokens = trustedProxyForScope && headerTokens?.length ? headerTokens : ["*"];
       } else if (claimsForScope) {
         // Authenticated with no scope claim → deny tools (empty list), not fail-open.
-        atrScopeTokens =
-          trustedProxyForScope && headerTokens?.length ? headerTokens : [];
+        atrScopeTokens = trustedProxyForScope && headerTokens?.length ? headerTokens : [];
       } else if (trustedProxyForScope && headerTokens?.length) {
         atrScopeTokens = headerTokens;
       } else {

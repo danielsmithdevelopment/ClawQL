@@ -6,7 +6,8 @@
 
 import { NATIVE_TOOL_POLICY } from "clawql-api";
 
-export type AtrToolScopeDecision = { readonly allow: true } | { readonly allow: false; readonly reason: string };
+export type AtrToolScopeDecision =
+  { readonly allow: true } | { readonly allow: false; readonly reason: string };
 
 /**
  * Resolve the ATR family for a tool name.
@@ -33,7 +34,11 @@ export function atrScopeFamilyForTool(toolName: string): string {
   if (policy && (policy.kind === "passthrough" || policy.kind === "read")) {
     return "core";
   }
-  if (toolName.startsWith("skills_") || toolName === "docs_search" || toolName.startsWith("audit")) {
+  if (
+    toolName.startsWith("skills_") ||
+    toolName === "docs_search" ||
+    toolName.startsWith("audit")
+  ) {
     return "core";
   }
   return toolName;

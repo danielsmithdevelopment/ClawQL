@@ -116,18 +116,12 @@ export type GrpcMcpServerOptions = {
    */
   authorizeMetadata?: (
     metadata: grpc.Metadata
-  ) =>
-    | Promise<boolean | GrpcAuthorizeResult>
-    | boolean
-    | GrpcAuthorizeResult;
+  ) => Promise<boolean | GrpcAuthorizeResult> | boolean | GrpcAuthorizeResult;
   /**
    * Run an authorized protobuf handler inside the host's request context
    * (ALS for ATR scope / tenant). Required for per-tool scope on gRPC.
    */
-  runWithAuthContext?: <T>(
-    ctx: GrpcAuthContext,
-    fn: () => Promise<T>
-  ) => Promise<T>;
+  runWithAuthContext?: <T>(ctx: GrpcAuthContext, fn: () => Promise<T>) => Promise<T>;
   /**
    * Passed to `grpc.Server` (e.g. `interceptors` for OpenTelemetry / metadata, see
    * [Google Cloud gRPC + MCP](https://cloud.google.com/blog/products/networking/grpc-as-a-native-transport-for-mcp)).
@@ -495,10 +489,7 @@ async function maybeStartGrpcMcpServerImpl(
   const authorize = options.authorizeMetadata;
   const runWithAuthContext = options.runWithAuthContext;
 
-  function methodIsResponseStream(
-    serviceDef: grpc.ServiceDefinition,
-    methodName: string
-  ): boolean {
+  function methodIsResponseStream(serviceDef: grpc.ServiceDefinition, methodName: string): boolean {
     const direct = serviceDef[methodName] as { responseStream?: boolean } | undefined;
     if (direct && typeof direct.responseStream === "boolean") return direct.responseStream;
     const camel = methodName.charAt(0).toLowerCase() + methodName.slice(1);
@@ -509,9 +500,7 @@ async function maybeStartGrpcMcpServerImpl(
     return false;
   }
 
-  async function resolveAuthorize(
-    metadata: grpc.Metadata
-  ): Promise<GrpcAuthorizeResult | false> {
+  async function resolveAuthorize(metadata: grpc.Metadata): Promise<GrpcAuthorizeResult | false> {
     if (!authorize) return { ok: true };
     const raw = await authorize(metadata);
     if (raw === false || raw == null) return false;
@@ -571,9 +560,7 @@ async function maybeStartGrpcMcpServerImpl(
       }
       const streaming = methodIsResponseStream(serviceDef, method);
       if (streaming) {
-        wrapped[method] = (
-          call: grpc.ServerWritableStream<unknown, unknown>
-        ) => {
+        wrapped[method] = (call: grpc.ServerWritableStream<unknown, unknown>) => {
           void (async () => {
             try {
               const result = await resolveAuthorize(call.metadata);
@@ -621,8 +608,7 @@ async function maybeStartGrpcMcpServerImpl(
               try {
                 callback({
                   code: grpc.status.UNAUTHENTICATED,
-                  message:
-                    err instanceof Error ? err.message : "gRPC MCP authentication failed",
+                  message: err instanceof Error ? err.message : "gRPC MCP authentication failed",
                 });
               } catch {
                 /* callback missing or already settled — never rethrow (S1) */
