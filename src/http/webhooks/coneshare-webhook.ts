@@ -15,21 +15,7 @@ import {
   resumeWorkflowFromHitlRef,
 } from "clawql-automation/workflow/suspend-resume";
 
-function webhookTokenExpected(): string | undefined {
-  const t = process.env.CLAWQL_CONESHARE_WEBHOOK_TOKEN?.trim();
-  return t && t.length > 0 ? t : undefined;
-}
-
-function webhookAuthOk(req: Request): boolean {
-  const expected = webhookTokenExpected();
-  if (!expected) return process.env.NODE_ENV !== "production";
-  const header =
-    req
-      .header("authorization")
-      ?.replace(/^Bearer\s+/i, "")
-      .trim() ?? req.header("x-coneshare-webhook-token")?.trim();
-  return header === expected;
-}
+import { bearerFromRequest, checkWebhookToken } from "./webhook-token-auth.js";
 
 function coneshareWebhookResumeEnabled(): boolean {
   const v = process.env.CLAWQL_CONESHARE_WEBHOOK_RESUME_WORKFLOW?.trim().toLowerCase();
@@ -83,15 +69,12 @@ function extractConeshareEvent(body: unknown): {
 
 /** POST **`/idp/coneshare/webhook`** — ConeShare automation / analytics callback. */
 export async function handleConeshareWebhookRequest(req: Request, res: Response): Promise<void> {
-  if (!webhookTokenExpected() && process.env.NODE_ENV === "production") {
-    res.status(503).json({
-      ok: false,
-      error: "Set CLAWQL_CONESHARE_WEBHOOK_TOKEN for webhook ingestion in production.",
-    });
-    return;
-  }
-  if (!webhookAuthOk(req)) {
-    res.status(401).json({ ok: false, error: "invalid or missing webhook token" });
+  const auth = checkWebhookToken({
+    expectedEnvName: "CLAWQL_CONESHARE_WEBHOOK_TOKEN",
+    presented: bearerFromRequest(req, "x-coneshare-webhook-token"),
+  });
+  if (!auth.ok) {
+    res.status(auth.status).json({ ok: false, error: auth.error });
     return;
   }
 

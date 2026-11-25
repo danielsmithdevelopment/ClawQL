@@ -76,15 +76,54 @@ export function assertSafeSourceFetchUrl(raw: string): URL {
     throw new Error("Source URL must use HTTPS.");
   }
 
-  const host = parsed.hostname.toLowerCase();
+  // URL.hostname keeps brackets on IPv6 literals; strip before isIP checks.
+  let host = parsed.hostname.toLowerCase();
+  if (host.startsWith("[") && host.endsWith("]")) {
+    host = host.slice(1, -1);
+  }
   if (!host || BLOCKED_HOSTNAMES.has(host) || host.endsWith(".localhost")) {
     throw new Error("Source URL host is not allowed.");
   }
   if (isPrivateOrLoopbackIp(host)) {
     throw new Error("Source URL must not target private or loopback addresses.");
   }
+  // CGNAT 100.64.0.0/10
+  {
+    const parts = host.split(".").map((p) => Number.parseInt(p, 10));
+    if (
+      parts.length === 4 &&
+      parts[0] === 100 &&
+      parts[1]! >= 64 &&
+      parts[1]! <= 127 &&
+      parts.every((n) => !Number.isNaN(n))
+    ) {
+      throw new Error("Source URL must not target private or loopback addresses.");
+    }
+  }
+  if (host.startsWith("::ffff:")) {
+    const mapped = host.slice("::ffff:".length);
+    if (isPrivateOrLoopbackIp(mapped)) {
+      throw new Error("Source URL must not target private or loopback addresses.");
+    }
+  }
 
   return parsed;
+}
+
+/** Resolve hostname and refuse if any address is private/loopback (audit 2.09). */
+export async function assertSafeSourceFetchUrlResolved(raw: string): Promise<URL> {
+  const url = assertSafeSourceFetchUrl(raw);
+  let host = url.hostname.toLowerCase();
+  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+  if (isIP(host)) return url;
+  const { lookup } = await import("node:dns/promises");
+  const results = await lookup(host, { all: true });
+  for (const r of results) {
+    if (isPrivateOrLoopbackIp(r.address)) {
+      throw new Error("Source URL must not resolve to private or loopback addresses.");
+    }
+  }
+  return url;
 }
 
 /** Fetch a user URL only after SSRF validation (single chokepoint for CodeQL + runtime policy). */
@@ -92,9 +131,26 @@ async function fetchSafeSourceUrlImpl(
   raw: string,
   fetchFn: typeof fetch = fetch
 ): Promise<{ url: URL; response: Response }> {
-  const url = assertSafeSourceFetchUrl(raw);
+  const url = await assertSafeSourceFetchUrlResolved(raw);
+  // Do not follow redirects automatically — each hop must be re-validated (audit 2.09).
   // codeql[js/request-forgery]: href is validated for public HTTPS hosts only (assertSafeSourceFetchUrl).
-  const response = await fetchFn(url.href);
+  let response = await fetchFn(url.href, { redirect: "manual" });
+  let hops = 0;
+  let current = url;
+  while (
+    hops < 5 &&
+    response.status >= 300 &&
+    response.status < 400 &&
+    response.headers.get("location")
+  ) {
+    hops += 1;
+    const nextRaw = new URL(response.headers.get("location")!, current).href;
+    current = await assertSafeSourceFetchUrlResolved(nextRaw);
+    response = await fetchFn(current.href, { redirect: "manual" });
+  }
+  if (response.status >= 300 && response.status < 400) {
+    throw new Error("Source URL redirect limit exceeded.");
+  }
   return { url, response };
 }
 

@@ -10,31 +10,15 @@ import { runIdpPipeline, type RunIdpPipelineInput } from "clawql-documents";
 import { getDocumentsPluginDeps } from "clawql-documents/plugin";
 import { publishDocumentPipelineHopEvent } from "clawql-automation/nats/publish-hooks";
 
-function runTokenExpected(): string | undefined {
-  const t = process.env.CLAWQL_IDP_PIPELINE_RUN_TOKEN?.trim();
-  return t && t.length > 0 ? t : undefined;
-}
-
-function authOk(req: Request): boolean {
-  const expected = runTokenExpected();
-  if (!expected) return process.env.NODE_ENV !== "production";
-  const header = req
-    .header("authorization")
-    ?.replace(/^Bearer\s+/i, "")
-    .trim();
-  return header === expected;
-}
+import { bearerFromRequest, checkWebhookToken } from "./webhooks/webhook-token-auth.js";
 
 export async function handleIdpPipelineRunRequest(req: Request, res: Response): Promise<void> {
-  if (!runTokenExpected() && process.env.NODE_ENV === "production") {
-    res.status(503).json({
-      ok: false,
-      error: "Set CLAWQL_IDP_PIPELINE_RUN_TOKEN for /idp/pipeline/run in production.",
-    });
-    return;
-  }
-  if (!authOk(req)) {
-    res.status(401).json({ ok: false, error: "invalid or missing pipeline run token" });
+  const auth = checkWebhookToken({
+    expectedEnvName: "CLAWQL_IDP_PIPELINE_RUN_TOKEN",
+    presented: bearerFromRequest(req),
+  });
+  if (!auth.ok) {
+    res.status(auth.status).json({ ok: false, error: auth.error });
     return;
   }
 

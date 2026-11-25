@@ -101,11 +101,20 @@ export async function runDoctor(
       message: `Obsidian vault: ${vaultPath}`,
       detail: writable ? undefined : "Path not readable/writable — memory_* disabled at startup",
     });
+    // Audit 2.08: vault must not be CLAWQL_HOME itself (secrets live beside Memory/).
+    const { resolve: resolvePath } = await import("node:path");
+    if (resolvePath(vaultPath) === resolvePath(home)) {
+      checks.push({
+        level: "warn",
+        message: "Memory vault equals CLAWQL_HOME",
+        detail: `Point CLAWQL_OBSIDIAN_VAULT_PATH at ${home}/Memory so git ingest cannot stage vault/ Auth/ worm/`,
+      });
+    }
   } else if (existsSync(home)) {
     checks.push({
       level: "warn",
       message: "CLAWQL_OBSIDIAN_VAULT_PATH unset",
-      detail: `Run clawql init or set CLAWQL_OBSIDIAN_VAULT_PATH=${home}`,
+      detail: `Run clawql init or set CLAWQL_OBSIDIAN_VAULT_PATH=${home}/Memory`,
     });
   } else {
     checks.push({

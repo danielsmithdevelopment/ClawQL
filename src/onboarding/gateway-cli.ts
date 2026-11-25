@@ -296,7 +296,7 @@ export async function materializeManagedGateway(options: {
     [
       `# Managed Edge Gateway secrets — do not commit`,
       `CLAWQL_HOME=${home}`,
-      `CLAWQL_OBSIDIAN_VAULT_PATH=${home}`,
+      `CLAWQL_OBSIDIAN_VAULT_PATH=${join(home, "Memory")}`,
       `CLAWQL_API_KEY=${created.secret}`,
       `CLAWQL_AUTH_MODE=apiKey`,
       `CLAWQL_INFERENCE_KEYS_ENABLED=1`,

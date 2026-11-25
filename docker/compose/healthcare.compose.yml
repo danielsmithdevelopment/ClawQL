@@ -27,6 +27,7 @@ services:
       MCP_HOST: "0.0.0.0"
       CLAWQL_AUTH_MODE: apiKey
       CLAWQL_API_KEY: ${CLAWQL_API_KEY:-change-me-local-dev-only}
+      CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED: "1"
       NODE_ENV: development
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       CLAWQL_ENABLE_HITL_LABEL_STUDIO: "1"

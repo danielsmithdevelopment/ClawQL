@@ -17,35 +17,17 @@ import { handleMemoryIngestToolInput } from "clawql-memory/plugin";
 import { handleAuditToolInput } from "../../mcp/clawql-audit.js";
 import { resolvePluginCompositionFlags } from "../../composition/resolve-plugin-flags.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
-
-function webhookTokenExpected(): string | undefined {
-  const t = process.env.CLAWQL_LANGFUSE_WEBHOOK_TOKEN?.trim();
-  return t && t.length > 0 ? t : undefined;
-}
-
-function webhookAuthOk(req: Request): boolean {
-  const expected = webhookTokenExpected();
-  if (!expected) return process.env.NODE_ENV !== "production";
-  const header =
-    req
-      .header("authorization")
-      ?.replace(/^Bearer\s+/i, "")
-      .trim() ?? req.header("x-langfuse-webhook-token")?.trim();
-  return header === expected;
-}
+import { bearerFromRequest, checkWebhookToken } from "./webhook-token-auth.js";
 
 /** POST **`/observability/langfuse/webhook`** — Langfuse score / trace callback. */
 export async function handleLangfuseEvalWebhookRequest(req: Request, res: Response): Promise<void> {
   if (!enforceWebhookRateLimit(req, res)) return;
-  if (!webhookTokenExpected() && process.env.NODE_ENV === "production") {
-    res.status(503).json({
-      ok: false,
-      error: "Set CLAWQL_LANGFUSE_WEBHOOK_TOKEN for webhook ingestion in production.",
-    });
-    return;
-  }
-  if (!webhookAuthOk(req)) {
-    res.status(401).json({ ok: false, error: "invalid or missing webhook token" });
+  const auth = checkWebhookToken({
+    expectedEnvName: "CLAWQL_LANGFUSE_WEBHOOK_TOKEN",
+    presented: bearerFromRequest(req, "x-langfuse-webhook-token"),
+  });
+  if (!auth.ok) {
+    res.status(auth.status).json({ ok: false, error: auth.error });
     return;
   }
 
