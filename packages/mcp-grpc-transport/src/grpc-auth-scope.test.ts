@@ -22,12 +22,10 @@ describe("grpcAuthContextFromAuthorizeResult (T2)", () => {
   });
 
   it("denies authenticated principal with missing scope (HTTP parity)", () => {
-    expect(
-      grpcAuthContextFromAuthorizeResult({ ok: true, sub: "u" }).atrScopeTokens
-    ).toEqual([]);
-    expect(
-      grpcAuthContextFromAuthorizeResult({ ok: true, tenantId: "t1" }).atrScopeTokens
-    ).toEqual([]);
+    expect(grpcAuthContextFromAuthorizeResult({ ok: true, sub: "u" }).atrScopeTokens).toEqual([]);
+    expect(grpcAuthContextFromAuthorizeResult({ ok: true, tenantId: "t1" }).atrScopeTokens).toEqual(
+      []
+    );
   });
 
   it("leaves boolean-true auth unscoped for tests", () => {

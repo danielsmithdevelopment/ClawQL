@@ -8,13 +8,7 @@ export type AtrToolScopeDecision =
   { readonly allow: true } | { readonly allow: false; readonly reason: string };
 
 /** Explicit always-allowed core tools (audit T3 — not every read/passthrough). */
-const CORE_TOOL_NAMES = new Set([
-  "cache",
-  "docs_search",
-  "audit",
-  "resume",
-  "console_link",
-]);
+const CORE_TOOL_NAMES = new Set(["cache", "docs_search", "audit", "resume", "console_link"]);
 
 /**
  * Resolve the ATR family for a tool name.
