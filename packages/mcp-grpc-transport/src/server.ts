@@ -477,7 +477,10 @@ async function maybeStartGrpcMcpServerImpl(
         wrapped[method] = handler;
         continue;
       }
-      wrapped[method] = (call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => {
+      wrapped[method] = (
+        call: grpc.ServerUnaryCall<unknown, unknown>,
+        callback: grpc.sendUnaryData<unknown>
+      ) => {
         void (async () => {
           try {
             const ok = await authorize(call.metadata);
