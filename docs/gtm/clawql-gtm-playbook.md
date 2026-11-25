@@ -2,11 +2,11 @@
 
 **Zero to Shared Tenancy: A Realistic Bootstrap Path**
 
-| Field         | Value                                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Version**   | June 2026                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Alignment** | [ClawQL IDP Platform](../vision/clawql-idp-platform.md) (v2 / July 2026 refresh)                                                                                                                                                                                                                                                                                                                 |
-| **Audience**  | Founders · operators · finance · GTM                                                                                                                                                                                                                                                                                                                                                             |
+| Field         | Value                                                                                                                                                                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Version**   | June 2026                                                                                                                                                                                                                                                                                                                                         |
+| **Alignment** | [ClawQL IDP Platform](../vision/clawql-idp-platform.md) (v2 / July 2026 refresh)                                                                                                                                                                                                                                                                  |
+| **Audience**  | Founders · operators · finance · GTM                                                                                                                                                                                                                                                                                                              |
 | **Related**   | [IDP GTM landing brief](../vision/clawql-idp-gtm.md) · [Hosted live bootstrap (Pulumi + Argo CD)](../deployment/hosted-live-bootstrap.md) · [MCP API adapter positioning](./mcp-api-adapter-positioning.md) · [Protocol Fabric](./protocol-fabric.md) · [Defense-in-depth](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) |
 
 > Internal strategy document. Do not distribute externally without review. Canonical path: `docs/gtm/clawql-gtm-playbook.md`.
@@ -466,13 +466,13 @@ Live page: [clawql.com/pricing](https://clawql.com/pricing). This section is str
 
 ### Competitive pricing benchmark
 
-| Capability vs competitor                | Cost comparison                                                                                                                                |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Capability vs competitor                | Cost comparison                                                                                                                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | MCP vs executor.sh                      | Equal-arm measurements on `/benchmarks`. Historical Executor Team caps — re-verify. ClawQL Developer early-access list price + vault memory; layer counts marked shipped vs planned. |
-| IDP vs Hyperscience / ABBYY             | Hyperscience $0.50–1.50/page → tens of thousands/mo at volume. ABBYY $40k–$100k/yr. ClawQL Dedicated + IDP $599/mo flat.                       |
-| VDR vs Intralinks / Datasite / Ansarada | Intralinks $10k–$200k+/yr + per-page. Ansarada ~$3,069/mo for 5 GB. ClawQL Shared includes Coneshare at $299/mo.                               |
-| Semantic search                         | Algolia/Coveo/Glean $500–2,000/mo. Onyx included in managed tiers.                                                                             |
-| Full replacement stack                  | Illustrative incumbent bands only (July 2026). ClawQL Dedicated + Security Pack early-access list price — not a certified TCO.                                                            |
+| IDP vs Hyperscience / ABBYY             | Hyperscience $0.50–1.50/page → tens of thousands/mo at volume. ABBYY $40k–$100k/yr. ClawQL Dedicated + IDP $599/mo flat.                                                             |
+| VDR vs Intralinks / Datasite / Ansarada | Intralinks $10k–$200k+/yr + per-page. Ansarada ~$3,069/mo for 5 GB. ClawQL Shared includes Coneshare at $299/mo.                                                                     |
+| Semantic search                         | Algolia/Coveo/Glean $500–2,000/mo. Onyx included in managed tiers.                                                                                                                   |
+| Full replacement stack                  | Illustrative incumbent bands only (July 2026). ClawQL Dedicated + Security Pack early-access list price — not a certified TCO.                                                       |
 
 ### Pricing validation checklist
 
@@ -530,16 +530,16 @@ Closest direct competitor to the MCP gateway layer. YC-backed, MIT, well-built f
 
 Benchmark evidence (frugal DeepSeek; graders require real `tool:clawql_*` evidence): search-first-discovery, vault memory under token pressure, audit trail, Panguard policy-deny — on **1.0** vs off **0.0**. Ledger: [`docs/benchmarks/openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md). Runs: `30872913516`, `30872437811`.
 
-| Dimension                               | Comparison                                                                                                                                                                                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Token efficiency                        | Compare equal-arm on `/benchmarks`; do not assert Executor layer count without a dated source. ClawQL documents multiple efficiency layers (shipped vs planned marked in inference docs). |
-| Measured reduction                      | Layer 1 alone ~99.8% input reduction (Avian/GCP/Jira/Cloudflare patterns). Layers 2–8 cut output, prose, cache, history, routing cost.                                                    |
-| Agent memory                            | ClawQL: vault + Obsidian + semantic recall. Re-verify Executor memory/search claims against current product docs.                                                                         |
-| Semantic search                         | ClawQL: Onyx connectors when configured. Re-verify Executor search claims against current product docs.                                                                                   |
+| Dimension                               | Comparison                                                                                                                                                                                   |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Token efficiency                        | Compare equal-arm on `/benchmarks`; do not assert Executor layer count without a dated source. ClawQL documents multiple efficiency layers (shipped vs planned marked in inference docs).    |
+| Measured reduction                      | Layer 1 alone ~99.8% input reduction (Avian/GCP/Jira/Cloudflare patterns). Layers 2–8 cut output, prose, cache, history, routing cost.                                                       |
+| Agent memory                            | ClawQL: vault + Obsidian + semantic recall. Re-verify Executor memory/search claims against current product docs.                                                                            |
+| Semantic search                         | ClawQL: Onyx connectors when configured. Re-verify Executor search claims against current product docs.                                                                                      |
 | Security                                | ClawQL: Kata, weight integrity, WORM Merkle, Panguard fail-closed (opt-in), YubiKey infra, Presidio pre-log, posture reports. Executor: verify current audit/secret features at procurement. |
-| IDP / VDR / sovereign LLM / multi-model | ClawQL packages cover IDP/VDR/sovereign inference when those tiers are enabled; do not claim Executor lacks features without a dated survey.                                              |
-| Pricing                                 | ClawQL early-access list prices on `/pricing` (subject to change). Executor Team metered historically — re-verify caps/overage for current Executor.                                      |
-| Adoption                                | executor.sh 2.6k+ stars / YC — only current lead; time + architecture education.                                                                                                          |
+| IDP / VDR / sovereign LLM / multi-model | ClawQL packages cover IDP/VDR/sovereign inference when those tiers are enabled; do not claim Executor lacks features without a dated survey.                                                 |
+| Pricing                                 | ClawQL early-access list prices on `/pricing` (subject to change). Executor Team metered historically — re-verify caps/overage for current Executor.                                         |
+| Adoption                                | executor.sh 2.6k+ stars / YC — only current lead; time + architecture education.                                                                                                             |
 
 **Positioning line:** ClawQL is a stateful agent gateway with memory, audit, and optional IDP — compare features via equal-arm benchmarks, not competitor nicknames.
 
@@ -601,28 +601,28 @@ OpenBench: Panguard policy-deny and search-first-discovery 1.0 vs 0.0 (run `3087
 
 ### Security objections in sales
 
-| Objection                    | Response                                                                                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Model tampering?             | SHA-256 + Cosign at startup; desperation-direction ablation before deploy.                                                               |
-| Can't send docs to cloud AI? | Sovereign LLM in tenant boundary; Istio egress block; Presidio before model.                                                             |
-| Audit logs altered?          | Merkle roots in WORM + Cosign Git; verification on read.                                                                                 |
-| Compromised mid-processing?  | Kata VM isolation; Panguard fail-closed.                                                                                                 |
-| Covert provider steering?    | No closed-model provider on Dedicated/Enterprise sovereign path.                                                                         |
-| vs executor.sh security?     | Kata, WORM Merkle, Panguard, YubiKey, Presidio, posture reports — [defense-in-depth](https://docs.clawql.com/security/defense-in-depth). |
+| Objection                    | Response                                                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model tampering?             | SHA-256 + Cosign at startup; desperation-direction ablation before deploy.                                                                                                |
+| Can't send docs to cloud AI? | Sovereign LLM in tenant boundary; Istio egress block; Presidio before model.                                                                                              |
+| Audit logs altered?          | Merkle roots in WORM + Cosign Git; verification on read.                                                                                                                  |
+| Compromised mid-processing?  | Kata VM isolation; Panguard fail-closed.                                                                                                                                  |
+| Covert provider steering?    | No closed-model provider on Dedicated/Enterprise sovereign path.                                                                                                          |
+| vs executor.sh security?     | Kata, WORM Merkle, Panguard, YubiKey, Presidio, posture reports — [defense-in-depth](https://docs.clawql.com/security/defense-in-depth).                                  |
 | SOC 2 / FedRAMP?             | ClawQL holds **no** SOC 2 Type II report and **no** FedRAMP authorization. Regulated profile produces control evidence for customer audits; timelines are customer-owned. |
 
 ### Competitor comparison one-pager
 
-| Capability               | ClawQL vs the field                                                    |
-| ------------------------ | ---------------------------------------------------------------------- |
-| Persistent agent memory  | Built-in vault with cross-session recall when configured — compare equal-arm on `/benchmarks`, not exclusivity claims. |
-| MCP gateway + efficiency | Multiple efficiency layers (shipped vs planned marked in inference docs) + memory + Onyx when configured. |
-| Full IDP pipeline        | Tika → Gotenberg → Stirling → archive → Onyx, one Helm chart.          |
-| Cryptographic audit      | WORM Merkle + Cosign; others have logs.                                |
+| Capability               | ClawQL vs the field                                                                                                     |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Persistent agent memory  | Built-in vault with cross-session recall when configured — compare equal-arm on `/benchmarks`, not exclusivity claims.  |
+| MCP gateway + efficiency | Multiple efficiency layers (shipped vs planned marked in inference docs) + memory + Onyx when configured.               |
+| Full IDP pipeline        | Tika → Gotenberg → Stirling → archive → Onyx, one Helm chart.                                                           |
+| Cryptographic audit      | WORM Merkle + Cosign; others have logs.                                                                                 |
 | Sovereign LLM            | Tenant-bound fine-tuned open model + egress block + Presidio + weight integrity when sovereign inference is configured. |
-| VDR                      | Coneshare from Shared; no per-deal fees.                               |
-| Defense-in-depth         | Public architecture docs; model-substrate threat model.                |
-| Pricing                  | Flat subscription; no per-page / per-deal / execution meters.          |
+| VDR                      | Coneshare from Shared; no per-deal fees.                                                                                |
+| Defense-in-depth         | Public architecture docs; model-substrate threat model.                                                                 |
+| Pricing                  | Flat subscription; no per-page / per-deal / execution meters.                                                           |
 
 ---
 
