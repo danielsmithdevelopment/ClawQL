@@ -615,11 +615,11 @@ OpenBench: Panguard policy-deny and search-first-discovery 1.0 vs 0.0 (run `3087
 
 | Capability               | ClawQL vs the field                                                    |
 | ------------------------ | ---------------------------------------------------------------------- |
-| Persistent agent memory  | Built-in vault; no adjacent competitor has cross-session agent memory. |
-| MCP gateway + efficiency | Eight compounding layers + memory + Onyx vs executor.sh Layer 1 only.  |
+| Persistent agent memory  | Built-in vault with cross-session recall when configured — compare equal-arm on `/benchmarks`, not exclusivity claims. |
+| MCP gateway + efficiency | Multiple efficiency layers (shipped vs planned marked in inference docs) + memory + Onyx when configured. |
 | Full IDP pipeline        | Tika → Gotenberg → Stirling → archive → Onyx, one Helm chart.          |
 | Cryptographic audit      | WORM Merkle + Cosign; others have logs.                                |
-| Sovereign LLM            | Fine-tuned Qwen + egress block + Presidio + weight integrity — unique. |
+| Sovereign LLM            | Tenant-bound fine-tuned open model + egress block + Presidio + weight integrity when sovereign inference is configured. |
 | VDR                      | Coneshare from Shared; no per-deal fees.                               |
 | Defense-in-depth         | Public architecture docs; model-substrate threat model.                |
 | Pricing                  | Flat subscription; no per-page / per-deal / execution meters.          |
@@ -630,7 +630,7 @@ OpenBench: Panguard policy-deny and search-first-discovery 1.0 vs 0.0 (run `3087
 
 Three deliverables from one engagement: scored report, labeled training dataset with provenance, optional PorTAL adapter registered in customer `tier-map.json`.
 
-Scale AI labels; Confident AI evals; Unsloth trains. Nobody runs the full loop as one managed engagement. Gateway unlock: `clawql-inference` already writes WORM traces — benchmarks, export, PorTAL, model escalation registration reuse that chokepoint.
+Scale AI labels; Confident AI evals; Unsloth trains. ClawQL packages the loop as one managed engagement when that service is sold. Gateway unlock: `clawql-inference` already writes WORM traces — benchmarks, export, PorTAL, model escalation registration reuse that chokepoint.
 
 | Tier                        | Price             | Deliverable                                                                                           |
 | --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |

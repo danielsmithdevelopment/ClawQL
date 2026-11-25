@@ -5592,7 +5592,7 @@ We actively block common leakage paths:
 
 Production Deployment: Secure-by-Default Architecture
 
-Production deployments are one-command and fully secure by default:
+Production-oriented deployments can follow one-command install paths; security defaults still require the hardening steps in this curriculum:
 
 - clawql deploy --env production applies every security control without any manual flags.
 
@@ -7693,6 +7693,8 @@ Additional GDPR mappings:
 ---
 
 HIPAA: PHI-Handling Deployments
+
+ClawQL is **not** HIPAA certified and does not sell a HIPAA certification. The controls below are engineering patterns for customers whose own GRC program, BAAs, and assessors cover ePHI.
 
 First determine applicability: Does the deployment process health condition, care provision, or payment data that identifies individuals?
 

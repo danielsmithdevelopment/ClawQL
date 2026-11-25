@@ -1064,7 +1064,7 @@ Phases below are **dependency-ordered workstreams**. Week ranges are **illustrat
 **Week 10: `clawql-legal` + `clawql-healthcare` + `clawql-insurance`**
 
 - Each vertical: document processing plugin + domain-specific MCP tools
-- Compliance tooling for each (ethical walls, HIPAA, SOC2)
+- Compliance tooling for each (ethical walls, PHI/PII redaction patterns, audit evidence hooks — no HIPAA cert / no SOC 2 Type II report)
 - `clawql-legal`: clause extraction, privilege redaction, precedent search
 
 **Week 11: Remaining verticals + `clawql-engineering`**
