@@ -330,8 +330,27 @@ async function startMcpApiAdapterImpl(
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
-  const host = options.host?.trim() || "0.0.0.0";
+  const host = options.host?.trim() || "127.0.0.1";
   const port = options.port ?? 8090;
+  const authConfigured = edgeAuthConfigured({
+    apiKey: options.apiKey,
+    jwt: options.jwtAuth,
+  });
+  const allowOpen =
+    process.env.CLAWQL_ADAPTER_ALLOW_UNAUTHENTICATED?.trim() === "1" ||
+    process.env.CLAWQL_ADAPTER_ALLOW_UNAUTHENTICATED?.trim()?.toLowerCase() === "true";
+  if (
+    !authConfigured &&
+    host !== "127.0.0.1" &&
+    host !== "localhost" &&
+    host !== "::1" &&
+    !allowOpen
+  ) {
+    throw new Error(
+      `mcp-api-adapter refuses open auth on non-loopback ${host}; ` +
+        "set API key/JWT, bind 127.0.0.1, or CLAWQL_ADAPTER_ALLOW_UNAUTHENTICATED=1"
+    );
+  }
   const { server, boundPort } = await listenHttp(app, host, port);
 
   const ws =

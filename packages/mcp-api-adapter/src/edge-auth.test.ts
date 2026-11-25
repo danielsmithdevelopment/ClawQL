@@ -15,13 +15,18 @@ const emptyCatalog: ToolCatalog = {
 describe("mcp-api-adapter edge auth", () => {
   const secret = "test-mcp-adapter-hs256-secret-32chars!";
   const issuer = "https://auth.clawql.test";
+  const audience = "mcp-api-adapter";
 
   it("accepts static api key or HS256 MCP JWT with atr claim", async () => {
-    const verifyJwt = createJwtVerifier({ hs256Secret: secret, issuer });
+    const verifyJwt = createJwtVerifier({ hs256Secret: secret, issuer, audience });
     expect(verifyJwt).toBeTruthy();
 
     expect(
-      await verifyEdgeCredential("static-key", { apiKey: "static-key", jwt: { hs256Secret: secret } }, verifyJwt)
+      await verifyEdgeCredential(
+        "static-key",
+        { apiKey: "static-key", jwt: { hs256Secret: secret, issuer, audience } },
+        verifyJwt
+      )
     ).toBe(true);
 
     const jwt = await new SignJWT({
@@ -30,15 +35,24 @@ describe("mcp-api-adapter edge auth", () => {
       .setProtectedHeader({ alg: "HS256" })
       .setSubject("alice")
       .setIssuer(issuer)
+      .setAudience(audience)
       .setExpirationTime("5m")
       .sign(new TextEncoder().encode(secret));
 
     expect(
-      await verifyEdgeCredential(jwt, { apiKey: "static-key", jwt: { hs256Secret: secret, issuer } }, verifyJwt)
+      await verifyEdgeCredential(
+        jwt,
+        { apiKey: "static-key", jwt: { hs256Secret: secret, issuer, audience } },
+        verifyJwt
+      )
     ).toBe(true);
 
     expect(
-      await verifyEdgeCredential("wrong", { apiKey: "static-key", jwt: { hs256Secret: secret, issuer } }, verifyJwt)
+      await verifyEdgeCredential(
+        "wrong",
+        { apiKey: "static-key", jwt: { hs256Secret: secret, issuer, audience } },
+        verifyJwt
+      )
     ).toBe(false);
   });
 
@@ -51,7 +65,7 @@ describe("mcp-api-adapter edge auth", () => {
         isError: false,
       }),
       apiKey: "static-key",
-      jwtAuth: { hs256Secret: secret, issuer },
+      jwtAuth: { hs256Secret: secret, issuer, audience },
     });
     const server = app.listen(0);
     const addr = server.address();
@@ -71,6 +85,7 @@ describe("mcp-api-adapter edge auth", () => {
         .setProtectedHeader({ alg: "HS256" })
         .setSubject("alice")
         .setIssuer(issuer)
+        .setAudience(audience)
         .setExpirationTime("5m")
         .sign(new TextEncoder().encode(secret));
 

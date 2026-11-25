@@ -343,7 +343,41 @@ async function executeRestOperationImpl(
       };
     }
 
-    const res = await getFetchImplForRest()(url.toString(), init);
+    // Audit 2.10: do not follow cross-origin redirects with credentials attached.
+    const fetchImpl = getFetchImplForRest();
+    const CREDENTIAL_HEADER_NAMES = [
+      "authorization",
+      "cookie",
+      "x-api-key",
+      "x-api_key",
+      "x-auth-key",
+      "x-n8n-api-key",
+      "proxy-authorization",
+    ];
+    init.redirect = "manual";
+    let res = await fetchImpl(url.toString(), init);
+    let hops = 0;
+    while (hops < 5 && res.status >= 300 && res.status < 400) {
+      const location = res.headers?.get?.("location");
+      if (!location) break;
+      hops += 1;
+      const nextUrl = new URL(location, url);
+      const sameOrigin =
+        nextUrl.protocol === url.protocol && nextUrl.host === url.host;
+      if (!sameOrigin) {
+        for (const name of Object.keys(headers)) {
+          if (CREDENTIAL_HEADER_NAMES.includes(name.toLowerCase())) {
+            delete headers[name];
+          }
+        }
+        init.headers = headers;
+      }
+      url.href = nextUrl.href;
+      res = await fetchImpl(url.toString(), init);
+    }
+    if (res.status >= 300 && res.status < 400) {
+      return { ok: false, error: `REST HTTP ${res.status}: redirect limit exceeded` };
+    }
     // Optional chaining: unit-test fetch stubs often omit Headers.
     const contentType = res.headers?.get?.("content-type") ?? "";
     const binary =

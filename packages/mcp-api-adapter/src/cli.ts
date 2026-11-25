@@ -47,6 +47,7 @@ HTTP APIs:
   --api-key <key>        Optional edge API key
   --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
   --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
+  --jwt-audience <aud>   Expected JWT aud when verifying MCP tokens (required with JWT)
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
 
@@ -153,6 +154,7 @@ const sharedOpts = {
   "api-key": { type: "string" },
   "jwks-url": { type: "string" },
   "jwt-issuer": { type: "string" },
+  "jwt-audience": { type: "string" },
   "refresh-ms": { type: "string" },
   title: { type: "string" },
   out: { type: "string" },
@@ -225,6 +227,10 @@ async function runServe(argv: string[]): Promise<void> {
     values["jwt-issuer"]?.trim() ||
     envFirst("MCP_API_ADAPTER_JWT_ISSUER", "CLAWQL_MCP_OAUTH_ISSUER") ||
     undefined;
+  const jwtAudience =
+    values["jwt-audience"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_JWT_AUDIENCE", "CLAWQL_MCP_OAUTH_AUDIENCE") ||
+    undefined;
   const jwtHs256Secret =
     envFirst("MCP_API_ADAPTER_JWT_HS256_SECRET", "CLAWQL_MCP_OAUTH_SIGNING_SECRET") || undefined;
   const jwtAuth =
@@ -232,6 +238,7 @@ async function runServe(argv: string[]): Promise<void> {
       ? {
           jwksUrl,
           issuer: jwtIssuer,
+          audience: jwtAudience,
           hs256Secret: jwksUrl ? undefined : jwtHs256Secret,
         }
       : undefined;
