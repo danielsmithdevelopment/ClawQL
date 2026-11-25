@@ -463,7 +463,10 @@ export function runProgramPlanEffect<E = never>(
 
     const gatedHost = yield* programIfcHostEffect(plan, host, env);
 
-    const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, Error> =>
+    const runOne = (
+      call: ProgramPlanCall,
+      index: number
+    ): Effect.Effect<ProgramCallOutcome, Error> =>
       Effect.gen(function* () {
         if (call.tool === "sleep") {
           yield* appendProcessWormGatedEffect({
@@ -870,7 +873,10 @@ export function runProgramPlanEffect<E = never>(
         return { record, value };
       });
 
-    const step = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, E | Error> =>
+    const step = (
+      call: ProgramPlanCall,
+      index: number
+    ): Effect.Effect<ProgramCallOutcome, E | Error> =>
       hooks === undefined
         ? runOne(call, index)
         : Effect.gen(function* () {

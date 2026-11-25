@@ -26,9 +26,7 @@ export function appendProcessWormGatedEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<WORMEntry | null, Error> {
   const write = appendProcessWormEffect(input).pipe(
-    Effect.mapError(
-      (err: AuditError) => new Error(err.reason || "process WORM append failed")
-    )
+    Effect.mapError((err: AuditError) => new Error(err.reason || "process WORM append failed"))
   );
   if (wormAppendRequired(env)) return write;
   return write.pipe(Effect.catch(() => Effect.succeed(null)));
