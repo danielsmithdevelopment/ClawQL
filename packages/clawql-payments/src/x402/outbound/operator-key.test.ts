@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   clawqlEnvContainsPlaintextOperatorKey,
+  generateOperatorApproveKey,
   hashOperatorApproveKey,
   verifyOperatorApproveKey,
 } from "./operator-key.js";
 
 describe("operator-key (audit Z2)", () => {
+  it("generates a 32-byte random key whose hash verifies", () => {
+    const a = generateOperatorApproveKey();
+    const b = generateOperatorApproveKey();
+    expect(a.key).not.toBe(b.key);
+    expect(a.hash).toBe(hashOperatorApproveKey(a.key));
+    expect(Buffer.from(a.key, "base64url").length).toBe(32);
+    expect(verifyOperatorApproveKey(a.key, { CLAWQL_OPERATOR_APPROVE_KEY_HASH: a.hash })).toEqual({
+      ok: true,
+    });
+  });
+
   it("hashes deterministically", () => {
     expect(hashOperatorApproveKey("op-secret")).toBe(hashOperatorApproveKey("op-secret"));
     expect(hashOperatorApproveKey("op-secret")).not.toBe(hashOperatorApproveKey("other"));

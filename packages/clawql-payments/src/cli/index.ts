@@ -45,6 +45,7 @@ export {
 } from "./x402.js";
 export {
   runPaymentsOutboundApprove,
+  runPaymentsOperatorKeyGenerate,
   type PaymentsOutboundApproveOptions,
 } from "../x402/outbound/approve-cli.js";
 export {

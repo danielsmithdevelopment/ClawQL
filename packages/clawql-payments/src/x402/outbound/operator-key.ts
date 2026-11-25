@@ -3,12 +3,32 @@
  * Server stores a SHA-256 hex digest (`CLAWQL_OPERATOR_APPROVE_KEY_HASH`);
  * the plaintext key is entered by the operator (password manager), never kept
  * in clawql.env.
+ *
+ * SHA-256 without salt is fine for a high-entropy random key (32 bytes).
+ * Do not accept human-chosen passwords — use {@link generateOperatorApproveKey}.
  */
 
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 export function hashOperatorApproveKey(plaintext: string): string {
   return createHash("sha256").update(plaintext, "utf8").digest("hex");
+}
+
+export type GeneratedOperatorApproveKey = {
+  /** Base64url plaintext — store in a password manager; never in clawql.env. */
+  key: string;
+  /** SHA-256 hex digest for CLAWQL_OPERATOR_APPROVE_KEY_HASH. */
+  hash: string;
+};
+
+/**
+ * Generate a 32-byte random operator approve key + its SHA-256 hash.
+ * Prefer this over accepting a human-chosen password (unsalted SHA-256 is
+ * weak against low-entropy secrets).
+ */
+export function generateOperatorApproveKey(): GeneratedOperatorApproveKey {
+  const key = randomBytes(32).toString("base64url");
+  return { key, hash: hashOperatorApproveKey(key) };
 }
 
 function hexEqual(a: string, b: string): boolean {

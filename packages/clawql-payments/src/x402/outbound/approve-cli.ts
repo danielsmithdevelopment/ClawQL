@@ -2,6 +2,8 @@
  * `clawql payments approve <quoteDigest>` — record a one-shot outbound payment
  * operator approval. Refused under regulated, and when running inside a harness
  * agent shell (audit Y4 / R12).
+ *
+ * `clawql payments operator-key generate` — mint a 32-byte random key + hash (Z2).
  */
 
 import { userInfo } from "node:os";
@@ -11,6 +13,7 @@ import {
   getOutboundPendingQuoteEffect,
   recordOutboundOperatorApprovalEffect,
 } from "./operator-approval.js";
+import { generateOperatorApproveKey } from "./operator-key.js";
 
 export type PaymentsOutboundApproveOptions = {
   quoteDigest?: string;
@@ -42,6 +45,28 @@ export function isPaymentsApproveBlockedInHarness(env: NodeJS.ProcessEnv = proce
   if (flag === "1" || flag === "true" || flag === "yes" || flag === "on") return true;
   if (env.CLAWQL_HARNESS_ID?.trim()) return true;
   return false;
+}
+
+/**
+ * Print a freshly generated operator approve key + hash for password-manager storage.
+ * Does not write clawql.env (audit Z2).
+ */
+export async function runPaymentsOperatorKeyGenerate(
+  options: { json?: boolean } = {}
+): Promise<number> {
+  const generated = generateOperatorApproveKey();
+  if (options.json) {
+    console.log(JSON.stringify(generated, null, 2));
+  } else {
+    console.log("Generated operator approve key (store plaintext in a password manager):");
+    console.log(`  key:  ${generated.key}`);
+    console.log(`  hash: ${generated.hash}`);
+    console.log("");
+    console.log("Put only the hash on the server:");
+    console.log(`  CLAWQL_OPERATOR_APPROVE_KEY_HASH=${generated.hash}`);
+    console.log("Do not write the plaintext key into clawql.env.");
+  }
+  return 0;
 }
 
 export async function runPaymentsOutboundApprove(
