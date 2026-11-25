@@ -150,6 +150,20 @@ export const NATIVE_TOOL_POLICY: Readonly<Record<string, NativeToolPolicy>> = {
   clawql_evidence: { kind: "read", specLabel: "clawql-chatgpt" },
   clawql_console: { kind: "passthrough", specLabel: "clawql-chatgpt" },
   clawql_open_file: { kind: "read", specLabel: "clawql-chatgpt" },
+
+  // Payments — read/list tools (audit 6.08); mutating tools stay destructive by default.
+  payments_cloudflare_handle_resolve: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_directory_resolve: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_directory_list: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_contacts_list: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_contacts_resolve: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_activity: { kind: "read", specLabel: "clawql-payments" },
+  payments_credits_request_list: { kind: "read", specLabel: "clawql-payments" },
+  execute_batch: {
+    kind: "destructive",
+    specLabel: "clawql-payments",
+    notes: "outbound x402 / financial — parks under risk enforcement (audit 6.02)",
+  },
 };
 
 /** Labels that count as untrusted for session taint after a successful read. */

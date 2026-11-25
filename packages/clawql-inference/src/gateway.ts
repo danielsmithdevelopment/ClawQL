@@ -93,13 +93,20 @@ export type CreateInferenceGatewayOptions = {
 };
 
 export class ConfiguredInferenceGateway implements InferenceGateway {
-  constructor(private readonly providers: ProviderRegistry) {}
+  constructor(
+    private readonly providers: ProviderRegistry,
+    private readonly env: NodeJS.ProcessEnv = process.env
+  ) {}
 
   async complete(request: InferenceRequest): Promise<InferenceResponse> {
     const modelId = request.model ?? request.routing?.modelId;
     if (!modelId) {
       throw new Error("InferenceRequest requires model or routing.modelId");
     }
+
+    // X4: local-only gate on the actual upstream model before any provider call.
+    const { assertInferenceModelAllowed } = await import("./policy/local-only.js");
+    assertInferenceModelAllowed(modelId, this.env);
 
     const { provider, model } = parseModelId(modelId);
     const adapter = getProviderAdapter(this.providers, provider);
@@ -111,9 +118,17 @@ export class ConfiguredInferenceGateway implements InferenceGateway {
       promptCacheEnabled: request.promptCacheEnabled,
       maxTokens: request.maxTokens,
     });
+    // X5: prefer provider-qualified id for downstream billing when response is bare.
+    const responseModel = response.model?.trim();
+    const qualified =
+      responseModel && responseModel.includes("/")
+        ? responseModel
+        : responseModel
+          ? `${provider}/${responseModel}`
+          : modelId;
     return {
       ...response,
-      model: response.model || modelId,
+      model: qualified,
       routing: request.routing,
       correlationId: request.correlationId,
     };
@@ -180,7 +195,7 @@ export function createInferenceGateway(
       env,
       plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
     });
-  const inner = new ConfiguredInferenceGateway(providers);
+  const inner = new ConfiguredInferenceGateway(providers, env);
   return composeInferenceGateway(inner, resolved);
 }
 
@@ -197,7 +212,7 @@ export function createInferenceGatewayEffect(
         env,
         plugins: resolved.providerPlugins ?? composeDefaultProviderPlugins(),
       });
-    const inner = new ConfiguredInferenceGateway(providers);
+    const inner = new ConfiguredInferenceGateway(providers, env);
 
     let semanticOptions = resolved.semanticCache;
     if (semanticOptions !== false && !semanticOptions?.cache) {

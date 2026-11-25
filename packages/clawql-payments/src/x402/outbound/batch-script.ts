@@ -25,7 +25,9 @@ export type OutboundX402BatchPayload = {
   readonly method?: string;
   readonly body?: string;
   readonly headers?: Record<string, string>;
+  /** @deprecated Agent path removed — use operatorApprovalId (audit 6.02). */
   readonly hitlApproval?: OutboundPaymentHitlApproval;
+  readonly operatorApprovalId?: string;
   readonly expectedQuoteDigest?: string;
 };
 
@@ -63,6 +65,7 @@ export function createOutboundX402PayBatchScript(options: {
         body: payload.body,
         headers: payload.headers,
         hitlApproval: payload.hitlApproval,
+        operatorApprovalId: payload.operatorApprovalId,
         expectedQuoteDigest: payload.expectedQuoteDigest,
         env: options.env,
         fetchImpl: options.fetchImpl,

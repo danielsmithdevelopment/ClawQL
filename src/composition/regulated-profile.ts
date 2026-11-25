@@ -61,6 +61,10 @@ export function applyRegulatedProfileEnvEffect(
     env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     env.CLAWQL_ENABLE_SESSION_IFC = "1";
     env.CLAWQL_WORM_REQUIRED = "1";
+    // Audit 6.06: inference stays on local providers unless allowlisted.
+    env.CLAWQL_INFERENCE_LOCAL_ONLY = "1";
+    // Audit 6.03: inference HTTP requires virtual keys under regulated.
+    env.CLAWQL_INFERENCE_KEYS_ENABLED = "1";
     if (!env.CLAWQL_SANDBOX_BACKEND?.trim()) {
       env.CLAWQL_SANDBOX_BACKEND = "auto";
     }

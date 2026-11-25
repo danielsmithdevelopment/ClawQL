@@ -71,11 +71,21 @@ describe("x402 gate enforcement", () => {
     };
     const header = Buffer.from(JSON.stringify(payload)).toString("base64");
 
-    const fetchImpl = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({ isValid: true, payer: "0xpayer" }),
-    }));
+    const fetchImpl = vi.fn(async (url: string) => {
+      const path = String(url);
+      if (path.includes("/settle")) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ success: true, transaction: "0xtxhashsettle" }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ isValid: true, payer: "0xpayer" }),
+      };
+    });
 
     const result = await enforceX402Gate({
       resource: "/v1/chat/completions",
@@ -89,6 +99,9 @@ describe("x402 gate enforcement", () => {
     if (result.action === "allow") {
       expect(result.payer).toBe("0xpayer");
     }
+    expect(fetchImpl).toHaveBeenCalled();
+    const entries = await listPaymentAuditEntries(10, env);
+    expect(entries.some((e) => e.action === "X402_PAYMENT_RECEIVED")).toBe(true);
   });
 
   it("records X402_PAYMENT_FAILED when facilitator rejects proof", async () => {

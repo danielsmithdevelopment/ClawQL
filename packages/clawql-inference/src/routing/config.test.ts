@@ -12,7 +12,7 @@ describe("loadModelEscalationConfig", () => {
   it("enables escalation when CLAWQL_INFERENCE_ROUTING_ENABLED=1", () => {
     const cfg = loadModelEscalationConfig({ CLAWQL_INFERENCE_ROUTING_ENABLED: "1" });
     expect(cfg.enabled).toBe(true);
-    expect(cfg.tierMap.standard).toBe("groq/llama-3.3-70b");
+    expect(cfg.tierMap.standard).toBe("groq/llama-3.3-70b-versatile");
   });
 
   it("enables escalation when model pin is set", () => {

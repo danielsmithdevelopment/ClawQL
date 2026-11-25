@@ -10,6 +10,7 @@
  * is public (no CPC bearer) when `CLAWQL_SELF_SERVE_CHECKOUT=1`; otherwise 503.
  */
 
+import { timingSafeEqual } from "node:crypto";
 import type { Express, Request, Response, NextFunction } from "express";
 import { Effect } from "effect";
 import { name, UserId } from "clawql-gdp";
@@ -58,6 +59,17 @@ function bearerToken(req: Request): string | undefined {
   return m?.[1]?.trim();
 }
 
+function timingSafeTokenEqual(presented: string, expected: string): boolean {
+  try {
+    const a = Buffer.from(presented);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || a.length === 0) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
 function requireProvisionToken(
   env: NodeJS.ProcessEnv
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -70,7 +82,8 @@ function requireProvisionToken(
       return;
     }
     const presented = bearerToken(req);
-    if (!presented || presented !== expected) {
+    // Audit 6.08: timing-safe compare.
+    if (!presented || !timingSafeTokenEqual(presented, expected)) {
       res.status(401).json({ error: "unauthorized" });
       return;
     }

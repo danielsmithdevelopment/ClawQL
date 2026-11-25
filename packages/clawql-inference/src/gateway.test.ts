@@ -34,7 +34,7 @@ describe("ConfiguredInferenceGateway", () => {
     });
 
     expect(result.content).toBe("hello from gateway");
-    expect(result.model).toBe("gpt-4o");
+    expect(result.model).toBe("openai/gpt-4o");
     expect(result.correlationId).toBe("corr-1");
     expect(fetchMock).toHaveBeenCalledOnce();
   });

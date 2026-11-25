@@ -8,3 +8,6 @@ export * from "./spend-cap-hook.js";
 export * from "./pay-batch.js";
 export * from "./batch-script.js";
 export * from "./outbound-plugin.js";
+export * from "./operator-approval.js";
+export * from "./approve-cli.js";
+export * from "./approve-http.js";

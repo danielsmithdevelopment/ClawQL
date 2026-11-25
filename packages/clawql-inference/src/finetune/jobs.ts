@@ -27,6 +27,26 @@ export function submitFinetuneJobEffect(
 ): Effect.Effect<FinetuneJob, Error> {
   return Effect.gen(function* () {
     const env = input.env ?? process.env;
+    // Audit 6.06: regulated / local-only refuse cloud fine-tune uploads.
+    const localOnly =
+      env.CLAWQL_TIER?.trim().toLowerCase() === "regulated" ||
+      ["1", "true", "yes", "on"].includes(
+        env.CLAWQL_INFERENCE_LOCAL_ONLY?.trim().toLowerCase() ?? ""
+      );
+    if (localOnly) {
+      const allow = (env.CLAWQL_INFERENCE_LOCAL_ALLOWLIST ?? "")
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+      if (!allow.includes(input.provider) && !allow.includes(`finetune:${input.provider}`)) {
+        return yield* Effect.fail(
+          new Error(
+            "Inference local-only refuses cloud fine-tune uploads " +
+              `(provider=${input.provider}). Allowlist with CLAWQL_INFERENCE_LOCAL_ALLOWLIST.`
+          )
+        );
+      }
+    }
     const apiKey = resolveApiKey(input.provider, env);
     const job =
       input.provider === "openai"
