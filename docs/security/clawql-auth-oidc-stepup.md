@@ -22,6 +22,8 @@ High-impact tools (payments, …)
 
 Login MFA and phishing-resistant passkeys remain **identity provider** concerns. Payments still use **stage → confirm** plus optional TOTP for “move money now.”
 
+**Outbound payment approve** (`POST /payments/outbound/approve`) is a separate human/operator path: it refuses MCP API keys / MCP OAuth / virtual keys, and (audit Z1) **requires** `CLAWQL_OPERATOR_APPROVE_OIDC_AUDIENCE` (must differ from the MCP audience — `auth_time`-only is refused). See [`outbound-payment-approve.md`](./outbound-payment-approve.md) for **human-approved** vs **operator-approved** wording.
+
 ## Gateway OIDC
 
 Set:

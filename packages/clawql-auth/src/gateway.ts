@@ -60,6 +60,13 @@ export type AtrClaims = {
   walletAddress?: string;
   /** True when primary TOTP / step-up MFA succeeded. */
   mfa?: boolean;
+  /**
+   * OIDC `auth_time` (seconds since epoch) when present — used for step-up /
+   * recent-signin checks (e.g. outbound payment approve, audit Z1).
+   */
+  authTime?: number;
+  /** Verified JWT `aud` value(s) when present. */
+  audience?: string | string[];
 };
 
 /**

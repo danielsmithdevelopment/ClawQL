@@ -25,6 +25,7 @@ import {
   runPaymentsX402Verify,
   runPaymentsX402WalletSetup,
   runPaymentsOutboundApprove,
+  runPaymentsOperatorKeyGenerate,
   runPaymentsPayoutConnectCreate,
   runPaymentsPayoutConnectLink,
   runPaymentsPayoutCreate,
@@ -434,6 +435,12 @@ export async function runPaymentsOutboundApproveCmd(
     home: options.home,
     json: options.json,
   });
+}
+
+export async function runPaymentsOperatorKeyGenerateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOperatorKeyGenerate({ json: options.json });
 }
 
 export async function runPaymentsPayoutConnectCreateCmd(

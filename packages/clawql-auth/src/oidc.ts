@@ -288,6 +288,12 @@ function finalizeMfaClaims(claims: AtrClaims, payload: JWTPayload): AtrClaims {
     const amr = asStringArray(payload.amr);
     if (amr.length > 0) claims.amr = amr;
   }
+  if (typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time)) {
+    claims.authTime = payload.auth_time;
+  }
+  if (payload.aud !== undefined) {
+    claims.audience = payload.aud as string | string[];
+  }
   return claims;
 }
 

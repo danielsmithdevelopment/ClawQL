@@ -104,6 +104,7 @@ import {
   runPaymentsX402VerifyCmd,
   runPaymentsX402WalletSetupCmd,
   runPaymentsOutboundApproveCmd,
+  runPaymentsOperatorKeyGenerateCmd,
   runPaymentsPayoutConnectCreateCmd,
   runPaymentsPayoutConnectLinkCmd,
   runPaymentsPayoutCreateCmd,
@@ -527,6 +528,8 @@ Usage:
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
   clawql payments approve <quoteDigest> [--principal operator:name]
                   # Tenant from CLAWQL_TENANT_ID only; refused in harness / regulated
+  clawql payments operator-key generate [--json]
+                  # Mint 32-byte random key + CLAWQL_OPERATOR_APPROVE_KEY_HASH (store key in password manager)
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -1658,6 +1661,15 @@ async function main(): Promise<void> {
       });
       return;
     }
+    if (subcmd === "operator-key") {
+      if (rest[0] === "generate") {
+        process.exitCode = await runPaymentsOperatorKeyGenerateCmd(paymentsOpts);
+        return;
+      }
+      console.error("Usage: clawql payments operator-key generate [--json]");
+      process.exitCode = 1;
+      return;
+    }
     if (subcmd === "x402") {
       const x402Action = rest[0];
       if (x402Action === "wallet" && rest[1] === "setup") {
@@ -1984,7 +1996,7 @@ async function main(): Promise<void> {
       return;
     }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | approve | x402 | payout | ramp | cloudflare-wallet | offramp | credits | org | compensation"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | approve | operator-key | x402 | payout | ramp | cloudflare-wallet | offramp | credits | org | compensation"
     );
     process.exitCode = 1;
     return;
