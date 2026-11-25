@@ -56,10 +56,7 @@ export function operatorApproveAuthTimeMaxSec(env: NodeJS.ProcessEnv = process.e
   return Math.min(n, 3600);
 }
 
-function audienceIncludes(
-  aud: string | string[] | undefined,
-  required: string
-): boolean {
+function audienceIncludes(aud: string | string[] | undefined, required: string): boolean {
   if (!aud) return false;
   if (typeof aud === "string") return aud === required;
   return aud.includes(required);
@@ -172,8 +169,7 @@ export async function resolveOutboundApproveOperator(
           : typeof claims.authTime === "number"
             ? claims.authTime
             : undefined;
-      const ageSec =
-        authTime === undefined ? undefined : Math.floor(Date.now() / 1000) - authTime;
+      const ageSec = authTime === undefined ? undefined : Math.floor(Date.now() / 1000) - authTime;
       const authTimeOk =
         authTime !== undefined && ageSec !== undefined && ageSec >= 0 && ageSec <= maxSec;
       if (!audOk && !authTimeOk) {

@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Request } from "express";
 import { SignJWT } from "jose";
-import {
-  operatorApproveAuthTimeMaxSec,
-  resolveOutboundApproveOperator,
-} from "./approve-http.js";
+import { operatorApproveAuthTimeMaxSec, resolveOutboundApproveOperator } from "./approve-http.js";
 import { hashOperatorApproveKey } from "./operator-key.js";
 
 function fakeReq(headers: Record<string, string>): Request {

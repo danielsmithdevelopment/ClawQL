@@ -13,12 +13,12 @@ describe("operator-key (audit Z2)", () => {
 
   it("verifies against CLAWQL_OPERATOR_APPROVE_KEY_HASH", () => {
     const hash = hashOperatorApproveKey("op-secret");
-    expect(verifyOperatorApproveKey("op-secret", { CLAWQL_OPERATOR_APPROVE_KEY_HASH: hash })).toEqual(
-      { ok: true }
-    );
     expect(
-      verifyOperatorApproveKey("wrong", { CLAWQL_OPERATOR_APPROVE_KEY_HASH: hash }).ok
-    ).toBe(false);
+      verifyOperatorApproveKey("op-secret", { CLAWQL_OPERATOR_APPROVE_KEY_HASH: hash })
+    ).toEqual({ ok: true });
+    expect(verifyOperatorApproveKey("wrong", { CLAWQL_OPERATOR_APPROVE_KEY_HASH: hash }).ok).toBe(
+      false
+    );
   });
 
   it("refuses plaintext env without allow flag", () => {
@@ -42,8 +42,8 @@ describe("operator-key (audit Z2)", () => {
     expect(
       clawqlEnvContainsPlaintextOperatorKey("# comment\nCLAWQL_OPERATOR_APPROVE_KEY=secret\n")
     ).toBe(true);
-    expect(
-      clawqlEnvContainsPlaintextOperatorKey("CLAWQL_OPERATOR_APPROVE_KEY_HASH=abc\n")
-    ).toBe(false);
+    expect(clawqlEnvContainsPlaintextOperatorKey("CLAWQL_OPERATOR_APPROVE_KEY_HASH=abc\n")).toBe(
+      false
+    );
   });
 });

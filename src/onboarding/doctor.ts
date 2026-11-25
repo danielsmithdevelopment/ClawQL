@@ -88,9 +88,7 @@ export async function runDoctor(
     // Audit Z2: plaintext operator approve key on disk is readable by same-user agent shells.
     try {
       const { readFileSync } = await import("node:fs");
-      const { clawqlEnvContainsPlaintextOperatorKey } = await import(
-        "clawql-payments/x402"
-      );
+      const { clawqlEnvContainsPlaintextOperatorKey } = await import("clawql-payments/x402");
       const envContents = readFileSync(envFile, "utf8");
       if (clawqlEnvContainsPlaintextOperatorKey(envContents)) {
         checks.push({
@@ -118,7 +116,8 @@ export async function runDoctor(
   ) {
     checks.push({
       level: "warn",
-      message: "CLAWQL_OPERATOR_APPROVE_KEY set without CLAWQL_OPERATOR_APPROVE_KEY_HASH (audit Z2)",
+      message:
+        "CLAWQL_OPERATOR_APPROVE_KEY set without CLAWQL_OPERATOR_APPROVE_KEY_HASH (audit Z2)",
       detail:
         "Prefer hash-only server config. Set CLAWQL_ALLOW_OPERATOR_APPROVE_KEY_PLAINTEXT=1 only for migration.",
     });

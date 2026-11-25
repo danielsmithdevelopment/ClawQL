@@ -5,10 +5,10 @@
 
 ## Claim wording
 
-| Path | Wording | When it holds |
-| ---- | ------- | ------------- |
-| Console / OIDC with step-up (Z1) | **human-approved** | JWT has dedicated approve audience **or** recent `auth_time` (default ≤ 5 min); role `operator`\|`admin` (or scope `payments:approve`) |
-| Dedicated operator key (hashed) | **operator-approved** | Server stores `CLAWQL_OPERATOR_APPROVE_KEY_HASH` only; operator pastes key from a password manager |
+| Path                             | Wording               | When it holds                                                                                                                          |
+| -------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Console / OIDC with step-up (Z1) | **human-approved**    | JWT has dedicated approve audience **or** recent `auth_time` (default ≤ 5 min); role `operator`\|`admin` (or scope `payments:approve`) |
+| Dedicated operator key (hashed)  | **operator-approved** | Server stores `CLAWQL_OPERATOR_APPROVE_KEY_HASH` only; operator pastes key from a password manager                                     |
 
 Do **not** call the key path “human-approved.” Do **not** claim either path until the matching row above is true in the deployment.
 

@@ -22,9 +22,7 @@ function hexEqual(a: string, b: string): boolean {
   }
 }
 
-export type OperatorKeyVerifyResult =
-  | { ok: true }
-  | { ok: false; reason: string };
+export type OperatorKeyVerifyResult = { ok: true } | { ok: false; reason: string };
 
 /**
  * Verify a presented operator approve key against the configured hash
@@ -47,8 +45,7 @@ export function verifyOperatorApproveKey(
   if (!plaintext) {
     return {
       ok: false,
-      reason:
-        "CLAWQL_OPERATOR_APPROVE_KEY_HASH unset — store sha256 hex of the key (audit Z2)",
+      reason: "CLAWQL_OPERATOR_APPROVE_KEY_HASH unset — store sha256 hex of the key (audit Z2)",
     };
   }
 
