@@ -1,4 +1,4 @@
-# Executor.sh comparison (executor-cmp-001)
+# Executor.sh comparison (executor-cmp-001) (Executor v1.6.10 historical)
 
 Side-by-side token comparison against [executor.sh](https://executor.sh/) using **their own homepage chart** as one Layer 1 reference, a **live Executor MCP/CLI install** for re-measurement, and a **GitHub PR list** (GitHub is in their showcase integrations) for Layer 2.
 
