@@ -23,19 +23,28 @@ describe("external-ingest SSRF gate", () => {
     expect(() => assertSafeExternalIngestUrl("https://metadata.google.internal/")).toThrow(
       /not allowed/i
     );
-    expect(() => assertSafeExternalIngestUrl("http://example.com/x")).toThrow(/localhost/i);
+    expect(() => assertSafeExternalIngestUrl("http://example.com/x")).toThrow(/HTTPS|http/i);
   });
 
-  it("allows public https and loopback http", () => {
+  it("allows public https and refuses loopback unless CLAWQL_WEB_ALLOW_LOOPBACK=1 (4.06)", () => {
     expect(assertSafeExternalIngestUrl("https://example.com/a").hostname).toBe("example.com");
-    expect(assertSafeExternalIngestUrl("http://127.0.0.1:9/").hostname).toBe("127.0.0.1");
-    expect(assertSafeExternalIngestUrl("http://localhost:9/").hostname).toBe("localhost");
+    expect(() => assertSafeExternalIngestUrl("http://127.0.0.1:9/")).toThrow(/loopback/i);
+    expect(() => assertSafeExternalIngestUrl("http://localhost:9/")).toThrow(/loopback/i);
+    const prev = process.env.CLAWQL_WEB_ALLOW_LOOPBACK;
+    process.env.CLAWQL_WEB_ALLOW_LOOPBACK = "1";
+    try {
+      expect(assertSafeExternalIngestUrl("http://127.0.0.1:9/").hostname).toBe("127.0.0.1");
+      expect(assertSafeExternalIngestUrl("http://localhost:9/").hostname).toBe("localhost");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_WEB_ALLOW_LOOPBACK;
+      else process.env.CLAWQL_WEB_ALLOW_LOOPBACK = prev;
+    }
   });
 
   it("rejects redirects that hop into private networks", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const href = String(input);
-      if (href.includes("public.example")) {
+      if (href.includes("example.com/start")) {
         return new Response(null, {
           status: 302,
           headers: { Location: "https://169.254.169.254/latest/meta-data/" },
@@ -45,8 +54,8 @@ describe("external-ingest SSRF gate", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchUrlResource("https://public.example/start")).rejects.toThrow(
-      /private|link-local/i
+    await expect(fetchUrlResource("https://example.com/start")).rejects.toThrow(
+      /private|link-local|loopback/i
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

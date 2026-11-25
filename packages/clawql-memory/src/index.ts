@@ -7,4 +7,5 @@ export * from "./vault/markdown.js";
 export * from "./vault/slug-index.js";
 export * from "./vault/utils.js";
 export * from "./vault/read-guard.js";
+export * from "./crypto/shred.js";
 export * from "./okf/index.js";

@@ -64,7 +64,8 @@ function planPush(
 function planPull(
   local: Map<string, { sha256: string }>,
   remote: SyncManifest | null,
-  force: boolean
+  force: boolean,
+  erasureTombstones: ReadonlySet<string> = new Set()
 ): SyncPlanEntry[] {
   const actions: SyncPlanEntry[] = [];
   if (!remote) return actions;
@@ -72,6 +73,11 @@ function planPull(
     // Never pull secrets / auth / WORM even if a teammate's manifest lists them.
     if (isExcludedRel(path)) {
       actions.push({ path, action: "skip", reason: "excluded from pull" });
+      continue;
+    }
+    // Audit 4.07: erased notes must not come back from the team bucket.
+    if (erasureTombstones.has(path.replace(/\\/g, "/"))) {
+      actions.push({ path, action: "skip", reason: "erasure tombstone" });
       continue;
     }
     const localEntry = local.get(path);
@@ -154,15 +160,18 @@ async function applyDownloads(
  */
 export function mergeManifestFiles(
   local: Map<string, SyncFileEntry>,
-  remote: SyncManifest | null
+  remote: SyncManifest | null,
+  erasureTombstones: ReadonlySet<string> = new Set()
 ): Record<string, SyncFileEntry> {
   const files: Record<string, SyncFileEntry> = {};
   if (remote?.files) {
     for (const [path, entry] of Object.entries(remote.files)) {
+      if (erasureTombstones.has(path.replace(/\\/g, "/"))) continue;
       files[path] = entry;
     }
   }
   for (const [path, entry] of local) {
+    if (erasureTombstones.has(path.replace(/\\/g, "/"))) continue;
     files[path] = entry;
   }
   return files;
@@ -173,13 +182,14 @@ function writeRemoteManifestEffect(
   config: ResolvedHomeSyncConfig,
   local: Map<string, SyncFileEntry>,
   remote: SyncManifest | null,
-  dryRun: boolean
+  dryRun: boolean,
+  erasureTombstones: ReadonlySet<string> = new Set()
 ): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
     const manifest: SyncManifest = {
       version: 1,
       updatedAt: new Date().toISOString(),
-      files: mergeManifestFiles(local, remote),
+      files: mergeManifestFiles(local, remote, erasureTombstones),
     };
     if (dryRun) return;
     yield* Effect.tryPromise({
@@ -195,13 +205,26 @@ export function runSyncPushEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
     const local = yield* collectLocalSyncFilesEffect(config.home, config.include);
     const remote = yield* fetchRemoteManifestEffect(client, config);
     const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
-    const actions = planPush(localHashes, remote, Boolean(opts.force));
+    const tombstones = yield* Effect.tryPromise({
+      try: async () => {
+        try {
+          const { loadErasureTombstonePaths } = await import("clawql-memory");
+          return await loadErasureTombstonePaths(config.home);
+        } catch {
+          return new Set<string>();
+        }
+      },
+      catch: asError,
+    }).pipe(Effect.orElseSucceed(() => new Set<string>()));
+    const actions = planPush(localHashes, remote, Boolean(opts.force)).filter(
+      (a) => !tombstones.has(a.path.replace(/\\/g, "/"))
+    );
     const dryRun = Boolean(opts.dryRun);
     const uploaded = yield* Effect.tryPromise({
       try: () => applyUploads(client, config, config.home, actions, dryRun),
       catch: asError,
     });
-    if (!dryRun) yield* writeRemoteManifestEffect(client, config, local, remote, false);
+    if (!dryRun) yield* writeRemoteManifestEffect(client, config, local, remote, false, tombstones);
     return summarize(config, actions, uploaded, 0, dryRun);
   });
 }
@@ -217,7 +240,18 @@ export function runSyncPullEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
     const local = yield* collectLocalSyncFilesEffect(config.home, config.include);
     const remote = yield* fetchRemoteManifestEffect(client, config);
     const localHashes = new Map([...local.entries()].map(([k, v]) => [k, { sha256: v.sha256 }]));
-    const actions = planPull(localHashes, remote, Boolean(opts.force));
+    const tombstones = yield* Effect.tryPromise({
+      try: async () => {
+        try {
+          const { loadErasureTombstonePaths } = await import("clawql-memory");
+          return await loadErasureTombstonePaths(config.home);
+        } catch {
+          return new Set<string>();
+        }
+      },
+      catch: asError,
+    }).pipe(Effect.orElseSucceed(() => new Set<string>()));
+    const actions = planPull(localHashes, remote, Boolean(opts.force), tombstones);
     const dryRun = Boolean(opts.dryRun);
     const downloaded = yield* Effect.tryPromise({
       try: () => applyDownloads(client, config, config.home, actions, dryRun, remote),

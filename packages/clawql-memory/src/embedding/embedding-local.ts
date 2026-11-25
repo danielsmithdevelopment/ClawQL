@@ -67,10 +67,12 @@ async function loadPipeline(model: string): Promise<LocalEmbedFn> {
     process.env.CLAWQL_BUNDLED_OFFLINE?.trim() === "1" ||
     process.env.TRANSFORMERS_OFFLINE?.trim() === "1";
   env.allowRemoteModels = !offline;
+  // Pin revision when set (checksum / revision pin for regulated installs).
+  const revision = process.env.CLAWQL_EMBEDDING_MODEL_REVISION?.trim() || undefined;
 
   const loadMs = embeddingLoadTimeoutMs();
   const extractor = await withTimeout(
-    Promise.resolve(pipeline("feature-extraction", model)),
+    Promise.resolve(pipeline("feature-extraction", model, revision ? { revision } : undefined)),
     loadMs,
     `local embedding pipeline(${model})`
   );

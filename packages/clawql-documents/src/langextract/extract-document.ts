@@ -1,10 +1,11 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { Effect } from "effect";
 import {
+  assertLangextractBackendAllowed,
   langextractBaseUrl,
-  langextractBackend,
-  langextractDefaultModelId,
   langextractToolEnabled,
+  resolveLangextractBackend,
+  resolveLangextractModelId,
 } from "./env.js";
 import { decodeExtractDocumentInput, extractDocumentToolZodShape } from "../schema/index.js";
 
@@ -401,12 +402,14 @@ async function postLangextractHttpImpl(
   baseUrl: string
 ): Promise<LangextractHttpResponse> {
   const { prompt_description, examples } = resolvePromptAndExamples(input);
+  const backend = resolveLangextractBackend(input.backend);
+  assertLangextractBackendAllowed(backend);
   const body = {
     text: input.text,
     prompt_description,
     examples,
-    model_id: input.model_id ?? langextractDefaultModelId(),
-    backend: input.backend ?? langextractBackend(),
+    model_id: resolveLangextractModelId(input.model_id),
+    backend,
     write_html: input.write_html ?? false,
     doc_id: input.doc_id,
   };
