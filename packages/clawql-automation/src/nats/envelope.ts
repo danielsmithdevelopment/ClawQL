@@ -51,15 +51,18 @@ export function buildWorkflowEvent(
     correlation_id?: string;
     workflow_ref?: HitlWorkflowRef;
     payload?: Record<string, unknown>;
+    /** Override event timestamp (audit W4: must match resume_sig). */
+    ts?: string;
   } = {}
 ): WorkflowEventEnvelope {
+  const { ts: tsOverride, ...rest } = fields;
   return {
     schema_version: WORKFLOW_EVENT_SCHEMA_VERSION,
     event_type: eventType,
     subject: workflowEventSubject(eventType),
     source,
-    ts: new Date().toISOString(),
-    ...fields,
+    ts: tsOverride ?? new Date().toISOString(),
+    ...rest,
   };
 }
 

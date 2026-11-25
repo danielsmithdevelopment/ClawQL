@@ -981,6 +981,9 @@ nats:
   # Optional external NATS URL override (for managed/shared clusters).
   # When set, this URL is injected into clawql-mcp as CLAWQL_NATS_URL.
   url: ""
+  # Audit W1: plain nats:// needs CLAWQL_NATS_ALLOW_INSECURE (paired with NetworkPolicy).
+  # null = auto (true for in-cluster nats:// or explicit nats://|ws:// url; false for tls://|wss://).
+  allowInsecure: null
   image:
     repository: nats
     tag: "2.10.17-alpine"

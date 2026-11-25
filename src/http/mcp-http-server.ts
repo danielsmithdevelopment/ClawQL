@@ -809,7 +809,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       // CLAWQL_TRUSTED_PROXY=1 (enterprise ingress that already authenticated).
       const claims = (
         req as import("express").Request & {
-          clawqlClaims?: { sub?: string };
+          clawqlClaims?: { sub?: string; tenantId?: string };
         }
       ).clawqlClaims;
       const trustedProxy = envFlagOn("CLAWQL_TRUSTED_PROXY");
@@ -821,12 +821,15 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             (typeof req.header("x-clawql-atr-sub") === "string" &&
               req.header("x-clawql-atr-sub")?.trim()))) ||
         "anonymous";
+      // Audit W3: tenant for events must come from verified claims, not filter args.
+      const claimsTenant = claims?.tenantId?.trim() || undefined;
       try {
         const { handleMcpEventsJsonRpc, McpEventsServiceLive } = await import("clawql-mcp-events");
         const rpc = await Effect.runPromise(
           handleMcpEventsJsonRpc(
             { jsonrpc: "2.0", id: body.id, method: body.method, params: body.params },
-            principal
+            principal,
+            { claimsTenant }
           ).pipe(Effect.provide(McpEventsServiceLive))
         );
         res.status(200).json(rpc);

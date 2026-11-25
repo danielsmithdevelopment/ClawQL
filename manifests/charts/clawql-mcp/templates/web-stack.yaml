@@ -130,7 +130,7 @@ spec:
       port: {{ .Values.webBrowser.chromium.port | default 9222 }}
       targetPort: cdp
 ---
-# Audit 5.01: only the ClawQL MCP pods may reach Chromium CDP.
+# Audit 5.01 / W2: only the MCP app pod may reach Chromium CDP; egress blocks RFC1918.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -146,13 +146,39 @@ spec:
       app.kubernetes.io/component: chromium
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: {{ include "clawql-mcp.name" . }}
               app.kubernetes.io/instance: {{ .Release.Name }}
+              app: {{ include "clawql-mcp.fullname" . }}
       ports:
         - protocol: TCP
           port: {{ .Values.webBrowser.chromium.port | default 9222 }}
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Public HTTP(S) only — exclude private / link-local / loopback (audit W2).
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 127.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
 {{- end }}

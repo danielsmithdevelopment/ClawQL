@@ -218,4 +218,22 @@ describe("mergeManifestFiles", () => {
     const merged = mergeManifestFiles(local, remote, tombs);
     expect(Object.keys(merged).sort()).toEqual(["Memory/keep.md"]);
   });
+
+  it("V2: local reuse of a tombstoned path can re-enter the manifest", async () => {
+    const { mergeManifestFiles, mergeErasureTombstones } = await import("./engine.js");
+    const local = new Map([
+      ["Memory/reused.md", { sha256: "n".repeat(64), size: 9, mtimeMs: 9 }],
+    ]);
+    const remote = {
+      version: 1 as const,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      files: {},
+      erasureTombstones: ["Memory/reused.md"],
+    };
+    const tombs = mergeErasureTombstones(new Set(), remote);
+    // Simulate push clearing reuse before merge:
+    tombs.delete("Memory/reused.md");
+    const merged = mergeManifestFiles(local, remote, tombs);
+    expect(merged["Memory/reused.md"]?.sha256).toBe("n".repeat(64));
+  });
 });

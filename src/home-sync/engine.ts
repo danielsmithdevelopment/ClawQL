@@ -262,7 +262,25 @@ export function runSyncPushEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
       try: () => loadLocalErasureTombstones(config.home),
       catch: asError,
     }).pipe(Effect.orElseSucceed(() => new Set<string>()));
-    const tombstones = mergeErasureTombstones(localTombs, remote);
+    let tombstones = mergeErasureTombstones(localTombs, remote);
+    // Audit V2: a local file at a tombstoned path is intentional reuse — clear tombstone.
+    const reused: string[] = [];
+    for (const path of [...tombstones]) {
+      if (!local.has(path) && !local.has(normalizeSyncPath(path))) continue;
+      reused.push(path);
+      tombstones.delete(path);
+    }
+    if (!opts.dryRun && reused.length) {
+      yield* Effect.tryPromise({
+        try: async () => {
+          const { clearErasureTombstonePath } = await import("clawql-memory");
+          for (const p of reused) {
+            await clearErasureTombstonePath(config.home, p).catch(() => undefined);
+          }
+        },
+        catch: asError,
+      }).pipe(Effect.ignore);
+    }
     const actions = planPush(localHashes, remote, Boolean(opts.force)).filter(
       (a) => !tombstones.has(normalizeSyncPath(a.path))
     );
@@ -303,13 +321,20 @@ export function runSyncPullEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
       try: () => applyDownloads(client, config, config.home, actions, dryRun, remote),
       catch: asError,
     });
-    // Drop any local copy that a teammate erased (shared tombstone).
+    // Drop any local copy that a teammate erased (shared tombstone) + derived indexes (V1).
     if (!dryRun) {
       for (const path of tombstones) {
         if (!local.has(path) && !local.has(normalizeSyncPath(path))) continue;
         const abs = absPathForRel(config.home, path);
         yield* Effect.tryPromise({
           try: () => unlink(abs).catch(() => undefined),
+          catch: asError,
+        }).pipe(Effect.ignore);
+        yield* Effect.tryPromise({
+          try: async () => {
+            const { purgeDerivedStoresForVaultPath } = await import("clawql-memory");
+            await purgeDerivedStoresForVaultPath(config.home, path);
+          },
           catch: asError,
         }).pipe(Effect.ignore);
       }

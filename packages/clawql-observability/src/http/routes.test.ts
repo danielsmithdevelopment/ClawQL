@@ -87,4 +87,23 @@ describe("observability HTTP routes", () => {
       /outputPath refused|alloy/i
     );
   });
+
+  it("refuses alloy apply to non-.river sibling under package (audit W5)", async () => {
+    const response = await Effect.runPromise(
+      handleObservabilityHttpRequestEffect(
+        {
+          method: "POST",
+          url: "/observability/alloy/apply",
+          headers: { authorization: "ApiKey secret-key" },
+          body: { outputPath: "package.json" },
+        },
+        { CLAWQL_OBSERVABILITY_API_KEY: "secret-key" }
+      )
+    );
+
+    expect(response.status).toBe(500);
+    expect(String((response.body as { reason?: string }).reason ?? JSON.stringify(response.body))).toMatch(
+      /outputPath refused|\.river/i
+    );
+  });
 });

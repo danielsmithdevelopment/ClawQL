@@ -58,22 +58,33 @@ describe("dispatchHitlCompletedEvent", () => {
     expect(resumeMock).not.toHaveBeenCalled();
   });
 
-  it("requires resume token when configured", async () => {
+  it("requires resume_sig HMAC when token configured (W4)", async () => {
     delete process.env.CLAWQL_NATS_HITL_ALLOW_UNSIGNED_RESUME;
     vi.stubEnv("CLAWQL_NATS_HITL_RESUME_TOKEN", "hitl-secret");
     resumeMock.mockClear();
+    const { signHitlResume } = await import("./hitl-resume-auth.js");
     const bad = buildWorkflowEvent("hitl.completed", "test", {
       workflow_ref: { namespace: "clawql", name: "wf-demo" },
-      payload: { decision: "approve", resume_token: "wrong" },
+      payload: { decision: "approve", resume_sig: "deadbeef" },
     });
     expect((await dispatchHitlCompletedEvent(bad)).ok).toBe(false);
 
+    const ts = new Date().toISOString();
+    const sig = signHitlResume("hitl-secret", "clawql/wf-demo", "approve", ts);
     const good = buildWorkflowEvent("hitl.completed", "test", {
       workflow_ref: { namespace: "clawql", name: "wf-demo" },
-      payload: { decision: "approve", resume_token: "hitl-secret" },
+      payload: { decision: "approve", resume_sig: sig },
+      ts,
     });
     expect((await dispatchHitlCompletedEvent(good)).ok).toBe(true);
     expect(resumeMock).toHaveBeenCalledTimes(1);
+
+    // Legacy raw resume_token still accepted during migration.
+    const legacy = buildWorkflowEvent("hitl.completed", "test", {
+      workflow_ref: { namespace: "clawql", name: "wf-demo" },
+      payload: { decision: "approve", resume_token: "hitl-secret" },
+    });
+    expect((await dispatchHitlCompletedEvent(legacy)).ok).toBe(true);
   });
 
   it("ignores events without workflow ref", async () => {

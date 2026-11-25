@@ -523,3 +523,27 @@ export async function loadErasureTombstonePaths(vaultRoot: string): Promise<Read
     return new Set();
   }
 }
+
+/** Audit V2: drop a path tombstone so a reused note name can sync again. */
+export function clearErasureTombstonePathEffect(
+  vaultRoot: string,
+  path: string
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    const norm = path.replace(/\\/g, "/");
+    const file = yield* readJsonFileEffect<ErasureTombstoneFile>(tombstoneListPath(vaultRoot), {
+      version: 1,
+      entries: [],
+    });
+    const next = (file.entries ?? []).filter((e) => e.path.replace(/\\/g, "/") !== norm);
+    if (next.length === (file.entries ?? []).length) return;
+    file.entries = next;
+    yield* fromPromise(() =>
+      writeFile(tombstoneListPath(vaultRoot), `${JSON.stringify(file, null, 2)}\n`, "utf8")
+    );
+  });
+}
+
+export async function clearErasureTombstonePath(vaultRoot: string, path: string): Promise<void> {
+  return Effect.runPromise(clearErasureTombstonePathEffect(vaultRoot, path));
+}

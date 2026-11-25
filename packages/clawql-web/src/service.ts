@@ -15,19 +15,19 @@ import type {
   WebSearchProvider,
 } from "./interfaces.js";
 import { browserAsSearch } from "./providers/fallback-search.js";
-import { assertSafeWebUrl, fetchRawUrl } from "./providers/browser/raw-fetch.js";
+import { assertSafeWebUrlResolved, fetchRawUrl } from "./providers/browser/raw-fetch.js";
 import { resolveBrowserProvider } from "./providers/browser/resolve.js";
 import { resolveSearchProvider } from "./providers/search/resolve.js";
 
-/** Audit 5.01: browser tools must use the same URL gate as raw fetch (no file:// / metadata / SSRF). */
-function assertSafeBrowserUrl(url: string): void {
-  assertSafeWebUrl(url);
+/** Audit 5.01 / W2: sync gate + DNS resolve before Chromium navigate. */
+async function assertSafeBrowserUrl(url: string): Promise<void> {
+  await assertSafeWebUrlResolved(url);
 }
 
-function assertSafeBrowserSteps(steps: BrowserStep[]): void {
+async function assertSafeBrowserSteps(steps: BrowserStep[]): Promise<void> {
   for (const step of steps) {
     if (step.action === "navigate") {
-      assertSafeBrowserUrl(step.url);
+      await assertSafeBrowserUrl(step.url);
     }
   }
 }
@@ -196,7 +196,7 @@ export function createWebService(
         }
       }
 
-      assertSafeBrowserUrl(url);
+      await assertSafeBrowserUrl(url);
       const browser = requireBrowser(browserProvider, "web_fetch");
       requireCapability(browser, "fetch", "web_fetch");
       try {
@@ -224,7 +224,7 @@ export function createWebService(
     },
 
     async screenshot(url: string, options?: FetchOptions): Promise<Uint8Array> {
-      assertSafeBrowserUrl(url);
+      await assertSafeBrowserUrl(url);
       const browser = requireBrowser(browserProvider, "web_screenshot");
       requireCapability(browser, "screenshot", "web_screenshot");
       const buf = await browser.screenshot!(url, options);
@@ -243,8 +243,8 @@ export function createWebService(
       steps: BrowserStep[],
       options?: FetchOptions
     ): Promise<PageContent> {
-      assertSafeBrowserUrl(url);
-      assertSafeBrowserSteps(steps);
+      await assertSafeBrowserUrl(url);
+      await assertSafeBrowserSteps(steps);
       const browser = requireBrowser(browserProvider, "web_interact");
       requireCapability(browser, "interact", "web_interact");
       const page = await browser.interact!(url, steps, options);

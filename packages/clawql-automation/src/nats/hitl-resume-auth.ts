@@ -1,10 +1,10 @@
 /**
- * Audit 5.02: NATS `hitl.completed` must not resume Argo without a human
- * approve decision and a shared resume token (unless unsigned resume is
- * explicitly allowed for local demos).
+ * Audit 5.02 / W4: NATS `hitl.completed` must not resume Argo without a human
+ * approve decision and a signed resume proof (HMAC over workflow + decision + ts).
+ * The shared secret never travels in the JetStream payload.
  */
 
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
 import {
   natsHitlAllowUnsignedResume,
@@ -23,6 +23,8 @@ export type HitlResumeAuthResult =
   | { ok: true }
   | { ok: false; error: string };
 
+const MAX_RESUME_AGE_MS = 24 * 60 * 60 * 1000;
+
 function readDecision(envelope: WorkflowEventEnvelope): string | undefined {
   const payload = envelope.payload;
   if (!payload || typeof payload !== "object") return undefined;
@@ -36,22 +38,57 @@ function readDecision(envelope: WorkflowEventEnvelope): string | undefined {
   return undefined;
 }
 
-function readPresentedToken(envelope: WorkflowEventEnvelope): string | undefined {
+function workflowCanonical(envelope: WorkflowEventEnvelope): string {
+  const ref = envelope.workflow_ref;
+  if (ref && typeof ref === "object") {
+    const ns = "namespace" in ref ? String((ref as { namespace?: string }).namespace ?? "") : "";
+    const name = "name" in ref ? String((ref as { name?: string }).name ?? "") : "";
+    if (ns || name) return `${ns}/${name}`;
+  }
+  return envelope.correlation_id?.trim() || "";
+}
+
+/** Canonical bytes for HMAC: workflow|decision|ts */
+export function hitlResumeSignPayload(
+  workflow: string,
+  decision: string,
+  ts: string
+): string {
+  return `${workflow}\n${decision}\n${ts}`;
+}
+
+export function signHitlResume(
+  secret: string,
+  workflow: string,
+  decision: string,
+  ts: string
+): string {
+  return createHmac("sha256", secret)
+    .update(hitlResumeSignPayload(workflow, decision, ts), "utf8")
+    .digest("hex");
+}
+
+function readPresentedSig(envelope: WorkflowEventEnvelope): string | undefined {
   const payload = envelope.payload;
   if (!payload || typeof payload !== "object") return undefined;
-  const direct = payload.resume_token;
-  if (typeof direct === "string") return direct;
+  const sig = payload.resume_sig;
+  if (typeof sig === "string" && sig.trim()) return sig.trim();
+  // Legacy: fixed secret in payload (pre-W4) — still accepted if it matches the HMAC secret string.
+  const legacy = payload.resume_token;
+  if (typeof legacy === "string" && legacy.trim()) return legacy.trim();
   const hitl = payload.clawql_hitl;
   if (hitl && typeof hitl === "object") {
-    const t = (hitl as Record<string, unknown>).resume_token;
-    if (typeof t === "string") return t;
+    const t = (hitl as Record<string, unknown>).resume_sig;
+    if (typeof t === "string" && t.trim()) return t.trim();
+    const lt = (hitl as Record<string, unknown>).resume_token;
+    if (typeof lt === "string" && lt.trim()) return lt.trim();
   }
   return undefined;
 }
 
 /**
  * Gate Argo resume from a NATS hitl.completed envelope.
- * Requires decision=approve and a matching CLAWQL_NATS_HITL_RESUME_TOKEN
+ * Requires decision=approve and a matching HMAC resume_sig (or legacy resume_token)
  * unless CLAWQL_NATS_HITL_ALLOW_UNSIGNED_RESUME=1.
  */
 export function assertHitlCompletedMayResumeEffect(
@@ -69,8 +106,8 @@ export function assertHitlCompletedMayResumeEffect(
       };
     }
 
-    const expected = natsHitlResumeToken();
-    if (!expected) {
+    const expectedSecret = natsHitlResumeToken();
+    if (!expectedSecret) {
       if (natsHitlAllowUnsignedResume()) {
         return { ok: true };
       }
@@ -82,11 +119,28 @@ export function assertHitlCompletedMayResumeEffect(
       };
     }
 
-    const presented = readPresentedToken(envelope) ?? "";
-    if (!presented || !timingSafeEqualString(presented, expected)) {
-      return { ok: false, error: "invalid or missing hitl resume_token" };
+    const presented = readPresentedSig(envelope) ?? "";
+    if (!presented) {
+      return { ok: false, error: "invalid or missing hitl resume_sig" };
     }
-    return { ok: true };
+
+    // W4: preferred — HMAC(workflow|decision|envelope.ts)
+    const workflow = workflowCanonical(envelope);
+    const expectedSig = signHitlResume(expectedSecret, workflow, decision, envelope.ts);
+    if (timingSafeEqualString(presented, expectedSig)) {
+      const at = Date.parse(envelope.ts);
+      if (Number.isFinite(at) && Date.now() - at > MAX_RESUME_AGE_MS) {
+        return { ok: false, error: "hitl resume_sig expired" };
+      }
+      return { ok: true };
+    }
+
+    // Legacy: raw shared secret in payload (pre-W4) — accepted until publishers migrate.
+    if (timingSafeEqualString(presented, expectedSecret)) {
+      return { ok: true };
+    }
+
+    return { ok: false, error: "invalid or missing hitl resume_sig" };
   });
 }
 

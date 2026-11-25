@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import type { HitlWorkflowRef } from "../workflow/suspend-resume.js";
 import { publishDocumentEventEffect, publishWorkflowEventEffect } from "./client.js";
 import { buildDocumentEvent, buildWorkflowEvent } from "./envelope.js";
+import { signHitlResume } from "./hitl-resume-auth.js";
 
 export function publishHitlEnqueuedEventEffect(fields: {
   correlation_id?: string;
@@ -38,25 +39,34 @@ export function publishHitlCompletedEventEffect(fields: {
   source?: string;
   /** Human decision — defaults to approve for authenticated Label Studio webhooks. */
   decision?: "approve" | "decline" | "reject";
-  /** Shared secret for NATS consumers (audit 5.02); defaults to CLAWQL_NATS_HITL_RESUME_TOKEN. */
+  /**
+   * HMAC signing secret (audit W4). Defaults to CLAWQL_NATS_HITL_RESUME_TOKEN.
+   * The secret is never placed in the JetStream payload — only `resume_sig`.
+   */
   resume_token?: string;
 }): Effect.Effect<boolean> {
-  const payload: Record<string, unknown> = {
-    decision: fields.decision ?? "approve",
-  };
+  const decision = fields.decision ?? "approve";
+  const payload: Record<string, unknown> = { decision };
   if (fields.clawql_hitl !== undefined) {
     payload.clawql_hitl = fields.clawql_hitl;
   }
-  const token =
+  const secret =
     fields.resume_token?.trim() || process.env.CLAWQL_NATS_HITL_RESUME_TOKEN?.trim() || undefined;
-  if (token) {
-    payload.resume_token = token;
+  const ts = new Date().toISOString();
+  if (secret) {
+    const workflow =
+      fields.workflow_ref?.namespace && fields.workflow_ref?.name
+        ? `${fields.workflow_ref.namespace}/${fields.workflow_ref.name}`
+        : fields.correlation_id?.trim() || "";
+    payload.resume_sig = signHitlResume(secret, workflow, decision, ts);
   }
   return publishWorkflowEventEffect(
     buildWorkflowEvent("hitl.completed", fields.source ?? "hitl-label-studio-webhook", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
       payload,
+      // Same ts as resume_sig (audit W4).
+      ts: secret ? ts : undefined,
     })
   );
 }

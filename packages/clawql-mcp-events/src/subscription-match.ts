@@ -45,14 +45,16 @@ export const subscriptionAllowsInboundEffect = (
   });
 
 /**
- * Audit 5.04: tenant-scoped events must not fan out to subscriptions that
- * omit a matching tenant_id filter (standing cross-tenant exfiltration).
+ * Audit 5.04 / W3: tenant-scoped events must match the subscriber's verified
+ * claims tenant (not a self-asserted filter argument).
  */
 export const tenantFilterAllowsEffect = (
   filters: Record<string, unknown>,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  claimsTenant?: string
 ): Effect.Effect<boolean> =>
   Effect.sync(() => {
+    void filters; // tenant filters are ignored — claimsTenant is authoritative (W3).
     const eventTenant =
       typeof data.tenant_id === "string"
         ? data.tenant_id.trim()
@@ -60,25 +62,21 @@ export const tenantFilterAllowsEffect = (
           ? data.tenant.trim()
           : "";
     if (!eventTenant) return true;
-    const filterTenant =
-      typeof filters.tenant_id === "string"
-        ? filters.tenant_id.trim()
-        : typeof filters.tenant === "string"
-          ? filters.tenant.trim()
-          : "";
-    if (!filterTenant) return false;
-    return filterValueMatches(filterTenant, eventTenant);
+    const bound = typeof claimsTenant === "string" ? claimsTenant.trim() : "";
+    if (!bound) return false;
+    return filterValueMatches(bound, eventTenant);
   });
 
 export const matchesEventFiltersEffect = (
   filters: Record<string, unknown>,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  claimsTenant?: string
 ): Effect.Effect<boolean> =>
   Effect.gen(function* () {
     const inboundOk = yield* subscriptionAllowsInboundEffect(filters, data);
     if (!inboundOk) return false;
 
-    const tenantOk = yield* tenantFilterAllowsEffect(filters, data);
+    const tenantOk = yield* tenantFilterAllowsEffect(filters, data, claimsTenant);
     if (!tenantOk) return false;
 
     const filterSource =
@@ -90,6 +88,8 @@ export const matchesEventFiltersEffect = (
 
     for (const [k, v] of Object.entries(filters)) {
       if (v == null || v === "") continue;
+      // Tenant is enforced via claimsTenant above — ignore client-supplied tenant filters.
+      if (k === "tenant_id" || k === "tenant") continue;
       if (typeof v === "string") {
         const actual = data[k];
         if (typeof actual !== "string" || !filterValueMatches(v, actual)) return false;

@@ -68,7 +68,8 @@ export function assertSafeWebUrl(urlStr: string): URL {
   return assertSafeSourceFetchUrl(urlStr);
 }
 
-async function assertSafeWebUrlResolved(urlStr: string): Promise<URL> {
+/** Audit W2: sync hostname checks + DNS resolve before browser navigate / fetch. */
+export async function assertSafeWebUrlResolved(urlStr: string): Promise<URL> {
   const sync = assertSafeWebUrl(urlStr);
   if (isLoopbackHostname(sync.hostname) && loopbackAllowed()) {
     return sync;

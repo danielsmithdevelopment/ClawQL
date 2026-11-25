@@ -319,11 +319,20 @@ export function makeMcpEventsService(
         const safeUrl = yield* assertSafeCallbackUrl(params.delivery.url, policy);
         yield* assertCallbackAllowlisted(safeUrl, enterprise.callbackAllowlist);
 
+        const claimsTenant = params.claimsTenant?.trim() || undefined;
+        // W3: strip client-supplied tenant filters; bind verified claims tenant instead.
+        const { tenant_id: _tid, tenant: _t, ...safeArgs } = args;
+        void _tid;
+        void _t;
+        if (claimsTenant) {
+          (safeArgs as Record<string, unknown>).tenant_id = claimsTenant;
+        }
+
         const id = deriveSubscriptionId({
           principal: params.principal,
           url: params.delivery.url,
           name: params.name,
-          arguments: args,
+          arguments: safeArgs,
         });
 
         const existing = yield* store.findByIdentity(id);
@@ -354,7 +363,7 @@ export function makeMcpEventsService(
           id,
           principal: params.principal,
           name: params.name,
-          arguments: args,
+          arguments: safeArgs,
           url: params.delivery.url,
           secret,
           previousSecret,
@@ -364,6 +373,7 @@ export function makeMcpEventsService(
           verified: false,
           createdAt: existing?.createdAt ?? now.toISOString(),
           updatedAt: now.toISOString(),
+          claimsTenant,
         };
 
         yield* verifyCallbackChallenge(sub, webhookFetch, verificationCache);
@@ -459,7 +469,11 @@ export function makeMcpEventsService(
           const matches: StoredSubscription[] = [];
           for (const s of all) {
             if (!s.verified || s.name !== screened.name) continue;
-            if (yield* matchesEventFiltersEffect(s.arguments, redactedData)) matches.push(s);
+            if (
+              yield* matchesEventFiltersEffect(s.arguments, redactedData, s.claimsTenant)
+            ) {
+              matches.push(s);
+            }
           }
 
         const outcomes: DeliveryOutcome[] = [];

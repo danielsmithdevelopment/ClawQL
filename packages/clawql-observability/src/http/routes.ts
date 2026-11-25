@@ -1,4 +1,5 @@
-import { resolve as resolvePath } from "node:path";
+import { timingSafeEqual } from "node:crypto";
+import { dirname, resolve as resolvePath } from "node:path";
 
 import { Effect } from "effect";
 
@@ -23,28 +24,38 @@ import type {
 } from "../query/types.js";
 import { ObservabilityAuthError } from "../scopes.js";
 
-/** Audit 5.03: alloy apply may only write under the configured alloy output dir. */
+function timingSafeEqualString(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
+
+/**
+ * Audit 5.03 / W5: alloy apply may only write the configured river file or
+ * another `.river` file in that same directory (not anywhere under the package).
+ */
 export function assertSafeAlloyOutputPath(
   requested: string,
   configuredDefault: string
 ): Effect.Effect<string, ObservabilityError> {
   return Effect.gen(function* () {
     const resolved = resolvePath(requested);
-    const allowedRoots = [
+    const allowedFiles = new Set([
       resolvePath(configuredDefault),
       resolvePath(packagePaths.alloyConfig),
-      resolvePath(packagePaths.root, "alloy"),
-    ].map((p) => {
-      const parent = resolvePath(p, "..");
-      return { file: p, parent };
-    });
-    const ok = allowedRoots.some(
-      ({ file, parent }) => resolved === file || resolved.startsWith(parent + "/")
+      resolvePath(packagePaths.alloySecuritySensors),
+    ]);
+    const allowedDirs = new Set(
+      [...allowedFiles].map((f) => dirname(f))
     );
+    const ok =
+      allowedFiles.has(resolved) ||
+      (resolved.endsWith(".river") && allowedDirs.has(dirname(resolved)));
     if (!ok) {
       return yield* Effect.fail(
         new ObservabilityError({
-          reason: `alloy outputPath refused (must be under observability alloy dir): ${requested}`,
+          reason: `alloy outputPath refused (must be a .river under the configured alloy dir): ${requested}`,
         })
       );
     }
@@ -121,7 +132,7 @@ export const authorizeObservabilityApiKeyEffect = (
       );
     }
     const presented = value.slice("ApiKey ".length).trim();
-    if (presented !== expected) {
+    if (!timingSafeEqualString(presented, expected)) {
       return yield* Effect.fail(
         new ObservabilityAuthError({
           scope: "observability:configure",

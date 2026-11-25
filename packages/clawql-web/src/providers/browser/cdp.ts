@@ -5,6 +5,7 @@
 
 import type { BrowserStep, PageContent } from "../../interfaces.js";
 import { Effect } from "effect";
+import { assertSafeWebUrlResolved } from "./raw-fetch.js";
 
 type CdpResponse = {
   id?: number;
@@ -209,6 +210,7 @@ async function cdpNavigateAndGetContentImpl(
   const provider = options.providerId ?? "chromium";
 
   return withTargetSession(cdpUrl, fetchImpl, async (send, browser) => {
+    await assertSafeWebUrlResolved(url);
     await send("Page.enable");
     const loadPromise = waitForLoadEvent(browser, timeoutMs);
     await send("Page.navigate", { url });
@@ -263,6 +265,7 @@ async function cdpScreenshotImpl(
   const timeoutMs = options.timeoutMs ?? 30_000;
 
   return withTargetSession(cdpUrl, fetchImpl, async (send, browser) => {
+    await assertSafeWebUrlResolved(url);
     await send("Page.enable");
     const loadPromise = waitForLoadEvent(browser, timeoutMs);
     await send("Page.navigate", { url });
@@ -304,6 +307,7 @@ async function cdpInteractImpl(
   const provider = options.providerId ?? "chromium";
 
   return withTargetSession(cdpUrl, fetchImpl, async (send, browser) => {
+    await assertSafeWebUrlResolved(url);
     await send("Page.enable");
     const loadPromise = waitForLoadEvent(browser, timeoutMs);
     await send("Page.navigate", { url });
@@ -315,6 +319,7 @@ async function cdpInteractImpl(
         continue;
       }
       if (step.action === "navigate") {
+        await assertSafeWebUrlResolved(step.url);
         await send("Page.navigate", { url: step.url });
         await new Promise((r) => setTimeout(r, 500));
         continue;
