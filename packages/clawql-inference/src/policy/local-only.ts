@@ -4,7 +4,14 @@
 
 import { parseModelId } from "../providers/parse-model-id.js";
 
-const LOCAL_PROVIDERS = new Set(["ollama", "mlx", "local", "clawql", "clawql-auto", "gliner-decide"]);
+const LOCAL_PROVIDERS = new Set([
+  "ollama",
+  "mlx",
+  "local",
+  "clawql",
+  "clawql-auto",
+  "gliner-decide",
+]);
 
 function envFlagOn(env: NodeJS.ProcessEnv, key: string): boolean {
   const v = env[key]?.trim().toLowerCase();

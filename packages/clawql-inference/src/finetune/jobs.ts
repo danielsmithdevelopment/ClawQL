@@ -31,7 +31,7 @@ export function submitFinetuneJobEffect(
     const localOnly =
       env.CLAWQL_TIER?.trim().toLowerCase() === "regulated" ||
       ["1", "true", "yes", "on"].includes(
-        (env.CLAWQL_INFERENCE_LOCAL_ONLY?.trim().toLowerCase() ?? "")
+        env.CLAWQL_INFERENCE_LOCAL_ONLY?.trim().toLowerCase() ?? ""
       );
     if (localOnly) {
       const allow = (env.CLAWQL_INFERENCE_LOCAL_ALLOWLIST ?? "")

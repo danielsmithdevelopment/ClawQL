@@ -77,8 +77,7 @@ describe("x402 gate enforcement", () => {
         return {
           ok: true,
           status: 200,
-          text: async () =>
-            JSON.stringify({ success: true, transaction: "0xtxhashsettle" }),
+          text: async () => JSON.stringify({ success: true, transaction: "0xtxhashsettle" }),
         };
       }
       return {

@@ -123,7 +123,10 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
       ): Effect.Effect<A | void, E> => {
         // Audit 6.05: gated WORM — refuse when required; best-effort otherwise.
         if (wormRequired(runEnv)) return write.pipe(Effect.asVoid);
-        return write.pipe(Effect.asVoid, Effect.catch(() => Effect.void));
+        return write.pipe(
+          Effect.asVoid,
+          Effect.catch(() => Effect.void)
+        );
       };
 
       const recordPaymentFailed = (input: {
@@ -337,8 +340,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-                env,
-              });
+              env,
+            });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -355,8 +358,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-                env,
-              });
+              env,
+            });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -374,8 +377,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-                env,
-              });
+              env,
+            });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -392,8 +395,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-                env,
-              });
+              env,
+            });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -422,8 +425,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason: verified.reason,
               correlationId: input.correlationId,
-                env,
-              });
+              env,
+            });
             return {
               action: "deny" as const,
               status: 402 as const,

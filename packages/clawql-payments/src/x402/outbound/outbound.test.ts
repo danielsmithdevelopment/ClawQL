@@ -281,7 +281,11 @@ describe("outbound-x402-pay batch", () => {
         sessionId: "s-freeze",
         resourceUrl: "https://api.example.com/r",
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
+        hitlApproval: {
+          quoteDigest: digest,
+          approvedAt: new Date().toISOString(),
+          principal: "operator@test",
+        },
         fetchImpl,
       })
     );
@@ -304,7 +308,11 @@ describe("outbound-x402-pay batch", () => {
         sessionId: "s-freeze",
         resourceUrl: "https://api.example.com/r",
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
+        hitlApproval: {
+          quoteDigest: digest,
+          approvedAt: new Date().toISOString(),
+          principal: "operator@test",
+        },
         fetchImpl: async () => new Response(paymentRequiredBody(), { status: 402 }),
       })
     );
@@ -326,7 +334,11 @@ describe("outbound-x402-pay batch", () => {
         sessionId: "s-ok",
         resourceUrl: "https://api.example.com/r",
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
+        hitlApproval: {
+          quoteDigest: digest,
+          approvedAt: new Date().toISOString(),
+          principal: "operator@test",
+        },
         fetchImpl: async (_url, init) => {
           calls += 1;
           if (calls === 1) {
