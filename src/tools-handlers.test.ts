@@ -235,6 +235,7 @@ describe("optional tool handlers (MCP content shape)", () => {
 
     beforeEach(() => {
       saved.CLAWQL_SANDBOX_BRIDGE_URL = process.env.CLAWQL_SANDBOX_BRIDGE_URL;
+      saved.CLAWQL_SANDBOX_BACKEND = process.env.CLAWQL_SANDBOX_BACKEND;
       saved.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN = process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
       delete process.env.CLAWQL_SANDBOX_BRIDGE_URL;
       delete process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN;
@@ -251,6 +252,7 @@ describe("optional tool handlers (MCP content shape)", () => {
     });
 
     it("returns text content with JSON from mocked bridge (no network)", async () => {
+      process.env.CLAWQL_SANDBOX_BACKEND = "bridge";
       process.env.CLAWQL_SANDBOX_BRIDGE_URL = "https://bridge.example.test";
       process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN = "secret";
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -282,6 +284,7 @@ describe("optional tool handlers (MCP content shape)", () => {
     });
 
     it("returns JSON error when bridge URL is not configured", async () => {
+      process.env.CLAWQL_SANDBOX_BACKEND = "bridge";
       const out = await handleClawqlCodeToolInput({ code: "x", language: "shell" });
       const parsed = JSON.parse(out.content[0].text) as { success: boolean; error?: string };
       expect(parsed.success).toBe(false);

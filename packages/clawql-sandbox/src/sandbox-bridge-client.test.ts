@@ -66,6 +66,7 @@ describe("sandbox-bridge-client", () => {
   });
 
   it("handleClawqlCodeToolInput returns JSON text", async () => {
+    process.env.CLAWQL_SANDBOX_BACKEND = "bridge";
     process.env.CLAWQL_SANDBOX_BRIDGE_URL = "https://bridge.example.test";
     process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN = "secret";
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
