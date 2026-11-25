@@ -27,5 +27,7 @@ paths = [
   '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',
   # Rank/diagnostic fixtures quote the same RFC OAuth example tokens/section ids.
   '''(^|/)benchmarks/pageindex-ab/design/''',
+  # Restored durability evidence (Pass 11): synthetic owner_phased_before_intent_* ids trip generic-api-key.
+  '''(^|/)docs/benchmarks/program-cell-fleet-kill/v4/''',
   '''\.test\.ts$''',
 ]
