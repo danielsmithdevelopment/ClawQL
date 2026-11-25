@@ -10,7 +10,10 @@ TMP_LEAN="$(mktemp)"
 TMP_FULL="$(mktemp)"
 trap 'rm -f "${TMP_LEAN}" "${TMP_FULL}"' EXIT
 
-_LINT_SECRET=(--set clawql-mcp.envFromSecret=clawql-lint-provider-env)
+_LINT_SECRET=(
+  --set clawql-mcp.envFromSecret=clawql-lint-provider-env
+  --set clawql-mcp.stores.postgres.auth.existingSecret=clawql-lint-postgres
+)
 
 helm template test manifests/charts/clawql-idp --namespace clawql \
   "${_LINT_SECRET[@]}" \

@@ -9,7 +9,7 @@ TMP_DISABLED="$(mktemp)"
 trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}"' EXIT
 
 # satisfy secretSourcing.requireVaultBackedSecrets (same lint stub name as Makefile helm-lint)
-_LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
+_LINT_SECRET=(-f manifests/charts/clawql-mcp/values-lint.yaml)
 
 helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
