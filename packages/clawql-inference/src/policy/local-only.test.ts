@@ -28,8 +28,6 @@ describe("inference local-only (X4)", () => {
       CLAWQL_INFERENCE_LOCAL_ONLY: "1",
       CLAWQL_INFERENCE_LOCAL_ALLOWLIST: "anthropic/claude-sonnet-4",
     };
-    expect(() =>
-      assertInferenceModelAllowed("anthropic/claude-sonnet-4", env)
-    ).not.toThrow();
+    expect(() => assertInferenceModelAllowed("anthropic/claude-sonnet-4", env)).not.toThrow();
   });
 });

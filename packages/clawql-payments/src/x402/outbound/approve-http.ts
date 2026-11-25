@@ -31,9 +31,8 @@ export function attachOutboundApproveRoutes(
 
   app.post(`${base}/approve`, options.auth, (req, res) => {
     void (async () => {
-      const claims = (
-        req as Request & { clawqlClaims?: { sub?: string; tenantId?: string } }
-      ).clawqlClaims;
+      const claims = (req as Request & { clawqlClaims?: { sub?: string; tenantId?: string } })
+        .clawqlClaims;
       const principal = claims?.sub?.trim();
       if (!principal) {
         res.status(401).json({
@@ -42,8 +41,7 @@ export function attachOutboundApproveRoutes(
         return;
       }
       const body = (req.body ?? {}) as Record<string, unknown>;
-      const quoteDigest =
-        typeof body.quoteDigest === "string" ? body.quoteDigest.trim() : "";
+      const quoteDigest = typeof body.quoteDigest === "string" ? body.quoteDigest.trim() : "";
       if (!quoteDigest) {
         res.status(400).json({ error: "quoteDigest is required" });
         return;
