@@ -52,13 +52,13 @@ Default TTL: 24h (`CLAWQL_PENDING_EXECUTION_TTL_HOURS`). Expired records cannot 
 
 ## Surfaces
 
-| Surface                                     | Action                                  |
-| ------------------------------------------- | --------------------------------------- |
-| MCP `execute`                               | Parks on mandate; returns `executionId` |
+| Surface                                     | Action                                             |
+| ------------------------------------------- | -------------------------------------------------- |
+| MCP `execute`                               | Parks on mandate; returns `executionId`            |
 | MCP `resume`                                | Decline only (`decision: decline`); refuse approve |
-| CLI `clawql resume <executionId>`           | Operator approve; records principal on WORM |
-| CLI `clawql resume --decline <executionId>` | WORM `HUMAN_REJECTION`; mark declined   |
-| Review / console                            | Operator approve or decline             |
+| CLI `clawql resume <executionId>`           | Operator approve; records principal on WORM        |
+| CLI `clawql resume --decline <executionId>` | WORM `HUMAN_REJECTION`; mark declined              |
+| Review / console                            | Operator approve or decline                        |
 
 ## Elicitation (deferred wire-up)
 

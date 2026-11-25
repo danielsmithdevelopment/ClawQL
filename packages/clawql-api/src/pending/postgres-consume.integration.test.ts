@@ -35,7 +35,9 @@ describe.skipIf(!dbUrl)("postgres multi-process shared-store consume", () => {
         reason: "HTTP POST",
       },
     });
-    await decidePendingExecution(parked.executionId, "approve", { approvedBy: { kind: "operator", id: "test-operator" } });
+    await decidePendingExecution(parked.executionId, "approve", {
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
     await resetPendingPostgresPoolForTests();
 
     const runWorker = (label: string) =>

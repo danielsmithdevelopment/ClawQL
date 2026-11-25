@@ -169,9 +169,7 @@ export function resolveAtrClaimsFromHeaders(
     const trustedProxy =
       process.env.CLAWQL_TRUSTED_PROXY?.trim() === "1" ||
       process.env.CLAWQL_TRUSTED_PROXY?.trim()?.toLowerCase() === "true";
-    const sub = trustedProxy
-      ? (headerValue(headers, "x-clawql-subject") ?? "local")
-      : "local";
+    const sub = trustedProxy ? (headerValue(headers, "x-clawql-subject") ?? "local") : "local";
     return { ok: true, claims: defaultAdminAtrClaims(sub) };
   }
 
@@ -201,12 +199,8 @@ export function resolveAtrClaimsFromHeaders(
     return {
       ok: true,
       claims: {
-        sub: trustedProxy
-          ? (headerValue(headers, "x-clawql-subject") ?? "api-key")
-          : "api-key",
-        role: trustedProxy
-          ? (headerValue(headers, "x-clawql-role") ?? "operator")
-          : "operator",
+        sub: trustedProxy ? (headerValue(headers, "x-clawql-subject") ?? "api-key") : "api-key",
+        role: trustedProxy ? (headerValue(headers, "x-clawql-role") ?? "operator") : "operator",
         scope: ["execute", "search", "memory"],
       },
     };

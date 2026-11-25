@@ -118,7 +118,10 @@ describe("pending execute park + resume", () => {
     });
 
     // Tampered args must not run even with approved id
-    await decidePendingExecution(parked.executionId, "approve", { home, approvedBy: { kind: "operator", id: "test-operator" } });
+    await decidePendingExecution(parked.executionId, "approve", {
+      home,
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
     const tampered = await Effect.runPromise(
       executeClawqlOperationEffect(
         {

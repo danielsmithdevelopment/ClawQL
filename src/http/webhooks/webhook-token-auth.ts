@@ -18,9 +18,7 @@ export function timingSafeTokenEqual(presented: string, expected: string): boole
   return timingSafeEqual(a, b);
 }
 
-export type WebhookTokenResult =
-  | { ok: true }
-  | { ok: false; status: 401 | 503; error: string };
+export type WebhookTokenResult = { ok: true } | { ok: false; status: 401 | 503; error: string };
 
 /**
  * @param expectedEnvName — env var holding the shared secret
@@ -31,8 +29,7 @@ export function checkWebhookToken(args: {
   readonly presented: string | undefined;
   readonly allowUnauthenticatedEnv?: string;
 }): WebhookTokenResult {
-  const allow =
-    envFlagOn(args.allowUnauthenticatedEnv ?? "CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED");
+  const allow = envFlagOn(args.allowUnauthenticatedEnv ?? "CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED");
   const expected = process.env[args.expectedEnvName]?.trim();
   if (!expected) {
     if (allow) return { ok: true };
@@ -50,7 +47,10 @@ export function checkWebhookToken(args: {
 }
 
 export function bearerFromRequest(req: Request, altHeader?: string): string | undefined {
-  const auth = req.header("authorization")?.replace(/^Bearer\s+/i, "").trim();
+  const auth = req
+    .header("authorization")
+    ?.replace(/^Bearer\s+/i, "")
+    .trim();
   if (auth) return auth;
   if (altHeader) {
     const alt = req.header(altHeader)?.trim();

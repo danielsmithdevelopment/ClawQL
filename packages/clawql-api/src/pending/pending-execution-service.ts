@@ -418,9 +418,7 @@ export async function decidePendingExecution(
   homeOrOptions?: string | DecidePendingOptions
 ): Promise<PendingExecutionRecord> {
   const options: DecidePendingOptions =
-    typeof homeOrOptions === "string"
-      ? { home: homeOrOptions }
-      : (homeOrOptions ?? {});
+    typeof homeOrOptions === "string" ? { home: homeOrOptions } : (homeOrOptions ?? {});
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* PendingExecutionService;

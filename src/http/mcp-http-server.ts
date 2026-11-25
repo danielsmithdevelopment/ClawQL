@@ -504,8 +504,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   // GraphQL is opt-in (audit 2.02). Legacy CLAWQL_HTTP_SKIP_GRAPHQL=1 still skips.
-  const enableGraphql =
-    envFlagOn("CLAWQL_HTTP_GRAPHQL") && !envFlagOn("CLAWQL_HTTP_SKIP_GRAPHQL");
+  const enableGraphql = envFlagOn("CLAWQL_HTTP_GRAPHQL") && !envFlagOn("CLAWQL_HTTP_SKIP_GRAPHQL");
   const tierRaw = process.env.CLAWQL_TIER?.trim().toLowerCase();
   if (enableGraphql && tierRaw === "regulated") {
     throw new Error(
@@ -952,8 +951,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             ? headerTokens.filter((t) => claimScope.includes(t))
             : [...claimScope];
       } else if (claimScope?.includes("*")) {
-        atrScopeTokens =
-          trustedProxyForScope && headerTokens?.length ? headerTokens : ["*"];
+        atrScopeTokens = trustedProxyForScope && headerTokens?.length ? headerTokens : ["*"];
       } else if (trustedProxyForScope && headerTokens?.length) {
         atrScopeTokens = headerTokens;
       } else {
@@ -1087,9 +1085,7 @@ export async function startMcpHttpServer(): Promise<void> {
   const authMode = await Effect.runPromise(resolveAuthMode());
   if (authMode === "noAuth") {
     if (tier === "regulated") {
-      throw new Error(
-        "CLAWQL_TIER=regulated refuses CLAWQL_AUTH_MODE=noAuth — set apiKey or oidc"
-      );
+      throw new Error("CLAWQL_TIER=regulated refuses CLAWQL_AUTH_MODE=noAuth — set apiKey or oidc");
     }
     if (!isLoopbackBindHost(listenHost) && !envFlagOn("CLAWQL_ALLOW_UNAUTHENTICATED")) {
       throw new Error(

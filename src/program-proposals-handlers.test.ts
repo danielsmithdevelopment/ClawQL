@@ -215,7 +215,9 @@ describe("execute_program proposals → submit_program_proposals (MCP handlers, 
         });
         expect(requests).toHaveLength(1);
 
-        await decidePendingExecution(parkedW1.executionId!, "approve", { approvedBy: { kind: "operator", id: "test-operator" } });
+        await decidePendingExecution(parkedW1.executionId!, "approve", {
+          approvedBy: { kind: "operator", id: "test-operator" },
+        });
         const second = await submit();
         expect(leaf(second, "W1")).toMatchObject({
           state: "ran",
@@ -233,7 +235,9 @@ describe("execute_program proposals → submit_program_proposals (MCP handlers, 
           { method: "POST", path: "/issues", body: { title: "Flaky test", body: "dup of #7" } },
         ]);
 
-        await decidePendingExecution(parkedW2.executionId!, "approve", { approvedBy: { kind: "operator", id: "test-operator" } });
+        await decidePendingExecution(parkedW2.executionId!, "approve", {
+          approvedBy: { kind: "operator", id: "test-operator" },
+        });
         const third = await submit();
         expect(third).toMatchObject({ ok: true, complete: true });
         expect(leaf(third, "W2")).toMatchObject({

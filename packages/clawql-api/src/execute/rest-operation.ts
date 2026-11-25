@@ -362,8 +362,7 @@ async function executeRestOperationImpl(
       if (!location) break;
       hops += 1;
       const nextUrl = new URL(location, url);
-      const sameOrigin =
-        nextUrl.protocol === url.protocol && nextUrl.host === url.host;
+      const sameOrigin = nextUrl.protocol === url.protocol && nextUrl.host === url.host;
       if (!sameOrigin) {
         for (const name of Object.keys(headers)) {
           if (CREDENTIAL_HEADER_NAMES.includes(name.toLowerCase())) {
