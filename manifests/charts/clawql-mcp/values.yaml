@@ -91,6 +91,16 @@ clawql-mcp-grpc:
 obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
+# Bind address inside the container (Services/probes need 0.0.0.0).
+mcpHost: "0.0.0.0"
+# Gateway auth — required when mcpHost is non-loopback (noAuth is refused).
+gatewayAuth:
+  mode: apiKey
+  # Prefer an existing Secret (key defaults to api-key).
+  existingSecret: ""
+  existingSecretKey: api-key
+  # Dev-only plaintext; leave empty in production and set existingSecret.
+  apiKey: ""
 # Host MCP process in this Deployment (celld is preferred isolate deploy via Streams/Workers).
 # Product ladder: celld → Bun (default host) → Node (legacy minority).
 # Default image (`ghcr.io/.../clawql-mcp`) is Bun distroless with ENTRYPOINT `bun --smol`.

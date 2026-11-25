@@ -23,6 +23,13 @@ export async function runResume(options: {
   }
 
   try {
+    const tier = process.env.CLAWQL_TIER?.trim().toLowerCase() || "standard";
+    if (tier === "regulated" && !options.decline) {
+      console.error(
+        "CLAWQL_TIER=regulated refuses CLI approve — use the console with a signed-in human. Decline still works here."
+      );
+      return 1;
+    }
     const approvedBy = await Effect.runPromise(resolveOperatorPrincipalEffect());
     const content = await resumeClawqlExecution({
       executionId,

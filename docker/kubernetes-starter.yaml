@@ -3,6 +3,18 @@ kind: Namespace
 metadata:
   name: clawql
 ---
+# Create before applying the Deployment:
+#   kubectl -n clawql create secret generic clawql-mcp-auth --from-literal=api-key="$(openssl rand -hex 32)"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clawql-mcp-auth
+  namespace: clawql
+type: Opaque
+stringData:
+  # Replace before production use — kubectl create/apply will not rotate this placeholder.
+  api-key: "replace-me-before-production"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,6 +46,16 @@ spec:
               value: "8080"
             - name: MCP_PATH
               value: /mcp
+            # Bind all interfaces inside the pod (host publish / Service need this).
+            - name: MCP_HOST
+              value: "0.0.0.0"
+            - name: CLAWQL_AUTH_MODE
+              value: apiKey
+            - name: CLAWQL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clawql-mcp-auth
+                  key: api-key
             - name: CLAWQL_BUNDLED_OFFLINE
               value: "1"
             - name: CLAWQL_OBSIDIAN_VAULT_PATH

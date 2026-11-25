@@ -57,10 +57,11 @@ async function ensureDir(home: string, rel: string): Promise<boolean> {
 
 async function writeClawqlEnv(home: string): Promise<string> {
   const envPath = getClawqlEnvFilePath(home);
-  const memoryVault = `${home}/Memory`;
+  // Vault root is CLAWQL_HOME; notes land under <vault>/Memory/ (not Memory/Memory/).
+  const memoryVault = home;
   const lines = [
     "# ClawQL local config (no secrets — provider tokens live in vault/providers.json)",
-    `# Memory vault is under Memory/ so git commit-on-ingest never stages vault/ Auth/ worm/`,
+    `# Obsidian vault root is CLAWQL_HOME; notes live under Memory/. Git staging excludes vault/ Auth/ worm/.`,
     `CLAWQL_OBSIDIAN_VAULT_PATH=${memoryVault}`,
     `CLAWQL_HOME=${home}`,
     "",

@@ -32,7 +32,12 @@ export type ResumeExecuteParams = {
    * When `"mcp"`, approve is refused even if a principal is present
    * (defense in depth against a compromised session minting operator ids).
    */
-  readonly channel?: "mcp" | "operator";
+  /**
+   * `"console"` = signed-in human via Review/dashboard.
+   * `"operator"` = local CLI (refused for approve when CLAWQL_TIER=regulated).
+   * `"mcp"` = agent (decline-only).
+   */
+  readonly channel?: "mcp" | "operator" | "console";
   readonly home?: string;
 };
 
@@ -59,8 +64,23 @@ export function resumeClawqlExecutionEffect(
           text: JSON.stringify({
             ok: false,
             error:
-              "MCP resume is decline-only. Approve with `clawql resume <executionId>` " +
-              "or Review/console — agents cannot self-approve mandates.",
+              "MCP resume is decline-only. Approve with Review/console " +
+              "(or `clawql resume` outside the regulated tier) — agents cannot self-approve mandates.",
+          }),
+        },
+      ];
+    }
+
+    const tier = process.env.CLAWQL_TIER?.trim().toLowerCase() || "standard";
+    if (tier === "regulated" && decision === "approve" && channel !== "console") {
+      return [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            ok: false,
+            error:
+              "CLAWQL_TIER=regulated requires mandate approval through the console " +
+              "with a signed-in human (CLI/shell `clawql resume` approve is refused).",
           }),
         },
       ];

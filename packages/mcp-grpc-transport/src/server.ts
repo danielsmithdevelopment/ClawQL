@@ -465,6 +465,42 @@ async function maybeStartGrpcMcpServerImpl(
   const protobufTaskRegistry = new TaskCancellationRegistry();
 
   const authorize = options.authorizeMetadata;
+
+  /** Wrap every unary/server-streaming handler so protobuf MCP is not an open door. */
+  function wrapServiceWithAuth(
+    impl: grpc.UntypedServiceImplementation
+  ): grpc.UntypedServiceImplementation {
+    if (!authorize) return impl;
+    const wrapped: grpc.UntypedServiceImplementation = {};
+    for (const [method, handler] of Object.entries(impl)) {
+      if (typeof handler !== "function") {
+        wrapped[method] = handler;
+        continue;
+      }
+      wrapped[method] = (call: grpc.ServerUnaryCall<unknown, unknown>, callback: grpc.sendUnaryData<unknown>) => {
+        void (async () => {
+          try {
+            const ok = await authorize(call.metadata);
+            if (!ok) {
+              callback({
+                code: grpc.status.UNAUTHENTICATED,
+                message: "gRPC MCP authentication failed",
+              });
+              return;
+            }
+            (handler as grpc.handleUnaryCall<unknown, unknown>)(call, callback);
+          } catch (err: unknown) {
+            callback({
+              code: grpc.status.UNAUTHENTICATED,
+              message: err instanceof Error ? err.message : "gRPC MCP authentication failed",
+            });
+          }
+        })();
+      };
+    }
+    return wrapped;
+  }
+
   const sessionImpl: grpc.UntypedServiceImplementation = {
     session: (call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>) => {
       const transport = new GrpcMcpSessionTransport(call);
@@ -509,7 +545,9 @@ async function maybeStartGrpcMcpServerImpl(
   server.addService(healthDef, createHealthImplementation());
   server.addService(
     protobufMcpServiceDef,
-    createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry)
+    wrapServiceWithAuth(
+      createMcpProtobufServiceImplementation(protobufBridge, protobufTaskRegistry)
+    )
   );
   server.addService(mcpDef, sessionImpl);
 

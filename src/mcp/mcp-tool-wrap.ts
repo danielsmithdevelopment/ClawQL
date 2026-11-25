@@ -144,6 +144,30 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   return wrapMcpToolHandler(toolName, async (...args: TArgs): Promise<TResult> => {
     await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
 
+    const scopeDenied = (() => {
+      const tokens = getMcpRequestContext()?.atrScopeTokens;
+      if (!tokens || tokens.length === 0 || tokens.includes("*")) return null;
+      const family =
+        toolName === "execute" || toolName.startsWith("execute_")
+          ? "execute"
+          : toolName === "search" || toolName.startsWith("search_")
+            ? "search"
+            : toolName.startsWith("memory_")
+              ? "memory"
+              : toolName.startsWith("audit")
+                ? "audit"
+                : toolName;
+      if (tokens.includes(family) || tokens.includes(toolName)) return null;
+      return `Tool "${toolName}" is outside session ATR scope [${tokens.join(", ")}]`;
+    })();
+    if (scopeDenied) {
+      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, scopeDenied));
+      return {
+        content: [{ type: "text" as const, text: scopeDenied }],
+        isError: true,
+      } as TResult;
+    }
+
     try {
       const mcpCtx = getMcpRequestContext();
       await runMcpProxyBeforeCallTool(toolName, args[0], {

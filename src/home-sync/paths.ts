@@ -6,25 +6,27 @@ export const SYNC_CONFIG_FILENAME = "sync.json";
 /** Object key for the team manifest (under bucket prefix). */
 export const MANIFEST_REL_KEY = ".clawql/sync/manifest.v1.json";
 
-/** Default team-share paths under `~/.ClawQL` (secrets excluded). */
-export const DEFAULT_SYNC_INCLUDE = [
-  "Memory",
-  "sources",
-  "sources.json",
-  "Dashboard/chats",
-] as const;
+/** Default team-share paths under `~/.ClawQL` (secrets / executable sources excluded). */
+export const DEFAULT_SYNC_INCLUDE = ["Memory", "Dashboard/chats"] as const;
 
-/** Never uploaded or pulled — secrets, auth, and WORM stay local. */
+/** Never uploaded or pulled — secrets, auth, WORM, and executable source defs stay local. */
 export const ALWAYS_EXCLUDE_REL = new Set([
   "vault/providers.json",
   "memory.db",
   "Dashboard/logs",
   SYNC_CONFIG_FILENAME,
   "clawql.env",
+  "sources.json",
 ]);
 
 /** Prefixes never pulled (even if a remote manifest lists them). */
-export const ALWAYS_EXCLUDE_PREFIXES = ["vault/", "Auth/", "worm/", "pending-executions/"] as const;
+export const ALWAYS_EXCLUDE_PREFIXES = [
+  "vault/",
+  "Auth/",
+  "worm/",
+  "pending-executions/",
+  "sources/",
+] as const;
 
 export function getSyncConfigPath(home = getClawqlHome()): string {
   return join(home, SYNC_CONFIG_FILENAME);

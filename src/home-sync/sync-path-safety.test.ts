@@ -32,6 +32,8 @@ describe("home-sync path safety (audit 2.07)", () => {
     expect(isExcludedRel("Auth/api-keys.json")).toBe(true);
     expect(isExcludedRel("worm/x")).toBe(true);
     expect(isExcludedRel("clawql.env")).toBe(true);
+    expect(isExcludedRel("sources.json")).toBe(true);
+    expect(isExcludedRel("sources/custom/foo.json")).toBe(true);
     expect(isExcludedRel("Memory/hello.md")).toBe(false);
   });
 });

@@ -8,8 +8,31 @@ import { Effect } from "effect";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "metadata.google"]);
 
-/** True for loopback, RFC1918, link-local, and unique-local IPv6 addresses. */
+/**
+ * Expand IPv4-mapped IPv6 (`::ffff:127.0.0.1` or Node's `::ffff:7f00:1`) to dotted IPv4.
+ */
+export function expandIpv4MappedIpv6(host: string): string | null {
+  const h = host.toLowerCase();
+  if (!h.startsWith("::ffff:")) return null;
+  const rest = h.slice("::ffff:".length);
+  if (isIP(rest) === 4) return rest;
+  // Node dns/lookup often returns hex form (::ffff:7f00:1 → 127.0.0.1).
+  const hexParts = rest.split(":");
+  if (hexParts.length === 2) {
+    const hi = Number.parseInt(hexParts[0]!, 16);
+    const lo = Number.parseInt(hexParts[1]!, 16);
+    if (Number.isFinite(hi) && Number.isFinite(lo)) {
+      return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+    }
+  }
+  return null;
+}
+
+/** True for loopback, RFC1918, link-local, CGNAT, and unique-local IPv6 addresses. */
 export function isPrivateOrLoopbackIp(host: string): boolean {
+  const mapped = expandIpv4MappedIpv6(host);
+  if (mapped) return isPrivateOrLoopbackIp(mapped);
+
   const ipVersion = isIP(host);
   if (ipVersion === 4) {
     const parts = host.split(".").map((p) => Number.parseInt(p, 10));
@@ -21,11 +44,13 @@ export function isPrivateOrLoopbackIp(host: string): boolean {
     if (a === 169 && b === 254) return true;
     if (a === 172 && b !== undefined && b >= 16 && b <= 31) return true;
     if (a === 192 && b === 168) return true;
+    // CGNAT 100.64.0.0/10
+    if (a === 100 && b !== undefined && b >= 64 && b <= 127) return true;
     return false;
   }
   if (ipVersion === 6) {
     const h = host.toLowerCase();
-    if (h === "::1") return true;
+    if (h === "::1" || h === "::") return true;
     if (h.startsWith("fc") || h.startsWith("fd")) return true;
     if (h.startsWith("fe80:")) return true;
   }
@@ -86,25 +111,6 @@ export function assertSafeSourceFetchUrl(raw: string): URL {
   }
   if (isPrivateOrLoopbackIp(host)) {
     throw new Error("Source URL must not target private or loopback addresses.");
-  }
-  // CGNAT 100.64.0.0/10
-  {
-    const parts = host.split(".").map((p) => Number.parseInt(p, 10));
-    if (
-      parts.length === 4 &&
-      parts[0] === 100 &&
-      parts[1]! >= 64 &&
-      parts[1]! <= 127 &&
-      parts.every((n) => !Number.isNaN(n))
-    ) {
-      throw new Error("Source URL must not target private or loopback addresses.");
-    }
-  }
-  if (host.startsWith("::ffff:")) {
-    const mapped = host.slice("::ffff:".length);
-    if (isPrivateOrLoopbackIp(mapped)) {
-      throw new Error("Source URL must not target private or loopback addresses.");
-    }
   }
 
   return parsed;

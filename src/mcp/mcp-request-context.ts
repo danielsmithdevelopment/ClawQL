@@ -8,6 +8,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export type McpRequestContext = {
   readonly sessionId?: string;
   readonly atrScopeTokens?: readonly string[];
+  /** Virtual-key / OIDC tenant — scopes events and durable stores when set. */
+  readonly tenantId?: string;
 };
 
 const mcpRequestAls = new AsyncLocalStorage<McpRequestContext>();

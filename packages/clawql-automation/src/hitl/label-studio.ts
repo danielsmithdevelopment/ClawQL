@@ -3,6 +3,7 @@
  * Opt-in via **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**.
  */
 
+import { timingSafeEqual } from "node:crypto";
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import type { Request, Response } from "express";
 import { Cause, Effect } from "effect";
@@ -247,19 +248,32 @@ function getWebhookTokenExpected(): string | undefined {
   return process.env.CLAWQL_HITL_WEBHOOK_TOKEN?.trim();
 }
 
-/** Validate webhook caller when `CLAWQL_HITL_WEBHOOK_TOKEN` is set (recommended). */
+function webhookAllowUnauthenticated(): boolean {
+  const raw = process.env.CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
+
+/**
+ * Validate webhook caller. Token always required unless
+ * `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1` (audit 2.11 / R7).
+ */
 export function hitlWebhookAuthOk(req: Request): boolean {
   const expected = getWebhookTokenExpected();
   if (!expected) {
-    if (process.env.NODE_ENV === "production") {
-      return false;
-    }
-    return true;
+    return webhookAllowUnauthenticated();
   }
   const auth = req.header("authorization");
   const bearer = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : "";
   const alt = req.header("x-clawql-hitl-token")?.trim();
-  return bearer === expected || alt === expected;
+  const presented = bearer || alt || "";
+  return presented.length > 0 && timingSafeEqualString(presented, expected);
 }
 
 function extractWebhookFields(body: unknown): {
@@ -298,10 +312,11 @@ function extractWebhookFields(body: unknown): {
 async function handleLabelStudioWebhookRequestImpl(req: Request, res: Response): Promise<void> {
   const deps = getHitlWebhookDeps();
   if (!deps.enforceWebhookRateLimit(req, res)) return;
-  if (!getWebhookTokenExpected() && process.env.NODE_ENV === "production") {
+  if (!getWebhookTokenExpected() && !webhookAllowUnauthenticated()) {
     res.status(503).json({
       ok: false,
-      error: "Set CLAWQL_HITL_WEBHOOK_TOKEN for webhook ingestion in production.",
+      error:
+        "Set CLAWQL_HITL_WEBHOOK_TOKEN (or CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1 for local demos only).",
     });
     return;
   }

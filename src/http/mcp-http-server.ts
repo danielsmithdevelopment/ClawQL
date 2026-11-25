@@ -64,6 +64,10 @@ import { applySecurityHeadersMiddleware } from "./security-headers.js";
 /** Inbound MCP OAuth / ID-JAG runtime — loaded only when env enables AS routes. */
 type McpOAuthRuntime = import("clawql-auth").McpOAuthRuntime;
 type IdJagIssuerRuntime = import("clawql-auth").IdJagIssuerRuntime;
+type GatewayAuthConfig = import("clawql-auth/gateway").GatewayAuthConfig;
+
+/** Last HTTP gateway auth config — reused by companion gRPC (VK + MCP OAuth). */
+let lastHttpGatewayAuthConfig: GatewayAuthConfig | undefined;
 
 /**
  * Cheap Ready gate for MCP Events (mirrors clawql-mcp-events isMcpEventsEnabledSync).
@@ -363,6 +367,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
    * from `/oauth/token` are also accepted in hybrid mode alongside apiKey/oidc.
    */
   const gatewayAuthConfig = buildGatewayAuthConfig(process.env, mcpOAuthRuntime?.validateBearer);
+  lastHttpGatewayAuthConfig = gatewayAuthConfig;
 
   const resolveEmaAdminClaims = (req: import("express").Request) =>
     resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
@@ -936,6 +941,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         }
       ).clawqlClaims;
       const claimScope = claimsForScope?.scope;
+      const tenantId = claimsForScope?.tenantId?.trim() || undefined;
       const atrToolsHeader = req.header("x-clawql-capability-tools")?.trim();
       const headerTokens = atrToolsHeader
         ? atrToolsHeader
@@ -963,7 +969,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         "mcp";
       try {
         await runWithOptionalX402Context(req, () =>
-          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens, tenantId }, () =>
             transport!.handleRequest(req, res, req.body)
           )
         );
@@ -1099,9 +1105,8 @@ export async function startMcpHttpServer(): Promise<void> {
   const { logStartupSummary } = await import("../host/startup-summary.js");
   await logStartupSummary();
   const { maybeStartGrpcMcpServer } = await import("mcp-grpc-transport");
-  const { resolveAtrClaimsFromHeadersEffect, loadGatewayAuthConfig } =
-    await import("clawql-auth/gateway");
-  const grpcAuthConfig = await Effect.runPromise(loadGatewayAuthConfig());
+  // Same composition as HTTP (virtual keys + MCP OAuth), not bare loadGatewayAuthConfig.
+  const grpcAuthConfig = lastHttpGatewayAuthConfig ?? buildGatewayAuthConfig(process.env);
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),
     authorizeMetadata: async (metadata) => {

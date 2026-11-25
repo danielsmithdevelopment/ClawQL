@@ -14,7 +14,8 @@ services:
       MCP_HOST: 0.0.0.0
       # Bound to loopback on the host (see ports). Set a real key before exposing further.
       CLAWQL_AUTH_MODE: apiKey
-      CLAWQL_API_KEY: ${CLAWQL_API_KEY:-change-me-local-dev-only}
+      # Required — no default. Export CLAWQL_API_KEY before `docker compose up`.
+      CLAWQL_API_KEY: ${CLAWQL_API_KEY:?set CLAWQL_API_KEY}
     volumes:
       # Host Obsidian vault (memory_ingest / memory_recall). Override with CLAWQL_VAULT_HOST_PATH.
       - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}:/vault
