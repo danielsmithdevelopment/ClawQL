@@ -7,6 +7,7 @@
 **Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md)
 
 **Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](archive/announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
+
 ## Breaking for regulated buyers (add to every channel)
 
 - **WORM on by default** (local SQLite under `$CLAWQL_HOME/worm`); turning off writes a signed `WORM_DISABLED` entry and warns at startup.
@@ -14,7 +15,6 @@
 - **No product telemetry** on self-hosted installs; Cloud analytics are consent-gated and labeled **pseudonymous**.
 - **Privacy:** never call stored pageview IDs anonymous; never read other applications’ credential files.
 - Managed Cloud remains **waitlist / founder-led** until unit costs are measured — not open self-serve Stripe by default.
-
 
 **Breaking change — product surface purge:** 8.0 also removes two product surfaces evaluated and not kept: **ClawQL PageIndex** (`pageindex_*` tools, hybrid PageIndex recall) and **CodeGraph / Graphify** (`codegraph_*` tools (11), `CLAWQL_ENABLE_CODEGRAPH`, hybrid code-graph recall, the `clawql-codegraph` package, and the `code_change` vault-notes flywheel from [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)). Both lost their A/B retest against a working baseline (Vectify-style ranking and `grep` + `read_around`, respectively) — see [migrate-to-8.0](../getting-started/migrate-to-8.0.md), the [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md), and the [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) for conditions under which CodeGraph could return as an opt-in tool.
 

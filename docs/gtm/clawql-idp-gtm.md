@@ -26,7 +26,7 @@ Gartner's first Magic Quadrant for Intelligent Document Processing (September 20
 | Rossum                   | Tiered from $18K/year  | $18K+ entry; SAP/Coupa-focused                                             |
 | Intralinks VDR           | $0.40–$0.85/page       | $15K–$200K+ per M&A deal                                                   |
 | Datasite VDR             | Custom quote           | Up to $720K/year for large implementations                                 |
-| **ClawQL IDP (Starter)** | **Flat $299/mo**       | **$3,588/year list (early access). 5,000 documents/month. VDR included.**                        |
+| **ClawQL IDP (Starter)** | **Flat $299/mo**       | **$3,588/year list (early access). 5,000 documents/month. VDR included.**  |
 
 A team paying $150,000/year for ABBYY pays $3,588/year for ClawQL Starter — for a platform that does more, deploys faster, and requires no dedicated implementation team.
 
