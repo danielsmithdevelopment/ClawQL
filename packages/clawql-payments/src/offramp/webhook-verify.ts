@@ -79,13 +79,27 @@ export function signMoonpayWebhookV2(
   return `t=${t},s=${s}`;
 }
 
+/** Short-lived replay cache for Transak JWT `jti` / hash (audit 6.08). */
+const transakReplaySeen = new Map<string, number>();
+const TRANSAK_REPLAY_TTL_MS = 10 * 60 * 1000;
+
+function rememberTransakReplay(key: string, nowMs: number): boolean {
+  for (const [k, exp] of transakReplaySeen) {
+    if (exp <= nowMs) transakReplaySeen.delete(k);
+  }
+  if (transakReplaySeen.has(key)) return false;
+  transakReplaySeen.set(key, nowMs + TRANSAK_REPLAY_TTL_MS);
+  return true;
+}
+
 /**
  * Verify Transak webhook JWT (`data` field) with HS256 using partner access token.
- * Returns decoded payload object.
+ * Requires alg=HS256, checks exp/nbf when present, and refuses replayed jti/hash.
  */
 export function verifyTransakWebhookJwt(
   dataJwt: string,
-  accessToken: string
+  accessToken: string,
+  options?: { nowSec?: number; maxSkewSec?: number }
 ): { ok: true; payload: Record<string, unknown> } | { ok: false; reason: string } {
   if (!accessToken.trim()) return { ok: false, reason: "Transak access token missing" };
   const parts = dataJwt.split(".");
@@ -93,8 +107,9 @@ export function verifyTransakWebhookJwt(
   const [headerB64, payloadB64, sigB64] = parts as [string, string, string];
   try {
     const header = JSON.parse(b64urlDecode(headerB64).toString("utf8")) as { alg?: string };
-    if (header.alg && header.alg !== "HS256") {
-      return { ok: false, reason: `Unsupported Transak JWT alg: ${header.alg}` };
+    // Audit 6.08: require HS256 explicitly (reject missing alg).
+    if (header.alg !== "HS256") {
+      return { ok: false, reason: `Unsupported Transak JWT alg: ${header.alg ?? "missing"}` };
     }
     const signingInput = `${headerB64}.${payloadB64}`;
     const expected = createHmac("sha256", accessToken).update(signingInput).digest();
@@ -106,6 +121,30 @@ export function verifyTransakWebhookJwt(
       string,
       unknown
     >;
+    const now = options?.nowSec ?? Math.floor(Date.now() / 1000);
+    const skew = options?.maxSkewSec ?? 300;
+    if (typeof payload.exp === "number" && now > payload.exp + skew) {
+      return { ok: false, reason: "Transak JWT expired" };
+    }
+    if (typeof payload.nbf === "number" && now + skew < payload.nbf) {
+      return { ok: false, reason: "Transak JWT not yet valid" };
+    }
+    // Prefer exp; when absent require iat within skew window.
+    if (typeof payload.exp !== "number") {
+      if (typeof payload.iat !== "number") {
+        return { ok: false, reason: "Transak JWT missing exp (and iat)" };
+      }
+      if (Math.abs(now - payload.iat) > skew) {
+        return { ok: false, reason: `Transak JWT iat skew > ${skew}s` };
+      }
+    }
+    const replayKey =
+      typeof payload.jti === "string" && payload.jti.trim()
+        ? `jti:${payload.jti.trim()}`
+        : `hash:${createHmac("sha256", "transak-replay").update(dataJwt).digest("hex")}`;
+    if (!rememberTransakReplay(replayKey, now * 1000)) {
+      return { ok: false, reason: "Transak JWT replay refused" };
+    }
     return { ok: true, payload };
   } catch (cause) {
     return {
@@ -115,13 +154,23 @@ export function verifyTransakWebhookJwt(
   }
 }
 
-/** Sign Transak-style HS256 JWT (tests). */
+/** Sign Transak-style HS256 JWT (tests). Adds iat/exp when absent. */
 export function signTransakWebhookJwt(
   payload: Record<string, unknown>,
   accessToken: string
 ): string {
+  const now = Math.floor(Date.now() / 1000);
+  const withTime = {
+    ...payload,
+    iat: typeof payload.iat === "number" ? payload.iat : now,
+    exp: typeof payload.exp === "number" ? payload.exp : now + 300,
+    jti:
+      typeof payload.jti === "string" && payload.jti.trim()
+        ? payload.jti
+        : `t_${now}_${Math.random().toString(36).slice(2, 10)}`,
+  };
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const body = Buffer.from(JSON.stringify(withTime)).toString("base64url");
   const sig = createHmac("sha256", accessToken).update(`${header}.${body}`).digest("base64url");
   return `${header}.${body}.${sig}`;
 }

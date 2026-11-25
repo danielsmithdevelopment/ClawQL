@@ -130,7 +130,7 @@ describe("outbound x402 fixture e2e", () => {
         sessionId: "sess-1",
         resourceUrl: baseUrl,
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() },
+        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
       })
     );
 
@@ -164,7 +164,7 @@ describe("outbound x402 fixture e2e", () => {
         sessionId: "sess-deny",
         resourceUrl: baseUrl,
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() },
+        hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
       })
     );
 
@@ -224,7 +224,7 @@ describe("outbound x402 fixture e2e", () => {
           sessionId: "s1",
           payload: {
             resourceUrl: baseUrl,
-            hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() },
+            hitlApproval: { quoteDigest: digest, approvedAt: new Date().toISOString() , principal: "operator@test" },
           },
         },
       })

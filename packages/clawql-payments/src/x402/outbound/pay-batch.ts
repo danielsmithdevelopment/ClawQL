@@ -4,11 +4,13 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import { type OutboundPaymentHitlApproval, OutboundPolicyError } from "clawql-core";
 import { Effect, Layer } from "effect";
 import { X402Error } from "../../errors/payment-errors.js";
 import { resolveFacilitatorEndpoint } from "../x402-runtime-config-service.js";
 import { OutboundSpendCounterService, utcDayKey, type SpendCounterKey } from "./counters.js";
+import { consumeOutboundOperatorApprovalEffect } from "./operator-approval.js";
 import { OutboundPolicyStoreService } from "./policy-store.js";
 import { computeQuoteDigest, quoteFromTerms } from "./quote.js";
 import { X402SignerService } from "./signer-service.js";
@@ -30,6 +32,8 @@ export type OutboundX402PayBatchInput = {
   readonly body?: string;
   readonly headers?: Record<string, string>;
   readonly hitlApproval?: OutboundPaymentHitlApproval;
+  /** One-shot operator approval id (audit 6.02). */
+  readonly operatorApprovalId?: string;
   readonly env?: NodeJS.ProcessEnv;
   readonly fetchImpl?: typeof fetch;
   /** Expected quote digest — reject if server terms differ. */
@@ -233,6 +237,33 @@ export function runOutboundX402PayBatchEffect(
     }
     const quote = quoteOrErr.q;
 
+    // Audit 6.02: prefer one-shot operator approval over caller-forged hitlApproval.
+    let hitlApproval = input.hitlApproval;
+    if (input.operatorApprovalId?.trim()) {
+      const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
+      const consumed = yield* consumeOutboundOperatorApprovalEffect({
+        home,
+        approvalId: input.operatorApprovalId.trim(),
+        quoteDigest: digest,
+        tenantId: input.tenantId,
+      }).pipe(Effect.catch(() => Effect.succeed(null)));
+      if (!consumed) {
+        return failResult(
+          mkBatch({ success: false }),
+          "hitl_required",
+          "operator_approval_invalid_or_consumed"
+        );
+      }
+      hitlApproval = {
+        quoteDigest: consumed.quoteDigest,
+        approvedAt: consumed.approvedAt,
+        principal: consumed.principal,
+      };
+    } else if (hitlApproval && !hitlApproval.principal?.trim()) {
+      // Strip agent-forged approvals that lack an operator principal.
+      hitlApproval = undefined;
+    }
+
     const evaluated = yield* evaluateSpendCapOutboundEffect({
       tenantId: input.tenantId,
       agentId: input.agentId,
@@ -244,7 +275,7 @@ export function runOutboundX402PayBatchEffect(
         resourceUrl: input.resourceUrl,
         method,
         quote,
-        hitlApproval: input.hitlApproval,
+        hitlApproval,
       },
     }).pipe(
       Effect.catch((err: OutboundPolicyError) =>

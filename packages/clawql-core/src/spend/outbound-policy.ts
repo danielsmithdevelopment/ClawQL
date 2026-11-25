@@ -46,6 +46,11 @@ export type OutboundPaymentQuote = {
 export type OutboundPaymentHitlApproval = {
   readonly quoteDigest: string;
   readonly approvedAt: string;
+  /**
+   * Audit 6.02: operator principal that approved (CLI/console). Agent-supplied
+   * approvals without a principal are refused.
+   */
+  readonly principal: string;
 };
 
 /** Synthetic action for `spend-cap-enforce` / `outbound_payment`. */
@@ -376,9 +381,15 @@ export function evaluateOutboundPayment(
       return { decision: "deny" as const, reason: "max_usdc_per_session_exceeded" };
     }
 
-    // First enablement: HITL regardless of amount — no override.
+    const approvalPrincipal = action.hitlApproval?.principal?.trim() ?? "";
+    const approvalBound =
+      Boolean(action.hitlApproval) &&
+      action.hitlApproval!.quoteDigest === action.quote.digest &&
+      approvalPrincipal.length > 0;
+
+    // First enablement: HITL regardless of amount — operator principal required (audit 6.02).
     if (!action.outboundPaymentEverEnabled) {
-      if (!action.hitlApproval || action.hitlApproval.quoteDigest !== action.quote.digest) {
+      if (!approvalBound) {
         return {
           decision: "hitl" as const,
           reason: "first_outbound_enablement_requires_hitl",
@@ -394,6 +405,9 @@ export function evaluateOutboundPayment(
       }
       if (action.hitlApproval.quoteDigest !== action.quote.digest) {
         return { decision: "deny" as const, reason: "hitl_quote_digest_mismatch" };
+      }
+      if (!approvalPrincipal) {
+        return { decision: "deny" as const, reason: "hitl_principal_required" };
       }
     }
 

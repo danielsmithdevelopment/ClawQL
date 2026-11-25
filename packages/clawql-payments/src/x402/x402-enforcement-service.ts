@@ -14,6 +14,11 @@ import { MppVerificationService } from "../mpp/verification-service.js";
 import type { MppPaymentChallenge } from "../mpp/types.js";
 import { parseX402PaymentPayloadHeader, readX402PaymentHeader } from "./headers.js";
 import { buildPaymentRequired, buildPaymentRequirements } from "./payment-requirements.js";
+import {
+  hashX402PaymentPayload,
+  sharedX402ReplayCache,
+  type X402ReplayCache,
+} from "./replay-cache.js";
 import type { X402PaymentRequired } from "./types.js";
 import { X402FacilitatorService } from "./x402-facilitator-service.js";
 import { X402GateService } from "./x402-gate-service.js";
@@ -48,9 +53,14 @@ export type EnforceX402GateInput = {
   requestUrl: string;
   headers: Record<string, string | string[] | undefined>;
   correlationId?: string;
+  /**
+   * Audit 6.01: settle defaults to true. Set false only for isolated unit tests
+   * that mock verify without a settle endpoint.
+   */
   settle?: boolean;
   env?: NodeJS.ProcessEnv;
   fetchImpl?: typeof fetch;
+  replayCache?: X402ReplayCache;
 };
 
 export type X402Settlement = {
@@ -101,25 +111,39 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
       const mppVerification = yield* MppVerificationService;
       const ap2 = yield* Ap2MandateService;
 
+      const wormRequired = (runEnv: NodeJS.ProcessEnv) => {
+        if (runEnv.CLAWQL_TIER?.trim().toLowerCase() === "regulated") return true;
+        const raw = runEnv.CLAWQL_WORM_REQUIRED?.trim().toLowerCase();
+        return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+      };
+
+      const gatedAuditAppend = <A, E>(
+        write: Effect.Effect<A, E>,
+        runEnv: NodeJS.ProcessEnv
+      ): Effect.Effect<A | void, E> => {
+        // Audit 6.05: gated WORM — refuse when required; best-effort otherwise.
+        if (wormRequired(runEnv)) return write.pipe(Effect.asVoid);
+        return write.pipe(Effect.asVoid, Effect.catch(() => Effect.void));
+      };
+
       const recordPaymentFailed = (input: {
         tenantId: string;
         resource: string;
         reason: string;
         correlationId?: string;
+        env?: NodeJS.ProcessEnv;
       }) =>
-        audit
-          .appendEntry(
+        gatedAuditAppend(
+          audit.appendEntry(
             buildX402PaymentFailedEntry({
               tenantId: input.tenantId,
               resource: input.resource,
               reason: input.reason,
               correlationId: input.correlationId,
             })
-          )
-          .pipe(
-            Effect.asVoid,
-            Effect.catch(() => Effect.void)
-          );
+          ),
+          input.env ?? process.env
+        );
 
       const reconcileSettlement = (input: {
         tenantId: string;
@@ -127,8 +151,19 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
         amountUsdc: number;
         proof: X402PaymentProof;
         correlationId?: string;
+        env?: NodeJS.ProcessEnv;
       }) =>
         Effect.gen(function* () {
+          if (!input.proof.txHash?.trim()) {
+            // Audit 6.01: never record PAYMENT_RECEIVED without a settlement tx.
+            return {
+              id: `x402_unsettle_${Date.now().toString(36)}`,
+              amountUsdc: input.amountUsdc,
+              resource: input.resource,
+              tenantId: input.tenantId,
+              settledAt: new Date().toISOString(),
+            } satisfies X402Settlement;
+          }
           const settlement: X402Settlement = {
             id: `x402_${Date.now().toString(36)}`,
             txHash: input.proof.txHash,
@@ -137,17 +172,19 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
             tenantId: input.tenantId,
             settledAt: new Date().toISOString(),
           };
-          yield* audit
-            .appendEntry(
+          yield* gatedAuditAppend(
+            audit.appendEntry(
               buildX402PaymentReceivedEntry({
                 tenantId: input.tenantId,
                 amountUsdc: input.amountUsdc,
                 resource: input.resource,
                 agentId: input.proof.payer,
                 correlationId: input.correlationId,
+                txHash: input.proof.txHash,
               })
-            )
-            .pipe(Effect.catch(() => Effect.void));
+            ),
+            input.env ?? process.env
+          );
           return settlement;
         });
 
@@ -186,6 +223,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 resource: gate.resource,
                 reason,
                 correlationId: input.correlationId,
+                env,
               });
               return {
                 action: "deny" as const,
@@ -272,6 +310,7 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
                 resource: gate.resource,
                 reason,
                 correlationId: input.correlationId,
+                env,
               });
               return {
                 action: "deny" as const,
@@ -298,7 +337,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-            });
+                env,
+              });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -315,7 +355,27 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-            });
+                env,
+              });
+            return {
+              action: "deny" as const,
+              status: 402 as const,
+              reason,
+              resource: gate.resource,
+            };
+          }
+
+          const replay = input.replayCache ?? sharedX402ReplayCache();
+          const payloadKey = hashX402PaymentPayload(paymentPayload);
+          if (replay.seen(payloadKey)) {
+            const reason = "x402 payment payload already settled (replay refused)";
+            yield* recordPaymentFailed({
+              tenantId,
+              resource: gate.resource,
+              reason,
+              correlationId: input.correlationId,
+                env,
+              });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -332,7 +392,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason,
               correlationId: input.correlationId,
-            });
+                env,
+              });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -361,7 +422,8 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
               reason: verified.reason,
               correlationId: input.correlationId,
-            });
+                env,
+              });
             return {
               action: "deny" as const,
               status: 402 as const,
@@ -369,6 +431,37 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               resource: gate.resource,
             };
           }
+
+          // Audit 6.01: settle before allow (default on).
+          const shouldSettle = input.settle !== false;
+          let txHash: string | undefined;
+          if (shouldSettle) {
+            const settled = yield* facilitator.settle({
+              facilitatorUrl: config.facilitatorUrl,
+              paymentPayload,
+              paymentRequirements,
+              env,
+              fetchImpl: input.fetchImpl,
+            });
+            if (!settled.settled) {
+              yield* recordPaymentFailed({
+                tenantId,
+                resource: gate.resource,
+                reason: settled.reason,
+                correlationId: input.correlationId,
+                env,
+              });
+              return {
+                action: "deny" as const,
+                status: 402 as const,
+                reason: settled.reason,
+                resource: gate.resource,
+              };
+            }
+            txHash = settled.transaction;
+          }
+
+          replay.remember(payloadKey);
 
           yield* reconcileSettlement({
             tenantId,
@@ -379,8 +472,10 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
               amount: gate.price,
               asset: gate.asset,
               resource: gate.resource,
+              txHash,
             },
             correlationId: input.correlationId,
+            env,
           });
 
           return {

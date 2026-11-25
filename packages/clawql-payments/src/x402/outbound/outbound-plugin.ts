@@ -30,6 +30,38 @@ function parseTruthy(value: string | undefined): boolean {
   return n === "1" || n === "true" || n === "yes" || n === "on";
 }
 
+/** Audit 6.02: outbound payment targets must be public HTTPS. */
+function assertSafeOutboundResourceUrl(raw: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw.trim());
+  } catch {
+    throw new Error("resourceUrl is not a valid URL");
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("resourceUrl must use HTTPS");
+  }
+  let host = parsed.hostname.toLowerCase();
+  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+  if (
+    !host ||
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "0.0.0.0" ||
+    host.startsWith("10.") ||
+    host.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
+    host.startsWith("169.254.") ||
+    host.startsWith("fc") ||
+    host.startsWith("fd") ||
+    host.startsWith("fe80:")
+  ) {
+    throw new Error("resourceUrl must not target private or loopback hosts");
+  }
+}
+
 export function paymentsOutboundX402Enabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return parseTruthy(env.CLAWQL_PAYMENTS_OUTBOUND);
 }
@@ -79,30 +111,27 @@ export function createPaymentsOutboundX402Plugin(
             "Start a named execute-batch script. Terminal result only. Use batchName outbound-x402-pay for third-party 402 payment.",
           schema: {
             batchName: z.string().describe("Named batch id, e.g. outbound-x402-pay"),
-            tenantId: z.string(),
-            agentId: z.string(),
-            sessionId: z.string(),
+            // Audit 6.02: tenant/agent/session come from claims when present; args are fallback only.
+            tenantId: z.string().optional(),
+            agentId: z.string().optional(),
+            sessionId: z.string().optional(),
             resourceUrl: z.string().url().optional(),
             method: z.string().optional(),
             body: z.string().optional(),
-            hitlApproval: z
-              .object({
-                quoteDigest: z.string(),
-                approvedAt: z.string(),
-              })
-              .optional(),
+            /** One-shot operator approval id (audit 6.02) — not agent-forged hitlApproval. */
+            operatorApprovalId: z.string().optional(),
             expectedQuoteDigest: z.string().optional(),
           },
           handler: async (argsUnknown) => {
             const args = argsUnknown as {
               batchName: string;
-              tenantId: string;
-              agentId: string;
-              sessionId: string;
+              tenantId?: string;
+              agentId?: string;
+              sessionId?: string;
               resourceUrl?: string;
               method?: string;
               body?: string;
-              hitlApproval?: { quoteDigest: string; approvedAt: string };
+              operatorApprovalId?: string;
               expectedQuoteDigest?: string;
             };
             if (args.batchName !== OUTBOUND_X402_PAY_BATCH_NAME) {
@@ -144,20 +173,46 @@ export function createPaymentsOutboundX402Plugin(
               };
             }
 
+            // Audit 6.02: prefer host-bound env ids (set from verified claims); args are fallback.
+            const tenantId =
+              env.CLAWQL_TENANT_ID?.trim() || args.tenantId?.trim() || "default";
+            const agentId =
+              env.CLAWQL_AGENT_ID?.trim() || args.agentId?.trim() || "agent";
+            const sessionId =
+              env.CLAWQL_SESSION_ID?.trim() || args.sessionId?.trim() || "session";
+
+            // Audit 6.02: refuse non-https / loopback / private payment resource URLs.
+            try {
+              assertSafeOutboundResourceUrl(args.resourceUrl);
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text" as const,
+                    text: JSON.stringify({
+                      ok: false,
+                      reason: "resourceUrl_refused",
+                      detail: err instanceof Error ? err.message : String(err),
+                    }),
+                  },
+                ],
+              };
+            }
+
             const script = createOutboundX402PayBatchScript({
               env,
               provideLayer: paymentsLayer,
             });
             const result = await Effect.runPromise(
               script.run({
-                tenantId: args.tenantId,
-                agentId: args.agentId,
-                sessionId: args.sessionId,
+                tenantId,
+                agentId,
+                sessionId,
                 payload: {
                   resourceUrl: args.resourceUrl,
                   method: args.method,
                   body: args.body,
-                  hitlApproval: args.hitlApproval,
+                  operatorApprovalId: args.operatorApprovalId,
                   expectedQuoteDigest: args.expectedQuoteDigest,
                 },
               })

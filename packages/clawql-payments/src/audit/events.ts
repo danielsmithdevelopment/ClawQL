@@ -228,6 +228,8 @@ export function buildX402PaymentReceivedEntry(input: {
   resource: string;
   agentId?: string;
   correlationId?: string;
+  /** Settlement transaction hash (audit 6.01 — only after facilitator settle). */
+  txHash?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "X402_PAYMENT_RECEIVED",
@@ -239,6 +241,7 @@ export function buildX402PaymentReceivedEntry(input: {
       tenant_id: input.tenantId,
       resource: input.resource,
       agent_id: input.agentId,
+      ...(input.txHash ? { tx_hash: input.txHash } : {}),
     },
   });
 }

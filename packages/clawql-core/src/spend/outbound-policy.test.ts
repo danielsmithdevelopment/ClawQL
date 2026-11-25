@@ -166,7 +166,11 @@ describe("evaluateOutboundPayment", () => {
         policy,
         action({
           outboundPaymentEverEnabled: false,
-          hitlApproval: { quoteDigest: "digest-a", approvedAt: new Date().toISOString() },
+          hitlApproval: {
+            quoteDigest: "digest-a",
+            approvedAt: new Date().toISOString(),
+            principal: "operator@test",
+          },
         })
       )
     );
@@ -179,7 +183,11 @@ describe("evaluateOutboundPayment", () => {
         policy,
         action({
           quote: { amountUsdc: "0.02", digest: "digest-b" },
-          hitlApproval: { quoteDigest: "digest-a", approvedAt: new Date().toISOString() },
+          hitlApproval: {
+            quoteDigest: "digest-a",
+            approvedAt: new Date().toISOString(),
+            principal: "operator@test",
+          },
         })
       )
     );

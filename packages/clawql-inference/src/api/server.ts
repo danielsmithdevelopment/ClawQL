@@ -17,6 +17,7 @@ import { createInferenceStore } from "../store/create.js";
 import type { InferenceStore } from "../store/types.js";
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
+import { keysEnforcementActive } from "../keys/store.js";
 import { Effect } from "effect";
 
 export type CreateInferenceHttpAppOptions = {
@@ -92,7 +93,45 @@ export function resolveInferencePort(env: NodeJS.ProcessEnv = process.env): numb
 }
 
 export function resolveInferenceHost(env: NodeJS.ProcessEnv = process.env): string {
-  return env.CLAWQL_INFERENCE_HOST?.trim() || "0.0.0.0";
+  // Audit 6.03: default loopback (was 0.0.0.0).
+  return env.CLAWQL_INFERENCE_HOST?.trim() || "127.0.0.1";
+}
+
+function isLoopbackBindHost(host: string): boolean {
+  const h = host.trim().toLowerCase();
+  return h === "127.0.0.1" || h === "localhost" || h === "::1" || h === "[::1]";
+}
+
+function envFlagOn(env: NodeJS.ProcessEnv, key: string): boolean {
+  const v = env[key]?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
+/**
+ * Audit 6.03: refuse unauthenticated non-loopback binds unless explicitly allowed.
+ * Regulated tier always requires virtual-key enforcement.
+ */
+export function assertInferenceBindAuthPolicy(
+  host: string,
+  env: NodeJS.ProcessEnv = process.env
+): void {
+  const regulated = env.CLAWQL_TIER?.trim().toLowerCase() === "regulated";
+  const keysOn = keysEnforcementActive(env);
+  if (regulated && !keysOn) {
+    throw new Error(
+      "CLAWQL_TIER=regulated requires inference virtual-key enforcement " +
+        "(create a key or set CLAWQL_INFERENCE_KEYS_ENABLED=1)"
+    );
+  }
+  if (!isLoopbackBindHost(host) && !keysOn) {
+    if (regulated || !envFlagOn(env, "CLAWQL_INFERENCE_ALLOW_UNAUTHENTICATED")) {
+      throw new Error(
+        `Refusing unauthenticated inference bind on ${host}: ` +
+          "set CLAWQL_INFERENCE_HOST=127.0.0.1, enable virtual keys, " +
+          "or set CLAWQL_INFERENCE_ALLOW_UNAUTHENTICATED=1 (non-regulated only)"
+      );
+    }
+  }
 }
 
 async function runInferenceHttpServerImpl(
@@ -115,6 +154,7 @@ async function runInferenceHttpServerImpl(
   const app = createInferenceHttpApp({ gateway, registry, env });
   const port = options.port ?? resolveInferencePort(env);
   const host = options.host ?? resolveInferenceHost(env);
+  assertInferenceBindAuthPolicy(host, env);
   await new Promise<void>((resolve) => {
     app.listen(port, host, () => resolve());
   });
