@@ -107,8 +107,13 @@ export type GrpcMcpServerOptions = {
    * Unary protobuf **`model_context_protocol.Mcp`** still uses one shared instance from {@link createMcpServer}.
    */
   createSessionMcpServer?: () => Promise<McpServer>;
-  /** Bind address host:port (default `process.env.GRPC_BIND` or `0.0.0.0:${GRPC_PORT}`). */
+  /** Bind address host:port (default `process.env.GRPC_BIND` or `127.0.0.1:${GRPC_PORT}`). */
   bindAddress?: string;
+  /**
+   * Host-supplied gateway auth. When set, every Session stream and unary MCP call
+   * must pass; when unset, plaintext loopback remains open for local tests only.
+   */
+  authorizeMetadata?: (metadata: grpc.Metadata) => Promise<boolean> | boolean;
   /**
    * Passed to `grpc.Server` (e.g. `interceptors` for OpenTelemetry / metadata, see
    * [Google Cloud gRPC + MCP](https://cloud.google.com/blog/products/networking/grpc-as-a-native-transport-for-mcp)).
@@ -367,21 +372,39 @@ function createHealthImplementation(): grpc.UntypedServiceImplementation {
   };
 }
 
+function isLoopbackBindHost(host: string): boolean {
+  const h = host.trim().toLowerCase();
+  return h === "127.0.0.1" || h === "localhost" || h === "::1";
+}
+
 function getGrpcBindAddress(override?: string): string {
   if (override?.trim()) {
     return override.trim();
   }
   const port = Number.parseInt(process.env.GRPC_PORT ?? "50051", 10);
-  const host = (process.env.GRPC_BIND ?? "0.0.0.0").trim() || "0.0.0.0";
+  const host = (process.env.GRPC_BIND ?? "127.0.0.1").trim() || "127.0.0.1";
   return `${host}:${Number.isFinite(port) ? port : 50051}`;
 }
 
-function createServerCredentials(): grpc.ServerCredentials {
+function createServerCredentials(bindHost: string): grpc.ServerCredentials {
   const certPath = process.env.GRPC_TLS_CERT_PATH?.trim();
   const keyPath = process.env.GRPC_TLS_KEY_PATH?.trim();
   const caPath = process.env.GRPC_TLS_CA_PATH?.trim();
+  const tier = process.env.CLAWQL_TIER?.trim().toLowerCase();
+  const allowInsecure = process.env.GRPC_ALLOW_INSECURE?.trim() === "1";
 
   if (!certPath || !keyPath) {
+    if (tier === "regulated") {
+      throw new Error(
+        "CLAWQL_TIER=regulated requires gRPC TLS (set GRPC_TLS_CERT_PATH and GRPC_TLS_KEY_PATH)"
+      );
+    }
+    if (!isLoopbackBindHost(bindHost) && !allowInsecure) {
+      throw new Error(
+        `gRPC plaintext refused on non-loopback bind ${bindHost}; ` +
+          "set GRPC_BIND=127.0.0.1, configure TLS, or set GRPC_ALLOW_INSECURE=1"
+      );
+    }
     return grpc.ServerCredentials.createInsecure();
   }
 
@@ -441,6 +464,7 @@ async function maybeStartGrpcMcpServerImpl(
   const protobufBridge = new McpProtobufBridge(sharedMcpForProtobufRpc);
   const protobufTaskRegistry = new TaskCancellationRegistry();
 
+  const authorize = options.authorizeMetadata;
   const sessionImpl: grpc.UntypedServiceImplementation = {
     session: (call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>) => {
       const transport = new GrpcMcpSessionTransport(call);
@@ -448,20 +472,36 @@ async function maybeStartGrpcMcpServerImpl(
       call.on("end", () => {
         void mcpServer?.close().catch(() => {});
       });
-      const started: Promise<McpServer> = createSessionMcp
-        ? createSessionMcp()
-        : Promise.resolve(createMcp());
-      void started
-        .then((server) => {
+      void (async () => {
+        if (authorize) {
+          const ok = await authorize(call.metadata);
+          if (!ok) {
+            call.emit("error", {
+              code: grpc.status.UNAUTHENTICATED,
+              message: "gRPC MCP authentication failed",
+            });
+            try {
+              call.end();
+            } catch {
+              /* already closed */
+            }
+            return;
+          }
+        }
+        const started: Promise<McpServer> = createSessionMcp
+          ? createSessionMcp()
+          : Promise.resolve(createMcp());
+        try {
+          const server = await started;
           mcpServer = server;
-          return server.connect(transport);
-        })
-        .catch((err: unknown) => {
+          await server.connect(transport);
+        } catch (err: unknown) {
           const e = err instanceof Error ? err : new Error(String(err));
           transport.onerror?.(e);
           void mcpServer?.close().catch(() => {});
           void transport.close();
-        });
+        }
+      })();
     },
   };
 
@@ -484,7 +524,8 @@ async function maybeStartGrpcMcpServerImpl(
   }
 
   const bindAddress = getGrpcBindAddress(options.bindAddress);
-  const creds = createServerCredentials();
+  const bindHost = /^(.+):(\d+)$/.exec(bindAddress)?.[1] ?? "127.0.0.1";
+  const creds = createServerCredentials(bindHost);
 
   const resolvedAddress = await new Promise<string>((resolve, reject) => {
     server.bindAsync(bindAddress, creds, (err, boundPort) => {
@@ -497,7 +538,7 @@ async function maybeStartGrpcMcpServerImpl(
         return;
       }
       const m = /^(.+):(\d+)$/.exec(bindAddress);
-      const host = m ? m[1] : "0.0.0.0";
+      const host = m ? m[1] : "127.0.0.1";
       resolve(`${host}:${boundPort}`);
     });
   });

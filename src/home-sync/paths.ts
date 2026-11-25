@@ -14,7 +14,7 @@ export const DEFAULT_SYNC_INCLUDE = [
   "Dashboard/chats",
 ] as const;
 
-/** Never uploaded — rebuild locally or keep per-machine. */
+/** Never uploaded or pulled — secrets, auth, and WORM stay local. */
 export const ALWAYS_EXCLUDE_REL = new Set([
   "vault/providers.json",
   "memory.db",
@@ -22,6 +22,9 @@ export const ALWAYS_EXCLUDE_REL = new Set([
   SYNC_CONFIG_FILENAME,
   "clawql.env",
 ]);
+
+/** Prefixes never pulled (even if a remote manifest lists them). */
+export const ALWAYS_EXCLUDE_PREFIXES = ["vault/", "Auth/", "worm/", "pending-executions/"] as const;
 
 export function getSyncConfigPath(home = getClawqlHome()): string {
   return join(home, SYNC_CONFIG_FILENAME);

@@ -801,11 +801,21 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         method?: string;
         params?: unknown;
       };
+      // Principal from verified claims only; caller headers are ignored unless
+      // CLAWQL_TRUSTED_PROXY=1 (enterprise ingress that already authenticated).
+      const claims = (
+        req as import("express").Request & {
+          clawqlClaims?: { sub?: string };
+        }
+      ).clawqlClaims;
+      const trustedProxy = envFlagOn("CLAWQL_TRUSTED_PROXY");
       const principal =
-        (typeof req.header("x-clawql-principal") === "string" &&
-          req.header("x-clawql-principal")?.trim()) ||
-        (typeof req.header("x-clawql-atr-sub") === "string" &&
-          req.header("x-clawql-atr-sub")?.trim()) ||
+        claims?.sub?.trim() ||
+        (trustedProxy &&
+          ((typeof req.header("x-clawql-principal") === "string" &&
+            req.header("x-clawql-principal")?.trim()) ||
+            (typeof req.header("x-clawql-atr-sub") === "string" &&
+              req.header("x-clawql-atr-sub")?.trim()))) ||
         "anonymous";
       try {
         const { handleMcpEventsJsonRpc, McpEventsServiceLive } = await import("clawql-mcp-events");
@@ -920,13 +930,35 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         jsonRpcError(res, "Bad Request: transport could not be resolved.");
         return;
       }
+      // Scope from verified claims; header may only narrow when CLAWQL_TRUSTED_PROXY=1.
+      const claimsForScope = (
+        req as import("express").Request & {
+          clawqlClaims?: { scope?: readonly string[]; tenantId?: string };
+        }
+      ).clawqlClaims;
+      const claimScope = claimsForScope?.scope;
       const atrToolsHeader = req.header("x-clawql-capability-tools")?.trim();
-      const atrScopeTokens = atrToolsHeader
+      const headerTokens = atrToolsHeader
         ? atrToolsHeader
             .split(",")
             .map((t) => t.trim())
             .filter(Boolean)
         : undefined;
+      const trustedProxyForScope = envFlagOn("CLAWQL_TRUSTED_PROXY");
+      let atrScopeTokens: string[] | undefined;
+      if (claimScope && claimScope.length > 0 && !claimScope.includes("*")) {
+        atrScopeTokens =
+          trustedProxyForScope && headerTokens?.length
+            ? headerTokens.filter((t) => claimScope.includes(t))
+            : [...claimScope];
+      } else if (claimScope?.includes("*")) {
+        atrScopeTokens =
+          trustedProxyForScope && headerTokens?.length ? headerTokens : ["*"];
+      } else if (trustedProxyForScope && headerTokens?.length) {
+        atrScopeTokens = headerTokens;
+      } else {
+        atrScopeTokens = undefined;
+      }
       const mcpSession =
         sessionId ??
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
@@ -1071,8 +1103,30 @@ export async function startMcpHttpServer(): Promise<void> {
   const { logStartupSummary } = await import("../host/startup-summary.js");
   await logStartupSummary();
   const { maybeStartGrpcMcpServer } = await import("mcp-grpc-transport");
+  const { resolveAtrClaimsFromHeadersEffect, loadGatewayAuthConfig } =
+    await import("clawql-auth/gateway");
+  const grpcAuthConfig = await Effect.runPromise(loadGatewayAuthConfig());
   const grpcPromise = maybeStartGrpcMcpServer({
     createMcpServer: () => createRegisteredMcpServer(),
+    authorizeMetadata: async (metadata) => {
+      const headers: Record<string, string | undefined> = {};
+      const map = metadata.getMap();
+      for (const [key, value] of Object.entries(map)) {
+        headers[key] =
+          typeof value === "string"
+            ? value
+            : Buffer.isBuffer(value)
+              ? value.toString("utf8")
+              : String(value);
+      }
+      const result = await Effect.runPromise(
+        resolveAtrClaimsFromHeadersEffect(headers, grpcAuthConfig).pipe(
+          Effect.map(() => true as const),
+          Effect.catch(() => Effect.succeed(false as const))
+        )
+      );
+      return result;
+    },
   });
 
   app.listen(PORT, listenHost, () => {

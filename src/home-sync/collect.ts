@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { Effect } from "effect";
-import { ALWAYS_EXCLUDE_REL } from "./paths.js";
+import { ALWAYS_EXCLUDE_PREFIXES, ALWAYS_EXCLUDE_REL } from "./paths.js";
 import type { SyncFileEntry } from "./types.js";
 
 function asError(cause: unknown): Error {
@@ -18,11 +18,39 @@ function toPosixRel(home: string, absPath: string): string {
   return relative(home, absPath).split("\\").join("/");
 }
 
-function isExcludedRel(rel: string): boolean {
-  if (ALWAYS_EXCLUDE_REL.has(rel)) return true;
-  if (rel.startsWith("vault/")) return true;
-  if (rel.includes("/.")) return true; // hidden dirs
+/** True when a relative path must never sync (push or pull). */
+export function isExcludedRel(rel: string): boolean {
+  const normalized = rel.replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!normalized || normalized === "." || ALWAYS_EXCLUDE_REL.has(normalized)) return true;
+  if (normalized.includes("..")) return true;
+  if (normalized.includes("/.")) return true; // hidden dirs
+  for (const prefix of ALWAYS_EXCLUDE_PREFIXES) {
+    if (normalized === prefix.slice(0, -1) || normalized.startsWith(prefix)) return true;
+  }
   return false;
+}
+
+/**
+ * Resolve a sync relative path under home. Rejects absolute paths, `..`, and
+ * anything that escapes the home after normalize (audit 2.07).
+ */
+export function assertSafeSyncRelPath(home: string, relPath: string): string {
+  const normalized = relPath.replace(/\\/g, "/");
+  if (!normalized || normalized.startsWith("/") || normalized.includes("\0")) {
+    throw new Error(`Unsafe sync path: ${relPath}`);
+  }
+  if (normalized.split("/").some((seg) => seg === ".." || seg === "")) {
+    throw new Error(`Unsafe sync path: ${relPath}`);
+  }
+  if (isExcludedRel(normalized)) {
+    throw new Error(`Excluded sync path: ${relPath}`);
+  }
+  const root = resolve(home);
+  const abs = resolve(root, normalized);
+  if (abs !== root && !abs.startsWith(`${root}${sep}`)) {
+    throw new Error(`Unsafe sync path escapes home: ${relPath}`);
+  }
+  return abs;
 }
 
 async function walkFile(
@@ -99,5 +127,5 @@ export async function collectLocalSyncFiles(
 }
 
 export function absPathForRel(home: string, relPath: string): string {
-  return join(home, relPath);
+  return assertSafeSyncRelPath(home, relPath);
 }
