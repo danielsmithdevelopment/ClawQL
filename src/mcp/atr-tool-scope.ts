@@ -1,20 +1,30 @@
 /**
- * Map MCP tool names to ATR scope families (audit Pass 2 S3).
- * Virtual keys carry execute/search/memory; passthrough/read natives map to `core`
- * so every non-empty session can still use cache, skills_*, audit, resume, etc.
+ * Map MCP tool names to ATR scope families (audit Pass 2 S3 / T3).
+ * Virtual keys carry execute/search/memory; a narrow `core` allowlist covers
+ * session utilities every non-empty scope may use.
  */
-
-import { NATIVE_TOOL_POLICY } from "clawql-api";
 
 export type AtrToolScopeDecision =
   { readonly allow: true } | { readonly allow: false; readonly reason: string };
+
+/** Explicit always-allowed core tools (audit T3 — not every read/passthrough). */
+const CORE_TOOL_NAMES = new Set([
+  "cache",
+  "docs_search",
+  "audit",
+  "resume",
+  "console_link",
+]);
 
 /**
  * Resolve the ATR family for a tool name.
  * - execute / proxy_call → execute
  * - search → search
  * - memory_* → memory
- * - passthrough/read natives → core
+ * - data_* → data
+ * - document tools → documents
+ * - web_* → web
+ * - narrow core allowlist → core
  * - otherwise the tool name itself
  */
 export function atrScopeFamilyForTool(toolName: string): string {
@@ -27,18 +37,23 @@ export function atrScopeFamilyForTool(toolName: string): string {
   if (toolName.startsWith("memory_")) {
     return "memory";
   }
-  if (toolName === "resume") {
-    return "core";
-  }
-  const policy = NATIVE_TOOL_POLICY[toolName];
-  if (policy && (policy.kind === "passthrough" || policy.kind === "read")) {
-    return "core";
+  if (toolName.startsWith("data_") || toolName === "clawql_sql") {
+    return "data";
   }
   if (
-    toolName.startsWith("skills_") ||
-    toolName === "docs_search" ||
-    toolName.startsWith("audit")
+    toolName.startsWith("inspect_") ||
+    toolName.startsWith("extract_") ||
+    toolName.startsWith("convert_") ||
+    toolName.startsWith("classify_") ||
+    toolName.startsWith("langextract") ||
+    toolName === "ingest_external_knowledge"
   ) {
+    return "documents";
+  }
+  if (toolName.startsWith("web_")) {
+    return "web";
+  }
+  if (CORE_TOOL_NAMES.has(toolName) || toolName.startsWith("skills_")) {
     return "core";
   }
   return toolName;

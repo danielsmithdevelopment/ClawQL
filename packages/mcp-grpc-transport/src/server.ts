@@ -143,6 +143,30 @@ export type GrpcAuthContext = {
   readonly tenantId?: string;
 };
 
+/**
+ * Map gRPC authorize claims to MCP request context (audit T2).
+ * Missing / empty scope on an authenticated principal → deny (`[]`), matching HTTP.
+ * Boolean-true auth with no identity claims → unscoped (`undefined`) for tests.
+ */
+export function grpcAuthContextFromAuthorizeResult(result: GrpcAuthorizeResult): GrpcAuthContext {
+  const scope = result.scope;
+  let atrScopeTokens: string[] | undefined;
+  if (scope && scope.length > 0) {
+    atrScopeTokens = scope.includes("*") ? ["*"] : [...scope];
+  } else if (scope) {
+    atrScopeTokens = [];
+  } else if (result.sub != null || result.tenantId != null) {
+    atrScopeTokens = [];
+  } else {
+    atrScopeTokens = undefined;
+  }
+  return {
+    sessionId: result.sub ? `grpc:${result.sub}` : "grpc",
+    atrScopeTokens,
+    tenantId: result.tenantId,
+  };
+}
+
 export type StartedGrpcServer = {
   /** Bound host:port (e.g. `127.0.0.1:54321` when using port 0). */
   address: string;
@@ -264,11 +288,19 @@ export class GrpcMcpSessionTransport implements Transport {
   setProtocolVersion?: (version: string) => void;
 
   private readonly call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>;
+  /** Audit T1: bind ATR/tenant ALS around every Session message (not only connect). */
+  private readonly runMessageWithAuth?: <T>(fn: () => Promise<T> | T) => Promise<T>;
   private started = false;
   private closed = false;
 
-  constructor(call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>) {
+  constructor(
+    call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>,
+    opts?: {
+      runMessageWithAuth?: <T>(fn: () => Promise<T> | T) => Promise<T>;
+    }
+  ) {
     this.call = call;
+    this.runMessageWithAuth = opts?.runMessageWithAuth;
   }
 
   async start(): Promise<void> {
@@ -295,14 +327,18 @@ export class GrpcMcpSessionTransport implements Transport {
           resumption_token: msg.resumption_token ?? undefined,
         });
         void (async () => {
-          const deliver = (): void => {
+          const deliver = async (): Promise<void> => {
             this.onmessage?.(message, extra);
           };
-          if (mcpMessageContextHook) {
-            await mcpMessageContextHook(extra)(deliver);
-          } else {
-            deliver();
-          }
+          const withHooks = async (): Promise<void> => {
+            if (mcpMessageContextHook) {
+              await mcpMessageContextHook(extra)(deliver);
+            } else {
+              await deliver();
+            }
+          };
+          if (this.runMessageWithAuth) await this.runMessageWithAuth(withHooks);
+          else await withHooks();
         })().catch((e) => {
           const err = e instanceof Error ? e : new Error(String(e));
           this.onerror?.(err);
@@ -510,21 +546,7 @@ async function maybeStartGrpcMcpServerImpl(
   }
 
   function authContextFromResult(result: GrpcAuthorizeResult): GrpcAuthContext {
-    const scope = result.scope;
-    let atrScopeTokens: string[] | undefined;
-    if (scope && scope.length > 0) {
-      atrScopeTokens = scope.includes("*") ? ["*"] : [...scope];
-    } else if (scope && scope.length === 0) {
-      atrScopeTokens = [];
-    } else {
-      // Boolean-true auth with no claims: unrestricted (tests / noAuth).
-      atrScopeTokens = ["*"];
-    }
-    return {
-      sessionId: result.sub ? `grpc:${result.sub}` : "grpc",
-      atrScopeTokens,
-      tenantId: result.tenantId,
-    };
+    return grpcAuthContextFromAuthorizeResult(result);
   }
 
   function rejectStreamingCall(
@@ -623,19 +645,27 @@ async function maybeStartGrpcMcpServerImpl(
 
   const sessionImpl: grpc.UntypedServiceImplementation = {
     session: (call: grpc.ServerDuplexStream<JsonRpcLineMsg, JsonRpcLineMsg>) => {
-      const transport = new GrpcMcpSessionTransport(call);
       let mcpServer: McpServer | undefined;
       call.on("end", () => {
         void mcpServer?.close().catch(() => {});
       });
       void (async () => {
+        // Audit T1: authorize once, then bind claims around every Session message.
+        let authCtx: GrpcAuthContext | undefined;
         if (authorize) {
           const result = await resolveAuthorize(call.metadata);
           if (!result) {
             rejectStreamingCall(call, "gRPC MCP authentication failed");
             return;
           }
+          authCtx = authContextFromResult(result);
         }
+        const runMessageWithAuth =
+          authCtx && runWithAuthContext
+            ? <T>(fn: () => Promise<T> | T): Promise<T> =>
+                runWithAuthContext(authCtx!, async () => await fn())
+            : undefined;
+        const transport = new GrpcMcpSessionTransport(call, { runMessageWithAuth });
         const started: Promise<McpServer> = createSessionMcp
           ? createSessionMcp()
           : Promise.resolve(createMcp());

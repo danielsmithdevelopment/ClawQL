@@ -8,6 +8,7 @@
 
 export {
   GrpcMcpSessionTransport,
+  grpcAuthContextFromAuthorizeResult,
   maybeStartGrpcMcpServer,
   setMcpMessageContextHook,
   defaultGrpcServerMessageSizeBytes,
