@@ -81,11 +81,10 @@ export const sovereignSecurityPack = {
   monthlyPrice: '$200',
   period: '/mo',
   subheadline:
-    'Optional on any paid tier. Included in Enterprise. Kata isolation, model weight verification, WORM Merkle audit logs, Panguard fail-closed ATR, and monthly posture reports.',
+    'Optional on any paid tier. Included in Enterprise. Paid extras beyond base WORM (on by default): Kata isolation, model weight verification, Panguard fail-closed ATR, and monthly posture reports.',
   features: [
     'Kata Container VM isolation for agent workloads',
     'Model weight integrity verification (SHA-256 + Cosign)',
-    'WORM Merkle audit logs with signed Git commits',
     'Panguard ATR fail-closed enforcement',
     'Presidio pre-log redaction pipeline',
     'Monthly automated security posture report',

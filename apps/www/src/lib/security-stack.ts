@@ -59,7 +59,7 @@ export const securityStackPhases: readonly SecurityStackPhase[] = [
           'EKS Pod Identity',
           'IRSA',
           'STS session policies',
-          'IdP-signed scope tokens',
+          'identity provider-signed scope tokens',
           'Kubernetes RBAC',
           'Istio mTLS (SPIFFE)',
           'Istio AuthorizationPolicy',

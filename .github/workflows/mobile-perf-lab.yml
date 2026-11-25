@@ -13,6 +13,9 @@ concurrency:
   group: mobile-perf-lab-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   perf-lab:
     runs-on: ubuntu-latest

@@ -9,6 +9,8 @@ Apache 2.0 / MIT · [github.com/danielsmithdevelopment/ClawQL](https://github.co
 
 ClawQL is under active development. The horizontal platform through **7.1.0** is shipped; **8.0.0** adds provider opt-in, enforcement defaults, and the last horizontal packages below. See [Getting started](https://docs.clawql.com/getting-started). The table below is the honest current state; everything after it describes where ClawQL is going and why.
 
+**Self-improving harnesses (Harness²):** when agents refine prompts, tools, memory, and skills online without a grader, authority must sit **outside** that harness. Positioning and an adversarial gate benchmark spec: [`harness2-authority-outside.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/harness2-authority-outside.md).
+
 | Package                    | Status                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clawql-mcp`               | ✅ Shipped (transport + MCP registration in `src/`)                                                                                                                                                                                                                                                                                                                                                                          |
@@ -157,7 +159,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`clawql-auth` expansion** — OIDC JWT **consumer** (`CLAWQL_AUTH_MODE=oidc`), shared TOTP step-up + WebAuthn hooks, MFA policy for financial tools. Not a full IdP. SAML/LDAP client modes and full RBAC/ABAC remain roadmap. Outbound OAuth refresh (mutex / proactive) + inbound MCP OAuth 2.1: [`docs/security/clawql-auth-package-spec.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-package-spec.md). See [`docs/security/clawql-auth-oidc-stepup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-oidc-stepup.md).
 
-**Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop, circuit breakers, and full WORM defaults remain roadmap.
+**Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop and circuit breakers remain roadmap. Local hash-chained WORM is **on by default** in 8.0 (sqlite under `$CLAWQL_HOME/worm`); remote Object Lock defaults on Cloud paid tiers and the regulated profile.
 
 **`clawql-operator`** — Scaffold (0.2.1) shipped; full NL dashboard, dynamic Deployments, and auth reconciliation planned.
 

@@ -10,6 +10,8 @@ import {
   createWormTrailConfigFromEnvEffect,
   defaultWormAgentName,
   defaultWormSessionId,
+  wormBackendStatusFromConfig,
+  type WormBackendStatus,
 } from "./env-config.js";
 import { createWORMAuditTrailEffect, WORMAuditTrailService } from "./trail.js";
 
@@ -21,12 +23,21 @@ let bootState: "idle" | "booting" | "ready" | "disabled" | "failed" = "idle";
 let bootFiber: Promise<TrailSvc | null> | null = null;
 let defaultSession = "clawql-host";
 let defaultAgent: string | undefined;
+let backendStatus: WormBackendStatus | null = null;
 
 export const processWormBootState = (): Effect.Effect<typeof bootState> =>
   Effect.sync(() => bootState);
 
 export const processWormReady = (): Effect.Effect<boolean> =>
   Effect.sync(() => bootState === "ready" && trailSvc !== null);
+
+/** Local/remote backend kinds after a successful boot (null when disabled / not booted). */
+export const processWormBackendStatus = (): Effect.Effect<WormBackendStatus | null> =>
+  Effect.sync(() => backendStatus);
+
+export function getProcessWormBackendStatus(): WormBackendStatus | null {
+  return backendStatus;
+}
 
 /** Fill sessionId / agentName when callers omit them. */
 export const withProcessWormDefaults = (input: WORMAppendInput): Effect.Effect<WORMAppendInput> =>
@@ -61,8 +72,17 @@ export const bootProcessWormFromEnvEffect = (
     const config = yield* createWormTrailConfigFromEnvEffect(env);
     if (!config) {
       bootState = "disabled";
+      backendStatus = null;
       return null;
     }
+
+    const status = wormBackendStatusFromConfig(config);
+    backendStatus = status;
+    process.stderr.write(
+      `[clawql-audit] process WORM backends: local=${status.local}` +
+        `${status.localDurable ? " (durable)" : " (not durable)"}` +
+        ` remote=${status.remote}\n`
+    );
 
     bootFiber = Effect.runPromise(
       Effect.gen(function* () {
@@ -78,6 +98,7 @@ export const bootProcessWormFromEnvEffect = (
             bootState = "failed";
             trailSvc = null;
             appendSem = null;
+            backendStatus = null;
           })
         )
       )
@@ -136,6 +157,7 @@ export const stopProcessWormEffect = (): Effect.Effect<void> =>
     trailSvc = null;
     appendSem = null;
     bootFiber = null;
+    backendStatus = null;
     bootState = "idle";
     if (svc) {
       yield* svc.stop().pipe(Effect.catch(() => Effect.void));

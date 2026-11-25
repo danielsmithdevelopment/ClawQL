@@ -38,6 +38,9 @@ concurrency:
   group: governance-policy-depth-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   smoke:
     name: ClawQL vs passthrough smoke

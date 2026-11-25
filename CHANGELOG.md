@@ -1,27 +1,14 @@
-## [Unreleased]
+# Changelog
 
-### Changed
-
-- **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only. Docs / docs.clawql.com closeout hub + `/v1/decisions` model table updated to match.
-
-- **Host MCP container + Helm: Bun `--smol` default** — [`docker/Dockerfile`](docker/Dockerfile) **`runtime`** (GHCR publish target) is Distroless **Bun 1.4** (`ENTRYPOINT bun --smol` on CA-enabled `cc-debian13` with `libstdc++` for DuckDB). **`runtime-node`** keeps Node 24 distroless as a minority escape. Helm **`hostRuntime: bun`** + **`bun.smol: true`**; **`nodeOptions`** lean **`--max-old-space-size=256`** (was 1536) for Node escape / Node sidecars. Aligns with [`docs/benchmarks/cloudflare-multiturn/measured-defaults.md`](docs/benchmarks/cloudflare-multiturn/measured-defaults.md). Ladder: **celld** preferred isolate → **Bun** default host → **Node** legacy.
-
-### Added
-
-- **Mandate Idempotency-Key on REST** — OpenAPI ops that declare header `Idempotency-Key` (or `x-clawql-idempotencyCapable`) set `riskHints.idempotencyCapable`. After atomic mandate consume, REST execute sends `Idempotency-Key: clawql-mandate:<executionId>`. Review **Keyed retry** redrives `outcome_unknown` without a second consume. Check-then-decide lookup + program-runner keyed resume still planned.
-
-- **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes the historical double-execute race). gdp-ts remains layer 1. TLC dual CI (atomic pass + weak counterexample): `.github/workflows/formal-mandate-tlc.yml` / `scripts/formal/run-mandate-tlc.sh`. Audit hunt: `scripts/formal/audit-mandate-double-execute.mjs`. Lean approval-policy oracle + differential tests under `formal/lean/` / `packages/clawql-api/src/policy/`. Concurrent consume regression (50 parallel → exactly one win).
-
-- **Security: atomic mandate consume** — **Postgres** conditional update for managed multi-node (`CLAWQL_PENDING_DATABASE_URL`); SQLite for single-node self-host; file-lock opt-in only. Two-process race tests for SQLite and Postgres. `outcome_unknown` Review after 60s; idempotency-gated retry. Event model: at-least-once + stable ID + receiver dedup (“processed once”). WORM hunt owner Daniel Smith (ADR 0014); local hash-chained WORM is on by default as of this audit fix — remote Object Lock remains opt-in / Cloud paid / regulated. Security page claim linked to ADR.
-
-- **Routing catalog honesty** — `search_provider_tool_routing` still lists as the productionTrusted _use site_, but `/decision` returns `calibrated: false` until the live default-on MCP catalog matches the frozen v0.4/v0.6 routing digest (PageIndex purge, `sources_propose`/`resume`, ouroboros/think opt-in). Gate: `routingCatalogAlignedForProductionTrust()`. Evidence: [`docs/design/effect-v4-cutover-evidence.md`](docs/design/effect-v4-cutover-evidence.md).
-
-## [8.0.0] - 2026-10-03
+## [8.0.0] - Unreleased
 
 Semver-**major** on the Agentic Gateway line: **empty-by-default bundled provider catalog**, **`ProviderPlugin` hard break** (no legacy bridge), skills-unified search + Agent Seer scenarios, enforcement opt-in, Managed Edge Gateway / enterprise control plane, payments + Effect hardening, **Effect v4.0.0** cutover, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, audit/TEE wedge, **`clawql-network`** / **`clawql-analytics`**, meta-ontology + ExtractBench, **Streams celld**, **Fast Decision** / capability lifecycle, inference gateway ladder, operation-risk + execute pause/resume, toolkits + self-serve Stripe, repo layout (`apps/` / `manifests/`), Learn/docs wave for 8.0, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and personal-agent / Protocol Fabric work since **`v7.2.0`**. Release notes: **[`RELEASE_NOTES_v8.0.0.md`](docs/release/RELEASE_NOTES_v8.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)**. Checklist: **[`docs/release/v8.0.0-checklist.md`](docs/release/v8.0.0-checklist.md)**. Inventory (as of 2026-10-03): **~1878 commits**, **~262 merge PRs** after `v7.2.0`.
 
 ### Breaking
 
+- **Process WORM on by default (durable local).** Hash-chained local WORM defaults to **sqlite** under `$CLAWQL_HOME/worm/clawql-worm.sqlite` (not an in-memory ring). Set `CLAWQL_WORM_LOCAL=memory` only for tests (startup warns). Set `CLAWQL_WORM_ENABLED=0` to disable (writes a final `WORM_DISABLED` entry when a trail was active).
+- **`CLAWQL_TIER=regulated`.** Refuses to start with WORM disabled, and refuses `CLAWQL_WORM_LOCAL=memory` or `CLAWQL_WORM_REMOTE=memory`. Remote Object Lock (`CLAWQL_WORM_REMOTE=s3`) is required for the regulated profile.
+- **Agent `audit` tool vs WORM.** MCP `audit.clear` empties only the agent-facing in-memory view; it never truncates the hash-chained WORM trail.
 - **Bundled providers opt-in (default empty).** Fresh install with no `CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS` / `CLAWQL_SPEC_*` / instance `providers` loads **no** OpenAPI catalog (native GraphQL/gRPC only when configured). **7.x** auto-loaded pack **`default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). **Migration:** `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`. Helm: set `providers.pack: default` (chart default is **`none`**). Boot logs `BREAKING (8.0.0)` when the catalog is empty. See [`docs/plugins/bundled-providers.md`](docs/plugins/bundled-providers.md).
 - **Plugin interface hard break ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999)).** Phase-2 `Plugin` / `onRegister` / `beforeCallTool` and `legacyPluginToProviderPlugin` are **removed**. Install only `ProviderPlugin` / `StandaloneSkillPlugin`. Rewrite out-of-tree plugins — **no soft landing**. Guide: [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md). Spec: [`docs/design/clawql-core-plugin-architecture.md`](docs/design/clawql-core-plugin-architecture.md).
 - **Tool-scope enforcement default off.** Bare install does not install a blocking enforcement provider. Opt in (e.g. `CLAWQL_PANGUARD_PROXY_PLUGIN=1` + `CLAWQL_PANGUARD_IN_PROCESS=1`). Boot **SECURITY WARNING** if none active unless `CLAWQL_ALLOW_NO_ENFORCEMENT=1`.
@@ -43,6 +30,18 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
   --set image.tag=8.0.0 \
   --set providers.pack=default
 ```
+
+### Changed (folded from former Unreleased)
+
+- **Decide family id `gliner-decide`** — live Fast Decision / WORM backend id is now `gliner-decide` (stub `gliner-decide-stub`, HTTP fallback `gliner-decide-http-fallback-heuristic`) so the name matches GLiNER2.5-Decide. The old `gliner2` family id is **removed** (no alias). `PRODUCTION_TRUSTED_SCORER_BACKEND` is `gliner-decide`. Frozen historical fixtures may still say `scorerBackend: "gliner2"`; that is archival only.
+- **Host MCP container + Helm: Bun `--smol` default** — Distroless Bun 1.4 runtime (`bun --smol`); Node escape retained. Aligns with measured Cloudflare multiturn defaults.
+
+### Added (folded from former Unreleased)
+
+- **Mandate Idempotency-Key on REST** — OpenAPI ops that declare `Idempotency-Key` set `riskHints.idempotencyCapable`; REST execute sends `Idempotency-Key: clawql-mandate:<executionId>` after atomic consume.
+- **Formal methods (ADR 0014)** — TLA+/Quint for protocol races; Lean policy-kernel oracle; mandate TLC dual CI.
+- **Security: atomic mandate consume** — Postgres multi-node / SQLite single-node; `outcome_unknown` Review; local hash-chained WORM on by default; remote Object Lock on Cloud paid / regulated.
+- **Routing catalog honesty** — `calibrated: false` until live catalog matches frozen routing digest.
 
 ### Changed
 

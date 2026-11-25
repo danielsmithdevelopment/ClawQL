@@ -544,6 +544,17 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         tier: process.env.CLAWQL_TIER?.trim() || "standard",
       },
     };
+    try {
+      const audit = await import("clawql-audit");
+      const wormStatus = audit.getProcessWormBackendStatus?.() ?? null;
+      if (wormStatus) {
+        (base.worm as Record<string, unknown>).local = wormStatus.local;
+        (base.worm as Record<string, unknown>).remote = wormStatus.remote;
+        (base.worm as Record<string, unknown>).localDurable = wormStatus.localDurable;
+      }
+    } catch {
+      /* clawql-audit optional at healthz */
+    }
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
     }

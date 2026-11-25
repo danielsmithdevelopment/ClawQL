@@ -162,7 +162,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`clawql-auth` expansion** — OIDC JWT **consumer** (`CLAWQL_AUTH_MODE=oidc`), shared TOTP step-up + WebAuthn hooks, MFA policy for financial tools. Not a full IdP. SAML/LDAP client modes and full RBAC/ABAC remain roadmap. Outbound OAuth refresh (mutex / proactive) + inbound MCP OAuth 2.1: [`docs/security/clawql-auth-package-spec.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-package-spec.md). See [`docs/security/clawql-auth-oidc-stepup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-oidc-stepup.md).
 
-**Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop, circuit breakers, and full WORM defaults remain roadmap.
+**Presidio & gateway depth** — Opt-in gateway redaction shipped (`CLAWQL_ENABLE_PRESIDIO=1`); mandatory uniform redaction on every IDP hop, circuit breakers, remain roadmap. Local hash-chained WORM is on by default in 8.0; remote Object Lock defaults on Cloud paid / regulated.
 
 **`clawql-operator`** — Scaffold (0.2.1) shipped; full NL dashboard, dynamic Deployments, and auth reconciliation planned.
 

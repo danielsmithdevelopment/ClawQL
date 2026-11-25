@@ -62,11 +62,39 @@ export function ensureProcessWormHostBootedEffect(
       return;
     }
     const audit = yield* Effect.promise(() => loadAudit());
-    const svc = yield* audit
-      .bootProcessWormFromEnvEffect(env)
-      .pipe(Effect.catch(() => Effect.succeed(null)));
-    booted = true;
-    if (!svc) return;
+    const svc = yield* audit.bootProcessWormFromEnvEffect(env).pipe(
+      Effect.mapError((err) => {
+        const reason =
+          err instanceof Error
+            ? err.message
+            : typeof err === "object" && err && "reason" in err
+              ? String((err as { reason: unknown }).reason)
+              : String(err);
+        return new Error(reason);
+      })
+    );
+    if (!svc) {
+      if (tierIsRegulated(env)) {
+        return yield* Effect.fail(
+          new Error(
+            "CLAWQL_TIER=regulated requires a durable process WORM trail. " +
+              "Check CLAWQL_WORM_* backends (sqlite/postgres local; s3 remote)."
+          )
+        );
+      }
+      booted = true;
+      return;
+    }
+    const status = audit.getProcessWormBackendStatus() ?? null;
+    if (tierIsRegulated(env) && status && (!status.localDurable || status.remote === "memory")) {
+      yield* audit.stopProcessWormEffect().pipe(Effect.catch(() => Effect.void));
+      return yield* Effect.fail(
+        new Error(
+          "CLAWQL_TIER=regulated refuses non-durable WORM backends " +
+            `(local=${status.local}, remote=${status.remote}).`
+        )
+      );
+    }
     try {
       const { registerMemoryWormSink } = requireFromHere(
         "clawql-memory/okf"
@@ -75,10 +103,19 @@ export function ensureProcessWormHostBootedEffect(
     } catch {
       /* memory package optional */
     }
-    if (env.CLAWQL_WORM_DEBUG?.trim() === "1") {
+    booted = true;
+    if (status) {
+      process.stderr.write(
+        `[clawql] process WORM ready local=${status.local} remote=${status.remote}\n`
+      );
+    } else if (env.CLAWQL_WORM_DEBUG?.trim() === "1") {
       process.stderr.write("[clawql] process WORM trail ready (clawql-audit)\n");
     }
   });
+}
+
+function tierIsRegulated(env: NodeJS.ProcessEnv): boolean {
+  return env.CLAWQL_TIER?.trim().toLowerCase() === "regulated";
 }
 
 /** Promise façade for MCP/HTTP process start. */

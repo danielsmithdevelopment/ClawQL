@@ -72,9 +72,12 @@ export function clawqlEqualArmEnv({ home, specPath, apiBase, baseEnv = process.e
   ]) {
     delete env[key];
   }
-  delete env.CLAWQL_WORM_ENABLED;
-  delete env.CLAWQL_WORM_LOCAL;
-  delete env.CLAWQL_WORM_REMOTE;
+  // Product default is durable sqlite WORM under CLAWQL_HOME. Equal-arm / Bun
+  // --smol hosts lack node:sqlite; keep an explicit memory dual-ack so Ready
+  // stays comparable and Bun CI boots. Override CLAWQL_WORM_LOCAL to measure sqlite.
+  env.CLAWQL_WORM_ENABLED = baseEnv.CLAWQL_WORM_ENABLED ?? "1";
+  env.CLAWQL_WORM_LOCAL = baseEnv.CLAWQL_WORM_LOCAL ?? "memory";
+  env.CLAWQL_WORM_REMOTE = baseEnv.CLAWQL_WORM_REMOTE ?? "memory";
   // Legacy ENABLE_* — harmless with INSTANCE_SPEC, but keep intent explicit.
   env.CLAWQL_ENABLE_MEMORY = "0";
   env.CLAWQL_ENABLE_DOCUMENTS = "0";

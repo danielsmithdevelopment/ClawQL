@@ -3,8 +3,11 @@
  *
  * Hash-chained local WORM is on by default. Set CLAWQL_WORM_ENABLED=0 to disable
  * (writes a final signed WORM_DISABLED entry first when a trail was active).
- * CLAWQL_WORM_LOCAL=memory|sqlite|postgres (default: sqlite when path set, else memory)
- * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
+ * CLAWQL_WORM_LOCAL=sqlite|postgres|memory — default **sqlite** under
+ * `$CLAWQL_HOME/worm/clawql-worm.sqlite` (or `~/.ClawQL/worm/...` when unset).
+ * Memory is tests-only: set `CLAWQL_WORM_LOCAL=memory` explicitly (startup warns).
+ * CLAWQL_WORM_REMOTE=memory|s3 (default: memory dual-ack peer; not durable alone)
+ * CLAWQL_TIER=regulated refuses memory local or memory remote.
  * CLAWQL_WORM_MEMORY_MAX_ENTRIES — ring cap for memory backend (default 10000; 0 = unbounded)
  * CLAWQL_WORM_SQLITE_PATH, CLAWQL_WORM_POSTGRES_URL, CLAWQL_WORM_S3_* for backends
  * CLAWQL_WORM_S3_OBJECT_LOCK=compliance|governance|0 — storage WORM (S3/MinIO Object Lock).
@@ -13,6 +16,8 @@
  * CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK=1 — boot-check bucket Object Lock Enabled.
  */
 
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { Effect } from "effect";
 import { AuditError } from "./errors.js";
 import { MemoryBackend, memoryBackendMaxEntriesFromEnv } from "./storage/memory.js";
@@ -22,6 +27,15 @@ import { SQLiteBackend } from "./storage/sqlite.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
 import { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
 import type { WORMAuditTrailConfig } from "./trail.js";
+
+export type WormBackendKind = "memory" | "sqlite" | "postgres" | "s3";
+
+export type WormBackendStatus = {
+  readonly local: WormBackendKind;
+  readonly remote: WormBackendKind;
+  /** True when local is sqlite or postgres (survives process restart). */
+  readonly localDurable: boolean;
+};
 
 function parseObjectLockMode(raw: string | undefined): S3ObjectLockMode | undefined {
   if (!raw) return undefined;
@@ -43,6 +57,38 @@ function parseIntEnv(env: NodeJS.ProcessEnv, key: string): number | undefined {
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) ? n : undefined;
 }
+
+function clawqlHomeFromEnv(env: NodeJS.ProcessEnv): string {
+  const raw = envTrim(env, "CLAWQL_HOME");
+  if (raw) return resolve(raw);
+  return resolve(homedir(), ".ClawQL");
+}
+
+/** Default SQLite path: `$CLAWQL_HOME/worm/clawql-worm.sqlite`. */
+export const defaultWormSqlitePath = (env: NodeJS.ProcessEnv = process.env): string =>
+  join(clawqlHomeFromEnv(env), "worm", "clawql-worm.sqlite");
+
+function tierIsRegulated(env: NodeJS.ProcessEnv): boolean {
+  return envTrim(env, "CLAWQL_TIER")?.toLowerCase() === "regulated";
+}
+
+function backendKind(backend: StorageBackend): WormBackendKind {
+  if (backend instanceof MemoryBackend) return "memory";
+  if (backend instanceof SQLiteBackend) return "sqlite";
+  if (backend instanceof PostgresBackend) return "postgres";
+  if (backend instanceof S3Backend) return "s3";
+  return "memory";
+}
+
+export const wormBackendStatusFromConfig = (config: WORMAuditTrailConfig): WormBackendStatus => {
+  const local = backendKind(config.local);
+  const remote = backendKind(config.remote);
+  return {
+    local,
+    remote,
+    localDurable: local === "sqlite" || local === "postgres",
+  };
+};
 
 /** True unless explicitly disabled (`0` / `false` / `off` / `no`). */
 export const wormEnabledFromEnv = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
@@ -66,18 +112,28 @@ export const defaultWormAgentName = (
 function makeLocal(env: NodeJS.ProcessEnv): Effect.Effect<LocalStorageBackend, AuditError> {
   return Effect.try({
     try: () => {
+      const explicit = envTrim(env, "CLAWQL_WORM_LOCAL")?.toLowerCase();
       const mode =
-        envTrim(env, "CLAWQL_WORM_LOCAL") ??
-        (envTrim(env, "CLAWQL_WORM_SQLITE_PATH")
-          ? "sqlite"
-          : envTrim(env, "CLAWQL_WORM_POSTGRES_URL")
-            ? "postgres"
-            : "memory");
+        explicit ??
+        (envTrim(env, "CLAWQL_WORM_POSTGRES_URL")
+          ? "postgres"
+          : // Default durable local store (not memory). Path may still be overridden.
+            "sqlite");
       if (mode === "memory") {
+        if (tierIsRegulated(env)) {
+          throw new Error(
+            "CLAWQL_TIER=regulated refuses CLAWQL_WORM_LOCAL=memory. " +
+              "Use sqlite (default) or postgres."
+          );
+        }
+        process.stderr.write(
+          "[clawql-audit] WARNING: CLAWQL_WORM_LOCAL=memory — entries are not durable " +
+            "(evicted / lost on restart). Use sqlite (default) or postgres for write-once storage.\n"
+        );
         return new MemoryBackend({ maxEntries: memoryBackendMaxEntriesFromEnv(env) });
       }
       if (mode === "sqlite") {
-        const path = envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
+        const path = envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? defaultWormSqlitePath(env);
         return new SQLiteBackend({ path });
       }
       if (mode === "postgres") {
@@ -100,8 +156,14 @@ function makeLocal(env: NodeJS.ProcessEnv): Effect.Effect<LocalStorageBackend, A
 function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, AuditError> {
   return Effect.try({
     try: () => {
-      const mode = envTrim(env, "CLAWQL_WORM_REMOTE") ?? "memory";
+      const mode = envTrim(env, "CLAWQL_WORM_REMOTE")?.toLowerCase() ?? "memory";
       if (mode === "memory") {
+        if (tierIsRegulated(env)) {
+          throw new Error(
+            "CLAWQL_TIER=regulated refuses CLAWQL_WORM_REMOTE=memory. " +
+              "Set CLAWQL_WORM_REMOTE=s3 with Object Lock (Cloud paid / regulated defaults)."
+          );
+        }
         return new MemoryBackend({ maxEntries: memoryBackendMaxEntriesFromEnv(env) });
       }
       if (mode === "s3") {

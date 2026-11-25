@@ -106,7 +106,7 @@ export const governmentIndustry: Industry = {
     'IDP pipeline — FOIA packets, permit applications, tax forms, bid documents: classify, extract, redact, archive',
     'Vault memory — durable program context, authorization language, and prior audit findings across agent sessions',
     'Supply chain signing — Cosign-signed images, CycloneDX SBOM, startup hash verification via clawql-release',
-    'FedRAMP-oriented defaults — self-hosted deployment patterns for agencies that cannot put program data in unmanaged SaaS',
+    'Self-hosted agency patterns — deployment defaults for agencies that cannot put program data in unmanaged SaaS',
   ],
   domainToolsSubheadline: 'Registered when CLAWQL_GOVERNMENT_ENABLED=1 (planned package enable flag):',
   domainTools: [

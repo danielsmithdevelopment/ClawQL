@@ -101,14 +101,14 @@ export default function Page() {
       <p>
         <strong>As a Resource App Authorization Server (consumer role).</strong> An enterprise&apos;s identity provider
         — Okta today, others as they add support — mints an ID-JAG assertion when an employee logs in. ClawQL verifies
-        that assertion against the org&apos;s JWKS, maps the employee&apos;s IdP groups to a scoped access token, and
+        that assertion against the org&apos;s JWKS, maps the employee&apos;s identity-provider groups to a scoped access token, and
         the employee gets access with no individual OAuth consent screen. This is the standard EMA flow: the org&apos;s
-        existing IdP stays the source of truth, ClawQL is the connector accepting its assertions.
+        existing identity provider stays the source of truth, ClawQL is the connector accepting its assertions.
       </p>
       <p>
         <strong>As an Enterprise Identity Provider (issuer role).</strong> ClawQL can also mint ID-JAG assertions
         itself, for organizations that want zero-touch provisioning without routing session-token custody through a
-        third-party identity SaaS. In this mode, ClawQL is the org&apos;s IdP for the purposes of MCP connector access —
+        third-party identity SaaS. In this mode, ClawQL acts as the identity provider for MCP connector access —
         any EMA-compliant connector, not just ClawQL&apos;s own, can accept assertions ClawQL issues.
       </p>
       <p>
@@ -179,11 +179,11 @@ export default function Page() {
             </tr>
             <tr>
               <td>Third-party identity provider holding session-token custody</td>
-              <td>EMA / ID-JAG, issuer role — ClawQL as the IdP</td>
+              <td>EMA / ID-JAG, issuer role — ClawQL as the identity provider</td>
             </tr>
             <tr>
               <td>Legacy SAML-based internal SSO</td>
-              <td>Out of scope — handled upstream by the org&apos;s IdP before reaching ClawQL</td>
+              <td>Out of scope — handled upstream by the org&apos;s identity provider before reaching ClawQL</td>
             </tr>
             <tr>
               <td>Verifying who did what, when</td>

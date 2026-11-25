@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Go-to-market playbook (zero → shared tenancy)](../gtm/clawql-gtm-playbook.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [OpenBench advanced specs](../benchmarks/openbench-advanced-specs.md) · [OpenBench results ledger](../benchmarks/openbench-results-ledger.md) (live A/B evidence) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
+**Related:** [IDP GTM strategy & landing brief](./clawql-idp-gtm.md) · [Go-to-market playbook (zero → shared tenancy)](../gtm/clawql-gtm-playbook.md) · [IDP pipeline hub](../providers/idp-pipeline.md) · [Requirements matrix](../roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](../architecture/clawql-token-efficiency.md) · [OpenBench advanced specs](../benchmarks/openbench-advanced-specs.md) · [OpenBench results ledger](../benchmarks/openbench-results-ledger.md) (live A/B evidence) · [Master enablement guide](./clawql-master-enablement-guide.md) · [Deployment guide](../deployment/clawql-deployment-operations-guide.md)
 
 ---
 
@@ -127,7 +127,7 @@ A single agent prompt — _“Process Q1 invoices, redact PII, cross-reference o
 
 ### Twelve-Layer Token Efficiency Architecture
 
-Most agent frameworks reduce cost at one point in the lifecycle. ClawQL addresses **twelve** points. Layers 1–8 are the MCP/gateway stack described below; Layers 9–12 are inference-gateway extensions ([canonical reference](../architecture/clawql-token-efficiency.md)). The nearest MCP gateway competitor (executor.sh) implements Layer 1 only.
+Most agent frameworks reduce cost at one point in the lifecycle. ClawQL addresses **twelve** points. Layers 1–8 are the MCP/gateway stack described below; Layers 9–12 are inference-gateway extensions ([canonical reference](../architecture/clawql-token-efficiency.md)). Equal-arm gateway measurements live on [the public benchmarks page](https://clawql.com/benchmarks) — cite those, not competitor jabs.
 
 | Layer                                 | Mechanism and measured impact                                                                                                                         |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -334,33 +334,20 @@ Full cryptographic trail from step 1 through 10.
 
 ## Competitive Positioning, Pricing, and Verticals
 
-### MCP Gateway: executor.sh — One Layer vs Twelve
+### MCP gateway comparisons
 
-| ClawQL capability               | executor.sh                                 |
-| ------------------------------- | ------------------------------------------- |
-| 12-layer token efficiency       | Layer 1 only                                |
-| Layers 2–12                     | None                                        |
-| Persistent vault memory         | None                                        |
-| Onyx semantic search            | None                                        |
-| Full IDP + Merkle audit         | None                                        |
-| Coneshare VDR                   | None                                        |
-| Sovereign LLM fleet             | None                                        |
-| NSV/SGDOP ensemble coordination | None                                        |
-| Defense-in-depth docs           | Secrets + basic policy; no equivalent depth |
-| GitHub stars                    | Ahead on adoption timing — not capability   |
-
-executor.sh is a **stateless tool router**. ClawQL is a **stateful agent operating system**.
+Compare gateways only with **measured, equal-arm** results ([`/benchmarks`](https://clawql.com/benchmarks) · [`openbench-results-ledger.md`](../benchmarks/openbench-results-ledger.md)). Do not treat marketing layer-count claims as evidence.
 
 ### Hosted Plan Pricing (July 2026 — plugin bundles)
 
-| Tier                    | Price          | Notes                                                                                             |
-| ----------------------- | -------------- | ------------------------------------------------------------------------------------------------- |
-| Self-hosted             | $0             | Full OSS; self-managed                                                                            |
-| Developer (planned)     | $29–99/mo      | Gateway + memory (+ Onyx on Teams); no IDP/GPU                                                    |
-| Shared                  | $299/mo        | Full IDP + Onyx + VDR + vault                                                                     |
-| Dedicated               | $599/mo        | Single-tenant; sovereign AI bundle; SSO/RBAC                                                      |
-| Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                        |
-| Sovereign Security Pack | +$200/mo       | Kata, weight integrity, WORM Merkle, Panguard, YubiKey signing, Presidio pre-log, monthly posture |
+| Tier                    | Price          | Notes                                                                                                                                                                      |
+| ----------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted             | $0             | Full OSS; self-managed                                                                                                                                                     |
+| Developer (planned)     | $29–99/mo      | Gateway + memory (+ Onyx on Teams); no IDP/GPU                                                                                                                             |
+| Shared                  | $299/mo        | Full IDP + Onyx + VDR + vault                                                                                                                                              |
+| Dedicated               | $599/mo        | Single-tenant; sovereign AI bundle; SSO/RBAC                                                                                                                               |
+| Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                                                                                                 |
+| Sovereign Security Pack | +$200/mo       | Kata, weight integrity, Panguard fail-closed, YubiKey signing, Presidio pre-log, monthly posture (base local WORM is on by default; Object Lock on Cloud paid / regulated) |
 
 > Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](./clawql-idp-gtm.md) for Starter/Business ladder variants and [clawql-gtm-playbook.md](../gtm/clawql-gtm-playbook.md) for corrected bootstrap burn and shared-tenancy economics.
 
@@ -381,27 +368,7 @@ Representative: 25 users, 25k docs/mo, VDR + compliance.
 
 **Real estate / Keller Williams Command + Drive:** MCP + memory + Onyx at Teams price; Coneshare for disclosure packages; classify/extract for TC workflows.
 
-**Software / technology:** One gateway for GitHub/Linear/Jira/Sentry/Slack; vault for eng decisions; Onyx over Notion/Confluence; Panguard + audit for governed tool use. Competes with executor.sh Team while adding memory + security depth.
-
-### executor.sh vs ClawQL (depth)
-
-| Dimension            | executor.sh                                            | ClawQL                                                                                                                                                                                                                                                                                  |
-| -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Category             | Tool — routes MCP calls, injects secrets, meters usage | Foundational Platform — Agentic Gateway, memory, search, security, IDP, sovereign inference                                                                                                                                                                                             |
-| Developer adoption   | Head start on marketing and community mindshare        | Later entrant; deeper stack, open-source core, published case studies                                                                                                                                                                                                                   |
-| Token efficiency     | One layer: search-and-execute only                     | Compounding token-efficiency layers (shipped and planned) on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](../benchmarks/openbench-results-ledger.md))                                                                                 |
-| Agent memory         | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0)                                                                                                                        |
-| Semantic search      | None                                                   | Onyx — 40+ connectors, citations; **OpenBench-verified** stubbed `knowledge_search_onyx` 1.0/0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189))                                                                                             |
-| Security             | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth                                                                                                                                      |
-| Automation / sandbox | None                                                   | `notify` + `schedule` + Docker `sandbox_exec` — **OpenBench-verified** on frugal DeepSeek ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); schedule [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
-| Composed rollout     | Single-call routing                                    | Multi-tool safe rollout (search→dry_run execute→audit→ingest) **1.0/0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305))                                                                                                                    |
-| Document pipeline    | None                                                   | Tika → Gotenberg → Stirling → archive → Onyx                                                                                                                                                                                                                                            |
-| VDR                  | None                                                   | Coneshare included from IDP Starter                                                                                                                                                                                                                                                     |
-| Sovereign LLM        | None                                                   | Fine-tuned Qwen inside tenant boundary (IDP tiers) — vertical adapters early; maturity risk named openly                                                                                                                                                                                |
-| Execution pricing    | 250K cap + $0.20/1K overage on Team                    | Unlimited on every tier — no caps, no overage bills                                                                                                                                                                                                                                     |
-| Gateway pricing      | Team $150/org/mo — metered routing                     | Developer $29/mo · Teams $99/mo with memory + search · unlimited executions                                                                                                                                                                                                             |
-
-On infrastructure dimensions that matter — memory, security, token efficiency depth, document pipeline, sovereign inference — ClawQL delivers more at lower gateway pricing. executor.sh's advantage is awareness and adoption velocity, not platform depth. The memory row is no longer an architectural claim alone: the same cheap-model class executor.sh customers would use still wins vault A/B cells under seed removal and token pressure ([OpenBench ledger](../benchmarks/openbench-results-ledger.md)).
+**Software / technology:** One gateway for GitHub/Linear/Jira/Sentry/Slack; vault for eng decisions; Onyx over Notion/Confluence; Panguard + audit for governed tool use.
 
 ### Empirically verified platform claims (OpenBench A/B)
 
@@ -435,12 +402,12 @@ ClawQL's MCP-native architecture benefits from improvements in frontier model ca
 
 ### Where Competitors Have Genuine Advantages
 
-| Gap                             | Honest assessment                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| Certifications (SOC 2, FedRAMP) | Controls architecturally present; audit process remaining.                     |
-| Pre-trained skill libraries     | ABBYY’s catalog is larger; ClawQL vertical adapters are deeper where shipped.  |
-| M&A brand                       | Intralinks embedded in IB relationships — references required.                 |
-| executor.sh DX / stars          | Strong developer experience; answer is Developer/Teams tier + memory/security. |
+| Gap                                 | Honest assessment                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Compliance reports (SOC 2, FedRAMP) | ClawQL holds **no** SOC 2 Type II report and **no** FedRAMP authorization; self-hosted agency patterns only. |
+| Pre-trained skill libraries         | ABBYY’s catalog is larger; ClawQL vertical adapters are deeper where shipped.                                |
+| M&A brand                           | Intralinks embedded in IB relationships — references required.                                               |
+| Peer gateway awareness              | Some tools have earlier developer mindshare; answer with measured evidence and shipped depth.                |
 
 ---
 
