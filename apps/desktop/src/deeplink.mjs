@@ -3,6 +3,8 @@
  * clawql://review/:id · https://cloud.clawql.com/app/review/:id · ?requestId=
  */
 
+const ALLOWED_HTTPS_HOSTS = new Set(['cloud.clawql.com'])
+
 /**
  * @param {string} url
  * @returns {string | null}
@@ -14,14 +16,15 @@ export function parseApprovalDeepLink(url) {
     const fromQuery = u.searchParams.get('requestId')
     if (fromQuery) return fromQuery
 
-    const parts = [
-      u.hostname &&
-      u.hostname !== 'cloud.clawql.com' &&
-      u.hostname !== 'acme.cloud.clawql.com'
-        ? u.hostname
-        : null,
-      ...u.pathname.split('/'),
-    ].filter((p) => Boolean(p && p.length > 0))
+    if (u.protocol === 'https:' && !ALLOWED_HTTPS_HOSTS.has(u.hostname)) {
+      return null
+    }
+
+    const parts = u.pathname.split('/').filter((p) => Boolean(p && p.length > 0))
+    // clawql://review/:id puts "review" in hostname for some parsers — handle both.
+    if (u.protocol === 'clawql:' && u.hostname === 'review' && parts[0]) {
+      return parts[0]
+    }
 
     if (parts[0] === 'app') parts.shift()
     if (parts[0] === 'review' && parts[1]) return parts[1]
@@ -49,8 +52,6 @@ export function deepLinkUrlsFromArgv(argv) {
   return argv.filter(
     (a) =>
       typeof a === 'string' &&
-      (a.startsWith('clawql://') ||
-        a.startsWith('https://cloud.clawql.com/') ||
-        a.startsWith('https://acme.cloud.clawql.com/')),
+      (a.startsWith('clawql://') || a.startsWith('https://cloud.clawql.com/')),
   )
 }

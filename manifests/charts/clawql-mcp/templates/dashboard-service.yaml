@@ -8,7 +8,7 @@ metadata:
     app: {{ include "clawql-mcp.dashboardName" . }}
     app.kubernetes.io/component: dashboard
 spec:
-  type: ClusterIP
+  type: {{ .Values.dashboard.service.type | default "ClusterIP" }}
   selector:
     {{- include "clawql-mcp.selectorLabels" . | nindent 4 }}
     app: {{ include "clawql-mcp.dashboardName" . }}

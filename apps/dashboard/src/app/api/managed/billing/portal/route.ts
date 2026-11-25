@@ -4,12 +4,16 @@ import { NextResponse } from "next/server";
 import { isManagedConsole } from "@/lib/console-surface";
 import { createManagedPortalSessionEffect } from "@/lib/managed/live/billing-portal";
 
+import { requireManagedApiSession } from "@/lib/api-auth";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
 
   const body = (await req.json().catch(() => ({}))) as { returnUrl?: string };
   const requestUrl = new URL(req.url);

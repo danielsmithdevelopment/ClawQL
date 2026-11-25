@@ -42,6 +42,7 @@ OpenClaw gateway (enabled): Control UI on loopback in the pod — port-forward t
 {{- if .Values.openclaw.chatBridge.enabled }}
 {{- if .Values.dashboard.enabled }}
 Dashboard Agent Chat auto-wires to: {{ include "clawql-mcp.openclawChatBridgeUrl" . }}
+Dashboard Service is {{ .Values.dashboard.service.type | default "ClusterIP" }} — keep it ClusterIP (or behind Ingress TLS). Binding every interface without auth exposes the console (audit 8.01 / 8.04).
 {{- else }}
 Chat bridge (POST /v1/chat): {{ include "clawql-mcp.openclawChatBridgeUrl" . }} — set dashboard.enabled or dashboard.openclawChatUrl to use Agent Chat.
 {{- end }}

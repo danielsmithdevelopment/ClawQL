@@ -80,6 +80,8 @@ export const listManagedConnectionsEffect = (
   resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...CONNECTIONS],
+    empty: [],
+    env,
     isLiveUseful: (rows) => rows.length > 0,
     live: Effect.gen(function* () {
       const home = env.CLAWQL_HOME?.trim() || undefined;

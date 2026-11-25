@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { fetchAgentChatUpstream } from '@/lib/agent-chat-upstream.server'
 import type { AgentChatRequestBody } from '@/lib/agent-chat-upstream.server'
+import { requireManagedApiSession } from "@/lib/api-auth";
 
 type Body = { message?: string; threadTitle?: string; threadId?: string }
 
@@ -16,6 +17,9 @@ function parseBody(body: Body): AgentChatRequestBody | NextResponse {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   let body: Body
   try {
     body = (await req.json()) as Body

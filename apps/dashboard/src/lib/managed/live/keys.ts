@@ -58,6 +58,8 @@ export const listManagedKeysEffect = (
   resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...API_KEYS],
+    empty: [],
+    env,
     isLiveUseful: (keys) => keys.length > 0,
     live: Effect.gen(function* () {
       const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });

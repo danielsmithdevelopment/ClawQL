@@ -16,7 +16,7 @@ describe('desktop deeplink', () => {
     )
     assert.equal(
       parseApprovalDeepLink('https://acme.cloud.clawql.com/app/review/rev_decision?x=1'),
-      'rev_decision',
+      null,
     )
     assert.equal(
       parseApprovalDeepLink('https://cloud.clawql.com/home?requestId=rev_x'),

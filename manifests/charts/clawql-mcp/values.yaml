@@ -1372,11 +1372,15 @@ dashboard:
   openclawChatUrl: ""
   # Agent Chat SSE streaming (dashboard simulates or proxies bridge /v1/chat/stream).
   chatStream: true
+  # Extra Hostnames allowed by dashboard API Host checks (ingress hosts are appended automatically).
+  allowedHosts: []
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
     tag: latest
     pullPolicy: IfNotPresent
   service:
+    # ClusterIP by default — do not expose the console on a public LoadBalancer without auth (audit 8.01/8.04).
+    type: ClusterIP
     port: 3040
     targetPort: 3040
   k8s:
@@ -1734,7 +1738,7 @@ uptimeKuma:
             pathType: Prefix
     tls: []
 
-# Hermes — natural-language platform ops (`@hermes …` in dashboard). No separate container; enables dashboard flag.
+# Hermes — planned natural-language platform ops (`@hermes …` in dashboard). No dashboard implementation yet (audit 8.08).
 hermes:
   enabled: false
 

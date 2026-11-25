@@ -44,9 +44,21 @@ describe("managed session", () => {
     expect(cfg.allowMock).toBe(false);
   });
 
-  it("allows explicit mock in production when CLAWQL_MANAGED_AUTH_MOCK=1", () => {
+  it("refuses CLAWQL_MANAGED_AUTH_MOCK in cloud production (audit 8.01)", () => {
     const cfg = Effect.runSync(
       loadManagedAuthConfigEffect({ NODE_ENV: "production", CLAWQL_MANAGED_AUTH_MOCK: "1" }),
+    );
+    expect(cfg.allowMock).toBe(false);
+  });
+
+  it("allows desktop managed fixture mock even when NODE_ENV=production", () => {
+    const cfg = Effect.runSync(
+      loadManagedAuthConfigEffect({
+        NODE_ENV: "production",
+        CLAWQL_DESKTOP_MODE: "1",
+        CLAWQL_DESKTOP_MANAGED_FIXTURE: "1",
+        CLAWQL_MANAGED_AUTH_MOCK: "1",
+      }),
     );
     expect(cfg.allowMock).toBe(true);
   });

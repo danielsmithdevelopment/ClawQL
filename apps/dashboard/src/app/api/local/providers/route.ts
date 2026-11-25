@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+import {
+  maskProviderValues,
+  requireDesktopApiAuth,
+} from '@/lib/api-auth'
 import { isDesktopMode } from '@/lib/desktop-mode'
 import {
   applyLocalProviderEnvChanges,
@@ -19,16 +23,21 @@ function desktopOnly() {
   return null
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const denied = desktopOnly()
   if (denied) return denied
+  const authDenied = requireDesktopApiAuth(req)
+  if (authDenied) return authDenied
 
   try {
     const { path, data } = await readLocalProvidersVaultData()
+    const values = vaultProviderDataToEnv(data)
     return NextResponse.json({
-      values: vaultProviderDataToEnv(data),
+      // Masked only — vault is write-oriented from the UI (audit 8.02).
+      values: maskProviderValues(values),
       vaultPath: path,
       found: Object.keys(data).length > 0,
+      masked: true,
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
@@ -44,6 +53,8 @@ type Body = {
 export async function POST(req: Request) {
   const denied = desktopOnly()
   if (denied) return denied
+  const authDenied = requireDesktopApiAuth(req)
+  if (authDenied) return authDenied
 
   let body: Body
   try {
@@ -57,6 +68,8 @@ export async function POST(req: Request) {
   for (const [k, v] of Object.entries(body.values ?? {})) {
     if (!catalogKeys.has(k)) continue
     if (typeof v !== 'string') continue
+    // Ignore masked placeholders the UI may echo back.
+    if (v.includes('•')) continue
     const t = v.trim()
     if (t !== '') literals[k] = v
   }
@@ -71,7 +84,12 @@ export async function POST(req: Request) {
 
   try {
     const result = await applyLocalProviderEnvChanges(literals, removeKeys)
-    return NextResponse.json({ ok: true, vaultPath: result.path, values: result.values })
+    return NextResponse.json({
+      ok: true,
+      vaultPath: result.path,
+      values: maskProviderValues(result.values),
+      masked: true,
+    })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     return NextResponse.json({ error: 'vault write failed', detail: msg }, { status: 502 })

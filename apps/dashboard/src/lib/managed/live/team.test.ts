@@ -22,16 +22,17 @@ describe("managed team live layer", () => {
     expect(listed.roles.some((r) => r.id === "admin")).toBe(true);
   });
 
-  it("falls back to fixture when live org spend has no useful members", async () => {
+  it("returns an empty live roster when org id is unset (no Acme fixture)", async () => {
     const listed = await Effect.runPromise(
       listManagedTeamEffect({
         ...process.env,
         CLAWQL_MANAGED_DATA_SOURCE: "live",
         CLAWQL_MANAGED_ORG_ID: "",
+        NODE_ENV: "production",
       }),
     );
-    expect(listed.source).toBe("fixture");
-    expect(listed.people.some((p) => p.id === "dana")).toBe(true);
+    expect(listed.source).toBe("live");
+    expect(listed.people).toEqual([]);
   });
 
   it("requires acceptance checkboxes before invite", async () => {

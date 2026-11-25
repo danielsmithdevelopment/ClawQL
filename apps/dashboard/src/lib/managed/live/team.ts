@@ -81,11 +81,14 @@ export const listManagedTeamEffect = (
     const resolved = yield* resolveWithFallbackEffect<ManagedTeamPerson[]>({
       source: readManagedDataSource(env),
       fixture: fixturePeople,
+      empty: [],
+      env,
       isLiveUseful: (people) => people.length > 0 && people[0]?.id.startsWith("member_") === true,
       live: Effect.gen(function* () {
         const orgId = managedOrgId(env);
         if (!orgId) {
-          return yield* Effect.fail(new Error("CLAWQL_MANAGED_ORG_ID required for live team"));
+          // Empty live roster — never invent Acme members (audit 8.03).
+          return [] as ManagedTeamPerson[];
         }
         const summary = yield* getOrgUnifiedSpendSummaryEffect({
           orgId,
@@ -93,7 +96,7 @@ export const listManagedTeamEffect = (
           includeWormSpend: false,
         });
         if (summary.members.length === 0) {
-          return yield* Effect.fail(new Error("no org members"));
+          return [] as ManagedTeamPerson[];
         }
         const people: ManagedTeamPerson[] = summary.members.map((m) => {
           const email = m.email?.trim() || `${m.memberTenantId}@org.local`;

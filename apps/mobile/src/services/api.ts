@@ -1247,7 +1247,7 @@ export function getGatewayBundleEffect(
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
       return {
-        base: "https://acme.cloud.clawql.com",
+        base: "https://cloud.clawql.com",
         endpoints: FIXTURE_GATEWAY_ENDPOINTS,
         routes: FIXTURE_GATEWAY_ROUTES,
         source: "fixture" as const,
@@ -1269,7 +1269,7 @@ export function getGatewayBundleEffect(
     }).pipe(
       Effect.catch(() =>
         Effect.succeed({
-          base: "https://acme.cloud.clawql.com",
+          base: "https://cloud.clawql.com",
           endpoints: [...FIXTURE_GATEWAY_ENDPOINTS],
           routes: [...FIXTURE_GATEWAY_ROUTES],
           source: "fixture" as const,
@@ -1277,7 +1277,7 @@ export function getGatewayBundleEffect(
       )
     );
     return {
-      base: res.base ?? "https://acme.cloud.clawql.com",
+      base: res.base ?? "https://cloud.clawql.com",
       endpoints: res.endpoints ?? FIXTURE_GATEWAY_ENDPOINTS,
       routes: res.routes ?? FIXTURE_GATEWAY_ROUTES,
       source: res.source ?? "fixture",

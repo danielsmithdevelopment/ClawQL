@@ -35,11 +35,22 @@ spec:
             - name: CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL
               value: {{ $openclawChatUrl | quote }}
             {{- end }}
+            # Image defaults to 127.0.0.1; pods need all interfaces for Service/probes (audit 8.04).
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            {{- $ingressHosts := list }}
+            {{- range (.Values.dashboard.ingress.hosts | default list) }}
+            {{- if .host }}{{- $ingressHosts = append $ingressHosts .host }}{{- end }}
+            {{- end }}
+            {{- $allowedHosts := concat (list "127.0.0.1" "localhost" (include "clawql-mcp.dashboardName" .)) (.Values.dashboard.allowedHosts | default list) $ingressHosts | uniq }}
+            - name: CLAWQL_DASHBOARD_ALLOWED_HOSTS
+              value: {{ $allowedHosts | join "," | quote }}
             - name: CLAWQL_DASHBOARD_CHAT_STREAM
               value: {{ ternary "1" "0" (.Values.dashboard.chatStream | default true) | quote }}
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: {{ .Values.obsidianVaultPath | quote }}
             {{- if .Values.hermes.enabled }}
+            {{/* Planned — no dashboard Hermes implementation yet (audit 8.08). */}}
             - name: CLAWQL_DASHBOARD_HERMES_OPS
               value: "1"
             {{- end }}

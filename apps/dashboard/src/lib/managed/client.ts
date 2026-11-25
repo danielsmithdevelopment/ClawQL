@@ -131,10 +131,30 @@ export async function decideManagedReview(input: {
   kind: 'change' | 'source'
   decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key'
 }): Promise<{ ok: true; id: string; status: string }> {
+  const needsProof = input.decision === 'approve' || input.decision === 'retry_with_key'
+  let approvalProof:
+    | { method: string; attestation: string }
+    | undefined
+  if (needsProof) {
+    const mint = await fetch('/api/managed/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...input, mintProof: true }),
+    })
+    const minted = (await mint.json().catch(() => ({}))) as {
+      approvalProof?: { method: string; attestation: string }
+      error?: string
+    }
+    if (!mint.ok || !minted.approvalProof?.attestation) {
+      throw new Error(minted.error || `Approval proof required (${mint.status})`)
+    }
+    approvalProof = minted.approvalProof
+  }
+
   const res = await fetch('/api/managed/review', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, approvalProof }),
   })
   const body = (await res.json().catch(() => ({}))) as {
     ok?: true

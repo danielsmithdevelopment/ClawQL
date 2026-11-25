@@ -63,9 +63,14 @@ export const loadManagedAuthConfigEffect = (
     const forceMock = envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK);
     const configured = Boolean(supabaseUrl && supabaseAnonKey);
     const isProd = (env.NODE_ENV ?? process.env.NODE_ENV) === "production";
-    // Mock when forced, or when Supabase is unset outside production.
-    // Production without Supabase fails closed unless CLAWQL_MANAGED_AUTH_MOCK=1.
-    const allowMock = forceMock || (!configured && !isProd);
+    const e2e = env.CLAWQL_E2E_HARNESS === "1";
+    const desktopFixture =
+      envTruthy(env.CLAWQL_DESKTOP_MODE) && envTruthy(env.CLAWQL_DESKTOP_MANAGED_FIXTURE);
+    // Cloud production never allows mock (audit 8.01). Desktop local fixture and E2E may.
+    const allowMock =
+      e2e ||
+      desktopFixture ||
+      (!isProd && (forceMock || !configured));
     return {
       supabaseUrl: supabaseUrl?.replace(/\/$/, ""),
       supabaseAnonKey,
@@ -88,16 +93,20 @@ export const resolveManagedSessionEffect = (input: {
         anonKey: cfg.supabaseAnonKey,
         accessToken: token,
       });
+      const orgFromEnv =
+        env.CLAWQL_MANAGED_ORG_ID?.trim() ||
+        env.NEXT_PUBLIC_CLAWQL_MANAGED_ORG_ID?.trim() ||
+        undefined;
       return {
         mode: "supabase" as const,
         userId: claims.userId,
         email: claims.email,
         displayName: claims.displayName,
-        role: "Org admin",
+        role: claims.role,
         initials: initialsFromName(claims.displayName),
-        orgId: "org_pending",
-        orgName: "Your organization",
-        planLabel: "Team plan",
+        orgId: claims.orgId || orgFromEnv || "org_pending",
+        orgName: claims.orgName,
+        planLabel: claims.planLabel,
         accessToken: token,
       };
     }
@@ -118,6 +127,10 @@ type SupabaseUserClaims = {
   readonly userId: string;
   readonly email: string;
   readonly displayName: string;
+  readonly role: string;
+  readonly orgId: string | undefined;
+  readonly orgName: string;
+  readonly planLabel: string;
 };
 
 const fetchSupabaseUserEffect = (input: {
@@ -136,7 +149,22 @@ const fetchSupabaseUserEffect = (input: {
       const body = (await res.json().catch(() => ({}))) as {
         id?: string;
         email?: string;
-        user_metadata?: { full_name?: string; name?: string };
+        app_metadata?: {
+          org_id?: string;
+          org_name?: string;
+          role?: string;
+          plan?: string;
+          plan_label?: string;
+        };
+        user_metadata?: {
+          full_name?: string;
+          name?: string;
+          org_id?: string;
+          org_name?: string;
+          role?: string;
+          plan?: string;
+          plan_label?: string;
+        };
         msg?: string;
         message?: string;
         error_description?: string;
@@ -149,12 +177,18 @@ const fetchSupabaseUserEffect = (input: {
       const userId = body.id?.trim();
       if (!userId) throw new Error("Supabase user response missing id");
       const email = body.email?.trim() || "unknown@example.com";
+      const meta = { ...body.app_metadata, ...body.user_metadata };
       const displayName =
         body.user_metadata?.full_name?.trim() ||
         body.user_metadata?.name?.trim() ||
         email.split("@")[0] ||
         "User";
-      return { userId, email, displayName };
+      const role = meta.role?.trim() || "Member";
+      const orgId = meta.org_id?.trim() || undefined;
+      const orgName = meta.org_name?.trim() || "Your organization";
+      const planLabel =
+        meta.plan_label?.trim() || meta.plan?.trim() || "Team plan";
+      return { userId, email, displayName, role, orgId, orgName, planLabel };
     },
     catch: (cause) =>
       new ManagedSessionError({
@@ -198,8 +232,11 @@ export function resolveManagedSessionSync(input: {
       Effect.catchTag("ManagedSessionError", (e) => {
         const env = input.env ?? process.env;
         const isProd = (env.NODE_ENV ?? process.env.NODE_ENV) === "production";
-        // Dev / explicit mock only — never silently fixture an unauthenticated prod session.
-        if (envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK) || !isProd) {
+        const e2e = env.CLAWQL_E2E_HARNESS === "1";
+        const desktopFixture =
+          envTruthy(env.CLAWQL_DESKTOP_MODE) && envTruthy(env.CLAWQL_DESKTOP_MANAGED_FIXTURE);
+        // Dev / E2E / desktop fixture only — never silently fixture an unauthenticated cloud prod session.
+        if (!isProd || e2e || desktopFixture) {
           return Effect.succeed(MOCK_MANAGED_SESSION);
         }
         return Effect.die(new Error(e.reason));

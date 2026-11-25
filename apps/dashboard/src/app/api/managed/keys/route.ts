@@ -8,7 +8,7 @@ import {
   revokeManagedKeyEffect,
 } from "@/lib/managed/live/keys";
 import { resolveTrustedOrgIdEffect } from "@/lib/managed/org-scope";
-import { resolveManagedSessionSync } from "@/lib/managed/session";
+import { requireManagedApiSession } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -19,9 +19,12 @@ function guard() {
   return null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   const result = await Effect.runPromise(listManagedKeysEffect());
   return NextResponse.json(result);
 }
@@ -29,6 +32,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
 
   const body = (await req.json().catch(() => ({}))) as {
     action?: string;
@@ -41,7 +47,7 @@ export async function POST(req: Request) {
     orgId?: string;
   };
 
-  const session = resolveManagedSessionSync({});
+  const session = auth.session;
   const orgResolved = await Effect.runPromise(
     resolveTrustedOrgIdEffect({
       sessionOrgId: session.orgId,

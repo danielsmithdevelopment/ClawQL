@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server'
 
 import { loadChatMessages, saveChatMessages, updateChatThread } from '@/lib/chat-vault-store.server'
 import type { ChatMessage } from '@/components/dashboard/types'
+import { requireManagedApiSession } from "@/lib/api-auth";
 
 type RouteContext = { params: Promise<{ threadId: string }> }
 
-export async function GET(_req: Request, context: RouteContext) {
+export async function GET(req: Request, context: RouteContext) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   const { threadId } = await context.params
   try {
     const messages = await loadChatMessages(threadId)
@@ -18,6 +22,9 @@ export async function GET(_req: Request, context: RouteContext) {
 }
 
 export async function PUT(req: Request, context: RouteContext) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   const { threadId } = await context.params
   try {
     const body = (await req.json()) as { messages?: ChatMessage[] }
@@ -34,6 +41,9 @@ export async function PUT(req: Request, context: RouteContext) {
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   const { threadId } = await context.params
   try {
     const body = (await req.json()) as { title?: string; updatedAt?: number }
