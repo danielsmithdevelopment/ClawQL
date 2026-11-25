@@ -95,7 +95,7 @@ export const surveillanceIndustry: Industry = {
     'Hardware attestation receipt — accepts HSE attestation proofs from camera hardware and incorporates them into the Merkle chain at ingestion',
   ],
   domainToolsSubheadline:
-    'Registered when CLAWQL_SURVEILLANCE_ENABLED=1:',
+    'Planned package enable flag (spec published; no clawql-surveillance package or compose stack ships today):',
   domainTools: [
     {
       name: 'footage_ingest',
@@ -238,7 +238,7 @@ export const surveillanceIndustry: Industry = {
     'clawql-surveillance is infrastructure for camera vendors and integrators. It does not operate cameras, collect footage, or provide law enforcement services. The audit architecture described here is designed to protect defendants, officers, and contracting agencies equally — the same controls that authenticate footage also make unauthorized access impossible to hide.',
   ctaHeadline: 'Ready to demo ClawQL for surveillance?',
   ctaSubheadline:
-    'Self-host the surveillance compose stack or contact us about vendor integration. The audit infrastructure is available today; hardware attestation integration is scoped per camera vendor.',
+    'Read the technical specification, or contact us about vendor integration. Domain tools and a compose stack are planned; hardware attestation integration is scoped per camera vendor.',
   ctaSecondaryHref: 'https://docs.clawql.com/surveillance/clawql-surveillance',
   ctaSecondaryLabel: 'Technical specification',
   closingNote:

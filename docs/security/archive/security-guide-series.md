@@ -5628,7 +5628,7 @@ Key Takeaways (Memorize These!)
 
 - Staging must enforce the same security controls as production; a staging environment that is more permissive is not a staging environment, it is a gap.
 
-You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production deployments are secure by default and fully automated. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.
+You now have a development and deployment pipeline where security is the path of least resistance. The workstation is hardened, leakage is prevented, and production-oriented deployments can be made secure by default when operators apply the hardening defaults in this curriculum. This closes the loop between developer intent and production reality — the entire platform is only as secure as the code and configuration that reaches it.
 
 ## **MODULE 22**
 
@@ -7786,7 +7786,7 @@ Key Takeaways (Memorize These!)
 
 - Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble.
 
-You now have a compliance mapping that turns every technical control into auditable evidence across GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. Regulatory requirements are no longer an afterthought — they are satisfied by the same infrastructure that keeps the platform secure. This completes the governance layer that makes the entire platform audit-ready by design.
+You now have a compliance mapping that turns every technical control into auditable evidence across GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. Regulatory requirements are no longer an afterthought — they can be evidenced by the same infrastructure when the regulated profile and retention practices are in place. ClawQL holds no SOC 2 Type II report and no FedRAMP authorization today.
 
 ## **MODULE 30**
 

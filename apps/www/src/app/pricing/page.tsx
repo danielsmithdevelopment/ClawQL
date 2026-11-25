@@ -9,6 +9,7 @@ import { Plan, PricingHeroMultiTier } from '@/components/sections/pricing-hero-m
 import {
   annualBillingNoteText,
   annualBillingSavingsLabel,
+  earlyAccessPriceDisclaimer,
   hostedFreeTrial,
   managedPrice,
   pluginBundles,
@@ -102,6 +103,9 @@ export const metadata = pageMetadata({
 export default function Page() {
   return (
     <>
+      <p className="mx-auto max-w-7xl px-6 pt-8 text-sm/6 text-mist-600 dark:text-mist-500">
+        {earlyAccessPriceDisclaimer}
+      </p>
       <Section id="self-hosted" eyebrow="Open source" headline="Run it yourself, free forever">
         <div className="flex flex-col gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:flex-row sm:items-center sm:justify-between dark:bg-white/5">
           <div className="max-w-2xl">

@@ -7,7 +7,7 @@
 | **Version**   | June 2026                                                                                                                                                                                                                                                                                                                                                                                        |
 | **Alignment** | [ClawQL IDP Platform](../vision/clawql-idp-platform.md) (v2 / July 2026 refresh)                                                                                                                                                                                                                                                                                                                 |
 | **Audience**  | Founders · operators · finance · GTM                                                                                                                                                                                                                                                                                                                                                             |
-| **Related**   | [IDP GTM landing brief](../vision/clawql-idp-gtm.md) · [Hosted live bootstrap (Pulumi + Argo CD)](../deployment/hosted-live-bootstrap.md) · [Public IDP GTM](https://clawql.com/idp/gtm) · [MCP API adapter positioning](./mcp-api-adapter-positioning.md) · [Protocol Fabric](./protocol-fabric.md) · [Defense-in-depth](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) |
+| **Related**   | [IDP GTM landing brief](../vision/clawql-idp-gtm.md) · [Hosted live bootstrap (Pulumi + Argo CD)](../deployment/hosted-live-bootstrap.md) · [MCP API adapter positioning](./mcp-api-adapter-positioning.md) · [Protocol Fabric](./protocol-fabric.md) · [Defense-in-depth](../security/clawql-comprehensive-defense-in-depth-mcp-k3s-may-2026.md) |
 
 > Internal strategy document. Do not distribute externally without review. Canonical path: `docs/gtm/clawql-gtm-playbook.md`.
 
@@ -468,11 +468,11 @@ Live page: [clawql.com/pricing](https://clawql.com/pricing). This section is str
 
 | Capability vs competitor                | Cost comparison                                                                                                                                |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| MCP vs executor.sh                      | executor.sh Team $150/mo + 250k cap + $0.20/1k overage. ClawQL Developer $29/mo unlimited + memory + eight efficiency layers + security depth. |
+| MCP vs executor.sh                      | Equal-arm measurements on `/benchmarks`. Historical Executor Team caps — re-verify. ClawQL Developer early-access list price + vault memory; layer counts marked shipped vs planned. |
 | IDP vs Hyperscience / ABBYY             | Hyperscience $0.50–1.50/page → tens of thousands/mo at volume. ABBYY $40k–$100k/yr. ClawQL Dedicated + IDP $599/mo flat.                       |
 | VDR vs Intralinks / Datasite / Ansarada | Intralinks $10k–$200k+/yr + per-page. Ansarada ~$3,069/mo for 5 GB. ClawQL Shared includes Coneshare at $299/mo.                               |
 | Semantic search                         | Algolia/Coveo/Glean $500–2,000/mo. Onyx included in managed tiers.                                                                             |
-| Full replacement stack                  | executor.sh + ABBYY + Intralinks + Glean ≈ $8k–15k+/mo. ClawQL Dedicated + Security Pack $799/mo.                                              |
+| Full replacement stack                  | Illustrative incumbent bands only (July 2026). ClawQL Dedicated + Security Pack early-access list price — not a certified TCO.                                                            |
 
 ### Pricing validation checklist
 
@@ -532,16 +532,16 @@ Benchmark evidence (frugal DeepSeek; graders require real `tool:clawql_*` eviden
 
 | Dimension                               | Comparison                                                                                                                                                                                |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Token efficiency                        | executor.sh = Layer 1 only. ClawQL Layers 1–8 compound.                                                                                                                                   |
+| Token efficiency                        | Compare equal-arm on `/benchmarks`; do not assert Executor layer count without a dated source. ClawQL documents multiple efficiency layers (shipped vs planned marked in inference docs). |
 | Measured reduction                      | Layer 1 alone ~99.8% input reduction (Avian/GCP/Jira/Cloudflare patterns). Layers 2–8 cut output, prose, cache, history, routing cost.                                                    |
-| Agent memory                            | executor.sh: none. ClawQL: vault + Obsidian + semantic recall.                                                                                                                            |
-| Semantic search                         | executor.sh: none. ClawQL: Onyx 40+ connectors.                                                                                                                                           |
-| Security                                | executor.sh: host-side secrets + tool allow/block + basic audit. ClawQL adds Kata, weight integrity, WORM Merkle, Panguard fail-closed, YubiKey infra, Presidio pre-log, posture reports. |
-| IDP / VDR / sovereign LLM / multi-model | executor.sh: none. ClawQL: full stack.                                                                                                                                                    |
-| Pricing                                 | executor.sh $150/mo metered. ClawQL Developer $29 unlimited.                                                                                                                              |
+| Agent memory                            | ClawQL: vault + Obsidian + semantic recall. Re-verify Executor memory/search claims against current product docs.                                                                         |
+| Semantic search                         | ClawQL: Onyx connectors when configured. Re-verify Executor search claims against current product docs.                                                                                   |
+| Security                                | ClawQL: Kata, weight integrity, WORM Merkle, Panguard fail-closed (opt-in), YubiKey infra, Presidio pre-log, posture reports. Executor: verify current audit/secret features at procurement. |
+| IDP / VDR / sovereign LLM / multi-model | ClawQL packages cover IDP/VDR/sovereign inference when those tiers are enabled; do not claim Executor lacks features without a dated survey.                                              |
+| Pricing                                 | ClawQL early-access list prices on `/pricing` (subject to change). Executor Team metered historically — re-verify caps/overage for current Executor.                                      |
 | Adoption                                | executor.sh 2.6k+ stars / YC — only current lead; time + architecture education.                                                                                                          |
 
-**Positioning line:** executor.sh is a stateless tool router. ClawQL is a stateful agent operating system.
+**Positioning line:** ClawQL is a stateful agent gateway with memory, audit, and optional IDP — compare features via equal-arm benchmarks, not competitor nicknames.
 
 ### Market 1b: LiteLLM — March 2026 migration
 
@@ -609,7 +609,7 @@ OpenBench: Panguard policy-deny and search-first-discovery 1.0 vs 0.0 (run `3087
 | Compromised mid-processing?  | Kata VM isolation; Panguard fail-closed.                                                                                                 |
 | Covert provider steering?    | No closed-model provider on Dedicated/Enterprise sovereign path.                                                                         |
 | vs executor.sh security?     | Kata, WORM Merkle, Panguard, YubiKey, Presidio, posture reports — [defense-in-depth](https://docs.clawql.com/security/defense-in-depth). |
-| SOC 2 / FedRAMP?             | Controls present; audit in progress. Typical 12–18 months post-controls.                                                                 |
+| SOC 2 / FedRAMP?             | ClawQL holds **no** SOC 2 Type II report and **no** FedRAMP authorization. Regulated profile produces control evidence for customer audits; timelines are customer-owned. |
 
 ### Competitor comparison one-pager
 

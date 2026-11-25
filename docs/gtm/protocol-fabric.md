@@ -64,7 +64,7 @@ Marketing and GTM need a **single** claim. Explaining “Core plus mcp-api-adapt
 | **Kong / Apigee**                  | Classic protocol translation | No MCP IR, not agent-native                       |
 | **APIAgent / OpenAPI→MCP proxies** | APIs → MCP                   | Inverse of the adapter; not multi-surface outward |
 
-Nobody else ships **both directions** with MCP as IR and the full multi-surface outward adapter in one product story.
+ClawQL ships **both directions** with MCP as IR and multi-surface outward adapters in one product story — exclusivity is not claimed without a published survey.
 
 ### ESB analogy (GTM optional)
 

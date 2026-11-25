@@ -33,7 +33,7 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 - AI agents have no persistent memory — every session starts from zero. Institutional context must be re-explained manually.
 - Naive tool-calling approaches load full API specs into context windows: **2,556,000+ tokens** for three common providers combined.
 - VDR incumbents charge $10,000–$200,000+/year with no pipeline integration. IDP vendors charge $0.50–1.50/page.
-- No competitor provides a sovereign locally-running fine-tuned LLM with verifiable data sovereignty at the infrastructure layer.
+- Sovereign locally-running fine-tuned LLM with infrastructure-enforced data sovereignty is a ClawQL design goal when sovereign inference is configured — not a certified exclusive market claim.
 
 ---
 

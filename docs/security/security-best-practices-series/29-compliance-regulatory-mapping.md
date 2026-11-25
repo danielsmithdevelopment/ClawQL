@@ -170,4 +170,4 @@ Key Takeaways (Memorize These!)
 
 - Audit readiness as a continuous state (quarterly evidence packages, WORM retention, Merkle chain) is cheaper than audit preparation as a periodic scramble.
 
-You now have a compliance mapping that turns every technical control into auditable evidence across GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. Regulatory requirements are no longer an afterthought — they are satisfied by the same infrastructure that keeps the platform secure. This completes the governance layer that makes the entire platform audit-ready by design.
+You now have a compliance mapping that turns every technical control into auditable evidence across GDPR, HIPAA, SOC 2 Type II, and the EU AI Act. Regulatory requirements are no longer an afterthought — they can be evidenced by the same infrastructure when the regulated profile and retention practices are in place. ClawQL holds no SOC 2 Type II report and no FedRAMP authorization today.

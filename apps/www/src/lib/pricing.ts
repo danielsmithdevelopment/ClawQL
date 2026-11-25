@@ -19,6 +19,10 @@ export type PricingPlanName = (typeof pricingPlanNames)[number]
 export const unlimitedExecutionsTagline =
   'Unlimited MCP executions on every hosted tier — no caps, no overage, no meter.'
 
+/** Public list prices are early-access and subject to change until unit costs are measured on a real host. */
+export const earlyAccessPriceDisclaimer =
+  'Early-access list prices — subject to change. Self-host remains free on Apache 2.0.'
+
 /** Hosted entry point — waitlist by default; Stripe Checkout copy when self-serve env is set. */
 const hostedFreeTrialWaitlist = {
   durationDays: 14,

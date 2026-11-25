@@ -2,7 +2,7 @@ IDP-first GTM · July 2026
 
 # Document Processing That Doesn't Stop at Extraction
 
-Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer motion: [inference-first GTM](https://clawql.com/inference/gtm/). Enterprise motion: [enterprise GTM](https://clawql.com/enterprise/gtm/). Live gateway/memory A/B: [OpenBench results ledger](../benchmarks/openbench-results-ledger.md). Dataset protocol: [OpenBench dataset product](../benchmarks/openbench-dataset-product.md).
+Standalone Intelligent Document Processing motion for ops, compliance, legal, lending, and M&A — full lifecycle from ingest to secure distribution, Merkle audit trails, MCP-native agents, Starter at $299/mo. Developer / enterprise GTM strategy lives under `docs/gtm/` (internal — not published on clawql.com). Live gateway/memory A/B: [OpenBench results ledger](../benchmarks/openbench-results-ledger.md). Dataset protocol: [OpenBench dataset product](../benchmarks/openbench-dataset-product.md).
 
 [View IDP landing](https://clawql.com/idp/) · [Start free trial](https://clawql.com/signup/) · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [Deploy with Helm](https://docs.clawql.com/deployment/kubernetes)
 
@@ -160,7 +160,7 @@ Subhead: full lifecycle (ingest → distribute) in one system, AI-agent orchestr
 8. Pricing expanded + Starter callout
 9. Footer CTAs by buyer type
 
-Public marketing landing: [`clawql.com/idp`](https://clawql.com/idp/). This playbook is the strategy source of truth at `/idp/gtm`.
+Public marketing landing: [`clawql.com/idp`](https://clawql.com/idp/). This playbook is the internal strategy source (`docs/vision/clawql-idp-gtm.md`); public `/idp/gtm` is a stub.
 
 ---
 
@@ -196,4 +196,4 @@ Land with pipeline + VDR + auditability at a price incumbents cannot match. When
 
 [Start 14-day trial](https://clawql.com/signup/) · [Read IDP docs](https://docs.clawql.com/vision/idp-platform) · [View pricing](https://clawql.com/pricing/)
 
-July 2026 · ClawQL IDP GTM · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [Inference GTM](https://clawql.com/inference/gtm/)
+July 2026 · ClawQL IDP GTM · [IDP platform docs](https://docs.clawql.com/vision/idp-platform) · [GTM playbook (internal)](../gtm/clawql-gtm-playbook.md)

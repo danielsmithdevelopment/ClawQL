@@ -34,7 +34,7 @@ export const healthcareIndustry: Industry = {
   domainTools: [
     { name: 'fhir_parse', description: 'Parse FHIR R4 bundles into agent-friendly structured summaries.' },
     { name: 'hl7_extract', description: 'Extract segments and fields from HL7 v2 messages for routing and structuring.' },
-    { name: 'dicom_analyze', description: 'Expose imaging metadata to agents under HIPAA-friendly redaction policies.' },
+    { name: 'dicom_analyze', description: 'Expose imaging metadata to agents under PHI-oriented redaction policies (no HIPAA certification claim).' },
     { name: 'ehr_structure', description: 'Normalize discharge summaries and referral letters into queryable fields.' },
     { name: 'deidentify', description: 'Strip PHI before documents enter vault, archive, or search indexes.' },
     { name: 'clinical_note_structure', description: 'Structure free-text notes with provenance for coder review.' },

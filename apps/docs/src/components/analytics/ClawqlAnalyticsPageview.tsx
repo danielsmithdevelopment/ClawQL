@@ -7,12 +7,33 @@ import { Suspense, useEffect, useRef } from 'react'
 const SESSION_STORAGE_KEY = 'clawql_analytics_sid'
 const CONSENT_STORAGE_KEY = 'clawql_analytics_consent'
 
+export function hasAnalyticsConsent(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(CONSENT_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function setAnalyticsConsent(enabled: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (enabled) {
+      window.localStorage.setItem(CONSENT_STORAGE_KEY, '1')
+    } else {
+      window.localStorage.removeItem(CONSENT_STORAGE_KEY)
+      window.localStorage.removeItem(SESSION_STORAGE_KEY)
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 /** Pseudonymous ID only after explicit consent (`localStorage` flag). */
 function readConsentedSessionId(): string | undefined {
-  if (typeof window === 'undefined') return undefined
+  if (!hasAnalyticsConsent()) return undefined
   try {
-    if (window.localStorage.getItem(CONSENT_STORAGE_KEY) !== '1')
-      return undefined
     const existing = window.localStorage.getItem(SESSION_STORAGE_KEY)
     if (existing) return existing
     const id = crypto.randomUUID()
@@ -35,6 +56,7 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED !== '1') return
+    if (!hasAnalyticsConsent()) return
 
     const query = searchParams?.toString()
     const path = `${pathname}${query ? `?${query}` : ''}`
@@ -49,6 +71,7 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
       process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT ?? defaultEndpoint
 
     const sessionId = readConsentedSessionId()
+    if (!sessionId) return
 
     void postAnalyticsPageview(endpoint, {
       path,
@@ -56,13 +79,13 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
         typeof document !== 'undefined'
           ? document.referrer || undefined
           : undefined,
-      ...(sessionId ? { sessionId } : {}),
+      sessionId,
       timestamp: new Date().toISOString(),
       properties: {
         site,
         hostname:
           typeof window !== 'undefined' ? window.location.hostname : undefined,
-        identity: sessionId ? 'pseudonymous' : 'anonymous_no_id',
+        identity: 'pseudonymous',
       },
     })
   }, [pathname, searchParams, site])
@@ -70,7 +93,7 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
   return null
 }
 
-/** Fires pageviews through clawql-analytics. Persistent IDs are pseudonymous and consent-gated. */
+/** Fires pageviews only after consent; session IDs are pseudonymous. */
 export function ClawqlAnalyticsPageview(props: ClawqlAnalyticsPageviewProps) {
   return (
     <Suspense fallback={null}>

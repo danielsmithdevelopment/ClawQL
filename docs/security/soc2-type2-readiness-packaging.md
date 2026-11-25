@@ -88,7 +88,7 @@ Use this as a **control inventory**. Mark each row for your environment: **In pl
 | Webhook verify               | Stripe signature verify                                                                        | ☐     |
 | HITL / mandates              | Review queue, device-bound keys                                                                | ☐     |
 | AI tool-scope enforcement    | [`ai-enforcement-default-posture.md`](ai-enforcement-default-posture.md) — Panguard on in prod | ☐     |
-| Merkle / WORM (when enabled) | `clawql-audit` / curriculum §18                                                                | ☐     |
+| Merkle / WORM (on by default in 8.0; remote Object Lock on Cloud paid / regulated) | `clawql-audit` / curriculum §18                                                                | ☐     |
 
 ### C1 — Confidentiality
 
