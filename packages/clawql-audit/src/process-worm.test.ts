@@ -24,6 +24,9 @@ describe("process WORM boot + append", () => {
     delete process.env.CLAWQL_WORM_SESSION_ID;
     delete process.env.CLAWQL_WORM_TEE;
     delete process.env.CLAWQL_WORM_TEE_PLATFORM;
+    delete process.env.CLAWQL_WORM_TEE_EPHEMERAL;
+    delete process.env.CLAWQL_WORM_REQUIRED;
+    delete process.env.CLAWQL_TIER;
   });
 
   it("no-ops when CLAWQL_WORM_ENABLED=0", async () => {
@@ -125,6 +128,7 @@ describe("process WORM boot + append", () => {
     process.env.CLAWQL_WORM_REMOTE = "memory";
     process.env.CLAWQL_WORM_RECONCILE_MS = "0";
     process.env.CLAWQL_WORM_TEE = "1";
+    process.env.CLAWQL_WORM_TEE_EPHEMERAL = "1";
 
     const svc = await Effect.runPromise(bootProcessWormFromEnvEffect());
     expect(svc).not.toBeNull();
@@ -137,5 +141,26 @@ describe("process WORM boot + append", () => {
       })
     );
     expect(entry?.teeSignature).toBeTruthy();
+  });
+
+  it("refuses append when CLAWQL_WORM_REQUIRED and trail not ready", async () => {
+    process.env.CLAWQL_WORM_ENABLED = "0";
+    process.env.CLAWQL_WORM_REQUIRED = "1";
+    await bootProcessWormFromEnv();
+    let reason = "";
+    await Effect.runPromise(
+      appendProcessWormEffect({
+        type: "SESSION_START",
+        timestamp: new Date().toISOString(),
+        sessionId: "req",
+      }).pipe(
+        Effect.catch((err) => {
+          reason = err.reason;
+          return Effect.succeed(null);
+        })
+      )
+    );
+    expect(reason).toMatch(/required/i);
+    delete process.env.CLAWQL_WORM_REQUIRED;
   });
 });

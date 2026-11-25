@@ -156,7 +156,12 @@ const TIER_PRESET_HORIZONTAL: Record<
     data: { enabled: false },
     ouroboros: { enabled: false },
   },
-  /** Regulated profile: enterprise horizontal defaults; process WORM must stay on (host refuses CLAWQL_WORM_ENABLED=0). */
+  /**
+   * Regulated profile: enterprise horizontal defaults plus process WORM (host refuses
+   * CLAWQL_WORM_ENABLED=0 / memory backends). Env composition lives in
+   * `src/composition/regulated-profile.ts` (Panguard fail-closed, parked destructive
+   * writes, session IFC/taint; refuses ALLOW_NO_ENFORCEMENT and the Cloudflare bridge).
+   */
   regulated: {
     memory: { enabled: true },
     documents: {
@@ -173,7 +178,8 @@ const TIER_PRESET_HORIZONTAL: Record<
       argocd: { enabled: false },
       hitlLabelStudio: { enabled: false },
     },
-    sandbox: { enabled: false },
+    /** Local backends only under regulated (bridge refused at selection). */
+    sandbox: { enabled: true },
     data: { enabled: false },
     ouroboros: { enabled: false },
   },

@@ -25,8 +25,8 @@ describe("parseExplicitSandboxBackendEnv", () => {
     else process.env.KUBERNETES_SERVICE_HOST = saved.k8sHost;
   });
 
-  it("defaults unset off-cluster to bridge", () => {
-    expect(parseExplicitSandboxBackendEnv()).toBe("bridge");
+  it("defaults unset (any cluster) to auto — local backends first (audit 3.07)", () => {
+    expect(parseExplicitSandboxBackendEnv()).toBeNull();
   });
 
   it("defaults unset in-cluster to auto (Agent Substrate → Kata …)", () => {
@@ -105,6 +105,18 @@ describe("resolveSandboxBackendChoice", () => {
     expect(r).toEqual({ ok: true, backend: "docker" });
   });
 
+  it("auto uses seatbelt before bridge when both available", async () => {
+    const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(false),
+      seatbelt: () => Effect.succeed(true),
+      docker: () => Effect.succeed(false),
+      bridge: () => Effect.succeed(true),
+    };
+    const r = await resolveSandboxBackendChoice(null, deps);
+    expect(r).toEqual({ ok: true, backend: "macos-seatbelt" });
+  });
+
   it("auto uses bridge when only bridge is configured", async () => {
     const deps: SandboxBackendAutoDeps = {
       agentSubstrate: () => Effect.succeed(false),
@@ -115,6 +127,21 @@ describe("resolveSandboxBackendChoice", () => {
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r).toEqual({ ok: true, backend: "bridge" });
+  });
+
+  it("regulated tier refuses bridge even when only bridge is available", async () => {
+    const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(false),
+      seatbelt: () => Effect.succeed(false),
+      docker: () => Effect.succeed(false),
+      bridge: () => Effect.succeed(true),
+    };
+    const r = await resolveSandboxBackendChoice(null, deps, {
+      CLAWQL_TIER: "regulated",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/regulated.*bridge/i);
   });
 
   it("auto fails when nothing is available", async () => {

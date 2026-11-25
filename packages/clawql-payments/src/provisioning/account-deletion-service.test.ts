@@ -188,7 +188,7 @@ describe("AccountDeletionService", () => {
     expect(blob).not.toContain("sb-secret-subject");
     expect(blob).not.toContain("cus_secret_customer");
     expect(blob).not.toContain("gone@acme.com");
-    expect(gone[0]?.payload.tenant_id).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(gone[0]?.payload.tenant_id).toMatch(/^deletion_job:adj_/);
 
     const resumed = await runDeletion(
       Effect.gen(function* () {

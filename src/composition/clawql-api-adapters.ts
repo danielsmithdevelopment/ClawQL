@@ -98,7 +98,9 @@ async function ensureClawqlApiImpl(): Promise<ClawQLApiHandle> {
   if (apiHandle) return apiHandle;
   if (ensureApiPromise) return ensureApiPromise;
   ensureApiPromise = (async () => {
-    void Effect.runPromise(ensureProcessWormHostBootedEffect()).catch(() => undefined);
+    // Await WORM boot before composing plugins / accepting traffic (audit 3.01).
+    // Regulated-tier refusals must surface — do not swallow into undefined.
+    await Effect.runPromise(ensureProcessWormHostBootedEffect());
     const pluginLayers = await Effect.runPromise(
       composeHorizontalPluginLayersDynamicEffect(resolvePluginCompositionFlags())
     );
