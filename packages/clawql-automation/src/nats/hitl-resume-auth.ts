@@ -6,10 +6,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
-import {
-  natsHitlAllowUnsignedResume,
-  natsHitlResumeToken,
-} from "./env.js";
+import { natsHitlAllowUnsignedResume, natsHitlResumeToken } from "./env.js";
 import type { WorkflowEventEnvelope } from "./envelope.js";
 
 function timingSafeEqualString(a: string, b: string): boolean {
@@ -19,9 +16,7 @@ function timingSafeEqualString(a: string, b: string): boolean {
   return timingSafeEqual(ba, bb);
 }
 
-export type HitlResumeAuthResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type HitlResumeAuthResult = { ok: true } | { ok: false; error: string };
 
 const MAX_RESUME_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -49,11 +44,7 @@ function workflowCanonical(envelope: WorkflowEventEnvelope): string {
 }
 
 /** Canonical bytes for HMAC: workflow|decision|ts */
-export function hitlResumeSignPayload(
-  workflow: string,
-  decision: string,
-  ts: string
-): string {
+export function hitlResumeSignPayload(workflow: string, decision: string, ts: string): string {
   return `${workflow}\n${decision}\n${ts}`;
 }
 

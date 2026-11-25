@@ -50,8 +50,6 @@ describe("vault read-guard (4.01 / 4.03)", () => {
     expect(isForbiddenFileRoot(home, { CLAWQL_HOME: home })).toBe(true);
     const okDir = await mkdtemp(join(tmpdir(), "clawql-ok-root-"));
     expect(isForbiddenFileRoot(okDir, { CLAWQL_HOME: home })).toBe(false);
-    expect(filterConfiguredFileRoots(["/", home, okDir], { CLAWQL_HOME: home })).toEqual([
-      okDir,
-    ]);
+    expect(filterConfiguredFileRoots(["/", home, okDir], { CLAWQL_HOME: home })).toEqual([okDir]);
   });
 });

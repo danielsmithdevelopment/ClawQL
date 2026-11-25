@@ -212,9 +212,7 @@ async function applyTombstoneDeletes(
   dryRun: boolean
 ): Promise<SyncPlanEntry[]> {
   const remoteFiles = remote?.files ?? {};
-  const alreadyShared = new Set(
-    (remote?.erasureTombstones ?? []).map((p) => normalizeSyncPath(p))
-  );
+  const alreadyShared = new Set((remote?.erasureTombstones ?? []).map((p) => normalizeSyncPath(p)));
   const actions: SyncPlanEntry[] = [];
   for (const path of erasureTombstones) {
     const norm = normalizeSyncPath(path);

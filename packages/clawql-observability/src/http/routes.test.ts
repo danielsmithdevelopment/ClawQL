@@ -83,9 +83,9 @@ describe("observability HTTP routes", () => {
     );
 
     expect(response.status).toBe(500);
-    expect(String((response.body as { reason?: string }).reason ?? JSON.stringify(response.body))).toMatch(
-      /outputPath refused|alloy/i
-    );
+    expect(
+      String((response.body as { reason?: string }).reason ?? JSON.stringify(response.body))
+    ).toMatch(/outputPath refused|alloy/i);
   });
 
   it("refuses alloy apply to non-.river sibling under package (audit W5)", async () => {
@@ -102,8 +102,8 @@ describe("observability HTTP routes", () => {
     );
 
     expect(response.status).toBe(500);
-    expect(String((response.body as { reason?: string }).reason ?? JSON.stringify(response.body))).toMatch(
-      /outputPath refused|\.river/i
-    );
+    expect(
+      String((response.body as { reason?: string }).reason ?? JSON.stringify(response.body))
+    ).toMatch(/outputPath refused|\.river/i);
   });
 });

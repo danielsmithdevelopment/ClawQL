@@ -46,9 +46,7 @@ export function assertSafeAlloyOutputPath(
       resolvePath(packagePaths.alloyConfig),
       resolvePath(packagePaths.alloySecuritySensors),
     ]);
-    const allowedDirs = new Set(
-      [...allowedFiles].map((f) => dirname(f))
-    );
+    const allowedDirs = new Set([...allowedFiles].map((f) => dirname(f)));
     const ok =
       allowedFiles.has(resolved) ||
       (resolved.endsWith(".river") && allowedDirs.has(dirname(resolved)));
