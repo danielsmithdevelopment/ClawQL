@@ -11,10 +11,10 @@ Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). W
    - Canonicalize `{ operationId, args, fields }` and SHA-256 → `argsHash`.
    - Persist a pending record under `$CLAWQL_HOME/pending-executions/` (default `~/.ClawQL/pending-executions/`).
    - WORM: `HUMAN_DECISION_REQUESTED`.
-   - Return `status: "mandate_required"` with `executionId`, `argsHash`, `risk`, and how to approve (`clawql resume <id>` or MCP `resume`).
-5. Human (or ChatGPT form, later) approves → `clawql resume <id>` / MCP `resume`:
+   - Return `status: "mandate_required"` with `executionId`, `argsHash`, `risk`, and how to approve (`clawql resume <id>` or Review/console). MCP `resume` is **decline-only** — agents cannot self-approve.
+5. Human approves → `clawql resume <id>` / Review / console (never MCP approve):
    - Load pending; require `status === "pending"` and recompute `argsHash` match (tamper → reject).
-   - WORM: `HUMAN_APPROVAL`.
+   - WORM: `HUMAN_APPROVAL` with the operator principal (`approvedBy`).
    - **Atomic consume** before the side effect: conditional update
      `approved` → `outcome_unknown` where `argsHash` matches and `expiresAt` is still in the future
      (store clock — Postgres `now()`, never each replica’s wall clock). Zero rows → refuse.
@@ -55,9 +55,10 @@ Default TTL: 24h (`CLAWQL_PENDING_EXECUTION_TTL_HOURS`). Expired records cannot 
 | Surface                                     | Action                                  |
 | ------------------------------------------- | --------------------------------------- |
 | MCP `execute`                               | Parks on mandate; returns `executionId` |
-| MCP `resume`                                | `{ executionId }` → run parked call     |
-| CLI `clawql resume <executionId>`           | Same as MCP `resume`                    |
+| MCP `resume`                                | Decline only (`decision: decline`); refuse approve |
+| CLI `clawql resume <executionId>`           | Operator approve; records principal on WORM |
 | CLI `clawql resume --decline <executionId>` | WORM `HUMAN_REJECTION`; mark declined   |
+| Review / console                            | Operator approve or decline             |
 
 ## Elicitation (deferred wire-up)
 

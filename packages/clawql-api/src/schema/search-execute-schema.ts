@@ -77,9 +77,9 @@ export const RESUME_EXECUTION_ID_DESCRIPTION =
   "Resumes the exact parked operationId + args — no alternate arguments.";
 
 export const RESUME_DECISION_DESCRIPTION =
-  "approve (default) runs the parked call; decline records HUMAN_REJECTION and does not execute.";
+  "MCP resume is decline-only (default decline). Approve via `clawql resume` or Review/console — agents cannot self-approve.";
 
-/** MCP `resume` tool arguments — Effect Schema (source of truth). */
+/** MCP `resume` tool arguments — Effect Schema (source of truth). Decline-only. */
 export const ResumeInputSchema = Schema.Struct({
   executionId: Schema.String.annotate({ description: RESUME_EXECUTION_ID_DESCRIPTION }),
   decision: Schema.optional(

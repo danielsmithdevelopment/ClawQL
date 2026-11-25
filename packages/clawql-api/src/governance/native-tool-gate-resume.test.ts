@@ -34,7 +34,7 @@ async function parkAndApprove(home: string) {
     },
     home,
   });
-  await decidePendingExecution(parked.executionId, "approve", home);
+  await decidePendingExecution(parked.executionId, "approve", { home, approvedBy: { kind: "operator", id: "test-operator" } });
   return parked;
 }
 

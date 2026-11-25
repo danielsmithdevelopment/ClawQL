@@ -1,8 +1,11 @@
 /**
  * `clawql resume <executionId>` — approve (or decline) a parked mandate execute.
+ * Approve records an operator principal on HUMAN_APPROVAL (never via MCP).
  */
 
+import { Effect } from "effect";
 import { resumeClawqlExecution } from "clawql-api";
+import { resolveOperatorPrincipalEffect } from "clawql-api/sources";
 
 export async function runResume(options: {
   executionId?: string;
@@ -20,9 +23,13 @@ export async function runResume(options: {
   }
 
   try {
+    const approvedBy = await Effect.runPromise(resolveOperatorPrincipalEffect());
     const content = await resumeClawqlExecution({
       executionId,
       decision: options.decline ? "decline" : "approve",
+      approvedBy,
+      channel: "operator",
+      home: options.home,
     });
     const text = content[0]?.text ?? "";
     console.log(text);

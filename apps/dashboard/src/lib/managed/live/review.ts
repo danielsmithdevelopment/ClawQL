@@ -189,7 +189,11 @@ export const decideManagedReviewEffect = (input: {
       }
       const decision = input.decision;
       const record = yield* Effect.tryPromise({
-        try: () => decidePendingExecution(input.id, decision, home),
+        try: () =>
+          decidePendingExecution(input.id, decision, {
+            home,
+            approvedBy: { kind: "operator", id: input.operatorId },
+          }),
         catch: asReviewError,
       });
       return { ok: true as const, id: record.executionId, status: record.status };
