@@ -65,7 +65,7 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/architecture` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/architecture`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |
 | `/vision/immutable-releases`   | `docs/vision/clawql-hybrid-decentralized-github-alternative.md` (Layer 0) | `scripts/sync-clawql-hybrid-decentralized-doc.mjs` |
-| `/vision/slide-deck`           | `docs/presentations/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
+| `/vision/slide-deck`           | `docs/presentations/archive/clawql-slides.md`                                     | `scripts/sync-clawql-slides-doc.mjs`            |
 | `/security/defense-in-depth`   | `docs/security/clawql-defense-in-depth-security-guide.md` (deployment reference) | `scripts/sync-clawql-defense-in-depth-doc.mjs`  |
 | `/security/best-practices/*`   | `docs/security/security-best-practices-series/*.md`                       | `scripts/sync-security-training-modules.mjs`    |
 

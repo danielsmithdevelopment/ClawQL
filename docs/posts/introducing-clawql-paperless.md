@@ -1,5 +1,7 @@
 # Paperless-ngx Explained: Open-Source Document Management for a Searchable Archive
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 Paperless-ngx is an open-source document management system focused on turning paper and digital files into a searchable, organized archive.
 
 - **Docs:** https://docs.paperless-ngx.com

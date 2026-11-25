@@ -170,7 +170,7 @@ When a horizontal tier or vertical is disabled, its Effect Layer is not composed
 
 ## 7. Cross-Cutting Concerns
 
-**Security**: Classification gating, external model routing, WORM Merkle audit, and runtime enforcement (Tetragon/Falco) are applied at the gateway. ATR/Panguard chokepoint, Vault-backed provider secrets, and opt-in Presidio gateway hooks ship in 7.0; full mandatory Presidio on every path and full WORM remain roadmap.
+**Security**: Classification gating, external model routing, WORM Merkle audit, and runtime enforcement (Tetragon/Falco) are applied at the gateway. ATR/Panguard chokepoint, Vault-backed provider secrets, and opt-in Presidio gateway hooks ship in 7.0+; local hash-chained WORM is on by default in 8.0 (sqlite under `$CLAWQL_HOME/worm`); full mandatory Presidio on every path remains roadmap.
 
 **Observability**: OTEL wraps MCP tool handlers today. Full LGTM+ stack + `clawql-telemetry` package remain roadmap. Langfuse handles LLM/tool chains where configured.
 

@@ -186,7 +186,7 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 ## [7.2.0] - 2026-08-04
 
-Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Convergence Week **MCP 2026-07-28 / OKF v0.2 / PorTAL**, native **CodeGraph**, **mcp-api-adapter**, Managed Edge Gateway wedge, Cloud Agent / team-sync hardening, and a completed **IDP** document-event wave (including Stirling + NATS). No intentional semver-major breaks vs **7.1.0** — see behavioral notes in release notes. Release notes: **[`RELEASE_NOTES_v7.2.0.md`](docs/release/RELEASE_NOTES_v7.2.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.2.0.md`](docs/announcements/announcement-drafts-v7.2.0.md)**. Inventory: **48** product/deps PRs merged after `v7.1.0` (excluding the 7.1.0 prep PR itself).
+Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Convergence Week **MCP 2026-07-28 / OKF v0.2 / PorTAL**, native **CodeGraph**, **mcp-api-adapter**, Managed Edge Gateway wedge, Cloud Agent / team-sync hardening, and a completed **IDP** document-event wave (including Stirling + NATS). No intentional semver-major breaks vs **7.1.0** — see behavioral notes in release notes. Release notes: **[`RELEASE_NOTES_v7.2.0.md`](docs/release/RELEASE_NOTES_v7.2.0.md)**. Announcement drafts: **[`docs/announcements/archive/announcement-drafts-v7.2.0.md`](docs/announcements/archive/announcement-drafts-v7.2.0.md)**. Inventory: **48** product/deps PRs merged after `v7.1.0` (excluding the 7.1.0 prep PR itself).
 
 ### Added
 
@@ -259,7 +259,7 @@ Minor release on the **7.0 Agentic Gateway** line: **Memory Stack 2.0**, Converg
 
 ## [7.1.0] - 2026-07-20
 
-Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**, a full **payments** wave (credits, payouts, compensation, deduction), deep **Effect** platform wiring, and **GTM / docs** alignment. No intentional semver-major breaks vs **7.0.0**. Release notes: **[`RELEASE_NOTES_v7.1.0.md`](docs/release/RELEASE_NOTES_v7.1.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.1.0.md`](docs/announcements/announcement-drafts-v7.1.0.md)**.
+Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**, a full **payments** wave (credits, payouts, compensation, deduction), deep **Effect** platform wiring, and **GTM / docs** alignment. No intentional semver-major breaks vs **7.0.0**. Release notes: **[`RELEASE_NOTES_v7.1.0.md`](docs/release/RELEASE_NOTES_v7.1.0.md)**. Announcement drafts: **[`docs/announcements/archive/announcement-drafts-v7.1.0.md`](docs/announcements/archive/announcement-drafts-v7.1.0.md)**.
 
 ### Added
 
@@ -291,7 +291,7 @@ Minor release on the **7.0 Agentic Gateway** line: **enterprise Ontology + OKF**
 
 ## [7.0.0] - 2026-07-10
 
-Major release: **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI** — opinionated default stack everywhere (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](docs/release/RELEASE_NOTES_v7.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md)**. Fabric architecture: **[`docs/architecture/zero-trust-agentic-fabric.md`](docs/architecture/zero-trust-agentic-fabric.md)**.
+Major release: **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI** — opinionated default stack everywhere (npm + Helm), **vault-first defense in depth**, **ClawQL Operator** with provider-secret reconciliation, **npm package separation at 7.0.0**, observability ADR 0005, and consolidated IDP wave. Release notes: **[`RELEASE_NOTES_v7.0.0.md`](docs/release/RELEASE_NOTES_v7.0.0.md)**. Announcement drafts: **[`docs/announcements/archive/announcement-drafts-v7.0.0.md`](docs/announcements/archive/announcement-drafts-v7.0.0.md)**. Fabric architecture: **[`docs/architecture/zero-trust-agentic-fabric.md`](docs/architecture/zero-trust-agentic-fabric.md)**.
 
 ### Breaking
 

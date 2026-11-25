@@ -29,6 +29,6 @@ Cookie `clawql-support-impersonation` binds the browser to the active record (ht
 
 ## Follow-ups
 
-- Dual-write to process WORM when dashboard shares a host with `CLAWQL_WORM_ENABLED=1`.
+- Dual-write to process WORM when the dashboard shares a host with process WORM enabled (on by default; set `CLAWQL_WORM_ENABLED=0` to disable).
 - Live identity provider role claims instead of fixture role strings.
 - Time-boxed auto-expiry (e.g. 30 minutes) with audit on expiry.

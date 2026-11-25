@@ -1,7 +1,7 @@
 /**
  * Copies the canonical slide deck from docs/ into src/generated/ for /vision/slide-deck.
  *
- * Source: docs/presentations/clawql-slides.md → src/generated/clawql-slides-body.mdx
+ * Source: docs/presentations/archive/clawql-slides.md → src/generated/clawql-slides-body.mdx
  *
  * Run from apps/docs/: node scripts/sync-clawql-slides-doc.mjs
  *
@@ -20,6 +20,17 @@ const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'clawql-slides-body.mdx')
 const srcRelative = path.join('docs', 'presentations', 'clawql-slides.md')
+// ARCHIVE_DISABLED: live deck moved to docs/presentations/archive/ (audit 10b.02).
+// Keep committed generated MDX unless CLAWQL_SYNC_ARCHIVED_SLIDES=1.
+const archiveFlag = process.env.CLAWQL_SYNC_ARCHIVED_SLIDES === '1'
+if (!archiveFlag && fs.existsSync(dst)) {
+  console.log(
+    'sync-clawql-slides-doc: archived — keeping existing',
+    path.relative(websiteRoot, dst),
+  )
+  process.exit(0)
+}
+
 
 function findRepoRootWithDocsPresentations() {
   let dir = websiteRoot
@@ -45,12 +56,12 @@ const src = repoRoot ? path.join(repoRoot, srcRelative) : null
 if (!src || !fs.existsSync(src)) {
   if (fs.existsSync(dst)) {
     console.warn(
-      'sync-clawql-slides-doc: docs/presentations/clawql-slides.md not found; keeping existing src/generated/clawql-slides-body.mdx (typical for Docker context ./website)',
+      'sync-clawql-slides-doc: docs/presentations/archive/clawql-slides.md not found; keeping existing src/generated/clawql-slides-body.mdx (typical for Docker context ./website)',
     )
     process.exit(0)
   }
   console.error(
-    'sync-clawql-slides-doc: missing source docs/presentations/clawql-slides.md and no generated MDX at',
+    'sync-clawql-slides-doc: missing source docs/presentations/archive/clawql-slides.md and no generated MDX at',
     dst,
   )
   process.exit(1)

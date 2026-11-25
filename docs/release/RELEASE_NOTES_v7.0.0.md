@@ -14,7 +14,7 @@
 
 The Agentic Gateway speaks OpenAI-compatible **`/v1`** and MCP **`/mcp`**. Enterprise deployments follow the [Zero-Trust Agentic Fabric](../architecture/zero-trust-agentic-fabric.md): Regional Hubs (routing/billing), Dedicated Virtual Gateways (Audit-Trail Enforcement Points with NATS JetStream + Valkey), and Edge Gateways on developer machines.
 
-→ Announcement drafts: [`docs/announcements/announcement-drafts-v7.0.0.md`](../announcements/announcement-drafts-v7.0.0.md) · GTM: [inference-first playbook](https://clawql.com/inference/gtm/)
+→ Announcement drafts: [`docs/announcements/archive/announcement-drafts-v7.0.0.md`](../announcements/archive/announcement-drafts-v7.0.0.md) · GTM: [inference-first playbook](https://clawql.com/inference/gtm/)
 
 ---
 

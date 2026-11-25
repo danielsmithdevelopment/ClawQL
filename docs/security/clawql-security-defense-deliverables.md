@@ -1,6 +1,6 @@
 # Defense in depth — engineering deliverables matrix
 
-**Purpose:** Trace every major control in [`clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md) (companion to **§08** / slides **68–79** in [`../presentations/clawql-slides.md`](../presentations/clawql-slides.md)) to **concrete** repo artifacts, **CI** jobs, **Helm** knobs, or **GitHub issues**. This is the **authoritative engineering backlog** for “what is **already in Git** vs what is **planned**.”
+**Purpose:** Trace every major control in [`clawql-security-defense-in-depth.md`](clawql-security-defense-in-depth.md) (companion to **§08** / slides **68–79** in [`../presentations/archive/clawql-slides.md`](../presentations/archive/clawql-slides.md)) to **concrete** repo artifacts, **CI** jobs, **Helm** knobs, or **GitHub issues**. This is the **authoritative engineering backlog** for “what is **already in Git** vs what is **planned**.”
 
 **Relationship to the slide deck:** **`clawql-slides.md`** describes the **target** product and infrastructure story (**Golden Image**, **SBOM**, **Cosign**, mesh, Vault, etc.). **Do not** replace that narrative with “CI only” language — use **this matrix** to show **shipped / partial / planned** next to the same bullets so decks and RFPs stay ambitious while engineering stays honest.
 

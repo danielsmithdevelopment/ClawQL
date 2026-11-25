@@ -1,5 +1,7 @@
 # Gotenberg Explained: API-First Document Conversion to PDF
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 Gotenberg is a Docker-based API for document conversion, with a strong focus on turning many input formats into PDF in a repeatable server environment.
 
 - **Project site:** https://gotenberg.dev

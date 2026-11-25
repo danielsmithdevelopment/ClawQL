@@ -13,7 +13,7 @@
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.** 7.1 shipped Ontology + payments rails; **7.2** closes the PragmaticVectors memory-stack gaps and finishes the IDP event bus story.
 
-→ Announcement drafts: [`docs/announcements/announcement-drafts-v7.2.0.md`](../announcements/announcement-drafts-v7.2.0.md) · Prior minor: [`RELEASE_NOTES_v7.1.0.md`](RELEASE_NOTES_v7.1.0.md) · Checklist: [`docs/release/v7.2.0-checklist.md`](v7.2.0-checklist.md)
+→ Announcement drafts: [`docs/announcements/archive/announcement-drafts-v7.2.0.md`](../announcements/archive/announcement-drafts-v7.2.0.md) · Prior minor: [`RELEASE_NOTES_v7.1.0.md`](RELEASE_NOTES_v7.1.0.md) · Checklist: [`docs/release/v7.2.0-checklist.md`](v7.2.0-checklist.md)
 
 ---
 

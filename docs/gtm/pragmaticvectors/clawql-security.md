@@ -176,7 +176,7 @@ const inventory = await security_discover({
 });
 ```
 
-Discovery runs on a schedule in production deployments and writes WORM events when new agents or endpoints appear. New additions that haven't gone through the vetting path trigger an alert.
+Discovery is designed to run on a schedule in operator deployments and write WORM events when new agents or endpoints appear (target posture — not a claim of measured production fleets). New additions that haven't gone through the vetting path trigger an alert.
 
 ---
 

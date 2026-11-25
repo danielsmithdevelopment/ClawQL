@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { AnalyticsConsentControl } from '@/components/analytics/AnalyticsConsentControl'
 import { Button } from '@/components/Button'
 import { navigation } from '@/components/Navigation'
 
@@ -120,6 +121,7 @@ export function Footer() {
   return (
     <footer className="mx-auto w-full max-w-2xl space-y-10 pb-16 lg:max-w-5xl">
       <PageNavigation />
+      <AnalyticsConsentControl />
       <SmallPrint />
     </footer>
   )

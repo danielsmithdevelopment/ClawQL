@@ -12,13 +12,13 @@ export const executorBenchmark = {
   name: 'executor.sh',
   href: 'https://executor.sh/',
   positioning:
-    'executor.sh normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and basic audit logging. That is the complete product, and it does that job well.',
+    'executor.sh normalizes OpenAPI/GraphQL/MCP into a search-and-execute gateway with host-side secret injection and audit logging. Product surface evolves — verify current Executor docs at procurement time; equal-arm measurements live on /benchmarks.',
   pricing: [
     { tier: 'Free', price: '$0', includes: '3 members · 10,000 executions/mo cap' },
     {
       tier: 'Team',
       price: '$150/org/mo',
-      includes: '250,000 executions/mo cap · $0.20/1,000 overage · basic audit log only',
+      includes: 'Metered Team plan (caps/overage historically published — re-verify against Executor 2; see /benchmarks footnotes)',
     },
     { tier: 'ClawQL', price: 'All tiers', includes: unlimitedExecutionsTagline },
   ],
@@ -70,7 +70,7 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
   },
   {
     dimension: 'Security architecture',
-    executor: 'Host-side secret injection and basic audit log',
+    executor: 'Host-side secret injection and audit logging (WORM/Merkle unverified for Executor v2 — see /benchmarks)',
     clawql:
       'Kata VM isolation, WORM Merkle audit logs, Panguard fail-closed ATR, model weight integrity verification, Presidio pre-log redaction',
   },
@@ -92,12 +92,12 @@ export const executorComparisonRows: ExecutorComparisonRow[] = [
   },
   {
     dimension: 'Execution pricing',
-    executor: '250,000 cap on Team + $0.20/1,000 overage',
+    executor: 'Metered executions on Team (historical v1 caps — re-verify for v2)',
     clawql: 'Unlimited executions on every tier',
   },
   {
     dimension: 'Pricing (gateway-only)',
-    executor: 'Team $150/org/mo — metered executions, no memory or search',
+    executor: 'Team plan — metered executions; memory/search not claimed here (see /benchmarks)',
     clawql: `Developer ${pricing.developer.monthlyPrice}/mo with vault memory; Teams ${pricing.teams.monthlyPrice}/mo adds Onyx search. IDP from ${pricing.starter.monthlyPrice}/mo`,
   },
 ]
@@ -106,14 +106,14 @@ export const tcoBenchmarks = [
   {
     label: 'vs executor.sh (MCP gateway)',
     scenario: 'Team connecting Cursor to GitHub, Stripe, Jira — heavy daily agent usage',
-    incumbent: 'executor.sh Team $150/org/mo + $0.20/1,000 overage — you pay more as agents work harder',
+    incumbent: 'executor.sh Team — metered executions (confirm current caps/overage on executor.sh); gateway without vault memory or Onyx',
     clawql: `Teams ${pricing.teams.monthlyPrice}/mo — unlimited executions, edge-hosted gateway, vault memory, Onyx search`,
     note: '',
   },
   {
     label: 'vs Hyperscience (IDP)',
     scenario: 'Business tier: 25,000 documents/mo × ~5 pages = 125,000 pages',
-    incumbent: '~$1.50/page → ~$187,500/mo',
+    incumbent: 'Published Hyperscience bands often cite ~$0.xx–$1.50/page — upper bound ≈$187,500/mo at 125k pages; typical contract prices are lower — confirm with vendor',
     clawql: `Business (IDP bundle): ${pricing.business.monthlyPrice}/mo flat`,
     note: '',
   },
@@ -158,7 +158,7 @@ export const stackReplacementSummary = {
   clawqlBusiness: `${pricing.business.monthlyPrice}/month`,
   clawqlBusinessMax: `Up to ${businessAllInMonthly}/month with Sovereign Security Pack`,
   savingsNote:
-    '10–19× below incumbent stack at comparable capability, with sovereign inference and zero external LLM API calls.',
+    'Order-of-magnitude below published incumbent stack bands when comparing gateway+IDP+VDR bundles; "comparable capability" is not claimed for ABBYY skill catalogs. Zero external LLM API calls only with sovereign inference configured.',
   disclaimer:
     'Illustrative benchmarks from published competitor pricing bands (July 2026). Your volume and contract terms will differ — use these for order-of-magnitude comparison, not procurement quotes.',
 } as const

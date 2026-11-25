@@ -6,7 +6,8 @@ WT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 LOG="${LOG:-/tmp/harvey-lab-local-fail-v3.log}"
 AGG="${AGG:-${WT}/benchmarks/harvey-labs/results/aggregate-fail-v3.json}"
 
-export HARVEY_LABS="${HARVEY_LABS:-/tmp/harvey-labs-work2/harvey-labs}"
+if [ -z "${HARVEY_LABS:-}" ]; then echo "Set HARVEY_LABS to your harvey-labs checkout (do not rely on a machine-local /tmp path)." >&2; exit 1; fi
+export HARVEY_LABS
 export CLAWQL_LAB_SKIP_CLONE=1
 export CLAWQL_LAB_PODMAN_VIA_DOCKER=1
 export LAB_ARMS=nemotron-clawql
@@ -47,7 +48,7 @@ agg = json.loads(agg_path.read_text())
 t = os.environ["TASK"]
 ec = int(os.environ["EC"])
 task = f"firm-knowledge/tasks/{t}"
-base = Path("/tmp/harvey-labs-work2/harvey-labs/results") / task
+base = Path(os.environ["HARVEY_LABS"]) / "results" / task
 cands = sorted(
     base.glob("NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/*/scores.json"),
     key=lambda p: p.stat().st_mtime,

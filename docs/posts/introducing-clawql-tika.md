@@ -1,5 +1,7 @@
 # Apache Tika Explained: The Extraction Layer Behind Searchable Documents
 
+> Published as a launch note; claims should be read **as of ClawQL 8.0** (Ouroboros agent tools opt-in; WORM on by default).
+
 Apache Tika is one of the most widely used tools for document text and metadata extraction. It provides a unified interface for detecting file types and parsing content from many formats, which is why it appears in so many document, search, and AI ingestion pipelines.
 
 - **Project site:** https://tika.apache.org

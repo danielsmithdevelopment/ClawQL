@@ -4,7 +4,7 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v7.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.0.0) · [npm: clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference-first GTM](https://clawql.com/inference/gtm/) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.0.0.md](../release/RELEASE_NOTES_v7.0.0.md)
+**Links:** [GitHub release v7.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.0.0) · [npm: clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [GTM playbook (internal)](../gtm/clawql-gtm-playbook.md) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.0.0.md](../release/RELEASE_NOTES_v7.0.0.md)
 
 ---
 
@@ -63,7 +63,7 @@ Land with inference and MCP. Expand product-led into infrastructure optimization
 2. **Dedicated Virtual Gateway** — Audit-Trail Enforcement Point; NATS JetStream + Valkey for event-driven swarm workflows; federated peers (no global master)
 3. **Edge Agentic Gateway** — developer laptop nodes; mTLS policy push / audit-bundle sync
 
-→ [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference-first GTM playbook](https://clawql.com/inference/gtm/)
+→ [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [GTM playbook (internal)](../gtm/clawql-gtm-playbook.md)
 
 ### Why it matters
 
@@ -89,7 +89,7 @@ Highlights:
 - Enterprise path: **Zero-Trust Agentic Fabric** — Regional Hubs → Dedicated Virtual Gateways → Edge Gateways
 - Operator scaffold, Desktop app, observability ADR 0005, IDP wave
 
-**Links:** GitHub releases · npm **`clawql-mcp@7.0.0`** · docs.clawql.com/architecture/agentic-fabric · clawql.com/inference/gtm
+**Links:** GitHub releases · npm **`clawql-mcp@7.0.0`** · docs.clawql.com/architecture/agentic-fabric · docs/gtm (internal)
 
 #AgenticGateway #MCP #AuditableAI #Kubernetes #ClawQL #ProductionAI
 
@@ -180,6 +180,6 @@ Full notes: docs/release/RELEASE_NOTES_v7.0.0.md · CHANGELOG [7.0.0]
 - [ ] Lead with **Agentic Gateway / Foundational Platform / Auditable Production AI** — not “operating system for agents”
 - [ ] Prefer **Regional Hub** over “global edge” for hosted Developer/Teams
 - [ ] Prefer **Dedicated Virtual Gateway** / **Edge Agentic Gateway** over vague “Virtual Gateway = laptop” language
-- [ ] Link fabric doc + inference GTM; Palantir / sovereign narrative stays secondary (`/enterprise/gtm`)
+- [ ] Link fabric doc + inference GTM; Palantir / sovereign narrative stays secondary (`docs/gtm`, internal)
 - [ ] Confirm npm tag + GitHub release URL before publishing
 ```

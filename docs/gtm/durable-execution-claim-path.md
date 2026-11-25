@@ -71,7 +71,7 @@ Extend the TLA+ spec from single writes to programs: a crashed program eventuall
 
 > ClawQL runs programs durably: after a crash or node failure, a program resumes from its last completed step and runs to completion, never repeating a write.
 
-Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a position no one else can claim in full today.
+Name the granularity: **“durable execution with step-level checkpoints.”** On John’s grid that is a defined, respectable position and does **not** imply Golem’s mid-step transparency. Combined with write guarantees for APIs that don’t cooperate, it is a scoped claim we can make only after the measured board in `docs/benchmarks/durability-proof/` supports it — not an exclusivity claim about other systems.
 
 ---
 

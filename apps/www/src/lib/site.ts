@@ -32,13 +32,6 @@ export const site = {
     twitter: 'https://x.com/clawql',
     /** Public IDP (intelligent document processing) marketing landing. */
     idp: '/idp',
-    /**
-     * Former GTM playbook routes — pages now return a public “not published” stub
-     * (noindex; removed from sitemap). Kept as URL constants so old links resolve.
-     */
-    inferenceGtm: '/inference/gtm',
-    idpGtm: '/idp/gtm',
-    enterpriseGtm: '/enterprise/gtm',
     /** ClawQL Streams — event-driven agents + Protocol Fabric (see #fabric). */
     streams: '/streams',
     /** Protocol Fabric canonical marketing URL (section on Streams). */

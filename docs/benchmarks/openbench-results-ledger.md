@@ -583,7 +583,7 @@ Stakeholder framing: these headline WINs upgrade **architectural** statements to
 | Doc                                                                                          | What changed                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | [`docs/vision/clawql-idp-platform.md`](../vision/clawql-idp-platform.md)                     | **Empirically verified platform claims** table includes P2 notify/sandbox/composed                                      |
-| [`docs/vision/clawql-idp-gtm.md`](../vision/clawql-idp-gtm.md)                               | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros / notify+sandbox+composed) |
+| [`docs/gtm/clawql-idp-gtm.md`](../gtm/clawql-idp-gtm.md)                                     | Differentiator #7 + gateway objection handlers (memory / search-first / Panguard / Ouroboros / notify+sandbox+composed) |
 | [`docs/architecture/clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md) | **Live behavioral evidence** for Layer 1 search-first + Layer 6 vault-under-pressure + composed rollout                 |
 | [`docs/benchmarks/openbench-task-explanations.md`](./openbench-task-explanations.md)         | Thorough prove / why / how for every verified cell                                                                      |
 

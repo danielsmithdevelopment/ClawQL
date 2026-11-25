@@ -10,7 +10,7 @@
 **Arm:** `nemotron-clawql` only  
 **Agent:** `openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit` via clawql-inference `:8091` → MLX `:8081`  
 **Judge:** `ollama/qwen3.6:35b` via same gateway  
-**Checkout:** harvey worktree `~/ClawQL-harvey-lab` · harvey-labs `/tmp/harvey-labs-work2/harvey-labs`
+**Checkout:** harvey worktree `$CLAWQL_HARVEY_WORKTREE` · harvey-labs `$HARVEY_LABS`
 
 ---
 
@@ -111,7 +111,7 @@ AND (is_hsr_second_request OR has_ma_execution_agreement)
 | Tika | 9998 | Docx→text for deal value / extract |
 | LangExtract | 8090 | Demo mode OK if local heuristics always run |
 
-Env pattern used: `CLAWQL_LAB_PODMAN_VIA_DOCKER=1`, `HARVEY_LABS=/tmp/harvey-labs-work2/harvey-labs`, `CLAWQL_LAB_SKIP_CLONE=1`, overlay via `apply_clawql_adapter.py`.
+Env pattern used: `CLAWQL_LAB_PODMAN_VIA_DOCKER=1`, `HARVEY_LABS=$HARVEY_LABS`, `CLAWQL_LAB_SKIP_CLONE=1`, overlay via `apply_clawql_adapter.py`.
 
 **Process lesson:** MCP restart = hard-kill + free port; durable services in Cursor background terminals (agent short shells SIGTERM process groups).
 

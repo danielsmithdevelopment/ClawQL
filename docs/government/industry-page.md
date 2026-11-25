@@ -155,7 +155,7 @@ Analyze bond measure language for measurability. Generate machine-readable outco
 
 `document_ingest()` · `document_export_foia()`
 
-Ingest government documents with cryptographic chain of custody. Generate FOIA-compliant exports with verification proof.
+Ingest government documents with cryptographic chain of custody. Generate FOIA response packages with chain of custody and verification proof (planned).
 
 `contract_ingest()` · `contract_monitor()`
 
@@ -243,7 +243,7 @@ A city contracts for license plate reader cameras promising crime reduction outc
 
 The state auditor's office accesses the auditor API with a read-only key. They can retrieve any program record, verify any Arweave anchor, and generate outcome comparison reports without requesting anything from the agency being audited. When a program's self-reported outcomes diverge from independently measured data, the discrepancy is already flagged in the audit log by the time the auditor arrives.
 
-### FOIA-compliant document production
+### FOIA response packages (planned)
 
 A journalist submits a FOIA request for contracts related to a bond-funded program. `document_export_foia()` generates the response with full chain of custody proof — every document hashed, Merkle-chained, and Arweave-anchored where applicable. The journalist can verify independently that the documents are complete and unaltered. Selective production — providing some documents and not others — is detectable because the audit log is tamper-evident.
 

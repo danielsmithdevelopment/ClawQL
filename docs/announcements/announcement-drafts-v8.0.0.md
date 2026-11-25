@@ -6,7 +6,15 @@
 
 **Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md)
 
-**Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
+**Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](archive/announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
+
+## Breaking for regulated buyers (add to every channel)
+
+- **WORM on by default** (local SQLite under `$CLAWQL_HOME/worm`); turning off writes a signed `WORM_DISABLED` entry and warns at startup.
+- **`regulated` tier** refuses WORM off and memory WORM backends.
+- **No product telemetry** on self-hosted installs; Cloud analytics are consent-gated and labeled **pseudonymous**.
+- **Privacy:** never call stored pageview IDs anonymous; never read other applications’ credential files.
+- Managed Cloud remains **waitlist / founder-led** until unit costs are measured — not open self-serve Stripe by default.
 
 **Breaking change — product surface purge:** 8.0 also removes two product surfaces evaluated and not kept: **ClawQL PageIndex** (`pageindex_*` tools, hybrid PageIndex recall) and **CodeGraph / Graphify** (`codegraph_*` tools (11), `CLAWQL_ENABLE_CODEGRAPH`, hybrid code-graph recall, the `clawql-codegraph` package, and the `code_change` vault-notes flywheel from [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)). Both lost their A/B retest against a working baseline (Vectify-style ranking and `grep` + `read_around`, respectively) — see [migrate-to-8.0](../getting-started/migrate-to-8.0.md), the [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md), and the [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) for conditions under which CodeGraph could return as an opt-in tool.
 
@@ -24,20 +32,23 @@
 
 **7.2** closed Memory Stack + IDP Partials. **8.0** is the honesty release for install posture **and** extension surface:
 
-1. **Empty by default** — restore 7.x with `CLAWQL_PROVIDER=default` or Helm `providers.pack: default`.
-2. **`ProviderPlugin` only** — legacy `Plugin` bridge gone; rewrite out-of-tree plugins ([migrate-to-8.0](../getting-started/migrate-to-8.0.md)).
-3. **Enforcement opt-in** — Panguard proxy off until `CLAWQL_PANGUARD_PROXY_PLUGIN=1`; boot warns if none active.
-4. **Skills-unified search** — operations and skills in one ranker; Agent Seer cold-start scenarios.
-5. **Gateway + web/data/MCP UI** — Managed Edge Gateway, `clawql-web`, DuckDB `data_*`, PixelDrop / HTMX playground.
-6. **Observability + audit** — `clawql-observability` LGTM+/Faro; merkle/audit WORM wedge; simulated TEE.
-7. **Network + analytics** — `clawql-network` mesh CLI; `clawql-analytics` docs adapter; workspace **`0.1.0`** first-publish policy.
-8. **Learn / 8.0 docs** — migrate-to-8 guide, Streams/IDP labs, Security/OSV sidebar, `/security/status`.
-9. **Streams celld** — celld **v0.4.0** Lab 5 + Helm; AgentSessionDO MCP/memory/adapter/audit-LTX path; BurstWatch / AWS burst path.
-10. **Fast Decision + capability lifecycle** — GLiNER2/Decide classifier; default-on capability gate; gateway ladder `/decision` + `/events`.
-11. **Risk / HITL** — operation-risk-from-spec; execute pause/resume for mandates.
-12. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
-13. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; self-serve Stripe.
-14. **Effect v4.0.0** — singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4 ([#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)).
+1. **WORM on by default** — local hash-chained WORM (SQLite under `$CLAWQL_HOME/worm`); remote Object Lock default on Cloud paid / `regulated`; `audit` `clear` empties only the agent view.
+2. **`regulated` tier** — refuses WORM off and non-durable WORM backends; leaving the profile is recorded.
+3. **No telemetry when self-hosted** — gateway does not phone home; Cloud pageviews are consent-gated and pseudonymous (never “anonymous”).
+4. **Empty by default** — restore 7.x with `CLAWQL_PROVIDER=default` or Helm `providers.pack: default`.
+5. **`ProviderPlugin` only** — legacy `Plugin` bridge gone; rewrite out-of-tree plugins ([migrate-to-8.0](../getting-started/migrate-to-8.0.md)).
+6. **Enforcement opt-in** — Panguard proxy off until `CLAWQL_PANGUARD_PROXY_PLUGIN=1`; boot warns if none active.
+7. **Skills-unified search** — operations and skills in one ranker; Agent Seer cold-start scenarios.
+8. **Gateway + web/data/MCP UI** — Managed Edge Gateway, `clawql-web`, DuckDB `data_*`, PixelDrop / HTMX playground.
+9. **Observability + audit** — `clawql-observability` LGTM+/Faro; merkle/audit WORM; simulated TEE.
+10. **Network + analytics** — `clawql-network` mesh CLI; `clawql-analytics` docs adapter; workspace **`0.1.0`** first-publish policy.
+11. **Learn / 8.0 docs** — migrate-to-8 guide, Streams/IDP labs, Security/OSV sidebar, `/security/status`.
+12. **Streams celld** — celld **v0.4.0** Lab 5 + Helm; AgentSessionDO path; BurstWatch / AWS burst path.
+13. **Fast Decision + capability lifecycle** — GLiNER2/Decide classifier; default-on capability gate; gateway ladder `/decision` + `/events`.
+14. **Risk / HITL** — operation-risk-from-spec; execute pause/resume for mandates.
+15. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
+16. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; managed billing via waitlist / founder-led onboarding (Stripe only when self-serve env is set).
+17. **Effect v4.0.0** — singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4 ([#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)).
 
 ### Why it matters
 
@@ -53,7 +64,7 @@ Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slac
 
 Shipped **clawql-mcp 8.0.0** (semver-**major**).
 
-Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · **Effect v4** · skills-unified search · LGTM+/Faro observability · Streams **celld** · `clawql-network` + analytics · Learn/migrate-to-8 docs · Managed Edge Gateway.
+Headlines: **WORM on by default** · **`regulated` tier** · **no self-hosted telemetry** · **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · **Effect v4** · waitlist-led managed Cloud (not open self-serve by default).
 
 Pin `@8` · migrate: docs/getting-started/migrate-to-8.0.md · npm: clawql-mcp@8.0.0
 

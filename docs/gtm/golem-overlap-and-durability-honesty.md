@@ -194,7 +194,7 @@ Do **not** put Golem on the MCP token/governance pets board as if it were Bifros
 
 **Message John directly**, using his own distinction:
 
-> Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and exactly once only where idempotency keys exist and that path is shipped. Here are the crash-test numbers. Want to check our setup and show the combination together?
+> Golem makes **execution** durable; ClawQL governs the **remote effects** you both agree no runtime can make durable on its own — at most once, approved, audited, and at most once unless keyed resend is shipped and the upstream honors keys. Here are the crash-test numbers. Want to check our setup and show the combination together?
 
 Body: (1) execution vs effect durability; (2) his three conditions, acknowledged; (3) Tier C claim + evidence + dual-mode board; (4) invite Golem-arm config; (5) REST mandate keys shipped + check-then-decide lookup still planned (not overclaimed).
 

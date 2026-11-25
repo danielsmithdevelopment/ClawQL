@@ -145,7 +145,7 @@ The entire platform is built on Effect-TS. For non-technical readers: when a new
 
 **`clawql-agents`** — Hardened adapters for seven open-source agents (Panguard, WORM hooks, vault memory, Helm overlays, dry OpenBench runner). Spec: [`docs/agents/clawql-agents-spec-v0.1.md`](https://docs.clawql.com/agents/clawql-agents).
 
-**`clawql-audit`** — Durable WORM audit trail package (Merkle chain, SQLite/Postgres/S3 backends, replication). Distinct from the in-process MCP `audit` ring buffer in gateway core. Docs: [`/audit`](https://docs.clawql.com/audit).
+**`clawql-audit`** — Durable WORM audit trail package (Merkle chain, SQLite/Postgres/S3 backends, replication). Distinct from the agent-facing MCP `audit` view over the WORM trail (`clear` empties only the view). Docs: [`/audit`](https://docs.clawql.com/audit).
 
 **`clawql-auth`** — Gateway modes, ATR claims, provider headers.
 

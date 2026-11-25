@@ -594,7 +594,7 @@ Use cases:   Law firm intake, due diligence, litigation support,
 ```
 Tools:       fhir_parse, hl7_extract, dicom_analyze, ehr_structure,
              deidentify, medical_image_analyze, clinical_note_structure
-Compliance:  HIPAA-friendly redaction, PHI de-identification, audit trails
+Compliance:  PHI-oriented redaction and de-identification patterns, audit trails (no HIPAA certification claim)
 Use cases:   Clinical document processing, radiology, patient record intelligence
 ```
 
@@ -603,7 +603,7 @@ Use cases:   Clinical document processing, radiology, patient record intelligenc
 ```
 Tools:       claim_extract, policy_analyze, loss_run_reconcile,
              fraud_flag, payout_validate, coverage_check
-Compliance:  HIPAA/SOC2 redaction, immutable Merkle audit trails
+Compliance:  PHI/PII redaction patterns and Merkle audit trails (ClawQL holds no HIPAA cert / no SOC 2 Type II report)
 Use cases:   Carriers, brokers, P&C/life/health — claims and policy lifecycle
 ```
 
@@ -1064,7 +1064,7 @@ Phases below are **dependency-ordered workstreams**. Week ranges are **illustrat
 **Week 10: `clawql-legal` + `clawql-healthcare` + `clawql-insurance`**
 
 - Each vertical: document processing plugin + domain-specific MCP tools
-- Compliance tooling for each (ethical walls, HIPAA, SOC2)
+- Compliance tooling for each (ethical walls, PHI/PII redaction patterns, audit evidence hooks — no HIPAA cert / no SOC 2 Type II report)
 - `clawql-legal`: clause extraction, privilege redaction, precedent search
 
 **Week 11: Remaining verticals + `clawql-engineering`**

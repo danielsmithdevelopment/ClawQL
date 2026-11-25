@@ -244,7 +244,7 @@ Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGa
    **Alpha now:** Packer golden host + Pulumi dedicated tier boots team vault, then Managed Edge Gateway (`/mcp` + `/v1`) via `bootstrap-dedicated-gateway.sh`. Full WORM/NATS/Valkey + JWT ATR remain follow-ups.
 4. **Regional Hub** — ClawQL-managed metering / routing pipe only — never holds your sovereign vault.
 
-GTM narrative: [Inference-first GTM](https://clawql.com/inference/gtm) · Architecture: [Agentic Fabric](/architecture/agentic-fabric)
+GTM narrative: [GTM playbook (internal)](../gtm/clawql-gtm-playbook.md) · Architecture: [Agentic Fabric](/architecture/agentic-fabric)
 
 ---
 
