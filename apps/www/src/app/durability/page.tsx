@@ -5,10 +5,11 @@ import { pageMetadata } from '@/lib/seo'
 import { site } from '@/lib/site'
 
 const GH = 'https://github.com/danielsmithdevelopment/ClawQL'
-const EVIDENCE_BOARD = `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`
-const EVIDENCE_SOAK = `${GH}/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/node-soak-lab-authorizing-mac-mini-identity-remeasure.json`
-const EVIDENCE_SETTLE = `${GH}/blob/de237c7681f87bdbcbef8e9dac0aa813ed8d9148/docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json`
-const EVIDENCE_DIR = `${GH}/tree/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill`
+/** Board summaries live under v4/ on main (SHA-256 manifest in README). */
+const EVIDENCE_BOARD = `${GH}/blob/main/docs/benchmarks/program-cell-fleet-kill/v4/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json`
+const EVIDENCE_SOAK = `${GH}/blob/main/docs/benchmarks/program-cell-fleet-kill/v4/node-soak-lab-authorizing-mac-mini-identity-remeasure.json`
+const EVIDENCE_SETTLE = `${GH}/blob/main/docs/benchmarks/program-cell-fleet-kill/v4/v4-identity-remeasure-during-call-settle.json`
+const EVIDENCE_DIR = `${GH}/tree/main/docs/benchmarks/program-cell-fleet-kill/v4`
 const FORMAL_TLA = `${GH}/tree/cadb0a4bcb7dd312663b9eea59ec1e49ff6c6ba6/formal/tla`
 const WHITEPAPAPER = `${GH}/blob/main/docs/vision/clawql-network-whitepaper-v0.2.md`
 const DRAFT_DOC = `${GH}/blob/main/docs/gtm/clawql-durability-page-draft.md`
@@ -260,7 +261,7 @@ export default function Page() {
         <li>
           Crash boards and evidence:{' '}
           <Link href={EVIDENCE_DIR}>
-            <code>docs/benchmarks/program-cell-fleet-kill/</code>
+            <code>docs/benchmarks/program-cell-fleet-kill/v4/</code>
           </Link>
         </li>
         <li>

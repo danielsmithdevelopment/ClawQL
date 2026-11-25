@@ -552,6 +552,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         (base.worm as Record<string, unknown>).remote = wormStatus.remote;
         (base.worm as Record<string, unknown>).localDurable = wormStatus.localDurable;
       }
+      if (typeof audit.getProcessWormAppendFailureCount === "function") {
+        (base.worm as Record<string, unknown>).appendFailures =
+          audit.getProcessWormAppendFailureCount();
+      }
+      if (typeof audit.processWormRequiredFromEnv === "function") {
+        (base.worm as Record<string, unknown>).required = audit.processWormRequiredFromEnv();
+      }
     } catch {
       /* clawql-audit optional at healthz */
     }

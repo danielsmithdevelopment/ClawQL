@@ -169,7 +169,7 @@ export function IdpLanding() {
         headline={
           <>
             Your IDP costs $150,000/year.
-            <br className="max-sm:hidden" /> Ours costs {pricing.starter.monthlyPrice}/month. And it does more.
+            <br className="max-sm:hidden" /> Ours costs {pricing.starter.monthlyPrice}/month. And it covers intake through secure sharing.
           </>
         }
         subheadline={

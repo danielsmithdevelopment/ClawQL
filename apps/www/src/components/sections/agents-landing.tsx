@@ -83,7 +83,7 @@ const differentiators = [
   {
     index: '03',
     title: 'Auditability you can prove',
-    body: 'Merkle-chained WORM, LTX replication that acknowledges after a disk quorum on the fleet (bucket upload follows; zone and region loss not yet measured), hardware attestation via clawql-tee, and QR export to an air-gapped examiner is not a log file. It is a verifiable record of what the agent decided and what the human chose.',
+    body: 'Merkle-chained WORM, LTX replication that acknowledges after a disk quorum on the fleet (bucket upload follows; zone and region loss not yet measured), and clawql-tee attestation (software-simulated today; hardware planned) are not a log file. They are a verifiable record of what the agent decided and what the human chose. QR export to an air-gapped examiner is planned.',
   },
 ] as const
 
@@ -147,7 +147,7 @@ const securityItems = [
   },
   {
     title: 'clawql-tee',
-    body: 'Hardware attestation for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. GPU confidential computing. QR air-gap audit export.',
+    body: 'Specified for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves — software-simulated today; hardware adapters planned. QR air-gap export planned.',
   },
   {
     title: '32-module security curriculum',
@@ -372,10 +372,10 @@ export function AgentsLanding() {
         }
       >
         <p className="mb-8 max-w-3xl text-[1.05rem] leading-relaxed">
-          Fully DO-compatible runtime supporting AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware attestation
-          proves what software is running. Vault releases secrets only after verification. GPU confidential computing
-          keeps weights and inputs away from the host. Audit leaves the TEE through a QR optical channel — fountain
-          codes, encryption, HMAC, Merkle verification.
+          DO-compatible runtime with a software-simulated TEE today; AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves
+          adapters are planned. Simulated attestation proves what software is running. Vault can release secrets only
+          after verification when hardware adapters ship. GPU confidential computing and QR optical audit export
+          (fountain codes, encryption, HMAC, Merkle verification) are planned.
         </p>
         <div className="-mx-6 overflow-x-auto px-6 sm:mx-0 sm:px-0">
           <table className="agents-compare min-w-[40rem]">

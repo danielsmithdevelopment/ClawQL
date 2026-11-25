@@ -43,6 +43,15 @@ export function ensureProcessWormHostBootedEffect(
 ): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
     if (booted) return;
+
+    // Regulated profile: compose fail-closed controls before WORM / plugins (audit 3.05).
+    if (tierIsRegulated(env)) {
+      const { applyRegulatedProfileEnvEffect } = yield* Effect.promise(
+        () => import("./regulated-profile.js")
+      );
+      yield* applyRegulatedProfileEnvEffect(env);
+    }
+
     if (!wormEnabledFromEnvSync(env)) {
       process.stderr.write(
         "[clawql] WARNING: process WORM disabled (CLAWQL_WORM_ENABLED=0). " +
@@ -57,6 +66,13 @@ export function ensureProcessWormHostBootedEffect(
               "Unset CLAWQL_WORM_ENABLED=0 or leave the regulated profile."
           )
         );
+      }
+      // Audit 3.03: if a durable local store already exists, append WORM_DISABLED once.
+      const audit = yield* Effect.promise(() => loadAudit());
+      if (typeof audit.recordProcessWormDisabledEffect === "function") {
+        yield* audit
+          .recordProcessWormDisabledEffect(env, "CLAWQL_WORM_ENABLED=0")
+          .pipe(Effect.catch(() => Effect.void));
       }
       booted = true;
       return;

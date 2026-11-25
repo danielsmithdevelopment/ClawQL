@@ -11,7 +11,14 @@ if (!mattersRoot) {
 
 process.env.CLAWQL_ENABLE_DATA = "1";
 if (!process.env.CLAWQL_DATA_PATH) {
-  process.env.CLAWQL_DATA_PATH = resolve("/tmp/harvey-lab-data.duckdb");
+  const harveyRoot = process.env.HARVEY_LABS?.trim();
+  if (!harveyRoot) {
+    console.error(
+      "Set HARVEY_LABS (or CLAWQL_DATA_PATH) — do not rely on a machine-local /tmp path."
+    );
+    process.exit(1);
+  }
+  process.env.CLAWQL_DATA_PATH = resolve(harveyRoot, "harvey-lab-data.duckdb");
 }
 
 const store = getClawqlDataStore();

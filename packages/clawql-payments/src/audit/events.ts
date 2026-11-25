@@ -1292,23 +1292,27 @@ export function buildOrgPlanChangedEntry(input: {
   });
 }
 
+/**
+ * Account-deletion WORM entry. Records the deletion job id and counts only —
+ * never plain or SHA-256 hashes of user/org/Stripe ids (audit 3.06 / T3 Code pattern).
+ */
 export function buildAccountDeletedEntry(input: {
-  userIdHash: string;
-  orgIdsHash: string;
-  supabaseSubjectHash: string;
-  stripeCustomerHash: string;
+  deletionJobId: string;
+  orgCount: number;
+  stripeCustomerCount: number;
+  supabaseSubjectCount: number;
   correlationId?: string;
 }): PaymentWormEntry {
   return buildPaymentWormEntry({
     eventKind: "ACCOUNT_DELETED",
-    summary: `Account deleted (hashed refs only)`,
+    summary: `Account deleted (job refs only; no subject hashes)`,
     correlationId: input.correlationId,
     payload: {
       provider: "billing",
-      tenant_id: `sha256:${input.userIdHash}`,
-      org_id: input.orgIdsHash,
-      resource: input.supabaseSubjectHash,
-      reason: input.stripeCustomerHash,
+      tenant_id: `deletion_job:${input.deletionJobId}`,
+      org_id: `org_count:${input.orgCount}`,
+      resource: `supabase_subject_count:${input.supabaseSubjectCount}`,
+      reason: `stripe_customer_count:${input.stripeCustomerCount}`,
     },
   });
 }

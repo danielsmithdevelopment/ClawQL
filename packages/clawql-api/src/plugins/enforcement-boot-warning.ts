@@ -30,16 +30,29 @@ export function allowNoEnforcementExplicitly(): boolean {
   return process.env.CLAWQL_ALLOW_NO_ENFORCEMENT?.trim() === "1";
 }
 
+function tierIsRegulated(): boolean {
+  return process.env.CLAWQL_TIER?.trim().toLowerCase() === "regulated";
+}
+
 /**
  * Emit SECURITY WARNING to stderr when zero enforcement hooks are active.
  * Effect-typed for consistency with boot paths; side effect is intentional.
+ * Regulated tier refuses CLAWQL_ALLOW_NO_ENFORCEMENT and fails closed when no
+ * enforcement is active (audit 3.05).
  */
 export function warnIfNoEnforcementActiveEffect(
   plugins: readonly AnyPlugin[]
 ): Effect.Effect<boolean, never> {
   return Effect.sync(() => {
-    if (allowNoEnforcementExplicitly()) return false;
     if (hasActiveToolEnforcement(plugins)) return false;
+    if (tierIsRegulated()) {
+      throw new Error(
+        "CLAWQL_TIER=regulated requires an active tool-scope enforcement provider " +
+          "(e.g. CLAWQL_PANGUARD_PROXY_PLUGIN=1 + CLAWQL_PANGUARD_IN_PROCESS=1). " +
+          "CLAWQL_ALLOW_NO_ENFORCEMENT is refused under the regulated profile."
+      );
+    }
+    if (allowNoEnforcementExplicitly()) return false;
     process.stderr.write(`${NO_ENFORCEMENT_SECURITY_WARNING}\n`);
     return true;
   });

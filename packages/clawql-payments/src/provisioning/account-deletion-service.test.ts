@@ -167,7 +167,7 @@ describe("AccountDeletionService", () => {
     expect(deleted.wormWritten).toBe(true);
     expect(deleted.jobId).toMatch(/^adj_[a-f0-9]{32}$/);
     expect(deleted.orgsDeleted).toBeGreaterThanOrEqual(1);
-    expect(deleted.userIdHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(deleted.deletionRef).toMatch(/^[a-f0-9]{64}$/);
     expect(deleted.steps.keys.status).toBe("completed");
     expect(deleted.steps.org.status).toBe("completed");
     expect(deleted.steps.supabase.status).toBe("completed");
@@ -188,7 +188,7 @@ describe("AccountDeletionService", () => {
     expect(blob).not.toContain("sb-secret-subject");
     expect(blob).not.toContain("cus_secret_customer");
     expect(blob).not.toContain("gone@acme.com");
-    expect(gone[0]?.payload.tenant_id).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(gone[0]?.payload.tenant_id).toMatch(/^deletion_job:adj_/);
 
     const resumed = await runDeletion(
       Effect.gen(function* () {

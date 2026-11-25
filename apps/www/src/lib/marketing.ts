@@ -248,5 +248,5 @@ export const protocolFabricSurfaces = {
 
 export const clawqlTeeSummary = {
   href: 'https://docs.clawql.com/streams/clawql-tee',
-  body: 'For regulated environments where the operator itself cannot be trusted: clawql-tee is a DO-compatible runtime with AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware attestation gates secrets; the audit trail can leave via QR optical channel — no network path across the boundary.',
+  body: 'For regulated environments where the operator itself cannot be trusted: clawql-tee is specified as a DO-compatible runtime for AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Today only the software-simulated platform ships; hardware adapters are planned. QR optical export is planned — no network path across the boundary when that surface ships.',
 } as const

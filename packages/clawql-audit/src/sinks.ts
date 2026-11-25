@@ -5,6 +5,7 @@
 
 import { Effect } from "effect";
 import type { WORMAppendInput, WORMEntry, WORMEntryType } from "./entry.js";
+import type { AuditError } from "./errors.js";
 import { appendProcessWorm, appendProcessWormEffect } from "./process-worm.js";
 
 export type AuthWormEvent = {
@@ -276,7 +277,7 @@ export const wormInputFromPanguardAllow = (input: {
 
 export const appendAuthEventToWormEffect = (
   event: AuthWormEvent
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const input = yield* wormInputFromAuthEvent(event);
     return yield* appendProcessWormEffect(input);
@@ -284,7 +285,7 @@ export const appendAuthEventToWormEffect = (
 
 export const appendMemoryEventToWormEffect = (
   event: MemoryWormEventLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const input = yield* wormInputFromMemoryEvent(event);
     return yield* appendProcessWormEffect(input);
@@ -292,7 +293,7 @@ export const appendMemoryEventToWormEffect = (
 
 export const appendWebEventToWormEffect = (
   event: WebWormEventLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const input = yield* wormInputFromWebEvent(event);
     return yield* appendProcessWormEffect(input);
@@ -300,7 +301,7 @@ export const appendWebEventToWormEffect = (
 
 export const appendPaymentEventToWormEffect = (
   entry: PaymentWormEventLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const input = yield* wormInputFromPaymentEvent(entry);
     return yield* appendProcessWormEffect(input);
@@ -308,7 +309,7 @@ export const appendPaymentEventToWormEffect = (
 
 export const appendInferenceCallToWormEffect = (
   input: InferenceCallLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const body = yield* wormInputFromInferenceCall(input);
     return yield* appendProcessWormEffect(body);
@@ -316,7 +317,7 @@ export const appendInferenceCallToWormEffect = (
 
 export const appendInferenceResultToWormEffect = (
   input: InferenceResultLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const body = yield* wormInputFromInferenceResult(input);
     return yield* appendProcessWormEffect(body);
@@ -324,7 +325,7 @@ export const appendInferenceResultToWormEffect = (
 
 export const appendInferenceAuditEntryToWormEffect = (
   entry: InferenceAuditEntryLike
-): Effect.Effect<WORMEntry | null> =>
+): Effect.Effect<WORMEntry | null, AuditError> =>
   Effect.gen(function* () {
     const body = yield* wormInputFromInferenceAuditEntry(entry);
     return yield* appendProcessWormEffect(body);

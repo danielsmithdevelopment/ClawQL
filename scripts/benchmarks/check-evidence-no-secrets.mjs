@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 /**
- * Fail if any docs/benchmarks *evidence*.json contains credential-shaped content
- * or unredacted cloud account / bucket identifiers.
+ * Fail if published benchmark evidence JSON contains credential-shaped content
+ * or unredacted cloud account / bucket identifiers (audit 11.04).
  *
- * Usage: node scripts/benchmarks/check-evidence-no-secrets.mjs [rootDir]
+ * Usage:
+ *   node scripts/benchmarks/check-evidence-no-secrets.mjs [rootDir ...]
+ * Default roots: docs/benchmarks, benchmarks (results + evidence trees)
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const root = process.argv[2] || join(process.cwd(), "docs/benchmarks");
+const cwd = process.cwd();
+const defaultRoots = [
+  join(cwd, "docs/benchmarks"),
+  join(cwd, "benchmarks"),
+];
+const roots = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const scanRoots = (roots.length ? roots : defaultRoots).filter((r) => existsSync(r));
 
 const PATTERNS = [
   { name: "aws_access_key_id", re: /\bAKIA[0-9A-Z]{16}\b/ },
@@ -30,17 +38,29 @@ const PATTERNS = [
   { name: "bucket_field_unredacted", re: /"bucket"\s*:\s*"s3:\/\// },
 ];
 
-function isEvidenceFile(name) {
-  // evidence.json, phased-evidence.json, *-evidence.json
-  return name === "evidence.json" || (name.endsWith(".json") && name.includes("evidence"));
+function isScanTarget(name, absPath) {
+  if (!name.endsWith(".json")) return false;
+  // Always scan *evidence*.json
+  if (name === "evidence.json" || name.includes("evidence")) return true;
+  // Board / result JSON under docs/benchmarks or **/results/**
+  const norm = absPath.replace(/\\/g, "/");
+  if (norm.includes("/docs/benchmarks/")) return true;
+  if (norm.includes("/results/")) return true;
+  return false;
 }
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".git") continue;
     const p = join(dir, name);
-    const st = statSync(p);
+    let st;
+    try {
+      st = statSync(p);
+    } catch {
+      continue;
+    }
     if (st.isDirectory()) walk(p, out);
-    else if (isEvidenceFile(name)) out.push(p);
+    else if (isScanTarget(name, p)) out.push(p);
   }
   return out;
 }
@@ -56,9 +76,17 @@ function scanText(text) {
 if (process.argv.includes("--self-test")) {
   const samples = [
     { label: "akia", text: '{"k":"AKIAIOSFODNN7EXAMPLE"}', expect: "aws_access_key_id" },
-    { label: "r2_host", text: "https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com", expect: "r2_endpoint_host" },
+    {
+      label: "r2_host",
+      text: "https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com",
+      expect: "r2_endpoint_host",
+    },
     { label: "s3_uri", text: '{"bucket":"s3://my-bucket/prefix"}', expect: "s3_uri_unredacted" },
-    { label: "clean", text: '{"bucketRedacted":true,"storageProvider":"cloudflare-r2"}', expect: null },
+    {
+      label: "clean",
+      text: '{"bucketRedacted":true,"storageProvider":"cloudflare-r2"}',
+      expect: null,
+    },
   ];
   let bad = 0;
   for (const s of samples) {
@@ -74,11 +102,12 @@ if (process.argv.includes("--self-test")) {
   process.exit(0);
 }
 
-const files = walk(root);
+const files = [];
+for (const root of scanRoots) walk(root, files);
 let failed = 0;
 for (const file of files) {
   const text = readFileSync(file, "utf8");
-  const rel = relative(process.cwd(), file);
+  const rel = relative(cwd, file);
   for (const name of scanText(text)) {
     console.error(`FAIL ${rel}: matched ${name}`);
     failed += 1;
@@ -89,4 +118,6 @@ if (failed > 0) {
   console.error(`check-evidence-no-secrets: ${failed} finding(s) in ${files.length} file(s)`);
   process.exit(1);
 }
-console.log(`check-evidence-no-secrets: ok (${files.length} evidence file(s))`);
+console.log(
+  `check-evidence-no-secrets: ok (${files.length} file(s) across ${scanRoots.length} root(s))`
+);

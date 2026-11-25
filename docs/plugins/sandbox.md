@@ -52,7 +52,7 @@ See [Local agent sandbox](/agent-setup#local-agent-sandbox-mac-os-seatbelt) and 
 | **`kata`**           | Kubernetes Jobs with Kata Containers (production)               |
 | **`docker`**         | Docker socket backend (single-node dev)                         |
 | **`macos-seatbelt`** | macOS Seatbelt sandbox                                          |
-| **`bridge`**         | Cloudflare sandbox bridge (default off-cluster)                 |
+| **`bridge`**         | Cloudflare sandbox bridge (pin explicitly; last in auto)        |
 | **`auto`**           | Seatbelt → Docker → bridge (or Kata in-cluster when configured) |
 
 Helm: `enableSandbox: true` plus optional `sandboxKata` / `sandboxDocker` blocks.

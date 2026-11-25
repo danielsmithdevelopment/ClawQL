@@ -16,7 +16,7 @@
  * plan loop, which is deterministic given the journaled results.
  */
 
-import { appendProcessWormEffect } from "clawql-audit";
+import { appendProcessWormGatedEffect } from "../audit/worm-append-gated.js";
 import { Clock, Context, Data, Duration, Effect, Layer, Option, Result } from "effect";
 import { isReadOperation } from "../ifc/session-ifc-enforce.js";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
@@ -120,7 +120,8 @@ export type DurableProgramRefusalCode =
   | "journal_corrupt"
   | "journal_divergence"
   | "replay_label_failed"
-  | "awaiting_approval";
+  | "awaiting_approval"
+  | "worm_append_failed";
 
 /** The defect {@link DurableProgramRunOptions.simulateCrashAfterCalls} dies with. */
 export class ProgramCrashSimulated extends Data.TaggedError("ProgramCrashSimulated")<{
@@ -484,12 +485,24 @@ function runAttemptEffect(
     });
 
     const auditResult = (metadata: Readonly<Record<string, unknown>>) =>
-      appendProcessWormEffect({
+      appendProcessWormGatedEffect({
         type: "TOOL_CALL_RESULT",
         timestamp: new Date().toISOString(),
         sessionId: input.sessionId ?? "",
         metadata: { source: "execute_program", programId, journal: api.backend, ...metadata },
-      }).pipe(Effect.catch(() => Effect.void));
+      }).pipe(
+        Effect.asVoid,
+        Effect.mapError(
+          (e) =>
+            new DurableProgramRefusal({
+              programId,
+              code: "worm_append_failed",
+              message: e instanceof Error ? e.message : String(e),
+              fixHint:
+                "Process WORM append failed (CLAWQL_TIER=regulated or CLAWQL_WORM_REQUIRED=1). Fix the trail and resume.",
+            })
+        )
+      );
 
     const diverged = (index: number, why: string) =>
       Effect.fail(
@@ -773,7 +786,19 @@ function runAttemptEffect(
     ).pipe(Effect.result);
 
     if (Result.isFailure(outcome)) {
-      const refusal = outcome.failure;
+      const refusal: DurableProgramRefusal =
+        outcome.failure instanceof DurableProgramRefusal
+          ? outcome.failure
+          : new DurableProgramRefusal({
+              programId,
+              code: "worm_append_failed",
+              message:
+                outcome.failure instanceof Error
+                  ? outcome.failure.message
+                  : String(outcome.failure),
+              fixHint:
+                "Process WORM append failed (CLAWQL_TIER=regulated or CLAWQL_WORM_REQUIRED=1). Fix the trail and resume.",
+            });
       if (refusal.code === "journal_divergence") {
         yield* api
           .markStatus(programId, "failed", { error: refusal.message })

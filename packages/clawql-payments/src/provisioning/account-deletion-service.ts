@@ -60,7 +60,8 @@ export type DeleteAccountInput = {
 export type DeleteAccountResult = {
   readonly jobId: string;
   readonly status: AccountDeletionJob["status"];
-  readonly userIdHash: string;
+  /** Opaque job-scoped ref (not a hash of the user id). */
+  readonly deletionRef: string;
   readonly orgsDeleted: number;
   readonly stripeCustomersDeleted: number;
   readonly supabaseUserDeleted: boolean;
@@ -70,8 +71,9 @@ export type DeleteAccountResult = {
   readonly wormWritten: boolean;
 };
 
-const sha256HexEffect = (value: string): Effect.Effect<string> =>
-  Effect.sync(() => createHash("sha256").update(value, "utf8").digest("hex"));
+/** Opaque API-facing ref — HMAC of the deletion job id, not of the user id (audit 3.06). */
+const deletionRefEffect = (jobId: string): Effect.Effect<string> =>
+  Effect.sync(() => createHash("sha256").update(`deletion-ref:${jobId}`, "utf8").digest("hex"));
 
 const nowIsoEffect = (): Effect.Effect<string> => Effect.sync(() => new Date().toISOString());
 
@@ -111,11 +113,11 @@ const stepEventForPatch = (
 
 const resultFromJobEffect = (job: AccountDeletionJob): Effect.Effect<DeleteAccountResult> =>
   Effect.gen(function* () {
-    const userIdHash = yield* sha256HexEffect(job.clawqlUserId);
+    const deletionRef = yield* deletionRefEffect(job.jobId);
     return {
       jobId: job.jobId,
       status: job.status,
-      userIdHash,
+      deletionRef,
       orgsDeleted: job.steps.org.orgsDeleted ?? job.orgIds.length,
       stripeCustomersDeleted: job.steps.stripe.stripeCustomersDeleted ?? 0,
       supabaseUserDeleted: job.steps.supabase.supabaseUserDeleted === true,
@@ -462,18 +464,12 @@ export function accountDeletionLiveLayer(): Layer.Layer<
           }
 
           if (!next.wormWritten) {
-            const userIdHash = yield* sha256HexEffect(next.clawqlUserId);
-            const orgHash = yield* sha256HexEffect([...next.orgIds].sort().join(","));
-            const supabaseHash = yield* sha256HexEffect(
-              [...next.supabaseSubjects].sort().join(",")
-            );
-            const stripeHash = yield* sha256HexEffect([...next.stripeCustomerIds].sort().join(","));
             yield* audit.appendEntry(
               buildAccountDeletedEntry({
-                userIdHash,
-                orgIdsHash: orgHash,
-                supabaseSubjectHash: supabaseHash,
-                stripeCustomerHash: stripeHash,
+                deletionJobId: next.jobId,
+                orgCount: next.orgIds.length,
+                stripeCustomerCount: next.stripeCustomerIds.length,
+                supabaseSubjectCount: next.supabaseSubjects.length,
                 correlationId: next.correlationId,
               })
             );
