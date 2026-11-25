@@ -37,12 +37,21 @@ export type DuckDbHandle = {
   readonly connection: DuckDBConnection;
 };
 
+/**
+ * Open DuckDB with host/URL IO disabled (audit 4.02).
+ * Ingest still needs a writable connection; external access stays off either way.
+ */
 export async function openDuckDb(path: string): Promise<DuckDbHandle> {
   if (path && path !== ":memory:") {
     mkdirSync(dirname(path), { recursive: true });
   }
-  const instance = await DuckDBInstance.create(path);
+  const instance = await DuckDBInstance.create(path, {
+    enable_external_access: "false",
+    autoinstall_known_extensions: "false",
+    autoload_known_extensions: "false",
+  });
   const connection = await instance.connect();
+  await connection.run("SET lock_configuration=true");
   return { path, instance, connection };
 }
 

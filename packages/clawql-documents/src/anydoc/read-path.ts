@@ -1,6 +1,11 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { cwd } from "node:process";
 import { isAbsolute, resolve } from "node:path";
+import {
+  filterConfiguredFileRoots,
+  isForbiddenAllowlistedFile,
+  isForbiddenFileRoot,
+} from "../shared/file-roots.js";
 import { anydocFileRootsEnv } from "./env.js";
 import { Effect } from "effect";
 
@@ -9,6 +14,9 @@ function isPathInsideRoot(root: string, file: string): boolean {
   return file === root || file.startsWith(prefix);
 }
 
+/**
+ * Audit 4.03: no cwd default. Roots must be set; `/`, `$HOME`, `$CLAWQL_HOME` refused.
+ */
 async function resolveAllowRoots(): Promise<string[]> {
   const raw = anydocFileRootsEnv();
   const parts = raw
@@ -16,11 +24,13 @@ async function resolveAllowRoots(): Promise<string[]> {
         .split(/[:,\n]/)
         .map((s) => s.trim())
         .filter(Boolean)
-    : [cwd()];
+    : [];
+  const candidates = filterConfiguredFileRoots(parts, process.env);
   const out: string[] = [];
-  for (const p of parts) {
+  for (const p of candidates) {
     try {
-      out.push(await realpath(resolve(p)));
+      const real = await realpath(resolve(p));
+      if (!isForbiddenFileRoot(real, process.env)) out.push(real);
     } catch {
       /* skip missing roots */
     }
@@ -43,14 +53,18 @@ async function readAnydocPathAllowlistedImpl(pathInput: string): Promise<Buffer>
   const roots = await resolveAllowRoots();
   if (roots.length === 0) {
     throw new Error(
-      "No valid CLAWQL_ANYDOC_FILE_ROOTS (or CLAWQL_PDF_INSPECTOR_FILE_ROOTS) could be resolved; set absolute directory prefixes."
+      "convert_document requires CLAWQL_ANYDOC_FILE_ROOTS or CLAWQL_PDF_INSPECTOR_FILE_ROOTS " +
+        "(absolute dirs; `/`, `$HOME`, and `$CLAWQL_HOME` are refused)."
     );
   }
-  if (!roots.some((root) => isPathInsideRoot(root, realFile))) {
-    const show = anydocFileRootsEnv()
-      ? "CLAWQL_ANYDOC_FILE_ROOTS / CLAWQL_PDF_INSPECTOR_FILE_ROOTS"
-      : "the default process working directory (set CLAWQL_ANYDOC_FILE_ROOTS to allow more trees)";
-    throw new Error(`document path escapes allowlist (${show}): ${pathInput}`);
+  const matched = roots.find((root) => isPathInsideRoot(root, realFile));
+  if (!matched) {
+    throw new Error(
+      `document path escapes allowlist (CLAWQL_ANYDOC_FILE_ROOTS / CLAWQL_PDF_INSPECTOR_FILE_ROOTS): ${pathInput}`
+    );
+  }
+  if (isForbiddenAllowlistedFile(realFile, matched)) {
+    throw new Error(`document path looks like a secret or credential file: ${pathInput}`);
   }
   const st = await stat(realFile);
   if (!st.isFile()) {

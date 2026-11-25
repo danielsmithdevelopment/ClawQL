@@ -12,4 +12,16 @@ describe("validateReadonlySelect", () => {
     expect(() => validateReadonlySelect("SELECT 1; SELECT 2")).toThrow(/single/);
     expect(() => validateReadonlySelect("DROP TABLE matters")).toThrow(/read-only/);
   });
+
+  it("rejects host file and URL scans (4.02)", () => {
+    expect(() => validateReadonlySelect("SELECT * FROM read_text('/etc/passwd')")).toThrow(
+      /host files|remote URLs/
+    );
+    expect(() => validateReadonlySelect("SELECT * FROM glob('/**')")).toThrow(
+      /host files|remote URLs/
+    );
+    expect(() => validateReadonlySelect("SELECT * FROM 'https://example.com/x'")).toThrow(
+      /host files|remote URLs/
+    );
+  });
 });

@@ -1,11 +1,19 @@
 /**
  * Server-side reads for `memory_ingest.toolOutputsFile` — large bodies without
  * multi‑100KB tool JSON from the client.
+ *
+ * Audit 4.03: no default root (cwd). Feature stays off until
+ * `CLAWQL_MEMORY_INGEST_FILE_ROOTS` is set to non-forbidden directories.
  */
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, resolve, sep } from "node:path";
 import { cwd } from "node:process";
 import { Effect } from "effect";
+import {
+  filterConfiguredFileRoots,
+  isForbiddenAllowlistedFile,
+  isForbiddenFileRoot,
+} from "./vault/read-guard.js";
 
 const DEFAULT_MAX_BYTES = 10_000_000;
 
@@ -28,8 +36,8 @@ export function getMemoryIngestFileMaxBytes(): number {
 }
 
 /**
- * Comma- or newline-separated absolute directory prefixes. If unset, the only
- * allowed root is the process current working directory (resolved).
+ * Comma- or newline-separated absolute directory prefixes.
+ * Unset / empty → no roots (toolOutputsFile refuses). `/`, `$HOME`, `$CLAWQL_HOME` dropped.
  */
 async function getMemoryIngestFileRootsRealImpl(): Promise<string[]> {
   const raw = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS?.trim();
@@ -39,22 +47,17 @@ async function getMemoryIngestFileRootsRealImpl(): Promise<string[]> {
         .map((s) => s.trim())
         .filter(Boolean)
     : [];
-  if (parts.length > 0) {
-    const out: string[] = [];
-    for (const p of parts) {
-      try {
-        out.push(await realpath(resolve(p)));
-      } catch {
-        // ignore invalid roots; still enforce others
-      }
+  const candidates = filterConfiguredFileRoots(parts, process.env);
+  const out: string[] = [];
+  for (const p of candidates) {
+    try {
+      const real = await realpath(p);
+      if (!isForbiddenFileRoot(real, process.env)) out.push(real);
+    } catch {
+      // ignore invalid roots; still enforce others
     }
-    return out;
   }
-  try {
-    return [await realpath(cwd())];
-  } catch {
-    return [cwd()];
-  }
+  return out;
 }
 
 export function getMemoryIngestFileRootsRealEffect(): Effect.Effect<string[], Error> {
@@ -131,23 +134,29 @@ async function readToolOutputsFileForIngestImpl(
     return {
       ok: false,
       error:
-        "No valid CLAWQL_MEMORY_INGEST_FILE_ROOTS could be resolved; set absolute directory prefixes in CLAWQL_MEMORY_INGEST_FILE_ROOTS.",
+        "toolOutputsFile requires CLAWQL_MEMORY_INGEST_FILE_ROOTS (absolute dirs; `/`, `$HOME`, and `$CLAWQL_HOME` are refused).",
     };
   }
 
-  let allowed = false;
+  let matchedRoot: string | undefined;
   for (const root of roots) {
     if (isPathUnderRootDir(root, realFile)) {
-      allowed = true;
+      matchedRoot = root;
       break;
     }
   }
 
-  if (!allowed) {
-    const show = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS?.trim()
-      ? "CLAWQL_MEMORY_INGEST_FILE_ROOTS"
-      : "the default process working directory (set CLAWQL_MEMORY_INGEST_FILE_ROOTS to allow more trees)";
-    return { ok: false, error: `path is outside allowed roots from ${show}` };
+  if (!matchedRoot) {
+    return {
+      ok: false,
+      error: "path is outside allowed roots from CLAWQL_MEMORY_INGEST_FILE_ROOTS",
+    };
+  }
+  if (isForbiddenAllowlistedFile(realFile, matchedRoot)) {
+    return {
+      ok: false,
+      error: "path looks like a secret or credential file and is refused",
+    };
   }
 
   const text = await readFile(realFile, "utf8");

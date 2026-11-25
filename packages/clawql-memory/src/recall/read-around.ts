@@ -6,6 +6,7 @@
 import { Context, Effect, Layer } from "effect";
 import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { MemoryError } from "../effect/memory-errors.js";
+import { assertSafeVaultMemoryRead } from "../vault/read-guard.js";
 import { readVaultTextFile } from "../vault/utils.js";
 
 export type DocSection = {
@@ -262,6 +263,8 @@ export function executeReadAroundEffect(
           error: "vault_not_configured",
         } satisfies ReadAroundResult;
       }
+      // Audit 4.01: agent vault reads only under Memory/ (.md / .cqk), realpath-checked.
+      yield* memoryFromPromise(() => assertSafeVaultMemoryRead(vault, input.path!));
       markdown = yield* memoryFromPromise(() => readVaultTextFile(vault, input.path!));
     }
     if (!markdown) {

@@ -5,6 +5,7 @@ const library = defineConfig({
     index: "src/index.ts",
     "vault/config": "src/vault/config.ts",
     "vault/utils": "src/vault/utils.ts",
+    "vault/read-guard": "src/vault/read-guard.ts",
     "vault/slug-index": "src/vault/slug-index.ts",
     "vault/provider-index": "src/vault/provider-index.ts",
     "okf/index": "src/okf/index.ts",

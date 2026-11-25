@@ -68,10 +68,28 @@ describe("memory-ingest-file", () => {
     if (!r.ok) expect(r.error).toMatch(/too long/);
   });
 
-  it("getMemoryIngestFileRootsReal falls back to cwd when roots unset", async () => {
+  it("getMemoryIngestFileRootsReal is empty when roots unset (no cwd default)", async () => {
     delete process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS;
     const roots = await getMemoryIngestFileRootsReal();
-    expect(roots.length).toBeGreaterThanOrEqual(1);
+    expect(roots).toEqual([]);
+  });
+
+  it("readToolOutputsFileForIngest refuses when roots unset", async () => {
+    delete process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS;
+    const dir = await mkdtemp(join(tmpdir(), "clawql-ingest-noroot-"));
+    const file = join(dir, "out.txt");
+    await writeFile(file, "x\n", "utf8");
+    const r = await readToolOutputsFileForIngest(file);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/CLAWQL_MEMORY_INGEST_FILE_ROOTS/);
+  });
+
+  it("getMemoryIngestFileRootsReal drops slash, home, and CLAWQL_HOME", async () => {
+    const { homedir } = await import("node:os");
+    process.env.CLAWQL_HOME = await mkdtemp(join(tmpdir(), "clawql-home-"));
+    process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS = `/,${homedir()},${process.env.CLAWQL_HOME}`;
+    const roots = await getMemoryIngestFileRootsReal();
+    expect(roots).toEqual([]);
   });
 
   it("readToolOutputsFileForIngest reads file under explicit CLAWQL_MEMORY_INGEST_FILE_ROOTS", async () => {
