@@ -25,6 +25,7 @@ function catalog(): ToolCatalog {
 describe("mcp-ui ATR scoping", () => {
   const secret = "test-mcp-ui-atr-hs256-secret-32chars!!";
   const issuer = "https://auth.clawql.test";
+  const audience = "mcp-api-adapter";
   let closeServer: (() => Promise<void>) | undefined;
 
   afterEach(async () => {
@@ -37,6 +38,7 @@ describe("mcp-ui ATR scoping", () => {
       .setProtectedHeader({ alg: "HS256" })
       .setSubject(String(atr.sub ?? "user"))
       .setIssuer(issuer)
+      .setAudience(audience)
       .setExpirationTime("5m")
       .sign(new TextEncoder().encode(secret));
   }
@@ -45,7 +47,7 @@ describe("mcp-ui ATR scoping", () => {
     const app = createMcpApiAdapterApp({
       getCatalog: catalog,
       callTool: async () => ({ text: "{}", content: [], isError: false }),
-      jwtAuth: { hs256Secret: secret, issuer },
+      jwtAuth: { hs256Secret: secret, issuer, audience },
       mcpUiPath: "/mcp-ui",
       mcpUiAtrScoped: atrScoped,
       title: "ATR scope test",

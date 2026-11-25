@@ -177,14 +177,24 @@ async function commitVaultAfterIngestImpl(input: {
   try {
     await ensureGitRepo(input.vault);
 
-    // Stage note + index/log only — never `git add -A` (would pick up secrets if
-    // the vault was wrongly pointed at CLAWQL_HOME).
-    const toStage = ["index.md", "log.md", ".gitignore"];
+    // Stage note + existing index/log only — never `git add -A` (would pick up
+    // secrets if the vault was wrongly pointed at CLAWQL_HOME).
+    const toStage: string[] = [".gitignore"];
     if (input.path?.trim()) toStage.push(input.path.trim());
+    for (const candidate of ["index.md", "log.md"]) {
+      try {
+        await access(join(input.vault, candidate));
+        toStage.push(candidate);
+      } catch {
+        /* not present yet */
+      }
+    }
     await git(input.vault, ["add", "--", ...toStage]);
 
-    const { stdout: status } = await git(input.vault, ["status", "--porcelain"]);
-    if (!status.trim()) {
+    // Only staged changes matter — untracked notes outside `toStage` must not
+    // force a no-op `git commit` (which fails with "nothing to commit").
+    const { stdout: staged } = await git(input.vault, ["diff", "--cached", "--name-only"]);
+    if (!staged.trim()) {
       return { committed: false, skipped: "nothing to commit" };
     }
 

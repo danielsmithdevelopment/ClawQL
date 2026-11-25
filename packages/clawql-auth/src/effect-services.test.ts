@@ -109,15 +109,22 @@ describe("clawql-auth Effect services", () => {
   });
 
   it("GatewayAuthService resolves admin claims in noAuth mode", async () => {
-    const program = Effect.gen(function* () {
-      const svc = yield* GatewayAuthService;
-      return yield* svc.resolveClaims({ "x-clawql-subject": "u42" });
-    });
-    const claims = await Effect.runPromise(
-      program.pipe(Effect.provide(createGatewayAuthServiceLayer({ mode: "noAuth" })))
-    );
-    expect(claims.role).toBe("admin");
-    expect(claims.sub).toBe("u42");
+    const prevTrusted = process.env.CLAWQL_TRUSTED_PROXY;
+    process.env.CLAWQL_TRUSTED_PROXY = "1";
+    try {
+      const program = Effect.gen(function* () {
+        const svc = yield* GatewayAuthService;
+        return yield* svc.resolveClaims({ "x-clawql-subject": "u42" });
+      });
+      const claims = await Effect.runPromise(
+        program.pipe(Effect.provide(createGatewayAuthServiceLayer({ mode: "noAuth" })))
+      );
+      expect(claims.role).toBe("admin");
+      expect(claims.sub).toBe("u42");
+    } finally {
+      if (prevTrusted === undefined) delete process.env.CLAWQL_TRUSTED_PROXY;
+      else process.env.CLAWQL_TRUSTED_PROXY = prevTrusted;
+    }
   });
 
   it("resolveAtrClaimsFromHeadersEffect verifies oidc JWT end to end", async () => {

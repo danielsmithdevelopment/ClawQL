@@ -84,6 +84,9 @@ ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 # Ephemeral containers: disable Bun transpiler cache (matches oven/bun distroless default).
 ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+# Inside the container bind all interfaces so published ports reach the process;
+# host compose should still publish as 127.0.0.1:… for local demos.
+ENV MCP_HOST=0.0.0.0
 # Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
 COPY --from=bun-bin /usr/local/bin/bun /usr/local/bin/bun
@@ -113,6 +116,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
+ENV MCP_HOST=0.0.0.0
 
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
 COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
@@ -147,6 +151,7 @@ ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+ENV MCP_HOST=0.0.0.0
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/dist ./dist

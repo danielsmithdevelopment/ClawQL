@@ -84,6 +84,7 @@ function multipartBody(
 describe("mcp-ui batches 2-4 e2e", () => {
   const secret = "test-mcp-ui-batches-hs256-secret-32ch!!";
   const issuer = "https://auth.clawql.test";
+  const audience = "mcp-api-adapter";
   let closeServer: (() => Promise<void>) | undefined;
   let lastArgs: Record<string, unknown> | undefined;
 
@@ -98,6 +99,7 @@ describe("mcp-ui batches 2-4 e2e", () => {
       .setProtectedHeader({ alg: "HS256" })
       .setSubject(String(atr.sub ?? "user"))
       .setIssuer(issuer)
+      .setAudience(audience)
       .setExpirationTime("5m")
       .sign(new TextEncoder().encode(secret));
   }
@@ -111,7 +113,7 @@ describe("mcp-ui batches 2-4 e2e", () => {
         await new Promise((r) => setTimeout(r, 30));
         return { text: JSON.stringify({ ok: true, dry_run: args.dry_run }), content: [], isError: false };
       },
-      jwtAuth: { hs256Secret: secret, issuer },
+      jwtAuth: { hs256Secret: secret, issuer, audience },
       mcpUiPath: "/mcp-ui",
       mcpUiAtrScoped: true,
     });
