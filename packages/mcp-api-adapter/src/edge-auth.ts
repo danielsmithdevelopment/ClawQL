@@ -16,8 +16,10 @@ import { Effect } from "effect";
 export type McpApiAdapterJwtAuthOptions = {
   /** ClawQL AS JWKS URL (e.g. `https://mcp.example.com/.well-known/jwks.json`). */
   jwksUrl?: string;
-  /** Expected JWT `iss` (ClawQL MCP OAuth issuer). */
+  /** Expected JWT `iss` (ClawQL MCP OAuth issuer). Required when verifying JWTs. */
   issuer?: string;
+  /** Expected JWT `aud`. Required when verifying JWTs (audit 2.12). */
+  audience?: string | string[];
   /** HS256 secret for tests / single-node when JWKS is unavailable. */
   hs256Secret?: string | Uint8Array;
 };
@@ -49,9 +51,15 @@ export function createJwtVerifier(
 ): ((token: string) => Promise<VerifiedMcpAdapterAtr>) | null {
   const jwksUrl = options.jwksUrl?.trim();
   const issuer = options.issuer?.trim();
+  const audience = options.audience;
   const hs256 = options.hs256Secret;
 
   if (!jwksUrl && !hs256) return null;
+  if (!issuer?.trim() || audience == null || (Array.isArray(audience) && audience.length === 0)) {
+    throw new Error(
+      "mcp-api-adapter JWT auth requires issuer and audience (set both or use API key only)"
+    );
+  }
 
   let jwks: JWTVerifyGetKey | undefined;
   if (jwksUrl) {
@@ -60,15 +68,19 @@ export function createJwtVerifier(
 
   return async (token: string): Promise<VerifiedMcpAdapterAtr> => {
     let payload: JWTPayload;
+    const verifyOpts = {
+      issuer,
+      audience,
+    };
     if (jwks) {
       const verified = await jwtVerify(token, jwks, {
-        ...(issuer ? { issuer } : {}),
+        ...verifyOpts,
         algorithms: ["RS256", "ES256"],
       });
       payload = verified.payload;
     } else {
       const verified = await jwtVerify(token, toKey(hs256!), {
-        ...(issuer ? { issuer } : {}),
+        ...verifyOpts,
         algorithms: ["HS256"],
       });
       payload = verified.payload;
@@ -114,12 +126,17 @@ async function resolveEdgeCredentialImpl(
   if (!presented?.trim()) return null;
   const token = presented.trim();
   const apiKey = options.apiKey?.trim();
-  if (apiKey && token === apiKey) {
-    return {
-      sub: "api-key",
-      role: "admin",
-      scope: ["*"],
-    };
+  if (apiKey) {
+    const { timingSafeEqual } = await import("node:crypto");
+    const a = Buffer.from(token, "utf8");
+    const b = Buffer.from(apiKey, "utf8");
+    if (a.length === b.length && timingSafeEqual(a, b)) {
+      return {
+        sub: "api-key",
+        role: "admin",
+        scope: ["*"],
+      };
+    }
   }
   if (!verifyJwt) return null;
   try {

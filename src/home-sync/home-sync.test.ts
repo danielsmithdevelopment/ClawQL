@@ -30,7 +30,8 @@ describe("collectLocalSyncFiles", () => {
 
     const files = await collectLocalSyncFiles(home, [...DEFAULT_SYNC_INCLUDE]);
     expect(files.has("Memory/note.md")).toBe(true);
-    expect(files.has("sources.json")).toBe(true);
+    // sources.json carries cliCommand/mcpCommand — never team-synced (R5).
+    expect(files.has("sources.json")).toBe(false);
     expect(files.has("vault/providers.json")).toBe(false);
     expect(files.get("Memory/note.md")?.sha256).toMatch(/^[a-f0-9]{64}$/);
   });

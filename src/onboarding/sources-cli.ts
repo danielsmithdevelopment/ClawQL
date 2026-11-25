@@ -6,6 +6,7 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Effect } from "effect";
 import {
+  assertSafeSourceId,
   cacheCustomSourceBody,
   detectSourceFromUrl,
   ensureSourceCacheDir,
@@ -181,7 +182,9 @@ export async function runSourcesAdd(options: SourcesAddOptions): Promise<number>
       console.error("CLI sources require --command");
       return 1;
     }
-    const id = options.id?.trim() || slugifySourceId(options.name ?? options.command);
+    const id = assertSafeSourceId(
+      options.id?.trim() || slugifySourceId(options.name ?? options.command)
+    );
     const entry: CustomSourceEntry = {
       id,
       name: options.name?.trim() || options.command,
@@ -205,7 +208,9 @@ export async function runSourcesAdd(options: SourcesAddOptions): Promise<number>
   }
 
   const detected = await detectSourceFromUrl(url, { kindHint: kind });
-  const id = options.id?.trim() || slugifySourceId(options.name ?? detected.name ?? url);
+  const id = assertSafeSourceId(
+    options.id?.trim() || slugifySourceId(options.name ?? detected.name ?? url)
+  );
   await ensureSourceCacheDir(id, home);
 
   let entry: CustomSourceEntry = {
@@ -242,7 +247,8 @@ export async function runSourcesAdd(options: SourcesAddOptions): Promise<number>
       ...entry,
       grpcEndpoint: options.grpcEndpoint?.trim() || "localhost:50051",
       protoPath: options.protoPath?.trim() || `sources/${id}/service.proto`,
-      grpcInsecure: true,
+      // Default to TLS; opt into insecure with CLAWQL_SOURCES_GRPC_INSECURE=1 (audit 2.19).
+      grpcInsecure: process.env.CLAWQL_SOURCES_GRPC_INSECURE?.trim() === "1",
     };
   } else if (detected.bodyText) {
     entry = await cacheCustomSourceBody(entry, detected.bodyText, home);

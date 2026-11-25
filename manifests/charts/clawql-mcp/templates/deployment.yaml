@@ -128,6 +128,22 @@ spec:
               value: {{ .Values.port | quote }}
             - name: MCP_PATH
               value: {{ .Values.mcpPath | quote }}
+            # Inside the pod bind all interfaces so probes/Services reach the process.
+            - name: MCP_HOST
+              value: {{ .Values.mcpHost | default "0.0.0.0" | quote }}
+            - name: CLAWQL_AUTH_MODE
+              value: {{ .Values.gatewayAuth.mode | default "apiKey" | quote }}
+            {{- if .Values.gatewayAuth.existingSecret }}
+            - name: CLAWQL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.gatewayAuth.existingSecret | quote }}
+                  key: {{ .Values.gatewayAuth.existingSecretKey | default "api-key" | quote }}
+            {{- else if .Values.gatewayAuth.apiKey }}
+            - name: CLAWQL_API_KEY
+              value: {{ .Values.gatewayAuth.apiKey | quote }}
+            {{- end }}
+            {{/* Without a key, apiKey mode fails closed at process start on MCP_HOST=0.0.0.0. */}}
             - name: CLAWQL_BUNDLED_OFFLINE
               value: {{ .Values.bundledOffline | quote }}
             {{- if eq $hostRuntime "bun" }}

@@ -11,7 +11,12 @@ CONTAINER="clawql-mcp-distribution-smoke"
 docker build -f docker/Dockerfile --target runtime -t "${IMAGE}" .
 
 docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
-docker run -d --name "${CONTAINER}" -p 18080:8080 "${IMAGE}" >/dev/null
+# Image binds 0.0.0.0 so published ports work; non-loopback noAuth is refused —
+# smoke uses a throwaway apiKey (same pattern as docker-compose.yml).
+docker run -d --name "${CONTAINER}" -p 18080:8080 \
+  -e CLAWQL_AUTH_MODE=apiKey \
+  -e CLAWQL_API_KEY=ci-distribution-smoke-only \
+  "${IMAGE}" >/dev/null
 
 trap 'docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true' EXIT
 

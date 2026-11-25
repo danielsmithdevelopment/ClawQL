@@ -211,7 +211,12 @@ export function registerClawqlApiShutdownHooks(): void {
 export function runMcpProxyBeforeCallToolEffect(
   toolName: string,
   args: unknown,
-  opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
+  opts?: {
+    readonly sessionId?: string;
+    readonly atrScopeTokens?: readonly string[];
+    /** Pass 2 S4 / CI: forward tenant into McpProxyCallContext. */
+    readonly tenantId?: string;
+  }
 ): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () =>
@@ -223,6 +228,7 @@ export function runMcpProxyBeforeCallToolEffect(
             args,
             sessionId: opts?.sessionId,
             atrScopeTokens: opts?.atrScopeTokens,
+            tenantId: opts?.tenantId,
           });
         })
       ),
@@ -234,7 +240,11 @@ export function runMcpProxyBeforeCallToolEffect(
 export async function runMcpProxyBeforeCallTool(
   toolName: string,
   args: unknown,
-  opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
+  opts?: {
+    readonly sessionId?: string;
+    readonly atrScopeTokens?: readonly string[];
+    readonly tenantId?: string;
+  }
 ): Promise<void> {
   return Effect.runPromise(runMcpProxyBeforeCallToolEffect(toolName, args, opts));
 }

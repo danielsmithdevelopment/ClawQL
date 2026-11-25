@@ -29,6 +29,8 @@ export function grantsWithinAtr(
   attemptedGrant: readonly string[] | undefined
 ): boolean {
   if (!attemptedGrant || attemptedGrant.length === 0) return true;
+  // Admin / unrestricted sessions use `*` — treat as wildcard, not a literal token.
+  if (atrScope.has("*")) return true;
   for (const token of attemptedGrant) {
     if (!atrScope.has(token)) return false;
   }

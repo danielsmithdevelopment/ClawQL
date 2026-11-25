@@ -343,7 +343,86 @@ async function executeRestOperationImpl(
       };
     }
 
-    const res = await getFetchImplForRest()(url.toString(), init);
+    // Audit 2.10 / R4: manual redirects — never replay a write cross-origin;
+    // 303 and POST→301/302 become GET; only 307/308 keep method+body.
+    const fetchImpl = getFetchImplForRest();
+    const credentialHeaderNames = new Set([
+      "authorization",
+      "cookie",
+      "x-api-key",
+      "x-api_key",
+      "x-auth-key",
+      "x-n8n-api-key",
+      "proxy-authorization",
+    ]);
+    // Custom header names from CLAWQL_PROVIDER_AUTH_JSON are also credentials.
+    try {
+      const rawMap = process.env.CLAWQL_PROVIDER_AUTH_JSON?.trim();
+      if (rawMap) {
+        const parsed = JSON.parse(rawMap) as Record<string, unknown>;
+        for (const v of Object.values(parsed)) {
+          if (v && typeof v === "object" && !Array.isArray(v)) {
+            for (const name of Object.keys(v as Record<string, unknown>)) {
+              credentialHeaderNames.add(name.toLowerCase());
+            }
+          }
+        }
+      }
+    } catch {
+      /* ignore malformed map — auth-headers already logs */
+    }
+    init.redirect = "manual";
+    const originalMethod = String(init.method ?? "GET").toUpperCase();
+    const isWrite =
+      originalMethod !== "GET" && originalMethod !== "HEAD" && originalMethod !== "OPTIONS";
+    let res = await fetchImpl(url.toString(), init);
+    let hops = 0;
+    while (hops < 5 && res.status >= 300 && res.status < 400) {
+      const location = res.headers?.get?.("location");
+      if (!location) break;
+      hops += 1;
+      const status = res.status;
+      const nextUrl = new URL(location, url);
+      const sameOrigin = nextUrl.protocol === url.protocol && nextUrl.host === url.host;
+      if (!sameOrigin && isWrite) {
+        // S5: the write may already have been applied; do not report a plain
+        // failure (that invites a retry and a second write).
+        return {
+          ok: true,
+          data: {
+            outcome: "outcome_unknown",
+            status,
+            location: nextUrl.href,
+            message:
+              `Upstream returned HTTP ${status} with a cross-origin Location after ${originalMethod}; ` +
+              "the write may have been applied; refusing to follow (at-most-once).",
+          },
+        };
+      }
+      if (!sameOrigin) {
+        for (const name of Object.keys(headers)) {
+          if (credentialHeaderNames.has(name.toLowerCase())) {
+            delete headers[name];
+          }
+        }
+        init.headers = headers;
+      }
+      // RFC 7231 / browser behavior: 303 always GET; 301/302 on POST → GET.
+      // 307/308 preserve method and body (same-origin only for writes, above).
+      if (status === 303 || ((status === 301 || status === 302) && originalMethod === "POST")) {
+        init.method = "GET";
+        delete (init as { body?: unknown }).body;
+      } else if (status !== 307 && status !== 308 && isWrite) {
+        // Other 3xx on writes: do not silently replay the body.
+        init.method = "GET";
+        delete (init as { body?: unknown }).body;
+      }
+      url.href = nextUrl.href;
+      res = await fetchImpl(url.toString(), init);
+    }
+    if (res.status >= 300 && res.status < 400) {
+      return { ok: false, error: `REST HTTP ${res.status}: redirect limit exceeded` };
+    }
     // Optional chaining: unit-test fetch stubs often omit Headers.
     const contentType = res.headers?.get?.("content-type") ?? "";
     const binary =

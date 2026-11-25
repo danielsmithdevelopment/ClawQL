@@ -58,6 +58,8 @@ export function emitHookBlocked(input: {
   tool: string;
   reason: string;
   session_id?: string;
+  /** Virtual-key / OIDC tenant when present (audit S4). */
+  tenant_id?: string;
 }): void {
   emitMcpEventBestEffort({
     name: "hook.blocked",
@@ -65,6 +67,7 @@ export function emitHookBlocked(input: {
       tool: input.tool,
       reason: input.reason,
       ...(input.session_id ? { session_id: input.session_id } : {}),
+      ...(input.tenant_id ? { tenant_id: input.tenant_id } : {}),
     },
   });
 }

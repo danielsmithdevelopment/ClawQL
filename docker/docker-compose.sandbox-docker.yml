@@ -1,0 +1,12 @@
+# Opt-in override: mount the host Docker socket for CLAWQL_SANDBOX_BACKEND=docker.
+# Usage:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.sandbox-docker.yml up -d --build
+services:
+  clawql-mcp-http:
+    build:
+      target: runtime-with-docker-cli
+    environment:
+      CLAWQL_ENABLE_SANDBOX: "1"
+      CLAWQL_SANDBOX_BACKEND: "docker"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

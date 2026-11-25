@@ -101,6 +101,16 @@ export async function runDoctor(
       message: `Obsidian vault: ${vaultPath}`,
       detail: writable ? undefined : "Path not readable/writable — memory_* disabled at startup",
     });
+    // Vault root is normally CLAWQL_HOME; notes live under Memory/. Warn only when
+    // someone nested the vault at home/Memory (would write Memory/Memory/).
+    const { resolve: resolvePath, join: joinPath } = await import("node:path");
+    if (resolvePath(vaultPath) === resolvePath(joinPath(home, "Memory"))) {
+      checks.push({
+        level: "warn",
+        message: "Memory vault is nested under Memory/",
+        detail: `Set CLAWQL_OBSIDIAN_VAULT_PATH=${home} so notes stay at ${home}/Memory (not Memory/Memory)`,
+      });
+    }
   } else if (existsSync(home)) {
     checks.push({
       level: "warn",
@@ -111,7 +121,7 @@ export async function runDoctor(
     checks.push({
       level: "warn",
       message: "Memory vault not configured",
-      detail: "clawql init creates ~/.ClawQL and sets CLAWQL_OBSIDIAN_VAULT_PATH",
+      detail: "clawql init creates ~/.ClawQL and sets CLAWQL_OBSIDIAN_VAULT_PATH to that home",
     });
   }
 

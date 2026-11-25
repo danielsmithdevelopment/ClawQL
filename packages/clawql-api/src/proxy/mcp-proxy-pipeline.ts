@@ -17,6 +17,8 @@ export type McpProxyCallContext = {
   readonly args: unknown;
   readonly sessionId?: string;
   readonly atrScopeTokens?: readonly string[];
+  /** Virtual-key / OIDC tenant — namespaces session id for hooks when set (S4). */
+  readonly tenantId?: string;
 };
 
 /** Runs HookRegistry `pre-execute` hooks through `fireHook` (ATR never-loosen). */
@@ -38,11 +40,15 @@ export function mcpProxyPipelineLayer(registry: PluginRegistry): Layer.Layer<Mcp
           const listed = yield* registry.hookRegistry.list("pre-execute", ctx.toolName);
           if (listed.length === 0) return;
 
+          const sessionId =
+            ctx.tenantId && ctx.sessionId
+              ? `${ctx.tenantId}::${ctx.sessionId}`
+              : (ctx.sessionId ?? "mcp");
           const result = yield* fireHooksForEvent(
             listed,
             {
               session: {
-                id: ctx.sessionId ?? "mcp",
+                id: sessionId,
                 atrScope: atrScopeFromTokens(ctx.atrScopeTokens ?? []),
               },
               toolName: ctx.toolName,

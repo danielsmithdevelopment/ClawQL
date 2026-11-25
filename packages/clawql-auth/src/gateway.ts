@@ -164,7 +164,12 @@ export function resolveAtrClaimsFromHeaders(
   }
 
   if (config.mode === "noAuth") {
-    const sub = headerValue(headers, "x-clawql-subject") ?? "local";
+    // Caller-chosen subject only when a trusted proxy already authenticated
+    // (CLAWQL_TRUSTED_PROXY=1). Otherwise claims stay fixed as local admin.
+    const trustedProxy =
+      process.env.CLAWQL_TRUSTED_PROXY?.trim() === "1" ||
+      process.env.CLAWQL_TRUSTED_PROXY?.trim()?.toLowerCase() === "true";
+    const sub = trustedProxy ? (headerValue(headers, "x-clawql-subject") ?? "local") : "local";
     return { ok: true, claims: defaultAdminAtrClaims(sub) };
   }
 
@@ -188,11 +193,14 @@ export function resolveAtrClaimsFromHeaders(
 
   // 2) Static CLAWQL_API_KEY (legacy / bootstrap)
   if (config.apiKey && apiKeysEqual(presented, config.apiKey)) {
+    const trustedProxy =
+      process.env.CLAWQL_TRUSTED_PROXY?.trim() === "1" ||
+      process.env.CLAWQL_TRUSTED_PROXY?.trim()?.toLowerCase() === "true";
     return {
       ok: true,
       claims: {
-        sub: headerValue(headers, "x-clawql-subject") ?? "api-key",
-        role: headerValue(headers, "x-clawql-role") ?? "operator",
+        sub: trustedProxy ? (headerValue(headers, "x-clawql-subject") ?? "api-key") : "api-key",
+        role: trustedProxy ? (headerValue(headers, "x-clawql-role") ?? "operator") : "operator",
         scope: ["execute", "search", "memory"],
       },
     };

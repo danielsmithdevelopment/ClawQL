@@ -118,7 +118,10 @@ describe("pending execute park + resume", () => {
     });
 
     // Tampered args must not run even with approved id
-    await decidePendingExecution(parked.executionId, "approve", home);
+    await decidePendingExecution(parked.executionId, "approve", {
+      home,
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
     const tampered = await Effect.runPromise(
       executeClawqlOperationEffect(
         {
@@ -189,6 +192,8 @@ describe("pending execute park + resume", () => {
     };
     expect(json.status).toBe("mandate_required");
     expect(json.executionId).toMatch(/^pex_/);
-    expect(json.approval.tool).toBe("resume");
+    expect(json.approval.declineTool).toBe("resume");
+    expect(json.approval).not.toHaveProperty("tool");
+    expect(json.approval.cli).toMatch(/^clawql resume /);
   });
 });

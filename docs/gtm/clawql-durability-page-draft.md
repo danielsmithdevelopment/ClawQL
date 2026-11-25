@@ -86,8 +86,8 @@ _Design work, not yet built or measured._ Whitepaper cross-links: [§10](../visi
 Everything above is reproducible from the public repository (links pinned to the commits that landed each artifact):
 
 - Crash boards and evidence: [`docs/benchmarks/program-cell-fleet-kill/`](https://github.com/danielsmithdevelopment/ClawQL/tree/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill) (identity remesure board + soak at `e7e2d8d1`)
-- Authorizing soak and the v4 board, with matching binary identity: branch [`v4-soak-mac-mini-20261106`](https://github.com/danielsmithdevelopment/ClawQL/tree/v4-soak-mac-mini-20261106); identity remesure JSON at commit [`e7e2d8d1`](https://github.com/danielsmithdevelopment/ClawQL/blob/e7e2d8d11d2a0f81e98002730e3620eacccacb34/docs/benchmarks/program-cell-fleet-kill/phased-n1000-v4-mac-mini-ttl3000-identity-remeasure.json)
-- During-call settlement of the 2 trials: [`v4-identity-remeasure-during-call-settle.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/de237c7681f87bdbcbef8e9dac0aa813ed8d9148/docs/benchmarks/program-cell-fleet-kill/v4-identity-remeasure-during-call-settle.json) (`de237c76`)
+- Authorizing soak and the v4 board, with matching binary identity: branch [`v4-soak-mac-mini-20261106`](https://github.com/danielsmithdevelopment/ClawQL/tree/v4-soak-mac-mini-20261106); identity remesure JSON under [`docs/benchmarks/program-cell-fleet-kill/v4/`](../benchmarks/program-cell-fleet-kill/v4/) (restored byte-identical to commits `e7e2d8d1` / `de237c76`)
+- During-call settlement of the 2 trials: [`v4/v4-identity-remeasure-during-call-settle.json`](../benchmarks/program-cell-fleet-kill/v4/v4-identity-remeasure-during-call-settle.json)
 - Formal models: [`formal/tla/`](https://github.com/danielsmithdevelopment/ClawQL/tree/cadb0a4bcb7dd312663b9eea59ec1e49ff6c6ba6/formal/tla) (program resume, leases, mandates, payments)
 
 ---

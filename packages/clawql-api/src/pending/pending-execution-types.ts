@@ -54,9 +54,11 @@ export type ParkExecuteResult = {
   readonly argsHash: string;
   readonly risk: OperationRisk;
   readonly approval: {
+    /** Operator CLI — agents must not approve via MCP. */
     readonly cli: string;
-    readonly tool: "resume";
     readonly declineCli: string;
+    /** MCP `resume` is decline-only; approve is CLI / Review / console. */
+    readonly declineTool: "resume";
   };
   readonly expiresAt: string;
 };

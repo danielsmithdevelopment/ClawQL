@@ -48,7 +48,10 @@ describe("atomic mandate consume", () => {
       },
       home,
     });
-    await decidePendingExecution(parked.executionId, "approve", home);
+    await decidePendingExecution(parked.executionId, "approve", {
+      home,
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
 
     const results = await Promise.all(
       Array.from({ length: 50 }, (_, i) =>
@@ -99,7 +102,10 @@ describe("atomic mandate consume", () => {
       },
       home,
     });
-    await decidePendingExecution(parked.executionId, "approve", home);
+    await decidePendingExecution(parked.executionId, "approve", {
+      home,
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
 
     const badDigest = await tryConsumeApprovedMandate({
       executionId: parked.executionId,

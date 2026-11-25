@@ -84,9 +84,39 @@ async function isGitRepo(vault: string): Promise<boolean> {
   }
 }
 
+const VAULT_GITIGNORE = `# Secrets and durable state that must never leave the Memory vault via git
+/vault/
+/Auth/
+/worm/
+/pending-executions/
+/clawql.env
+/providers.json
+**/providers.json
+*.sqlite
+*.sqlite-journal
+memory.db
+`;
+
+async function ensureVaultGitignore(vault: string): Promise<void> {
+  const { writeFile, readFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const gi = join(vault, ".gitignore");
+  try {
+    const existing = await readFile(gi, "utf8");
+    if (existing.includes("/worm/") && existing.includes("/Auth/")) return;
+  } catch {
+    /* create */
+  }
+  await writeFile(gi, VAULT_GITIGNORE, "utf8");
+}
+
 async function ensureGitRepo(vault: string): Promise<void> {
-  if (await isGitRepo(vault)) return;
+  if (await isGitRepo(vault)) {
+    await ensureVaultGitignore(vault);
+    return;
+  }
   await git(vault, ["init"]);
+  await ensureVaultGitignore(vault);
   // Quiet local identity for agent commits when unset.
   const name = envTrim("CLAWQL_MEMORY_GIT_AUTHOR_NAME") ?? "ClawQL Memory";
   const email = envTrim("CLAWQL_MEMORY_GIT_AUTHOR_EMAIL") ?? "memory@clawql.local";
@@ -147,11 +177,24 @@ async function commitVaultAfterIngestImpl(input: {
   try {
     await ensureGitRepo(input.vault);
 
-    // Stage all vault changes (index.md / log.md / note) — not only the note path.
-    await git(input.vault, ["add", "-A"]);
+    // Stage note + existing index/log only — never `git add -A` (would pick up
+    // secrets if the vault was wrongly pointed at CLAWQL_HOME).
+    const toStage: string[] = [".gitignore"];
+    if (input.path?.trim()) toStage.push(input.path.trim());
+    for (const candidate of ["index.md", "log.md"]) {
+      try {
+        await access(join(input.vault, candidate));
+        toStage.push(candidate);
+      } catch {
+        /* not present yet */
+      }
+    }
+    await git(input.vault, ["add", "--", ...toStage]);
 
-    const { stdout: status } = await git(input.vault, ["status", "--porcelain"]);
-    if (!status.trim()) {
+    // Only staged changes matter — untracked notes outside `toStage` must not
+    // force a no-op `git commit` (which fails with "nothing to commit").
+    const { stdout: staged } = await git(input.vault, ["diff", "--cached", "--name-only"]);
+    if (!staged.trim()) {
       return { committed: false, skipped: "nothing to commit" };
     }
 

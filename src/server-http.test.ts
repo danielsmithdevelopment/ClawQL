@@ -109,11 +109,13 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
     saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     saved.CLAWQL_CORS_ALLOW_ORIGIN = process.env.CLAWQL_CORS_ALLOW_ORIGIN;
+    saved.CLAWQL_HTTP_GRAPHQL = process.env.CLAWQL_HTTP_GRAPHQL;
     process.env.CLAWQL_SPEC_PATH = minimalSpec;
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     delete process.env.CLAWQL_CORS_ALLOW_ORIGIN;
+    delete process.env.CLAWQL_HTTP_GRAPHQL;
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
@@ -174,6 +176,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   }
 
   it("POST /graphql returns schema introspection", async () => {
+    process.env.CLAWQL_HTTP_GRAPHQL = "1";
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/graphql`, {
         method: "POST",
@@ -191,6 +194,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
   });
 
   it("accepts JSON bodies over default Express ~100kb limit (large execute / GraphQL payloads)", async () => {
+    process.env.CLAWQL_HTTP_GRAPHQL = "1";
     await withHttpServer(async (base) => {
       const pad = "x".repeat(120_000);
       const res = await fetch(`${base}/graphql`, {

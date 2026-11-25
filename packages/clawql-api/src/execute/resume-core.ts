@@ -1,5 +1,9 @@
 /**
  * Resume a parked mandate execute after human approval (or decline).
+ *
+ * Approve is operator-only (CLI / Review / console) and records the human
+ * principal on HUMAN_APPROVAL. MCP `resume` is decline-only — agents must
+ * never self-approve.
  */
 
 import { Effect } from "effect";
@@ -7,7 +11,9 @@ import { ArgsHash, ExecutionId, name } from "clawql-gdp";
 import {
   decidePendingExecution,
   markPendingCompleted,
+  type DecidePendingOptions,
 } from "../pending/pending-execution-service.js";
+import type { SourceProposalPrincipal } from "../sources/source-proposal-principal.js";
 import { mandateArgsMatchEffect } from "../proofs/mandate-args-match.js";
 import type { LoadSpecFn } from "../search/search-core.js";
 import { loadSpec } from "../spec/spec-loader.js";
@@ -17,6 +23,22 @@ import type { McpTextContent } from "./types.js";
 export type ResumeExecuteParams = {
   readonly executionId: string;
   readonly decision?: "approve" | "decline";
+  /**
+   * Who is deciding. Required for approve (`kind: "operator"`).
+   * MCP agents must not supply an operator principal.
+   */
+  readonly approvedBy?: SourceProposalPrincipal;
+  /**
+   * When `"mcp"`, approve is refused even if a principal is present
+   * (defense in depth against a compromised session minting operator ids).
+   */
+  /**
+   * `"console"` = signed-in human via Review/dashboard.
+   * `"operator"` = local CLI (refused for approve when CLAWQL_TIER=regulated).
+   * `"mcp"` = agent (decline-only).
+   */
+  readonly channel?: "mcp" | "operator" | "console";
+  readonly home?: string;
 };
 
 function fromPromise<A>(fn: () => Promise<A>): Effect.Effect<A, Error> {
@@ -32,10 +54,47 @@ export function resumeClawqlExecutionEffect(
 ): Effect.Effect<McpTextContent[], Error> {
   return Effect.gen(function* () {
     const executionId = params.executionId.trim();
-    const decision = params.decision ?? "approve";
+    const channel = params.channel ?? "operator";
+    const decision = params.decision ?? (channel === "mcp" ? "decline" : "approve");
+
+    if (channel === "mcp" && decision === "approve") {
+      return [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            ok: false,
+            error:
+              "MCP resume is decline-only. Approve with Review/console " +
+              "(or `clawql resume` outside the regulated tier) — agents cannot self-approve mandates.",
+          }),
+        },
+      ];
+    }
+
+    const tier = process.env.CLAWQL_TIER?.trim().toLowerCase() || "standard";
+    if (tier === "regulated" && decision === "approve" && channel !== "console") {
+      return [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            ok: false,
+            error:
+              "CLAWQL_TIER=regulated requires mandate approval through the console " +
+              "with a signed-in human (CLI/shell `clawql resume` approve is refused).",
+          }),
+        },
+      ];
+    }
+
+    const decideOpts: DecidePendingOptions = {
+      home: params.home,
+      approvedBy: params.approvedBy,
+    };
 
     if (decision === "decline") {
-      const declined = yield* fromPromise(() => decidePendingExecution(executionId, "decline"));
+      const declined = yield* fromPromise(() =>
+        decidePendingExecution(executionId, "decline", decideOpts)
+      );
       return [
         {
           type: "text" as const,
@@ -49,7 +108,9 @@ export function resumeClawqlExecutionEffect(
       ];
     }
 
-    const approved = yield* fromPromise(() => decidePendingExecution(executionId, "approve"));
+    const approved = yield* fromPromise(() =>
+      decidePendingExecution(executionId, "approve", decideOpts)
+    );
     const livePayload = {
       operationId: approved.operationId,
       args: approved.args,
@@ -108,7 +169,7 @@ export function resumeClawqlExecutionEffect(
       /* non-JSON success bodies still count as completed */
     }
 
-    yield* fromPromise(() => markPendingCompleted(executionId, { ok, error }));
+    yield* fromPromise(() => markPendingCompleted(executionId, { ok, error }, params.home));
 
     return content;
   });

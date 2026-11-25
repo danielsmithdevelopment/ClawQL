@@ -1,11 +1,12 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Effect } from "effect";
-import { absPathForRel, collectLocalSyncFilesEffect } from "./collect.js";
+import { absPathForRel, collectLocalSyncFilesEffect, isExcludedRel } from "./collect.js";
 import {
   contentTypeForRelPath,
   createDefaultObjectStorageClientEffect,
   fetchRemoteManifestEffect,
+  type ObjectStorageClient,
 } from "./object-storage.js";
 import { objectKeyForRelPath } from "./paths.js";
 import type {
@@ -15,7 +16,6 @@ import type {
   SyncPlanEntry,
   SyncRunResult,
 } from "./types.js";
-import type { ObjectStorageClient } from "./object-storage.js";
 import { assertManifestSha256 } from "./verify.js";
 
 export type SyncRunOptions = {
@@ -69,6 +69,11 @@ function planPull(
   const actions: SyncPlanEntry[] = [];
   if (!remote) return actions;
   for (const [path, remoteEntry] of Object.entries(remote.files)) {
+    // Never pull secrets / auth / WORM even if a teammate's manifest lists them.
+    if (isExcludedRel(path)) {
+      actions.push({ path, action: "skip", reason: "excluded from pull" });
+      continue;
+    }
     const localEntry = local.get(path);
     if (!localEntry) {
       actions.push({ path, action: "download", reason: "new on remote" });
@@ -120,6 +125,7 @@ async function applyDownloads(
   const remoteFiles = remote?.files ?? {};
   for (const a of actions) {
     if (a.action !== "download") continue;
+    if (isExcludedRel(a.path)) continue;
     const key = objectKeyForRelPath(config.prefix ?? "", a.path);
     if (dryRun) {
       count += 1;
@@ -133,7 +139,9 @@ async function applyDownloads(
     }
     const abs = absPathForRel(home, a.path);
     await mkdir(dirname(abs), { recursive: true });
-    await writeFile(abs, body);
+    const tmp = `${abs}.clawql-sync-tmp`;
+    await writeFile(tmp, body);
+    await rename(tmp, abs);
     count += 1;
   }
   return count;

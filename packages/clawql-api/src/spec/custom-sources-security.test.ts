@@ -24,6 +24,12 @@ describe("custom-sources-security", () => {
     expect(() => assertSafeSourceFetchUrl("https://localhost/openapi.json")).toThrow();
     expect(() => assertSafeSourceFetchUrl("https://172.16.5.1/openapi.json")).toThrow();
     expect(() => assertSafeSourceFetchUrl("https://169.254.169.254/latest")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://[::1]/openapi.json")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://[::]/openapi.json")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://[::ffff:127.0.0.1]/openapi.json")).toThrow();
+    // Node dns form of IPv4-mapped loopback
+    expect(() => assertSafeSourceFetchUrl("https://[::ffff:7f00:1]/openapi.json")).toThrow();
+    expect(() => assertSafeSourceFetchUrl("https://100.64.1.1/openapi.json")).toThrow();
     const u = assertSafeSourceFetchUrl("https://example.com/openapi.json");
     expect(u.hostname).toBe("example.com");
   });

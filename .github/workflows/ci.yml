@@ -665,8 +665,8 @@ jobs:
     needs: [changes, lint, workflow-scripts]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    # Cold npm + full unit/coverage matrix can exceed 15m under slow registry (Node 22 cancelled at ~15m).
-    timeout-minutes: 25
+    # Cold npm + coverage + density fair-board (~90s) — leave headroom after Node 25 ONNX/WASM flakes.
+    timeout-minutes: 35
     strategy:
       fail-fast: true
       matrix:
@@ -691,6 +691,11 @@ jobs:
         run: bash scripts/ci/assert-dist-mcp-nonnegotiable-tools.sh
 
       - name: Unit tests + coverage
+        env:
+          # Fail fast when @xenova/transformers would hang on Node 25 onnx→wasm fallback.
+          CLAWQL_EMBEDDING_LOAD_TIMEOUT_MS: "30000"
+          TRANSFORMERS_OFFLINE: "1"
+          CLAWQL_BUNDLED_OFFLINE: "1"
         run: npx vitest run --coverage
 
       - name: Dashboard unit tests

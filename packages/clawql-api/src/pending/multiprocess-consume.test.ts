@@ -33,7 +33,10 @@ describe("multi-process shared-store consume", () => {
       },
       home,
     });
-    await decidePendingExecution(parked.executionId, "approve", home);
+    await decidePendingExecution(parked.executionId, "approve", {
+      home,
+      approvedBy: { kind: "operator", id: "test-operator" },
+    });
     // Close parent handle so children can open WAL cleanly.
     resetPendingSqliteCacheForTests();
 

@@ -85,6 +85,7 @@ describe("fireHook ATR never-loosen", () => {
     expect(grantsWithinAtr(scope, undefined)).toBe(true);
     expect(grantsWithinAtr(scope, ["a"])).toBe(true);
     expect(grantsWithinAtr(scope, ["a", "c"])).toBe(false);
+    expect(grantsWithinAtr(atrScopeFromTokens(["*"]), ["execute", "search"])).toBe(true);
   });
 });
 

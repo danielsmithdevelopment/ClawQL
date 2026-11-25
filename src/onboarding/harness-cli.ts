@@ -362,6 +362,69 @@ export async function prepareHarness(id: HarnessId): Promise<void> {
   }
 }
 
+/**
+ * Env for harness agent processes (interactive + headless).
+ * Keeps agent model login keys (OpenAI/Anthropic/…) but strips ClawQL gateway
+ * credentials and cloud provider vault secrets from the parent shell.
+ */
+export function buildHarnessChildEnv(
+  home = getClawqlHome(),
+  source: NodeJS.ProcessEnv = process.env
+): NodeJS.ProcessEnv {
+  const allowEnvKeys = new Set([
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "TERM",
+    "TERM_PROGRAM",
+    "COLORTERM",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "XDG_RUNTIME_DIR",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "CLAWQL_HOME",
+    "CLAWQL_OBSIDIAN_VAULT_PATH",
+    "CLAWQL_ENABLE_MEMORY",
+    "CLAWQL_BUNDLED_OFFLINE",
+    "CLAWQL_OPENBENCH",
+    "CLAWQL_ENABLE_DOCUMENTS",
+    "DISPLAY",
+    "WAYLAND_DISPLAY",
+    // Agent CLI model logins (Codex / Claude Code / Cursor) — not gateway secrets.
+    "OPENAI_API_KEY",
+    "OPENAI_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_BASE_URL",
+    "CLAUDE_API_KEY",
+    "CURSOR_API_KEY",
+  ]);
+  const childEnv: NodeJS.ProcessEnv = {};
+  for (const [k, v] of Object.entries(source)) {
+    if (v == null) continue;
+    // Strip ClawQL gateway / vault credentials always.
+    if (/^CLAWQL_.*(KEY|TOKEN|SECRET|PASSWORD)/i.test(k) && k !== "CLAWQL_HOME") continue;
+    if (/^(AWS_|AZURE_|GCP_|GOOGLE_APPLICATION_|STRIPE_|GITHUB_TOKEN)/i.test(k)) continue;
+    if (allowEnvKeys.has(k) || k.startsWith("CLAWQL_")) {
+      childEnv[k] = v;
+      continue;
+    }
+    // Drop other *_KEY / *_TOKEN / *_SECRET unless explicitly allowlisted above.
+    if (/(_KEY|_TOKEN|_SECRET|_PASSWORD|_PASS)$/i.test(k)) continue;
+  }
+  childEnv.CLAWQL_HOME = home;
+  if (!childEnv.CLAWQL_OBSIDIAN_VAULT_PATH?.trim()) {
+    childEnv.CLAWQL_OBSIDIAN_VAULT_PATH = home;
+  }
+  return childEnv;
+}
+
 export async function runHarness(id: HarnessId, forwarded: string[]): Promise<number> {
   await prepareHarness(id);
   const bin = resolveHarnessBinary(id);
@@ -384,13 +447,13 @@ export async function runHarness(id: HarnessId, forwarded: string[]): Promise<nu
   const spawnBin = gate.wrap ? "/usr/bin/sandbox-exec" : bin;
   const spawnArgs = gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
 
+  const home = getClawqlHome();
+  const childEnv = buildHarnessChildEnv(home);
+
   return new Promise((resolvePromise) => {
     const child = spawn(spawnBin, spawnArgs, {
       stdio: "inherit",
-      env: {
-        ...process.env,
-        CLAWQL_HOME: getClawqlHome(),
-      },
+      env: childEnv,
     });
     child.on("exit", (code, signal) => {
       if (signal) resolvePromise(1);
@@ -769,14 +832,8 @@ export async function runHarnessNonInteractive(
   const spawnArgs = gate.ok && gate.wrap ? gate.sandboxArgv(bin, forwarded) : forwarded;
 
   const home = getClawqlHome();
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    CLAWQL_HOME: home,
-    CLAWQL_OPENBENCH: "1",
-  };
-  if (!env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim()) {
-    env.CLAWQL_OBSIDIAN_VAULT_PATH = home;
-  }
+  const env = buildHarnessChildEnv(home);
+  env.CLAWQL_OPENBENCH = "1";
   if (!env.CLAWQL_ENABLE_MEMORY?.trim()) {
     env.CLAWQL_ENABLE_MEMORY = "1";
   }

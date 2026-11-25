@@ -248,9 +248,11 @@ export async function handleClawqlResumeToolInput(
   return getClawqlApi().run(
     Effect.gen(function* () {
       const params = yield* decodeResumeInput(raw);
+      // MCP channel is decline-only — approve never reaches decide/WORM.
       const content = yield* resumeClawqlExecutionEffect({
         executionId: params.executionId,
-        decision: params.decision,
+        decision: params.decision ?? "decline",
+        channel: "mcp",
       });
       return { content: [...content] };
     })
@@ -642,6 +644,7 @@ export function registerTools(server: McpServer) {
 
   server.tool(
     "resume",
+    "Decline a parked mandate execute (executionId from mandate_required). Decline-only — approve with `clawql resume <id>` or Review/console; agents cannot self-approve.",
     resumeToolZodShape,
     wrapRegisteredMcpToolHandler("resume", handleClawqlResumeToolInput)
   );

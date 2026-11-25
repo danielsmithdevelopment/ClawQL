@@ -99,7 +99,11 @@ function gateway(
             operationId: input.operationId,
             executionId,
             argsHash,
-            approval: { tool: "resume", cli: `clawql resume ${executionId}` },
+            approval: {
+              declineTool: "resume",
+              cli: `clawql resume ${executionId}`,
+              declineCli: `clawql resume --decline ${executionId}`,
+            },
           });
         }
         return text(resultOf(input));

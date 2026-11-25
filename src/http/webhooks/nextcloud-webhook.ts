@@ -10,11 +10,7 @@ import { handleMemoryIngestToolInput } from "clawql-memory/plugin";
 import { handleAuditToolInput } from "../../mcp/clawql-audit.js";
 import { resolvePluginCompositionFlags } from "../../composition/resolve-plugin-flags.js";
 import { publishDocumentInboxArrivedEvent } from "clawql-automation/nats/publish-hooks";
-
-function webhookTokenExpected(): string | undefined {
-  const t = process.env.CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN?.trim();
-  return t && t.length > 0 ? t : undefined;
-}
+import { bearerFromRequest, checkWebhookToken } from "./webhook-token-auth.js";
 
 function webhookEnabled(): boolean {
   const raw = process.env.CLAWQL_ENABLE_NEXTCLOUD_WEBHOOK?.trim();
@@ -22,17 +18,6 @@ function webhookEnabled(): boolean {
   if (raw === "1" || raw === "true" || raw === "yes") return true;
   // Default on when Nextcloud is configured and documents are enabled.
   return Boolean(process.env.NEXTCLOUD_BASE_URL?.trim());
-}
-
-function webhookAuthOk(req: Request): boolean {
-  const expected = webhookTokenExpected();
-  if (!expected) return process.env.NODE_ENV !== "production";
-  const header =
-    req
-      .header("authorization")
-      ?.replace(/^Bearer\s+/i, "")
-      .trim() ?? req.header("x-nextcloud-webhook-token")?.trim();
-  return header === expected;
 }
 
 function extractInboxEvent(body: unknown): {
@@ -74,15 +59,12 @@ export async function handleNextcloudWebhookRequest(req: Request, res: Response)
     res.status(404).json({ ok: false, error: "Nextcloud webhook disabled" });
     return;
   }
-  if (!webhookTokenExpected() && process.env.NODE_ENV === "production") {
-    res.status(503).json({
-      ok: false,
-      error: "Set CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN for webhook ingestion in production.",
-    });
-    return;
-  }
-  if (!webhookAuthOk(req)) {
-    res.status(401).json({ ok: false, error: "invalid or missing webhook token" });
+  const auth = checkWebhookToken({
+    expectedEnvName: "CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN",
+    presented: bearerFromRequest(req, "x-nextcloud-webhook-token"),
+  });
+  if (!auth.ok) {
+    res.status(auth.status).json({ ok: false, error: auth.error });
     return;
   }
 

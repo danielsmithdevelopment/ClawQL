@@ -7,6 +7,10 @@ import { hostname } from "node:os";
 import { Context, Effect, Layer } from "effect";
 import { appendProcessWormLazyEffect } from "../audit/clawql-audit-lazy.js";
 import type { OperationRisk } from "../risk/operation-risk-types.js";
+import {
+  formatSourceProposalPrincipalEffect,
+  type SourceProposalPrincipal,
+} from "../sources/source-proposal-principal.js";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
 import { hashPendingArgsEffect } from "./args-hash.js";
 import {
@@ -37,6 +41,16 @@ export type ParkInput = {
 
 export type ResumeDecision = "approve" | "decline";
 
+/** Options for park resume decide — approve requires an operator principal. */
+export type DecidePendingOptions = {
+  readonly home?: string;
+  /**
+   * Who is deciding. Approve requires `kind: "operator"` (CLI / Review / console).
+   * Agents never hold this identity; MCP `resume` is decline-only.
+   */
+  readonly approvedBy?: SourceProposalPrincipal;
+};
+
 export type ConsumeApprovedInput = {
   readonly executionId: string;
   readonly argsHash: string;
@@ -56,7 +70,7 @@ export class PendingExecutionService extends Context.Service<
     readonly decide: (
       executionId: string,
       decision: ResumeDecision,
-      home?: string
+      options?: DecidePendingOptions
     ) => Effect.Effect<PendingExecutionRecord, Error>;
     /** Atomic one-shot consume. Null = refuse (already consumed, mismatch, expired). */
     readonly tryConsume: (
@@ -150,8 +164,8 @@ export const PendingExecutionLive = Layer.succeed(
           risk: input.risk,
           approval: {
             cli: `clawql resume ${executionId}`,
-            tool: "resume" as const,
             declineCli: `clawql resume --decline ${executionId}`,
+            declineTool: "resume" as const,
           },
           expiresAt,
         };
@@ -160,9 +174,9 @@ export const PendingExecutionLive = Layer.succeed(
     load: (executionId, home) =>
       readPendingExecutionEffect(executionId, home ?? resolveClawqlHome()),
 
-    decide: (executionId, decision, homeOpt) =>
+    decide: (executionId, decision, options) =>
       Effect.gen(function* () {
-        const home = homeOpt ?? resolveClawqlHome();
+        const home = options?.home ?? resolveClawqlHome();
         const record = yield* readPendingExecutionEffect(executionId, home);
         if (!record) {
           return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
@@ -197,6 +211,9 @@ export const PendingExecutionLive = Layer.succeed(
 
         const now = new Date().toISOString();
         if (decision === "decline") {
+          const declinedBy = options?.approvedBy
+            ? yield* formatSourceProposalPrincipalEffect(options.approvedBy)
+            : undefined;
           const declined = yield* updatePendingStatusEffect(
             executionId,
             { status: "declined", approvedAt: null, completedAt: now },
@@ -206,11 +223,26 @@ export const PendingExecutionLive = Layer.succeed(
             type: "HUMAN_REJECTION",
             timestamp: now,
             sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
-            metadata: { executionId, operationId: record.operationId, argsHash: record.argsHash },
+            metadata: {
+              executionId,
+              operationId: record.operationId,
+              argsHash: record.argsHash,
+              ...(declinedBy ? { declinedBy } : {}),
+            },
           });
           return declined;
         }
 
+        const approvedBy = options?.approvedBy;
+        if (!approvedBy || approvedBy.kind !== "operator") {
+          return yield* Effect.fail(
+            new Error(
+              "Mandate approve is operator-only: use `clawql resume <id>` or Review/console " +
+                "(MCP `resume` is decline-only; agents cannot self-approve)"
+            )
+          );
+        }
+        const approvedByFormatted = yield* formatSourceProposalPrincipalEffect(approvedBy);
         const approved = yield* updatePendingStatusEffect(
           executionId,
           { status: "approved", approvedAt: now },
@@ -220,7 +252,12 @@ export const PendingExecutionLive = Layer.succeed(
           type: "HUMAN_APPROVAL",
           timestamp: now,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
-          metadata: { executionId, operationId: record.operationId, argsHash: record.argsHash },
+          metadata: {
+            executionId,
+            operationId: record.operationId,
+            argsHash: record.argsHash,
+            approvedBy: approvedByFormatted,
+          },
         });
         return approved;
       }),
@@ -378,12 +415,14 @@ export async function parkMandateExecute(input: ParkInput): Promise<ParkExecuteR
 export async function decidePendingExecution(
   executionId: string,
   decision: ResumeDecision,
-  home?: string
+  homeOrOptions?: string | DecidePendingOptions
 ): Promise<PendingExecutionRecord> {
+  const options: DecidePendingOptions =
+    typeof homeOrOptions === "string" ? { home: homeOrOptions } : (homeOrOptions ?? {});
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* PendingExecutionService;
-      return yield* svc.decide(executionId, decision, home);
+      return yield* svc.decide(executionId, decision, options);
     }).pipe(Effect.provide(PendingExecutionLive))
   );
 }

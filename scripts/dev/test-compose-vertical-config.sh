@@ -25,6 +25,8 @@ fi
 
 export CLAWQL_LABEL_STUDIO_API_TOKEN=compose-config-test-token
 export CLAWQL_HITL_WEBHOOK_TOKEN=compose-config-test-webhook
+# Required by compose `${CLAWQL_API_KEY:?…}` (audit Pass 2 R10 / CI compose-config-test).
+export CLAWQL_API_KEY="${CLAWQL_API_KEY:-compose-config-test-api-key}"
 
 HAVE_DOCKER=0
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then

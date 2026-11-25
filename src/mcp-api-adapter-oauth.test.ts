@@ -63,11 +63,13 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
     );
 
     const issuer = "https://auth.clawql.test";
+    const audience = "https://mcp.clawql.test/mcp";
     const salt = "aabbccddee";
     const clientSecret = "client-secret-value";
     const runtime = await Effect.runPromise(
       createMcpOAuthForTests({
         issuer,
+        resourceAudience: audience,
         signing,
         clients: [
           {
@@ -95,7 +97,7 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
     const adapterApp = createMcpApiAdapterApp({
       getCatalog: () => emptyCatalog,
       callTool: async () => ({ text: "", content: [], isError: false }),
-      jwtAuth: { jwksUrl, issuer },
+      jwtAuth: { jwksUrl, issuer, audience },
     });
     const adapter = await listen(adapterApp);
     servers.push(adapter.server);
@@ -109,6 +111,7 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
         grantType: "client_credentials",
         clientId: "cline-agent",
         clientSecret,
+        resource: audience,
       })
     );
 
@@ -125,6 +128,7 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
       .setProtectedHeader({ alg: "RS256", kid: "adapter-it" })
       .setSubject("attacker")
       .setIssuer(issuer)
+      .setAudience(audience)
       .setExpirationTime("5m")
       .sign(attackerKey);
 
@@ -140,6 +144,7 @@ describe("mcp-api-adapter ClawQL MCP JWT / JWKS enforcement", () => {
       .setProtectedHeader({ alg: "RS256", kid: "adapter-it" })
       .setSubject("alice")
       .setIssuer(issuer)
+      .setAudience(audience)
       .setIssuedAt(Math.floor(Date.now() / 1000) - 600)
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
       .sign(signing.signKey);

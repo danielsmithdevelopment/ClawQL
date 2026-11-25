@@ -170,6 +170,38 @@ describe("executeRestOperation", () => {
     );
   });
 
+  it("S5: cross-origin redirect after POST returns outcome_unknown, not ok:false", async () => {
+    let posts = 0;
+    await withFetchServer(
+      async (req) => {
+        if (req.method === "POST") {
+          posts += 1;
+          return new Response(null, {
+            status: 303,
+            headers: { Location: "https://evil.example/applied" },
+          });
+        }
+        throw new Error(`unexpected follow-up ${req.method} ${req.url}`);
+      },
+      async (origin) => {
+        const out = await executeRestOperation(
+          makeOp({ method: "POST", requestBody: "CreateReq" }),
+          { itemId: "abc", note: "create" },
+          makeOpenApi(origin)
+        );
+        expect(posts).toBe(1);
+        expect(out.ok).toBe(true);
+        if (out.ok) {
+          expect(out.data).toMatchObject({
+            outcome: "outcome_unknown",
+            status: 303,
+            location: "https://evil.example/applied",
+          });
+        }
+      }
+    );
+  });
+
   it("returns formatted error on non-OK response", async () => {
     await withFetchServer(
       () => new Response("bad upstream", { status: 500 }),

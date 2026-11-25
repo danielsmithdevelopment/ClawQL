@@ -29,6 +29,30 @@ function localCacheDir(): string | undefined {
   return v || undefined;
 }
 
+function embeddingLoadTimeoutMs(): number {
+  const raw = process.env.CLAWQL_EMBEDDING_LOAD_TIMEOUT_MS?.trim();
+  if (raw) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  }
+  // Node 25: onnxruntime often fails protobuf parse then hangs on WASM fallback.
+  return 45_000;
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function loadPipeline(model: string): Promise<LocalEmbedFn> {
   if (embedOverride) return embedOverride;
   if (cachedEmbed && cachedModelId === model) return cachedEmbed;
@@ -38,10 +62,18 @@ async function loadPipeline(model: string): Promise<LocalEmbedFn> {
   if (cacheDir) {
     env.cacheDir = cacheDir;
   }
-  // Allow remote model fetch on first use (cached thereafter).
-  env.allowRemoteModels = true;
+  // Audit 4.04 / CI: offline installs must not hang on Hugging Face / WASM downloads.
+  const offline =
+    process.env.CLAWQL_BUNDLED_OFFLINE?.trim() === "1" ||
+    process.env.TRANSFORMERS_OFFLINE?.trim() === "1";
+  env.allowRemoteModels = !offline;
 
-  const extractor = await pipeline("feature-extraction", model);
+  const loadMs = embeddingLoadTimeoutMs();
+  const extractor = await withTimeout(
+    Promise.resolve(pipeline("feature-extraction", model)),
+    loadMs,
+    `local embedding pipeline(${model})`
+  );
   const embed: LocalEmbedFn = async (texts) => {
     const out: Float32Array[] = [];
     for (const text of texts) {

@@ -84,10 +84,21 @@ describe("git-backend commit-on-ingest", () => {
   it("returns nothing-to-commit on second identical call", async () => {
     process.env.CLAWQL_MEMORY_BACKEND = "git";
     process.env.CLAWQL_MEMORY_GIT_PUSH_MODE = "off";
+    process.env.CLAWQL_MEMORY_GIT_AUTHOR_NAME = "Test Agent";
+    process.env.CLAWQL_MEMORY_GIT_AUTHOR_EMAIL = "test@clawql.local";
     await writeFile(join(home, "Memory", "a.md"), "a\n", "utf8");
-    const first = await commitVaultAfterIngest({ vault: home, title: "a" });
+    const first = await commitVaultAfterIngest({
+      vault: home,
+      path: "Memory/a.md",
+      title: "a",
+    });
     expect(first.committed).toBe(true);
-    const second = await commitVaultAfterIngest({ vault: home, title: "a" });
+    expect(first.error).toBeUndefined();
+    const second = await commitVaultAfterIngest({
+      vault: home,
+      path: "Memory/a.md",
+      title: "a",
+    });
     expect(second.committed).toBe(false);
     expect(second.skipped).toMatch(/nothing to commit/i);
   });
