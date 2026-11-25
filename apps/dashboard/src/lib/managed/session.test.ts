@@ -32,8 +32,22 @@ describe("managed session", () => {
     }
   });
 
-  it("allows mock when Supabase is not configured", () => {
-    const cfg = Effect.runSync(loadManagedAuthConfigEffect({}));
+  it("allows mock when Supabase is not configured outside production", () => {
+    const cfg = Effect.runSync(loadManagedAuthConfigEffect({ NODE_ENV: "development" }));
+    expect(cfg.allowMock).toBe(true);
+  });
+
+  it("fails closed in production when Supabase is not configured and mock is off", () => {
+    const cfg = Effect.runSync(
+      loadManagedAuthConfigEffect({ NODE_ENV: "production", CLAWQL_MANAGED_AUTH_MOCK: "0" }),
+    );
+    expect(cfg.allowMock).toBe(false);
+  });
+
+  it("allows explicit mock in production when CLAWQL_MANAGED_AUTH_MOCK=1", () => {
+    const cfg = Effect.runSync(
+      loadManagedAuthConfigEffect({ NODE_ENV: "production", CLAWQL_MANAGED_AUTH_MOCK: "1" }),
+    );
     expect(cfg.allowMock).toBe(true);
   });
 

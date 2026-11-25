@@ -62,8 +62,10 @@ export const loadManagedAuthConfigEffect = (
       undefined;
     const forceMock = envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK);
     const configured = Boolean(supabaseUrl && supabaseAnonKey);
-    // Mock when forced, or when Supabase is not configured (dev / Cloud Agent).
-    const allowMock = forceMock || !configured;
+    const isProd = (env.NODE_ENV ?? process.env.NODE_ENV) === "production";
+    // Mock when forced, or when Supabase is unset outside production.
+    // Production without Supabase fails closed unless CLAWQL_MANAGED_AUTH_MOCK=1.
+    const allowMock = forceMock || (!configured && !isProd);
     return {
       supabaseUrl: supabaseUrl?.replace(/\/$/, ""),
       supabaseAnonKey,
@@ -195,8 +197,9 @@ export function resolveManagedSessionSync(input: {
     resolveManagedSessionEffect(input).pipe(
       Effect.catchTag("ManagedSessionError", (e) => {
         const env = input.env ?? process.env;
-        // Dev / explicit mock: never blank the console while wiring Supabase.
-        if (envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK) || env.NODE_ENV !== "production") {
+        const isProd = (env.NODE_ENV ?? process.env.NODE_ENV) === "production";
+        // Dev / explicit mock only — never silently fixture an unauthenticated prod session.
+        if (envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK) || !isProd) {
           return Effect.succeed(MOCK_MANAGED_SESSION);
         }
         return Effect.die(new Error(e.reason));
