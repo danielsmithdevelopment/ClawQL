@@ -260,7 +260,7 @@ export function runSyncPushEffect(opts: SyncRunOptions = {}): Effect.Effect<Sync
       try: () => loadLocalErasureTombstones(config.home),
       catch: asError,
     }).pipe(Effect.orElseSucceed(() => new Set<string>()));
-    let tombstones = mergeErasureTombstones(localTombs, remote);
+    const tombstones = mergeErasureTombstones(localTombs, remote);
     // Audit V2: a local file at a tombstoned path is intentional reuse — clear tombstone.
     const reused: string[] = [];
     for (const path of [...tombstones]) {
