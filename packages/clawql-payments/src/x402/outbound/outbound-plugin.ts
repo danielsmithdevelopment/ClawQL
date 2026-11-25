@@ -7,6 +7,7 @@ import { resolveSecretStore } from "clawql-auth";
 import {
   defineRegisteringProviderPlugin,
   ExecuteBatchRegistry,
+  getMcpRequestContext,
   type ProviderPlugin,
 } from "clawql-core";
 import { Effect, Layer } from "effect";
@@ -173,10 +174,25 @@ export function createPaymentsOutboundX402Plugin(
               };
             }
 
-            // Audit 6.02: prefer host-bound env ids (set from verified claims); args are fallback.
-            const tenantId = env.CLAWQL_TENANT_ID?.trim() || args.tenantId?.trim() || "default";
-            const agentId = env.CLAWQL_AGENT_ID?.trim() || args.agentId?.trim() || "agent";
-            const sessionId = env.CLAWQL_SESSION_ID?.trim() || args.sessionId?.trim() || "session";
+            // X2: spend identity from verified MCP request claims only when ALS is set.
+            // Never let caller args choose tenant/agent/session under an MCP request.
+            const claimCtx = getMcpRequestContext();
+            let tenantId: string;
+            let agentId: string;
+            let sessionId: string;
+            if (claimCtx) {
+              tenantId = claimCtx.tenantId?.trim() || "default";
+              agentId =
+                claimCtx.agentId?.trim() || claimCtx.sub?.trim() || "agent";
+              sessionId = claimCtx.sessionId?.trim() || "session";
+            } else {
+              // Direct script / unit tests outside MCP ALS — env then args.
+              tenantId =
+                env.CLAWQL_TENANT_ID?.trim() || args.tenantId?.trim() || "default";
+              agentId = env.CLAWQL_AGENT_ID?.trim() || args.agentId?.trim() || "agent";
+              sessionId =
+                env.CLAWQL_SESSION_ID?.trim() || args.sessionId?.trim() || "session";
+            }
 
             // Audit 6.02: refuse non-https / loopback / private payment resource URLs.
             try {

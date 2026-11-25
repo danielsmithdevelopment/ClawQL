@@ -1,17 +1,12 @@
 /**
- * Audit 6.06: regulated / CLAWQL_INFERENCE_LOCAL_ONLY refuse non-local providers.
+ * Audit 6.06 / X4: regulated / CLAWQL_INFERENCE_LOCAL_ONLY refuse non-local providers.
+ * Aliases like clawql / clawql-auto are NOT local — check the resolved upstream model.
  */
 
 import { parseModelId } from "../providers/parse-model-id.js";
 
-const LOCAL_PROVIDERS = new Set([
-  "ollama",
-  "mlx",
-  "local",
-  "clawql",
-  "clawql-auto",
-  "gliner-decide",
-]);
+/** True local backends only (not routing aliases). */
+const LOCAL_PROVIDERS = new Set(["ollama", "mlx", "local"]);
 
 function envFlagOn(env: NodeJS.ProcessEnv, key: string): boolean {
   const v = env[key]?.trim().toLowerCase();
@@ -28,8 +23,12 @@ export function isLocalInferenceProvider(provider: string): boolean {
 }
 
 export function isLocalInferenceModelId(modelId: string): boolean {
-  const { provider } = parseModelId(modelId);
-  return isLocalInferenceProvider(provider);
+  try {
+    const { provider } = parseModelId(modelId);
+    return isLocalInferenceProvider(provider);
+  } catch {
+    return false;
+  }
 }
 
 /** Operator allowlist of extra model ids (comma-separated) when local-only is on. */
@@ -44,6 +43,10 @@ export function inferenceLocalOnlyAllowlist(env: NodeJS.ProcessEnv = process.env
   );
 }
 
+/**
+ * Refuse cloud / alias models under local-only. Call at the gateway on the
+ * actual upstream model id immediately before the provider adapter runs (X4).
+ */
 export function assertInferenceModelAllowed(
   modelId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -54,7 +57,7 @@ export function assertInferenceModelAllowed(
   if (isLocalInferenceModelId(modelId)) return;
   throw new Error(
     `Inference local-only (regulated or CLAWQL_INFERENCE_LOCAL_ONLY=1) refuses model ` +
-      `"${modelId}". Use ollama/mlx/local or CLAWQL_INFERENCE_LOCAL_ALLOWLIST.`
+      `"${modelId}". Use ollama/… or mlx/… (or CLAWQL_INFERENCE_LOCAL_ALLOWLIST).`
   );
 }
 

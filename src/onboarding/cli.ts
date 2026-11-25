@@ -103,6 +103,7 @@ import {
   runPaymentsX402ReconcileCmd,
   runPaymentsX402VerifyCmd,
   runPaymentsX402WalletSetupCmd,
+  runPaymentsOutboundApproveCmd,
   runPaymentsPayoutConnectCreateCmd,
   runPaymentsPayoutConnectLinkCmd,
   runPaymentsPayoutCreateCmd,
@@ -357,7 +358,8 @@ function parse(argv: string[]): {
     else if (a === "--payload") flags.payloadPath = argv[++i] ?? "";
     else if (a === "--process") flags.process = true;
     else if (a === "--facilitator-url") flags.facilitatorUrl = argv[++i] ?? "";
-    else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
+    else if (a === "--tenant-id" || a === "--tenant") flags.tenantId = argv[++i] ?? "";
+    else if (a === "--principal") flags.principal = argv[++i] ?? "";
     else if (a === "--org-id") flags.orgId = argv[++i] ?? "";
     else if (a === "--actor-tenant") flags.actorTenantId = argv[++i] ?? "";
     else if (a === "--billing-mode") flags.billingMode = argv[++i] ?? "";
@@ -523,6 +525,7 @@ Usage:
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
+  clawql payments approve <quoteDigest> [--tenant ID] [--principal operator:name]
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -1397,6 +1400,7 @@ async function main(): Promise<void> {
       payer: typeof flags.payer === "string" ? flags.payer : undefined,
       date: typeof flags.date === "string" ? flags.date : undefined,
       tenantId: typeof flags.tenantId === "string" ? flags.tenantId : undefined,
+      principal: typeof flags.principal === "string" ? flags.principal : undefined,
       accountId: typeof flags.accountId === "string" ? flags.accountId : undefined,
       publishableKey: typeof flags.publishableKey === "string" ? flags.publishableKey : undefined,
       webhookSecret: typeof flags.webhookSecret === "string" ? flags.webhookSecret : undefined,
@@ -1644,6 +1648,13 @@ async function main(): Promise<void> {
         "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | checkout create | webhook listen | webhook verify"
       );
       process.exitCode = 1;
+      return;
+    }
+    if (subcmd === "approve") {
+      process.exitCode = await runPaymentsOutboundApproveCmd({
+        ...paymentsOpts,
+        quoteDigest: rest[0],
+      });
       return;
     }
     if (subcmd === "x402") {
@@ -1972,7 +1983,7 @@ async function main(): Promise<void> {
       return;
     }
     console.error(
-      "Usage: clawql payments plan | usage | spend | audit | stripe | x402 | payout | ramp | cloudflare-wallet | offramp | credits | org | compensation"
+      "Usage: clawql payments plan | usage | spend | audit | stripe | approve | x402 | payout | ramp | cloudflare-wallet | offramp | credits | org | compensation"
     );
     process.exitCode = 1;
     return;

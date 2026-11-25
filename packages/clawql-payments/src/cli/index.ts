@@ -44,6 +44,10 @@ export {
   type PaymentsX402WalletSetupOptions,
 } from "./x402.js";
 export {
+  runPaymentsOutboundApprove,
+  type PaymentsOutboundApproveOptions,
+} from "../x402/outbound/approve-cli.js";
+export {
   runPaymentsPayoutConnectCreate,
   runPaymentsPayoutConnectLink,
   runPaymentsPayoutCreate,

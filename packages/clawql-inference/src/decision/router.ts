@@ -318,12 +318,27 @@ async function handleOpenAiDecisions(
     return;
   }
 
+  // X4: regulated / local-only refuses remote Luna and OpenRouter decisions.
+  const { inferenceLocalOnlyEnabled } = await import("../policy/local-only.js");
+  if (inferenceLocalOnlyEnabled(options.env)) {
+    if (modelKind === "luna" || modelKind === "microsoft" || isLunaModelId(parsed.model)) {
+      sendOpenAiError(
+        res,
+        403,
+        "Inference local-only refuses remote decisions backends (Luna / OpenRouter). Use clawql or gliner-decide.",
+        "invalid_request_error"
+      );
+      return;
+    }
+  }
+
   const preferRemote = modelKind === "luna" || isLunaModelId(parsed.model);
   const preferOpenRouter = modelKind === "microsoft";
   const lunaOk = remoteLunaAvailable(options.env);
   const openRouterOk =
     Boolean(options.callOpenRouter) || remoteOpenRouterDecisionsAvailable(options.env);
   const isAuto = parsed.model.trim().toLowerCase() === "clawql-auto";
+  const localOnly = inferenceLocalOnlyEnabled(options.env);
 
   // Images: never treat API key presence as consent.
   if (parsed.hasImages && !allowImages) {
@@ -366,14 +381,16 @@ async function handleOpenAiDecisions(
     return;
   }
 
-  // clawql-auto: local-first with escalate when abstaining
+  // clawql-auto: local-first with escalate when abstaining (disabled under local-only / X4).
   const decisionRequest: DecisionRequest = isAuto
     ? {
         ...parsed.request,
-        escalation: {
-          mode: parsed.request.escalation?.mode ?? "escalate",
-          model: parsed.request.escalation?.model ?? "gpt-6-luna",
-        },
+        escalation: localOnly
+          ? { mode: "abstain" as const, model: undefined }
+          : {
+              mode: parsed.request.escalation?.mode ?? "escalate",
+              model: parsed.request.escalation?.model ?? "gpt-6-luna",
+            },
       }
     : parsed.request;
 
@@ -443,6 +460,7 @@ async function handleOpenAiDecisions(
     const result = await options.decide(decisionRequest);
 
     if (
+      !localOnly &&
       result.escalated &&
       lunaOk &&
       (decisionRequest.escalation?.mode === "escalate" ||

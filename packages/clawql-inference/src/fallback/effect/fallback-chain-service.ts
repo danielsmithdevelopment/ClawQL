@@ -14,15 +14,14 @@ function wormAppendRequired(env: NodeJS.ProcessEnv): boolean {
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
-function appendHopWorm(
+/** X6: record the hop attempt before the provider call leaves the machine. */
+function appendHopCallWorm(
   request: InferenceRequest,
   modelId: string,
-  ok: boolean,
-  detail: string | undefined,
   env: NodeJS.ProcessEnv
 ): Effect.Effect<void, Error> {
   const { provider, model } = parseModelId(modelId);
-  const call = appendInferenceCallToWormEffect({
+  const write = appendInferenceCallToWormEffect({
     correlationId: request.correlationId,
     modelId,
     provider,
@@ -37,7 +36,19 @@ function appendHopWorm(
     Effect.mapError((err) => new Error(err.reason || "fallback hop WORM call failed")),
     Effect.asVoid
   );
-  const result = appendInferenceResultToWormEffect({
+  if (wormAppendRequired(env)) return write;
+  return write.pipe(Effect.catch(() => Effect.void));
+}
+
+function appendHopResultWorm(
+  request: InferenceRequest,
+  modelId: string,
+  ok: boolean,
+  detail: string | undefined,
+  env: NodeJS.ProcessEnv
+): Effect.Effect<void, Error> {
+  const { provider } = parseModelId(modelId);
+  const write = appendInferenceResultToWormEffect({
     correlationId: request.correlationId,
     modelId,
     provider,
@@ -50,9 +61,8 @@ function appendHopWorm(
     Effect.mapError((err) => new Error(err.reason || "fallback hop WORM result failed")),
     Effect.asVoid
   );
-  const both = call.pipe(Effect.flatMap(() => result));
-  if (wormAppendRequired(env)) return both;
-  return both.pipe(Effect.catch(() => Effect.void));
+  if (wormAppendRequired(env)) return write;
+  return write.pipe(Effect.catch(() => Effect.void));
 }
 
 /** Effect service for ordered model fallback within a single `complete()` call. */
@@ -101,13 +111,14 @@ export function fallbackChainLiveLayer(
 
           for (const modelId of chain) {
             attempted.push(modelId);
+            // X6: hop call record before the prompt leaves (regulated: fail closed).
+            yield* appendHopCallWorm(request, modelId, env);
             const result = yield* gateway
               .complete({ ...request, model: modelId })
               .pipe(Effect.result);
 
             if (Result.isSuccess(result)) {
-              // Audit 6.05: record every hop (failed ones below; success on last).
-              yield* appendHopWorm(request, modelId, true, undefined, env);
+              yield* appendHopResultWorm(request, modelId, true, undefined, env);
               const primary = request.model ?? request.routing?.modelId ?? modelId;
               if (modelId === primary) {
                 return result.success;
@@ -119,7 +130,7 @@ export function fallbackChainLiveLayer(
               };
             }
             lastError = result.failure;
-            yield* appendHopWorm(
+            yield* appendHopResultWorm(
               request,
               modelId,
               false,

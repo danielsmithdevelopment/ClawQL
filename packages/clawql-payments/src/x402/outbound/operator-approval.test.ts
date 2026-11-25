@@ -67,4 +67,25 @@ describe("outbound operator approval (audit 6.02)", () => {
       })
     ).toBeNull();
   });
+
+  it("refuses expired approvals", async () => {
+    home = await mkdtemp(join(tmpdir(), "clawql-x402-apr-"));
+    const a = await recordOutboundOperatorApproval({
+      home,
+      quoteDigest: "digest-exp",
+      principal: "ops@example.com",
+      tenantId: "t1",
+      env: { CLAWQL_OUTBOUND_APPROVAL_TTL_SEC: "60" },
+    });
+    const past = Date.parse(a.expiresAt) + 1_000;
+    expect(
+      await consumeOutboundOperatorApproval({
+        home,
+        approvalId: a.id,
+        quoteDigest: "digest-exp",
+        tenantId: "t1",
+        nowMs: past,
+      })
+    ).toBeNull();
+  });
 });

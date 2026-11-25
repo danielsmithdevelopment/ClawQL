@@ -521,6 +521,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     await attachGraphqlHttpToMcpApp(app, { auth: applyGatewayAuth });
   }
 
+  // X1: console outbound payment approve (principal from claims.sub).
+  if (!skipPaymentsAndNetworkRoutes()) {
+    const { attachOutboundApproveRoutes } = await import("clawql-payments");
+    attachOutboundApproveRoutes(app, { auth: applyGatewayAuth });
+  }
+
   if (httpMetricsEnabledForHttp()) {
     app.get("/metrics", async (_req, res) => {
       try {
@@ -940,11 +946,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       // Scope from verified claims; header may only narrow when CLAWQL_TRUSTED_PROXY=1.
       const claimsForScope = (
         req as import("express").Request & {
-          clawqlClaims?: { scope?: readonly string[]; tenantId?: string };
+          clawqlClaims?: { scope?: readonly string[]; tenantId?: string; sub?: string };
         }
       ).clawqlClaims;
       const claimScope = claimsForScope?.scope;
       const tenantId = claimsForScope?.tenantId?.trim() || undefined;
+      const claimSub = claimsForScope?.sub?.trim() || undefined;
       const atrToolsHeader = req.header("x-clawql-capability-tools")?.trim();
       const headerTokens = atrToolsHeader
         ? atrToolsHeader
@@ -975,8 +982,15 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         "mcp";
       try {
         await runWithOptionalX402Context(req, () =>
-          runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens, tenantId }, () =>
-            transport!.handleRequest(req, res, req.body)
+          runWithMcpRequestContext(
+            {
+              sessionId: mcpSession,
+              atrScopeTokens,
+              tenantId,
+              sub: claimSub,
+              agentId: claimSub,
+            },
+            () => transport!.handleRequest(req, res, req.body)
           )
         );
       } finally {

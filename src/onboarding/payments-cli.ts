@@ -24,6 +24,7 @@ import {
   runPaymentsX402Reconcile,
   runPaymentsX402Verify,
   runPaymentsX402WalletSetup,
+  runPaymentsOutboundApprove,
   runPaymentsPayoutConnectCreate,
   runPaymentsPayoutConnectLink,
   runPaymentsPayoutCreate,
@@ -144,6 +145,10 @@ export type PaymentsCliOptions = {
   payer?: string;
   date?: string;
   tenantId?: string;
+  /** Outbound x402 operator approve (X1). */
+  quoteDigest?: string;
+  principal?: string;
+  home?: string;
   accountId?: string;
   publishableKey?: string;
   webhookSecret?: string;
@@ -417,6 +422,18 @@ export async function runPaymentsX402GateListCmd(
   options: PaymentsCliOptions = {}
 ): Promise<number> {
   return runPaymentsX402GateList({ json: options.json });
+}
+
+export async function runPaymentsOutboundApproveCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOutboundApprove({
+    quoteDigest: options.quoteDigest,
+    tenantId: options.tenantId,
+    principal: options.principal,
+    home: options.home,
+    json: options.json,
+  });
 }
 
 export async function runPaymentsPayoutConnectCreateCmd(

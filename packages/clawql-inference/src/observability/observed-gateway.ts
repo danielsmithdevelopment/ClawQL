@@ -13,10 +13,29 @@ function resolveRequestModelId(request: InferenceRequest): string {
   return request.model ?? request.routing?.modelId ?? "unknown";
 }
 
-/** Audit 6.04: charge the upstream model that answered. */
+/**
+ * Audit 6.04 / X5: charge the upstream model that answered, preferring a
+ * provider-qualified id (gateway already qualifies bare response.model).
+ */
 function resolveBillableModelId(request: InferenceRequest, response?: InferenceResponse): string {
   const fromResponse = response?.model?.trim();
-  if (fromResponse) return fromResponse;
+  if (fromResponse) {
+    if (fromResponse.includes("/")) return fromResponse;
+    // Bare name: qualify from the request's resolved provider when possible.
+    try {
+      const requested = resolveRequestModelId(request);
+      const { provider } = parseModelId(requested);
+      if (provider && provider !== "openai") return `${provider}/${fromResponse}`;
+      // Bare openai default from parseModelId is often wrong for ollama — keep response as-is
+      // only when request was also bare/openai; otherwise attach request provider.
+      if (requested.includes("/")) {
+        return `${provider}/${fromResponse}`;
+      }
+    } catch {
+      /* fall through */
+    }
+    return fromResponse;
+  }
   return resolveRequestModelId(request);
 }
 
