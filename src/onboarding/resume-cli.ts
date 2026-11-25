@@ -30,6 +30,15 @@ export async function runResume(options: {
       );
       return 1;
     }
+    const inHarness =
+      process.env.CLAWQL_IN_HARNESS?.trim() === "1" ||
+      Boolean(process.env.CLAWQL_HARNESS_ID?.trim());
+    if (inHarness && !options.decline) {
+      console.error(
+        "clawql resume approve is refused inside a harness/agent shell (audit R12/Y4). Decline still works here."
+      );
+      return 1;
+    }
     const approvedBy = await Effect.runPromise(resolveOperatorPrincipalEffect());
     const content = await resumeClawqlExecution({
       executionId,

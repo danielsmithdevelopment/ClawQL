@@ -521,10 +521,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     await attachGraphqlHttpToMcpApp(app, { auth: applyGatewayAuth });
   }
 
-  // X1: console outbound payment approve (principal from claims.sub).
+  // Y1: outbound approve uses dedicated operator key / OIDC — not MCP gateway auth.
   if (!skipPaymentsAndNetworkRoutes()) {
     const { attachOutboundApproveRoutes } = await import("clawql-payments");
-    attachOutboundApproveRoutes(app, { auth: applyGatewayAuth });
+    attachOutboundApproveRoutes(app, { env: process.env });
   }
 
   if (httpMetricsEnabledForHttp()) {

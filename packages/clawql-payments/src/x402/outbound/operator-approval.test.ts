@@ -4,18 +4,33 @@ import { join } from "node:path";
 import { describe, expect, it, afterEach } from "vitest";
 import {
   consumeOutboundOperatorApproval,
+  parkOutboundPendingQuote,
   recordOutboundOperatorApproval,
 } from "./operator-approval.js";
 
-describe("outbound operator approval (audit 6.02)", () => {
+async function park(home: string, digest: string, tenantId = "t1"): Promise<void> {
+  await parkOutboundPendingQuote({
+    home,
+    quoteDigest: digest,
+    amount: "1.00",
+    asset: "USDC",
+    payee: "0xabc",
+    resourceUrl: "https://pay.example/resource",
+    network: "base",
+    tenantId,
+  });
+}
+
+describe("outbound operator approval (audit 6.02 / Y3)", () => {
   let home = "";
 
   afterEach(async () => {
     if (home) await rm(home, { recursive: true, force: true });
   });
 
-  it("records and consumes a one-shot approval", async () => {
+  it("records and consumes a one-shot approval bound to a parked quote", async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-x402-apr-"));
+    await park(home, "digest-1");
     const a = await recordOutboundOperatorApproval({
       home,
       quoteDigest: "digest-1",
@@ -23,6 +38,8 @@ describe("outbound operator approval (audit 6.02)", () => {
       tenantId: "t1",
     });
     expect(a.id.startsWith("x402apr_")).toBe(true);
+    expect(a.quote.amount).toBe("1.00");
+    expect(a.quote.payee).toBe("0xabc");
 
     const first = await consumeOutboundOperatorApproval({
       home,
@@ -42,8 +59,21 @@ describe("outbound operator approval (audit 6.02)", () => {
     expect(second).toBeNull();
   });
 
+  it("refuses approve without a parked quote (Y3)", async () => {
+    home = await mkdtemp(join(tmpdir(), "clawql-x402-apr-"));
+    await expect(
+      recordOutboundOperatorApproval({
+        home,
+        quoteDigest: "missing",
+        principal: "ops@example.com",
+        tenantId: "t1",
+      })
+    ).rejects.toThrow(/parked quote/);
+  });
+
   it("refuses digest or tenant mismatch", async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-x402-apr-"));
+    await park(home, "digest-1");
     const a = await recordOutboundOperatorApproval({
       home,
       quoteDigest: "digest-1",
@@ -70,6 +100,7 @@ describe("outbound operator approval (audit 6.02)", () => {
 
   it("refuses expired approvals", async () => {
     home = await mkdtemp(join(tmpdir(), "clawql-x402-apr-"));
+    await park(home, "digest-exp");
     const a = await recordOutboundOperatorApproval({
       home,
       quoteDigest: "digest-exp",
