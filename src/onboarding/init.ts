@@ -46,7 +46,12 @@ export type InitResult = {
 async function ensureDir(home: string, rel: string): Promise<boolean> {
   const full = resolve(home, rel);
   const existed = existsSync(full);
-  await mkdir(full, { recursive: true });
+  await mkdir(full, { recursive: true, mode: 0o700 });
+  try {
+    await chmod(full, 0o700);
+  } catch {
+    /* best-effort on platforms without chmod */
+  }
   return !existed;
 }
 
@@ -134,6 +139,12 @@ async function tryPushHashicorpVault(fromEnvPath: string): Promise<boolean> {
 
 export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   const home = resolve(options.home ?? getClawqlHome());
+  await mkdir(home, { recursive: true, mode: 0o700 });
+  try {
+    await chmod(home, 0o700);
+  } catch {
+    /* best-effort */
+  }
   const createdDirs: string[] = [];
   for (const rel of INIT_DIRECTORIES) {
     if (await ensureDir(home, rel)) createdDirs.push(rel);
