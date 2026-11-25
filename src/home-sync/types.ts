@@ -31,14 +31,19 @@ export type SyncFileEntry = {
  * Pull / `sync status` / `memory_sync` compare against this index — not a raw
  * bucket listing. Push must merge remote-only paths (`mergeManifestFiles`) so a
  * sparse local vault cannot drop team notes from the index while objects remain.
+ *
+ * `erasureTombstones` (audit U1) is the shared team erase set: every member's
+ * pull skips these paths, and the next push deletes matching bucket objects.
  */
 export type SyncManifest = {
   version: 1;
   updatedAt: string;
   files: Record<string, SyncFileEntry>;
+  /** Vault-relative paths that must never be restored from the team bucket. */
+  erasureTombstones?: string[];
 };
 
-export type SyncAction = "upload" | "download" | "skip" | "conflict";
+export type SyncAction = "upload" | "download" | "skip" | "conflict" | "delete";
 
 export type SyncPlanEntry = {
   path: string;

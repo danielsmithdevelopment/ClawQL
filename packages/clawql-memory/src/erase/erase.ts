@@ -89,10 +89,48 @@ type EraseLockState = {
   pathId?: string;
   /** True when the on-disk note was a crypto-shred envelope before erase. */
   wasEncryptedEnvelope: boolean;
+  /**
+   * True when git history for this path contains a non-envelope (plaintext) blob
+   * (audit U3 — crypto-shred enabled after a plaintext commit).
+   */
+  gitHistoryHadPlaintext: boolean;
   memoryDbErased: boolean;
   pgvectorErased: boolean;
   ontologyErased: boolean;
 };
+
+/** Probe git history for any plaintext (non-envelope) revision of `rel` (audit U3). */
+async function gitHistoryHadPlaintextBlob(vault: string, rel: string): Promise<boolean> {
+  try {
+    const { execFile } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const execFileAsync = promisify(execFile);
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", vault, "log", "--all", "--pretty=format:%H", "--", rel],
+      { maxBuffer: 4 * 1024 * 1024 }
+    );
+    const shas = stdout
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const sha of shas) {
+      try {
+        const { stdout: blob } = await execFileAsync(
+          "git",
+          ["-C", vault, "show", `${sha}:${rel}`],
+          { maxBuffer: 8 * 1024 * 1024 }
+        );
+        if (blob && !isEncryptedVaultEnvelope(blob)) return true;
+      } catch {
+        /* blob missing at this revision */
+      }
+    }
+  } catch {
+    /* not a git vault */
+  }
+  return false;
+}
 
 function causeMessage(cause: Cause.Cause<unknown>): string {
   const squashed = Cause.squash(cause);
@@ -131,6 +169,9 @@ async function eraseUnderVaultLock(
   } catch {
     /* missing */
   }
+
+  // U3: inspect history before unlink — plaintext commits survive crypto-shred.
+  state.gitHistoryHadPlaintext = await gitHistoryHadPlaintextBlob(vault, rel);
 
   const mapped = await lookupPathMapByPath(vault, rel);
   state.pathId = mapped?.pathId;
@@ -217,6 +258,7 @@ export function executeMemoryEraseCoreEffect(
       cryptoKeyDestroyed: false,
       pathMapDeleted: false,
       wasEncryptedEnvelope: false,
+      gitHistoryHadPlaintext: false,
       memoryDbErased: false,
       pgvectorErased: false,
       ontologyErased: false,
@@ -266,8 +308,11 @@ export function executeMemoryEraseCoreEffect(
       })
     );
 
+    // U3: only claim ciphertext-only history when every git blob was an envelope.
     const gitHistoryRetainsCiphertextOnly =
-      state.wasEncryptedEnvelope && state.cryptoKeyDestroyed === true;
+      state.wasEncryptedEnvelope &&
+      state.cryptoKeyDestroyed === true &&
+      !state.gitHistoryHadPlaintext;
 
     const wormExit = yield* Effect.exit(
       emitMemoryWormEventEffect({
@@ -320,7 +365,7 @@ export function executeMemoryEraseCoreEffect(
       },
       denyListUpdated: Boolean(state.contentHash && state.pathId),
       exportNote:
-        "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. An erasure tombstone was written so home-sync pull will not restore this path. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
+        "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. An erasure tombstone was written locally and the next home-sync push publishes it to the shared manifest and deletes the bucket object. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
     };
   });
 }

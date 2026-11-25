@@ -156,4 +156,20 @@ Validation steps follow.
     ].join(" ");
     expect(text).toMatch(/secret|non-note|Memory|Vault read/i);
   });
+
+  it("reads the realpath-checked absolute file (U2)", async () => {
+    const root = await mkdtemp(join(tmpdir(), "clawql-ra-u2-"));
+    await mkdir(join(root, "Memory"), { recursive: true });
+    await writeFile(join(root, "Memory", "note.md"), DOC, "utf8");
+    const r = await Effect.runPromise(
+      executeReadAroundEffect(root, {
+        path: "Memory/note.md",
+        sectionId: "sec-protocols",
+        tokenBudget: 200,
+      })
+    );
+    expect(r.ok).toBe(true);
+    expect(r.path).toBe("Memory/note.md");
+    expect(r.content).toMatch(/orchid-77/);
+  });
 });
