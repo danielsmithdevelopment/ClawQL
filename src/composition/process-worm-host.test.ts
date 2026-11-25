@@ -34,9 +34,9 @@ describe("ensureProcessWormHostBootedEffect", () => {
     process.env.CLAWQL_WORM_ENABLED = "0";
     delete process.env.CLAWQL_ALLOW_NO_ENFORCEMENT;
 
-    await expect(
-      Effect.runPromise(ensureProcessWormHostBootedEffect(process.env))
-    ).rejects.toThrow(/regulated.*WORM disabled/i);
+    await expect(Effect.runPromise(ensureProcessWormHostBootedEffect(process.env))).rejects.toThrow(
+      /regulated.*WORM disabled/i
+    );
   });
 
   it("regulated profile refuses ALLOW_NO_ENFORCEMENT", async () => {
@@ -45,9 +45,9 @@ describe("ensureProcessWormHostBootedEffect", () => {
     process.env.CLAWQL_ALLOW_NO_ENFORCEMENT = "1";
     delete process.env.CLAWQL_SANDBOX_BACKEND;
 
-    await expect(
-      Effect.runPromise(applyRegulatedProfileEnvEffect(process.env))
-    ).rejects.toThrow(/ALLOW_NO_ENFORCEMENT/);
+    await expect(Effect.runPromise(applyRegulatedProfileEnvEffect(process.env))).rejects.toThrow(
+      /ALLOW_NO_ENFORCEMENT/
+    );
   });
 
   it("regulated profile sets Panguard + IFC defaults", async () => {

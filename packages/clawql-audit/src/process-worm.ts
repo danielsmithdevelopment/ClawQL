@@ -174,15 +174,17 @@ export const appendProcessWormEffect = (
       return null;
     }
     const body = yield* withProcessWormDefaults(input);
-    return yield* sem.withPermits(1)(svc.append(body)).pipe(
-      Effect.map((e) => e as WORMEntry | null),
-      Effect.catch((err: AuditError) => {
-        appendFailureCount += 1;
-        process.stderr.write(`[clawql-audit] process WORM append failed: ${err.reason}\n`);
-        if (required) return Effect.fail(err);
-        return Effect.succeed(null);
-      })
-    );
+    return yield* sem
+      .withPermits(1)(svc.append(body))
+      .pipe(
+        Effect.map((e) => e as WORMEntry | null),
+        Effect.catch((err: AuditError) => {
+          appendFailureCount += 1;
+          process.stderr.write(`[clawql-audit] process WORM append failed: ${err.reason}\n`);
+          if (required) return Effect.fail(err);
+          return Effect.succeed(null);
+        })
+      );
   });
 
 export const stopProcessWormEffect = (): Effect.Effect<void> =>
@@ -252,7 +254,9 @@ export const recordProcessWormDisabledEffect = (
         metadata: { reason },
       });
       if (appendSem) {
-        yield* appendSem.withPermits(1)(svc.append(body)).pipe(Effect.catch(() => Effect.void));
+        yield* appendSem
+          .withPermits(1)(svc.append(body))
+          .pipe(Effect.catch(() => Effect.void));
       }
       yield* stopProcessWormEffect();
     } finally {

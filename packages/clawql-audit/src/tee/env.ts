@@ -15,11 +15,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { Effect } from "effect";
 import { AuditError } from "../errors.js";
-import {
-  createEcdsaTeeSigner,
-  createSimulatedTeeSigner,
-  generateTeeKeyPairPem,
-} from "./ecdsa.js";
+import { createEcdsaTeeSigner, createSimulatedTeeSigner, generateTeeKeyPairPem } from "./ecdsa.js";
 import type { TEEAttestationReport, TEESigner } from "./signer.js";
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {
@@ -111,8 +107,7 @@ export const createWormTeeSignerFromEnvEffect = (
     }
 
     // Persistent signing key under $CLAWQL_HOME/worm (audit 3.04).
-    const home =
-      envTrim(env, "CLAWQL_HOME") ?? resolve(homedir(), ".ClawQL");
+    const home = envTrim(env, "CLAWQL_HOME") ?? resolve(homedir(), ".ClawQL");
     const keyDir = join(resolve(home), "worm");
     const privPath = join(keyDir, "tee-signing.key.pem");
     const pubPath = join(keyDir, "tee-signing.pub.pem");

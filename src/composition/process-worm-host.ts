@@ -70,9 +70,9 @@ export function ensureProcessWormHostBootedEffect(
       // Audit 3.03: if a durable local store already exists, append WORM_DISABLED once.
       const audit = yield* Effect.promise(() => loadAudit());
       if (typeof audit.recordProcessWormDisabledEffect === "function") {
-        yield* audit.recordProcessWormDisabledEffect(env, "CLAWQL_WORM_ENABLED=0").pipe(
-          Effect.catch(() => Effect.void)
-        );
+        yield* audit
+          .recordProcessWormDisabledEffect(env, "CLAWQL_WORM_ENABLED=0")
+          .pipe(Effect.catch(() => Effect.void));
       }
       booted = true;
       return;
