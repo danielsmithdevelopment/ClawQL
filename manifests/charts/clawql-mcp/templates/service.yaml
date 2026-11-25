@@ -30,6 +30,9 @@ spec:
       {{- if and (hasKey .Values.service.http "nodePort") .Values.service.http.nodePort }}
       nodePort: {{ .Values.service.http.nodePort }}
       {{- end }}
+    {{- $grpcAlias := index .Values "clawql-mcp-grpc" | default dict }}
+    {{- $enableGrpc := or .Values.enableGrpc (and $grpcAlias $grpcAlias.enabled) }}
+    {{- if $enableGrpc }}
     - name: grpc
       port: {{ .Values.service.grpc.port }}
       targetPort: grpc
@@ -37,3 +40,4 @@ spec:
       {{- if and (hasKey .Values.service.grpc "nodePort") .Values.service.grpc.nodePort }}
       nodePort: {{ .Values.service.grpc.nodePort }}
       {{- end }}
+    {{- end }}

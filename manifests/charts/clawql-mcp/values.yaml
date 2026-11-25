@@ -22,6 +22,11 @@ image:
 pluginTiers:
   tier: standard
 
+# Default-deny NetworkPolicy for the MCP pod (audit 7.04). Off by default for shared/dev clusters.
+networkPolicy:
+  defaultDeny:
+    enabled: false
+
 imagePullSecrets: []
 
 serviceAccount:
@@ -350,12 +355,18 @@ sandboxKata:
 # Requires enableSandbox: true. Local single-node clusters only (Docker Desktop / Rancher Desktop). See manifests/charts/clawql-mcp/README.md.
 sandboxDocker:
   enabled: false
+  # Required when enabled outside labs (audit 7.03). values-docker-desktop sets true.
+  allowHostDockerSocket: false
   hostSocketPath: /var/run/docker.sock
   # When true, docker-sock hostPath uses type: Socket (kubelet rejects if the path is not a socket). Docker Desktop
   # Kubernetes sometimes fails this check even with a valid socket — set false in values-docker-desktop.yaml.
   enforceHostPathSocketType: true
   # https://download.docker.com/linux/static/stable/<arch>/docker-<version>.tgz
   staticCliVersion: "27.4.1"
+  # SHA-256 of docker-<version>.tgz per arch (audit 7.05). Empty → refuse download in init.
+  staticCliSha256:
+    x86_64: "9dc39fa726db525f22bd6861308a09f6c31a14de3e512ba1576a329b833798f5"
+    aarch64: "4c3a49213419cac4abf4c12b601490d37b0768dcd1bc87c4a8be88a07900f774"
   initImage: curlimages/curl:8.11.1
   # Host sockets are often root:docker 660; run MCP container as root so docker CLI can connect (local dev only).
   runAsRootForDockerSocket: false
@@ -717,7 +728,7 @@ documentPipeline:
     enabled: false
     image:
       repository: ghcr.io/danielsmithdevelopment/clawql-classifier-http
-      tag: latest
+      tag: "8.0.0"
       pullPolicy: IfNotPresent
     # When empty, chart builds from docs/examples/idp/classifier-http via values override / local image.
     service:
@@ -743,7 +754,7 @@ documentPipeline:
     enabled: false
     image:
       repository: ghcr.io/danielsmithdevelopment/clawql-langextract-http
-      tag: latest
+      tag: "8.0.0"
       pullPolicy: IfNotPresent
     service:
       port: 8090
@@ -763,7 +774,7 @@ documentPipeline:
     enabled: false
     image:
       repository: ghcr.io/danielsmithdevelopment/clawql-privacy-filter-http
-      tag: latest
+      tag: "8.0.0"
       pullPolicy: IfNotPresent
     service:
       port: 8091
@@ -1318,7 +1329,7 @@ ui:
   replicaCount: 1
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-website
-    tag: latest
+    tag: "8.0.0"
     pullPolicy: IfNotPresent
   service:
     port: 3000
@@ -1374,7 +1385,7 @@ dashboard:
   chatStream: true
   image:
     repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
-    tag: latest
+    tag: "8.0.0"
     pullPolicy: IfNotPresent
   service:
     port: 3040

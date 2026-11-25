@@ -9,7 +9,8 @@
 #   docker build -f docker/Dockerfile --target runtime-node -t clawql-mcp:node .   # minority escape
 # Run:  docker run --rm -p 8080:8080 clawql-mcp
 
-FROM node:25-bookworm-slim AS builder
+# Pin builder by digest (audit 7.05). Tag 25-bookworm-slim @ hub.docker.com.
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS builder
 WORKDIR /app
 # Pull Bookworm security updates before npm ci (golden-image Trivy gate).
 RUN apt-get update \
@@ -136,6 +137,9 @@ CMD ["dist/server-http.js"]
 # Build: docker build -f docker/Dockerfile --target runtime-with-docker-cli -t clawql-mcp:local .
 FROM oven/bun@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS runtime-with-docker-cli
 ARG DOCKER_STATIC_VERSION=27.4.1
+# SHA-256 of docker-<version>.tgz (audit 7.05).
+ARG DOCKER_STATIC_SHA256_X86_64=9dc39fa726db525f22bd6861308a09f6c31a14de3e512ba1576a329b833798f5
+ARG DOCKER_STATIC_SHA256_AARCH64=4c3a49213419cac4abf4c12b601490d37b0768dcd1bc87c4a8be88a07900f774
 WORKDIR /app
 USER root
 RUN apt-get update \
@@ -143,9 +147,16 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
   && rm -rf /var/lib/apt/lists/* \
   && ARCH="$(dpkg --print-architecture)" \
-  && case "$ARCH" in amd64) DARCH=x86_64 ;; arm64) DARCH=aarch64 ;; *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; esac \
+  && case "$ARCH" in \
+       amd64) DARCH=x86_64; EXPECT="${DOCKER_STATIC_SHA256_X86_64}" ;; \
+       arm64) DARCH=aarch64; EXPECT="${DOCKER_STATIC_SHA256_AARCH64}" ;; \
+       *) echo "unsupported arch: $ARCH" >&2; exit 1 ;; \
+     esac \
   && curl -fsSL "https://download.docker.com/linux/static/stable/${DARCH}/docker-${DOCKER_STATIC_VERSION}.tgz" \
-    | tar xz --strip-components=1 -C /usr/local/bin docker/docker \
+       -o /tmp/docker.tgz \
+  && echo "${EXPECT}  /tmp/docker.tgz" | sha256sum -c - \
+  && tar xz --strip-components=1 -C /usr/local/bin -f /tmp/docker.tgz docker/docker \
+  && rm -f /tmp/docker.tgz \
   && chmod +x /usr/local/bin/docker
 ENV NODE_ENV=production
 ENV CLAWQL_BUNDLED_OFFLINE=1

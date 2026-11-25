@@ -36,3 +36,39 @@
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{- /* 7.03 — host Docker socket is lab-only (always enforced) */ -}}
+{{- if and .Values.enableSandbox .Values.sandboxDocker.enabled (not .Values.sandboxDocker.allowHostDockerSocket) }}
+{{- fail "sandboxDocker.enabled requires sandboxDocker.allowHostDockerSocket=true (local clusters only — audit 7.03)" }}
+{{- end }}
+
+{{- /* 7.04 — regulated tier must carry OIDC + remote WORM Object Lock + default-deny NP */ -}}
+{{- if eq (.Values.pluginTiers.tier | default "") "regulated" }}
+{{- if ne (.Values.gatewayAuth.mode | default "") "oidc" }}
+{{- fail "pluginTiers.tier=regulated requires gatewayAuth.mode=oidc (audit 7.04)" }}
+{{- end }}
+{{- $oidcJwks := "" }}
+{{- $oidcIssuer := "" }}
+{{- $oidcAud := "" }}
+{{- $wormLock := "" }}
+{{- $wormRemote := "" }}
+{{- range (.Values.extraEnv | default list) }}
+{{- if eq .name "CLAWQL_AUTH_OIDC_JWKS_URL" }}{{- $oidcJwks = .value | default "" }}{{- end }}
+{{- if eq .name "CLAWQL_AUTH_OIDC_ISSUER" }}{{- $oidcIssuer = .value | default "" }}{{- end }}
+{{- if eq .name "CLAWQL_AUTH_OIDC_AUDIENCE" }}{{- $oidcAud = .value | default "" }}{{- end }}
+{{- if eq .name "CLAWQL_WORM_S3_OBJECT_LOCK" }}{{- $wormLock = .value | default "" }}{{- end }}
+{{- if eq .name "CLAWQL_WORM_REMOTE" }}{{- $wormRemote = .value | default "" }}{{- end }}
+{{- end }}
+{{- if or (eq $oidcJwks "") (eq $oidcIssuer "") (eq $oidcAud "") }}
+{{- fail "pluginTiers.tier=regulated requires CLAWQL_AUTH_OIDC_JWKS_URL / ISSUER / AUDIENCE in extraEnv (set in values-regulated or host overlay) — audit 7.04" }}
+{{- end }}
+{{- if ne $wormRemote "s3" }}
+{{- fail "pluginTiers.tier=regulated requires CLAWQL_WORM_REMOTE=s3 in extraEnv (audit 7.04)" }}
+{{- end }}
+{{- if and (ne $wormLock "compliance") (ne $wormLock "governance") }}
+{{- fail "pluginTiers.tier=regulated requires CLAWQL_WORM_S3_OBJECT_LOCK=compliance|governance (audit 7.04)" }}
+{{- end }}
+{{- if not (and .Values.networkPolicy .Values.networkPolicy.defaultDeny .Values.networkPolicy.defaultDeny.enabled) }}
+{{- fail "pluginTiers.tier=regulated requires networkPolicy.defaultDeny.enabled=true (audit 7.04)" }}
+{{- end }}
+{{- end }}
