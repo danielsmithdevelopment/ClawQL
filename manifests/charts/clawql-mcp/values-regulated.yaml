@@ -54,3 +54,16 @@ onyx:
 
 secretSourcing:
   requireVaultBackedSecrets: true
+
+# Supply chain (audit 7.05) — digest pin + Cosign on the regulated path.
+image:
+  tag: "8.0.0"
+  pullPolicy: IfNotPresent
+
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+    verifyDigest: true
+    mutateDigest: true
+    cosign:
+      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/\\.github/workflows/docker-publish\\.yml@refs/(heads/main|tags/v.*)$"

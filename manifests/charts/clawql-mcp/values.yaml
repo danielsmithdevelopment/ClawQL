@@ -14,7 +14,8 @@ deploymentStrategy: {}
 
 image:
   repository: ghcr.io/danielsmithdevelopment/clawql-mcp
-  tag: latest
+  # Empty → templates use Chart.AppVersion (audit 7.05). Avoid floating `latest`.
+  tag: ""
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -1747,6 +1748,7 @@ kyverno:
     background: false
     failurePolicy: Fail
     webhookTimeoutSeconds: 30
+    # Default off so shared/dev clusters without Cosign stay installable; values-regulated turns these on (audit 7.05).
     verifyDigest: false
     mutateDigest: false
     excludeNamespaces:
@@ -1766,7 +1768,8 @@ kyverno:
     # `CLAWQL_GHCR_PULL_USERNAME` if not using `GITHUB_ACTOR`).
     imageRegistrySecretNames: []
     cosign:
-      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
+      # Pin to docker-publish on main / version tags — not every workflow on any ref (audit 7.05).
+      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/\\.github/workflows/docker-publish\\.yml@refs/(heads/main|tags/v.*)$"
       issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
       rekorUrl: "https://rekor.sigstore.dev"
   # Optional ClusterPolicy: require spec.runtimeClassName per namespace lists (Kata vs gVisor tiers).

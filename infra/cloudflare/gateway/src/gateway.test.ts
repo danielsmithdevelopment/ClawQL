@@ -112,4 +112,22 @@ describe("idp proxy origin", () => {
     expect(headers.get("X-Correlation-Id")).toBe("c1");
     expect(headers.get("host")).toBeNull();
   });
+
+  it("strips client-supplied X-ClawQL and correlation headers before setting hop values", () => {
+    const req = new Request("https://gateway.clawql.app/mcp", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer t",
+        "X-ClawQL-Tenant-Id": "attacker",
+        "X-ClawQL-Role": "admin",
+        "X-Correlation-Id": "client-spoof",
+      },
+      body: "{}",
+    });
+    const init = buildIdpProxyInit(req, { tenantId: "acme", correlationId: "c1" });
+    const headers = init.headers as Headers;
+    expect(headers.get("X-ClawQL-Tenant-Id")).toBe("acme");
+    expect(headers.get("X-ClawQL-Role")).toBeNull();
+    expect(headers.get("X-Correlation-Id")).toBe("c1");
+  });
 });
