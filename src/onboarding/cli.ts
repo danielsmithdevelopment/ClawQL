@@ -525,7 +525,8 @@ Usage:
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
   clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
-  clawql payments approve <quoteDigest> [--tenant ID] [--principal operator:name]
+  clawql payments approve <quoteDigest> [--principal operator:name]
+                  # Tenant from CLAWQL_TENANT_ID only; refused in harness / regulated
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
