@@ -167,7 +167,7 @@ describe("AccountDeletionService", () => {
     expect(deleted.wormWritten).toBe(true);
     expect(deleted.jobId).toMatch(/^adj_[a-f0-9]{32}$/);
     expect(deleted.orgsDeleted).toBeGreaterThanOrEqual(1);
-    expect(deleted.userIdHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(deleted.deletionRef).toMatch(/^[a-f0-9]{64}$/);
     expect(deleted.steps.keys.status).toBe("completed");
     expect(deleted.steps.org.status).toBe("completed");
     expect(deleted.steps.supabase.status).toBe("completed");

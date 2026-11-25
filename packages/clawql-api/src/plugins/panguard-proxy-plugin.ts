@@ -15,6 +15,7 @@ import {
 } from "clawql-core";
 import { Effect } from "effect";
 import { loadClawqlAuditEffect } from "../audit/clawql-audit-lazy.js";
+import { appendProcessWormGatedEffect } from "../audit/worm-append-gated.js";
 
 export type PanguardProxyPluginOptions = {
   /** When true, plugin is registered but does not intercept traffic (default sidecar path). */
@@ -39,14 +40,26 @@ function atrBlockHook(): LifecycleHook {
       Effect.gen(function* () {
         const toolName = ctx.toolName ?? "";
         const blocked = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim();
+
+        const recordAllow = Effect.gen(function* () {
+          const audit = yield* loadClawqlAuditEffect();
+          const input = yield* audit.wormInputFromPanguardAllow({ toolName });
+          yield* appendProcessWormGatedEffect(input);
+        });
+        const recordDeny = (reason: string) =>
+          Effect.gen(function* () {
+            const audit = yield* loadClawqlAuditEffect();
+            const input = yield* audit.wormInputFromPanguardDeny({ toolName, reason });
+            // Deny decisions must be recorded when WORM is required (audit 3.02).
+            yield* appendProcessWormGatedEffect(input);
+          });
+
         if (!blocked) {
           const ok: HookResult = { allow: true };
+          // Allow-path WORM is opt-in via CLAWQL_WORM_PANGUARD_ALLOW, except regulated
+          // still fails closed if that env is set and the append fails.
           if (process.env.CLAWQL_WORM_PANGUARD_ALLOW?.trim() === "1") {
-            yield* Effect.gen(function* () {
-              const audit = yield* loadClawqlAuditEffect();
-              const input = yield* audit.wormInputFromPanguardAllow({ toolName });
-              yield* audit.appendProcessWormEffect(input);
-            }).pipe(Effect.catch(() => Effect.void));
+            yield* recordAllow;
           }
           return ok;
         }
@@ -56,20 +69,12 @@ function atrBlockHook(): LifecycleHook {
           .filter(Boolean);
         if (deny.includes(toolName) || deny.includes("*")) {
           const reason = `Panguard policy blocked tool: ${toolName}`;
-          yield* Effect.gen(function* () {
-            const audit = yield* loadClawqlAuditEffect();
-            const input = yield* audit.wormInputFromPanguardDeny({ toolName, reason });
-            yield* audit.appendProcessWormEffect(input);
-          }).pipe(Effect.catch(() => Effect.void));
+          yield* recordDeny(reason);
           const denied: HookResult = { allow: false, denyReason: reason };
           return denied;
         }
         if (process.env.CLAWQL_WORM_PANGUARD_ALLOW?.trim() === "1") {
-          yield* Effect.gen(function* () {
-            const audit = yield* loadClawqlAuditEffect();
-            const input = yield* audit.wormInputFromPanguardAllow({ toolName });
-            yield* audit.appendProcessWormEffect(input);
-          }).pipe(Effect.catch(() => Effect.void));
+          yield* recordAllow;
         }
         const ok: HookResult = { allow: true };
         return ok;

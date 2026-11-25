@@ -2,7 +2,8 @@
  * Env → WORM trail config. Effect-primary; null when durable WORM is disabled.
  *
  * Hash-chained local WORM is on by default. Set CLAWQL_WORM_ENABLED=0 to disable
- * (writes a final signed WORM_DISABLED entry first when a trail was active).
+ * (writes a final hash-chained WORM_DISABLED entry first when a trail was active;
+ * ECDSA signatures require CLAWQL_WORM_TEE=1 with a persistent key under $CLAWQL_HOME/worm).
  * CLAWQL_WORM_LOCAL=sqlite|postgres|memory — default **sqlite** under
  * `$CLAWQL_HOME/worm/clawql-worm.sqlite` (or `~/.ClawQL/worm/...` when unset).
  * Memory is tests-only: set `CLAWQL_WORM_LOCAL=memory` explicitly (startup warns).

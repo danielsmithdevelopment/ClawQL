@@ -16,7 +16,7 @@
  * plan loop, which is deterministic given the journaled results.
  */
 
-import { appendProcessWormEffect } from "clawql-audit";
+import { appendProcessWormGatedEffect } from "../audit/worm-append-gated.js";
 import { Clock, Context, Data, Duration, Effect, Layer, Option, Result } from "effect";
 import { isReadOperation } from "../ifc/session-ifc-enforce.js";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
@@ -484,12 +484,12 @@ function runAttemptEffect(
     });
 
     const auditResult = (metadata: Readonly<Record<string, unknown>>) =>
-      appendProcessWormEffect({
+      appendProcessWormGatedEffect({
         type: "TOOL_CALL_RESULT",
         timestamp: new Date().toISOString(),
         sessionId: input.sessionId ?? "",
         metadata: { source: "execute_program", programId, journal: api.backend, ...metadata },
-      }).pipe(Effect.catch(() => Effect.void));
+      });
 
     const diverged = (index: number, why: string) =>
       Effect.fail(

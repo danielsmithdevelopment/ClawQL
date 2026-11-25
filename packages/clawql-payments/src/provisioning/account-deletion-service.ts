@@ -60,7 +60,8 @@ export type DeleteAccountInput = {
 export type DeleteAccountResult = {
   readonly jobId: string;
   readonly status: AccountDeletionJob["status"];
-  readonly userIdHash: string;
+  /** Opaque job-scoped ref (not a hash of the user id). */
+  readonly deletionRef: string;
   readonly orgsDeleted: number;
   readonly stripeCustomersDeleted: number;
   readonly supabaseUserDeleted: boolean;
@@ -112,12 +113,11 @@ const stepEventForPatch = (
 
 const resultFromJobEffect = (job: AccountDeletionJob): Effect.Effect<DeleteAccountResult> =>
   Effect.gen(function* () {
-    // Field kept for API compatibility; value is a job-scoped opaque ref, not a user-id hash.
-    const userIdHash = yield* deletionRefEffect(job.jobId);
+    const deletionRef = yield* deletionRefEffect(job.jobId);
     return {
       jobId: job.jobId,
       status: job.status,
-      userIdHash,
+      deletionRef,
       orgsDeleted: job.steps.org.orgsDeleted ?? job.orgIds.length,
       stripeCustomersDeleted: job.steps.stripe.stripeCustomersDeleted ?? 0,
       supabaseUserDeleted: job.steps.supabase.supabaseUserDeleted === true,

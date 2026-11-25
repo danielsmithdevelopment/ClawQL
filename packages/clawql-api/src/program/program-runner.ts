@@ -8,7 +8,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { appendProcessWormEffect } from "clawql-audit";
+import { appendProcessWormGatedEffect } from "../audit/worm-append-gated.js";
 import { Context, Duration, Effect, Layer, Option, Result } from "effect";
 import { resolveSessionLabelKey } from "../ifc/session-label-store.js";
 import type { PendingExecutionStatus } from "../pending/pending-execution-types.js";
@@ -447,7 +447,7 @@ export function runProgramPlanEffect<E = never>(
     const honesty = input.honesty ?? HONESTY;
     const env = input.env ?? process.env;
 
-    yield* appendProcessWormEffect({
+    yield* appendProcessWormGatedEffect({
       type: "TOOL_CALL_ATTEMPT",
       timestamp: new Date().toISOString(),
       sessionId: input.sessionId ?? "",
@@ -459,14 +459,14 @@ export function runProgramPlanEffect<E = never>(
         interpreter: "plan-runner-v0",
         ...input.auditMetadata,
       },
-    }).pipe(Effect.catch(() => Effect.void));
+    });
 
     const gatedHost = yield* programIfcHostEffect(plan, host, env);
 
     const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
       Effect.gen(function* () {
         if (call.tool === "sleep") {
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_ATTEMPT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -477,7 +477,7 @@ export function runProgramPlanEffect<E = never>(
               durationMs: call.durationMs,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           yield* Effect.sleep(Duration.millis(call.durationMs));
           const value = { ok: true as const, sleptMs: call.durationMs };
           const record: ProgramCallRecord = {
@@ -489,7 +489,7 @@ export function runProgramPlanEffect<E = never>(
             status: "slept",
             resultPreview: previewText(JSON.stringify(value)),
           };
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_RESULT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -501,12 +501,12 @@ export function runProgramPlanEffect<E = never>(
               status: "slept",
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           return { record, value };
         }
 
         if (call.tool === "await_approval") {
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_ATTEMPT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -517,7 +517,7 @@ export function runProgramPlanEffect<E = never>(
               executionId: call.executionId,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           if (gatedHost.pendingStatus === undefined) {
             const record: ProgramCallRecord = {
               index,
@@ -580,7 +580,7 @@ export function runProgramPlanEffect<E = never>(
               : {}),
             resultPreview: previewText(JSON.stringify(value)),
           };
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_RESULT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -592,12 +592,12 @@ export function runProgramPlanEffect<E = never>(
               status: callStatus,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           return { record, value };
         }
 
         if (call.tool === "model_call") {
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_ATTEMPT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -608,7 +608,7 @@ export function runProgramPlanEffect<E = never>(
               model: call.model,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           if (gatedHost.modelCall === undefined) {
             const record: ProgramCallRecord = {
               index,
@@ -658,7 +658,7 @@ export function runProgramPlanEffect<E = never>(
             ...(err !== undefined ? { error: err } : {}),
             resultPreview: previewText(JSON.stringify(value)),
           };
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_RESULT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -670,12 +670,12 @@ export function runProgramPlanEffect<E = never>(
               status: record.status,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           return { record, value };
         }
 
         if (call.tool === "search") {
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_ATTEMPT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -686,7 +686,7 @@ export function runProgramPlanEffect<E = never>(
               query: call.query,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
 
           const out = yield* gatedHost
             .search({ query: call.query, limit: call.limit ?? 5 }, { programId })
@@ -712,7 +712,7 @@ export function runProgramPlanEffect<E = never>(
             status: look.status,
             resultPreview: previewText(out.formattedText),
           };
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_RESULT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -723,7 +723,7 @@ export function runProgramPlanEffect<E = never>(
               ok: look.ok,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           let value: unknown = out.formattedText;
           try {
             value = JSON.parse(out.formattedText);
@@ -769,7 +769,7 @@ export function runProgramPlanEffect<E = never>(
             error: `Write rejected in program mode (risk policy: ${policyLabel})`,
             status: "program_write_rejected",
           };
-          yield* appendProcessWormEffect({
+          yield* appendProcessWormGatedEffect({
             type: "TOOL_CALL_RESULT",
             timestamp: new Date().toISOString(),
             sessionId: input.sessionId ?? "",
@@ -783,7 +783,7 @@ export function runProgramPlanEffect<E = never>(
               risk: riskInfo.risk,
               index,
             },
-          }).pipe(Effect.catch(() => Effect.void));
+          });
           return {
             record,
             value: {
@@ -797,7 +797,7 @@ export function runProgramPlanEffect<E = never>(
           };
         }
 
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormGatedEffect({
           type: "TOOL_CALL_ATTEMPT",
           timestamp: new Date().toISOString(),
           sessionId: input.sessionId ?? "",
@@ -808,7 +808,7 @@ export function runProgramPlanEffect<E = never>(
             operationId: call.operationId,
             index,
           },
-        }).pipe(Effect.catch(() => Effect.void));
+        });
 
         const out = yield* gatedHost
           .execute(
@@ -848,7 +848,7 @@ export function runProgramPlanEffect<E = never>(
           status: look.status,
           resultPreview: previewText(text),
         };
-        yield* appendProcessWormEffect({
+        yield* appendProcessWormGatedEffect({
           type: "TOOL_CALL_RESULT",
           timestamp: new Date().toISOString(),
           sessionId: input.sessionId ?? "",
@@ -860,7 +860,7 @@ export function runProgramPlanEffect<E = never>(
             ok: look.ok,
             index,
           },
-        }).pipe(Effect.catch(() => Effect.void));
+        });
         let value: unknown = text;
         try {
           value = JSON.parse(text);
@@ -974,7 +974,7 @@ export function runProgramPlanEffect<E = never>(
     const result =
       proposals.length > 0 ? { ...(readResult as Record<string, unknown>), proposals } : readResult;
 
-    yield* appendProcessWormEffect({
+    yield* appendProcessWormGatedEffect({
       type: "TOOL_CALL_RESULT",
       timestamp: new Date().toISOString(),
       sessionId: input.sessionId ?? "",
@@ -998,7 +998,7 @@ export function runProgramPlanEffect<E = never>(
           : {}),
         ...input.auditMetadata,
       },
-    }).pipe(Effect.catch(() => Effect.void));
+    });
 
     return {
       ok: allOk,

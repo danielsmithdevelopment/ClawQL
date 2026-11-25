@@ -1,16 +1,11 @@
 import { createHash } from "node:crypto";
 import { Effect, Layer } from "effect";
 import { loadClawqlAuditEffect, processWormEnvLikelyEnabled } from "../audit/clawql-audit-lazy.js";
+import { appendProcessWormGatedEffect } from "../audit/worm-append-gated.js";
 import { ExecuteService } from "../execute-service.js";
 import { loadSpec } from "../spec/spec-loader.js";
 import type { LoadSpecFn } from "../search/search-core.js";
 import { executeClawqlOperationEffect } from "./execute-core.js";
-
-function wormAppendRequired(env: NodeJS.ProcessEnv = process.env): boolean {
-  if (env.CLAWQL_TIER?.trim().toLowerCase() === "regulated") return true;
-  const raw = env.CLAWQL_WORM_REQUIRED?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
-}
 
 function errorBodyAuditDetail(rawDetail: string): string {
   const hash = createHash("sha256").update(rawDetail).digest("hex").slice(0, 16);
@@ -48,20 +43,15 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
         Effect.gen(function* () {
           const args = input.args ?? {};
           if (processWormEnvLikelyEnabled()) {
-            const wormWrite = Effect.gen(function* () {
+            // Regulated / CLAWQL_WORM_REQUIRED: refuse the action if the attempt cannot be recorded.
+            yield* Effect.gen(function* () {
               const audit = yield* loadClawqlAuditEffect();
               const attempt = yield* audit.wormInputFromToolAttempt({
                 operationId: input.operationId,
                 argKeys: Object.keys(args),
               });
-              yield* audit.appendProcessWormEffect(attempt);
+              yield* appendProcessWormGatedEffect(attempt);
             });
-            // Regulated / CLAWQL_WORM_REQUIRED: refuse the action if the attempt cannot be recorded.
-            if (wormAppendRequired()) {
-              yield* wormWrite;
-            } else {
-              yield* wormWrite.pipe(Effect.catch(() => Effect.void));
-            }
           }
 
           const content = yield* executeClawqlOperationEffect(
@@ -77,7 +67,7 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
 
           const ok = executeResultLooksOk(content);
           if (processWormEnvLikelyEnabled()) {
-            const wormWrite = Effect.gen(function* () {
+            yield* Effect.gen(function* () {
               const audit = yield* loadClawqlAuditEffect();
               // Prefer body hash over raw failure text (audit 3.09).
               const rawDetail = ok ? undefined : content[0]?.text;
@@ -87,13 +77,8 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
                 ok,
                 detail,
               });
-              yield* audit.appendProcessWormEffect(result);
+              yield* appendProcessWormGatedEffect(result);
             });
-            if (wormAppendRequired()) {
-              yield* wormWrite;
-            } else {
-              yield* wormWrite.pipe(Effect.catch(() => Effect.void));
-            }
           }
 
           return { content };
