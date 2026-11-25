@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 
+import { useManagedSession } from '@/components/managed/ManagedSessionProvider'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
@@ -32,6 +33,8 @@ const CRUMB: Record<Section, string> = {
 }
 
 export function SettingsPage() {
+  const session = useManagedSession()
+  const orgName = session.orgName || 'your organization'
   const [section, setSection] = useState<Section>('general')
   const searchParams = useSearchParams()
   const e2eRole = searchParams.get('e2eRole')
@@ -41,7 +44,7 @@ export function SettingsPage() {
     <PageChrome
       crumbs={['Settings', CRUMB[section]]}
       title="Settings"
-      description="Org-wide rules for Acme Robotics. Every change here is recorded in the audit log."
+      description={`Org-wide rules for ${orgName}. Every change here is recorded in the audit log.`}
     >
       {memberReadOnly ? (
         <div
@@ -72,7 +75,7 @@ export function SettingsPage() {
         </nav>
 
         {section === 'general' ? <GeneralSection readOnly={memberReadOnly} /> : null}
-        {section === 'signin' ? <SignInSection /> : null}
+        {section === 'signin' ? <SignInSection orgLabel={orgName} email={session.email} /> : null}
         {section === 'privacy' ? <PrivacySection /> : null}
         {section === 'network' ? <NetworkSection /> : null}
         {section === 'advanced' ? <AdvancedSection readOnly={memberReadOnly} /> : null}
@@ -145,7 +148,8 @@ function GeneralSection({ readOnly = false }: { readOnly?: boolean }) {
   )
 }
 
-function SignInSection() {
+function SignInSection({ orgLabel, email }: { orgLabel: string; email: string }) {
+  const domain = email.includes('@') ? email.split('@')[1]! : orgLabel
   return (
     <div className="space-y-4" data-testid="settings-signin">
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -163,7 +167,7 @@ function SignInSection() {
           <span>
             <strong>Require single sign-on</strong>
             <span className="mt-0.5 block text-xs text-slate-500">
-              Everyone at acme.example signs in through Okta. Password sign-in is off.
+              Everyone at {domain} signs in through Okta. Password sign-in is off.
             </span>
           </span>
         </label>

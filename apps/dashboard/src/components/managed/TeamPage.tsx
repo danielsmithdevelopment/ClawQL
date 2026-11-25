@@ -36,12 +36,13 @@ export function TeamPage() {
   const showViewAs = actorCanViewAs(session.role)
   const [tab, setTab] = useState<Tab>('people')
 
+  const orgName = session.orgName || 'your organization'
   const description =
     tab === 'groups'
       ? 'Groups come from Okta. Use them to grant roles and to say who answers or approves what.'
       : tab === 'roles'
         ? 'Roles decide what people can do in the console. Approval areas sit on top, set per rule in Review.'
-        : "Who's in Acme Robotics, what they can do, and who can approve what agents ask for."
+        : `Who's in ${orgName}, what they can do, and who can approve what agents ask for.`
 
   return (
     <PageChrome

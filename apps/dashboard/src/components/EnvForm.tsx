@@ -383,8 +383,8 @@ export function EnvForm({ catalog }: { catalog: EnvCatalog }) {
           </label>
         </div>
         <label className="mt-4 block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          Sync bearer token (optional — required when{' '}
-          <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">CLAWQL_DASHBOARD_SYNC_TOKEN</code> is set)
+          Sync bearer token (required — must match{' '}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">CLAWQL_DASHBOARD_SYNC_TOKEN</code>)
           <input
             type="password"
             className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-claw-cyan/40 focus:ring-2 dark:border-white/20 dark:bg-claw-bg dark:text-zinc-100"

@@ -77,8 +77,8 @@ Existing browser **localStorage** chats are **imported once** into the vault on 
 | `CLAWQL_OBSIDIAN_VAULT_PATH`         | Obsidian vault root for dashboard chat persistence (default **`~/.ClawQL`**). Chats live under **`Dashboard/chats/`**; API logs under **`Dashboard/logs/`**. Same path as ClawQL MCP **`memory_*`** tools. |
 | `CLAWQL_CONSOLE_SURFACE`             | `self-hosted` (default) or **`managed`** / `cloud` for **cloud.clawql.com**. Same shadcn app; managed mode is for Supabase session (not a second UI kit). |
 | `NEXT_PUBLIC_CLAWQL_CONSOLE_SURFACE` | Browser-visible twin of `CLAWQL_CONSOLE_SURFACE` (set to `managed` / `cloud` for Cloud). |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Managed Auth (Supabase). When unset, the console uses the Acme Robotics fixture session. |
-| `CLAWQL_MANAGED_AUTH_MOCK`           | Force the fixture session even when Supabase is configured (`1` / `true`). |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Managed Auth (Supabase). Required in production. Outside production, unset → Acme fixture session. |
+| `CLAWQL_MANAGED_AUTH_MOCK`           | Force the fixture session (`1` / `true`), including in production when Supabase is unset. |
 | `CLAWQL_MANAGED_DATA_SOURCE`         | `auto` (default), `live`, or `fixture`. `auto` prefers live keys/usage/review when useful, else Acme fixtures. |
 | `CLAWQL_MANAGED_ORG_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_ORG_ID` | Org id for live usage (`getOrgUnifiedSpendSummary`) and key scoping. |
 | `CLAWQL_MANAGED_TENANT_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_TENANT_ID` | Optional actor tenant for unified spend. |
@@ -123,7 +123,7 @@ In local dev (`npm run dev`), Kubernetes sync defaults to **enabled** unless exp
 | Variable                                       | Purpose                                                                                                                  |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC`              | Must be **`1`** for `GET /api/k8s/secret-env` (Vault prefill) and `POST /api/k8s/sync-secret` (Vault save + rollout).    |
-| `CLAWQL_DASHBOARD_SYNC_TOKEN`                  | If set, clients must send `Authorization: Bearer <same value>`.                                                          |
+| `CLAWQL_DASHBOARD_SYNC_TOKEN`                  | **Required** for k8s sync routes. Clients must send `Authorization: Bearer <same value>` (fail closed when unset).       |
 | `KUBE_CONTEXT`                                 | Optional; passed to kubectl as `--context`.                                                                              |
 | `CLAWQL_DASHBOARD_K8S_NAMESPACE`               | Default namespace (default **`clawql`**).                                                                                |
 | `CLAWQL_DASHBOARD_K8S_SECRET_NAME`             | Form field default only (legacy label retained in API route names).                                                      |
