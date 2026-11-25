@@ -18,6 +18,10 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+# Runtime security tier (`CLAWQL_TIER`). Override to `regulated` via values-regulated.yaml.
+pluginTiers:
+  tier: standard
+
 imagePullSecrets: []
 
 serviceAccount:
