@@ -551,6 +551,33 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
 {{- $spec | toJson -}}
 {{- end }}
 
+{{/*
+Merge Values.extraEnv with Values.extraEnvAppend by env name.
+Append wins on collision (host overlays override regulated placeholders).
+Drops CLAWQL_TIER — the Deployment already sets it from pluginTiers.tier;
+a second entry breaks Kubernetes server-side apply (duplicate env key).
+*/}}
+{{- define "clawql-mcp.mergedExtraEnv" -}}
+{{- $overrideNames := dict -}}
+{{- range (.Values.extraEnvAppend | default list) -}}
+{{- $_ := set $overrideNames .name true -}}
+{{- end -}}
+{{- $out := list -}}
+{{- range (.Values.extraEnv | default list) -}}
+{{- if and (ne .name "CLAWQL_TIER") (not (hasKey $overrideNames .name)) -}}
+{{- $out = append $out . -}}
+{{- end -}}
+{{- end -}}
+{{- range (.Values.extraEnvAppend | default list) -}}
+{{- if ne .name "CLAWQL_TIER" -}}
+{{- $out = append $out . -}}
+{{- end -}}
+{{- end -}}
+{{- if $out -}}
+{{- toYaml $out -}}
+{{- end -}}
+{{- end }}
+
 {{- define "clawql-mcp.uptimeKumaName" -}}
 {{- printf "%s-uptime-kuma" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}

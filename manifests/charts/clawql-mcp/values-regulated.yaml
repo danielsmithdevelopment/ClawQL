@@ -26,9 +26,9 @@ networkPolicy:
     enabled: true
 
 # Runtime + compliance flags (Pass 6 / Pass 7).
+# CLAWQL_TIER comes from pluginTiers.tier in the Deployment template — do not
+# also set it here (duplicate env keys break Kubernetes server-side apply).
 extraEnv:
-  - name: CLAWQL_TIER
-    value: regulated
   - name: CLAWQL_WORM_REQUIRED
     value: "1"
   - name: CLAWQL_WORM_ENABLED

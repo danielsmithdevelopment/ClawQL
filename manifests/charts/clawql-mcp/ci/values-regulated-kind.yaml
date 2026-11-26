@@ -9,9 +9,10 @@
 # - Host values: OIDC, MinIO, secret refs
 #
 # IMPORTANT: Helm replaces lists rather than merging them. Do NOT set
-# `extraEnv` here — that would wipe CLAWQL_TIER / WORM / inference flags from
-# values-regulated.yaml. Host overrides go in `extraEnvAppend` (appended after
-# extraEnv in the Deployment template).
+# `extraEnv` here — that would wipe WORM / inference flags from
+# values-regulated.yaml. Host overrides go in `extraEnvAppend`; the chart
+# merges by env name (append wins) so OIDC placeholders are overridden without
+# duplicate keys (Kubernetes SSA rejects duplicate env names).
 
 security:
   kata:

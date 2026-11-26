@@ -1189,9 +1189,9 @@ streams:
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 
-# Appended after `extraEnv` in the MCP Deployment (and nats worker/bridge).
-# Use this in host/CI overlays so Helm list-replace does not wipe regulated
-# flags from values-regulated.yaml. Later duplicate names win in the container.
+# Merged with `extraEnv` by name in the MCP Deployment (and nats worker/bridge);
+# append wins on collision. Use this in host/CI overlays so Helm list-replace
+# does not wipe regulated flags from values-regulated.yaml.
 extraEnvAppend: []
 
 # Optional: load env vars from an existing Secret (keys become env var names).

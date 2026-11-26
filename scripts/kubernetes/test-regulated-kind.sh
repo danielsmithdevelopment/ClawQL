@@ -120,13 +120,23 @@ fi
 docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" --target runtime "${ROOT}"
 kind load docker-image "${IMAGE_LOCAL}" --name "${CLUSTER_NAME}"
 
-echo "==> Bootstrap Vault + ESO (secretSourcing.requireVaultBackedSecrets stays on)"
+echo "==> Bootstrap Vault + ESO (optional on kind; Secret below is the kind stand-in)"
 export HELM_RELEASE_NAME="${REL}"
 export HELM_NAMESPACE="${NS}"
-# Chart may install Vault; bootstrap seeds KV + ExternalSecret.
+# Chart may install Vault on docker-desktop; on kind the STS is usually absent.
+# Keep trying bootstrap for environments that already have Vault, but do not
+# block the job — kind always materializes clawql-provider-env next.
 bash "${ROOT}/scripts/kubernetes/bootstrap-local-vault-and-eso.sh" || {
-  echo "WARN: bootstrap-local-vault-and-eso returned non-zero — continuing if secrets already present" >&2
+  echo "WARN: bootstrap-local-vault-and-eso returned non-zero — using kind Secret stand-in" >&2
 }
+
+echo "==> Ensure Secret/clawql-provider-env (MinIO Object Lock credentials for kind)"
+# values-regulated-kind sets envFromSecret=clawql-provider-env. Without Vault+ESO
+# the Secret must exist or the MCP pods never start. Keys are lab-only (MinIO defaults).
+kubectl -n "${NS}" create secret generic clawql-provider-env \
+  --from-literal=CLAWQL_WORM_S3_ACCESS_KEY_ID=minioadmin \
+  --from-literal=CLAWQL_WORM_S3_SECRET_ACCESS_KEY=minioadmin \
+  --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Deploy MinIO (Object Lock) + JWKS Service in ${NS}"
 # MinIO — prefer quay digest when pullable; fall back to tag used by audit compose.
@@ -351,9 +361,13 @@ except ImportError:
 kind = yaml.safe_load(Path(sys.argv[1]).read_text()) or {}
 worm = yaml.safe_load(Path(sys.argv[2]).read_text()) or {}
 merged = dict(kind)
-merged["extraEnvAppend"] = list(kind.get("extraEnvAppend") or []) + list(
+# Merge by name so WORM=0 overrides any prior append of the same key.
+by_name = {}
+for item in list(kind.get("extraEnvAppend") or []) + list(
     worm.get("extraEnvAppend") or []
-)
+):
+    by_name[item["name"]] = item
+merged["extraEnvAppend"] = list(by_name.values())
 Path(sys.argv[3]).write_text(yaml.safe_dump(merged, sort_keys=False))
 PY
 helm upgrade --install "${REL}-wormoff" "${ROOT}/manifests/charts/clawql-mcp" \
