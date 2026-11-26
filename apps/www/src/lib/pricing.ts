@@ -120,7 +120,7 @@ export const pricing = {
     badge: 'Gateway + memory · early access',
     pluginBundle: 'gateway' as const,
     valueAnchor:
-      'Unlimited executions + vault memory + twelve efficiency layers — executor.sh caps usage and charges overage.',
+      'Unlimited executions + vault memory + compounding efficiency layers (shipped and planned) — compare metered gateways on measured equal-arm results.',
     subheadline:
       'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Request early access for managed hosting, or self-host free today.',
     features: [

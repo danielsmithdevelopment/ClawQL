@@ -2,11 +2,11 @@ export const site = {
   name: 'ClawQL',
   tagline: 'Agentic Infrastructure for Regulated Industries',
   description:
-    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a hash-chained WORM audit trail on every action (local trail on by default; remote durable copies default on Cloud paid tiers and the regulated profile). Apache 2.0.',
+    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, a software-simulated TEE path today (hardware adapters planned), and a hash-chained WORM audit trail on every action (local trail on by default; remote durable copies default on Cloud paid tiers and the regulated profile). Apache 2.0.',
   earlyAccess: {
     badge: 'Early access waitlist — self-host free today',
     summary:
-      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and TEE-ready audit. Self-host free on Apache 2.0, or request early access for managed hosting.',
+      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and hash-chained WORM audit (software-simulated TEE today; hardware adapters planned). Self-host free on Apache 2.0, or request early access for managed hosting.',
     pricingNote:
       'Self-host free forever on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
   },

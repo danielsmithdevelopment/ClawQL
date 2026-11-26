@@ -287,8 +287,8 @@ export const durabilityBenchmarkLinks: readonly { href: string; label: string; d
     detail: 'Dual columns × upstream modes',
   },
   {
-    href: `${GH}/docs/gtm/golem-overlap-and-durability-honesty.md`,
-    label: 'Golem honesty',
-    detail: 'Execution vs effect; collaboration pitch',
+    href: `${GH}/docs/audit/clawql-audit-spec-v0.1.md`,
+    label: 'Audit trail spec',
+    detail: 'Hash-chained WORM; RPO scope for fleet mode',
   },
 ] as const

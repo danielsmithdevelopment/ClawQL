@@ -234,7 +234,7 @@ export default function Page() {
       <SecuritySection
         id="security"
         eyebrow="Security & TEE"
-        headline="Documented, reproducible — and TEE-ready."
+        headline="Documented, reproducible — software-simulated TEE today."
         subheadline={
           <p>
             ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission

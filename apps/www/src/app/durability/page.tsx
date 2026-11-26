@@ -12,7 +12,7 @@ const EVIDENCE_SETTLE = `${GH}/blob/main/docs/benchmarks/program-cell-fleet-kill
 const EVIDENCE_DIR = `${GH}/tree/main/docs/benchmarks/program-cell-fleet-kill/v4`
 const FORMAL_TLA = `${GH}/tree/cadb0a4bcb7dd312663b9eea59ec1e49ff6c6ba6/formal/tla`
 const WHITEPAPAPER = `${GH}/blob/main/docs/vision/clawql-network-whitepaper-v0.2.md`
-const DRAFT_DOC = `${GH}/blob/main/docs/gtm/clawql-durability-page-draft.md`
+const DURABILITY_SPEC = `${GH}/blob/main/docs/audit/clawql-audit-spec-v0.1.md`
 
 export const metadata = pageMetadata({
   title: 'Durability',
@@ -35,7 +35,7 @@ export default function Page() {
       <p className="text-sm text-mist-600 dark:text-mist-400">
         Full measurement tables: <Link href={`${site.urls.benchmarks}#durability`}>/benchmarks § Durability</Link>
         {' · '}
-        Source draft: <Link href={DRAFT_DOC}>docs/gtm/clawql-durability-page-draft.md</Link>
+        Audit trail spec: <Link href={DURABILITY_SPEC}>docs/audit/clawql-audit-spec-v0.1.md</Link>
       </p>
 
       <p>

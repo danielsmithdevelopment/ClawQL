@@ -39,7 +39,7 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 
 ## The ClawQL Solution
 
-- **Twelve-layer token efficiency** reducing input tokens by ~99.8% on average at Layer 1. The nearest MCP gateway competitor implements one layer. Canonical detail: [`clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md).
+- **Twelve-layer token efficiency** reducing input tokens by ~99.8% on average at Layer 1 (shipped and planned layers called out in the inference docs). Canonical detail: [`clawql-token-efficiency.md`](../architecture/clawql-token-efficiency.md).
 - **End-to-end IDP pipeline:** ingest → convert → redact → archive → semantically index → share — one Helm chart.
 - **Durable cross-session agent memory** (Markdown, local, portable). OKF v0.2 trust signals (`generated`, `verified`, `stale_after`, `status`, `superseded_by`) in vault entries. `memory_ingest` / `memory_recall` tools. See [`okf.md`](../memory/okf.md).
 - **PorTAL** (Ramp Labs, Apache 2.0): Portable Task-specific Adapter Learning via `--format portal-bundle` in the flywheel export pipeline. See [`portal-flywheel.md`](../inference/portal-flywheel.md).

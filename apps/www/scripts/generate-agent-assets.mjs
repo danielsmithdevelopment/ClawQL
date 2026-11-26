@@ -287,7 +287,7 @@ See also: ${origin}/llms.txt · ${docs}/llms.txt
 function buildHomeMd() {
   const body = `# ClawQL — Agentic Infrastructure for Regulated Industries
 
-ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or request early access.
+ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and hash-chained WORM audit (software-simulated TEE today; hardware adapters planned). Self-host free on Apache 2.0 or request early access.
 
 ## Install (official CLI)
 

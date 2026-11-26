@@ -7,6 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
+import { findMonorepoRoot } from './lib/find-monorepo-root.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -15,16 +16,7 @@ const dst = path.join(dstDir, 'clawql-network-body.mdx')
 const srcRelative = path.join('docs', 'specs', 'network', 'clawql-network-v0.1.md')
 
 function findRepoRootWithDocs() {
-  let dir = websiteRoot
-  for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
-      return dir
-    }
-    const parent = path.dirname(dir)
-    if (parent === dir) break
-    dir = parent
-  }
-  return null
+  return findMonorepoRoot(websiteRoot)
 }
 
 fs.mkdirSync(dstDir, { recursive: true })

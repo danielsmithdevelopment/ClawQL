@@ -101,7 +101,7 @@ const rylTiers = [
   {
     tier: 'Enterprise TEE',
     price: 'from $3,500/month',
-    detail: 'clawql-tee, hardware attestation, WORM audit, QR export, SLA, DPA/BAA',
+    detail: 'clawql-tee (software-simulated today; hardware adapters planned), WORM audit, planned QR export, SLA, DPA/BAA',
   },
 ] as const
 
@@ -189,8 +189,8 @@ export function AgentsLanding() {
             </p>
             <p className="agents-hero__lede">
               Agentic infrastructure for regulated production work — event-driven sessions, structured institutional
-              recall, hardware-verified execution, and a WORM trail on every action. Mechanism-proven on OpenBench
-              mini-firm Calderwood &amp; Harkness tasks (B-7).
+              recall, software-simulated TEE today (hardware adapters planned), and a WORM trail on every action.
+              Mechanism-proven on OpenBench mini-firm Calderwood &amp; Harkness tasks (B-7).
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg" color="light">
@@ -211,7 +211,7 @@ export function AgentsLanding() {
         headline="Built for production, not demo loops"
         subheadline={
           <p>
-            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · TEE-ready from day one
+            Apache 2.0 core · Event-driven, not prompt-driven · OpenBench mini-firm proven · WORM trail on by default
           </p>
         }
       >
@@ -366,7 +366,7 @@ export function AgentsLanding() {
         id="tee"
         className="agents-section-band"
         eyebrow="The trust layer"
-        headline="clawql-tee — hardware-verified agent execution"
+        headline="clawql-tee — software-simulated today; hardware adapters planned"
         subheadline={
           <p>For regulated environments where the operator itself cannot be trusted.</p>
         }
