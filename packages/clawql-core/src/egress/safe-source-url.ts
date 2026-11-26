@@ -106,9 +106,7 @@ export async function assertSafeSourceFetchUrlResolved(raw: string): Promise<URL
 }
 
 /** Effect wrapper around {@link assertSafeSourceFetchUrlResolved}. */
-export function assertSafeSourceFetchUrlResolvedEffect(
-  raw: string
-): Effect.Effect<URL, Error> {
+export function assertSafeSourceFetchUrlResolvedEffect(raw: string): Effect.Effect<URL, Error> {
   return Effect.tryPromise({
     try: () => assertSafeSourceFetchUrlResolved(raw),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
