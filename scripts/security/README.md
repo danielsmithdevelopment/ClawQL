@@ -5,14 +5,14 @@
 `regulated-refusals.e2e.test.ts` exercises process-level gates without spawning
 the HTTP server or a Kubernetes cluster:
 
-| #   | Refusal                                                         | Mechanism                                              |
-| --- | --------------------------------------------------------------- | ------------------------------------------------------ |
-| 1   | `CLAWQL_WORM_ENABLED=0` refuses boot                            | `ensureProcessWormHostBootedEffect`                    |
-| 2   | MCP `resume` approve fails (decline-only)                       | `resumeClawqlExecutionEffect` channel=`mcp`            |
-| 3   | `noAuth` refused (loopback and non-loopback)                    | `assertMcpHttpAuthBindPolicyEffect`                    |
-| 4a  | `CLAWQL_HTTP_GRAPHQL=1` refused                                 | `assertHttpGraphqlAllowedEffect`                       |
-| 4b  | Webhook without shared token → 503                              | `checkWebhookToken`                                    |
-| 4c  | Inference remote model refused after regulated profile defaults | `applyRegulatedProfileEnvEffect` + local-only assert   |
+| #   | Refusal                                                         | Mechanism                                            |
+| --- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| 1   | `CLAWQL_WORM_ENABLED=0` refuses boot                            | `ensureProcessWormHostBootedEffect`                  |
+| 2   | MCP `resume` approve fails (decline-only)                       | `resumeClawqlExecutionEffect` channel=`mcp`          |
+| 3   | `noAuth` refused (loopback and non-loopback)                    | `assertMcpHttpAuthBindPolicyEffect`                  |
+| 4a  | `CLAWQL_HTTP_GRAPHQL=1` refused                                 | `assertHttpGraphqlAllowedEffect`                     |
+| 4b  | Webhook without shared token → 503                              | `checkWebhookToken`                                  |
+| 4c  | Inference remote model refused after regulated profile defaults | `applyRegulatedProfileEnvEffect` + local-only assert |
 
 ```bash
 npm run test:regulated-refusals
@@ -25,20 +25,26 @@ npm run test:regulated-refusals
 HTTP. Harness: `regulated-wire-harness.ts` (spawn, OIDC mint via `jose` + PEM
 path, request sink, bucket helpers).
 
-| #    | Trigger                                      | Expected                                      | Must not happen                          |
-| ---- | -------------------------------------------- | --------------------------------------------- | ---------------------------------------- |
-| 1    | `CLAWQL_WORM_ENABLED=0`                      | Non-zero exit; stderr WORM disabled           | Port never opens                         |
-| 1b   | `CLAWQL_SOURCES_ALLOW_HTTP=1`                | Non-zero exit; stderr SOURCES_ALLOW_HTTP      | Port never opens                         |
-| 2    | Bucket without Object Lock                   | Boot refused by Object Lock verification      | Port never opens                         |
-| 3    | `noAuth` + allow-unauthenticated             | Non-zero exit; stderr noAuth                  | Port never opens                         |
-| 4    | `CLAWQL_HTTP_GRAPHQL=1`                      | Non-zero exit                                 | Port never opens                         |
-| 5–7b | MCP JWT / resume approve+decline             | 401 / decline-only / decline succeeds            | No tool run / still pending / declined   |
-| 8    | Operator channel, in-process                 | Regulated console-only refuse                 | Still pending                            |
-| 9    | Webhook no/wrong token                       | 503 / 401                                     | Handler side effects absent              |
-| 10   | Inference `openai/gpt-4o`                    | Local-only refuse                             | Inference sink empty                     |
-| 11   | `sources_propose` HTTPS SSRF targets         | SSRF guard refuse                             | Sink empty                               |
-| 12   | `GET /chain/verify`                          | Chain verifies                                | —                                        |
-| 13   | Concurrent x402 same proof                   | One allow; second settle denied               | —                                        |
+| #    | Trigger                                  | Expected                                 | Must not happen                        |
+| ---- | ---------------------------------------- | ---------------------------------------- | -------------------------------------- |
+| 1    | `CLAWQL_WORM_ENABLED=0`                  | Non-zero exit; stderr WORM disabled      | Port never opens                       |
+| 1b   | `CLAWQL_SOURCES_ALLOW_HTTP=1`            | Non-zero exit; stderr SOURCES_ALLOW_HTTP | Port never opens                       |
+| 2    | Bucket without Object Lock               | Boot refused by Object Lock verification | Port never opens                       |
+| 3    | `noAuth` + allow-unauthenticated         | Non-zero exit; stderr noAuth             | Port never opens                       |
+| 4    | `CLAWQL_HTTP_GRAPHQL=1`                  | Non-zero exit                            | Port never opens                       |
+| 5–7b | MCP JWT / resume approve+decline         | 401 / decline-only / decline succeeds    | No tool run / still pending / declined |
+| 8    | Operator channel via `clawql resume` CLI | Regulated console-only refuse            | Still pending                          |
+| 9    | Webhook no/wrong token                   | 503 / 401                                | Handler side effects absent            |
+| 10   | Inference `openai/gpt-4o`                | Local-only refuse                        | Inference sink empty                   |
+| 11   | `sources_propose` HTTPS SSRF targets     | SSRF guard refuse                        | Sink empty                             |
+| 12   | `GET /chain/verify`                      | Chain verifies                           | —                                      |
+| 13   | Concurrent x402 same proof               | One allow; second settle already-settled | —                                      |
+
+**SSRF hostname→loopback (F4):** `assertSafeSourceFetchUrlResolved` uses a hard-coded
+`dns/promises.lookup` with no injectable resolver today, so the suite cannot force a
+hostname that resolves to loopback without changing system DNS. Literal
+`https://127.0.0.1` / link-local IPs cover the IP path; hostname rebinding remains a
+documented gap until the egress module accepts an injected lookup.
 
 ```bash
 npm run build
