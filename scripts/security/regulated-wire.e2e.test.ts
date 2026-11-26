@@ -115,8 +115,20 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     srv = await spawnServer(env);
     await srv.waitListening(90_000);
     baseUrl = `http://127.0.0.1:${srv.port}`;
+    // Capability lifecycle (default-on) resolves execute → inner operationId
+    // (patchItem) and checks session_catalog∩ATR. Seed both the OpenAPI op and
+    // resume/core so park + MCP resume are reachable; refusals under test are
+    // channel/regulated gates, not the three-bucket catalog.
     agentToken = await oidc.mint({
-      scope: ["execute", "search", "memory", "sources_propose"],
+      scope: [
+        "execute",
+        "search",
+        "memory",
+        "sources_propose",
+        "patchItem",
+        "resume",
+        "core",
+      ],
     });
   }, 120_000);
 
@@ -289,6 +301,7 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       },
     });
     const parkText = toolResultText(park.body);
+    expect(parkText, `park response: ${parkText}`).not.toMatch(/CAPABILITY_WRITE_INTERCEPTED/i);
     const parkJson = JSON.parse(parkText) as {
       status?: string;
       executionId?: string;
