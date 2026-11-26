@@ -1,15 +1,15 @@
 # Migrating to ClawQL 8.0.0
 
-**Breaking release means breaking release.** The Phase-2 `Plugin` / `onRegister` / `beforeCallTool` interface is **removed**. There is no compatibility bridge. Rewrite plugins against `ProviderPlugin` / `StandaloneSkillPlugin`. Defaults also change (empty catalog, enforcement off).
+**Breaking release means breaking release.** The Phase-2 `Plugin` / `onRegister` / `beforeCallTool` interface is **removed**. There is no compatibility bridge. Rewrite plugins against `ProviderPlugin` / `StandaloneSkillPlugin`. Defaults also change (empty catalog, loopback-first auth, GraphQL/embeddings local-first). On `standard`, Panguard stays opt-in with a boot warning; on `regulated`, enforcement/WORM/local-inference are forced.
 
 ## Breaking defaults (read first)
 
 | Before 8.0                                                                                    | After 8.0                                               | What to set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bundled OpenAPI pack often loaded                                                             | **Empty catalog** until opted in                        | `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm `providers.pack=default`                                                                                                                                                                                                                                                                                                                                                                                |
-| Panguard proxy composed by default                                                            | **Off** until opted in                                  | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| In-process ATR gating opt-in                                                                  | Still opt-in (unchanged)                                | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Silent ungated tools if Panguard passive                                                      | **SECURITY WARNING** at boot                            | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Panguard proxy composed by default                                                            | **Off on `standard`** until opted in; **forced on `regulated`** | `CLAWQL_PANGUARD_PROXY_PLUGIN=1` (+ `CLAWQL_PANGUARD_IN_PROCESS=1`). Do **not** set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` under regulated                                                                                                                                                                                                                                                                                                                                                                 |
+| In-process ATR gating opt-in                                                                  | Still opt-in on `standard`; forced with regulated profile | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Silent ungated tools if Panguard passive                                                      | **SECURITY WARNING** at boot                            | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional (**refused** when `CLAWQL_TIER=regulated`)                                                                                                                                                                                                                                                                                                                                                      |
 | `pageindex_*` tools / hybrid PageIndex                                                        | **Removed** in 8.0                                      | Drop `CLAWQL_ENABLE_PAGEINDEX`, `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX`, and `pageindex.db.json` sync — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)                                                                                                                                                                                                                                                                                                                         |
 | `codegraph_*` tools / Graphify import                                                         | **Removed** in 8.0                                      | Drop `CLAWQL_ENABLE_CODEGRAPH`, `CLAWQL_CODEGRAPH_*`, `CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, and `clawql-codegraph` — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) and [post-8.0 backlog](../backlog/post-8.0-codegraph-revisit.md)                                                                                                                                                                                                                                        |
 | Tika / Gotenberg / Stirling in default `DEFAULT_IDP_PIPELINE` + `BUNDLED_DOCUMENT_VENDOR_IDS` | **Opt-in only** — Docling is the sole default converter | Specs stay on disk (**not hard-purged**); named jobs: Tika=cheap text, Gotenberg=Office→PDF, Stirling=redact, Anydoc=fast Office. Re-add with `CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling` and/or Helm `documentPipeline.{tika,gotenberg,stirling}.enabled=true` — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)                                                                                                                                                        |
@@ -24,7 +24,26 @@
 | Section IDs from TOC / list “headings”                                                        | **Filtered** in `read_around`                           | See [Section artifact headings](#section-artifact-headings-toc--lists)                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `Plugin` + `beforeCallTool`                                                                   | **Deleted**                                             | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.
+Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement on `standard` until you opt in.
+
+## Breaking changes from the security audit
+
+These are independent of the empty-catalog / ProviderPlugin majors. Escape-hatch inventory: [`docs/security/secure-defaults.md`](../security/secure-defaults.md).
+
+| Topic | What changed | Operator action |
+| ----- | ------------ | --------------- |
+| **Loopback default bind** | MCP HTTP defaults to `MCP_HOST=127.0.0.1` with Host allowlist for DNS rebinding | Keep loopback for local agents; set `MCP_ALLOWED_HOSTS` + real auth for Tailscale/internal hostnames |
+| **`noAuth` off loopback** | Non-loopback `noAuth` refused unless `CLAWQL_ALLOW_UNAUTHENTICATED=1`; regulated refuses `noAuth` | Prefer `CLAWQL_AUTH_MODE=apiKey` or `oidc` on anything networked |
+| **gRPC auth / TLS** | Auth wrapper always; TLS required off loopback (regulated requires cert/key) | Set `GRPC_TLS_*` or bind `127.0.0.1`; avoid `GRPC_ALLOW_INSECURE=1` outside demos |
+| **Webhook tokens** | Shared secrets required | Set `CLAWQL_*_WEBHOOK_TOKEN` (or demo-only `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1`) |
+| **NATS creds + TLS** | Creds and `tls://` / `wss://` required | Configure user/pass, token, or creds file; avoid `CLAWQL_NATS_ALLOW_INSECURE=1` |
+| **Decline-only MCP resume** | MCP `resume` cannot approve mandates | Approve from console / signed human path; MCP may decline only |
+| **GraphQL off by default** | In-process `/graphql` needs `CLAWQL_HTTP_GRAPHQL=1`; regulated refuses | Leave unset unless you accept execute-core bypass |
+| **LangExtract → Ollama** | Live extraction should use local Ollama rather than cloud aggregators by default policy | `LANGEXTRACT_BACKEND=ollama` (+ local model) for live; keep tool opt-in |
+| **Local embeddings** | MiniLM local unless `CLAWQL_EMBEDDING_PROVIDER=http` | Do not rely on `OPENAI_API_KEY` alone; set `http` + allowlist under regulated |
+| **Sources excluded from sync** | Team sync never uploads `sources/`, vault, auth, WORM, `clawql.env` | Keep executable source defs local; sync Memory/chats only |
+| **Operator payment approvals** | Hash-only operator key and/or dedicated OIDC approve audience | See [`outbound-payment-approve.md`](../security/outbound-payment-approve.md) |
+| **Dashboard auth / passkey** | Managed console requires session auth; synced passkeys for sign-in, device-bound for approvals; Desktop APIs desktop-mode + loopback | Wire OIDC/passkey for managed; keep Desktop on `127.0.0.1` |
 
 ## Plugin interface (hard break)
 
@@ -104,11 +123,16 @@ Empty skill index until a ProviderPlugin / StandaloneSkillPlugin installs skills
 # 2. Restore curated APIs (if you relied on the old default pack)
 export CLAWQL_PROVIDER=default
 
-# 3. Restore enforcement (recommended for production)
+# 3. Restore enforcement (recommended for production / required for regulated)
 export CLAWQL_PANGUARD_PROXY_PLUGIN=1
 export CLAWQL_PANGUARD_IN_PROCESS=1
 
-# 4. Or acknowledge ungated tools (dev only)
+# 4. Networked MCP: real auth (noAuth is loopback-only)
+export MCP_HOST=127.0.0.1
+# export CLAWQL_AUTH_MODE=apiKey
+# export CLAWQL_API_KEY=…
+
+# 5. Or acknowledge ungated tools (dev / standard only — refused under regulated)
 # export CLAWQL_ALLOW_NO_ENFORCEMENT=1
 ```
 
@@ -146,5 +170,6 @@ Regression coverage: TOC + numbered-list + postal-junk cases in `packages/clawql
 - Spec: [`docs/design/clawql-core-plugin-architecture.md`](../design/clawql-core-plugin-architecture.md)
 - Action items: [`docs/design/clawql-8.0-plugin-architecture-action-items.md`](../design/clawql-8.0-plugin-architecture-action-items.md)
 - Panguard: [`docs/plugins/panguard-proxy.md`](../plugins/panguard-proxy.md)
+- Secure defaults / escape hatches: [`docs/security/secure-defaults.md`](../security/secure-defaults.md)
 - Empty catalog / packs: [`docs/plugins/bundled-providers.md`](../plugins/bundled-providers.md)
 - Hosted-edge Workers (8.0 lag): [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md)

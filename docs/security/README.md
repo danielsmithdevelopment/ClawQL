@@ -8,6 +8,7 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 
 ## Core references
 
+- **Secure defaults / escape hatches** (`CLAWQL_*ALLOW*|INSECURE*|UNAUTH*`, bind, WORM, regulated): [`secure-defaults.md`](secure-defaults.md) — CI: `npm run check:secure-defaults`
 - **Security training (32 modules):** [`security-best-practices-series/README.md`](security-best-practices-series/README.md) — canonical published modules; site: `/security/best-practices/*` (sync via `apps/docs/scripts/sync-security-training-modules.mjs`). Source bodies: [`security-curriculum-v30/`](security-curriculum-v30/README.md). Legacy monolith: [`archive/security-guide-series.md`](archive/security-guide-series.md).
 - Defense-in-depth reference guide: `clawql-security-defense-in-depth.md`
 - Engineering deliverables matrix (shipped/partial/planned): `clawql-security-defense-deliverables.md`
