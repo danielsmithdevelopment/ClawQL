@@ -17,6 +17,9 @@ with crash-after-consume leaving **`outcome_unknown`** (never silently retried).
 | `MandateLifecycleWeak.cfg` | TLC — **legacy race** (`WeakConsume = TRUE`); must _fail_ Safety     |
 | `BatchMandate.tla`         | ADR 0015 — batch Merkle root approve + inclusion consume             |
 | `BatchMandate.cfg`         | TLC — Safety must pass (`./scripts/formal/run-batch-mandate-tlc.sh`) |
+| `ApprovalChannel.tla`      | Spec — channel/kind/tier guards for mandate approve                  |
+| `ApprovalChannel.cfg`      | TLC — target (`WeakMcpApprove = FALSE`); must pass                   |
+| `ApprovalChannelWeak.cfg`  | TLC — mcp approve enabled; must fail `NoAgentApproval`               |
 
 ## Invariants (target)
 
@@ -62,6 +65,36 @@ Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneS
 Native resume must appear in traces as **Consume/ResumeById → SideEffect → Finalize**, never
 **approved → SideEffect** while status stays `approved`. Vitest:
 `packages/clawql-api/src/governance/native-tool-gate-resume.test.ts` (serial + concurrent).
+
+## Approval channel (resume-core)
+
+Models the channel × tier guards that keep agents from self-approving and keep
+regulated approves on the console path.
+
+### Invariants
+
+1. **NoAgentApproval** — no approval WORM entry has `kind = agent` or `channel = mcp`.
+2. **RegulatedConsoleOnly** — under `regulated`, every approval came through `console`.
+3. **HumanRecordIsHuman** — `HUMAN_APPROVAL` exists only for principal kind `human`
+   (operator-key path records `OPERATOR_APPROVAL`, never human — audit #1548).
+4. **ExecuteNeedsQuorum** — execution runs only after approvals meet quorum.
+
+### Mapping to code
+
+| Spec                     | Code                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `ApproveEnabled` (mcp)   | `resume-core.ts` — `channel === "mcp" && decision === "approve"` refuse |
+| `ApproveEnabled` (tier)  | `resume-core.ts` — regulated + approve + `channel !== "console"` refuse |
+| `Approve` / worm types   | `pending-execution-service.ts` decide + WORM append (`HUMAN_APPROVAL` / decline) |
+| `KindOf` / `OPERATOR_APPROVAL` | Target ghost type for operator-key path (not logged as human)   |
+| `WeakMcpApprove`         | **Bug oracle** — `ApproveEnabled` ignores mcp refuse (pre-fix)     |
+| `HumanRecordIsHuman`     | Target: operator key ≠ `HUMAN_APPROVAL` (audit #1548)                |
+
+```bash
+./scripts/formal/run-approval-channel-tlc.sh
+```
+
+Expect: atomic config exit 0; weak config exit ≠ 0 with `NoAgentApproval` violated.
 
 ## Audit hunt (production)
 

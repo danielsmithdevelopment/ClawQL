@@ -20,6 +20,8 @@ on:
       - "packages/clawql-payments/src/compensation/**"
       - "packages/clawql-payments/src/acp/**"
       - "packages/clawql-payments/src/stripe/**"
+      - "packages/clawql-payments/src/x402/**"
+      - "packages/clawql-api/src/execute/resume-core.ts"
   workflow_dispatch:
 
 concurrency:
@@ -114,3 +116,9 @@ jobs:
 
       - name: Run payments ledger lock TLC dual configs
         run: bash scripts/formal/run-payments-ledger-lock-tlc.sh
+
+      - name: Run approval-channel TLC dual configs
+        run: bash scripts/formal/run-approval-channel-tlc.sh
+
+      - name: Run x402 settle-before-allow TLC (pass + two weak counterexamples)
+        run: bash scripts/formal/run-x402-settlement-tlc.sh

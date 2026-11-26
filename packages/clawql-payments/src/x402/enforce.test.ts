@@ -157,4 +157,105 @@ describe("x402 gate enforcement", () => {
     const parsed = parseX402PaymentPayloadHeader(header);
     expect(parsed?.x402Version).toBe(2);
   });
+
+  it("refuses settle:false under CLAWQL_TIER=regulated", async () => {
+    env.CLAWQL_TIER = "regulated";
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
+
+    const payload = {
+      x402Version: 2,
+      payload: { signature: "0xregulated-skip" },
+    };
+    const header = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    const fetchImpl = vi.fn(async (url: string) => {
+      const path = String(url);
+      if (path.includes("/settle")) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ success: true, transaction: "0xshould-not" }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ isValid: true, payer: "0xpayer" }),
+      };
+    });
+
+    const result = await enforceX402Gate({
+      resource: "/v1/chat/completions",
+      requestUrl: "http://127.0.0.1:8080/v1/chat/completions",
+      headers: { "payment-signature": header },
+      settle: false,
+      env,
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+
+    expect(result.action).toBe("deny");
+    if (result.action === "deny") {
+      expect(result.reason).toMatch(/regulated.*settle:false|settle-before-allow/i);
+    }
+    const settleCalls = fetchImpl.mock.calls.filter(([url]) => String(url).includes("/settle"));
+    expect(settleCalls).toHaveLength(0);
+    const entries = await listPaymentAuditEntries(10, env);
+    expect(entries.some((e) => e.action === "X402_PAYMENT_RECEIVED")).toBe(false);
+  });
+
+  it("at most one allow for concurrent requests with one proof (facilitator settle-once)", async () => {
+    await createX402Gate({ resource: "/v1/chat/completions", price: 0.001, asset: "USDC" }, env);
+
+    const payload = {
+      x402Version: 2,
+      payload: { signature: "0xconcurrent-once" },
+    };
+    const header = Buffer.from(JSON.stringify(payload)).toString("base64");
+
+    let settleCount = 0;
+    const fetchImpl = vi.fn(async (url: string) => {
+      const path = String(url);
+      if (path.includes("/settle")) {
+        settleCount += 1;
+        if (settleCount > 1) {
+          return {
+            ok: true,
+            status: 200,
+            text: async () =>
+              JSON.stringify({ success: false, errorReason: "authorization already settled" }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ success: true, transaction: "0xtx-once" }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ isValid: true, payer: "0xpayer" }),
+      };
+    });
+
+    const { createX402ReplayCache } = await import("./replay-cache.js");
+    // Two replica-shaped caches (process-local); facilitator refuses second settle.
+    const cacheA = createX402ReplayCache();
+    const cacheB = createX402ReplayCache();
+
+    const req = (replayCache: ReturnType<typeof createX402ReplayCache>) =>
+      enforceX402Gate({
+        resource: "/v1/chat/completions",
+        requestUrl: "http://127.0.0.1:8080/v1/chat/completions",
+        headers: { "payment-signature": header },
+        env,
+        fetchImpl: fetchImpl as unknown as typeof fetch,
+        replayCache,
+      });
+
+    const [a, b] = await Promise.all([req(cacheA), req(cacheB)]);
+    const allows = [a, b].filter((r) => r.action === "allow");
+    expect(allows.length).toBeLessThanOrEqual(1);
+    expect(settleCount).toBeGreaterThanOrEqual(1);
+  });
 });
