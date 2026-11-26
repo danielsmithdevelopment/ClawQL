@@ -84,30 +84,46 @@ async function isGitRepo(vault: string): Promise<boolean> {
   }
 }
 
-const VAULT_GITIGNORE = `# Secrets and durable state that must never leave the Memory vault via git
-/vault/
-/Auth/
-/worm/
-/pending-executions/
-/clawql.env
-/providers.json
-**/providers.json
-*.sqlite
-*.sqlite-journal
-memory.db
-`;
+/** Required ignore lines — append missing ones; never overwrite user entries (audit 4.08). */
+const VAULT_GITIGNORE_LINES = [
+  "# ClawQL — secrets and durable state that must never leave via git",
+  "/vault/",
+  "/Auth/",
+  "/worm/",
+  "/pending-executions/",
+  "/clawql.env",
+  "/providers.json",
+  "**/providers.json",
+  "*.sqlite",
+  "*.sqlite-journal",
+  "memory.db",
+  "/.clawql/",
+] as const;
 
 async function ensureVaultGitignore(vault: string): Promise<void> {
   const { writeFile, readFile } = await import("node:fs/promises");
   const { join } = await import("node:path");
   const gi = join(vault, ".gitignore");
+  let existing = "";
   try {
-    const existing = await readFile(gi, "utf8");
-    if (existing.includes("/worm/") && existing.includes("/Auth/")) return;
+    existing = await readFile(gi, "utf8");
   } catch {
     /* create */
   }
-  await writeFile(gi, VAULT_GITIGNORE, "utf8");
+  const have = new Set(
+    existing
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean),
+  );
+  const missing = VAULT_GITIGNORE_LINES.filter((line) => {
+    if (line.startsWith("#")) return !existing.includes("ClawQL — secrets");
+    return !have.has(line);
+  });
+  if (missing.length === 0) return;
+  const sep = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
+  const block = missing.join("\n") + "\n";
+  await writeFile(gi, existing + sep + block, "utf8");
 }
 
 async function ensureGitRepo(vault: string): Promise<void> {

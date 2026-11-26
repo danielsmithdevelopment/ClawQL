@@ -2,8 +2,9 @@
  * Crypto-shredding for git-native vault notes.
  *
  * Plaintext never lives in git history: each note is AES-256-GCM encrypted with a
- * per-note key stored outside the vault tree (`.clawql/note-keys/`). Erase destroys
- * the key so ciphertext in commits / R2 mirrors becomes permanently unreadable.
+ * per-note key under `<vault>/.clawql/note-keys/` (gitignored via `/.clawql/`; not
+ * under the Memory note tree). Erase destroys the key so ciphertext in commits /
+ * R2 mirrors becomes permanently unreadable.
  *
  * Domain APIs are Effect-primary; thin Promise façades remain for erase/MCP edges.
  */
