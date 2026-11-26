@@ -7,6 +7,8 @@ on:
       - "formal/**"
       - "scripts/formal/**"
       - ".github/workflows/formal-mandate-tlc.yml"
+      - "packages/clawql-payments/src/x402/**"
+      - "packages/clawql-api/src/execute/resume-core.ts"
   pull_request:
     branches: [main]
     paths:
