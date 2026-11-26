@@ -1,4 +1,11 @@
+---
+status: shipping
+title: "Operation risk from the spec (v0.1)"
+---
+
 # Operation risk from the spec (v0.1)
+
+**Status:** `shipping` (lifecycle — see [docs/specs/README.md](../README.md))
 
 Every imported operation gets a **risk** classification at load time. Agents see it in `search` before calling, and in the `execute` refusal when policy blocks the call.
 
