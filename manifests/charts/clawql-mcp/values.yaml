@@ -173,10 +173,22 @@ mcpProxy:
     limits:
       cpu: "1"
       memory: 256Mi
-  securityContext: {}
+  # nginx alpine runs as uid/gid 101; match managedGateway hardening (audit 7.03).
+  podSecurityContext:
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
   custom:
     image:
       repository: ""
