@@ -14,7 +14,7 @@
 **Does adding `codegraph_*` improve today’s default (grep + read)?**  
 Same “does adding X improve today’s default” test used everywhere else. Every coding agent already has grep — so the beat contrast is **grep + CodeGraph vs grep alone**.
 
-A CodeGraph-only arm answers a different question (can CodeGraph *replace* grep?) and skews both ways. Keep it **diagnostic only**.
+A CodeGraph-only arm answers a different question (can CodeGraph _replace_ grep?) and skews both ways. Keep it **diagnostic only**.
 
 ## Caveat (locked in)
 
@@ -22,24 +22,24 @@ Twelve prove keys on **one TypeScript monorepo** (ClawQL) is a **small test on C
 
 ## Why
 
-| Target | Unique job to prove | Controls |
-| ------ | ------------------- | -------- |
+| Target                            | Unique job to prove                                                      | Controls                                                    |
+| --------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | `codegraph_*` (bundled with grep) | Extra value of callers / impact / explore when grep is already available | **`A-grep`**, **`A-no-tools`**, no-harm cohort, usage rates |
 
 ## Parallelism
 
-| Track | Work | Outcome |
-| ----- | ---- | ------- |
-| **A (done)** | [Vectify fair test](vectify-fair-test.md) | Tie → purge; Vectify design → [post-8.0 backlog](../../../docs/backlog/post-8.0-vectify-pageindex.md) |
-| **B (this doc)** | grep+CodeGraph vs grep (+ no-tools / no-harm / usage) | Keep opt-in or leave bundle at freeze |
-| **C (locked)** | model k-grid → [`rerank-model-grid.json`](rerank-model-grid.json); bakeoff → [`rerank-bakeoff.md`](rerank-bakeoff.md) | **`TOP_K_DOC=10`** (model norerank flat k10→k20). MaxP/blend on tune next; confirm fresh keys |
+| Track            | Work                                                                                                                  | Outcome                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **A (done)**     | [Vectify fair test](vectify-fair-test.md)                                                                             | Tie → purge; Vectify design → [post-8.0 backlog](../../../docs/backlog/post-8.0-vectify-pageindex.md) |
+| **B (this doc)** | grep+CodeGraph vs grep (+ no-tools / no-harm / usage)                                                                 | Keep opt-in or leave bundle at freeze                                                                 |
+| **C (locked)**   | model k-grid → [`rerank-model-grid.json`](rerank-model-grid.json); bakeoff → [`rerank-bakeoff.md`](rerank-bakeoff.md) | **`TOP_K_DOC=10`** (model norerank flat k10→k20). MaxP/blend on tune next; confirm fresh keys         |
 
 ## Cohorts
 
-| Cohort | n | File | Counts toward Net? |
-| ------ | - | ---- | ------------------ |
-| **Prove** | 12 | [`codegraph-prove-keys.md`](codegraph-prove-keys.md) | **Yes** |
-| **No-harm** | 6 | [`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json) | **No** (gate only) |
+| Cohort      | n   | File                                                         | Counts toward Net? |
+| ----------- | --- | ------------------------------------------------------------ | ------------------ |
+| **Prove**   | 12  | [`codegraph-prove-keys.md`](codegraph-prove-keys.md)         | **Yes**            |
+| **No-harm** | 6   | [`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json) | **No** (gate only) |
 
 Both cohorts run on required arms every live spend.
 
@@ -47,12 +47,12 @@ Both cohorts run on required arms every live spend.
 
 **Locked model:** `PAGEINDEX_AB_AGENT_MODEL` = `VECTIFY_FAIR_MODEL` = **`anthropic/claude-sonnet-4.6`**.
 
-| Arm id | Role | Tools | Purpose |
-| ------ | ---- | ----- | ------- |
-| `A-no-tools` | baseline | *(none)* | Memory alone (public repo) |
-| `A-grep` | **control** | `grep`, `read_around` | Today’s default |
-| `A-codegraph` | **treatment** | `grep`, `read_around`, `codegraph_*` | **Additive** — default PLUS CodeGraph (**beat arm**) |
-| `A-codegraph-only` | diagnostic | `codegraph_*`, `read_around` (**no grep**) | Optional; “replace grep?” — **never decides freeze** |
+| Arm id             | Role          | Tools                                      | Purpose                                              |
+| ------------------ | ------------- | ------------------------------------------ | ---------------------------------------------------- |
+| `A-no-tools`       | baseline      | _(none)_                                   | Memory alone (public repo)                           |
+| `A-grep`           | **control**   | `grep`, `read_around`                      | Today’s default                                      |
+| `A-codegraph`      | **treatment** | `grep`, `read_around`, `codegraph_*`       | **Additive** — default PLUS CodeGraph (**beat arm**) |
+| `A-codegraph-only` | diagnostic    | `codegraph_*`, `read_around` (**no grep**) | Optional; “replace grep?” — **never decides freeze** |
 
 Budget: `max_tool_calls` ≤ 12, timeout 180s unless a cell documents higher. Grade **answer-only** strict accuracy.
 
@@ -66,11 +66,11 @@ Let \(W\) = # treatment correct and grep-only wrong
 Let \(L\) = # grep-only correct and treatment wrong  
 **Net** \(= W - L\)
 
-| Outcome on prove | Condition | Meaning |
-| ---------------- | --------- | ------- |
+| Outcome on prove    | Condition                          | Meaning                             |
+| ------------------- | ---------------------------------- | ----------------------------------- |
 | **CodeGraph beats** | Net \(\ge 5\) **and** no-harm pass | Keep `codegraph_*` opt-in candidate |
-| **Tie** | Net \(\in [-4, +4]\) | **Counts as purge** — leave bundle |
-| **Grep beats** | Net \(\le -5\) | Purge |
+| **Tie**             | Net \(\in [-4, +4]\)               | **Counts as purge** — leave bundle  |
+| **Grep beats**      | Net \(\le -5\)                     | Purge                               |
 
 Net is exactly the **extra value of bundling CodeGraph** on top of grep.
 
@@ -124,7 +124,7 @@ node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
 
 ## Related
 
-- [`codegraph-prove-keys.md`](codegraph-prove-keys.md) / [`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)  
-- [`unsolved-8-key-review.md`](unsolved-8-key-review.md)  
-- [`query-rewrite-arm.md`](query-rewrite-arm.md) — k-sweep elevation  
+- [`codegraph-prove-keys.md`](codegraph-prove-keys.md) / [`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)
+- [`unsolved-8-key-review.md`](unsolved-8-key-review.md)
+- [`query-rewrite-arm.md`](query-rewrite-arm.md) — k-sweep elevation
 - Purge inventory: [`8.0.0-purge-inventory-spec-v0.1.md`](../../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md)

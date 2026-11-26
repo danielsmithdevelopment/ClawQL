@@ -9,11 +9,11 @@
 
 **`TOP_K_DOC = 10` still locked — now for the right reason.** Free re-slice by question class ([`recall-by-question-class.md`](recall-by-question-class.md)):
 
-| class | R@10 | R@20 | lift |
-| ----- | ---- | ---- | ---- |
-| content | **1.000** | **1.000** | 0 |
-| depth_position | 0.409 | 0.617 | +21pp |
-| pooled (legacy) | 0.653 | 0.775 | +12pp |
+| class           | R@10      | R@20      | lift  |
+| --------------- | --------- | --------- | ----- |
+| content         | **1.000** | **1.000** | 0     |
+| depth_position  | 0.409     | 0.617     | +21pp |
+| pooled (legacy) | 0.653     | 0.775     | +12pp |
 
 Content recall is already saturated at k≤3; the pooled climb is depth templates (excluded from recall scoring). Content model accuracy when gold ∈ top-10 is ~100%. k=20 cannot help content on this set.
 
@@ -21,12 +21,12 @@ Content recall is already saturated at k≤3; the pooled climb is depth template
 
 ## Results (H-idf, offline extractAnswer)
 
-| k  | gold_recall | answer_accuracy | strict_accuracy | Δ strict vs k=3 | leakage (of answers) |
-| -- | ----------- | --------------- | --------------- | --------------- | -------------------- |
-| 3  | 0.485       | 0.782           | 0.592           | —               | 68 (24%)             |
-| 6  | 0.569       | 0.841           | 0.662           | +7.0pp          | 64                   |
-| 10 | 0.653       | 0.872           | 0.723           | +13.1pp         | 53                   |
-| 20 | 0.775       | 0.916           | 0.813           | **+22.1pp**     | 37 (11%)             |
+| k   | gold_recall | answer_accuracy | strict_accuracy | Δ strict vs k=3 | leakage (of answers) |
+| --- | ----------- | --------------- | --------------- | --------------- | -------------------- |
+| 3   | 0.485       | 0.782           | 0.592           | —               | 68 (24%)             |
+| 6   | 0.569       | 0.841           | 0.662           | +7.0pp          | 64                   |
+| 10  | 0.653       | 0.872           | 0.723           | +13.1pp         | 53                   |
+| 20  | 0.775       | 0.916           | 0.813           | **+22.1pp**     | 37 (11%)             |
 
 Gold still climbs k=10→20 (+12.2pp). Exploratory **k=40**: gold ≈0.855, strict ≈0.872 (+5.9pp vs k=20) — under the single-step ~7–8pp bar; do not raise past 20 on that alone.
 
@@ -38,12 +38,12 @@ Offline empty-evidence extract scores 0 on answerable keys **by construction** (
 
 ## Recommendation lock
 
-| Field | Value |
-| ----- | ----- |
-| Eval / harness top-k | **10** (model-scored lock) |
-| Offline preferred | 20 (+22.1pp offline strict) — **overruled by model grade** |
-| Model norerank k20−k10 | flash **−0.4pp**; Sonnet **0pp** |
-| Next | MaxP/blend/hdr on tune (full-text candidates); confirm on fresh keys — see [`rerank-bakeoff.md`](rerank-bakeoff.md) |
+| Field                  | Value                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Eval / harness top-k   | **10** (model-scored lock)                                                                                          |
+| Offline preferred      | 20 (+22.1pp offline strict) — **overruled by model grade**                                                          |
+| Model norerank k20−k10 | flash **−0.4pp**; Sonnet **0pp**                                                                                    |
+| Next                   | MaxP/blend/hdr on tune (full-text candidates); confirm on fresh keys — see [`rerank-bakeoff.md`](rerank-bakeoff.md) |
 
 ## Track B (unchanged)
 

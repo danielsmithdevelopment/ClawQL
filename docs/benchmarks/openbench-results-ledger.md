@@ -11,12 +11,12 @@
 
 **Not a WIN/FAIL cell.** Reframe: does each addition (BM25, PageIndex, CodeGraph) improve today's omit-`sources` default? Latency/cost reported, never gates. Live [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) overclaims hybrid defaults — correction draft [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
 
-| Item    | State                                                                                       |
-| ------- | ------------------------------------------------------------------------------------------- |
-| Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)            |
+| Item    | State                                                                             |
+| ------- | --------------------------------------------------------------------------------- |
+| Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)  |
 | Harness | [`archive/pageindex-ab/`](./archive/pageindex-ab/) — 8 confirmatory + diagnostics |
-| Control | `H-idf` = vault IDF + vector                                                                |
-| Next    | Corpus (+ list + code strata) → freeze → scored run                                         |
+| Control | `H-idf` = vault IDF + vector                                                      |
+| Next    | Corpus (+ list + code strata) → freeze → scored run                               |
 
 ### 2026-09-28 — `pageindex-ab` eval spec v0.1 scaffold (superseded by v0.2)
 

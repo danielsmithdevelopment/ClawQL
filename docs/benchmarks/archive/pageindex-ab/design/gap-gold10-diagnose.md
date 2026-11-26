@@ -9,11 +9,11 @@ Among **171** gold@10 keys: answer string in the 24k evidence window **93%** of 
 
 ## Model taxonomy (flash-lite, gold@10)
 
-| Class | n of 60 wrongs |
-| ----- | -------------- |
-| genuinely_wrong | 58 (~97%) |
-| grader_reject | 1 |
-| not_found | 1 |
+| Class           | n of 60 wrongs |
+| --------------- | -------------- |
+| genuinely_wrong | 58 (~97%)      |
+| grader_reject   | 1              |
+| not_found       | 1              |
 
 Grader is not the bottleneck. Most wrongs look like distractor section headings — but see the split below before treating that as a reading/position effect.
 
@@ -21,18 +21,18 @@ Grader is not the bottleneck. Most wrongs look like distractor section headings 
 
 Saved rows, no new spend. Depth/position templates = builder ladder (`near N% depth`, first/last numbered heading, ~20%/80% cross-section). Those **cannot be answered from section text**: a retrieved section does not say where it sits in the document.
 
-| Gold rank | All gold@10 | Depth/position | Content | Code-export |
-| --------- | ----------- | -------------- | ------- | ----------- |
-| 1 | 94/99 = **0.95** | **0/5 = 0.00** | 94/94 = **1.00** | — |
-| 2 | 7/14 = 0.50 | 1/8 = 0.12 | 6/6 = **1.00** | — |
-| 3 | 3/14 = 0.21 | 3/6 = 0.50 | — | **0/8 = 0.00** |
-| 4–10 | ~0.11–0.60 | flat ~0.1–0.6 | — | — |
+| Gold rank | All gold@10      | Depth/position | Content          | Code-export    |
+| --------- | ---------------- | -------------- | ---------------- | -------------- |
+| 1         | 94/99 = **0.95** | **0/5 = 0.00** | 94/94 = **1.00** | —              |
+| 2         | 7/14 = 0.50      | 1/8 = 0.12     | 6/6 = **1.00**   | —              |
+| 3         | 3/14 = 0.21      | 3/6 = 0.50     | —                | **0/8 = 0.00** |
+| 4–10      | ~0.11–0.60       | flat ~0.1–0.6  | —                | —              |
 
-| Bucket | n | Answer accuracy | Mean gold rank (correct / wrong) |
-| ------ | - | --------------- | -------------------------------- |
-| `depth_position` | 63 | **0.175** | 5.55 / 5.25 (no position signal) |
-| `content` | 100 | **1.000** | 1.06 / — |
-| `code_export` | 8 | **0.000** | — / 3.0 (all answer `../src/core.js`) |
+| Bucket           | n   | Answer accuracy | Mean gold rank (correct / wrong)      |
+| ---------------- | --- | --------------- | ------------------------------------- |
+| `depth_position` | 63  | **0.175**       | 5.55 / 5.25 (no position signal)      |
+| `content`        | 100 | **1.000**       | 1.06 / —                              |
+| `code_export`    | 8   | **0.000**       | — / 3.0 (all answer `../src/core.js`) |
 
 **Composition artifact:** the overall rank-1 pool is 94/99 content (all correct) + 5 depth (all wrong). The steep 0.95→0.1 curve is **not** a mid-context reading effect — it is depth templates failing at every rank while content clusters at rank 1 and passes.
 

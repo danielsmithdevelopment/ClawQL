@@ -14,10 +14,10 @@ Browsers match the hash against the script body **byte-for-byte**. Any change to
 
 ## `apps/www` (static export → Cloudflare Pages `_headers`)
 
-| Step | Script | What it does |
-| ---- | ------ | ------------ |
-| Prebuild | `scripts/generate-agent-assets.mjs` | Writes `public/_headers` with hashes for **sitewide JSON-LD** (`wwwJsonLdScriptBodies` in `scripts/csp-script-hashes.mjs`, kept in sync with `SiteStructuredData.tsx`). |
-| Postbuild | `scripts/seal-csp-from-html.mjs` | Scans `out/**/*.html`, unions **every** inline script (JSON-LD + Next/Turbopack flight), rewrites `out/_headers` `script-src`. |
+| Step      | Script                              | What it does                                                                                                                                                            |
+| --------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prebuild  | `scripts/generate-agent-assets.mjs` | Writes `public/_headers` with hashes for **sitewide JSON-LD** (`wwwJsonLdScriptBodies` in `scripts/csp-script-hashes.mjs`, kept in sync with `SiteStructuredData.tsx`). |
+| Postbuild | `scripts/seal-csp-from-html.mjs`    | Scans `out/**/*.html`, unions **every** inline script (JSON-LD + Next/Turbopack flight), rewrites `out/_headers` `script-src`.                                          |
 
 ```bash
 cd apps/www
@@ -26,10 +26,10 @@ NEXT_PUBLIC_SITE_URL=https://clawql.com npm run build   # prebuild → next → 
 
 ## `apps/docs` (OpenNext → Workers ASSETS `_headers`)
 
-| Step | Script | What it does |
-| ---- | ------ | ------------ |
-| Prebuild | `scripts/generate-public-headers-csp.mjs` | Patches `public/_headers` with hashes for **site JSON-LD + case-study JSON-LD** (`docsKnownInlineScriptBodies`). |
-| After OpenNext | `scripts/seal-csp-from-html.mjs` | Scans `.open-next/assets/**/*.html`, rewrites ASSETS `_headers` with the full inline set. Wired into `deploy` / `upload` / `preview` npm scripts and `.github/workflows/deploy-docs.yml`. |
+| Step           | Script                                    | What it does                                                                                                                                                                              |
+| -------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prebuild       | `scripts/generate-public-headers-csp.mjs` | Patches `public/_headers` with hashes for **site JSON-LD + case-study JSON-LD** (`docsKnownInlineScriptBodies`).                                                                          |
+| After OpenNext | `scripts/seal-csp-from-html.mjs`          | Scans `.open-next/assets/**/*.html`, rewrites ASSETS `_headers` with the full inline set. Wired into `deploy` / `upload` / `preview` npm scripts and `.github/workflows/deploy-docs.yml`. |
 
 ```bash
 cd apps/docs

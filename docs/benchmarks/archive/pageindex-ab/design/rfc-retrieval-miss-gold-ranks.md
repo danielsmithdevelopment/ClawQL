@@ -16,7 +16,7 @@
 
 **Bottom line (miss recovery):** k∈{6,10} recovers at most **3/15** of these misses. The other **12** need better queries or key hygiene — not a bigger fixed budget on this polluted map.
 
-**Bottom line (default-path design — updated 2026-09-29):** after rewrite/RRF both failed via **shared top-k displacement**, the k-sweep is **elevated**: it shows whether a larger own budget removes displacement for any future addition. Schedule Track C; do not lag it behind CodeGraph question-writing. Expectation for *these* deep RFC keys remains low (and 7/8 of the fair-test “unsolved” set are defective — [`unsolved-8-key-review.md`](unsolved-8-key-review.md)).
+**Bottom line (default-path design — updated 2026-09-29):** after rewrite/RRF both failed via **shared top-k displacement**, the k-sweep is **elevated**: it shows whether a larger own budget removes displacement for any future addition. Schedule Track C; do not lag it behind CodeGraph question-writing. Expectation for _these_ deep RFC keys remains low (and 7/8 of the fair-test “unsolved” set are defective — [`unsolved-8-key-review.md`](unsolved-8-key-review.md)).
 
 ## Rows
 

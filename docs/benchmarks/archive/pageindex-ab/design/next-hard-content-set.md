@@ -20,11 +20,11 @@
 
 `hard_content_key_gate.py` (v2) classifies content keys by **question↔gold word overlap**, not keyword rank:
 
-| Cohort | Rule | Role |
-| ------ | ---- | ---- |
-| **hard** | `overlap_gold < 0.3` | Difficulty shared across methods (not keyword’s own misses) |
+| Cohort      | Rule                 | Role                                                          |
+| ----------- | -------------------- | ------------------------------------------------------------- |
+| **hard**    | `overlap_gold < 0.3` | Difficulty shared across methods (not keyword’s own misses)   |
 | **no_harm** | `overlap_gold ≥ 0.6` | Easy keys; MaxP/rerank must not regress these (Vectify-style) |
-| mid | between bands | Neither cohort |
+| mid         | between bands        | Neither cohort                                                |
 
 **Do not** accept keys because keyword ranks gold below 10 — that set is keyword’s failures, so vector/MaxP win by construction (same regression-to-the-mean trap as the 12 deep misses).
 

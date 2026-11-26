@@ -114,7 +114,7 @@ async function ensureVaultGitignore(vault: string): Promise<void> {
     existing
       .split(/\r?\n/)
       .map((l) => l.trim())
-      .filter(Boolean),
+      .filter(Boolean)
   );
   const missing = VAULT_GITIGNORE_LINES.filter((line) => {
     if (line.startsWith("#")) return !existing.includes("ClawQL — secrets");

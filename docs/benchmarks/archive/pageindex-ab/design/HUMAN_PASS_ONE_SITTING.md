@@ -3,10 +3,10 @@
 **Status: PASSED (agent-reviewed 2026-09-30)** — see [`HUMAN_PASS_RESULT.json`](HUMAN_PASS_RESULT.json).  
 No ceremonial signature. Acceptance sampling + CodeGraph grep checks are done; proceed to H-idf / Track B.
 
-| Gate | What was reviewed | Result |
-| ---- | ----------------- | ------ |
-| **CodeGraph prove** | All 12 keys — single unique-string grep cannot answer (all need graph) | **pass** (0 soluble) |
-| **Doc / k-sweep** | Stratified sample of 60 ([`doc-human-pass-sample.json`](doc-human-pass-sample.json), seed `20261015`) | **pass** (0 real defects; 3 auto-flags adjudicated FP) |
+| Gate                | What was reviewed                                                                                     | Result                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **CodeGraph prove** | All 12 keys — single unique-string grep cannot answer (all need graph)                                | **pass** (0 soluble)                                   |
+| **Doc / k-sweep**   | Stratified sample of 60 ([`doc-human-pass-sample.json`](doc-human-pass-sample.json), seed `20261015`) | **pass** (0 real defects; 3 auto-flags adjudicated FP) |
 
 Machine gates: `keys_flagged_defective=0`, `map_artifact_section_count=0`, `keys_with_gold_clean=238`.
 

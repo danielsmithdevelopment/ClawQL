@@ -2,11 +2,11 @@
 
 n=100. Mean overlap with gold section tokens: **0.718**. Exclusive-to-gold: **0.490**.
 
-| stratum | n | mean overlap_gold | mean exclusive_gold |
-| ------- | - | ----------------- | ------------------- |
-| code | 16 | 0.575 | 0.575 |
-| converted_pdf | 42 | 0.757 | 0.214 |
-| weakly_structured | 42 | 0.733 | 0.733 |
+| stratum           | n   | mean overlap_gold | mean exclusive_gold |
+| ----------------- | --- | ----------------- | ------------------- |
+| code              | 16  | 0.575             | 0.575               |
+| converted_pdf     | 42  | 0.757             | 0.214               |
+| weakly_structured | 42  | 0.733             | 0.733               |
 
 ## Verdict
 

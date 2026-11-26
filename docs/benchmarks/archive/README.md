@@ -13,6 +13,6 @@ Planning-context numbers for the multi-provider workflow are in [`../multi-provi
 
 ## Archived harness trees
 
-| Tree | Note |
-| ---- | ---- |
+| Tree                             | Note                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | [`pageindex-ab/`](pageindex-ab/) | Memory-stack A/B harness; **`pageindex_*` purged in 8.0** — see [`pageindex-ab/ARCHIVE.md`](pageindex-ab/ARCHIVE.md). |

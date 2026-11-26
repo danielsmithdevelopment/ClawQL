@@ -32,8 +32,8 @@ The workflow prefers `OPENROUTER_API_KEY_TRACK_B` and falls back to `OPENROUTER_
 
 Live schedule (see `track_b_cell_schedule.mjs`):
 
-1. Prove: `A-grep` then `A-codegraph` per key  
-2. No-harm: same pair per key  
+1. Prove: `A-grep` then `A-codegraph` per key
+2. No-harm: same pair per key
 3. `A-no-tools` baseline (prove then no-harm)
 
 Resume skips graded rows. Prior `A-no-tools` cells remain valid; beat pairs run next.

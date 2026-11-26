@@ -94,7 +94,6 @@ This section restates general compliance language for pdf-long-prairie-abs. It i
 
 This section restates general compliance language for pdf-long-prairie-abs. It intentionally contains no evaluation markers. Parties acknowledge standard representations, warranties, and notice procedures. Cross-references to schedules 18 through 20 are placeholders only. Nothing in this boilerplate states principal, margin, leverage, severity, or facility fee figures used by the gold keys.
 
-
 ## miscellaneous provisions that look like a heading
 
 This block mimics a bad Docling heading. The **amortization schedule start date** is **April 1, 2027**, even though nothing in the title says amortization.
@@ -144,7 +143,6 @@ This section restates general compliance language for pdf-long-prairie-abs-tail.
 ### Boilerplate block 8 (pdf-long-prairie-abs-tail)
 
 This section restates general compliance language for pdf-long-prairie-abs-tail. It intentionally contains no evaluation markers. Parties acknowledge standard representations, warranties, and notice procedures. Cross-references to schedules 8 through 10 are placeholders only. Nothing in this boilerplate states principal, margin, leverage, severity, or facility fee figures used by the gold keys.
-
 
 ## schedules
 

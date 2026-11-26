@@ -11,37 +11,37 @@ Raising k from 3→20 is worth **+22pp offline strict**, but it works around wea
 
 ## Pattern (tune, n=156 with gold; docs-only n=142)
 
-| Method | recall@10 | recall@50 | recall@100 |
-| ------ | --------- | --------- | ---------- |
-| keyword IDF (today) | **0.599** | **0.866** | **0.979** |
-| vector (MiniLM) | 0.599 | 0.859 | 0.979 |
-| RRF(keyword, vector) | 0.620 | 0.845 | 0.979 |
-| keyword + heading-path context | 0.606 | 0.866 | 0.979 |
-| RRF + context | 0.634 | 0.859 | 0.979 |
+| Method                         | recall@10 | recall@50 | recall@100 |
+| ------------------------------ | --------- | --------- | ---------- |
+| keyword IDF (today)            | **0.599** | **0.866** | **0.979**  |
+| vector (MiniLM)                | 0.599     | 0.859     | 0.979      |
+| RRF(keyword, vector)           | 0.620     | 0.845     | 0.979      |
+| keyword + heading-path context | 0.606     | 0.866     | 0.979      |
+| RRF + context                  | 0.634     | 0.859     | 0.979      |
 
 Holdout docs-only mirrors this (keyword@10 **0.646**, @50 **0.875**, @100 **0.958**).
 
 ### Miss classes among keyword@10 misses (tune 57)
 
-| Class | n | Meaning |
-| ----- | - | ------- |
-| **rerank** | **32** | best gold rank in (10, 50] |
-| **deep_rerank** | **8** | best gold rank in (50, 100] |
-| vector_rescue | 8 | vector ≤10 while keyword >10 |
-| merge | 3 | lone ≤10 but RRF buries it |
-| contextual_header_fix | 1 | heading-path alone fixes the miss |
-| index_mismatch | ~0 | gold outside top-100 |
+| Class                 | n      | Meaning                           |
+| --------------------- | ------ | --------------------------------- |
+| **rerank**            | **32** | best gold rank in (10, 50]        |
+| **deep_rerank**       | **8**  | best gold rank in (50, 100]       |
+| vector_rescue         | 8      | vector ≤10 while keyword >10      |
+| merge                 | 3      | lone ≤10 but RRF buries it        |
+| contextual_header_fix | 1      | heading-path alone fixes the miss |
+| index_mismatch        | ~0     | gold outside top-100              |
 
 **Ceiling:** a perfect reranker over keyword top-50 → top-10 would lift tune docs recall@10 by **~+26.8pp** (0.599 → 0.866). Top-100 ceiling is ~+38pp. That is the same order of magnitude as the k=3→20 offline strict gain — but at **k=10**.
 
 ## Decisions
 
-| Hypothesis | Result | Action |
-| ---------- | ------ | ------ |
-| Merge buries golds | Rare (3 tune misses) | Do **not** prioritize `CLAWQL_MEMORY_RECALL_HYBRID` / RRF for this failure mode |
-| Need reranker | **Yes** — 40/57 misses in ranks 11–100 | **Next:** cross-encoder over keyword top-50 → keep 10/20 (local 5090) |
-| Contextual heading path | **No ship** — <1pp lift on tune docs; wash/slight regression on holdout | Deterministic `Doc › H1 › H2` prepend is not enough on RFCs |
-| Index/wording mismatch | Almost none (@100 ≈ 0.98) | LLM-written one-sentence context still optional if deep misses remain after rerank |
+| Hypothesis              | Result                                                                  | Action                                                                             |
+| ----------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Merge buries golds      | Rare (3 tune misses)                                                    | Do **not** prioritize `CLAWQL_MEMORY_RECALL_HYBRID` / RRF for this failure mode    |
+| Need reranker           | **Yes** — 40/57 misses in ranks 11–100                                  | **Next:** cross-encoder over keyword top-50 → keep 10/20 (local 5090)              |
+| Contextual heading path | **No ship** — <1pp lift on tune docs; wash/slight regression on holdout | Deterministic `Doc › H1 › H2` prepend is not enough on RFCs                        |
+| Index/wording mismatch  | Almost none (@100 ≈ 0.98)                                               | LLM-written one-sentence context still optional if deep misses remain after rerank |
 
 ## Ship plan
 

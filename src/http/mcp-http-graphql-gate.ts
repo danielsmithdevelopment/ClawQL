@@ -17,7 +17,8 @@ export function assertHttpGraphqlAllowedEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
-    const enable = envFlagOn(env, "CLAWQL_HTTP_GRAPHQL") && !envFlagOn(env, "CLAWQL_HTTP_SKIP_GRAPHQL");
+    const enable =
+      envFlagOn(env, "CLAWQL_HTTP_GRAPHQL") && !envFlagOn(env, "CLAWQL_HTTP_SKIP_GRAPHQL");
     if (!enable) return;
     if (env.CLAWQL_TIER?.trim().toLowerCase() === "regulated") {
       return yield* Effect.fail(

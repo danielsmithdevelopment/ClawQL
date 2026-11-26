@@ -94,7 +94,6 @@ This section restates general compliance language for pdf-long-cascade-term. It 
 
 This section restates general compliance language for pdf-long-cascade-term. It intentionally contains no evaluation markers. Parties acknowledge standard representations, warranties, and notice procedures. Cross-references to schedules 18 through 20 are placeholders only. Nothing in this boilerplate states principal, margin, leverage, severity, or facility fee figures used by the gold keys.
 
-
 ## miscellaneous provisions that look like a heading
 
 This block mimics a bad Docling heading. The **amortization schedule start date** is **January 14, 2029**, even though nothing in the title says amortization.
@@ -144,7 +143,6 @@ This section restates general compliance language for pdf-long-cascade-term-tail
 ### Boilerplate block 8 (pdf-long-cascade-term-tail)
 
 This section restates general compliance language for pdf-long-cascade-term-tail. It intentionally contains no evaluation markers. Parties acknowledge standard representations, warranties, and notice procedures. Cross-references to schedules 8 through 10 are placeholders only. Nothing in this boilerplate states principal, margin, leverage, severity, or facility fee figures used by the gold keys.
-
 
 ## schedules
 

@@ -11,11 +11,11 @@
 
 **Product question:** does adding `codegraph_*` improve today’s default (grep + read)?
 
-| Outcome | Condition | Freeze action |
-| ------- | --------- | ------------- |
-| **CodeGraph beats** | Net \(\ge 5\) on these 12 (**grep+CodeGraph** vs grep) **and** no-harm \(\ge 5/6\) | Keep opt-in candidate |
-| **Tie** | Net \(\in [-4,+4]\) **or** no-harm fail | **Purge** (leave bundle) |
-| **Grep beats** | Net \(\le -5\) | Purge |
+| Outcome             | Condition                                                                          | Freeze action            |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------ |
+| **CodeGraph beats** | Net \(\ge 5\) on these 12 (**grep+CodeGraph** vs grep) **and** no-harm \(\ge 5/6\) | Keep opt-in candidate    |
+| **Tie**             | Net \(\in [-4,+4]\) **or** no-harm fail                                            | **Purge** (leave bundle) |
+| **Grep beats**      | Net \(\le -5\)                                                                     | Purge                    |
 
 Arms every spend: `A-no-tools`, `A-grep` (control), `A-codegraph` = **grep + codegraph_*** (treatment). Optional diagnostic: `A-codegraph-only` (no grep) — never decides freeze. Record `used_codegraph` on the treatment arm.
 
@@ -23,14 +23,14 @@ Arms every spend: `A-no-tools`, `A-grep` (control), `A-codegraph` = **grep + cod
 
 ## Requirements
 
-| Rule | Detail |
-| ---- | ------ |
-| Repo | ClawQL monorepo packages (`clawql-codegraph`, `clawql-memory`, `clawql-core`, `clawql-api`) |
-| Job | Callers-of / impact-of-change / explore neighborhood |
-| Grep control | Answer **not** recoverable by one unique-string `grep` |
-| Gold | Human verifies oracle sample; cite symbol ids / files |
-| n prove | **12** (Net uses these only) |
-| n no-harm | **6** ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)) |
+| Rule         | Detail                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| Repo         | ClawQL monorepo packages (`clawql-codegraph`, `clawql-memory`, `clawql-core`, `clawql-api`) |
+| Job          | Callers-of / impact-of-change / explore neighborhood                                        |
+| Grep control | Answer **not** recoverable by one unique-string `grep`                                      |
+| Gold         | Human verifies oracle sample; cite symbol ids / files                                       |
+| n prove      | **12** (Net uses these only)                                                                |
+| n no-harm    | **6** ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json))                        |
 
 ## Rejected as prove material
 
@@ -39,20 +39,20 @@ Arms every spend: `A-no-tools`, `A-grep` (control), `A-codegraph` = **grep + cod
 
 ## Keys (review all 12 — confirm single grep fails)
 
-| id | job | question | gold (oracle sample) | why grep fails |
-| -- | --- | -------- | -------------------- | -------------- |
-| `cg-prove-01` | impact | Using the code graph (not grep), list the TypeScript symbols within depth 2 that depend on… | impacted (sample): makeCodeGraphServiceLive, graph/explore.ts, exploreGraph, … | String grep finds the definition and imports, but does not rank inbound blast radius… |
-| `cg-prove-02` | impact | What is the upstream blast radius (depth ≤2) of renaming `fireHook`? List distinct package… | impacted (sample): plugin/hook-runtime.ts, fireHooksForEvent, execute-batch/index.ts, … | `fireHook` appears in many packages; grep dumps every string hit… |
-| `cg-prove-03` | impact | List depth-≤2 dependents of `createMemoryPlugin` (who wires or calls the memory plugin fac… | impacted (sample): makeMemoryLayer, plugin/memory-plugin.test.ts, … | Inbound callers across packages need the reverse edge walk… |
-| `cg-prove-04` | impact | What is the depth-≤2 blast radius of `queryGraph`? Name dependents in explore/service/reca… | impacted (sample): dogfood/…, makeCodeGraphServiceLive, impactAnalysis, … | Grep cannot separate live call edges from prose… |
-| `cg-prove-05` | impact | Who depends on `splitMarkdownSections` (depth ≤2)? List impacted symbol names and files. | impacted (sample): recall/read-around.test.ts, readAroundFromMarkdown, … | Misses re-exports / Effect wrappers… |
-| `cg-prove-06` | explore | Using one-shot explore, summarize `indexRepository`: primary file, notable neighbors… | primary=indexRepository file=indexer/index-repo.ts | Explore aggregates explain + neighbors + impact… |
-| `cg-prove-07` | impact | List depth-≤2 dependents of `reciprocalRankFusion`… | impacted (sample): rerankNormalizedHitsRrf, effect/memory-recall-effect.ts, … | Inbound edges across hybrid recall… |
-| `cg-prove-08` | impact | List depth-≤2 dependents of `defineProviderPlugin` across provider packages. | impacted (sample): plugin/dynamic-loader.test.ts, plugin/providers/panguard, … | Prove job is the dependency set on signature change… |
-| `cg-prove-09` | impact | What symbols/files sit in the depth-2 blast radius of `linkTypeScriptCrossFile`? | impacted (sample): indexRepository, indexer/index-repo.ts, … | Multi-hop indexer pipeline… |
-| `cg-prove-10` | impact | List depth-≤2 dependents of `grantsWithinAtr` across packages. | impacted (sample): fireHook, execute-batch/index.ts, … | Re-exports vs design text… |
-| `cg-prove-11` | explore | Explore `codegraphImpact` (MCP handler): which service method does it call… | primary=codegraphImpact file=mcp/handlers.ts | Handler → service → impactAnalysis chain… |
-| `cg-prove-12` | impact | List depth-≤2 dependents of `bm25Score`… | impacted (sample): scoreWithVaultRanker, effect/…, … | Inbound blast radius for a safe rename… |
+| id            | job     | question                                                                                    | gold (oracle sample)                                                                    | why grep fails                                                                        |
+| ------------- | ------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `cg-prove-01` | impact  | Using the code graph (not grep), list the TypeScript symbols within depth 2 that depend on… | impacted (sample): makeCodeGraphServiceLive, graph/explore.ts, exploreGraph, …          | String grep finds the definition and imports, but does not rank inbound blast radius… |
+| `cg-prove-02` | impact  | What is the upstream blast radius (depth ≤2) of renaming `fireHook`? List distinct package… | impacted (sample): plugin/hook-runtime.ts, fireHooksForEvent, execute-batch/index.ts, … | `fireHook` appears in many packages; grep dumps every string hit…                     |
+| `cg-prove-03` | impact  | List depth-≤2 dependents of `createMemoryPlugin` (who wires or calls the memory plugin fac… | impacted (sample): makeMemoryLayer, plugin/memory-plugin.test.ts, …                     | Inbound callers across packages need the reverse edge walk…                           |
+| `cg-prove-04` | impact  | What is the depth-≤2 blast radius of `queryGraph`? Name dependents in explore/service/reca… | impacted (sample): dogfood/…, makeCodeGraphServiceLive, impactAnalysis, …               | Grep cannot separate live call edges from prose…                                      |
+| `cg-prove-05` | impact  | Who depends on `splitMarkdownSections` (depth ≤2)? List impacted symbol names and files.    | impacted (sample): recall/read-around.test.ts, readAroundFromMarkdown, …                | Misses re-exports / Effect wrappers…                                                  |
+| `cg-prove-06` | explore | Using one-shot explore, summarize `indexRepository`: primary file, notable neighbors…       | primary=indexRepository file=indexer/index-repo.ts                                      | Explore aggregates explain + neighbors + impact…                                      |
+| `cg-prove-07` | impact  | List depth-≤2 dependents of `reciprocalRankFusion`…                                         | impacted (sample): rerankNormalizedHitsRrf, effect/memory-recall-effect.ts, …           | Inbound edges across hybrid recall…                                                   |
+| `cg-prove-08` | impact  | List depth-≤2 dependents of `defineProviderPlugin` across provider packages.                | impacted (sample): plugin/dynamic-loader.test.ts, plugin/providers/panguard, …          | Prove job is the dependency set on signature change…                                  |
+| `cg-prove-09` | impact  | What symbols/files sit in the depth-2 blast radius of `linkTypeScriptCrossFile`?            | impacted (sample): indexRepository, indexer/index-repo.ts, …                            | Multi-hop indexer pipeline…                                                           |
+| `cg-prove-10` | impact  | List depth-≤2 dependents of `grantsWithinAtr` across packages.                              | impacted (sample): fireHook, execute-batch/index.ts, …                                  | Re-exports vs design text…                                                            |
+| `cg-prove-11` | explore | Explore `codegraphImpact` (MCP handler): which service method does it call…                 | primary=codegraphImpact file=mcp/handlers.ts                                            | Handler → service → impactAnalysis chain…                                             |
+| `cg-prove-12` | impact  | List depth-≤2 dependents of `bm25Score`…                                                    | impacted (sample): scoreWithVaultRanker, effect/…, …                                    | Inbound blast radius for a safe rename…                                               |
 
 Full oracle golds: [`codegraph-prove-keys.oracle.json`](codegraph-prove-keys.oracle.json).
 
@@ -67,6 +67,6 @@ Full oracle golds: [`codegraph-prove-keys.oracle.json`](codegraph-prove-keys.ora
 
 ## Signer
 
-| Role | Name | Date |
-| ---- | ---- | ---- |
-| Human pass (Track B prove) | | |
+| Role                       | Name | Date |
+| -------------------------- | ---- | ---- |
+| Human pass (Track B prove) |      |      |
