@@ -61,7 +61,11 @@ function enrollmentAuditPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(clawqlHome(env), "Dashboard", "passkey-enrollments.jsonl");
 }
 
-/** Decode auth_time (or iat) from a JWT payload without re-verifying (caller already validated the session). */
+/**
+ * Recent interactive sign-in time from a JWT (CC2).
+ * Prefer `auth_time`, else the latest `amr[].timestamp` (Supabase includes these on password/OAuth).
+ * Do **not** fall back to `iat` — refresh reissues access tokens and would weaken first-passkey gating.
+ */
 export function accessTokenAuthTimeSec(accessToken: string | undefined | null): number | undefined {
   const token = accessToken?.trim();
   if (!token) return undefined;
@@ -71,17 +75,27 @@ export function accessTokenAuthTimeSec(accessToken: string | undefined | null): 
     const payload = JSON.parse(Buffer.from(parts[1]!, "base64url").toString("utf8")) as {
       auth_time?: number;
       iat?: number;
+      amr?: Array<string | { method?: string; timestamp?: number }>;
     };
     if (typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time)) {
       return payload.auth_time;
     }
-    if (typeof payload.iat === "number" && Number.isFinite(payload.iat)) {
-      return payload.iat;
+    let amrMax: number | undefined;
+    if (Array.isArray(payload.amr)) {
+      for (const entry of payload.amr) {
+        if (entry && typeof entry === "object" && typeof entry.timestamp === "number") {
+          const ts = entry.timestamp;
+          if (!Number.isFinite(ts)) continue;
+          amrMax = amrMax == null ? ts : Math.max(amrMax, ts);
+        }
+      }
     }
+    if (amrMax != null) return amrMax;
+    // Explicitly ignore iat (CC2).
+    return undefined;
   } catch {
     return undefined;
   }
-  return undefined;
 }
 
 export function recentAuthSatisfied(
@@ -521,16 +535,47 @@ export function recordPasskeyEnrollmentEffect(
   });
 }
 
+let passkeyNotifyWarnLogged = false;
+
+/** CC3: warn once when production enrollments have no outbound notify URL. */
+export function warnIfPasskeyEnrollNotifyUnset(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (passkeyNotifyWarnLogged) return;
+  if ((env.NODE_ENV ?? "") !== "production") return;
+  if (env.CLAWQL_E2E_HARNESS === "1") return;
+  if (env.CLAWQL_PASSKEY_ENROLL_NOTIFY_URL?.trim()) return;
+  passkeyNotifyWarnLogged = true;
+  console.warn(
+    "[clawql-dashboard] CLAWQL_PASSKEY_ENROLL_NOTIFY_URL is unset — passkey enrollments are recorded locally and in the managed audit feed but not emailed. Set the URL (and optional CLAWQL_ORG_ADMIN_NOTIFY_EMAILS) for outbound notices.",
+  );
+}
+
 /**
- * Notify the enrollee + configured org-admin addresses (BB2).
- * Always records locally; POSTs to CLAWQL_PASSKEY_ENROLL_NOTIFY_URL when set.
+ * Notify the enrollee + configured org-admin addresses (BB2 / CC3).
+ * Always records to jsonl + managed audit feed; POSTs to CLAWQL_PASSKEY_ENROLL_NOTIFY_URL when set.
  */
 export function notifyPasskeyEnrollmentEffect(
   event: PasskeyEnrollmentAudit,
   env: NodeJS.ProcessEnv = process.env,
 ): Effect.Effect<{ readonly notified: boolean }, Error> {
   return Effect.gen(function* () {
+    warnIfPasskeyEnrollNotifyUnset(env);
     yield* recordPasskeyEnrollmentEffect(event, env);
+
+    const { appendManagedAuditRuntimeEffect } = yield* Effect.tryPromise({
+      try: () => import("@/lib/managed/live/impersonation"),
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
+    yield* appendManagedAuditRuntimeEffect({
+      actor: event.email || event.userId,
+      action: "passkey.enroll",
+      outcome: event.firstKey
+        ? `First passkey enrolled (${event.label})`
+        : `Additional passkey enrolled (${event.label})`,
+      tone: "ok",
+    });
+
     const webhook = env.CLAWQL_PASSKEY_ENROLL_NOTIFY_URL?.trim();
     const adminEmails = (env.CLAWQL_ORG_ADMIN_NOTIFY_EMAILS ?? "")
       .split(",")
@@ -546,6 +591,7 @@ export function notifyPasskeyEnrollmentEffect(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type: "passkey_enrollment",
+            channel: "email",
             ...event,
             notifyEmails: [event.email, ...adminEmails],
             wording:

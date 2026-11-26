@@ -11,6 +11,7 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
 
 import { isDesktopMode } from "@/lib/desktop-mode";
+import { managedOrgId } from "@/lib/managed/data-source";
 import {
   type ManagedSession,
   resolveManagedSessionEffect,
@@ -179,8 +180,9 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
 }
 
 /**
- * Managed APIs that touch org data (BB1): require a real org membership.
+ * Managed APIs that touch org data (BB1 / CC1): require a real org membership.
  * Supabase users without app_metadata.org_id get 403 (not auto-joined to the deploy org).
+ * When CLAWQL_MANAGED_ORG_ID is set (single-tenant / shared Supabase), session org must match.
  */
 export async function requireManagedOrgSession(req: Request): Promise<ApiSessionResult> {
   const auth = await requireManagedApiSession(req);
@@ -192,6 +194,18 @@ export async function requireManagedOrgSession(req: Request): Promise<ApiSession
         {
           error:
             "Organization membership required — ask an admin to set app_metadata.org_id (public sign-up alone is not enough)",
+        },
+        { status: 403 },
+      ),
+    };
+  }
+  if (!sessionMatchesDeployOrg(auth.session)) {
+    return {
+      ok: false,
+      response: jsonResponse(
+        {
+          error:
+            "Organization mismatch — this deployment is bound to a different org (set app_metadata.org_id to match CLAWQL_MANAGED_ORG_ID)",
         },
         { status: 403 },
       ),
@@ -252,6 +266,16 @@ export function isE2eApprovalProof(proof: ApprovalProofInput): boolean {
 
 export function sessionHasOrg(session: ManagedSession): boolean {
   return Boolean(session.orgId?.trim());
+}
+
+/** CC1: when the deploy binds CLAWQL_MANAGED_ORG_ID, session org must match. */
+export function sessionMatchesDeployOrg(
+  session: ManagedSession,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const deployOrg = managedOrgId(env);
+  if (!deployOrg) return true;
+  return session.orgId.trim() === deployOrg;
 }
 
 export function sessionIsAdmin(session: ManagedSession): boolean {

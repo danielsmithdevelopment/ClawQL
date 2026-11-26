@@ -14,6 +14,7 @@ import {
   originFromRequest,
   rpIdFromRequest,
   verifyEnrollResponseEffect,
+  warnIfPasskeyEnrollNotifyUnset,
 } from "@/lib/managed/approve-webauthn";
 
 export const runtime = "nodejs";
@@ -22,6 +23,7 @@ export async function GET(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
+  warnIfPasskeyEnrollNotifyUnset();
   const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 

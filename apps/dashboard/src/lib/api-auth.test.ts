@@ -8,6 +8,7 @@ import {
   sessionCanApprove,
   sessionHasOrg,
   sessionIsAdmin,
+  sessionMatchesDeployOrg,
 } from "./api-auth";
 import { MOCK_MANAGED_SESSION } from "./managed/session";
 
@@ -85,5 +86,42 @@ describe("api-auth", () => {
     expect(sessionIsAdmin(MOCK_MANAGED_SESSION)).toBe(true);
     expect(sessionIsAdmin({ ...MOCK_MANAGED_SESSION, role: "Member" })).toBe(false);
     expect(sessionCanApprove({ ...MOCK_MANAGED_SESSION, orgId: "" })).toBe(false);
+  });
+
+  it("requires session org to match CLAWQL_MANAGED_ORG_ID when set (CC1)", () => {
+    expect(
+      sessionMatchesDeployOrg(MOCK_MANAGED_SESSION, { CLAWQL_MANAGED_ORG_ID: "" }),
+    ).toBe(true);
+    expect(
+      sessionMatchesDeployOrg(MOCK_MANAGED_SESSION, {
+        CLAWQL_MANAGED_ORG_ID: MOCK_MANAGED_SESSION.orgId,
+      }),
+    ).toBe(true);
+    expect(
+      sessionMatchesDeployOrg(MOCK_MANAGED_SESSION, {
+        CLAWQL_MANAGED_ORG_ID: "org_other",
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("accessTokenAuthTimeSec (CC2)", () => {
+  it("prefers auth_time then amr timestamp and never iat", async () => {
+    const { accessTokenAuthTimeSec } = await import("./managed/approve-webauthn");
+    const enc = (obj: object) =>
+      `hdr.${Buffer.from(JSON.stringify(obj)).toString("base64url")}.sig`;
+    expect(accessTokenAuthTimeSec(enc({ auth_time: 100, iat: 999, amr: [] }))).toBe(100);
+    expect(
+      accessTokenAuthTimeSec(
+        enc({
+          iat: 999,
+          amr: [
+            { method: "password", timestamp: 200 },
+            { method: "otp", timestamp: 250 },
+          ],
+        }),
+      ),
+    ).toBe(250);
+    expect(accessTokenAuthTimeSec(enc({ iat: 999 }))).toBeUndefined();
   });
 });

@@ -68,6 +68,22 @@ const pushAuditEffect = (entry: ManagedAuditRuntimeEntry): Effect.Effect<void> =
     yield* Ref.set(auditRuntimeRef, [entry, ...cur].slice(0, 200));
   });
 
+/** Shared runtime audit feed (impersonation, passkey enroll, …) — CC3. */
+export const appendManagedAuditRuntimeEffect = (
+  entry: Omit<ManagedAuditRuntimeEntry, "id" | "time"> & {
+    readonly id?: string;
+    readonly time?: string;
+  },
+): Effect.Effect<void> =>
+  pushAuditEffect({
+    id: entry.id ?? newId("aud"),
+    time: entry.time ?? clockTime(),
+    actor: entry.actor,
+    action: entry.action,
+    outcome: entry.outcome,
+    tone: entry.tone,
+  });
+
 const AUDIT_DIR = path.join(process.cwd(), ".data");
 const AUDIT_JSONL = path.join(AUDIT_DIR, "support-impersonation-audit.jsonl");
 
