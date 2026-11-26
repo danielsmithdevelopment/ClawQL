@@ -257,7 +257,7 @@ jobs:
       - uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca
 
       # azure/setup-helm@v5.0.1
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e
         with:
           version: v3.17.0
 
