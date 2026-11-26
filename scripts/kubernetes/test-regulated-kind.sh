@@ -84,16 +84,13 @@ kubectl create namespace "${NS}"
 
 echo "==> Build + load PR MCP image"
 IMAGE_LOCAL="clawql-mcp:regulated-kind"
-# Prefer existing Dockerfile for clawql-mcp HTTP image.
-DOCKERFILE="${ROOT}/docker/Dockerfile.mcp-http"
+DOCKERFILE="${ROOT}/docker/Dockerfile"
 if [[ ! -f "${DOCKERFILE}" ]]; then
-  DOCKERFILE="$(find "${ROOT}/docker" -name '*mcp*' -type f | head -1 || true)"
+  echo "missing ${DOCKERFILE}" >&2
+  exit 1
 fi
-if [[ -z "${DOCKERFILE}" || ! -f "${DOCKERFILE}" ]]; then
-  echo "WARN: no MCP Dockerfile found — expecting preloaded ${IMAGE_LOCAL}" >&2
-else
-  docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" "${ROOT}"
-fi
+# Match docker-publish.yml: --file docker/Dockerfile --target runtime
+docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" --target runtime "${ROOT}"
 kind load docker-image "${IMAGE_LOCAL}" --name "${CLUSTER_NAME}"
 
 echo "==> Bootstrap Vault + ESO (secretSourcing.requireVaultBackedSecrets stays on)"
