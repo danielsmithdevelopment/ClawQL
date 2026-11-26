@@ -1,0 +1,58 @@
+# Run every scripts/kubernetes/test-helm-*-templates.sh (D2b).
+# Path-filtered on chart + script changes. Fix or delete drifted scripts — do not skip.
+name: Helm templates
+
+on:
+  pull_request:
+    paths:
+      - "manifests/charts/**"
+      - "scripts/kubernetes/test-helm-*-templates.sh"
+      - "Makefile"
+      - ".github/workflows/helm-templates.yml"
+  push:
+    branches: [main]
+    paths:
+      - "manifests/charts/**"
+      - "scripts/kubernetes/test-helm-*-templates.sh"
+      - "Makefile"
+      - ".github/workflows/helm-templates.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: helm-templates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  helm-templates:
+    name: Helm template scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # azure/setup-helm@v5.0.1
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
+        with:
+          version: v3.17.0
+
+      - name: Install PyYAML (overlay / regulated helpers)
+        run: pip install --user pyyaml
+
+      - name: Run every test-helm-*-templates.sh
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          scripts=(scripts/kubernetes/test-helm-*-templates.sh)
+          if [[ ${#scripts[@]} -eq 0 ]]; then
+            echo "FAIL: no test-helm-*-templates.sh found" >&2
+            exit 1
+          fi
+          echo "Found ${#scripts[@]} helm template scripts"
+          for s in "${scripts[@]}"; do
+            echo "==> $s"
+            bash "$s"
+          done
+          echo "OK: all helm template scripts passed"
