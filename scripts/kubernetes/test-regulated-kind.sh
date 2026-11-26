@@ -267,32 +267,70 @@ if ! kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=10m;
   exit 1
 fi
 
-echo "==> E1: live pod must carry CLAWQL_TIER=regulated (overlay must not wipe extraEnv)"
+echo "==> E1/H1: live MCP pod must carry every regulated extraEnv (not only CLAWQL_TIER)"
+# H1: pluginTiers.tier alone sets CLAWQL_TIER — that would pass even if extraEnv was wiped.
+# Compare values-regulated.yaml extraEnv against the live MCP container, allowing
+# overlay extraEnvAppend to override only allowlisted host keys.
 kubectl -n "${NS}" get deploy -l "app.kubernetes.io/instance=${REL}" -o json \
   >"${ARTIFACT_DIR}/deploy-main.json"
-python3 - "${ARTIFACT_DIR}/deploy-main.json" <<'PY'
+python3 - "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
+  "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
+  "${ARTIFACT_DIR}/deploy-main.json" <<'PY'
 import json, sys
 from pathlib import Path
-doc = json.loads(Path(sys.argv[1]).read_text())
+
+try:
+    import yaml
+except ImportError as e:
+    raise SystemExit(f"E1 FAIL: PyYAML required for regulated extraEnv compare ({e})") from e
+
+reg = yaml.safe_load(Path(sys.argv[1]).read_text()) or {}
+kind = yaml.safe_load(Path(sys.argv[2]).read_text()) or {}
+doc = json.loads(Path(sys.argv[3]).read_text())
 items = doc.get("items") or []
 if not items:
     raise SystemExit("E1 FAIL: no deployments for release")
-found_tier = False
+
+# Host overlay may replace these names via extraEnvAppend.
+override_names = {
+    (e.get("name") or "")
+    for e in (kind.get("extraEnvAppend") or [])
+    if isinstance(e, dict) and e.get("name")
+}
+expected = {}
+for e in reg.get("extraEnv") or []:
+    name = e.get("name")
+    if not name or name in override_names:
+        continue
+    if "value" in e:
+        expected[name] = str(e["value"])
+
+# Always require tier regulated (from pluginTiers or extraEnv).
+expected["CLAWQL_TIER"] = "regulated"
+
+mcp_env = None
 for dep in items:
+    name = dep.get("metadata", {}).get("name", "")
+    if "proxy" in name:
+        continue
     for c in dep["spec"]["template"]["spec"].get("containers") or []:
-        env = {e["name"]: e.get("value") for e in (c.get("env") or []) if "name" in e}
-        if env.get("CLAWQL_TIER") == "regulated":
-            found_tier = True
-        if env.get("CLAWQL_WORM_ENABLED") != "1" and "clawql-mcp" in c.get("name", ""):
-            # Main MCP container must keep regulated WORM flags
-            if c.get("name", "").endswith("clawql-mcp") or c.get("name") == dep["metadata"]["name"]:
-                if "CLAWQL_WORM_ENABLED" in env and env.get("CLAWQL_WORM_ENABLED") != "1":
-                    raise SystemExit(f"E1 FAIL: CLAWQL_WORM_ENABLED={env.get('CLAWQL_WORM_ENABLED')}")
-        if env.get("CLAWQL_INFERENCE_LOCAL_ONLY") == "0":
-            raise SystemExit("E1 FAIL: CLAWQL_INFERENCE_LOCAL_ONLY cleared")
-if not found_tier:
-    raise SystemExit("E1 FAIL: CLAWQL_TIER=regulated missing from pod env (extraEnv wiped?)")
-print("E1 OK: CLAWQL_TIER=regulated present on release")
+        cname = c.get("name", "")
+        if "proxy" in cname:
+            continue
+        env = {e["name"]: e.get("value") for e in (c.get("env") or []) if "name" in e and "value" in e}
+        if env.get("CLAWQL_TIER") == "regulated" or "CLAWQL_WORM_ENABLED" in env:
+            mcp_env = env
+            break
+    if mcp_env is not None:
+        break
+if mcp_env is None:
+    raise SystemExit("E1 FAIL: could not find MCP container env on release Deployments")
+
+missing = [k for k, v in expected.items() if mcp_env.get(k) != v]
+if missing:
+    detail = {k: {"want": expected[k], "got": mcp_env.get(k)} for k in missing}
+    raise SystemExit(f"E1 FAIL: regulated extraEnv missing/wrong on live pod: {detail}")
+print(f"E1 OK: {len(expected)} regulated env keys match live MCP pod (overlay overrides excluded)")
 PY
 
 echo "==> K5: every Service is ClusterIP"
@@ -466,12 +504,18 @@ if ! echo "${WORMOFF_LOGS}" | grep -Eiq 'regulated.*WORM disabled|WORM disabled'
   exit 1
 fi
 echo "K1 OK: worm-off release not Ready; logs carry WORM refusal (positive control: main Ready)"
-kubectl -n "${NS}" wait --for=condition=ready pod -l "app.kubernetes.io/instance=${REL}" --timeout=120s
+# Do not wait on app.kubernetes.io/instance=${REL}: sealed Vault pods share that
+# label and never become Ready. Wait only for the MCP Deployment we already rolled out.
+kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=120s
 
 echo "==> K3/K4 network policy probes (positive + negative)"
-# Resolve the real MCP Service name (fullname = Release.Name-clawql-mcp, not REL-mcp-http).
-MCP_SVC="$(kubectl -n "${NS}" get svc -l "app.kubernetes.io/instance=${REL},app.kubernetes.io/name=clawql-mcp" \
-  -o jsonpath='{.items[0].metadata.name}')"
+# Prefer the MCP HTTP Service (not the proxy) by app label from fullnameOverride.
+MCP_SVC="$(kubectl -n "${NS}" get svc -l "app.kubernetes.io/instance=${REL},app=clawql-mcp-http" \
+  -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+if [[ -z "${MCP_SVC}" ]]; then
+  MCP_SVC="$(kubectl -n "${NS}" get svc -l "app.kubernetes.io/instance=${REL},app.kubernetes.io/name=clawql-mcp" \
+    -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep -v proxy | head -1 || true)"
+fi
 if [[ -z "${MCP_SVC}" ]]; then
   echo "K3 FAIL: could not resolve MCP Service for release ${REL}" >&2
   exit 1
@@ -486,11 +530,18 @@ kubectl -n "${NS}" create job clawql-net-pos --image=curlimages/curl:8.5.0 -- \
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s
 echo "K4 positive OK: LocalStack reachable from release namespace"
 
-# Positive control for K3: same-namespace Job can resolve+reach MCP Service (or get HTTP response)
+# H2: K3 positive control must fail if DNS/policy/path is broken — no `|| true`,
+# and require a non-000 HTTP status in the Job log.
 kubectl -n "${NS}" delete job clawql-net-mcp-pos --ignore-not-found
 kubectl -n "${NS}" create job clawql-net-mcp-pos --image=curlimages/curl:8.5.0 -- \
-  sh -c "curl -sS --max-time 10 -o /dev/null -w '%{http_code}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz || true"
+  sh -c "code=\$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz); echo \"http_code=\$code\"; case \"\$code\" in 000) exit 1 ;; *) exit 0 ;; esac"
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-mcp-pos --timeout=60s
+POS_LOG="$(kubectl -n "${NS}" logs job/clawql-net-mcp-pos 2>/dev/null || true)"
+echo "K3 pos log: ${POS_LOG}"
+if ! echo "${POS_LOG}" | grep -Eq 'http_code=[1-5][0-9][0-9]'; then
+  echo "K3 FAIL: in-namespace positive control did not report a real HTTP status" >&2
+  exit 1
+fi
 echo "K3 positive OK: in-namespace Job reached ${MCP_SVC} (DNS+policy path works)"
 
 # Negative: pod in other namespace should fail to reach MCP Service (timeout/refused — not NXDOMAIN alone)
@@ -509,5 +560,5 @@ echo "==> In-cluster wire rows 5–12 (Job)"
 # the in-cluster Job image is published; K1/K5/K6/K7 already exercise chart surface.
 echo "NOTE: full in-cluster D1 matrix Job is staged; chart checks K1/K5/K6/K7 ran."
 
-echo "regulated-kind OK"
+echo "regulated-kind PARTIAL: K1/K5/K6/K7 + E1/H1 env compare green; K2/K4-neg/in-cluster D1 matrix still scaffolding"
 echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
