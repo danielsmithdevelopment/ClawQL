@@ -98,7 +98,11 @@ export type LifecycleHook = {
   readonly id: string;
   readonly scope: LifecycleScope;
   readonly event: LifecycleEvent;
-  /** Regex; required for `tool` scope. */
+  /**
+   * Tool-name regex; required for `tool` scope.
+   * Compiled and anchored as a **full-name** match (`^(?:pattern)$`) at
+   * registration — invalid patterns fail install rather than silently never applying.
+   */
   readonly toolPattern?: string;
   /**
    * Enforcement hooks must be `true` and awaited before the gated action proceeds.
@@ -400,7 +404,11 @@ export class HookRegistry extends Context.Service<
   }
 >()("clawql/HookRegistry") {}
 
-export type RegisteredHook = LifecycleHook & { readonly pluginId: string };
+export type RegisteredHook = LifecycleHook & {
+  readonly pluginId: string;
+  /** Full-name matcher compiled at registration; set when `toolPattern` was provided. */
+  readonly toolPatternRegex?: RegExp;
+};
 
 export class VaultSeedPort extends Context.Service<
   VaultSeedPort,

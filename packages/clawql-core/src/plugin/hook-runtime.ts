@@ -112,11 +112,44 @@ export function fireHooksForEvent(
   });
 }
 
-export function toolMatchesPattern(toolName: string, pattern: string | undefined): boolean {
-  if (!pattern) return true;
-  try {
-    return new RegExp(pattern).test(toolName);
-  } catch {
-    return false;
+/**
+ * Compile a lifecycle `toolPattern` for **full tool-name** matching.
+ *
+ * Patterns are always anchored as `^(?:…)$` so they match the entire tool name
+ * (not a substring). Authors may still write `^…$` themselves; the outer wrap is
+ * idempotent for typical patterns. Invalid regex syntax fails — callers must
+ * reject registration / stop startup rather than silently skipping the hook.
+ */
+export function compileToolPattern(pattern: string): Effect.Effect<RegExp, ClawQLError> {
+  const trimmed = pattern.trim();
+  if (!trimmed) {
+    return Effect.fail(new ClawQLError({ reason: "toolPattern must be a non-empty regex" }));
   }
+  return Effect.try({
+    try: () => new RegExp(`^(?:${trimmed})$`),
+    catch: (cause) =>
+      new ClawQLError({
+        reason: `Invalid toolPattern regex ${JSON.stringify(trimmed)}: ${
+          cause instanceof Error ? cause.message : String(cause)
+        }`,
+        cause,
+      }),
+  });
+}
+
+/**
+ * Match a tool name against a pattern compiled via {@link compileToolPattern},
+ * or against a raw pattern string (compiled on the fly with the same anchoring).
+ *
+ * Prefer compiling at registration and passing the `RegExp`. Invalid string
+ * patterns throw (via `Effect.runSync`) — they must not silently return false.
+ */
+export function toolMatchesPattern(
+  toolName: string,
+  pattern: string | RegExp | undefined
+): boolean {
+  if (!pattern) return true;
+  if (pattern instanceof RegExp) return pattern.test(toolName);
+  const re = Effect.runSync(compileToolPattern(pattern));
+  return re.test(toolName);
 }
