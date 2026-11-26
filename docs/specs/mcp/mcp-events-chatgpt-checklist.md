@@ -1,4 +1,11 @@
+---
+status: accepted
+title: "MCP Events — ChatGPT live checklist (**blocking** for v8.0.0)"
+---
+
 # MCP Events — ChatGPT live checklist (**blocking** for v8.0.0)
+
+**Status:** `accepted` (lifecycle — see [docs/specs/README.md](../README.md))
 
 This pass is a **hard release gate**. Do **not** tag or publish `clawql-mcp@8.0.0` until every box below is checked against a ChatGPT plugin-connected ClawQL MCP server.
 

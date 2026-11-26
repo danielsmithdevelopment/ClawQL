@@ -1,4 +1,11 @@
+---
+status: shipping
+title: "Sources propose (v0.2)"
+---
+
 # Sources propose (v0.2)
+
+**Status:** `shipping` (lifecycle — see [docs/specs/README.md](../README.md))
 
 Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). Agents may **propose** a custom source; a **distinct operator** **approves** before `sources.json` changes.
 

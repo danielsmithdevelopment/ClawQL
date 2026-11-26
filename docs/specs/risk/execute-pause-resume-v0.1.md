@@ -1,4 +1,11 @@
+---
+status: shipping
+title: "Execute pause and resume (v0.1)"
+---
+
 # Execute pause and resume (v0.1)
+
+**Status:** `shipping` (lifecycle — see [docs/specs/README.md](../README.md))
 
 Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). When `risk.policy === "mandate"`, `execute` **parks** the call instead of a bare refuse-and-retry.
 

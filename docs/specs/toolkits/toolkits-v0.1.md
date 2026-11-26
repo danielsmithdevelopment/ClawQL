@@ -1,4 +1,11 @@
+---
+status: draft
+title: "Toolkits as packaging (v0.1)"
+---
+
 # Toolkits as packaging (v0.1)
+
+**Status:** `draft` (lifecycle — see [docs/specs/README.md](../README.md))
 
 A **toolkit** is a first-class named preset that expands to an existing **provider pack** / `enabled` list, an **ATR tool allowlist**, and optional **API key scopes**. It does **not** introduce a new provider runtime.
 
