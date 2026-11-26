@@ -1,35 +1,25 @@
 import { Effect } from "effect";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { requireManagedOrgSession } from "@/lib/api-auth";
 import { isManagedConsole } from "@/lib/console-surface";
 import {
   getActiveImpersonationEffect,
   startImpersonationEffect,
   stopImpersonationEffect,
 } from "@/lib/managed/live/impersonation";
-import { resolveManagedSessionSync } from "@/lib/managed/session";
 
 export const runtime = "nodejs";
 
 const COOKIE = "clawql-support-impersonation";
 
-function sessionFromCookies(
-  cookieStore: Awaited<ReturnType<typeof cookies>>
-) {
-  const accessToken =
-    cookieStore.get("sb-access-token")?.value ??
-    cookieStore.get("clawql-supabase-access-token")?.value ??
-    null;
-  return resolveManagedSessionSync({ accessToken });
-}
-
-export async function GET() {
+export async function GET(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
-  const cookieStore = await cookies();
-  const session = sessionFromCookies(cookieStore);
+  const auth = await requireManagedOrgSession(req);
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
   const active = await Effect.runPromise(getActiveImpersonationEffect(session.userId));
   return NextResponse.json({
     active,
@@ -46,8 +36,9 @@ export async function POST(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
-  const cookieStore = await cookies();
-  const session = sessionFromCookies(cookieStore);
+  const auth = await requireManagedOrgSession(req);
+  if (!auth.ok) return auth.response;
+  const session = auth.session;
   const body = (await req.json().catch(() => ({}))) as {
     action?: "start" | "stop";
     targetUserId?: string;
@@ -61,7 +52,7 @@ export async function POST(req: Request) {
       stopImpersonationEffect({
         actorUserId: session.userId,
         actorEmail: session.email,
-      })
+      }),
     );
     const res = NextResponse.json({ ok: true, ended });
     res.cookies.set(COOKIE, "", { path: "/", maxAge: 0 });
@@ -86,9 +77,9 @@ export async function POST(req: Request) {
           ok: false as const,
           status: err._tag === "Forbidden" ? 403 : 400,
           error: err.message,
-        })
-      )
-    )
+        }),
+      ),
+    ),
   );
 
   if (!result.ok) {

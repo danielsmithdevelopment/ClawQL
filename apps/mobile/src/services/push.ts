@@ -51,7 +51,7 @@ export type AppDeepLinkTarget =
   | { readonly surface: "skills" }
   | { readonly surface: "connections" };
 
-const CLOUD_HOSTS = new Set(["cloud.clawql.com", "acme.cloud.clawql.com"]);
+const CLOUD_HOSTS = new Set(["cloud.clawql.com"]);
 
 function pathSegmentsFromUrl(url: string): {
   segments: string[];

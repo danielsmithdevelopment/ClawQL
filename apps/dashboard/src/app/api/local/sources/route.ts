@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { requireDesktopApiAuth } from '@/lib/api-auth'
 import { isDesktopMode } from '@/lib/desktop-mode'
 import { addLocalSourceFromInput } from '@/lib/local-sources-add.server'
 import type { LocalCustomSourceEntry } from '@/lib/custom-sources-types'
@@ -23,9 +24,11 @@ function desktopOnly() {
   return null
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const denied = desktopOnly()
   if (denied) return denied
+  const authDenied = requireDesktopApiAuth(req)
+  if (authDenied) return authDenied
 
   const file = await readLocalSourcesFile()
   return NextResponse.json({
@@ -50,6 +53,8 @@ type AddBody = {
 export async function POST(request: Request) {
   const denied = desktopOnly()
   if (denied) return denied
+  const authDenied = requireDesktopApiAuth(request)
+  if (authDenied) return authDenied
 
   const body = (await request.json()) as Partial<LocalCustomSourceEntry> & AddBody
 
@@ -92,6 +97,8 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const denied = desktopOnly()
   if (denied) return denied
+  const authDenied = requireDesktopApiAuth(request)
+  if (authDenied) return authDenied
 
   const url = new URL(request.url)
   const id = url.searchParams.get('id')?.trim()

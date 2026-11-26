@@ -126,15 +126,53 @@ export async function fetchManagedReview(): Promise<{
   return getJson('/api/managed/review')
 }
 
+async function webauthnApproveAssertion(input: {
+  id: string
+  kind: 'change' | 'source'
+  decision: 'approve' | 'retry_with_key'
+}): Promise<{ method: 'webauthn'; response: unknown }> {
+  const challengeRes = await fetch('/api/managed/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...input, action: 'approve_challenge' }),
+  })
+  const challenged = (await challengeRes.json().catch(() => ({}))) as {
+    options?: Record<string, unknown>
+    error?: string
+  }
+  if (!challengeRes.ok || !challenged.options) {
+    throw new Error(challenged.error || `Passkey challenge failed (${challengeRes.status})`)
+  }
+  if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+    throw new Error('WebAuthn is not available in this browser')
+  }
+  const { startAuthentication } = await import('@simplewebauthn/browser')
+  const response = await startAuthentication({
+    optionsJSON: challenged.options as unknown as Parameters<
+      typeof startAuthentication
+    >[0]['optionsJSON'],
+  })
+  return { method: 'webauthn', response }
+}
+
 export async function decideManagedReview(input: {
   id: string
   kind: 'change' | 'source'
   decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key'
 }): Promise<{ ok: true; id: string; status: string }> {
+  let approvalProof: { method: 'webauthn'; response: unknown } | undefined
+  if (input.decision === 'approve' || input.decision === 'retry_with_key') {
+    approvalProof = await webauthnApproveAssertion({
+      id: input.id,
+      kind: input.kind,
+      decision: input.decision,
+    })
+  }
+
   const res = await fetch('/api/managed/review', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, approvalProof }),
   })
   const body = (await res.json().catch(() => ({}))) as {
     ok?: true

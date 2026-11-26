@@ -9,6 +9,7 @@ import {
   type ManagedEvidenceAttachment,
 } from "@/lib/managed/live/evidence";
 
+import { requireManagedOrgSession } from "@/lib/api-auth";
 export const runtime = "nodejs";
 
 function guard() {
@@ -21,6 +22,9 @@ function guard() {
 export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
+  const auth = await requireManagedOrgSession(req);
+  if (!auth.ok) return auth.response;
+
   const reviewId = new URL(req.url).searchParams.get("reviewId")?.trim();
   if (!reviewId) {
     return NextResponse.json({ error: "reviewId required" }, { status: 400 });
@@ -32,6 +36,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
+  const auth = await requireManagedOrgSession(req);
+  if (!auth.ok) return auth.response;
+
   const body = (await req.json().catch(() => ({}))) as Partial<ManagedEvidenceAttachment> & {
     action?: string;
     attachmentId?: string;

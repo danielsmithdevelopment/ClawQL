@@ -54,7 +54,15 @@ async function createWindow(url) {
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
-    void shell.openExternal(target)
+    // Allow only https: and the clawql: app scheme (audit 8.06).
+    try {
+      const u = new URL(target)
+      if (u.protocol === 'https:' || u.protocol === 'clawql:') {
+        void shell.openExternal(target)
+      }
+    } catch {
+      /* ignore invalid URLs */
+    }
     return { action: 'deny' }
   })
 

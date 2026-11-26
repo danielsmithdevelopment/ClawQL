@@ -61,6 +61,8 @@ export const listManagedReviewEffect = (
   resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...REVIEW_ITEMS],
+    empty: [],
+    env,
     isLiveUseful: (items) => items.length > 0,
     live: Effect.gen(function* () {
       const home = env.CLAWQL_HOME?.trim() || undefined;

@@ -99,7 +99,8 @@ RUN apk upgrade --no-cache \
   && npm --version >/dev/null 2>&1 && exit 1 || true
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV HOSTNAME=0.0.0.0
+# Default loopback for self-hosted / docker run (audit 8.04). Kubernetes chart sets HOSTNAME=0.0.0.0.
+ENV HOSTNAME=127.0.0.1
 ENV PORT=3040
 COPY --from=builder /app/dashboard/package*.json ./
 COPY --from=builder /app/dashboard/node_modules ./node_modules
@@ -108,4 +109,4 @@ COPY --from=builder /app/dashboard/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/packages /packages
 COPY --from=builder /app/node_modules /node_modules
 EXPOSE 3040
-CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3040"]
+CMD ["sh", "-c", "exec node node_modules/next/dist/bin/next start -H \"${HOSTNAME:-127.0.0.1}\" -p \"${PORT:-3040}\""]

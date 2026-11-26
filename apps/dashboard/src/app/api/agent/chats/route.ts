@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 
 import { createChatThread, getChatVaultInfo, importChatThreadsFromLocal, listChatThreads } from '@/lib/chat-vault-store.server'
+import { requireManagedApiSession } from "@/lib/api-auth";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const info = await getChatVaultInfo()
     const { threads, vaultRoot } = await listChatThreads()
@@ -19,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = (await req.json()) as { title?: string }
     const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : 'New chat'
@@ -38,6 +45,9 @@ export async function POST(req: Request) {
 
 /** One-time import from browser localStorage → vault files. */
 export async function PUT(req: Request) {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = (await req.json()) as {
       threads?: Array<{ id: string; title: string; updatedAt: number }>

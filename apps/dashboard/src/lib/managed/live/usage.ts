@@ -69,13 +69,34 @@ export const loadManagedUsageEffect = (
   const orgId = managedOrgId(env);
   const actorTenantId = managedTenantId(env);
 
+  const EMPTY_USAGE: ManagedUsageSnapshot = {
+    monthSpent: 0,
+    monthBudget: 0,
+    forecast: 0,
+    forecastNote: "No usage data yet.",
+    todaySpent: 0,
+    todayNote: "Daily spend series will appear when usage metering is connected.",
+    planRenews: "—",
+    teamRows: [],
+    daily: [],
+    meta: {
+      orgId: orgId ?? "",
+      totalCreditsCents: 0,
+      poolSpendableCents: 0,
+      memberCount: 0,
+      generatedAt: new Date(0).toISOString(),
+    },
+  };
+
   return resolveWithFallbackEffect<ManagedUsageSnapshot>({
     source: readManagedDataSource(env),
     fixture: FIXTURE_USAGE,
-    isLiveUseful: (u) => u.meta.orgId !== "fixture",
+    empty: EMPTY_USAGE,
+    env,
+    isLiveUseful: (u) => u.meta.orgId !== "fixture" && u.meta.orgId !== "",
     live: Effect.gen(function* () {
       if (!orgId) {
-        return yield* Effect.fail(new Error("CLAWQL_MANAGED_ORG_ID is required for live usage"));
+        return EMPTY_USAGE;
       }
       const summary = yield* getOrgUnifiedSpendSummaryEffect({
         orgId,

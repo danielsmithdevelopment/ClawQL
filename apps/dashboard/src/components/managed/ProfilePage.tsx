@@ -74,7 +74,7 @@ export function ProfilePage() {
                 ? "Syncs across devices, so it can't approve."
                 : k.kind === 'totp'
                   ? 'Authenticator app — sign-in only.'
-                  : 'Device-bound security key.',
+                  : 'Passkey (WebAuthn).',
             ok: k.status === 'Can approve',
           }))
         if (mapped.length > 0) setKeys(mapped)

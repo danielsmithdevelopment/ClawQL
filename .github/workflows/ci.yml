@@ -562,18 +562,28 @@ jobs:
         run: |
           set -euo pipefail
           docker rm -f clawql-dashboard-e2e-gate 2>/dev/null || true
+          # Image defaults to HOSTNAME=127.0.0.1 (audit 8.04). Published ports need 0.0.0.0
+          # inside the container (same as the Helm chart for k8s).
           docker run -d --name clawql-dashboard-e2e-gate -p 13040:3040 \
+            -e HOSTNAME=0.0.0.0 \
             -e CLAWQL_CONSOLE_SURFACE=managed \
             clawql-dashboard:ci-smoke
           # Wait for Next to listen
+          ready=0
           for _ in $(seq 1 60); do
             if curl -sf -o /dev/null "http://127.0.0.1:13040/" || curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040/" | grep -qE '^[2345]'; then
+              ready=1
               break
             fi
             sleep 2
           done
+          if [ "$ready" != "1" ]; then
+            echo "dashboard container did not become ready on :13040" >&2
+            docker logs clawql-dashboard-e2e-gate || true
+            exit 1
+          fi
           for path in /api/e2e/control /api/e2e/reset /api/e2e/scenario /api/e2e/audit; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040${path}")
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040${path}" || true)
             echo "${path} → ${code}"
             if [ "$code" != "404" ]; then
               echo "expected 404 for ${path} on production image, got ${code}" >&2

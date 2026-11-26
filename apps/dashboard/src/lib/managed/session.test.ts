@@ -44,9 +44,21 @@ describe("managed session", () => {
     expect(cfg.allowMock).toBe(false);
   });
 
-  it("allows explicit mock in production when CLAWQL_MANAGED_AUTH_MOCK=1", () => {
+  it("refuses CLAWQL_MANAGED_AUTH_MOCK in cloud production (audit 8.01)", () => {
     const cfg = Effect.runSync(
       loadManagedAuthConfigEffect({ NODE_ENV: "production", CLAWQL_MANAGED_AUTH_MOCK: "1" }),
+    );
+    expect(cfg.allowMock).toBe(false);
+  });
+
+  it("allows desktop managed fixture mock even when NODE_ENV=production", () => {
+    const cfg = Effect.runSync(
+      loadManagedAuthConfigEffect({
+        NODE_ENV: "production",
+        CLAWQL_DESKTOP_MODE: "1",
+        CLAWQL_DESKTOP_MANAGED_FIXTURE: "1",
+        CLAWQL_MANAGED_AUTH_MOCK: "1",
+      }),
     );
     expect(cfg.allowMock).toBe(true);
   });
@@ -75,5 +87,75 @@ describe("managed session", () => {
   it("builds initials from a display name", () => {
     expect(initialsFromName("Dana Reyes")).toBe("DR");
     expect(initialsFromName("Ava")).toBe("AV");
+  });
+
+  it("reads role and org from app_metadata only (AA1)", async () => {
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          id: "user_1",
+          email: "a@example.com",
+          app_metadata: { role: "Member", org_id: "org_real", org_name: "Real Org" },
+          user_metadata: {
+            role: "admin",
+            org_id: "org_forged",
+            org_name: "Forged",
+            full_name: "Ada Lovelace",
+          },
+        }),
+        { status: 200 },
+      )) as typeof fetch;
+
+    try {
+      const session = await Effect.runPromise(
+        resolveManagedSessionEffect({
+          accessToken: "tok",
+          env: {
+            NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+            CLAWQL_MANAGED_AUTH_MOCK: "0",
+          },
+        }),
+      );
+      expect(session.role).toBe("Member");
+      expect(session.orgId).toBe("org_real");
+      expect(session.orgName).toBe("Real Org");
+      expect(session.displayName).toBe("Ada Lovelace");
+    } finally {
+      globalThis.fetch = prevFetch;
+    }
+  });
+
+  it("does not invent an org from CLAWQL_MANAGED_ORG_ID (BB1)", async () => {
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          id: "user_stranger",
+          email: "stranger@example.com",
+          app_metadata: {},
+          user_metadata: { full_name: "Stranger" },
+        }),
+        { status: 200 },
+      )) as typeof fetch;
+
+    try {
+      const session = await Effect.runPromise(
+        resolveManagedSessionEffect({
+          accessToken: "tok",
+          env: {
+            NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+            CLAWQL_MANAGED_AUTH_MOCK: "0",
+            CLAWQL_MANAGED_ORG_ID: "org_deploy",
+          },
+        }),
+      );
+      expect(session.orgId).toBe("");
+      expect(session.role).toBe("Member");
+    } finally {
+      globalThis.fetch = prevFetch;
+    }
   });
 });

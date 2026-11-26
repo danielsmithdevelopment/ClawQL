@@ -53,19 +53,30 @@ export function mapIssuedKeyToUi(record: {
 }
 
 export const listManagedKeysEffect = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<{ readonly keys: ApiKeyItem[]; readonly source: "live" | "fixture" }> =>
-  resolveWithFallbackEffect({
+  input: {
+    /** Session org — required for live listing (BB1); never fall back to env-only listing of all orgs. */
+    readonly orgId: string;
+    readonly env?: NodeJS.ProcessEnv;
+  },
+): Effect.Effect<{ readonly keys: ApiKeyItem[]; readonly source: "live" | "fixture" }> => {
+  const env = input.env ?? process.env;
+  const orgId = input.orgId.trim();
+  return resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...API_KEYS],
+    empty: [],
+    env,
     isLiveUseful: (keys) => keys.length > 0,
     live: Effect.gen(function* () {
+      if (!orgId) {
+        return [];
+      }
       const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });
-      const orgId = managedOrgId(env);
-      const records = yield* store.listActive(orgId ? { orgId } : undefined);
+      const records = yield* store.listActive({ orgId });
       return records.map(mapIssuedKeyToUi);
     }),
   }).pipe(Effect.map(({ data, source }) => ({ keys: data, source })));
+};
 
 export const issueManagedKeyEffect = (input: {
   readonly name: string;

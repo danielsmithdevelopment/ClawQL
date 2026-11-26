@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { mkdir } from 'node:fs/promises'
@@ -5,6 +6,11 @@ import { fileURLToPath } from 'node:url'
 
 export const DASHBOARD_PORT = 3040
 export const BRIDGE_PORT = 8787
+
+/** Per-launch token for dashboard /api (audit 8.02). */
+export function mintDesktopApiToken() {
+  return randomBytes(32).toString('base64url')
+}
 
 /** `import.meta.url` of `src/main.mjs` — URL `..` is the file's directory parent. */
 export function repoRootFromMain(mainUrl) {
@@ -31,11 +37,17 @@ export function desktopServiceEnv(home) {
   const managedFixture =
     process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE === '1' ||
     process.env.CLAWQL_CONSOLE_SURFACE === 'managed'
+  // AA4: token is in process env — same-OS-user agent shells can read it (Z4 class).
+  // Prefer sandboxed agents or approve from another device for regulated installs.
+  const desktopToken =
+    process.env.CLAWQL_DESKTOP_API_TOKEN?.trim() || mintDesktopApiToken()
 
   return {
     ...process.env,
     CLAWQL_DESKTOP_MODE: '1',
     NEXT_PUBLIC_CLAWQL_DESKTOP_MODE: '1',
+    CLAWQL_DESKTOP_API_TOKEN: desktopToken,
+    CLAWQL_DASHBOARD_ALLOWED_HOSTS: '127.0.0.1,localhost',
     CLAWQL_DASHBOARD_ALLOW_K8S_SYNC: '0',
     CLAWQL_OBSIDIAN_VAULT_PATH: home,
     CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL: `http://127.0.0.1:${BRIDGE_PORT}/v1/chat`,
@@ -49,6 +61,7 @@ export function desktopServiceEnv(home) {
       ? {
           CLAWQL_CONSOLE_SURFACE: 'managed',
           CLAWQL_DESKTOP_MANAGED_FIXTURE: '1',
+          CLAWQL_MANAGED_AUTH_MOCK: '1',
         }
       : {}),
   }

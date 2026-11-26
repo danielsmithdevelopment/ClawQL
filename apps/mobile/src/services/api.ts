@@ -262,16 +262,23 @@ export function pendingReviewCountEffect(
   return listReviewEffect(session).pipe(Effect.map((r) => r.items.length));
 }
 
+export type ReviewApprovalProof =
+  | {
+      method: "nfc_security_key" | "device_biometric_reviewer_demo";
+      attestation?: string;
+    }
+  | {
+      method: "webauthn";
+      response: unknown;
+    };
+
 export function decideReviewEffect(input: {
   session: MobileSession;
   id: string;
   kind: ReviewKind;
   decision: ReviewDecision;
   answer?: string;
-  approvalProof?: {
-    method: "nfc_security_key" | "device_biometric_reviewer_demo";
-    attestation?: string;
-  };
+  approvalProof?: ReviewApprovalProof;
 }): Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
@@ -283,12 +290,14 @@ export function decideReviewEffect(input: {
       }
       const leaveInQueue = input.decision === "retry_with_key";
       const status = input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
+      const attestation =
+        input.approvalProof && input.approvalProof.method !== "webauthn"
+          ? input.approvalProof.attestation
+          : undefined;
       const detail =
         input.answer ??
         input.approvalProof?.method ??
-        (input.approvalProof?.attestation?.startsWith("fixture-nfc:")
-          ? "fixture_simulated_nfc"
-          : input.decision);
+        (attestation?.startsWith("fixture-nfc:") ? "fixture_simulated_nfc" : input.decision);
       const event: ActivityEvent = {
         id: nextActivityId(),
         atMs: Date.now(),
@@ -317,8 +326,31 @@ export function decideReviewEffect(input: {
         status,
       };
     }
+    const needsWebAuthn =
+      input.decision === "approve" || input.decision === "retry_with_key";
+    // Live approve requires a verified WebAuthn assertion (audit AA2). NFC attestation
+    // strings alone are no longer accepted — fixture mode above still simulates NFC.
+    let webauthnResponse: unknown | undefined;
+    if (needsWebAuthn) {
+      if (input.approvalProof?.method === "webauthn") {
+        webauthnResponse = input.approvalProof.response;
+      }
+      if (webauthnResponse == null) {
+        return yield* Effect.fail(
+          new MobileApiError({
+            reason:
+              "device_bound_security_key_required — submit a WebAuthn assertion (NFC attestation alone is not verified)",
+            status: 403,
+          }),
+        );
+      }
+    }
     const res = yield* Effect.tryPromise({
       try: async () => {
+        const approvalProof =
+          needsWebAuthn && webauthnResponse != null
+            ? { method: "webauthn" as const, response: webauthnResponse }
+            : undefined;
         const r = await fetch(`${config.apiBase}/api/managed/review`, {
           method: "POST",
           headers: authHeaders(input.session),
@@ -327,7 +359,7 @@ export function decideReviewEffect(input: {
             kind: input.kind,
             decision: input.decision,
             answer: input.answer,
-            approvalProof: input.approvalProof,
+            approvalProof,
           }),
         });
         if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });
@@ -1247,7 +1279,7 @@ export function getGatewayBundleEffect(
     const config = yield* loadMobileConfigEffect();
     if (isFixtureSession(session, config.fixtureMode)) {
       return {
-        base: "https://acme.cloud.clawql.com",
+        base: "https://cloud.clawql.com",
         endpoints: FIXTURE_GATEWAY_ENDPOINTS,
         routes: FIXTURE_GATEWAY_ROUTES,
         source: "fixture" as const,
@@ -1269,7 +1301,7 @@ export function getGatewayBundleEffect(
     }).pipe(
       Effect.catch(() =>
         Effect.succeed({
-          base: "https://acme.cloud.clawql.com",
+          base: "https://cloud.clawql.com",
           endpoints: [...FIXTURE_GATEWAY_ENDPOINTS],
           routes: [...FIXTURE_GATEWAY_ROUTES],
           source: "fixture" as const,
@@ -1277,7 +1309,7 @@ export function getGatewayBundleEffect(
       )
     );
     return {
-      base: res.base ?? "https://acme.cloud.clawql.com",
+      base: res.base ?? "https://cloud.clawql.com",
       endpoints: res.endpoints ?? FIXTURE_GATEWAY_ENDPOINTS,
       routes: res.routes ?? FIXTURE_GATEWAY_ROUTES,
       source: res.source ?? "fixture",
@@ -1883,10 +1915,7 @@ export class MobileApi extends Context.Service<
       kind: ReviewKind;
       decision: ReviewDecision;
       answer?: string;
-      approvalProof?: {
-        method: "nfc_security_key" | "device_biometric_reviewer_demo";
-        attestation?: string;
-      };
+      approvalProof?: ReviewApprovalProof;
     }) => Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError>;
     readonly listActivity: (
       session: MobileSession

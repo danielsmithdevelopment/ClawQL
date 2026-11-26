@@ -1,19 +1,32 @@
 import { NextResponse } from 'next/server'
 
+import { assertApiHostAllowed } from '@/lib/api-auth'
 import { k8sSyncAllowed, k8sSyncAuthOk } from '@/lib/k8s-dashboard-auth'
 import { syncSecretAndRestart } from '@/lib/k8s-sync'
 
 export const runtime = 'nodejs'
 
 type Body = {
-  namespace?: string
-  secretName?: string
-  deploymentName?: string
   values?: Record<string, string>
   removeKeys?: string[]
 }
 
+function configuredVaultTarget(): {
+  namespace: string
+  secretName: string
+  deploymentName: string
+} {
+  return {
+    namespace: (process.env.CLAWQL_DASHBOARD_K8S_NAMESPACE ?? 'clawql').trim(),
+    secretName: (process.env.CLAWQL_DASHBOARD_K8S_SECRET_NAME ?? 'clawql-provider-env').trim(),
+    deploymentName: (process.env.CLAWQL_DASHBOARD_K8S_DEPLOYMENT ?? 'clawql-mcp-http').trim(),
+  }
+}
+
 export async function POST(req: Request) {
+  const hostDenied = assertApiHostAllowed(req)
+  if (hostDenied) return hostDenied
+
   if (!k8sSyncAllowed()) {
     return NextResponse.json(
       {
@@ -34,11 +47,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const namespace = (body.namespace ?? process.env.CLAWQL_DASHBOARD_K8S_NAMESPACE ?? 'clawql').trim()
-  const secretName = (body.secretName ?? process.env.CLAWQL_DASHBOARD_K8S_SECRET_NAME ?? 'clawql-provider-env').trim()
-  const deploymentName = (
-    body.deploymentName ?? process.env.CLAWQL_DASHBOARD_K8S_DEPLOYMENT ?? 'clawql-mcp-http'
-  ).trim()
+  // Caller-supplied namespace / secretName / deploymentName are ignored (audit 8.05).
+  const { namespace, secretName, deploymentName } = configuredVaultTarget()
   const raw = body.values ?? {}
   const literals: Record<string, string> = {}
   for (const [k, v] of Object.entries(raw)) {

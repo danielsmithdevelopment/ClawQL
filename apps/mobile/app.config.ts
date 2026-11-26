@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: BUNDLE_ID,
-    associatedDomains: ["applinks:cloud.clawql.com", "applinks:acme.cloud.clawql.com"],
+    associatedDomains: ["applinks:cloud.clawql.com"],
     infoPlist: {
       NFCReaderUsageDescription:
         "ClawQL reads your security key over NFC to approve exact-change requests.",
@@ -54,11 +54,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           {
             scheme: "https",
             host: "cloud.clawql.com",
-            pathPrefix: "/app",
-          },
-          {
-            scheme: "https",
-            host: "acme.cloud.clawql.com",
             pathPrefix: "/app",
           },
         ],

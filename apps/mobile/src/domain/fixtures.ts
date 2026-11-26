@@ -876,7 +876,7 @@ export const FIXTURE_AUDIT_ENTRIES: readonly AuditEntry[] = [
 
 export const FIXTURE_ORG_SETTINGS: OrgSettings = {
   name: "Acme Robotics",
-  consoleAddress: "acme.cloud.clawql.com",
+  consoleAddress: "cloud.clawql.com",
   dataRegion: "United States",
   timeZone: "Pacific Time (Los Angeles)",
   securityContact: "security@acme.example",
