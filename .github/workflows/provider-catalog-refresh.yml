@@ -1,0 +1,82 @@
+# Weekly provider catalog drift check (audit 7.07 / 7.54–7.59).
+# Does not open PRs automatically — scripts under scripts/providers/ need live
+# network + optional self-hosted credentials for a full refresh. This job:
+#   1) validates committed top-50 manifests parse as JSON
+#   2) runs fetch-all-google-discovery-specs --dry-run (list only; no writes)
+#   3) uploads a small drift/list artifact
+# Full refresh (workflow_dispatch): same steps; operators can re-run locally with
+# `npm run fetch-provider-specs` when network + secrets are available.
+name: Provider catalog refresh
+
+on:
+  schedule:
+    # Weekly Monday 13:00 UTC (after npm audit at 12:00).
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # actions/setup-node@v6.3.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate committed provider manifests
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/provider-catalog-report
+          {
+            echo "# Provider catalog validate $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "## Top-50 manifests"
+            node -e '
+              const fs = require("node:fs");
+              const paths = [
+                "providers/aws/aws-top50-apis.json",
+                "providers/google/google-top50-apis.json",
+              ];
+              for (const p of paths) {
+                const raw = fs.readFileSync(p, "utf8");
+                const j = JSON.parse(raw);
+                const n = Array.isArray(j) ? j.length : (j.apis?.length ?? j.items?.length ?? Object.keys(j).length);
+                console.log(`- ok ${p} (entries≈${n})`);
+              }
+            '
+            echo
+            echo "## scripts/providers inventory"
+            ls -1 scripts/providers
+            echo
+            echo "## Note"
+            echo "Full network refresh (fetch-provider-specs / fetch-aws-top50 / fetch-google-top50)"
+            echo "is not run in CI — requires egress + optional self-hosted OpenAPI hosts."
+            echo "Local: npm run fetch-provider-specs"
+            echo "Dry-run list only is exercised below."
+          } | tee /tmp/provider-catalog-report/validate.txt
+
+      - name: Dry-run Google discovery list (no downloads)
+        run: |
+          set -euo pipefail
+          # Script has no --help; --dry-run prints the planned API list without writing.
+          node scripts/providers/fetch-all-google-discovery-specs.mjs --dry-run --limit=20 \
+            | tee /tmp/provider-catalog-report/google-discovery-dry-run.txt
+
+      - name: Upload catalog report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: provider-catalog-report
+          path: /tmp/provider-catalog-report
+          if-no-files-found: error
+          retention-days: 30
