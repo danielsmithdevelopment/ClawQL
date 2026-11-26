@@ -1,0 +1,61 @@
+# CI overlay for regulated kind job (D3 — signed GHCR + Kyverno Cosign).
+# Allowed keys only — scripts/kubernetes/check-regulated-kind-overlay.sh --signed
+# fails the job if any other top-level or nested key is introduced.
+#
+# Differs from values-regulated-kind.yaml:
+# - Kyverno image signature policy ON (Cosign enforce)
+# - Image is the published GHCR tag (not a local unsigned PR build)
+# - Kata still off (kind has no Kata runtime)
+#
+# Still must not weaken regulated flags via extraEnv (use extraEnvAppend only).
+
+security:
+  kata:
+    enabled: false
+
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+    matchReleaseNamespaceOnly: true
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: nightly
+  pullPolicy: IfNotPresent
+
+enableGrpc: true
+clawql-mcp-grpc:
+  enabled: true
+grpcTls:
+  existingSecret: clawql-grpc-tls
+
+networkPolicy:
+  defaultDeny:
+    extraEgress:
+      - to:
+          - podSelector: {}
+        ports:
+          - protocol: TCP
+            port: 80
+          - protocol: TCP
+            port: 4566
+
+extraEnvAppend:
+  - name: CLAWQL_HOME
+    value: /vault
+  - name: CLAWQL_AUTH_OIDC_JWKS_URL
+    value: http://clawql-jwks.clawql.svc.cluster.local/.well-known/jwks.json
+  - name: CLAWQL_AUTH_OIDC_ISSUER
+    value: http://clawql-jwks.clawql.svc.cluster.local
+  - name: CLAWQL_AUTH_OIDC_AUDIENCE
+    value: clawql-mcp
+  - name: CLAWQL_WORM_S3_ENDPOINT
+    value: http://clawql-localstack.clawql.svc.cluster.local:4566
+  - name: CLAWQL_WORM_S3_BUCKET
+    value: clawql-worm
+  - name: CLAWQL_WORM_S3_FORCE_PATH_STYLE
+    value: "1"
+  - name: CLAWQL_WORM_S3_REGION
+    value: us-east-1
+
+envFromSecret: clawql-provider-env

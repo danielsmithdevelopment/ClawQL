@@ -1,0 +1,55 @@
+# D3: regulated chart on kind with the published, Cosign-signed GHCR image.
+# Nightly + workflow_dispatch only — GHCR/Fulcio/Rekor outages must not block PRs.
+# Test evidence for the regulated profile — not certification. Kata stays off on kind.
+name: Regulated kind signed
+
+on:
+  schedule:
+    # After docker-publish daily (0 6 UTC).
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: regulated-kind-signed-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  regulated-kind-signed:
+    name: Regulated chart on kind (signed GHCR + Cosign)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Overlay allowlist (signed)
+        run: bash scripts/kubernetes/check-regulated-kind-overlay.sh --signed
+
+      - name: Install skopeo
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq skopeo
+
+      - name: Regulated kind driver (signed / N1–N5)
+        env:
+          CLAWQL_REGULATED_KIND_MODE: signed
+          CLAWQL_REGULATED_KIND_ARTIFACTS: ${{ runner.temp }}/regulated-kind-signed-artifacts
+          CLAWQL_SIGNED_IMAGE_TAG: nightly
+        run: bash scripts/kubernetes/test-regulated-kind.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: regulated-kind-signed-artifacts
+          path: ${{ runner.temp }}/regulated-kind-signed-artifacts
+          if-no-files-found: ignore
