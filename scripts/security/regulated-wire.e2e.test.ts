@@ -473,6 +473,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     );
     const before = inferenceSink.requests.length;
     const infHome = await makeWorkDir("clawql-wire-inf-");
+    const infBucket = newBucketName("clawql-wire-inf");
+    await createObjectLockBucket(s3Client(s3), infBucket, "COMPLIANCE");
     const { createVirtualKey } = await import(
       "../../packages/clawql-inference/src/keys/store.js"
     );
@@ -491,6 +493,20 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         CLAWQL_INFERENCE_KEYS_ENABLED: "1",
         CLAWQL_INFERENCE_PORT: String(port),
         CLAWQL_INFERENCE_HOST: "127.0.0.1",
+        // Regulated inference requires a ready process WORM trail before gates run.
+        CLAWQL_WORM_ENABLED: "1",
+        CLAWQL_WORM_REQUIRED: "1",
+        CLAWQL_WORM_LOCAL: "sqlite",
+        CLAWQL_WORM_REMOTE: "s3",
+        CLAWQL_WORM_S3_ENDPOINT: s3.endpoint,
+        CLAWQL_WORM_S3_BUCKET: infBucket,
+        CLAWQL_WORM_S3_ACCESS_KEY_ID: s3.accessKeyId,
+        CLAWQL_WORM_S3_SECRET_ACCESS_KEY: s3.secretAccessKey,
+        CLAWQL_WORM_S3_FORCE_PATH_STYLE: "1",
+        CLAWQL_WORM_S3_REGION: "us-east-1",
+        CLAWQL_WORM_S3_OBJECT_LOCK: "compliance",
+        CLAWQL_WORM_S3_OBJECT_LOCK_DAYS: "1",
+        CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK: "1",
         // Provider base the gateway actually reads — sink must stay untouched.
         CLAWQL_OPENAI_BASE_URL: `${inferenceSink.baseUrl}/v1`,
       },
