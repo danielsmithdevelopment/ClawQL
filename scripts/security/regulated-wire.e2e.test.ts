@@ -307,9 +307,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       executionId?: string;
       ok?: boolean;
     };
-    expect(parkJson.status === "mandate_required" || parkJson.ok === false).toBe(true);
+    expect(parkJson.status).toBe("mandate_required");
     const executionId = parkJson.executionId;
-    expect(executionId).toBeTruthy();
+    expect(executionId).toMatch(/^pex_/);
 
     const resume = await rpc({
       jsonrpc: "2.0",
@@ -320,7 +320,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         arguments: { executionId, decision: "approve" },
       },
     });
-    const resumeJson = JSON.parse(toolResultText(resume.body)) as {
+    const resumeText = toolResultText(resume.body);
+    expect(resumeText, `resume response: ${resumeText}`).not.toMatch(/CAPABILITY_WRITE_INTERCEPTED/i);
+    const resumeJson = JSON.parse(resumeText) as {
       ok?: boolean;
       error?: string;
     };
@@ -353,9 +355,12 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         arguments: { operationId: "patchItem", args: { id: "park-7b" } },
       },
     });
-    const executionId = (JSON.parse(toolResultText(park.body)) as { executionId?: string })
-      .executionId;
-    expect(executionId).toBeTruthy();
+    const park7b = toolResultText(park.body);
+    expect(park7b, `park response: ${park7b}`).not.toMatch(/CAPABILITY_WRITE_INTERCEPTED/i);
+    const park7bJson = JSON.parse(park7b) as { status?: string; executionId?: string };
+    expect(park7bJson.status).toBe("mandate_required");
+    const executionId = park7bJson.executionId;
+    expect(executionId).toMatch(/^pex_/);
 
     const resume = await rpc({
       jsonrpc: "2.0",
@@ -460,21 +465,11 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   }, 180_000);
 
   it("10) inference remote model refused; sink receives nothing", async () => {
-    if (!existsSync(INFERENCE_BIN)) {
-      // Fallback: policy assert under regulated env (server-http does not mount /v1)
-      const { assertInferenceModelAllowed } = await import(
-        "../../packages/clawql-inference/src/policy/local-only.js"
-      );
-      const { applyRegulatedProfileEnvEffect } = await import(
-        "../../src/composition/regulated-profile.js"
-      );
-      const { Effect } = await import("effect");
-      const env = { ...process.env, CLAWQL_TIER: "regulated" };
-      delete env.CLAWQL_ALLOW_NO_ENFORCEMENT;
-      await Effect.runPromise(applyRegulatedProfileEnvEffect(env));
-      expect(() => assertInferenceModelAllowed("openai/gpt-4o", env)).toThrow(/local-only/);
-      return;
-    }
+    // F1: gateway reads CLAWQL_OPENAI_BASE_URL (not OPENAI_BASE_URL). Require a live
+    // inference process and an HTTP refusal — a crash must not count as pass.
+    expect(existsSync(INFERENCE_BIN), "packages/clawql-inference/bin/clawql-inference.mjs").toBe(
+      true
+    );
     const before = inferenceSink.requests.length;
     const port = await pickFreePort();
     const child = spawn(process.execPath, [INFERENCE_BIN], {
@@ -486,8 +481,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         CLAWQL_INFERENCE_LOCAL_ONLY: "1",
         CLAWQL_INFERENCE_KEYS_ENABLED: "0",
         CLAWQL_INFERENCE_PORT: String(port),
-        // Point a remote base at the sink — refusal must happen before fetch
-        OPENAI_BASE_URL: `${inferenceSink.baseUrl}/v1`,
+        // Provider base the gateway actually reads — sink must stay untouched.
+        CLAWQL_OPENAI_BASE_URL: `${inferenceSink.baseUrl}/v1`,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -496,18 +491,27 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       stderr += d.toString("utf8");
     });
     const deadline = Date.now() + 30_000;
+    let listening = false;
     while (Date.now() < deadline) {
       try {
         const h = await fetch(`http://127.0.0.1:${port}/healthz`, {
           signal: AbortSignal.timeout(400),
         });
-        if (h.ok) break;
+        if (h.ok) {
+          listening = true;
+          break;
+        }
       } catch {
         /* wait */
       }
-      if (child.exitCode !== null) break;
+      if (child.exitCode !== null) {
+        throw new Error(
+          `inference exited before listen (code=${child.exitCode}): ${stderr.slice(-800)}`
+        );
+      }
       await new Promise((r) => setTimeout(r, 100));
     }
+    expect(listening, `inference never listened: ${stderr.slice(-800)}`).toBe(true);
     const res = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -515,12 +519,10 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         model: "openai/gpt-4o",
         messages: [{ role: "user", content: "hi" }],
       }),
-    }).catch((e: Error) => ({ ok: false, status: 0, text: async () => e.message }));
-    const status = "status" in res ? res.status : 0;
-    const body = "text" in res ? await res.text() : "";
-    expect(status === 0 || status >= 400 || /local-only/i.test(body) || /local-only/i.test(stderr)).toBe(
-      true
-    );
+    });
+    const body = await res.text();
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(body + stderr).toMatch(/local-only/i);
     expect(inferenceSink.requests.length).toBe(before);
     child.kill("SIGTERM");
   }, 60_000);
@@ -528,6 +530,7 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   it("11) SSRF: sources_propose to link-local / loopback refused; sink untouched", async () => {
     const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const before = apiSink.requests.length;
+    // CLAWQL_SOURCES_ALLOW_HTTP=1 is set so HTTPS-only is not the refusal under test.
     for (const url of [
       "http://169.254.169.254/latest/meta-data/",
       "http://127.0.0.1/",
@@ -543,7 +546,10 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         },
       });
       const text = toolResultText(result.body);
-      expect(text).toMatch(/private|loopback|not allowed|Invalid|HTTPS|refused|SSRF|must not/i);
+      expect(text, `ssrf response for ${url}: ${text}`).not.toMatch(/HTTPS required/i);
+      expect(text, `ssrf response for ${url}: ${text}`).toMatch(
+        /private|loopback|link-local|must not target/i
+      );
     }
     expect(apiSink.requests.length).toBe(before);
   }, 60_000);
@@ -553,9 +559,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       headers: { authorization: `ApiKey ${auditApiKey}` },
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok?: boolean; valid?: boolean; verified?: boolean };
-    // Accept shapes used by clawql-audit routes
-    expect(body.ok === true || body.valid === true || body.verified === true || res.ok).toBe(true);
+    const body = (await res.json()) as { valid?: boolean; entriesChecked?: number };
+    expect(body.valid).toBe(true);
+    expect((body.entriesChecked ?? 0) >= 0).toBe(true);
   }, 30_000);
 
   it("13) x402 concurrent same-proof → at most one allow (facilitator settle-once)", async () => {
@@ -622,6 +628,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         replayCache,
       });
     const [ra, rb] = await Promise.all([req(a), req(b)]);
-    expect([ra, rb].filter((r) => r.action === "allow").length).toBeLessThanOrEqual(1);
+    const allows = [ra, rb].filter((r) => r.action === "allow");
+    // Facilitator settle-once: exactly one allow; the second must not also allow.
+    expect(allows.length).toBe(1);
+    expect(settleCount).toBeGreaterThanOrEqual(1);
   }, 60_000);
 });
