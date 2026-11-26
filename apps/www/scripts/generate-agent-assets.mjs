@@ -365,6 +365,14 @@ function getAgentMarkdownMap() {
     '/agents': `# Agentic Platform · ClawQL\n\nStreams + ontology + /mcp-ui + TEE. See ${origin}/agents/.\n`,
     '/streams': `# ClawQL Streams\n\nEvent-driven agents + Protocol Fabric (Core + mcp-api-adapter). Fabric: ${origin}/streams/#fabric\n\nDocs: ${docs}/streams/clawql-streams · ${docs}/mcp/protocol-fabric\n`,
     '/security': `# ClawQL Security\n\nDefense-in-depth for agentic production. See ${origin}/security/.\n\nDocs: ${docs}/security\n`,
+    '/durability': `# Durability\n\nCrash durability narrative with lab evidence. See ${origin}/durability/.\n`,
+    '/governance': `# Governance\n\nOutside-the-agent tool-call controls. See ${origin}/governance/.\n`,
+    '/ontology': `# Ontology\n\nClawQL's ontology layer — typed entities, relationships, actions. See ${origin}/ontology/.\n`,
+    '/data-handling': `# How we handle your data\n\nPractical data-handling narrative. See ${origin}/data-handling/.\n`,
+    '/cloud': `# ClawQL Cloud\n\nManaged hosting early access. See ${origin}/cloud/.\n`,
+    '/integrations': `# Integrations\n\nMCP clients, providers, IDP, inference, ops. See ${origin}/integrations/.\n`,
+    '/inference': `# Inference\n\nOpenAI-compatible /v1 control plane. See ${origin}/inference/.\n\nDocs: ${docs}/getting-started/inference\n`,
+    '/enterprise': `# Enterprise\n\nRegulated-buyer overview. See ${origin}/enterprise/.\n`,
     '/idp': `# Intelligent Document Processing\n\nSee ${origin}/idp/.\n`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nSee ${origin}/inference/gtm/.\n`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSee ${origin}/enterprise/gtm/.\n`,
@@ -926,6 +934,14 @@ writeText(
 - [Streams](${origin}/streams/)
 - [Agents](${origin}/agents/)
 - [Security](${origin}/security/)
+- [Durability](${origin}/durability/)
+- [Governance](${origin}/governance/)
+- [Ontology](${origin}/ontology/)
+- [Data handling](${origin}/data-handling/)
+- [Cloud](${origin}/cloud/)
+- [Integrations](${origin}/integrations/)
+- [Inference](${origin}/inference/)
+- [Enterprise](${origin}/enterprise/)
 `,
 )
 

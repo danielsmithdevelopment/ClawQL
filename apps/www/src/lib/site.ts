@@ -24,6 +24,20 @@ export const site = {
     benchmarks: '/benchmarks',
     /** Crash durability narrative (lab v4 evidence) — full tables on /benchmarks#durability. */
     durability: '/durability',
+    /** Typed ontology layer narrative (graph + structured recall). */
+    ontology: '/ontology',
+    /** Outside-the-agent governance narrative. */
+    governance: '/governance',
+    /** Managed Cloud product narrative (early access + planned workloads). */
+    cloud: '/cloud',
+    /** Practical data-handling narrative (pairs with /privacy-policy). */
+    dataHandling: '/data-handling',
+    /** Integrations catalog (honest statuses). */
+    integrations: '/integrations',
+    /** Inference control-plane marketing landing. */
+    inference: '/inference',
+    /** Enterprise / regulated-buyer marketing landing. */
+    enterprise: '/enterprise',
     /** Defense-in-depth security stack (marketing). */
     security: '/security',
     /** Public status surface (gateway health + components). */
