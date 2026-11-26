@@ -83,7 +83,7 @@
   "CLAWQL_PANGUARD_IN_PROCESS"
 -}}
 {{- range $mustOne }}
-{{- $v := index $eff . | default "" }}
+{{- $v := index $eff . | default "" | toString | trim }}
 {{- if ne $v "1" }}
 {{- fail (printf "pluginTiers.tier=regulated refuses weakened %s=%q (must be \"1\"; audit H3). Runtime refusals remain the backstop for envFromSecret." . $v) }}
 {{- end }}
@@ -96,7 +96,8 @@
   "CLAWQL_SOURCES_ALLOW_HTTP"
 -}}
 {{- range $mustOff }}
-{{- $v := index $eff . | default "" | lower }}
+{{- /* L2: trim before truthy check so " 1" / " True " cannot sneak through. */ -}}
+{{- $v := index $eff . | default "" | toString | trim | lower }}
 {{- if or (eq $v "1") (eq $v "true") (eq $v "yes") (eq $v "on") }}
 {{- fail (printf "pluginTiers.tier=regulated refuses truthy %s=%q (audit H3). Runtime refusals remain the backstop for envFromSecret." . $v) }}
 {{- end }}

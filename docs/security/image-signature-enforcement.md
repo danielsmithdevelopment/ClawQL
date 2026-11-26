@@ -58,7 +58,7 @@ spec:
 - **Kyverno version** skew: field names moved across releases (`failureAction` vs nested fields). Validate against your installed Kyverno docs.
 - **Private GHCR (not the shipping default):** Kyverno needs **registry read** for manifests/signatures (`imageRegistryCredentials` / workload pull secrets). Upstream **`docker-publish`** signs images and **fails** if anonymous **`skopeo inspect`** on **`:latest`** still fails. GitHub does **not** ship a published **REST `PATCH`** for container package visibility—packages are made **Public** in **Package settings → Danger zone**. Forks that keep packages private can wire **`imageRegistrySecretNames`** (see **`values.yaml`**).
 - **Escape hatches** break the guarantee: policies that **exclude** namespaces, `kube-system`, or `failurePolicy: Ignore` on the webhook, or workloads that **bypass** the API server (static manifests applied with elevated rights) are all ways enforcement can be weakened.
-- **Third-party images** in the same chart (document services, etc.) each need their **own** policy or an explicit **allowlist** if they are unsigned.
+- **Third-party images** in the same chart (nginx proxy, document services, etc.) are **digest-pinned in values**, not Cosign-verified. The chart Cosign policy matches only `ghcr.io/danielsmithdevelopment/clawql-*` (plus the openclaw-vendor mirror). Treat Hub digests as pin integrity, not signature verification — add a separate policy or allowlist if those images must be signed too.
 
 ## Option B — Other stacks
 

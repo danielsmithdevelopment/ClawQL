@@ -94,7 +94,9 @@ Rendering cannot see values injected only through `envFromSecret`; runtime boot 
 
 ## Dynamic pass (CI)
 
-Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals`. Wire-level coverage that spawns `dist/server-http.js` under the regulated profile with Object Lock S3 is `npm run test:regulated-wire` (same workflow). See [`scripts/security/README.md`](../../scripts/security/README.md). The kind + Helm job (D2/D2b) exercises the chart surface against `values-regulated.yaml` (H3 render refuse, H4 pod security hard-fail, PARTIAL until K2/K4-neg/in-cluster D1 land). Helm template scripts run in CI via the `helm-templates` job.
+Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals`. Wire-level coverage that spawns `dist/server-http.js` under the regulated profile with Object Lock S3 is `npm run test:regulated-wire` (same workflow). See [`scripts/security/README.md`](../../scripts/security/README.md). The kind + Helm job (D2/D2b) exercises the chart surface against `values-regulated.yaml` (H3 render refuse, H4 pod security hard-fail, PARTIAL until K2/K4-neg/in-cluster D1 land). Helm template scripts run in CI via the `helm-templates` job. The nightly signed job (D3) installs the published GHCR image with Kyverno Cosign enforcing — Kata stays off on kind (not runtime-isolation evidence).
+
+**Third-party images** in `values-regulated.yaml` (nginx proxy, LocalStack stand-ins, etc.) are **digest-pinned only**. Cosign `verifyImages` covers `ghcr.io/danielsmithdevelopment/clawql-*` (and the openclaw-vendor mirror) — do not describe Hub/third-party digests as signature verification.
 
 ## Related
 

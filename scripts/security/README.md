@@ -65,12 +65,14 @@ not need a loopback JWKS URL under regulated.
 Workflow: `.github/workflows/regulated-refusals.yml` (path-filtered) runs both
 jobs.
 
-## Kind job (D2 — follow-up)
+## Kind jobs (D2 / D3)
 
-Install `manifests/charts/clawql-mcp` with `values-regulated.yaml` on kind
-(Calico/Cilium for NetworkPolicy), Vault+ESO, and rerun wire assertions
-in-cluster. See the dynamic-pass plan for K1–K7.
+- **D2 (PR):** `regulated-kind.yml` → `test-regulated-kind.sh` with
+  `CLAWQL_REGULATED_KIND_MODE=partial` (local unsigned image, Cosign off).
+- **D3 (nightly / dispatch):** `regulated-kind-signed.yml` → same driver with
+  `MODE=signed` (published GHCR `:nightly`, Kyverno Cosign on, N1–N5).
 
+Kata stays disabled on kind — not runtime-isolation evidence.
 ## Evidence wording
 
 These jobs are **test evidence** for the regulated profile, not certification

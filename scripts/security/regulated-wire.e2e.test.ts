@@ -470,7 +470,10 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       child.on("close", (code) => resolve({ stdout, stderr, code }));
     });
     expect(code, `cli stdout=${stdout} stderr=${stderr}`).not.toBe(0);
-    expect(`${stdout}\n${stderr}`).toMatch(/regulated.*refuse|console|refuses CLI approve/i);
+    // L3: match the regulated CLI refuse, not a bare "console" (harness refusals also mention it).
+    expect(`${stdout}\n${stderr}`).toMatch(
+      /CLAWQL_TIER=regulated refuses CLI approve|regulated refuses CLI approve.*console/i
+    );
 
     const { loadPendingExecution } = await import("clawql-api");
     expect((await loadPendingExecution(executionId, home))?.status).toBe("pending");
