@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 
 import {
-import { requireManagedApiSession } from "@/lib/api-auth";
   chunkTextForStream,
   fetchAgentChatUpstream,
   formatSse,
@@ -9,6 +8,7 @@ import { requireManagedApiSession } from "@/lib/api-auth";
   chatStreamEnabled,
   type AgentChatRequestBody,
 } from '@/lib/agent-chat-upstream.server'
+import { requireManagedApiSession } from '@/lib/api-auth'
 
 type Body = { message?: string; threadTitle?: string; threadId?: string }
 
@@ -78,8 +78,8 @@ function simulatedSseStream(data: Awaited<ReturnType<typeof fetchAgentChatUpstre
 }
 
 export async function POST(req: Request) {
-  const auth = await requireManagedApiSession(req);
-  if (!auth.ok) return auth.response;
+  const auth = await requireManagedApiSession(req)
+  if (!auth.ok) return auth.response
 
   if (!chatStreamEnabled()) {
     return NextResponse.json({ error: 'Streaming disabled (CLAWQL_DASHBOARD_CHAT_STREAM=0)' }, { status: 404 })

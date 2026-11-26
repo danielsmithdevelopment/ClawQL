@@ -262,16 +262,23 @@ export function pendingReviewCountEffect(
   return listReviewEffect(session).pipe(Effect.map((r) => r.items.length));
 }
 
+export type ReviewApprovalProof =
+  | {
+      method: "nfc_security_key" | "device_biometric_reviewer_demo";
+      attestation?: string;
+    }
+  | {
+      method: "webauthn";
+      response: unknown;
+    };
+
 export function decideReviewEffect(input: {
   session: MobileSession;
   id: string;
   kind: ReviewKind;
   decision: ReviewDecision;
   answer?: string;
-  approvalProof?: {
-    method: "nfc_security_key" | "device_biometric_reviewer_demo";
-    attestation?: string;
-  };
+  approvalProof?: ReviewApprovalProof;
 }): Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError> {
   return Effect.gen(function* () {
     const config = yield* loadMobileConfigEffect();
@@ -286,7 +293,9 @@ export function decideReviewEffect(input: {
       const detail =
         input.answer ??
         input.approvalProof?.method ??
-        (input.approvalProof?.attestation?.startsWith("fixture-nfc:")
+        (input.approvalProof &&
+        "attestation" in input.approvalProof &&
+        input.approvalProof.attestation?.startsWith("fixture-nfc:")
           ? "fixture_simulated_nfc"
           : input.decision);
       const event: ActivityEvent = {
@@ -321,14 +330,12 @@ export function decideReviewEffect(input: {
       input.decision === "approve" || input.decision === "retry_with_key";
     // Live approve requires a verified WebAuthn assertion (audit AA2). NFC attestation
     // strings alone are no longer accepted — fixture mode above still simulates NFC.
+    let webauthnResponse: unknown | undefined;
     if (needsWebAuthn) {
-      const webauthnResponse = (
-        input.approvalProof as { method?: string; response?: unknown } | undefined
-      )?.response;
-      if (
-        (input.approvalProof as { method?: string } | undefined)?.method !== "webauthn" ||
-        webauthnResponse == null
-      ) {
+      if (input.approvalProof?.method === "webauthn") {
+        webauthnResponse = input.approvalProof.response;
+      }
+      if (webauthnResponse == null) {
         return yield* Effect.fail(
           new MobileApiError({
             reason:
@@ -340,12 +347,10 @@ export function decideReviewEffect(input: {
     }
     const res = yield* Effect.tryPromise({
       try: async () => {
-        const approvalProof = needsWebAuthn
-          ? {
-              method: "webauthn" as const,
-              response: (input.approvalProof as { response: unknown }).response,
-            }
-          : undefined;
+        const approvalProof =
+          needsWebAuthn && webauthnResponse != null
+            ? { method: "webauthn" as const, response: webauthnResponse }
+            : undefined;
         const r = await fetch(`${config.apiBase}/api/managed/review`, {
           method: "POST",
           headers: authHeaders(input.session),
@@ -1910,10 +1915,7 @@ export class MobileApi extends Context.Service<
       kind: ReviewKind;
       decision: ReviewDecision;
       answer?: string;
-      approvalProof?: {
-        method: "nfc_security_key" | "device_biometric_reviewer_demo";
-        attestation?: string;
-      };
+      approvalProof?: ReviewApprovalProof;
     }) => Effect.Effect<{ ok: true; id: string; status: string }, MobileApiError>;
     readonly listActivity: (
       session: MobileSession

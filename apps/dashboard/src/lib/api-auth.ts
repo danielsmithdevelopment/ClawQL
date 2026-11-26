@@ -9,13 +9,17 @@
  */
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
-import { NextResponse } from "next/server";
 
 import { isDesktopMode } from "@/lib/desktop-mode";
 import {
   type ManagedSession,
   resolveManagedSessionEffect,
 } from "@/lib/managed/session";
+
+/** Prefer Response over NextResponse so unit tests do not need the Next package. */
+function jsonResponse(body: unknown, init?: ResponseInit): Response {
+  return Response.json(body, init);
+}
 
 export const DESKTOP_TOKEN_COOKIE = "clawql-desktop-api-token";
 export const DESKTOP_TOKEN_HEADER = "x-clawql-desktop-token";
@@ -66,7 +70,7 @@ export function extractDesktopToken(req: Request): string | null {
 }
 
 /** Host allowlist — blocks DNS-rebinding to the loopback dashboard (audit 8.02). */
-export function assertApiHostAllowed(req: Request): NextResponse | null {
+export function assertApiHostAllowed(req: Request): Response | null {
   const host = (req.headers.get("host") ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
   const hostname = host.replace(/:\d+$/, "");
   const allowed = new Set(
@@ -79,19 +83,16 @@ export function assertApiHostAllowed(req: Request): NextResponse | null {
   if (extra) allowed.add(extra.replace(/:\d+$/, ""));
 
   if (!hostname || !allowed.has(hostname)) {
-    return NextResponse.json(
-      { error: "Forbidden host", host: hostname || null },
-      { status: 403 },
-    );
+    return jsonResponse({ error: "Forbidden host", host: hostname || null }, { status: 403 });
   }
   return null;
 }
 
-export function assertDesktopApiToken(req: Request): NextResponse | null {
+export function assertDesktopApiToken(req: Request): Response | null {
   if (!isDesktopMode()) return null;
   const expected = process.env.CLAWQL_DESKTOP_API_TOKEN?.trim();
   if (!expected) {
-    return NextResponse.json(
+    return jsonResponse(
       { error: "Desktop API token is not configured (CLAWQL_DESKTOP_API_TOKEN)" },
       { status: 503 },
     );
@@ -100,7 +101,7 @@ export function assertDesktopApiToken(req: Request): NextResponse | null {
   const a = Buffer.from(got);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonResponse({ error: "Unauthorized" }, { status: 401 });
   }
   return null;
 }
@@ -111,7 +112,7 @@ export function mintDesktopApiToken(): string {
 
 export type ApiSessionResult =
   | { ok: true; session: ManagedSession }
-  | { ok: false; response: NextResponse };
+  | { ok: false; response: Response };
 
 const DESKTOP_LOCAL_SESSION: ManagedSession = {
   mode: "mock",
@@ -162,7 +163,7 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
     }
     return {
       ok: false,
-      response: NextResponse.json({ error: "Authentication required" }, { status: 401 }),
+      response: jsonResponse({ error: "Authentication required" }, { status: 401 }),
     };
   }
 
@@ -170,10 +171,7 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
   if (isProd && !e2e && !desktopFixture && session.mode === "mock") {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: "Mock session refused in production" },
-        { status: 401 },
-      ),
+      response: jsonResponse({ error: "Mock session refused in production" }, { status: 401 }),
     };
   }
 
@@ -181,7 +179,7 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
 }
 
 /** Desktop-only routes: host + per-launch token (audit 8.02). */
-export function requireDesktopApiAuth(req: Request): NextResponse | null {
+export function requireDesktopApiAuth(req: Request): Response | null {
   return assertApiHostAllowed(req) ?? assertDesktopApiToken(req);
 }
 
