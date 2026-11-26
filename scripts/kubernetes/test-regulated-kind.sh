@@ -461,11 +461,15 @@ labels["clawql-kind-fixture"] = "false"
 spec = doc["spec"]
 spec["replicas"] = 1
 # Unique selector so it doesn't fight the main Deployment.
+# matchLabels must be a subset of template labels (API validation).
 sel = spec.setdefault("selector", {}).setdefault("matchLabels", {})
 sel["app"] = "clawql-wormoff-mcp"
+sel["app.kubernetes.io/instance"] = "clawql-wormoff"
+sel["app.kubernetes.io/name"] = "clawql-mcp"
 tpl_labels = spec["template"]["metadata"].setdefault("labels", {})
 tpl_labels["app"] = "clawql-wormoff-mcp"
 tpl_labels["app.kubernetes.io/instance"] = "clawql-wormoff"
+tpl_labels["app.kubernetes.io/name"] = "clawql-mcp"
 # Drop probes that would keep restarting forever without changing the crash signal.
 for key in ("readinessProbe", "livenessProbe", "startupProbe"):
     for c in spec["template"]["spec"].get("containers", []):

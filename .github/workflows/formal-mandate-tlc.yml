@@ -59,7 +59,8 @@ jobs:
       - name: Run event-delivery TLC dual configs
         run: |
           set -euo pipefail
-          export TLA2TOOLS_JAR="$(bash scripts/formal/ensure-tla2tools.sh)"
+          TLA2TOOLS_JAR="$(bash scripts/formal/ensure-tla2tools.sh)"
+          export TLA2TOOLS_JAR
           WORK=$(mktemp -d)
           cp formal/tla/events/* "$WORK/"
           cd "$WORK"

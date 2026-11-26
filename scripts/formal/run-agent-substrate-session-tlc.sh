@@ -5,7 +5,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/sandbox"
-export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
 WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-agent-substrate-session-$$"
 mkdir -p "$WORKDIR"
 cleanup() { rm -rf "$WORKDIR"; }

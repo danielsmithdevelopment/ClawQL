@@ -41,4 +41,4 @@ if ! grep -Fq "No error has been found" "$LOG"; then
 fi
 
 echo "OK: TLC found no errors for ${MODULE} (${CFG})"
-cat "$LOG" | tail -n 12 || true
+tail -n 12 "$LOG" || true

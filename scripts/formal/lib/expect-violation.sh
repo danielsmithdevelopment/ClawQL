@@ -43,4 +43,4 @@ if ! grep -Eq "Invariant[[:space:]]+${INVARIANT}[[:space:]]+is violated" "$LOG";
 fi
 
 echo "OK: TLC violated Invariant ${INVARIANT} (exit=${EXIT})"
-cat "$LOG" | tail -n 20 || true
+tail -n 20 "$LOG" || true
