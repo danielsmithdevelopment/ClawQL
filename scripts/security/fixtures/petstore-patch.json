@@ -1,0 +1,33 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "PetstoreWire", "version": "1" },
+  "servers": [{ "url": "https://pets-wire.example.com" }],
+  "paths": {
+    "/pets/{id}": {
+      "patch": {
+        "operationId": "patchItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      },
+      "get": {
+        "operationId": "getItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      }
+    }
+  }
+}

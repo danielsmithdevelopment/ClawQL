@@ -69,7 +69,10 @@ export function assertSafeSourceFetchUrl(raw: string): URL {
     throw new Error("Invalid source URL.");
   }
 
-  const allowHttp = process.env.CLAWQL_SOURCES_ALLOW_HTTP?.trim() === "1";
+  // Regulated refuses cleartext sources even when CLAWQL_SOURCES_ALLOW_HTTP=1
+  // (boot also refuses that flag via applyRegulatedProfileEnvEffect).
+  const regulated = process.env.CLAWQL_TIER?.trim().toLowerCase() === "regulated";
+  const allowHttp = !regulated && process.env.CLAWQL_SOURCES_ALLOW_HTTP?.trim() === "1";
   if (parsed.protocol !== "https:" && !(allowHttp && parsed.protocol === "http:")) {
     throw new Error("Source URL must use HTTPS.");
   }

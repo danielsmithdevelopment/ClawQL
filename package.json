@@ -173,7 +173,8 @@
     "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh",
     "test:gdp-mistakes": "npm run build -w clawql-gdp && vitest run packages/clawql-gdp/src/gdp-mistakes-all.test.ts",
     "check:gdp": "npm run test:gdp-mistakes",
-    "test:regulated-refusals": "vitest run --config vitest.e2e.config.ts scripts/security/regulated-refusals.e2e.test.ts"
+    "test:regulated-refusals": "vitest run --config vitest.e2e.config.ts scripts/security/regulated-refusals.e2e.test.ts",
+    "test:regulated-wire": "vitest run --config vitest.e2e.config.ts scripts/security/regulated-wire.e2e.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",

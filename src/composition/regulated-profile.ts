@@ -45,6 +45,15 @@ export function applyRegulatedProfileEnvEffect(
       );
     }
 
+    if (envTruthy(env, "CLAWQL_SOURCES_ALLOW_HTTP")) {
+      return yield* Effect.fail(
+        new Error(
+          "CLAWQL_TIER=regulated refuses CLAWQL_SOURCES_ALLOW_HTTP=1. " +
+            "Custom sources must use HTTPS under the regulated profile."
+        )
+      );
+    }
+
     const sandbox = env.CLAWQL_SANDBOX_BACKEND?.trim().toLowerCase();
     if (sandbox === "bridge" || sandbox === "cloudflare") {
       return yield* Effect.fail(

@@ -1,10 +1,9 @@
 # Security dynamic pass (regulated refusals)
 
-## Process-level suite (CI today)
+## Process-level suite (fast)
 
-`regulated-refusals.e2e.test.ts` is the audit synthesis **dynamic pass** for
-`CLAWQL_TIER=regulated`. It exercises process-level gates without a Kubernetes
-cluster:
+`regulated-refusals.e2e.test.ts` exercises process-level gates without spawning
+the HTTP server or a Kubernetes cluster:
 
 | #   | Refusal                                                         | Mechanism                                              |
 | --- | --------------------------------------------------------------- | ------------------------------------------------------ |
@@ -17,24 +16,57 @@ cluster:
 
 ```bash
 npm run test:regulated-refusals
-# or: npx vitest run --config vitest.e2e.config.ts scripts/security/regulated-refusals.e2e.test.ts
 ```
 
-Workflow: `.github/workflows/regulated-refusals.yml` (path-filtered).
+## Wire-level suite (D1)
 
-Companion unit coverage for the auth-bind gate lives in
-`src/http/mcp-http-auth-bind.test.ts` (default unit CI).
+`regulated-wire.e2e.test.ts` spawns `dist/server-http.js` under
+`CLAWQL_TIER=regulated` with real S3 Object Lock and drives every refusal over
+HTTP. Harness: `regulated-wire-harness.ts` (spawn, OIDC mint via `jose` + PEM
+path, request sink, bucket helpers).
 
-## Future: kind job (not required for this pass)
+| #    | Trigger                                      | Expected                                      | Must not happen                          |
+| ---- | -------------------------------------------- | --------------------------------------------- | ---------------------------------------- |
+| 1    | `CLAWQL_WORM_ENABLED=0`                      | Non-zero exit; stderr WORM disabled           | Port never opens                         |
+| 1b   | `CLAWQL_SOURCES_ALLOW_HTTP=1`                | Non-zero exit; stderr SOURCES_ALLOW_HTTP      | Port never opens                         |
+| 2    | Bucket without Object Lock                   | Boot refused by Object Lock verification      | Port never opens                         |
+| 3    | `noAuth` + allow-unauthenticated             | Non-zero exit; stderr noAuth                  | Port never opens                         |
+| 4    | `CLAWQL_HTTP_GRAPHQL=1`                      | Non-zero exit                                 | Port never opens                         |
+| 5–7b | MCP JWT / resume approve+decline             | 401 / decline-only / decline succeeds            | No tool run / still pending / declined   |
+| 8    | Operator channel, in-process                 | Regulated console-only refuse                 | Still pending                            |
+| 9    | Webhook no/wrong token                       | 503 / 401                                     | Handler side effects absent              |
+| 10   | Inference `openai/gpt-4o`                    | Local-only refuse                             | Inference sink empty                     |
+| 11   | `sources_propose` HTTPS SSRF targets         | SSRF guard refuse                             | Sink empty                               |
+| 12   | `GET /chain/verify`                          | Chain verifies                                | —                                        |
+| 13   | Concurrent x402 same proof                   | One allow; second settle denied               | —                                        |
 
-A follow-up CI job should install `kind` + Helm and assert the same refusals
-against a live regulated chart (`deploy/helm` / `values-regulated.yaml`):
+```bash
+npm run build
+# LocalStack or MinIO with Object Lock:
+export CLAWQL_WORM_S3_ENDPOINT=http://127.0.0.1:4566   # or :9000 for MinIO
+export CLAWQL_WORM_S3_ACCESS_KEY_ID=test
+export CLAWQL_WORM_S3_SECRET_ACCESS_KEY=test
+npm run test:regulated-wire
+```
 
-1. Deploy with `CLAWQL_TIER=regulated` and `CLAWQL_WORM_ENABLED=0` → pod CrashLoop / refuse ready.
-2. MCP Streamable HTTP from an in-cluster client: `resume` approve JSON-RPC fails; decline succeeds.
-3. Service bind with `CLAWQL_AUTH_MODE=noAuth` on ClusterIP / non-loopback → container exit.
-4. GraphQL route absent / boot refuse when `CLAWQL_HTTP_GRAPHQL=1`.
-5. Webhook endpoints return 503 without tokens; inference gateway refuses cloud model ids.
+**Object Lock backend:** CI uses digest-pinned LocalStack (`localstack/localstack:4.3.0@sha256:…`)
+because anonymous MinIO pulls fail on GHA (same as `ci.yml`). Prefer MinIO locally
+via `packages/clawql-audit/docker-compose.minio-object-lock.yml` when pullable.
 
-Until that job lands, treat the process suite as the merge gate and keep kind
-evidence as a scheduled/manual lab (similar to `scripts/kubernetes/test-argo-workflow-kind.sh`).
+OIDC uses `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH` (static key) so the suite does
+not need a loopback JWKS URL under regulated.
+
+Workflow: `.github/workflows/regulated-refusals.yml` (path-filtered) runs both
+jobs.
+
+## Kind job (D2 — follow-up)
+
+Install `manifests/charts/clawql-mcp` with `values-regulated.yaml` on kind
+(Calico/Cilium for NetworkPolicy), Vault+ESO, and rerun wire assertions
+in-cluster. See the dynamic-pass plan for K1–K7.
+
+## Evidence wording
+
+These jobs are **test evidence** for the regulated profile, not certification
+(no FedRAMP-ready / HIPAA-certified language). Prefer **at most once**, never
+exactly once.
