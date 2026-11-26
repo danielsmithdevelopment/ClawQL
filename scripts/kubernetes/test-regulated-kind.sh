@@ -77,7 +77,28 @@ export KUBECONFIG="${KUBECONFIG_FILE}"
 
 echo "==> Install Calico ${CALICO_VERSION}"
 kubectl apply -f "https://raw.githubusercontent.com/projectcalico/calico/${CALICO_VERSION}/manifests/calico.yaml"
-kubectl -n kube-system wait --for=condition=ready pod -l k8s-app=calico-node --timeout=300s
+# kubectl wait fails immediately when the selector matches nothing (pods not
+# created yet). Poll until calico-node pods exist, then wait for Ready.
+echo "==> Wait for calico-node pods to appear"
+for _ in $(seq 1 90); do
+  if kubectl -n kube-system get pods -l k8s-app=calico-node --no-headers 2>/dev/null | grep -q .; then
+    break
+  fi
+  # Fallback label used by some Calico manifest revisions
+  if kubectl -n kube-system get pods -l app.kubernetes.io/name=calico-node --no-headers 2>/dev/null | grep -q .; then
+    break
+  fi
+  sleep 2
+done
+if kubectl -n kube-system get pods -l k8s-app=calico-node --no-headers 2>/dev/null | grep -q .; then
+  kubectl -n kube-system wait --for=condition=ready pod -l k8s-app=calico-node --timeout=300s
+elif kubectl -n kube-system get pods -l app.kubernetes.io/name=calico-node --no-headers 2>/dev/null | grep -q .; then
+  kubectl -n kube-system wait --for=condition=ready pod -l app.kubernetes.io/name=calico-node --timeout=300s
+else
+  echo "FAIL: no calico-node pods appeared" >&2
+  kubectl -n kube-system get pods -o wide >&2 || true
+  exit 1
+fi
 kubectl wait --for=condition=Ready nodes --all --timeout=180s
 
 kubectl create namespace "${NS}"
