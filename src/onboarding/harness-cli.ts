@@ -6,13 +6,21 @@
  */
 
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { existsSync } from "node:fs";
+import { Effect } from "effect";
 import { getClawqlHome } from "./paths.js";
 import { runInit } from "./init.js";
 import { ensureHarnessSandboxGate } from "clawql-sandbox/init";
+import { resolvePinnedClawqlMcpLaunch } from "./mcp-config.js";
+import {
+  backupOnceEffect,
+  parseMcpConfigJson,
+  writeFileAtomic,
+  writeFileAtomicEffect,
+} from "./mcp-config-write.js";
 
 export type HarnessId = "claude" | "codex" | "cursor" | "opencode";
 
@@ -87,19 +95,10 @@ async function writeClaudeDesktopMcp(): Promise<void> {
   await writeMcpConfigFile("claude-desktop");
 }
 
-/** Prefer workspace `bin/clawql-mcp.mjs` (OpenBench CI) over published npx. */
+/** Prefer workspace `bin/clawql-mcp.mjs`; else pin npx to the running CLI version (2.14). */
 export function resolveClawqlMcpCommand(): string[] {
-  const fromBin = process.env.CLAWQL_BIN?.trim();
-  if (fromBin?.endsWith("clawql.mjs")) {
-    const mcp = fromBin.replace(/clawql\.mjs$/, "clawql-mcp.mjs");
-    if (existsSync(mcp)) return ["node", mcp];
-  }
-  const argv1 = process.argv[1];
-  if (typeof argv1 === "string" && argv1.endsWith("clawql.mjs")) {
-    const mcp = argv1.replace(/clawql\.mjs$/, "clawql-mcp.mjs");
-    if (existsSync(mcp)) return ["node", mcp];
-  }
-  return ["npx", "-p", "clawql-mcp", "clawql-mcp"];
+  const launch = resolvePinnedClawqlMcpLaunch();
+  return [launch.command, ...launch.args];
 }
 
 /** Env passed into the OpenCode-local ClawQL MCP child (vault + memory for OpenBench). */
@@ -297,12 +296,13 @@ async function writeOpencodeMcp(): Promise<void> {
   await mkdir(cfgDir, { recursive: true });
 
   let existing: Record<string, unknown> = {};
+  let existingRaw: string | undefined;
   if (existsSync(cfgPath)) {
-    existing = JSON.parse(await readFile(cfgPath, "utf8")) as Record<string, unknown>;
-    await copyFile(cfgPath, `${cfgPath}.bak-${Date.now()}`);
+    existingRaw = await readFile(cfgPath, "utf8");
+    existing = parseMcpConfigJson(existingRaw);
   }
 
-  const mcp = (existing.mcp as Record<string, unknown> | undefined) ?? {};
+  const mcp = { ...((existing.mcp as Record<string, unknown> | undefined) ?? {}) };
   mcp.clawql = {
     type: "local",
     command: resolveClawqlMcpCommand(),
@@ -315,7 +315,17 @@ async function writeOpencodeMcp(): Promise<void> {
     ...existing,
     mcp,
   };
-  await writeFile(cfgPath, `${JSON.stringify(out, null, 2)}\n`, "utf8");
+  const nextRaw = `${JSON.stringify(out, null, 2)}\n`;
+  if (existingRaw !== undefined) {
+    try {
+      const prev = `${JSON.stringify(parseMcpConfigJson(existingRaw), null, 2)}\n`;
+      if (prev === nextRaw) return;
+    } catch {
+      /* rewrite */
+    }
+  }
+  await Effect.runPromise(backupOnceEffect(cfgPath));
+  await writeFileAtomic(cfgPath, nextRaw);
 }
 
 async function writeCodexMcp(): Promise<void> {
@@ -323,10 +333,12 @@ async function writeCodexMcp(): Promise<void> {
   const cfgPath = join(homedir(), ".codex", "config.toml");
   await mkdir(dirname(cfgPath), { recursive: true });
 
+  const launch = resolvePinnedClawqlMcpLaunch();
+  const argsToml = launch.args.map((a) => JSON.stringify(a)).join(", ");
   const block = `
 [mcp_servers.clawql]
-command = "npx"
-args = ["-y", "clawql-mcp"]
+command = ${JSON.stringify(launch.command)}
+args = [${argsToml}]
 enabled = true
 
 [mcp_servers.clawql.env]
@@ -335,13 +347,14 @@ CLAWQL_HOME = "${home.replace(/\\/g, "\\\\")}"
 
   if (existsSync(cfgPath)) {
     const raw = await readFile(cfgPath, "utf8");
-    if (!raw.includes("[mcp_servers.clawql]")) {
-      await copyFile(cfgPath, `${cfgPath}.bak-${Date.now()}`);
-      await writeFile(cfgPath, `${raw.trimEnd()}\n${block}`, "utf8");
+    if (raw.includes("[mcp_servers.clawql]")) {
+      return;
     }
+    await Effect.runPromise(backupOnceEffect(cfgPath));
+    await Effect.runPromise(writeFileAtomicEffect(cfgPath, `${raw.trimEnd()}\n${block}`));
     return;
   }
-  await writeFile(cfgPath, block.trimStart(), "utf8");
+  await writeFileAtomic(cfgPath, block.trimStart());
 }
 
 export async function prepareHarness(id: HarnessId): Promise<void> {
