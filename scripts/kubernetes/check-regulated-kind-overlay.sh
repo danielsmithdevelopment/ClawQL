@@ -22,6 +22,7 @@ except ImportError:
         "envFromSecret",
         "networkPolicy",
         "enableGrpc",
+        "clawql-mcp-grpc",
     }
     for line in text.splitlines():
         s = line.strip()
@@ -70,6 +71,7 @@ allowed_top = {
     "envFromSecret",
     "networkPolicy",
     "enableGrpc",
+    "clawql-mcp-grpc",
 }
 extra = set(doc) - allowed_top
 if extra:
@@ -95,6 +97,12 @@ if "image" in doc:
         )
 if "enableGrpc" in doc and doc["enableGrpc"] is not False:
     raise SystemExit("enableGrpc may only be false on the kind overlay (no gRPC TLS Secret)")
+if "clawql-mcp-grpc" in doc:
+    g = doc["clawql-mcp-grpc"]
+    if set(g) - {"enabled"}:
+        raise SystemExit(f"clawql-mcp-grpc keys not allowed: {sorted(set(g)-{'enabled'})}")
+    if g.get("enabled") is not False:
+        raise SystemExit("clawql-mcp-grpc.enabled may only be false on the kind overlay")
 if "networkPolicy" in doc:
     np = doc["networkPolicy"]
     if set(np) - {"defaultDeny"}:

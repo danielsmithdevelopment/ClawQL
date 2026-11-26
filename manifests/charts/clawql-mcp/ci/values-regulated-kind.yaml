@@ -31,7 +31,10 @@ image:
 
 # Regulated gRPC refuses plaintext; kind has no TLS Secret mount yet. HTTP MCP
 # is the surface exercised by K1–K7 (proxy is nginx HTTP passthrough).
+# Templates OR enableGrpc with clawql-mcp-grpc.enabled — clear both.
 enableGrpc: false
+clawql-mcp-grpc:
+  enabled: false
 
 # Allow MCP pods to reach in-cluster JWKS (80) and LocalStack S3 (4566).
 # Base default-deny only permits HTTP(S) to non-RFC1918 destinations.
