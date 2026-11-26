@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
-# D2: Install clawql-mcp with values-regulated.yaml on kind (Calico CNI),
-# rerun wire-level assertions in-cluster, plus cluster-only K1–K7 checks.
+# D2 / D3: Install clawql-mcp with values-regulated.yaml on kind (Calico CNI).
+#
+# Modes (CLAWQL_REGULATED_KIND_MODE):
+#   partial (default) — D2 PR path: local unsigned image, Cosign off, K1–K7 PARTIAL
+#   signed            — D3 nightly: published GHCR image, Kyverno Cosign on, N1–N5
 #
 # Pins: kind binary + node image by digest, Helm by version, Calico by version.
-# Requires Docker. Budget ~30 minutes.
+# Requires Docker. Budget ~30 minutes (partial) / ~45 minutes (signed).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
+
+MODE="${CLAWQL_REGULATED_KIND_MODE:-partial}"
+case "${MODE}" in
+  partial | signed) ;;
+  *)
+    echo "CLAWQL_REGULATED_KIND_MODE must be partial|signed (got ${MODE})" >&2
+    exit 1
+    ;;
+esac
 
 CLUSTER_NAME="${CLAWQL_REGULATED_KIND_CLUSTER:-clawql-regulated}"
 NS="${CLAWQL_REGULATED_KIND_NS:-clawql}"
@@ -17,8 +29,17 @@ KIND_VERSION="${CLAWQL_KIND_VERSION:-v0.27.0}"
 KIND_NODE_IMAGE="${CLAWQL_KIND_NODE_IMAGE:-kindest/node:v1.32.2@sha256:142f543559cc55d64e1ab9341df08e5ced84bd2e893736da8f51320f26f5950b}"
 HELM_VERSION="${CLAWQL_HELM_VERSION:-v3.17.2}"
 CALICO_VERSION="${CLAWQL_CALICO_VERSION:-v3.29.2}"
+KYVERNO_CHART_VERSION="${CLAWQL_KYVERNO_CHART_VERSION:-3.7.2}"
+SIGNED_IMAGE_REPO="${CLAWQL_SIGNED_IMAGE_REPO:-ghcr.io/danielsmithdevelopment/clawql-mcp}"
+SIGNED_IMAGE_TAG="${CLAWQL_SIGNED_IMAGE_TAG:-nightly}"
 ARTIFACT_DIR="${CLAWQL_REGULATED_KIND_ARTIFACTS:-/tmp/clawql-regulated-kind-artifacts}"
 mkdir -p "${ARTIFACT_DIR}"
+
+if [[ "${MODE}" == "signed" ]]; then
+  OVERLAY="${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind-signed.yaml"
+else
+  OVERLAY="${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml"
+fi
 
 dump_failure() {
   echo "==> Collecting failure artifacts into ${ARTIFACT_DIR}"
@@ -37,8 +58,12 @@ need_cmd() {
   }
 }
 
-echo "==> Overlay allowlist check"
-bash "${ROOT}/scripts/kubernetes/check-regulated-kind-overlay.sh"
+echo "==> Overlay allowlist check (mode=${MODE})"
+if [[ "${MODE}" == "signed" ]]; then
+  bash "${ROOT}/scripts/kubernetes/check-regulated-kind-overlay.sh" --signed
+else
+  bash "${ROOT}/scripts/kubernetes/check-regulated-kind-overlay.sh"
+fi
 
 echo "==> Ensure kind ${KIND_VERSION}"
 if ! command -v kind >/dev/null 2>&1 || [[ "$(kind version -q 2>/dev/null || true)" != "${KIND_VERSION#v}"* ]]; then
@@ -103,22 +128,54 @@ kubectl wait --for=condition=Ready nodes --all --timeout=180s
 
 kubectl create namespace "${NS}"
 
-echo "==> Build + load PR MCP image"
-IMAGE_LOCAL="clawql-mcp:regulated-kind"
-# E4: only docker/Dockerfile --target runtime. Never fall back to a root
-# Dockerfile or COPY **/*.yaml (that glob can pick Istio YAML as a "Dockerfile").
+PUBLISHED_DIGEST=""
 DOCKERFILE="${ROOT}/docker/Dockerfile"
-if [[ ! -f "${DOCKERFILE}" ]]; then
-  echo "missing ${DOCKERFILE}" >&2
-  exit 1
+if [[ "${MODE}" == "signed" ]]; then
+  echo "==> Install Kyverno ${KYVERNO_CHART_VERSION} (Cosign verifyImages prerequisite)"
+  helm repo add kyverno https://kyverno.github.io/kyverno/ >/dev/null 2>&1 || true
+  helm repo update >/dev/null
+  helm upgrade --install kyverno kyverno/kyverno \
+    --version "${KYVERNO_CHART_VERSION}" \
+    --namespace kyverno --create-namespace \
+    --set crds.migration.enabled=false \
+    --set-string admissionController.container.resources.requests.cpu=25m \
+    --set-string backgroundController.resources.requests.cpu=25m \
+    --set-string cleanupController.resources.requests.cpu=25m \
+    --set-string reportsController.resources.requests.cpu=25m \
+    --wait --timeout 10m
+
+  echo "==> Resolve published ${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG} digest (N1 record)"
+  if ! command -v skopeo >/dev/null 2>&1; then
+    sudo apt-get update -qq && sudo apt-get install -y -qq skopeo
+  fi
+  need_cmd skopeo
+  PUBLISHED_DIGEST="$(skopeo inspect "docker://${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}" --format '{{.Digest}}')"
+  if [[ -z "${PUBLISHED_DIGEST}" || "${PUBLISHED_DIGEST}" != sha256:* ]]; then
+    echo "FAIL: could not resolve digest for ${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}" >&2
+    exit 1
+  fi
+  echo "Published digest: ${PUBLISHED_DIGEST}"
+  echo "${PUBLISHED_DIGEST}" >"${ARTIFACT_DIR}/published-digest.txt"
+  # Pre-pull into kind so ImagePullBackOff does not masquerade as Cosign deny.
+  docker pull "${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}"
+  kind load docker-image "${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}" --name "${CLUSTER_NAME}"
+else
+  echo "==> Build + load PR MCP image"
+  IMAGE_LOCAL="clawql-mcp:regulated-kind"
+  # E4: only docker/Dockerfile --target runtime. Never fall back to a root
+  # Dockerfile or COPY **/*.yaml (that glob can pick Istio YAML as a "Dockerfile").
+  if [[ ! -f "${DOCKERFILE}" ]]; then
+    echo "missing ${DOCKERFILE}" >&2
+    exit 1
+  fi
+  if [[ -e "${ROOT}/Dockerfile" ]]; then
+    echo "FAIL: refuse root Dockerfile — use docker/Dockerfile --target runtime only" >&2
+    exit 1
+  fi
+  # Match docker-publish.yml: --file docker/Dockerfile --target runtime
+  docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" --target runtime "${ROOT}"
+  kind load docker-image "${IMAGE_LOCAL}" --name "${CLUSTER_NAME}"
 fi
-if [[ -e "${ROOT}/Dockerfile" ]]; then
-  echo "FAIL: refuse root Dockerfile — use docker/Dockerfile --target runtime only" >&2
-  exit 1
-fi
-# Match docker-publish.yml: --file docker/Dockerfile --target runtime
-docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" --target runtime "${ROOT}"
-kind load docker-image "${IMAGE_LOCAL}" --name "${CLUSTER_NAME}"
 
 echo "==> Ensure Secret/clawql-provider-env (LocalStack Object Lock credentials)"
 # Skip Vault bootstrap on kind — it waits 300s for a STS that is only Ready after
@@ -272,7 +329,7 @@ echo "==> Helm install regulated profile + kind overlay"
 helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
   -n "${NS}" \
   -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-  -f "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
+  -f "${OVERLAY}" \
   --wait=false --timeout 15m || {
   dump_failure
   exit 1
@@ -291,6 +348,22 @@ if ! kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=10m;
   exit 1
 fi
 
+if [[ "${MODE}" == "signed" ]]; then
+  echo "==> N1: live MCP image rewritten to @sha256 matching published ${SIGNED_IMAGE_TAG}"
+  LIVE_IMG="$(kubectl -n "${NS}" get "deployment/${MCP_DEPLOY}" -o jsonpath='{.spec.template.spec.containers[0].image}')"
+  echo "Live image: ${LIVE_IMG}"
+  if [[ "${LIVE_IMG}" != *"@sha256:"* ]]; then
+    echo "N1 FAIL: mutateDigest did not rewrite image to @sha256 (got ${LIVE_IMG})" >&2
+    exit 1
+  fi
+  LIVE_DIGEST="${LIVE_IMG##*@}"
+  if [[ "${LIVE_DIGEST}" != "${PUBLISHED_DIGEST}" ]]; then
+    echo "N1 FAIL: live digest ${LIVE_DIGEST} != published ${PUBLISHED_DIGEST}" >&2
+    exit 1
+  fi
+  echo "N1 OK: pod image is ${LIVE_DIGEST}"
+fi
+
 echo "==> E1/H1: live MCP pod must carry every regulated extraEnv (not only CLAWQL_TIER)"
 # H1: pluginTiers.tier alone sets CLAWQL_TIER — that would pass even if extraEnv was wiped.
 # Compare values-regulated.yaml extraEnv against the live MCP container, allowing
@@ -298,7 +371,7 @@ echo "==> E1/H1: live MCP pod must carry every regulated extraEnv (not only CLAW
 kubectl -n "${NS}" get deploy -l "app.kubernetes.io/instance=${REL}" -o json \
   >"${ARTIFACT_DIR}/deploy-main.json"
 python3 - "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-  "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
+  "${OVERLAY}" \
   "${ARTIFACT_DIR}/deploy-main.json" <<'PY'
 import json, sys
 from pathlib import Path
@@ -598,5 +671,94 @@ echo "==> In-cluster wire rows 5–12 (Job)"
 # the in-cluster Job image is published; K1/K5/K6/K7 already exercise chart surface.
 echo "NOTE: full in-cluster D1 matrix Job is staged; chart checks K1/K5/K6/K7 ran."
 
-echo "regulated-kind PARTIAL: K1/K5/K6/K7 + E1/H1 env compare green; K2/K4-neg/in-cluster D1 matrix still scaffolding"
-echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
+if [[ "${MODE}" == "signed" ]]; then
+  echo "==> N2: unsigned local image must be denied by Cosign"
+  UNSIGNED_TAG="${SIGNED_IMAGE_REPO}:unsigned-ci"
+  docker build -t "${UNSIGNED_TAG}" -f "${ROOT}/docker/Dockerfile" --target runtime "${ROOT}"
+  kind load docker-image "${UNSIGNED_TAG}" --name "${CLUSTER_NAME}"
+  set +e
+  kubectl -n "${NS}" delete pod clawql-n2-unsigned --ignore-not-found >/dev/null 2>&1
+  N2_OUT="$(kubectl -n "${NS}" run clawql-n2-unsigned --image="${UNSIGNED_TAG}" \
+    --image-pull-policy=Never --restart=Never \
+    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
+    --command -- sleep 5 2>&1)"
+  N2_RC=$?
+  set -e
+  echo "${N2_OUT}" | tee "${ARTIFACT_DIR}/n2-unsigned.txt"
+  if [[ "${N2_RC}" -eq 0 ]]; then
+    echo "N2 FAIL: unsigned image was admitted" >&2
+    kubectl -n "${NS}" delete pod clawql-n2-unsigned --ignore-not-found || true
+    exit 1
+  fi
+  if ! echo "${N2_OUT}" | grep -Eiq 'kyverno|verifyImages|signature|cosign|denied|block'; then
+    echo "N2 FAIL: admission failed without a Cosign/Kyverno deny signal" >&2
+    exit 1
+  fi
+  echo "N2 OK: unsigned image denied"
+
+  echo "==> N3: impossible subjectRegExp must deny the real signed image"
+  helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
+    -n "${NS}" \
+    -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
+    -f "${OVERLAY}" \
+    --set-string 'kyverno.imageSignaturePolicy.cosign.subjectRegExp=^https://example\.invalid/no-match$' \
+    --wait=false --timeout 5m
+  # Wait briefly for ClusterPolicy hook to re-apply.
+  sleep 5
+  set +e
+  kubectl -n "${NS}" delete pod clawql-n3-subject --ignore-not-found >/dev/null 2>&1
+  N3_OUT="$(kubectl -n "${NS}" run clawql-n3-subject \
+    --image="${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
+    --image-pull-policy=IfNotPresent --restart=Never \
+    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
+    --command -- sleep 5 2>&1)"
+  N3_RC=$?
+  set -e
+  echo "${N3_OUT}" | tee "${ARTIFACT_DIR}/n3-subject.txt"
+  if [[ "${N3_RC}" -eq 0 ]]; then
+    echo "N3 FAIL: signed image admitted under non-matching subjectRegExp" >&2
+    kubectl -n "${NS}" delete pod clawql-n3-subject --ignore-not-found || true
+    exit 1
+  fi
+  echo "N3 OK: subject pin checked (deny under impossible subjectRegExp)"
+  # Restore real subjectRegExp from values-regulated / overlay.
+  helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
+    -n "${NS}" \
+    -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
+    -f "${OVERLAY}" \
+    --wait=false --timeout 5m
+  sleep 5
+
+  echo "==> N4: Kyverno admission scaled to 0 must fail closed"
+  ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | grep -E 'admission|kyverno' | head -1 || true)"
+  if [[ -z "${ADM_DEPLOY}" ]]; then
+    echo "N4 FAIL: could not find Kyverno admission Deployment" >&2
+    exit 1
+  fi
+  kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=0
+  kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=120s || true
+  set +e
+  kubectl -n "${NS}" delete pod clawql-n4-failclosed --ignore-not-found >/dev/null 2>&1
+  N4_OUT="$(kubectl -n "${NS}" run clawql-n4-failclosed \
+    --image="${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
+    --image-pull-policy=IfNotPresent --restart=Never \
+    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
+    --command -- sleep 5 2>&1)"
+  N4_RC=$?
+  set -e
+  echo "${N4_OUT}" | tee "${ARTIFACT_DIR}/n4-failclosed.txt"
+  kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1
+  kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=180s
+  if [[ "${N4_RC}" -eq 0 ]]; then
+    echo "N4 FAIL: pod admitted while Kyverno admission was scaled to 0 (not fail-closed)" >&2
+    kubectl -n "${NS}" delete pod clawql-n4-failclosed --ignore-not-found || true
+    exit 1
+  fi
+  echo "N4 OK: failurePolicy=Fail denied create with admission down"
+
+  echo "regulated-kind SIGNED: N1–N4 Cosign matrix + N5 (D2 K-checks) green"
+  echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
+else
+  echo "regulated-kind PARTIAL: K1/K5/K6/K7 + E1/H1 env compare green; K2/K4-neg/in-cluster D1 matrix still scaffolding"
+  echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
+fi

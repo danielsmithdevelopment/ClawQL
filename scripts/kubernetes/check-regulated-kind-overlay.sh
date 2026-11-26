@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
-# Fail if ci/values-regulated-kind.yaml sets keys outside the D2 allowlist.
+# Fail if a regulated-kind CI overlay sets keys outside the allowlist.
 # Also refuse `extraEnv` (Helm list-replace would wipe values-regulated.yaml).
 # PyYAML is required (no line-scan fallback — H6).
+#
+# Usage:
+#   check-regulated-kind-overlay.sh           # D2 unsigned PR overlay
+#   check-regulated-kind-overlay.sh --signed  # D3 Cosign/GHCR overlay
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+MODE="partial"
 OVERLAY="${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml"
+if [[ "${1:-}" == "--signed" ]]; then
+  MODE="signed"
+  OVERLAY="${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind-signed.yaml"
+fi
 
-python3 - "$OVERLAY" <<'PY'
+python3 - "$OVERLAY" "$MODE" <<'PY'
 import sys
 from pathlib import Path
 
@@ -17,6 +26,7 @@ except ImportError as e:
     raise SystemExit(f"PyYAML required for regulated-kind overlay check: {e}") from e
 
 path = Path(sys.argv[1])
+mode = sys.argv[2]
 doc = yaml.safe_load(path.read_text()) or {}
 
 if "extraEnv" in doc:
@@ -57,18 +67,39 @@ if "security" in doc:
         raise SystemExit(f"security keys not allowed: {sorted(set(sec)-{'kata'})}")
     if set(sec.get("kata", {})) - {"enabled"}:
         raise SystemExit("security.kata may only set enabled")
+    if sec.get("kata", {}).get("enabled") is not False:
+        raise SystemExit("security.kata.enabled must be false on kind (no Kata runtime)")
 if "kyverno" in doc:
     k = doc["kyverno"]
     if set(k) - {"imageSignaturePolicy"}:
         raise SystemExit(f"kyverno keys not allowed: {sorted(set(k)-{'imageSignaturePolicy'})}")
     isp = k.get("imageSignaturePolicy", {})
-    if set(isp) - {"enabled"}:
-        raise SystemExit("kyverno.imageSignaturePolicy may only set enabled")
+    allowed_isp = {"enabled"} if mode == "partial" else {"enabled", "matchReleaseNamespaceOnly"}
+    if set(isp) - allowed_isp:
+        raise SystemExit(
+            f"kyverno.imageSignaturePolicy keys not allowed: {sorted(set(isp)-allowed_isp)}"
+        )
+    want = False if mode == "partial" else True
+    if isp.get("enabled") is not want:
+        raise SystemExit(
+            f"kyverno.imageSignaturePolicy.enabled must be {want} for {mode} overlay"
+        )
 if "image" in doc:
     if set(doc["image"]) - {"repository", "tag", "pullPolicy"}:
         raise SystemExit(
             f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}"
         )
+    repo = (doc["image"].get("repository") or "")
+    if mode == "signed":
+        if not str(repo).startswith("ghcr.io/danielsmithdevelopment/clawql-mcp"):
+            raise SystemExit(
+                f"signed overlay image.repository must be GHCR clawql-mcp, got {repo!r}"
+            )
+    else:
+        if "ghcr.io" in str(repo):
+            raise SystemExit(
+                "partial overlay must use a local image repository (not GHCR) — D3 covers signed"
+            )
 if "enableGrpc" in doc and doc["enableGrpc"] is not True:
     raise SystemExit("enableGrpc must be true on the kind overlay (self-signed TLS Secret)")
 if "clawql-mcp-grpc" in doc:
@@ -80,7 +111,9 @@ if "clawql-mcp-grpc" in doc:
 if "grpcTls" in doc:
     gt = doc["grpcTls"]
     if set(gt) - {"existingSecret", "mountPath", "certFile", "keyFile"}:
-        raise SystemExit(f"grpcTls keys not allowed: {sorted(set(gt)-{'existingSecret','mountPath','certFile','keyFile'})}")
+        raise SystemExit(
+            f"grpcTls keys not allowed: {sorted(set(gt)-{'existingSecret','mountPath','certFile','keyFile'})}"
+        )
     if not isinstance(gt.get("existingSecret"), str) or not gt.get("existingSecret"):
         raise SystemExit("grpcTls.existingSecret must be a non-empty string")
 if "networkPolicy" in doc:
@@ -108,5 +141,5 @@ if "extraEnvAppend" in doc:
 if "envFromSecret" in doc and not isinstance(doc["envFromSecret"], str):
     raise SystemExit("envFromSecret must be a string")
 
-print("OK: regulated-kind overlay keys within D2/D2b allowlist")
+print(f"OK: regulated-kind {mode} overlay keys within allowlist")
 PY
