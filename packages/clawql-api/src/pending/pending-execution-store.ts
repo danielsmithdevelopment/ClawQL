@@ -349,7 +349,6 @@ export {
 } from "./pending-execution-postgres.js";
 export { pendingStoreBackend, requiresSharedPendingPostgres } from "./pending-store-backend.js";
 
-
 /**
  * Compare-and-set claim for keyed outcome_unknown redrive (audit 2.18).
  * Returns the claimed record, or null if another redrive already claimed it.

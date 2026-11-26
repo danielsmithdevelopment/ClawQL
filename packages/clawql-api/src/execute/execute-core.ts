@@ -231,10 +231,14 @@ export function executeClawqlOperationEffect(
           }
           if (consumed.operationId !== operationId) {
             yield* fromPromise(() =>
-              markPendingCompleted(approvedId, {
-                ok: false,
-                error: "approved executionId is bound to a different operationId",
-              }, params.home)
+              markPendingCompleted(
+                approvedId,
+                {
+                  ok: false,
+                  error: "approved executionId is bound to a different operationId",
+                },
+                params.home
+              )
             );
             return yield* textContentEffect(
               JSON.stringify({
@@ -259,10 +263,14 @@ export function executeClawqlOperationEffect(
           );
           if (!mandateOk) {
             yield* fromPromise(() =>
-              markPendingCompleted(approvedId, {
-                ok: false,
-                error: "MandateArgsMatch proof failed",
-              }, params.home)
+              markPendingCompleted(
+                approvedId,
+                {
+                  ok: false,
+                  error: "MandateArgsMatch proof failed",
+                },
+                params.home
+              )
             );
             return yield* textContentEffect(
               JSON.stringify({

@@ -12,10 +12,7 @@
       "whenNotToUse": "Not a substitute for firm-knowledge SQL cohort counts or ontology flag recall",
       "requiresStructuredCorpus": false,
       "ontologyRole": "discovery",
-      "aliases": [
-        "tool.generic_search",
-        "generic_search"
-      ]
+      "aliases": ["tool.generic_search", "generic_search"]
     },
     {
       "capabilityId": "clawql.execute",
@@ -65,11 +62,7 @@
       "whenNotToUse": "Do not replace with bash ls/grep hunts when the structured corpus is available",
       "requiresStructuredCorpus": true,
       "ontologyRole": "structured_query",
-      "aliases": [
-        "mcp.data_query",
-        "clawql_sql",
-        "data_query"
-      ]
+      "aliases": ["mcp.data_query", "clawql_sql", "data_query"]
     },
     {
       "capabilityId": "clawql.cache",
@@ -221,9 +214,7 @@
       "whenNotToUse": "Invalid if skill validity rolled back",
       "requiresStructuredCorpus": true,
       "ontologyRole": "skill_fast_path",
-      "aliases": [
-        "skill.harvey.credit_facility_sql"
-      ]
+      "aliases": ["skill.harvey.credit_facility_sql"]
     },
     {
       "capabilityId": "skill.harvey.hsr_second_request_recall",
@@ -233,9 +224,7 @@
       "whenNotToUse": "Do not confuse with HSR filing-only prompts",
       "requiresStructuredCorpus": true,
       "ontologyRole": "skill_fast_path",
-      "aliases": [
-        "skill.harvey.hsr_second_request_recall"
-      ]
+      "aliases": ["skill.harvey.hsr_second_request_recall"]
     },
     {
       "capabilityId": "skill.clawql-search-workflows",
@@ -245,9 +234,7 @@
       "whenNotToUse": "Not for firm-knowledge cohort SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-search-workflows"
-      ]
+      "aliases": ["clawql-search-workflows"]
     },
     {
       "capabilityId": "skill.clawql-execute-workflows",
@@ -257,9 +244,7 @@
       "whenNotToUse": "Search first when operationId unknown",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-execute-workflows"
-      ]
+      "aliases": ["clawql-execute-workflows"]
     },
     {
       "capabilityId": "skill.clawql-memory-recall",
@@ -269,9 +254,7 @@
       "whenNotToUse": "Not a substitute for DuckDB cohort SQL when schema flags exist",
       "requiresStructuredCorpus": true,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-memory-recall"
-      ]
+      "aliases": ["clawql-memory-recall"]
     },
     {
       "capabilityId": "skill.clawql-memory-ingest",
@@ -281,9 +264,7 @@
       "whenNotToUse": "Not for querying cohorts",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-memory-ingest"
-      ]
+      "aliases": ["clawql-memory-ingest"]
     },
     {
       "capabilityId": "skill.clawql-vault-memory",
@@ -293,9 +274,7 @@
       "whenNotToUse": "Not for unstructured DMS greps when ontology exists",
       "requiresStructuredCorpus": true,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-vault-memory"
-      ]
+      "aliases": ["clawql-vault-memory"]
     },
     {
       "capabilityId": "skill.clawql-cache-workflows",
@@ -305,9 +284,7 @@
       "whenNotToUse": "Not durable vault storage",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-cache-workflows"
-      ]
+      "aliases": ["clawql-cache-workflows"]
     },
     {
       "capabilityId": "skill.clawql-audit-workflows",
@@ -317,9 +294,7 @@
       "whenNotToUse": "Not a search tool",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-audit-workflows"
-      ]
+      "aliases": ["clawql-audit-workflows"]
     },
     {
       "capabilityId": "skill.clawql-notify-workflows",
@@ -329,9 +304,7 @@
       "whenNotToUse": "Not firm-knowledge retrieval",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-notify-workflows"
-      ]
+      "aliases": ["clawql-notify-workflows"]
     },
     {
       "capabilityId": "skill.clawql-schedule-workflows",
@@ -341,9 +314,7 @@
       "whenNotToUse": "Not one-shot cohort queries",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-schedule-workflows"
-      ]
+      "aliases": ["clawql-schedule-workflows"]
     },
     {
       "capabilityId": "skill.clawql-sandbox-exec",
@@ -353,9 +324,7 @@
       "whenNotToUse": "Not firm-knowledge cohort enumeration",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-sandbox-exec"
-      ]
+      "aliases": ["clawql-sandbox-exec"]
     },
     {
       "capabilityId": "skill.clawql-composed-mcp-workflows",
@@ -365,9 +334,7 @@
       "whenNotToUse": "Prefer narrower skills when a single tool path is clear",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-composed-mcp-workflows"
-      ]
+      "aliases": ["clawql-composed-mcp-workflows"]
     },
     {
       "capabilityId": "skill.clawql-onyx-knowledge-workflows",
@@ -377,9 +344,7 @@
       "whenNotToUse": "Not DuckDB cohort SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-onyx-knowledge-workflows"
-      ]
+      "aliases": ["clawql-onyx-knowledge-workflows"]
     },
     {
       "capabilityId": "skill.clawql-ouroboros-workflows",
@@ -389,9 +354,7 @@
       "whenNotToUse": "Not firm-knowledge SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-ouroboros-workflows"
-      ]
+      "aliases": ["clawql-ouroboros-workflows"]
     },
     {
       "capabilityId": "skill.clawql-external-ingest",
@@ -401,9 +364,7 @@
       "whenNotToUse": "Not querying already-ingested corpus",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "clawql-external-ingest"
-      ]
+      "aliases": ["clawql-external-ingest"]
     },
     {
       "capabilityId": "skill.deep-thinking",
@@ -413,9 +374,7 @@
       "whenNotToUse": "Not a data retrieval path",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
-      "aliases": [
-        "deep-thinking"
-      ]
+      "aliases": ["deep-thinking"]
     }
   ]
 }
