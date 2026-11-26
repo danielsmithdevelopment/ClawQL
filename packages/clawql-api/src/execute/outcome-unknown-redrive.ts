@@ -43,6 +43,7 @@ export function redriveOutcomeUnknownWithKeyEffect(
         )
       );
     }
+    // CAS claim happens inside resolvePendingOutcomeUnknown (retry_with_key).
     yield* fromPromise(() => resolvePendingOutcomeUnknown(id, "retry_with_key", home));
     yield* executeClawqlOperationEffect(
       {
@@ -51,6 +52,7 @@ export function redriveOutcomeUnknownWithKeyEffect(
         fields: before.fields ?? undefined,
         where: before.where ?? undefined,
         approvedExecutionId: before.executionId,
+        home,
       },
       loadSpecFn
     );

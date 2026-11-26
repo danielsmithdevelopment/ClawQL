@@ -18,6 +18,7 @@ import {
   pendingTtlHours,
   readPendingExecutionEffect,
   tryConsumeApprovedEffect,
+  tryClaimOutcomeUnknownRedriveEffect,
   updatePendingStatusEffect,
   writePendingExecutionEffect,
 } from "./pending-execution-store.js";
@@ -136,6 +137,8 @@ export const PendingExecutionLive = Layer.succeed(
           consumedAt: null,
           consumedBy: null,
           idempotencyCapable: input.idempotencyCapable === true,
+          redriveClaimedAt: null,
+          redriveClaimedBy: null,
         };
         yield* writePendingExecutionEffect(record, home);
         yield* appendProcessWormLazyEffect({
@@ -333,6 +336,11 @@ export const PendingExecutionLive = Layer.succeed(
             idempotencyKey: mandateIdempotencyKey(executionId),
           },
         });
+        if (next.redriveClaimedAt || next.redriveClaimedBy) {
+          const cleared = { ...next, redriveClaimedAt: null, redriveClaimedBy: null };
+          yield* writePendingExecutionEffect(cleared, home);
+          return cleared;
+        }
         return next;
       }),
 
@@ -376,7 +384,7 @@ export const PendingExecutionLive = Layer.succeed(
           });
           return next;
         }
-        // retry_with_key — authorize re-drive with Idempotency-Key; never a second consume.
+        // retry_with_key — CAS claim then authorize; never a second consume (audit 2.18).
         if (!existing.idempotencyCapable) {
           return yield* Effect.fail(
             new Error(
@@ -384,20 +392,33 @@ export const PendingExecutionLive = Layer.succeed(
             )
           );
         }
-        const now = new Date().toISOString();
+        const claimed = yield* tryClaimOutcomeUnknownRedriveEffect(
+          executionId,
+          defaultConsumedBy(),
+          home
+        );
+        if (!claimed) {
+          return yield* Effect.fail(
+            new Error(
+              `Keyed redrive refused: execution ${executionId} already claimed or not redriveable`
+            )
+          );
+        }
+        const now = claimed.redriveClaimedAt ?? new Date().toISOString();
         yield* appendProcessWormLazyEffect({
           type: "MANDATE_RETRY_AUTHORIZED",
           timestamp: now,
           sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
           metadata: {
             executionId,
-            operationId: existing.operationId,
-            argsHash: existing.argsHash,
+            operationId: claimed.operationId,
+            argsHash: claimed.argsHash,
             idempotencyKey: mandateIdempotencyKey(executionId),
             authorizedBy: "operator",
+            redriveClaimedBy: claimed.redriveClaimedBy,
           },
         });
-        return existing;
+        return claimed;
       }),
   })
 );

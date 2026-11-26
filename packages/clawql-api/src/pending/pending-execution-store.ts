@@ -84,6 +84,8 @@ function normalizeRecord(raw: PendingExecutionRecord): PendingExecutionRecord {
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
     idempotencyCapable: raw.idempotencyCapable ?? false,
+    redriveClaimedAt: raw.redriveClaimedAt ?? null,
+    redriveClaimedBy: raw.redriveClaimedBy ?? null,
   };
 }
 
@@ -346,3 +348,67 @@ export {
   resetPendingPostgresPoolForTests,
 } from "./pending-execution-postgres.js";
 export { pendingStoreBackend, requiresSharedPendingPostgres } from "./pending-store-backend.js";
+
+
+/**
+ * Compare-and-set claim for keyed outcome_unknown redrive (audit 2.18).
+ * Returns the claimed record, or null if another redrive already claimed it.
+ */
+export const tryClaimOutcomeUnknownRedriveEffect = (
+  executionId: string,
+  claimedBy: string,
+  home = resolveClawqlHome()
+): Effect.Effect<PendingExecutionRecord | null, Error> => {
+  const backend = pendingStoreBackend();
+  const claim = (existing: PendingExecutionRecord): PendingExecutionRecord | null => {
+    if (existing.status !== "outcome_unknown" || !existing.idempotencyCapable) return null;
+    if (existing.redriveClaimedAt) return null;
+    const now = new Date().toISOString();
+    return {
+      ...existing,
+      redriveClaimedAt: now,
+      redriveClaimedBy: claimedBy,
+    };
+  };
+
+  if (backend === "file") {
+    return Effect.tryPromise({
+      try: async () => {
+        const path = recordPath(executionId, home);
+        return withPendingFileLock(path, async () => {
+          let raw: unknown;
+          try {
+            raw = JSON.parse(await readFile(path, "utf8")) as unknown;
+          } catch (e: unknown) {
+            if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+            throw e;
+          }
+          if (!isRecord(raw)) return null;
+          const next = claim(normalizeRecord(raw));
+          if (!next) return null;
+          await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, {
+            encoding: "utf8",
+            mode: FILE_MODE,
+          });
+          await chmod(path, FILE_MODE);
+          return next;
+        });
+      },
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
+  }
+
+  // sqlite / postgres: read-modify-write on payload (single-row update).
+  return Effect.gen(function* () {
+    const existing = yield* readPendingExecutionEffect(executionId, home);
+    if (!existing) return null;
+    const next = claim(existing);
+    if (!next) return null;
+    // Re-check under write: updatePendingStatus does not CAS redrive fields;
+    // write full record then re-read.
+    yield* writePendingExecutionEffect(next, home);
+    const after = yield* readPendingExecutionEffect(executionId, home);
+    if (!after || after.redriveClaimedBy !== claimedBy) return null;
+    return after;
+  });
+};

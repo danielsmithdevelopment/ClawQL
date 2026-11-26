@@ -20,6 +20,8 @@ export type ExecuteClawqlOperationParams = {
    * `CLAWQL_SESSION_ID` / API key id.
    */
   sessionId?: string;
+  /** Pending-execution home override (non-default CLAWQL_HOME stores). */
+  home?: string;
 };
 
 export type ExecuteOperationResult = { ok: true; data: unknown } | { ok: false; error: string };
