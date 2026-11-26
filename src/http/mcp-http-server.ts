@@ -510,13 +510,10 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   // GraphQL is opt-in (audit 2.02). Legacy CLAWQL_HTTP_SKIP_GRAPHQL=1 still skips.
-  const enableGraphql = envFlagOn("CLAWQL_HTTP_GRAPHQL") && !envFlagOn("CLAWQL_HTTP_SKIP_GRAPHQL");
-  const tierRaw = process.env.CLAWQL_TIER?.trim().toLowerCase();
-  if (enableGraphql && tierRaw === "regulated") {
-    throw new Error(
-      "CLAWQL_HTTP_GRAPHQL is refused in the regulated tier — GraphQL bypasses execute-core governance"
-    );
-  }
+  const { assertHttpGraphqlAllowedEffect, httpGraphqlEnabledEffect } =
+    await import("./mcp-http-graphql-gate.js");
+  await Effect.runPromise(assertHttpGraphqlAllowedEffect(process.env));
+  const enableGraphql = await Effect.runPromise(httpGraphqlEnabledEffect(process.env));
   if (!options.skipGraphqlAttach && enableGraphql) {
     const { attachGraphqlHttpToMcpApp } = await import("./graphql-http-attach.js");
     await attachGraphqlHttpToMcpApp(app, { auth: applyGatewayAuth });
@@ -1095,11 +1092,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   return app;
 }
 
-function isLoopbackBindHost(host: string): boolean {
-  const h = host.trim().toLowerCase();
-  return h === "127.0.0.1" || h === "localhost" || h === "::1";
-}
-
 export async function startMcpHttpServer(): Promise<void> {
   const { maybeInitOtelTracing } = await import("../observability/otel-tracing.js");
   await maybeInitOtelTracing();
@@ -1121,21 +1113,13 @@ export async function startMcpHttpServer(): Promise<void> {
   await ensureProcessWormHostBooted();
 
   const listenHost = process.env.MCP_HOST?.trim() || "127.0.0.1";
-  const tier = process.env.CLAWQL_TIER?.trim().toLowerCase() || "standard";
   const { Effect } = await import("effect");
   const { resolveAuthMode } = await import("clawql-auth/gateway");
   const authMode = await Effect.runPromise(resolveAuthMode());
-  if (authMode === "noAuth") {
-    if (tier === "regulated") {
-      throw new Error("CLAWQL_TIER=regulated refuses CLAWQL_AUTH_MODE=noAuth — set apiKey or oidc");
-    }
-    if (!isLoopbackBindHost(listenHost) && !envFlagOn("CLAWQL_ALLOW_UNAUTHENTICATED")) {
-      throw new Error(
-        `CLAWQL_AUTH_MODE=noAuth refused on non-loopback bind ${listenHost}; ` +
-          "set MCP_HOST=127.0.0.1, enable apiKey/oidc, or set CLAWQL_ALLOW_UNAUTHENTICATED=1"
-      );
-    }
-  }
+  const { assertMcpHttpAuthBindPolicyEffect } = await import("./mcp-http-auth-bind.js");
+  await Effect.runPromise(
+    assertMcpHttpAuthBindPolicyEffect({ listenHost, authMode, env: process.env })
+  );
 
   const app = await createMcpHttpApp({ host: listenHost });
   const { logStartupSummary } = await import("../host/startup-summary.js");
