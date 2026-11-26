@@ -6,11 +6,17 @@
 (*   - Approve on mcp is never enabled (WeakMcpApprove = FALSE).           *)
 (*   - Under regulated, approve is enabled only on console.                *)
 (*                                                                         *)
+(* Agent credentials are mcp-scoped (audit Y1/Z1): an agent principal can  *)
+(* only present credentials on Channel = "mcp" unless                      *)
+(* WeakAgentCredentialOnOperator is set (bug oracle for agent key on the   *)
+(* operator/console approve path). We do NOT assume KindOf # agent away.   *)
+(*                                                                         *)
 (* Ghost WORM log records HUMAN_APPROVAL / HUMAN_REJECTION /               *)
 (* OPERATOR_APPROVAL. HUMAN_APPROVAL is reserved for kind = human          *)
 (* (audit #1548: operator-key path must not be logged as human).           *)
 (*                                                                         *)
-(* WeakMcpApprove = TRUE enables approve on mcp → NoAgentApproval fails.   *)
+(* WeakMcpApprove = TRUE relaxes ApproveEnabled to allow mcp →             *)
+(* NoAgentApproval fails via the same Approve action (no bypass action).   *)
 (***************************************************************************)
 
 EXTENDS Naturals, FiniteSets, Sequences, TLC
@@ -20,7 +26,9 @@ CONSTANTS
   Humans,            \* principals of kind human
   Operators,         \* principals of kind operator
   Quorum,            \* distinct approvers required
-  WeakMcpApprove     \* BOOLEAN — TRUE = allow mcp approve (bug oracle)
+  WeakMcpApprove,    \* BOOLEAN — TRUE = ApproveEnabled allows mcp (bug oracle)
+  WeakAgentCredentialOnOperator
+  \* BOOLEAN — TRUE = agent principal may approve on operator/console (Y1/Z1 oracle)
 
 Principals == Agents \union Humans \union Operators
 
@@ -68,7 +76,7 @@ Init ==
   /\ wormLog = << >>
   /\ requester \in Principals
 
-\* Approve enabled only when channel policy allows.
+\* Channel policy (resume-core.ts). WeakMcpApprove relaxes the mcp refuse.
 ApproveEnabled ==
   /\ IF WeakMcpApprove
      THEN TRUE
@@ -77,11 +85,18 @@ ApproveEnabled ==
      THEN Channel = "console"
      ELSE TRUE
 
+\* Y1/Z1: agent credentials are mcp-scoped unless the weak oracle admits them
+\* on operator/console (the audit bug — agent key reached the operator path).
+ApproveCredentialOK(p) ==
+  \/ KindOf(p) \in {"human", "operator"}
+  \/ (KindOf(p) = "agent" /\ Channel = "mcp")
+  \/ (KindOf(p) = "agent" /\ WeakAgentCredentialOnOperator /\ Channel \in {"operator", "console"})
+
 Approve(p) ==
   /\ status = "pending"
   /\ p \in Principals
   /\ p # requester
-  /\ KindOf(p) # "agent"
+  /\ ApproveCredentialOK(p)
   /\ ApproveEnabled
   /\ \A i \in DOMAIN approvals : approvals[i].principal # p
   /\ LET rec == [principal |-> p, channel |-> Channel]
@@ -96,21 +111,6 @@ Approve(p) ==
        /\ IF Cardinality({ nextApprovals[i].principal : i \in DOMAIN nextApprovals }) >= Quorum
           THEN status' = "approved"
           ELSE status' = status
-  /\ UNCHANGED <<Channel, Tier, requester>>
-
-\* Weak oracle: mcp approve succeeds even when guards should refuse.
-WeakMcpApproveAction(p) ==
-  /\ WeakMcpApprove
-  /\ Channel = "mcp"
-  /\ status = "pending"
-  /\ p \in Principals
-  /\ p # requester
-  /\ LET rec == [principal |-> p, channel |-> Channel]
-         entry == [type |-> "HUMAN_APPROVAL", principal |-> p, channel |-> Channel]
-     IN
-       /\ approvals' = Append(approvals, rec)
-       /\ wormLog' = Append(wormLog, entry)
-       /\ status' = "approved"
   /\ UNCHANGED <<Channel, Tier, requester>>
 
 Decline(p) ==
@@ -130,7 +130,6 @@ Execute ==
 -----------------------------------------------------------------------------
 Next ==
   \/ \E p \in Principals : Approve(p)
-  \/ \E p \in Principals : WeakMcpApproveAction(p)
   \/ \E p \in Principals : Decline(p)
   \/ Execute
 

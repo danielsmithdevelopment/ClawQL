@@ -38,10 +38,11 @@ cross-replica guarantee. Prefer "at most once", never "exactly once".
 
 | Spec                         | Code                                                                 |
 | ---------------------------- | -------------------------------------------------------------------- |
+| `StartRequest` / `inflight`  | `replay.seen` check before settle (gap before `remember`)            |
+| `SettleAllow` / `cache`      | `facilitator.settle` then `replay.remember` then allow               |
 | `ReplayDeny` / `cache`       | `replay-cache.ts` `seen` / `remember` (module singleton, max 10_000) |
-| `AtomicAllow` settle step    | `x402-enforcement-service.ts` `facilitator.settle` before allow      |
 | `received`                   | reconcile writes `X402_PAYMENT_RECEIVED` only when `txHash` present   |
-| `WeakAllowSkipSettle`        | `settle: false` path (refused under `CLAWQL_TIER=regulated`)         |
+| `WeakSkipSettle`             | `settle: false` path (refused under `CLAWQL_TIER=regulated`)         |
 | `WeakFacilitatorDoubleSettle`| Facilitator that accepts a second settle of the same nonce           |
 
 ```bash

@@ -85,9 +85,11 @@ regulated approves on the console path.
 | ------------------------ | -------------------------------------------------------------------- |
 | `ApproveEnabled` (mcp)   | `resume-core.ts` — `channel === "mcp" && decision === "approve"` refuse |
 | `ApproveEnabled` (tier)  | `resume-core.ts` — regulated + approve + `channel !== "console"` refuse |
+| `ApproveCredentialOK`    | Y1/Z1 — agent credentials are mcp-scoped; operator/console is human/operator |
 | `Approve` / worm types   | `pending-execution-service.ts` decide + WORM append (`HUMAN_APPROVAL` / decline) |
 | `KindOf` / `OPERATOR_APPROVAL` | Target ghost type for operator-key path (not logged as human)   |
-| `WeakMcpApprove`         | **Bug oracle** — `ApproveEnabled` ignores mcp refuse (pre-fix)     |
+| `WeakMcpApprove`         | **Bug oracle** — same `Approve` action with mcp refuse relaxed (no bypass action) |
+| `WeakAgentCredentialOnOperator` | **Bug oracle** — agent key accepted on operator/console (Y1/Z1) |
 | `HumanRecordIsHuman`     | Target: operator key ≠ `HUMAN_APPROVAL` (audit #1548)                |
 
 ```bash
