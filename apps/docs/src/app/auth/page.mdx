@@ -47,9 +47,9 @@ ClawQL implements the open ID-JAG (Identity Assertion JWT Authorization Grant) e
 
 ClawQL supports both roles independently:
 
-**As a Resource App Authorization Server (consumer role).** An enterprise's identity provider — Okta today, others as they add support — mints an ID-JAG assertion when an employee logs in. ClawQL verifies that assertion against the org's JWKS, maps the employee's IdP groups to a scoped access token, and the employee gets access with no individual OAuth consent screen. This is the standard EMA flow: the org's existing IdP stays the source of truth, ClawQL is the connector accepting its assertions.
+**As a Resource App Authorization Server (consumer role).** An enterprise's identity provider — Okta today, others as they add support — mints an ID-JAG assertion when an employee logs in. ClawQL verifies that assertion against the org's JWKS, maps the employee's identity-provider groups to a scoped access token, and the employee gets access with no individual OAuth consent screen. This is the standard EMA flow: the org's existing identity provider stays the source of truth, ClawQL is the connector accepting its assertions.
 
-**As an Enterprise Identity Provider (issuer role).** ClawQL can also mint ID-JAG assertions itself, for organizations that want zero-touch provisioning without routing session-token custody through a third-party identity SaaS. In this mode, ClawQL is the org's IdP for the purposes of MCP connector access — any EMA-compliant connector, not just ClawQL's own, can accept assertions ClawQL issues.
+**As an Enterprise Identity Provider (issuer role).** ClawQL can also mint ID-JAG assertions itself, for organizations that want zero-touch provisioning without routing session-token custody through a third-party identity SaaS. In this mode, ClawQL is the org's identity provider for the purposes of MCP connector access — any EMA-compliant connector, not just ClawQL's own, can accept assertions ClawQL issues.
 
 An organization can run either role alone or both simultaneously, with no third-party identity provider involved in the AI/MCP path at all.
 
@@ -84,6 +84,6 @@ Every authentication event — a token issued, a token refused, a refresh that s
 | Outbound token expired overnight                            | Proactive refresh, 60 seconds before expiry                             |
 | Concurrent sessions invalidating each other's refresh token | Mutex — one refresh per provider, others queue                          |
 | Per-user OAuth consent screens at enterprise scale          | EMA / ID-JAG, consumer role                                             |
-| Third-party identity provider holding session-token custody | EMA / ID-JAG, issuer role — ClawQL as the IdP                           |
-| Legacy SAML-based internal SSO                              | Out of scope — handled upstream by the org's IdP before reaching ClawQL |
+| Third-party identity provider holding session-token custody | EMA / ID-JAG, issuer role — ClawQL as the identity provider             |
+| Legacy SAML-based internal SSO                              | Out of scope — handled upstream by the org's identity provider before reaching ClawQL |
 | Verifying who did what, when                                | Every auth event in the audit trail                                     |
