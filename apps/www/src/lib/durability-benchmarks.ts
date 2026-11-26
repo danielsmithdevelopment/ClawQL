@@ -29,7 +29,7 @@ export const durabilityBenchmarkMeta = {
   artifactComparison: 'docs/benchmarks/durability-proof/comparison/evidence.json',
   statusDoc: 'docs/benchmarks/durability-proof/STATUS.md',
   harnessFleet: 'scripts/benchmarks/fleet-phased-kill/',
-  harnessKillMid: 'scripts/benchmarks/security-suite/kill-mid-write/',
+  harnessKillMid: 'scripts/benchmarks/kill-mid-write/',
 } as const
 
 export type DurabilityColumnChip = {

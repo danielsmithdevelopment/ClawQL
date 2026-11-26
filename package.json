@@ -133,6 +133,7 @@
     "benchmark:fleet-phased-kill": "node scripts/benchmarks/fleet-phased-kill/run-board.mjs",
     "benchmark:fleet-ttl-tradeoff": "node scripts/benchmarks/fleet-phased-kill/build-ttl-tradeoff.mjs",
     "check:evidence-no-secrets": "node scripts/benchmarks/check-evidence-no-secrets.mjs",
+    "check:www-evidence-paths": "node scripts/benchmarks/check-www-evidence-paths.mjs",
     "benchmark:gateway-multi-multiturn": "node scripts/benchmarks/gateway-multi-multiturn.mjs",
     "benchmark:governance-policy-depth": "node scripts/benchmarks/governance-policy-depth/run-board.mjs",
     "benchmark:governance-policy-depth:cells": "node scripts/benchmarks/governance-policy-depth/run-cells.mjs",

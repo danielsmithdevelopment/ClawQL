@@ -391,6 +391,20 @@ jobs:
           node scripts/benchmarks/check-evidence-no-secrets.mjs --self-test
           node scripts/benchmarks/check-evidence-no-secrets.mjs
 
+  # Audit 11.03 — www lib must cite evidence paths that exist in-repo (thin; not 9.08 codegen).
+  www-evidence-paths:
+    name: WWW evidence paths
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Self-test + check cited artifact paths
+        run: |
+          node scripts/benchmarks/check-www-evidence-paths.mjs --self-test
+          node scripts/benchmarks/check-www-evidence-paths.mjs
+
   supply-chain:
     name: Supply chain (OSV + Trivy + SBOM)
     needs: [lint, workflow-scripts]
