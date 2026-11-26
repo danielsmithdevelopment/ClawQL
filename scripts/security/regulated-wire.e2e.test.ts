@@ -467,20 +467,30 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   it("10) inference remote model refused; sink receives nothing", async () => {
     // F1: gateway reads CLAWQL_OPENAI_BASE_URL (not OPENAI_BASE_URL). Require a live
     // inference process and an HTTP refusal — a crash must not count as pass.
+    // Regulated requires virtual-key enforcement (audit 6.03).
     expect(existsSync(INFERENCE_BIN), "packages/clawql-inference/bin/clawql-inference.mjs").toBe(
       true
     );
     const before = inferenceSink.requests.length;
+    const infHome = await makeWorkDir("clawql-wire-inf-");
+    const { createVirtualKey } = await import(
+      "../../packages/clawql-inference/src/keys/store.js"
+    );
+    const vk = await createVirtualKey(
+      { team: "wire" },
+      { CLAWQL_HOME: infHome, CLAWQL_INFERENCE_KEYS_ENABLED: "1" }
+    );
     const port = await pickFreePort();
     const child = spawn(process.execPath, [INFERENCE_BIN], {
       env: {
         PATH: process.env.PATH,
         HOME: process.env.HOME,
-        CLAWQL_HOME: home,
+        CLAWQL_HOME: infHome,
         CLAWQL_TIER: "regulated",
         CLAWQL_INFERENCE_LOCAL_ONLY: "1",
-        CLAWQL_INFERENCE_KEYS_ENABLED: "0",
+        CLAWQL_INFERENCE_KEYS_ENABLED: "1",
         CLAWQL_INFERENCE_PORT: String(port),
+        CLAWQL_INFERENCE_HOST: "127.0.0.1",
         // Provider base the gateway actually reads — sink must stay untouched.
         CLAWQL_OPENAI_BASE_URL: `${inferenceSink.baseUrl}/v1`,
       },
@@ -514,7 +524,10 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     expect(listening, `inference never listened: ${stderr.slice(-800)}`).toBe(true);
     const res = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${vk.secret}`,
+      },
       body: JSON.stringify({
         model: "openai/gpt-4o",
         messages: [{ role: "user", content: "hi" }],
@@ -547,8 +560,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       });
       const text = toolResultText(result.body);
       expect(text, `ssrf response for ${url}: ${text}`).not.toMatch(/HTTPS required/i);
+      // clawql-core egress messages vary: "must not target private…", "host is not allowed"
       expect(text, `ssrf response for ${url}: ${text}`).toMatch(
-        /private|loopback|link-local|must not target/i
+        /private|loopback|link-local|must not target|host is not allowed/i
       );
     }
     expect(apiSink.requests.length).toBe(before);
