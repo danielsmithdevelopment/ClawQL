@@ -393,13 +393,24 @@ for item in list(kind.get("extraEnvAppend") or []) + list(
 ):
     by_name[item["name"]] = item
 merged["extraEnvAppend"] = list(by_name.values())
+# values.yaml fullnameOverride is clawql-mcp-http — a second release in the
+# same namespace collides on NetworkPolicy/Deployment names. Give worm-off
+# its own fullname so Helm can install alongside the main release.
+merged["fullnameOverride"] = "clawql-wormoff-mcp-http"
 Path(sys.argv[3]).write_text(yaml.safe_dump(merged, sort_keys=False))
 PY
 helm upgrade --install "${REL}-wormoff" "${ROOT}/manifests/charts/clawql-mcp" \
   -n "${NS}" \
   -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
   -f "${ARTIFACT_DIR}/values-kind-wormoff.yaml" \
-  --wait=false || true
+  --wait=false
+# Fail fast if the worm-off release did not create any pods (ownership collision, etc.).
+if ! kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=${REL}-wormoff" -o name | grep -q .; then
+  echo "K1 FAIL: worm-off helm install produced no pods" >&2
+  helm status "${REL}-wormoff" -n "${NS}" >&2 || true
+  dump_failure
+  exit 1
+fi
 
 # E2: do not treat ImagePullBackOff / ContainerCreating as a WORM refusal success.
 echo "==> K1 wait until worm-off containers leave image-pull / creating"
