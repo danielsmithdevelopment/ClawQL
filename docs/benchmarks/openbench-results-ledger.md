@@ -14,7 +14,7 @@
 | Item    | State                                                                                       |
 | ------- | ------------------------------------------------------------------------------------------- |
 | Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)            |
-| Harness | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/) — 8 confirmatory + diagnostics |
+| Harness | [`archive/pageindex-ab/`](./archive/pageindex-ab/) — 8 confirmatory + diagnostics |
 | Control | `H-idf` = vault IDF + vector                                                                |
 | Next    | Corpus (+ list + code strata) → freeze → scored run                                         |
 

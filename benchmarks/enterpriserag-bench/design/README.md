@@ -37,7 +37,7 @@ Artifacts: `results/retrieval-maxp-k.json` + `.md`. Corpus under `data/` is giti
 
 ## Related
 
-- [`next-hard-content-set.md`](../../pageindex-ab/design/next-hard-content-set.md)
+- [`next-hard-content-set.md`](../../../docs/benchmarks/archive/pageindex-ab/design/next-hard-content-set.md)
 - [`post-8.0-vectify-pageindex.md`](../../../docs/backlog/post-8.0-vectify-pageindex.md)
 
 ## First slice result (2026-09-30)

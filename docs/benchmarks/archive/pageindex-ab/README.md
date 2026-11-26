@@ -1,6 +1,8 @@
+> **Archived.** Moved from `docs/benchmarks/archive/pageindex-ab/` after the **8.0** `pageindex_*` purge. See [`ARCHIVE.md`](ARCHIVE.md). Active CI workflow removed.
+
 # Memory stack default-route A/B (`pageindex-ab`)
 
-Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md) **v0.2**.
+Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../pageindex-ab-eval-spec-v0.1.md) **v0.2**.
 
 **Question:** does each addition (BM25 ranker, PageIndex, CodeGraph) improve **today's** omit-`sources` default (`vault` IDF + `vector`) on **task completion**?
 
@@ -12,12 +14,12 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **H-idf baseline (grown set, post-pass):** strict **0.536** on n=358 ([`design/hidf-baseline-hard-candidate.json`](design/hidf-baseline-hard-candidate.json)); well_structured 0.330, converted_pdf/weak 0.875, code 1.0. Acceptance pass recorded in [`HUMAN_PASS_RESULT.json`](design/HUMAN_PASS_RESULT.json).
 
-**Freeze critical path:** ClawQL PageIndex **purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test **void** ([`design/fair-test-void-retest.md`](design/fair-test-void-retest.md)); hard-candidate **grown** (~238 gold-clean; ~9pp single-comparison MDE with deterministic Flash-lite). **Human pass** = all 12 CodeGraph prove keys + stratified **60** doc sample ([`HUMAN_PASS_ONE_SITTING.md`](design/HUMAN_PASS_ONE_SITTING.md); ≥3 sample defects → fix builder). **Track B** beat locked (additive): Net≥5 for **grep+CodeGraph vs grep** + no-harm + no-tools + usage ([`codegraph-prove-decision.lock.json`](design/codegraph-prove-decision.lock.json); clear to sign). Purge inventory: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
+**Freeze critical path:** ClawQL PageIndex **purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test **void** ([`design/fair-test-void-retest.md`](design/fair-test-void-retest.md)); hard-candidate **grown** (~238 gold-clean; ~9pp single-comparison MDE with deterministic Flash-lite). **Human pass** = all 12 CodeGraph prove keys + stratified **60** doc sample ([`HUMAN_PASS_ONE_SITTING.md`](design/HUMAN_PASS_ONE_SITTING.md); ≥3 sample defects → fix builder). **Track B** beat locked (additive): Net≥5 for **grep+CodeGraph vs grep** + no-harm + no-tools + usage ([`codegraph-prove-decision.lock.json`](design/codegraph-prove-decision.lock.json); clear to sign). Purge inventory: [`8.0.0-purge-inventory-spec-v0.1.md`](../../../releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 
 ```
-benchmarks/pageindex-ab/
+docs/benchmarks/archive/pageindex-ab/
   README.md
   arms/arms.json          # 8 confirmatory (2×2×2) + union/gated extras + diagnostics
   schema/                 # answer / question / manifest
@@ -54,18 +56,18 @@ Diagnostics (`D-*`): alone baselines, grep, whole-doc, structured ontology, Duck
 ```bash
 npm run build -w clawql-pageindex -w clawql-memory
 
-python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
-python3 benchmarks/pageindex-ab/scripts/offline_ranker_compare.py
+python3 docs/benchmarks/archive/pageindex-ab/scripts/validate_scaffold.py
+python3 docs/benchmarks/archive/pageindex-ab/scripts/offline_ranker_compare.py
 
 # Contaminated-smoke (NEVER cite)
-node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
+node docs/benchmarks/archive/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
 
 # Hard candidate (preferred; Harvey/ExtractBench excluded)
-python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
-node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus hard-candidate
+python3 docs/benchmarks/archive/pageindex-ab/scripts/build_hard_candidate.py
+node docs/benchmarks/archive/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus hard-candidate
 
 # Free displacement check (converted_pdf gold-in-IDF-before-merge?)
-node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
+node docs/benchmarks/archive/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
 ```
 
 Agent-lite (cheap OpenRouter — retrieve → one completion):
@@ -77,7 +79,7 @@ export PAGEINDEX_AB_MODEL=google/gemini-2.5-flash-lite
 export PAGEINDEX_AB_LIMIT=0          # 0 = full corpus
 export PAGEINDEX_AB_TRIALS=3
 export PAGEINDEX_AB_EXTRA_ARMS=1     # union + gated
-node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
+node docs/benchmarks/archive/pageindex-ab/scripts/run_agent_factorial.mjs
 ```
 
 GHA PR triggers:

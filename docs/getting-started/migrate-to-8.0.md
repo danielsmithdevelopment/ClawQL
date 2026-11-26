@@ -154,7 +154,7 @@ Some converters promote **table-of-contents leader-dot lines** and **numbered li
 
 ```bash
 # Report artifact ATX headings in your vault (same rules as the product filter)
-python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
+python3 docs/benchmarks/archive/pageindex-ab/scripts/flag_artifact_gold_keys.py --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
 
 # Dry-run demote report
 node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
@@ -163,7 +163,7 @@ node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN
 node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH" --write
 ```
 
-Regression coverage: TOC + numbered-list + postal-junk cases in `packages/clawql-memory/src/recall/read-around.test.ts`. Scan notes: [`benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md`](../../benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md).
+Regression coverage: TOC + numbered-list + postal-junk cases in `packages/clawql-memory/src/recall/read-around.test.ts`. Scan notes: [`docs/benchmarks/archive/pageindex-ab/design/vault-artifact-scan-summary.md`](../benchmarks/archive/pageindex-ab/design/vault-artifact-scan-summary.md).
 
 ## Docs
 
