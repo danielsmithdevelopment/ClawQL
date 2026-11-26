@@ -55,7 +55,8 @@ export type EnforceX402GateInput = {
   correlationId?: string;
   /**
    * Audit 6.01: settle defaults to true. Set false only for isolated unit tests
-   * that mock verify without a settle endpoint.
+   * that mock verify without a settle endpoint. `CLAWQL_TIER=regulated` refuses
+   * `settle: false` (settle-before-allow; facilitator is the cross-replica guarantee).
    */
   settle?: boolean;
   env?: NodeJS.ProcessEnv;
@@ -436,6 +437,25 @@ export function x402EnforcementLiveLayer(): Layer.Layer<
           }
 
           // Audit 6.01: settle before allow (default on).
+          // Regulated refuses settle:false — replay safety rests on the facilitator
+          // refusing a second settle; verify-only must not mint an allow+remember.
+          if (input.settle === false && env.CLAWQL_TIER?.trim().toLowerCase() === "regulated") {
+            const reason =
+              "CLAWQL_TIER=regulated refuses x402 settle:false (settle-before-allow required)";
+            yield* recordPaymentFailed({
+              tenantId,
+              resource: gate.resource,
+              reason,
+              correlationId: input.correlationId,
+              env,
+            });
+            return {
+              action: "deny" as const,
+              status: 402 as const,
+              reason,
+              resource: gate.resource,
+            };
+          }
           const shouldSettle = input.settle !== false;
           let txHash: string | undefined;
           if (shouldSettle) {
