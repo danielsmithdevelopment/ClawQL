@@ -46,6 +46,7 @@ ClawQL fails closed on networked surfaces. Flags below are **escape hatches** (o
 | `CLAWQL_SOURCES_ALLOW_HTTP`                                                    | unset (off)              | Custom sources over cleartext HTTP                                                     | Prefer HTTPS                      |
 | `CLAWQL_SOURCES_GRPC_INSECURE`                                                 | unset (off)              | gRPC custom sources without TLS                                                        | Prefer TLS                        |
 | `CLAWQL_X402_ALLOW_INSECURE_PROOF`                                             | unset (off)              | Signature-only x402 proofs without facilitator verify (unit tests)                     | **Yes**                           |
+| `EnforceX402GateInput.settle: false`                                           | settle defaults **on**   | Verify-only allow (unit tests); skips facilitator settle before `replay.remember`      | **Yes** — settle-before-allow     |
 | `CLAWQL_AP2_ALLOW_WITHOUT_X402`                                                | unset (off)              | AP2 path without x402 settlement                                                       | Prefer settlement                 |
 | `CLAWQL_DASHBOARD_ALLOW_K8S_SYNC`                                              | off in production builds | Dashboard Vault/`kubectl` sync routes                                                  | Trusted admin machine only        |
 | `CLAWQL_HARNESS_ALLOW_UNSANDBOXED`                                             | unset (off)              | Bench harness without sandbox                                                          | Lab only                          |
@@ -79,7 +80,7 @@ ClawQL fails closed on networked surfaces. Flags below are **escape hatches** (o
 
 1. Leave escape hatches **unset** unless you are on loopback and know why.
 2. For anything networked: `CLAWQL_AUTH_MODE=apiKey|oidc`, real webhook tokens, NATS creds + `tls://`, local embeddings (or allowlisted HTTP).
-3. For payments: hash-only operator key and/or dedicated approve OIDC audience — see [`outbound-payment-approve.md`](./outbound-payment-approve.md).
+3. For payments: hash-only operator key and/or dedicated approve OIDC audience — see [`outbound-payment-approve.md`](./outbound-payment-approve.md). Configure a facilitator URL; x402 **at-most-once** allow across replicas depends on the facilitator refusing a second settle of the same authorization nonce (the in-process replay cache is per process and evicts at 10_000 entries — it is not the cross-replica guarantee). Under regulated, `settle: false` is refused.
 4. For regulated: set `CLAWQL_TIER=regulated` (or Helm `values-regulated.yaml`) and do **not** try to disable WORM / enforcement / local-only inference.
 
 ## Dynamic pass (CI)

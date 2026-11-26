@@ -11,6 +11,46 @@ consume or the program write-intent journal. See
 | `MoneyRequestStatus.*`        | Money-request / invoice status graph                |
 | `AcpCheckoutStatus.*`         | ACP checkout session status graph                   |
 | `PaymentsLedgerLock.*`        | Multi-node tenant ledger lock + fencing             |
+| `X402Settlement.*`            | x402 settle-before-allow + facilitator at-most-once |
+
+## x402 settle-before-allow
+
+| File                                     | Role                                                                 |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| `X402Settlement.tla`                     | Spec — request-id×proof inflight, per-process replay cache, facilitator settle |
+| `X402Settlement.cfg`                     | TLC — target (both weak flags FALSE); must pass                      |
+| `X402SettlementWeakSkipSettle.cfg`       | TLC — allow after verify without settle; must fail `AllowImpliesSettled` |
+| `X402SettlementWeakDoubleSettle.cfg`     | TLC — facilitator accepts second settle; must fail `AllowAtMostOnce` |
+| `X402SettlementWeakDoubleSettleSameReplica.cfg` | TLC — single replica + two request ids; must fail `AllowAtMostOnce` |
+
+### Invariants
+
+1. **AllowImpliesSettled** — every allowed request has a successful settle.
+2. **AllowAtMostOnce** — each proof is allowed at most once across all replicas.
+3. **ReceivedAfterSettle** — `X402_PAYMENT_RECEIVED` only after settle.
+
+**Claim caveat:** with per-replica caches and a check-then-remember gap,
+`AllowAtMostOnce` holds only because the facilitator refuses a second settle of
+the same authorization nonce. The weak double-settle config makes that
+dependency explicit — do not treat the in-process replay cache as the
+cross-replica guarantee. Prefer "at most once", never "exactly once".
+
+### Mapping to code
+
+| Spec                         | Code                                                                 |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `StartRequest` / `inflight`  | `replay.seen` check before settle; request-id×proof pairs (same-replica race) |
+| `SettleAllow` / `cache`      | `facilitator.settle` then `replay.remember` then allow               |
+| `ReplayDeny` / `cache`       | `replay-cache.ts` `seen` / `remember` (module singleton, max 10_000) |
+| `received`                   | reconcile writes `X402_PAYMENT_RECEIVED` only when `txHash` present   |
+| `WeakSkipSettle`             | `settle: false` path (refused under `CLAWQL_TIER=regulated`)         |
+| `WeakFacilitatorDoubleSettle`| Facilitator that accepts a second settle of the same nonce           |
+
+```bash
+./scripts/formal/run-x402-settlement-tlc.sh
+```
+
+Expect: atomic exit 0; all three weak configs exit ≠ 0.
 
 ## Coverage finding (critical)
 
