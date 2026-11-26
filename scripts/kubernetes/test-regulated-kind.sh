@@ -69,14 +69,16 @@ nodes:
 EOF
 
 kind delete cluster --name "${CLUSTER_NAME}" 2>/dev/null || true
-kind create cluster --name "${CLUSTER_NAME}" --config /tmp/clawql-regulated-kind.yaml --wait 120s
-export KUBECONFIG
-KUBECONFIG="$(kind get kubeconfig --name "${CLUSTER_NAME}")"
-export KUBECONFIG
+# disableDefaultCNI: control-plane will not be Ready until Calico is up — do not --wait.
+kind create cluster --name "${CLUSTER_NAME}" --config /tmp/clawql-regulated-kind.yaml --wait 0s
+KUBECONFIG_FILE="${ARTIFACT_DIR}/kind-${CLUSTER_NAME}.kubeconfig"
+kind get kubeconfig --name "${CLUSTER_NAME}" >"${KUBECONFIG_FILE}"
+export KUBECONFIG="${KUBECONFIG_FILE}"
 
 echo "==> Install Calico ${CALICO_VERSION}"
 kubectl apply -f "https://raw.githubusercontent.com/projectcalico/calico/${CALICO_VERSION}/manifests/calico.yaml"
 kubectl -n kube-system wait --for=condition=ready pod -l k8s-app=calico-node --timeout=300s
+kubectl wait --for=condition=Ready nodes --all --timeout=180s
 
 kubectl create namespace "${NS}"
 
@@ -207,14 +209,16 @@ helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
 }
 
 echo "==> K5: every Service is ClusterIP"
-kubectl -n "${NS}" get svc -o json | python3 - <<'PY'
-import json,sys
-doc=json.load(sys.stdin)
-bad=[]
-for item in doc.get("items",[]):
-    t=item.get("spec",{}).get("type")
-    name=item.get("metadata",{}).get("name")
-    if t in ("LoadBalancer","NodePort"):
+kubectl -n "${NS}" get svc -o json >"${ARTIFACT_DIR}/services.json"
+python3 - "${ARTIFACT_DIR}/services.json" <<'PY'
+import json, sys
+from pathlib import Path
+doc = json.loads(Path(sys.argv[1]).read_text())
+bad = []
+for item in doc.get("items", []):
+    t = item.get("spec", {}).get("type")
+    name = item.get("metadata", {}).get("name")
+    if t in ("LoadBalancer", "NodePort"):
         bad.append(f"{name}:{t}")
 if bad:
     raise SystemExit(f"K5 FAIL non-ClusterIP services: {bad}")
@@ -222,51 +226,57 @@ print("K5 OK: all Services ClusterIP")
 PY
 
 echo "==> K6: live pod security context"
-kubectl -n "${NS}" get pods -l app.kubernetes.io/name=clawql-mcp -o json | python3 - <<'PY'
-import json,sys
-doc=json.load(sys.stdin)
-pods=doc.get("items",[])
+kubectl -n "${NS}" get pods -l app.kubernetes.io/name=clawql-mcp -o json >"${ARTIFACT_DIR}/pods.json"
+python3 - "${ARTIFACT_DIR}/pods.json" <<'PY'
+import json, sys
+from pathlib import Path
+doc = json.loads(Path(sys.argv[1]).read_text())
+pods = doc.get("items", [])
 if not pods:
     raise SystemExit("K6 FAIL: no clawql-mcp pods")
 for pod in pods:
-    name=pod["metadata"]["name"]
-    for c in pod["spec"].get("containers",[]):
-        sc=c.get("securityContext") or {}
+    name = pod["metadata"]["name"]
+    for c in pod["spec"].get("containers", []):
+        sc = c.get("securityContext") or {}
         if sc.get("allowPrivilegeEscalation") is not False:
             raise SystemExit(f"K6 FAIL {name}/{c['name']}: allowPrivilegeEscalation")
-        if sc.get("readOnlyRootFilesystem") is not False and sc.get("readOnlyRootFilesystem") is not True:
-            # Prefer true; accept explicitly false only if documented — require true
-            if sc.get("readOnlyRootFilesystem") is not True:
-                print(f"WARN {name}/{c['name']}: readOnlyRootFilesystem not true ({sc.get('readOnlyRootFilesystem')})")
-        caps=(sc.get("capabilities") or {}).get("drop") or []
+        if sc.get("readOnlyRootFilesystem") is not True:
+            print(
+                f"WARN {name}/{c['name']}: readOnlyRootFilesystem not true "
+                f"({sc.get('readOnlyRootFilesystem')})"
+            )
+        caps = (sc.get("capabilities") or {}).get("drop") or []
         if "ALL" not in caps and "all" not in caps:
             print(f"WARN {name}/{c['name']}: capabilities.drop missing ALL")
-    for v in pod["spec"].get("volumes",[]):
+    for v in pod["spec"].get("volumes", []):
         if "hostPath" in v:
             raise SystemExit(f"K6 FAIL {name}: hostPath volume {v.get('name')}")
-        if v.get("hostPath",{}).get("path") in ("/var/run/docker.sock","/run/docker.sock"):
+        if v.get("hostPath", {}).get("path") in ("/var/run/docker.sock", "/run/docker.sock"):
             raise SystemExit(f"K6 FAIL {name}: docker socket mount")
 print("K6 OK: pod security checks passed (see WARNs)")
 PY
 
 echo "==> K7: mcpProxy is nginx passthrough with digest-pinned image (not JWT/ATR)"
-helm get values "${REL}" -n "${NS}" -a | python3 - <<'PY'
+helm get values "${REL}" -n "${NS}" -a >"${ARTIFACT_DIR}/helm-values.yaml"
+python3 - "${ARTIFACT_DIR}/helm-values.yaml" <<'PY'
 import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text()
 try:
     import yaml
 except ImportError:
-    text=sys.stdin.read()
     assert "mcpProxy:" in text
     print("K7 OK (no PyYAML): mcpProxy present in values")
     raise SystemExit(0)
-doc=yaml.safe_load(sys.stdin) or {}
-proxy=doc.get("mcpProxy") or {}
+doc = yaml.safe_load(text) or {}
+proxy = doc.get("mcpProxy") or {}
 assert proxy.get("enabled") is True, "K7: mcpProxy.enabled"
-assert proxy.get("mode","nginx") == "nginx", "K7: mode must be nginx passthrough"
-img=proxy.get("image") or {}
-digest=img.get("digest") or ""
+assert proxy.get("mode", "nginx") == "nginx", "K7: mode must be nginx passthrough"
+img = proxy.get("image") or {}
+digest = img.get("digest") or ""
 assert digest.startswith("sha256:"), f"K7: nginx image must be digest-pinned, got {digest!r}"
-print("K7 OK: mcpProxy nginx passthrough with digest", digest[:18]+"...")
+print("K7 OK: mcpProxy nginx passthrough with digest", digest[:18] + "...")
 PY
 
 echo "==> K1: second install with CLAWQL_WORM_ENABLED=0 never Ready"
@@ -292,7 +302,7 @@ echo "==> K3/K4 network policy probes (positive + negative)"
 # Positive: curl MinIO from a Job in NS
 kubectl -n "${NS}" delete job clawql-net-pos --ignore-not-found
 kubectl -n "${NS}" create job clawql-net-pos --image=curlimages/curl:8.5.0 -- \
-  curl -sf -o /dev/null -w '%{http_code}' http://clawql-minio.${NS}.svc.cluster.local:9000/minio/health/live || true
+  curl -sf -o /dev/null -w '%{http_code}' "http://clawql-minio.${NS}.svc.cluster.local:9000/minio/health/live" || true
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s || \
   echo "WARN: positive MinIO curl job did not complete (check NetworkPolicy allowlist)"
 

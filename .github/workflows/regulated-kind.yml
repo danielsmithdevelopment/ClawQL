@@ -62,10 +62,9 @@ jobs:
         run: bash scripts/kubernetes/check-regulated-kind-overlay.sh
 
       - name: Build host + MCP image inputs
-        run: |
-          export NODE_OPTIONS="--max-old-space-size=8192"
-          npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
-          npm run build || true
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: npm run build
 
       - name: Regulated kind driver
         env:
