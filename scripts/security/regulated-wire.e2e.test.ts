@@ -30,6 +30,8 @@ import {
   spawnServer,
   startRequestSink,
   writePatchPetstore,
+  toolResultText,
+  mcpInitialize,
   type MintedOidc,
   type S3Endpoints,
   type SpawnedServer,
@@ -113,7 +115,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     srv = await spawnServer(env);
     await srv.waitListening(90_000);
     baseUrl = `http://127.0.0.1:${srv.port}`;
-    agentToken = await oidc.mint({ scope: ["execute", "search", "memory"] });
+    agentToken = await oidc.mint({
+      scope: ["execute", "search", "memory", "sources_propose"],
+    });
   }, 120_000);
 
   afterAll(async () => {
@@ -184,6 +188,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     });
     const code = await bad.waitExit(60_000);
     expect(code).not.toBe(0);
+    // After process-worm-host maps AuditError.reason, LocalStack surfaces
+    // ObjectLockConfigurationNotFoundError as "configuration check failed: …".
     expect(bad.stderr).toMatch(/Object Lock|not storage WORM|configuration check failed/i);
     await assertPortClosed(port);
     await bad.kill();
@@ -256,27 +262,24 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
 
   it("6) valid token without execute scope → tool refused; sink not hit", async () => {
     const token = await oidc.mint({ scope: ["search", "memory"] });
-    const { rpc } = await (
-      await import("./regulated-wire-harness.js")
-    ).mcpInitialize(baseUrl, token);
+    const { rpc } = await mcpInitialize(baseUrl, token);
     const before = apiSink.requests.length;
-    const result = (await rpc({
+    const result = await rpc({
       jsonrpc: "2.0",
       id: 2,
       method: "tools/call",
       params: { name: "execute", arguments: { operationId: "patchItem", args: { id: "1" } } },
-    })) as { status: number; body: { result?: { isError?: boolean; content?: { text?: string }[] } } };
+    });
     expect(result.status).toBe(200);
-    const text = result.body?.result?.content?.[0]?.text || JSON.stringify(result.body);
-    expect(text).toMatch(/outside session ATR scope|empty ATR scope|refused/i);
+    expect(toolResultText(result.body)).toMatch(
+      /outside session ATR scope|empty ATR scope|refused/i
+    );
     expect(apiSink.requests.length).toBe(before);
   }, 60_000);
 
   it("7) resume approve via MCP refused; still pending; no HUMAN_APPROVAL", async () => {
-    const { rpc } = await (
-      await import("./regulated-wire-harness.js")
-    ).mcpInitialize(baseUrl, agentToken);
-    const park = (await rpc({
+    const { rpc } = await mcpInitialize(baseUrl, agentToken);
+    const park = await rpc({
       jsonrpc: "2.0",
       id: 3,
       method: "tools/call",
@@ -284,18 +287,18 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         name: "execute",
         arguments: { operationId: "patchItem", args: { id: "park-7" } },
       },
-    })) as { body: { result?: { content?: { text?: string }[] } } };
-    const parkText = park.body?.result?.content?.[0]?.text || "";
+    });
+    const parkText = toolResultText(park.body);
     const parkJson = JSON.parse(parkText) as {
       status?: string;
       executionId?: string;
       ok?: boolean;
     };
-    expect(parkJson.status || parkJson.ok === false ? "mandate_required" : "").toBeTruthy();
+    expect(parkJson.status === "mandate_required" || parkJson.ok === false).toBe(true);
     const executionId = parkJson.executionId;
     expect(executionId).toBeTruthy();
 
-    const resume = (await rpc({
+    const resume = await rpc({
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
@@ -303,15 +306,14 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         name: "resume",
         arguments: { executionId, decision: "approve" },
       },
-    })) as { body: { result?: { content?: { text?: string }[] } } };
-    const resumeJson = JSON.parse(resume.body?.result?.content?.[0]?.text || "{}") as {
+    });
+    const resumeJson = JSON.parse(toolResultText(resume.body)) as {
       ok?: boolean;
       error?: string;
     };
     expect(resumeJson.ok).toBe(false);
     expect(resumeJson.error).toMatch(/decline-only|cannot self-approve/i);
 
-    // Load pending via CLI-shaped sqlite under CLAWQL_HOME
     const { loadPendingExecution } = await import("clawql-api");
     const still = await loadPendingExecution(executionId!, home);
     expect(still?.status).toBe("pending");
@@ -319,22 +321,17 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     const chain = await fetch(`http://127.0.0.1:${wormHttpPort}/entries`, {
       headers: { authorization: `ApiKey ${auditApiKey}` },
     });
-    const entries = (await chain.json()) as { entries?: { type?: string }[] };
-    const types = (entries.entries || (entries as unknown as { type?: string }[]) || []).map(
-      (e: { type?: string }) => e.type
-    );
-    // Prefer entries array shape from WORM HTTP
-    const flat = Array.isArray(entries) ? entries : entries.entries || [];
+    const entries = await chain.json();
+    const flat = Array.isArray(entries)
+      ? entries
+      : ((entries as { entries?: { type?: string }[] }).entries ?? []);
     expect(flat.some((e: { type?: string }) => e.type === "HUMAN_APPROVAL")).toBe(false);
-    void types;
   }, 90_000);
 
   it("7b) resume decline succeeds; never run", async () => {
-    const { rpc } = await (
-      await import("./regulated-wire-harness.js")
-    ).mcpInitialize(baseUrl, agentToken);
+    const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const before = apiSink.requests.length;
-    const park = (await rpc({
+    const park = await rpc({
       jsonrpc: "2.0",
       id: 5,
       method: "tools/call",
@@ -342,13 +339,12 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         name: "execute",
         arguments: { operationId: "patchItem", args: { id: "park-7b" } },
       },
-    })) as { body: { result?: { content?: { text?: string }[] } } };
-    const executionId = (
-      JSON.parse(park.body?.result?.content?.[0]?.text || "{}") as { executionId?: string }
-    ).executionId;
+    });
+    const executionId = (JSON.parse(toolResultText(park.body)) as { executionId?: string })
+      .executionId;
     expect(executionId).toBeTruthy();
 
-    const resume = (await rpc({
+    const resume = await rpc({
       jsonrpc: "2.0",
       id: 6,
       method: "tools/call",
@@ -356,8 +352,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         name: "resume",
         arguments: { executionId, decision: "decline" },
       },
-    })) as { body: { result?: { content?: { text?: string }[] } } };
-    const resumeJson = JSON.parse(resume.body?.result?.content?.[0]?.text || "{}") as {
+    });
+    const resumeJson = JSON.parse(toolResultText(resume.body)) as {
       ok?: boolean;
       status?: string;
     };
@@ -371,10 +367,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   }, 90_000);
 
   it("8) operator-channel approve under regulated refused; still pending", async () => {
-    const { rpc } = await (
-      await import("./regulated-wire-harness.js")
-    ).mcpInitialize(baseUrl, agentToken);
-    const park = (await rpc({
+    const { rpc } = await mcpInitialize(baseUrl, agentToken);
+    const park = await rpc({
       jsonrpc: "2.0",
       id: 7,
       method: "tools/call",
@@ -382,10 +376,9 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         name: "execute",
         arguments: { operationId: "patchItem", args: { id: "park-8" } },
       },
-    })) as { body: { result?: { content?: { text?: string }[] } } };
-    const executionId = (
-      JSON.parse(park.body?.result?.content?.[0]?.text || "{}") as { executionId?: string }
-    ).executionId!;
+    });
+    const executionId = (JSON.parse(toolResultText(park.body)) as { executionId?: string })
+      .executionId!;
     expect(executionId).toBeTruthy();
 
     const { resumeClawqlExecutionEffect } = await import("clawql-api");
@@ -511,16 +504,14 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   }, 60_000);
 
   it("11) SSRF: sources_propose to link-local / loopback refused; sink untouched", async () => {
-    const { rpc } = await (
-      await import("./regulated-wire-harness.js")
-    ).mcpInitialize(baseUrl, agentToken);
+    const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const before = apiSink.requests.length;
     for (const url of [
       "http://169.254.169.254/latest/meta-data/",
       "http://127.0.0.1/",
       "http://localhost/",
     ]) {
-      const result = (await rpc({
+      const result = await rpc({
         jsonrpc: "2.0",
         id: 20,
         method: "tools/call",
@@ -528,8 +519,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
           name: "sources_propose",
           arguments: { url, name: "ssrf-probe", dryRun: true },
         },
-      })) as { body: { result?: { isError?: boolean; content?: { text?: string }[] } } };
-      const text = result.body?.result?.content?.[0]?.text || JSON.stringify(result.body);
+      });
+      const text = toolResultText(result.body);
       expect(text).toMatch(/private|loopback|not allowed|Invalid|HTTPS|refused|SSRF|must not/i);
     }
     expect(apiSink.requests.length).toBe(before);

@@ -424,7 +424,10 @@ export function regulatedBaseEnv(args: {
 export async function mcpInitialize(
   base: string,
   token: string
-): Promise<{ sessionId: string; rpc: (body: unknown) => Promise<unknown> }> {
+): Promise<{
+  sessionId: string;
+  rpc: (body: unknown) => Promise<{ status: number; body: unknown }>;
+}> {
   const initRes = await fetch(`${base}/mcp`, {
     method: "POST",
     headers: {
@@ -449,6 +452,21 @@ export async function mcpInitialize(
     throw new Error(`initialize failed ${initRes.status}: ${JSON.stringify(initBody)}`);
   }
 
+  // MCP Streamable HTTP: notify initialized before tools/call.
+  await fetch(`${base}/mcp`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      authorization: `Bearer ${token}`,
+      ...(sessionId ? { "mcp-session-id": sessionId } : {}),
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+    }),
+  });
+
   const rpc = async (body: unknown) => {
     const res = await fetch(`${base}/mcp`, {
       method: "POST",
@@ -463,6 +481,18 @@ export async function mcpInitialize(
     return { status: res.status, body: await parsePossiblySse(res) };
   };
   return { sessionId, rpc };
+}
+
+/** Extract tool result text from a tools/call JSON-RPC / SSE body. */
+export function toolResultText(rpcBody: unknown): string {
+  if (!rpcBody || typeof rpcBody !== "object") return String(rpcBody ?? "");
+  const body = rpcBody as {
+    result?: { content?: { text?: string }[]; isError?: boolean };
+    error?: { message?: string };
+  };
+  if (body.result?.content?.[0]?.text) return body.result.content[0].text;
+  if (body.error?.message) return body.error.message;
+  return JSON.stringify(rpcBody);
 }
 
 export async function parsePossiblySse(res: Response): Promise<unknown> {

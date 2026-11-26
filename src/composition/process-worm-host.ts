@@ -80,12 +80,18 @@ export function ensureProcessWormHostBootedEffect(
     const audit = yield* Effect.promise(() => loadAudit());
     const svc = yield* audit.bootProcessWormFromEnvEffect(env).pipe(
       Effect.mapError((err) => {
+        // Prefer AuditError.reason — TaggedError.message is often empty.
+        const taggedReason =
+          typeof err === "object" &&
+          err &&
+          "reason" in err &&
+          (err as { reason?: unknown }).reason != null
+            ? String((err as { reason: unknown }).reason)
+            : "";
         const reason =
-          err instanceof Error
-            ? err.message
-            : typeof err === "object" && err && "reason" in err
-              ? String((err as { reason: unknown }).reason)
-              : String(err);
+          taggedReason ||
+          (err instanceof Error && err.message ? err.message : "") ||
+          String(err);
         return new Error(reason);
       })
     );
