@@ -177,5 +177,4 @@ The adapter is **implemented in TypeScript** (`npx mcp-api-adapter`). Upstream M
 - Adapter guide: [`mcp-api-adapter.md`](./mcp-api-adapter.md)
 - Custom sources (CLI ops into Core): [`getting-started/custom-sources.md`](../getting-started/custom-sources.md)
 - Streams (event-driven autonomous execution): [`streams/clawql-streams.md`](../streams/clawql-streams.md)
-- GTM positioning: [`gtm/protocol-fabric.md`](../gtm/protocol-fabric.md)
 - Loop design / non-goals: [`design/protocol-fabric-loop-benchmark.md`](../design/protocol-fabric-loop-benchmark.md)

@@ -208,7 +208,7 @@ Every successful `issueToken` emits **`MCP_TOKEN_ISSUED`** to the auth WORM (no 
 
 **Shipped** in `inbound/id-jag.ts` + `inbound/mcp-oauth.ts` (`exchangeIdJag`).
 
-Enterprise-Managed Authorization is the stable MCP extension for org-wide connector authorization via the identity provider. The wire protocol is **Cross App Access (XAA)** — formally the **identity assertion authorization grant (ID-JAG)** — as implemented by Okta, Auth0 ([Cross App Access docs](https://auth0.com/docs/ai-agents-mcp/cross-app-access)), and other enterprise IdPs. Admins map identity provider groups → ATR scopes once; users inherit MCP access on first login with no per-connector consent.
+Enterprise-Managed Authorization is the stable MCP extension for org-wide connector authorization via the identity provider. The wire protocol is **Cross App Access (XAA)** — formally the **identity assertion authorization grant (ID-JAG)** — as implemented by Okta, Auth0 ([Cross App Access docs](https://auth0.com/docs/ai-agents-mcp/cross-app-access)), and other enterprise identity providers. Admins map identity provider groups → ATR scopes once; users inherit MCP access on first login with no per-connector consent.
 
 **XAA roles (terminology):** XAA defines three parties. `clawql-auth` participates in **one or two** of them depending on deployment — never as the Requesting App.
 

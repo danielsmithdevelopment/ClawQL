@@ -286,7 +286,7 @@ Docker Desktop **`make local-k8s-up`** opt-in: **`CLAWQL_ENABLE_OPENCLAW=1`** an
 
 **Optional Goose agent pool** ([`block/goose`](https://github.com/block/goose)): **`goose.enabled=true`**, set **`goose.replicaCount`** (start at **0**, scale on demand), provider keys via **`goose.*ApiKey`** or **`goose.existingSecret`**. Injects **`CLAWQL_MCP_URL`** when **`goose.clawqlMcp.enabled`**. Stateful PVC at **`goose.persistence.mountPath`** (default **`/opt/clawql/goose`**). Idle **`sleep infinity`** until AgentRuntime task API ships.
 
-**Hermes (NL ops):** **`hermes.enabled=true`** sets **`CLAWQL_DASHBOARD_HERMES_OPS=1`** on the dashboard Deployment (reserved for **`@hermes`** routing — see deployment ops guide). No separate container.
+**Hermes (NL ops, planned):** **`hermes.enabled`** defaults **false** (not shipped). When enabled later, it sets **`CLAWQL_DASHBOARD_HERMES_OPS=1`** on the dashboard Deployment (reserved for **`@hermes`** routing — see deployment ops guide). No separate container.
 
 ```bash
 helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \

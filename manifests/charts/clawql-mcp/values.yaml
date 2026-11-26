@@ -1082,7 +1082,7 @@ nats:
         cpu: "1"
         memory: 512Mi
   # IDP agent bridge (#128): terminal/viewer document events → MCP memory_ingest / notify.
-  # Pair with Hermes or Pi as the interactive MCP client — see docs/examples/idp/idp-nats-agent/.
+  # Pair with a planned Hermes/Pi interactive MCP client — see docs/examples/idp/idp-nats-agent/.
   agentBridge:
     enabled: false
     replicas: 1
@@ -1749,7 +1749,8 @@ uptimeKuma:
             pathType: Prefix
     tls: []
 
-# Hermes — planned natural-language platform ops (`@hermes …` in dashboard). No dashboard implementation yet (audit 8.08).
+# Hermes — planned natural-language platform ops (`@hermes …` in dashboard). Not shipped; flag reserved (audit 8.08).
+# No separate container; when enabled later, sets CLAWQL_DASHBOARD_HERMES_OPS=1 on the dashboard Deployment.
 hermes:
   enabled: false
 

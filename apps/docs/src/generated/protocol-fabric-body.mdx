@@ -160,7 +160,7 @@ Marketing and GTM need a **single** claim. Explaining “Core plus mcp-api-adapt
 | **Kong / Apigee**                  | Classic protocol translation | No MCP IR, not agent-native                       |
 | **APIAgent / OpenAPI→MCP proxies** | APIs → MCP                   | Inverse of the adapter; not multi-surface outward |
 
-Nobody else ships **both directions** with MCP as IR and the full multi-surface outward adapter in one product story.
+ClawQL ships **both directions** with MCP as IR and multi-surface outward adapters in one product story — exclusivity is not claimed without a published survey.
 
 Enterprise Service Buses reduced N×M integrations to N+M via a common bus. Protocol Fabric is the agent-era analogue: **MCP is the message format**, full protocol surface on both sides.
 
@@ -177,7 +177,6 @@ The adapter is **implemented in TypeScript** (`npx mcp-api-adapter`). Upstream M
 - Adapter guide: [`mcp-api-adapter.md`](/mcp/mcp-api-adapter)
 - Custom sources (CLI ops into Core): [`getting-started/custom-sources.md`](/getting-started/custom-sources)
 - Streams (event-driven autonomous execution): [`streams/clawql-streams.md`](/streams/clawql-streams)
-- GTM positioning: [`gtm/protocol-fabric.md`](/mcp/protocol-fabric)
 - Loop design / non-goals: [`design/protocol-fabric-loop-benchmark.md`](/mcp/protocol-fabric#proven-end-to-end-loop)
 
 export function wrapper({ children }) {
