@@ -390,24 +390,33 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         arguments: { operationId: "patchItem", args: { id: "park-8" } },
       },
     });
-    const executionId = (JSON.parse(toolResultText(park.body)) as { executionId?: string })
-      .executionId!;
+    const parkText = toolResultText(park.body);
+    expect(parkText, `park response: ${parkText}`).not.toMatch(/CAPABILITY_WRITE_INTERCEPTED/i);
+    const executionId = (JSON.parse(parkText) as { executionId?: string }).executionId!;
     expect(executionId).toBeTruthy();
 
-    const { resumeClawqlExecutionEffect } = await import("clawql-api");
-    const { Effect } = await import("effect");
-    const content = await Effect.runPromise(
-      resumeClawqlExecutionEffect({
-        executionId,
-        decision: "approve",
-        channel: "operator",
-        approvedBy: { kind: "operator", id: "wire-cli" },
-        home,
-      })
-    );
-    const json = JSON.parse(content[0]!.text) as { ok?: boolean; error?: string };
-    expect(json.ok).toBe(false);
-    expect(json.error).toMatch(/regulated.*console|console/i);
+    // CLI path reads CLAWQL_TIER from the calling process (not the MCP server).
+    const prevTier = process.env.CLAWQL_TIER;
+    process.env.CLAWQL_TIER = "regulated";
+    try {
+      const { resumeClawqlExecutionEffect } = await import("clawql-api");
+      const { Effect } = await import("effect");
+      const content = await Effect.runPromise(
+        resumeClawqlExecutionEffect({
+          executionId,
+          decision: "approve",
+          channel: "operator",
+          approvedBy: { kind: "operator", id: "wire-cli" },
+          home,
+        })
+      );
+      const json = JSON.parse(content[0]!.text) as { ok?: boolean; error?: string };
+      expect(json.ok).toBe(false);
+      expect(json.error).toMatch(/regulated.*console|console/i);
+    } finally {
+      if (prevTier === undefined) delete process.env.CLAWQL_TIER;
+      else process.env.CLAWQL_TIER = prevTier;
+    }
 
     const { loadPendingExecution } = await import("clawql-api");
     expect((await loadPendingExecution(executionId, home))?.status).toBe("pending");
