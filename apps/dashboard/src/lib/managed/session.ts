@@ -177,17 +177,20 @@ const fetchSupabaseUserEffect = (input: {
       const userId = body.id?.trim();
       if (!userId) throw new Error("Supabase user response missing id");
       const email = body.email?.trim() || "unknown@example.com";
-      const meta = { ...body.app_metadata, ...body.user_metadata };
+      // Display name may come from user_metadata (user-editable). Role and org MUST
+      // come only from app_metadata (service-role writable) — never user_metadata
+      // (audit AA1: users can forge role/org via updateUser).
+      const app = body.app_metadata ?? {};
       const displayName =
         body.user_metadata?.full_name?.trim() ||
         body.user_metadata?.name?.trim() ||
         email.split("@")[0] ||
         "User";
-      const role = meta.role?.trim() || "Member";
-      const orgId = meta.org_id?.trim() || undefined;
-      const orgName = meta.org_name?.trim() || "Your organization";
+      const role = app.role?.trim() || "Member";
+      const orgId = app.org_id?.trim() || undefined;
+      const orgName = app.org_name?.trim() || "Your organization";
       const planLabel =
-        meta.plan_label?.trim() || meta.plan?.trim() || "Team plan";
+        app.plan_label?.trim() || app.plan?.trim() || "Team plan";
       return { userId, email, displayName, role, orgId, orgName, planLabel };
     },
     catch: (cause) =>

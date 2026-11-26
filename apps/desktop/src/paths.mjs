@@ -37,6 +37,8 @@ export function desktopServiceEnv(home) {
   const managedFixture =
     process.env.CLAWQL_DESKTOP_MANAGED_FIXTURE === '1' ||
     process.env.CLAWQL_CONSOLE_SURFACE === 'managed'
+  // AA4: token is in process env — same-OS-user agent shells can read it (Z4 class).
+  // Prefer sandboxed agents or approve from another device for regulated installs.
   const desktopToken =
     process.env.CLAWQL_DESKTOP_API_TOKEN?.trim() || mintDesktopApiToken()
 

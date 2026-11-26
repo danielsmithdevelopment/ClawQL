@@ -2,13 +2,19 @@ import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
 import {
-  mintApprovalProof,
+  isE2eApprovalProof,
+  isWebAuthnApprovalProof,
   requireManagedApiSession,
   sessionCanApprove,
-  verifyApprovalProof,
   type ApprovalProofInput,
 } from "@/lib/api-auth";
 import { isManagedConsole } from "@/lib/console-surface";
+import {
+  issueApproveChallengeEffect,
+  originFromRequest,
+  rpIdFromRequest,
+  verifyApproveAssertionEffect,
+} from "@/lib/managed/approve-webauthn";
 import { decideManagedReviewEffect, listManagedReviewEffect } from "@/lib/managed/live/review";
 
 export const runtime = "nodejs";
@@ -23,7 +29,16 @@ const DECISIONS = [
 
 type Decision = (typeof DECISIONS)[number];
 
-const NEEDS_APPROVER_PROOF: ReadonlySet<Decision> = new Set(["approve", "retry_with_key"]);
+const NEEDS_WEBAUTHN: ReadonlySet<Decision> = new Set(["approve", "retry_with_key"]);
+
+function failureMessage(exit: { _tag: "Failure"; cause: unknown }): string {
+  const c = exit.cause as { _tag?: string; failure?: { message?: string }; message?: string };
+  if (c && typeof c === "object") {
+    if (typeof c.failure?.message === "string") return c.failure.message;
+    if (typeof c.message === "string") return c.message;
+  }
+  return "challenge_failed";
+}
 
 export async function GET(req: Request) {
   if (!isManagedConsole()) {
@@ -50,33 +65,41 @@ export async function POST(req: Request) {
     kind?: "change" | "source";
     decision?: Decision;
     approvalProof?: ApprovalProofInput;
-    mintProof?: boolean;
+    action?: "approve_challenge";
   };
 
-  if (body.mintProof === true) {
+  if (body.action === "approve_challenge") {
     if (!body.id?.trim() || !body.kind || !body.decision) {
       return NextResponse.json({ error: "id, kind, and decision are required" }, { status: 400 });
     }
     if (!sessionCanApprove(session)) {
       return NextResponse.json({ error: "Approver role required" }, { status: 403 });
     }
-    const proof = mintApprovalProof({
-      session,
-      id: body.id.trim(),
-      kind: body.kind,
-      decision: body.decision,
-    });
-    if (!proof) {
+    if (!NEEDS_WEBAUTHN.has(body.decision)) {
       return NextResponse.json(
-        {
-          error:
-            "Cannot mint approval proof — configure CLAWQL_DASHBOARD_APPROVE_HMAC_SECRET or sign in",
-        },
-        { status: 503 },
+        { error: "WebAuthn challenge is only for approve / retry_with_key" },
+        { status: 400 },
       );
     }
+    const exit = await Effect.runPromiseExit(
+      issueApproveChallengeEffect({
+        userId: session.userId,
+        reviewId: body.id.trim(),
+        kind: body.kind,
+        decision: body.decision,
+        rpId: rpIdFromRequest(req),
+      }),
+    );
+    if (exit._tag === "Failure") {
+      const reason = failureMessage(exit);
+      const msg = reason.includes("no_device_bound")
+        ? "Register a device-bound security key before approving"
+        : "Could not issue approval challenge";
+      return NextResponse.json({ error: msg, detail: reason }, { status: 403 });
+    }
     return NextResponse.json({
-      approvalProof: { method: "session_hmac", attestation: proof },
+      options: exit.value.options,
+      challenge: exit.value.challenge,
     });
   }
 
@@ -93,21 +116,37 @@ export async function POST(req: Request) {
     );
   }
 
-  if (NEEDS_APPROVER_PROOF.has(body.decision)) {
+  if (NEEDS_WEBAUTHN.has(body.decision)) {
     if (!sessionCanApprove(session)) {
       return NextResponse.json({ error: "Approver role required" }, { status: 403 });
     }
-    if (
-      !verifyApprovalProof({
-        session,
-        id: body.id.trim(),
-        kind: body.kind,
-        decision: body.decision,
-        approvalProof: body.approvalProof,
-      })
-    ) {
+
+    if (isE2eApprovalProof(body.approvalProof)) {
+      // CLAWQL_E2E_HARNESS=1 only
+    } else if (isWebAuthnApprovalProof(body.approvalProof)) {
+      const verifyExit = await Effect.runPromiseExit(
+        verifyApproveAssertionEffect({
+          userId: session.userId,
+          reviewId: body.id.trim(),
+          kind: body.kind,
+          decision: body.decision,
+          response: body.approvalProof.response,
+          rpId: rpIdFromRequest(req),
+          origin: originFromRequest(req),
+        }),
+      );
+      if (verifyExit._tag === "Failure") {
+        return NextResponse.json(
+          { error: "Security key assertion failed", detail: "webauthn_verify_failed" },
+          { status: 403 },
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: "Security key / approval proof required" },
+        {
+          error:
+            "Device-bound security key required — request an approve_challenge and submit a WebAuthn assertion",
+        },
         { status: 403 },
       );
     }

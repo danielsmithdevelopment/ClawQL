@@ -45,6 +45,11 @@ spec:
             {{- $allowedHosts := concat (list "127.0.0.1" "localhost" (include "clawql-mcp.dashboardName" .)) (.Values.dashboard.allowedHosts | default list) $ingressHosts | uniq }}
             - name: CLAWQL_DASHBOARD_ALLOWED_HOSTS
               value: {{ $allowedHosts | join "," | quote }}
+            {{- /* AA3: first ingress host so Host checks work behind Ingress without a manual PUBLIC_HOST. */}}
+            {{- if gt (len $ingressHosts) 0 }}
+            - name: CLAWQL_DASHBOARD_PUBLIC_HOST
+              value: {{ index $ingressHosts 0 | quote }}
+            {{- end }}
             - name: CLAWQL_DASHBOARD_CHAT_STREAM
               value: {{ ternary "1" "0" (.Values.dashboard.chatStream | default true) | quote }}
             - name: CLAWQL_OBSIDIAN_VAULT_PATH

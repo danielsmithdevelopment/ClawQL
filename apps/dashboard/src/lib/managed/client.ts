@@ -126,29 +126,46 @@ export async function fetchManagedReview(): Promise<{
   return getJson('/api/managed/review')
 }
 
+async function webauthnApproveAssertion(input: {
+  id: string
+  kind: 'change' | 'source'
+  decision: 'approve' | 'retry_with_key'
+}): Promise<{ method: 'webauthn'; response: unknown }> {
+  const challengeRes = await fetch('/api/managed/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...input, action: 'approve_challenge' }),
+  })
+  const challenged = (await challengeRes.json().catch(() => ({}))) as {
+    options?: Record<string, unknown>
+    error?: string
+  }
+  if (!challengeRes.ok || !challenged.options) {
+    throw new Error(challenged.error || `Security key challenge failed (${challengeRes.status})`)
+  }
+  if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+    throw new Error('WebAuthn is not available in this browser')
+  }
+  const { startAuthentication } = await import('@simplewebauthn/browser')
+  const response = await startAuthentication({
+    optionsJSON: challenged.options as Parameters<typeof startAuthentication>[0]['optionsJSON'],
+  })
+  return { method: 'webauthn', response }
+}
+
 export async function decideManagedReview(input: {
   id: string
   kind: 'change' | 'source'
   decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key'
 }): Promise<{ ok: true; id: string; status: string }> {
-  const needsProof = input.decision === 'approve' || input.decision === 'retry_with_key'
-  let approvalProof:
-    | { method: string; attestation: string }
-    | undefined
-  if (needsProof) {
-    const mint = await fetch('/api/managed/review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, mintProof: true }),
+  const needsKey = input.decision === 'approve' || input.decision === 'retry_with_key'
+  let approvalProof: { method: 'webauthn'; response: unknown } | undefined
+  if (needsKey) {
+    approvalProof = await webauthnApproveAssertion({
+      id: input.id,
+      kind: input.kind,
+      decision: input.decision,
     })
-    const minted = (await mint.json().catch(() => ({}))) as {
-      approvalProof?: { method: string; attestation: string }
-      error?: string
-    }
-    if (!mint.ok || !minted.approvalProof?.attestation) {
-      throw new Error(minted.error || `Approval proof required (${mint.status})`)
-    }
-    approvalProof = minted.approvalProof
   }
 
   const res = await fetch('/api/managed/review', {

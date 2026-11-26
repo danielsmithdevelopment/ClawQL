@@ -317,8 +317,35 @@ export function decideReviewEffect(input: {
         status,
       };
     }
+    const needsWebAuthn =
+      input.decision === "approve" || input.decision === "retry_with_key";
+    // Live approve requires a verified WebAuthn assertion (audit AA2). NFC attestation
+    // strings alone are no longer accepted — fixture mode above still simulates NFC.
+    if (needsWebAuthn) {
+      const webauthnResponse = (
+        input.approvalProof as { method?: string; response?: unknown } | undefined
+      )?.response;
+      if (
+        (input.approvalProof as { method?: string } | undefined)?.method !== "webauthn" ||
+        webauthnResponse == null
+      ) {
+        return yield* Effect.fail(
+          new MobileApiError({
+            reason:
+              "device_bound_security_key_required — submit a WebAuthn assertion (NFC attestation alone is not verified)",
+            status: 403,
+          }),
+        );
+      }
+    }
     const res = yield* Effect.tryPromise({
       try: async () => {
+        const approvalProof = needsWebAuthn
+          ? {
+              method: "webauthn" as const,
+              response: (input.approvalProof as { response: unknown }).response,
+            }
+          : undefined;
         const r = await fetch(`${config.apiBase}/api/managed/review`, {
           method: "POST",
           headers: authHeaders(input.session),
@@ -327,7 +354,7 @@ export function decideReviewEffect(input: {
             kind: input.kind,
             decision: input.decision,
             answer: input.answer,
-            approvalProof: input.approvalProof,
+            approvalProof,
           }),
         });
         if (!r.ok) throw Object.assign(new Error(`http_${r.status}`), { status: r.status });

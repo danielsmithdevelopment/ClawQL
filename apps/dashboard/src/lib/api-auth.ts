@@ -2,8 +2,12 @@
  * Dashboard API authentication (audit 8.01 / 8.02).
  * Managed + agent routes require a verified Supabase JWT (or explicit non-prod / desktop fixture).
  * Desktop mode requires a per-launch API token and a loopback Host.
+ *
+ * AA4: The desktop token lives in the Next.js process env. An agent shell running as the
+ * same OS user can read it — same class as gateway Z4. Structural answer: sandboxed agent
+ * shells, or approve from a separate device/session.
  */
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
@@ -147,14 +151,12 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
       accessToken,
       env: {
         ...env,
-        // Cloud production: never honor CLAWQL_MANAGED_AUTH_MOCK (audit 8.01).
         ...(isProd && !e2e && !desktopFixture ? { CLAWQL_MANAGED_AUTH_MOCK: "0" } : {}),
       },
     }),
   );
 
   if (exit._tag === "Failure") {
-    // Desktop with a valid per-launch token may run without Supabase / managed mock.
     if (isDesktopMode()) {
       return { ok: true, session: DESKTOP_LOCAL_SESSION };
     }
@@ -187,6 +189,7 @@ export type ApprovalProofInput =
   | string
   | {
       readonly method?: string;
+      readonly response?: unknown;
       readonly attestation?: string;
       readonly signature?: string;
       readonly credentialId?: string;
@@ -194,84 +197,24 @@ export type ApprovalProofInput =
   | null
   | undefined;
 
-/** Approve decisions need a server-verified proof (audit 8.01). */
-export function verifyApprovalProof(input: {
-  readonly session: ManagedSession;
-  readonly id: string;
-  readonly kind: string;
-  readonly decision: string;
-  readonly approvalProof?: ApprovalProofInput;
-}): boolean {
-  const proof = input.approvalProof;
-  if (proof == null) return false;
-
-  if (typeof proof === "object") {
-    const method = proof.method?.trim() ?? "";
-    const allowed = new Set([
-      "nfc_security_key",
-      "device_biometric_reviewer_demo",
-      "webauthn",
-      "session_hmac",
-    ]);
-    if (!allowed.has(method)) return false;
-    if (typeof proof.attestation === "string" && proof.attestation.trim().length >= 8) {
-      // Mobile NFC / biometric attestation bound by the client; reject empty stubs.
-      return true;
-    }
-    if (
-      typeof proof.signature === "string" &&
-      proof.signature.trim().length >= 8 &&
-      typeof proof.credentialId === "string" &&
-      proof.credentialId.trim().length > 0
-    ) {
-      return true;
-    }
-    if (method === "session_hmac" && typeof proof.attestation === "string") {
-      return verifyHmacProof(input.session, input.id, input.kind, input.decision, proof.attestation);
-    }
-    return false;
-  }
-
-  const trimmed = proof.trim();
-  if (!trimmed) return false;
-  if (process.env.CLAWQL_E2E_HARNESS === "1" && trimmed === "e2e-passkey") return true;
-  return verifyHmacProof(input.session, input.id, input.kind, input.decision, trimmed);
+/**
+ * Shape check only — cryptographic WebAuthn verify runs in the review route via
+ * `verifyApproveAssertionEffect`. Arbitrary attestation / signature strings are rejected (AA2).
+ */
+export function isWebAuthnApprovalProof(
+  proof: ApprovalProofInput,
+): proof is { readonly method: "webauthn"; readonly response: unknown } {
+  if (proof == null || typeof proof !== "object") return false;
+  if (proof.method !== "webauthn") return false;
+  return proof.response != null && typeof proof.response === "object";
 }
 
-function verifyHmacProof(
-  session: ManagedSession,
-  id: string,
-  kind: string,
-  decision: string,
-  proof: string,
-): boolean {
-  const secret =
-    process.env.CLAWQL_DASHBOARD_APPROVE_HMAC_SECRET?.trim() ||
-    session.accessToken?.trim() ||
-    "";
-  if (!secret) return false;
-  const payload = `${id}:${kind}:${decision}:${session.userId}`;
-  const expected = createHmac("sha256", secret).update(payload).digest("base64url");
-  const a = Buffer.from(proof);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-/** Mint a session-bound approve proof after the caller is already authenticated. */
-export function mintApprovalProof(input: {
-  readonly session: ManagedSession;
-  readonly id: string;
-  readonly kind: string;
-  readonly decision: string;
-}): string | null {
-  const secret =
-    process.env.CLAWQL_DASHBOARD_APPROVE_HMAC_SECRET?.trim() ||
-    input.session.accessToken?.trim() ||
-    (isDesktopMode() ? process.env.CLAWQL_DESKTOP_API_TOKEN?.trim() : undefined) ||
-    "";
-  if (!secret) return null;
-  const payload = `${input.id}:${input.kind}:${input.decision}:${input.session.userId}`;
-  return createHmac("sha256", secret).update(payload).digest("base64url");
+/** E2E harness only — never accepted in production builds. */
+export function isE2eApprovalProof(proof: ApprovalProofInput): boolean {
+  if (process.env.CLAWQL_E2E_HARNESS !== "1") return false;
+  if (typeof proof === "string") return proof.trim() === "e2e-passkey";
+  if (proof && typeof proof === "object" && proof.method === "e2e_passkey") return true;
+  return false;
 }
 
 export function sessionCanApprove(session: ManagedSession): boolean {

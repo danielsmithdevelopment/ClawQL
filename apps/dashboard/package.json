@@ -26,6 +26,8 @@
     "@base-ui/react": "^1.6.0",
     "@radix-ui/react-progress": "^1.1.7",
     "@shadcn/react": "^0.1.0",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^14.1.0",
     "@tailwindcss/postcss": "^4.2.2",
     "class-variance-authority": "^0.7.1",
     "clawql-api": "file:../../packages/clawql-api",
