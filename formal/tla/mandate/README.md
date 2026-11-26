@@ -18,8 +18,9 @@ with crash-after-consume leaving **`outcome_unknown`** (never silently retried).
 | `BatchMandate.tla`         | ADR 0015 — batch Merkle root approve + inclusion consume             |
 | `BatchMandate.cfg`         | TLC — Safety must pass (`./scripts/formal/run-batch-mandate-tlc.sh`) |
 | `ApprovalChannel.tla`      | Spec — channel/kind/tier guards for mandate approve                  |
-| `ApprovalChannel.cfg`      | TLC — target (`WeakMcpApprove = FALSE`); must pass                   |
+| `ApprovalChannel.cfg`      | TLC — target (both weak flags FALSE); must pass                      |
 | `ApprovalChannelWeak.cfg`  | TLC — mcp approve enabled; must fail `NoAgentApproval`               |
+| `ApprovalChannelWeakAgentCred.cfg` | TLC — agent key on operator/console; must fail `NoAgentApproval` |
 
 ## Invariants (target)
 
@@ -96,7 +97,7 @@ regulated approves on the console path.
 ./scripts/formal/run-approval-channel-tlc.sh
 ```
 
-Expect: atomic config exit 0; weak config exit ≠ 0 with `NoAgentApproval` violated.
+Expect: atomic config exit 0; both weak configs exit ≠ 0 with `NoAgentApproval` violated.
 
 ## Audit hunt (production)
 

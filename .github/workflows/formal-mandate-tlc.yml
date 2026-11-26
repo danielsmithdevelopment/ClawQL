@@ -119,8 +119,8 @@ jobs:
       - name: Run payments ledger lock TLC dual configs
         run: bash scripts/formal/run-payments-ledger-lock-tlc.sh
 
-      - name: Run approval-channel TLC dual configs
+      - name: Run approval-channel TLC (pass + two weak counterexamples)
         run: bash scripts/formal/run-approval-channel-tlc.sh
 
-      - name: Run x402 settle-before-allow TLC (pass + two weak counterexamples)
+      - name: Run x402 settle-before-allow TLC (pass + three weak counterexamples)
         run: bash scripts/formal/run-x402-settlement-tlc.sh

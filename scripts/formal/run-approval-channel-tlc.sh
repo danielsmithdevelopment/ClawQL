@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Approval channel TLC: atomic must pass; weak (mcp approve) must counterexample.
+# Approval channel TLC: atomic must pass; two weak configs must counterexample.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -18,6 +18,7 @@ fi
 cp "$DIR/ApprovalChannel.tla" \
    "$DIR/ApprovalChannel.cfg" \
    "$DIR/ApprovalChannelWeak.cfg" \
+   "$DIR/ApprovalChannelWeakAgentCred.cfg" \
    "$WORKDIR/"
 
 cd "$WORKDIR"
@@ -33,15 +34,26 @@ if [[ "$ATOMIC_EXIT" -ne 0 ]]; then
   exit 1
 fi
 
-echo "=== Weak mcp approve (must COUNTEREXAMPLE) ==="
+echo "=== Weak mcp approve (must COUNTEREXAMPLE NoAgentApproval) ==="
 set +e
 java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
   -config ApprovalChannelWeak.cfg ApprovalChannel
 WEAK_EXIT=$?
 set -e
 if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak ApprovalChannel config must violate Safety (got clean exit)" >&2
+  echo "FAIL: weak ApprovalChannel (WeakMcpApprove) must violate Safety (got clean exit)" >&2
   exit 1
 fi
 
-echo "OK: ApprovalChannel atomic green; weak produced counterexample (exit=$WEAK_EXIT)"
+echo "=== Weak agent credential on operator (must COUNTEREXAMPLE NoAgentApproval) ==="
+set +e
+java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
+  -config ApprovalChannelWeakAgentCred.cfg ApprovalChannel
+WEAK_CRED_EXIT=$?
+set -e
+if [[ "$WEAK_CRED_EXIT" -eq 0 ]]; then
+  echo "FAIL: WeakAgentCredentialOnOperator config must violate Safety (got clean exit)" >&2
+  exit 1
+fi
+
+echo "OK: ApprovalChannel atomic green; weak configs counterexample (exits=$WEAK_EXIT,$WEAK_CRED_EXIT)"

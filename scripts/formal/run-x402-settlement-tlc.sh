@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# x402 settle-before-allow TLC: atomic must pass; two weak configs must counterexample.
+# x402 settle-before-allow TLC: atomic must pass; three weak configs must counterexample.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -19,6 +19,7 @@ cp "$DIR/X402Settlement.tla" \
    "$DIR/X402Settlement.cfg" \
    "$DIR/X402SettlementWeakSkipSettle.cfg" \
    "$DIR/X402SettlementWeakDoubleSettle.cfg" \
+   "$DIR/X402SettlementWeakDoubleSettleSameReplica.cfg" \
    "$WORKDIR/"
 
 cd "$WORKDIR"
@@ -56,4 +57,15 @@ if [[ "$WEAK2_EXIT" -eq 0 ]]; then
   exit 1
 fi
 
-echo "OK: X402Settlement atomic green; both weak configs counterexample (exits=$WEAK1_EXIT,$WEAK2_EXIT)"
+echo "=== Weak same-replica double settle (must COUNTEREXAMPLE AllowAtMostOnce) ==="
+set +e
+java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
+  -config X402SettlementWeakDoubleSettleSameReplica.cfg X402Settlement
+WEAK3_EXIT=$?
+set -e
+if [[ "$WEAK3_EXIT" -eq 0 ]]; then
+  echo "FAIL: same-replica WeakFacilitatorDoubleSettle config must violate Safety (got clean exit)" >&2
+  exit 1
+fi
+
+echo "OK: X402Settlement atomic green; weak configs counterexample (exits=$WEAK1_EXIT,$WEAK2_EXIT,$WEAK3_EXIT)"

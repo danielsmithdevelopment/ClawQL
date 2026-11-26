@@ -17,10 +17,11 @@ consume or the program write-intent journal. See
 
 | File                                     | Role                                                                 |
 | ---------------------------------------- | -------------------------------------------------------------------- |
-| `X402Settlement.tla`                     | Spec — two replicas, per-process replay cache, facilitator settle    |
+| `X402Settlement.tla`                     | Spec — request-id×proof inflight, per-process replay cache, facilitator settle |
 | `X402Settlement.cfg`                     | TLC — target (both weak flags FALSE); must pass                      |
 | `X402SettlementWeakSkipSettle.cfg`       | TLC — allow after verify without settle; must fail `AllowImpliesSettled` |
 | `X402SettlementWeakDoubleSettle.cfg`     | TLC — facilitator accepts second settle; must fail `AllowAtMostOnce` |
+| `X402SettlementWeakDoubleSettleSameReplica.cfg` | TLC — single replica + two request ids; must fail `AllowAtMostOnce` |
 
 ### Invariants
 
@@ -38,7 +39,7 @@ cross-replica guarantee. Prefer "at most once", never "exactly once".
 
 | Spec                         | Code                                                                 |
 | ---------------------------- | -------------------------------------------------------------------- |
-| `StartRequest` / `inflight`  | `replay.seen` check before settle (gap before `remember`)            |
+| `StartRequest` / `inflight`  | `replay.seen` check before settle; request-id×proof pairs (same-replica race) |
 | `SettleAllow` / `cache`      | `facilitator.settle` then `replay.remember` then allow               |
 | `ReplayDeny` / `cache`       | `replay-cache.ts` `seen` / `remember` (module singleton, max 10_000) |
 | `received`                   | reconcile writes `X402_PAYMENT_RECEIVED` only when `txHash` present   |
@@ -49,7 +50,7 @@ cross-replica guarantee. Prefer "at most once", never "exactly once".
 ./scripts/formal/run-x402-settlement-tlc.sh
 ```
 
-Expect: atomic exit 0; both weak configs exit ≠ 0.
+Expect: atomic exit 0; all three weak configs exit ≠ 0.
 
 ## Coverage finding (critical)
 
