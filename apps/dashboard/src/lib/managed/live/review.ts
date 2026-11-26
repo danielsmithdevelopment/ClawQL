@@ -18,6 +18,7 @@ import { readdir } from "node:fs/promises";
 
 import { REVIEW_ITEMS, type ReviewItem } from "@/lib/managed/fixtures-ops";
 import { readManagedDataSource, resolveWithFallbackEffect } from "@/lib/managed/data-source";
+import { resolveDashboardManagedHomeEffect } from "@/lib/managed/org-home";
 
 function relativeTime(iso: string): string {
   const ms = Date.now() - Date.parse(iso);
@@ -56,16 +57,23 @@ const listPendingSourceIdsEffect = (home?: string): Effect.Effect<readonly strin
   });
 
 export const listManagedReviewEffect = (
-  env: NodeJS.ProcessEnv = process.env,
-): Effect.Effect<{ readonly items: ReviewItem[]; readonly source: "live" | "fixture" }> =>
-  resolveWithFallbackEffect({
+  input: {
+    readonly orgId?: string | null;
+    readonly env?: NodeJS.ProcessEnv;
+  } = {},
+): Effect.Effect<{ readonly items: ReviewItem[]; readonly source: "live" | "fixture" }> => {
+  const env = input.env ?? process.env;
+  return resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...REVIEW_ITEMS],
     empty: [],
     env,
     isLiveUseful: (items) => items.length > 0,
     live: Effect.gen(function* () {
-      const home = env.CLAWQL_HOME?.trim() || undefined;
+      const home = yield* resolveDashboardManagedHomeEffect({
+        orgId: input.orgId,
+        env,
+      }).pipe(Effect.orDie);
       const execIds = yield* listPendingExecutionIdsEffect(home);
       const sourceIds = yield* listPendingSourceIdsEffect(home);
       const items: ReviewItem[] = [];
@@ -142,6 +150,7 @@ export const listManagedReviewEffect = (
       return items;
     }),
   }).pipe(Effect.map(({ data, source }) => ({ items: data, source })));
+};
 
 export type ManagedReviewError = {
   readonly _tag: "ManagedReviewError";
@@ -160,11 +169,15 @@ export const decideManagedReviewEffect = (input: {
   readonly kind: "change" | "source";
   readonly decision: "approve" | "decline" | OutcomeUnknownResolve;
   readonly operatorId: string;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<{ readonly ok: true; readonly id: string; readonly status: string }, ManagedReviewError> =>
   Effect.gen(function* () {
     const env = input.env ?? process.env;
-    const home = env.CLAWQL_HOME?.trim() || undefined;
+    const home = yield* resolveDashboardManagedHomeEffect({
+      orgId: input.orgId,
+      env,
+    }).pipe(Effect.mapError(asReviewError));
 
     if (input.kind === "change") {
       if (

@@ -80,10 +80,11 @@ Existing browser **localStorage** chats are **imported once** into the vault on 
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Managed Auth (Supabase). Required in production. Outside production, unset → Acme fixture session. |
 | `CLAWQL_MANAGED_AUTH_MOCK`           | Force the fixture session (`1` / `true`), including in production when Supabase is unset. |
 | `CLAWQL_MANAGED_DATA_SOURCE`         | `auto` (default), `live`, or `fixture`. `auto` prefers live keys/usage/review when useful, else Acme fixtures. |
-| `CLAWQL_MANAGED_ORG_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_ORG_ID` | Org id for live usage (`getOrgUnifiedSpendSummary`) and key scoping. |
+| `CLAWQL_MANAGED_ORG_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_ORG_ID` | Org id for live usage (`getOrgUnifiedSpendSummary`) and key scoping. When set, durable stores under `CLAWQL_HOME` are partitioned at `orgs/<orgId>/` (CC1). |
+| `CLAWQL_MANAGED_MULTI_TENANT`        | Set to `1` for shared-home multi-tenant cloud without a single deploy org id — same `orgs/<orgId>/` partition; missing orgId fails closed. |
 | `CLAWQL_MANAGED_TENANT_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_TENANT_ID` | Optional actor tenant for unified spend. |
-| `CLAWQL_HOME`                        | Home dir for IssuedApiKeyStore + pending review files (default `./.clawql` under the dashboard cwd). |
-| `CLAWQL_API_KEYS_PATH`               | Optional override for the issued API keys JSON path. |
+| `CLAWQL_HOME`                        | Home dir for IssuedApiKeyStore + pending review files (default `./.clawql` under the dashboard cwd). Multi-tenant: `$CLAWQL_HOME/orgs/<orgId>/…`. |
+| `CLAWQL_API_KEYS_PATH`               | Optional override for the issued API keys JSON path (single-tenant only; ignored when multi-tenant partition is on). |
 | `CLAWQL_STRIPE_CUSTOMER_ID` / `STRIPE_CUSTOMER_ID` | Stripe customer for managed **Open Stripe portal** (`POST /api/managed/billing/portal`). |
 
 ## Managed console (`cloud.clawql.com`)

@@ -83,7 +83,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory + ag
 | -------------------- | ------------------------------------------------------------------------------------- |
 | `clawql-mcp`         | ✅ MCP server, stdio/HTTP/gRPC transports, tool registration (`src/`)                 |
 | `clawql-ouroboros`   | ✅ Evolutionary loops, Seed, EvolutionaryLoop, InMemoryEventStore, PostgresEventStore |
-| `mcp-grpc-transport` | ✅ First TypeScript gRPC transport for MCP                                            |
+| `mcp-grpc-transport` | ✅ TypeScript gRPC transport for MCP                                                  |
 | `clawql-core`        | ✅ Audit, cache, Merkle, Cuckoo, `Plugin` types (extraction order 1)                  |
 | `clawql-api`         | ✅ Spec load/search, execute, `createClawQLApi`, Panguard proxy plugin (order 2)      |
 | `clawql-memory`      | ✅ Vault, `memory.db`, ingest/recall (orders 4–7)                                     |

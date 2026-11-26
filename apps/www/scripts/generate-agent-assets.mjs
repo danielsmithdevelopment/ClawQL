@@ -8,6 +8,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { scriptSrcFromBodies, wwwJsonLdScriptBodies } from './csp-script-hashes.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const publicDir = path.join(__dirname, '../public')
@@ -287,7 +288,7 @@ See also: ${origin}/llms.txt · ${docs}/llms.txt
 function buildHomeMd() {
   const body = `# ClawQL — Agentic Infrastructure for Regulated Industries
 
-ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or request early access.
+ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and hash-chained WORM audit (software-simulated TEE today; hardware adapters planned). Self-host free on Apache 2.0 or request early access.
 
 ## Install (official CLI)
 
@@ -364,6 +365,14 @@ function getAgentMarkdownMap() {
     '/agents': `# Agentic Platform · ClawQL\n\nStreams + ontology + /mcp-ui + TEE. See ${origin}/agents/.\n`,
     '/streams': `# ClawQL Streams\n\nEvent-driven agents + Protocol Fabric (Core + mcp-api-adapter). Fabric: ${origin}/streams/#fabric\n\nDocs: ${docs}/streams/clawql-streams · ${docs}/mcp/protocol-fabric\n`,
     '/security': `# ClawQL Security\n\nDefense-in-depth for agentic production. See ${origin}/security/.\n\nDocs: ${docs}/security\n`,
+    '/durability': `# Durability\n\nCrash durability narrative with lab evidence. See ${origin}/durability/.\n`,
+    '/governance': `# Governance\n\nOutside-the-agent tool-call controls. See ${origin}/governance/.\n`,
+    '/ontology': `# Ontology\n\nClawQL's ontology layer — typed entities, relationships, actions. See ${origin}/ontology/.\n`,
+    '/data-handling': `# How we handle your data\n\nPractical data-handling narrative. See ${origin}/data-handling/.\n`,
+    '/cloud': `# ClawQL Cloud\n\nManaged hosting early access. See ${origin}/cloud/.\n`,
+    '/integrations': `# Integrations\n\nMCP clients, providers, IDP, inference, ops. See ${origin}/integrations/.\n`,
+    '/inference': `# Inference\n\nOpenAI-compatible /v1 control plane. See ${origin}/inference/.\n\nDocs: ${docs}/getting-started/inference\n`,
+    '/enterprise': `# Enterprise\n\nRegulated-buyer overview. See ${origin}/enterprise/.\n`,
     '/idp': `# Intelligent Document Processing\n\nSee ${origin}/idp/.\n`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nSee ${origin}/inference/gtm/.\n`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSee ${origin}/enterprise/gtm/.\n`,
@@ -807,15 +816,19 @@ writeJson(path.join(publicDir, 'api/health'), {
 })
 
 const linkHeader = getLinkHeaderValue()
+// Author JSON-LD hashes only here; postbuild seal-csp-from-html.mjs unions Next flight scripts from the export HTML tree.
+const scriptSrc = scriptSrcFromBodies(wwwJsonLdScriptBodies(origin))
 writeText(
   path.join(publicDir, '_headers'),
   `/*
+  # CSP script-src: sha256 hashes of known inline scripts (JSON-LD). See docs/website/csp-script-hashes.md.
+  # Deploy seals additional Next/Turbopack inline hashes via scripts/seal-csp-from-html.mjs (npm postbuild).
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://formsubmit.co; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://docs.clawql.com https://gateway.clawql.app; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://formsubmit.co; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; ${scriptSrc}; connect-src 'self' https://docs.clawql.com https://gateway.clawql.app; upgrade-insecure-requests
   Link: ${linkHeader}
 
 /index.md
@@ -921,6 +934,14 @@ writeText(
 - [Streams](${origin}/streams/)
 - [Agents](${origin}/agents/)
 - [Security](${origin}/security/)
+- [Durability](${origin}/durability/)
+- [Governance](${origin}/governance/)
+- [Ontology](${origin}/ontology/)
+- [Data handling](${origin}/data-handling/)
+- [Cloud](${origin}/cloud/)
+- [Integrations](${origin}/integrations/)
+- [Inference](${origin}/inference/)
+- [Enterprise](${origin}/enterprise/)
 `,
 )
 

@@ -12,7 +12,7 @@ Enterprise ClawQL deployments need a **single chokepoint** that validates **JWT 
 Agent → (JWT with ATR claims) → chokepoint → ClawQL MCP → search/execute → upstream APIs
 ```
 
-- The agent **cannot widen** its own scopes — only the IdP / gateway issues or refreshes tokens.
+- The agent **cannot widen** its own scopes — only the identity provider / gateway issues or refreshes tokens.
 - Denials should be **structured** (WORM escalation), not silent drops — see [security ontology loop](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/security-ontology-knowledge-loop.md).
 - **`cache`** is scratch state between chats; it is **not** a substitute for ATR enforcement.
 
@@ -114,7 +114,7 @@ When the mesh does not already validate every claim:
 
 **HTTP denial:** `401` with JSON-RPC `-32001`. **gRPC denial:** `UNAUTHENTICATED`. `/healthz` and gRPC health remain exempt.
 
-Wire these via `mcpProxy.custom.extraEnv` alongside your IdP values.
+Wire these via `mcpProxy.custom.extraEnv` alongside your identity-provider values.
 
 ## Pair with payments and audit
 

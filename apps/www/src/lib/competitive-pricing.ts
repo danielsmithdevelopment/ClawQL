@@ -268,7 +268,7 @@ export const competitiveHonestyNotes = [
   },
   {
     title: 'Unlimited executions — deliberate pricing',
-    body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. executor.sh caps usage and bills $0.20/1,000 overage.',
+    body: 'Gateway tiers run at the global edge and scale with demand — an extra execution or memory_recall costs us almost nothing in egress. Charging per execution creates a perverse incentive to throttle agents. ClawQL prices on hosting model, storage, and plugin bundles. Metered gateways often cap usage and bill overage — confirm current Executor pricing at procurement time; equal-arm measurements live on /benchmarks.',
   },
   {
     title: 'Seamless tier upgrades',

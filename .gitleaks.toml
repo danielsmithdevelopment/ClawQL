@@ -23,10 +23,11 @@ paths = [
   # Multi-attack injection corpus uses deliberate effectTokens (CLAWQL_INJECT_*), not secrets.
   '''(^|/)benchmarks/security-suite/multi-attack-injection/corpus/''',
   # Public IETF RFCs used as pageindex-ab hard-candidate docs (OAuth examples etc.).
-  '''(^|/)benchmarks/pageindex-ab/corpus/hard-candidate/docs/rfc''',
-  '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',
+  # Archived under docs/benchmarks/archive after 8.0 PageIndex purge (audit 11.06).
+  '''(^|/)docs/benchmarks/archive/pageindex-ab/corpus/hard-candidate/docs/rfc''',
+  '''(^|/)docs/benchmarks/archive/pageindex-ab/corpus/seed/rfc''',
   # Rank/diagnostic fixtures quote the same RFC OAuth example tokens/section ids.
-  '''(^|/)benchmarks/pageindex-ab/design/''',
+  '''(^|/)docs/benchmarks/archive/pageindex-ab/design/''',
   # Restored durability evidence (Pass 11): synthetic owner_phased_before_intent_* ids trip generic-api-key.
   '''(^|/)docs/benchmarks/program-cell-fleet-kill/v4/''',
   '''\.test\.ts$''',

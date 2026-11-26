@@ -82,6 +82,10 @@ ClawQL fails closed on networked surfaces. Flags below are **escape hatches** (o
 3. For payments: hash-only operator key and/or dedicated approve OIDC audience — see [`outbound-payment-approve.md`](./outbound-payment-approve.md).
 4. For regulated: set `CLAWQL_TIER=regulated` (or Helm `values-regulated.yaml`) and do **not** try to disable WORM / enforcement / local-only inference.
 
+## Dynamic pass (CI)
+
+Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals` — see [`scripts/security/README.md`](../../scripts/security/README.md). A future kind + Helm job will exercise the same surface against `values-regulated.yaml`; until then the process suite is the merge gate.
+
 ## Related
 
 - [`ai-enforcement-default-posture.md`](./ai-enforcement-default-posture.md)

@@ -5,6 +5,7 @@ import { readdir } from "node:fs/promises";
 
 import { CONNECTIONS, type ConnectionItem } from "@/lib/managed/fixtures";
 import { readManagedDataSource, resolveWithFallbackEffect } from "@/lib/managed/data-source";
+import { resolveDashboardManagedHomeEffect } from "@/lib/managed/org-home";
 
 function relativeTime(iso: string): string {
   const ms = Date.now() - Date.parse(iso);
@@ -72,19 +73,26 @@ const listPendingSourceIdsEffect = (home?: string): Effect.Effect<readonly strin
   });
 
 export const listManagedConnectionsEffect = (
-  env: NodeJS.ProcessEnv = process.env,
+  input: {
+    readonly orgId?: string | null;
+    readonly env?: NodeJS.ProcessEnv;
+  } = {},
 ): Effect.Effect<{
   readonly connections: ConnectionItem[];
   readonly source: "live" | "fixture";
-}> =>
-  resolveWithFallbackEffect({
+}> => {
+  const env = input.env ?? process.env;
+  return resolveWithFallbackEffect({
     source: readManagedDataSource(env),
     fixture: [...CONNECTIONS],
     empty: [],
     env,
     isLiveUseful: (rows) => rows.length > 0,
     live: Effect.gen(function* () {
-      const home = env.CLAWQL_HOME?.trim() || undefined;
+      const home = yield* resolveDashboardManagedHomeEffect({
+        orgId: input.orgId,
+        env,
+      }).pipe(Effect.orDie);
       const file = yield* readCustomSourcesFileEffect(home);
       const items: ConnectionItem[] = file.sources.map(mapCustomSourceToConnection);
 
@@ -111,3 +119,4 @@ export const listManagedConnectionsEffect = (
       return items;
     }),
   }).pipe(Effect.map(({ data, source }) => ({ connections: data, source })));
+};

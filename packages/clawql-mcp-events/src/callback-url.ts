@@ -1,9 +1,6 @@
-import { lookup } from "node:dns/promises";
 import { Effect } from "effect";
-import { isPrivateOrLoopbackIp } from "clawql-api";
+import { assertSafeSourceFetchUrlResolvedEffect } from "clawql-core";
 import { CallbackEndpointError } from "./errors.js";
-
-const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "metadata.google"]);
 
 export type CallbackUrlPolicy = {
   /** When true, allow loopback / private hosts (local tests only). */
@@ -20,9 +17,32 @@ export function readCallbackUrlPolicy(
   }));
 }
 
+function toCallbackSsrfError(cause: unknown): CallbackEndpointError {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  let mapped = "Callback host is not allowed";
+  if (/Invalid source URL/i.test(message)) {
+    mapped = "Invalid callback URL";
+  } else if (/must use HTTPS/i.test(message)) {
+    mapped = "Callback URL must use HTTPS";
+  } else if (/resolve to private or loopback/i.test(message)) {
+    mapped = "Callback resolves to a private address";
+  } else if (/private or loopback/i.test(message)) {
+    mapped = "Callback must not target private or loopback addresses";
+  } else if (/ENOTFOUND|getaddrinfo|EAI_AGAIN|DNS|resolution failed/i.test(message)) {
+    mapped = "Callback host DNS resolution failed";
+  } else if (/not allowed/i.test(message)) {
+    mapped = "Callback host is not allowed";
+  }
+  return new CallbackEndpointError({
+    message: mapped,
+    reason: "ssrf_blocked",
+  });
+}
+
 /**
- * Validate callback URL: HTTPS required, private/local blocked unless allowLocalhost,
- * DNS-resolved addresses re-checked. Does not fetch.
+ * Validate callback URL: HTTPS required (HTTP only when allowLocalhost),
+ * private/local blocked unless allowLocalhost, DNS-resolved addresses
+ * re-checked via clawql-core egress. Does not fetch.
  */
 export function assertSafeCallbackUrl(
   raw: string,
@@ -41,6 +61,8 @@ export function assertSafeCallbackUrl(
       );
     }
 
+    // Domain policy: callbacks are HTTPS-only unless local-test allow is on.
+    // Do not honor CLAWQL_SOURCES_ALLOW_HTTP here.
     if (parsed.protocol !== "https:" && !(policy.allowLocalhost && parsed.protocol === "http:")) {
       return yield* Effect.fail(
         new CallbackEndpointError({
@@ -60,35 +82,12 @@ export function assertSafeCallbackUrl(
       );
     }
 
-    if (!policy.allowLocalhost) {
-      if (BLOCKED_HOSTNAMES.has(host) || isPrivateOrLoopbackIp(host)) {
-        return yield* Effect.fail(
-          new CallbackEndpointError({
-            message: "Callback must not target private or loopback addresses",
-            reason: "ssrf_blocked",
-          })
-        );
-      }
-      const addrs = yield* Effect.tryPromise({
-        try: () => lookup(host, { all: true }),
-        catch: () =>
-          new CallbackEndpointError({
-            message: "Callback host DNS resolution failed",
-            reason: "ssrf_blocked",
-          }),
-      });
-      for (const a of addrs) {
-        if (isPrivateOrLoopbackIp(a.address)) {
-          return yield* Effect.fail(
-            new CallbackEndpointError({
-              message: "Callback resolves to a private address",
-              reason: "ssrf_blocked",
-            })
-          );
-        }
-      }
+    if (policy.allowLocalhost) {
+      return parsed;
     }
 
-    return parsed;
+    return yield* assertSafeSourceFetchUrlResolvedEffect(raw).pipe(
+      Effect.mapError(toCallbackSsrfError)
+    );
   });
 }

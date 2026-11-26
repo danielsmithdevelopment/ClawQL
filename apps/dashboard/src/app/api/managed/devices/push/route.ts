@@ -24,7 +24,9 @@ export async function GET(req: Request) {
   const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
-  const result = await Effect.runPromise(listManagedPushDevicesEffect());
+  const result = await Effect.runPromise(
+    listManagedPushDevicesEffect({ orgId: auth.session.orgId }),
+  );
   return NextResponse.json(result);
 }
 
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
         label: body.label,
         userId: body.userId ?? session.userId,
         fixture: body.fixture,
+        orgId: session.orgId,
       }),
     );
     return NextResponse.json(result);
@@ -74,7 +77,9 @@ export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const userId = url.searchParams.get("userId")?.trim();
   try {
-    const result = await Effect.runPromise(clearManagedPushDevicesEffect({ userId }));
+    const result = await Effect.runPromise(
+      clearManagedPushDevicesEffect({ userId, orgId: auth.session.orgId }),
+    );
     return NextResponse.json(result);
   } catch (cause: unknown) {
     const msg = cause instanceof Error ? cause.message : String(cause);

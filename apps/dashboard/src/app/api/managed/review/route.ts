@@ -48,7 +48,9 @@ export async function GET(req: Request) {
   const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
-  const result = await Effect.runPromise(listManagedReviewEffect());
+  const result = await Effect.runPromise(
+    listManagedReviewEffect({ orgId: auth.session.orgId }),
+  );
   return NextResponse.json(result);
 }
 
@@ -86,6 +88,7 @@ export async function POST(req: Request) {
       resolveReviewChangeHashEffect({
         reviewId: body.id.trim(),
         kind: body.kind,
+        orgId: session.orgId,
       }),
     );
     if (hashExit._tag === "Failure") {
@@ -102,6 +105,7 @@ export async function POST(req: Request) {
         decision: body.decision,
         changeHash: hashExit.value,
         rpId: rpIdFromRequest(req),
+        orgId: session.orgId,
       }),
     );
     if (exit._tag === "Failure") {
@@ -143,6 +147,7 @@ export async function POST(req: Request) {
         resolveReviewChangeHashEffect({
           reviewId: body.id.trim(),
           kind: body.kind,
+          orgId: session.orgId,
         }),
       );
       if (hashExit._tag === "Failure") {
@@ -161,6 +166,7 @@ export async function POST(req: Request) {
           response: body.approvalProof.response,
           rpId: rpIdFromRequest(req),
           origin: originFromRequest(req),
+          orgId: session.orgId,
         }),
       );
       if (verifyExit._tag === "Failure") {
@@ -186,6 +192,7 @@ export async function POST(req: Request) {
       kind: body.kind,
       decision: body.decision,
       operatorId: session.userId,
+      orgId: session.orgId,
     }),
   );
   if (exit._tag === "Failure") {

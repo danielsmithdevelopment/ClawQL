@@ -1,8 +1,9 @@
 import { Effect } from "effect";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
 import { readManagedDataSource } from "@/lib/managed/data-source";
+import { resolveManagedStorePathEffect } from "@/lib/managed/org-home";
 
 export type ManagedPushDevice = {
   readonly id: string;
@@ -14,12 +15,16 @@ export type ManagedPushDevice = {
   readonly fixture: boolean;
 };
 
-function resolveDevicesPath(env: NodeJS.ProcessEnv = process.env): string {
-  const override = env.CLAWQL_PUSH_DEVICES_PATH?.trim();
-  if (override) return override;
-  const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
-  return join(home, "Auth", "push-devices.json");
-}
+const resolveDevicesPathEffect = (input: {
+  readonly orgId?: string | null;
+  readonly env?: NodeJS.ProcessEnv;
+}): Effect.Effect<string, Error> =>
+  resolveManagedStorePathEffect({
+    orgId: input.orgId,
+    segments: ["Auth", "push-devices.json"],
+    overrideEnvKey: "CLAWQL_PUSH_DEVICES_PATH",
+    env: input.env,
+  }).pipe(Effect.mapError((e) => new Error(e.detail ?? e.reason)));
 
 const readDevicesFileEffect = (
   path: string,
@@ -51,7 +56,10 @@ const writeDevicesFileEffect = (
   });
 
 export const listManagedPushDevicesEffect = (
-  env: NodeJS.ProcessEnv = process.env,
+  input: {
+    readonly orgId?: string | null;
+    readonly env?: NodeJS.ProcessEnv;
+  } = {},
 ): Effect.Effect<
   {
     readonly devices: ManagedPushDevice[];
@@ -60,10 +68,11 @@ export const listManagedPushDevicesEffect = (
   Error
 > =>
   Effect.gen(function* () {
+    const env = input.env ?? process.env;
     if (readManagedDataSource(env) === "fixture") {
       return { devices: [] as ManagedPushDevice[], source: "fixture" as const };
     }
-    const path = resolveDevicesPath(env);
+    const path = yield* resolveDevicesPathEffect({ orgId: input.orgId, env });
     const devices = yield* readDevicesFileEffect(path);
     return { devices, source: "live" as const };
   });
@@ -74,6 +83,7 @@ export const registerManagedPushDeviceEffect = (input: {
   readonly label?: string;
   readonly userId?: string;
   readonly fixture?: boolean;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<
   { readonly device: ManagedPushDevice; readonly source: "live" },
@@ -86,7 +96,7 @@ export const registerManagedPushDeviceEffect = (input: {
     }
     const token = input.token.trim();
     if (!token) return yield* Effect.fail(new Error("token required"));
-    const path = resolveDevicesPath(env);
+    const path = yield* resolveDevicesPathEffect({ orgId: input.orgId, env });
     const existing = yield* readDevicesFileEffect(path);
     const device: ManagedPushDevice = {
       id: `push_${input.platform}_${token.slice(-12)}`,
@@ -104,6 +114,7 @@ export const registerManagedPushDeviceEffect = (input: {
 
 export const clearManagedPushDevicesEffect = (input?: {
   readonly userId?: string;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<{ readonly cleared: number; readonly source: "live" }, Error> =>
   Effect.gen(function* () {
@@ -111,7 +122,7 @@ export const clearManagedPushDevicesEffect = (input?: {
     if (readManagedDataSource(env) === "fixture") {
       return yield* Effect.fail(new Error("Push clear disabled while CLAWQL_MANAGED_DATA_SOURCE=fixture"));
     }
-    const path = resolveDevicesPath(env);
+    const path = yield* resolveDevicesPathEffect({ orgId: input?.orgId, env });
     const existing = yield* readDevicesFileEffect(path);
     const userId = input?.userId?.trim();
     const kept = userId

@@ -50,8 +50,10 @@ describe("managed connections live layer", () => {
     );
     const listed = await Effect.runPromise(
       listManagedConnectionsEffect({
-        CLAWQL_MANAGED_DATA_SOURCE: "live",
-        CLAWQL_HOME: dir,
+        env: {
+          CLAWQL_MANAGED_DATA_SOURCE: "live",
+          CLAWQL_HOME: dir,
+        },
       }),
     );
     expect(listed.source).toBe("live");

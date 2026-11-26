@@ -1,6 +1,9 @@
 /**
  * Bridge to the real clawql-api native tool gate (park + IFC).
  * Requires `npm run build -w clawql-api`.
+ *
+ * `gateNativeToolBeforeInvoke` returns `{ blocked: false }` or
+ * `{ blocked: true, errorResult: { content: [...] } }` — never a bare MCP block.
  */
 
 let apiPromise = null;
@@ -14,6 +17,18 @@ async function loadApi() {
     });
   }
   return apiPromise;
+}
+
+function parseDenyBody(decision) {
+  const text = decision?.errorResult?.content?.[0]?.text;
+  if (typeof text !== "string") {
+    return { status: "blocked", mechanism: "unknown", reason: "missing_error_body" };
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { status: "blocked", mechanism: "unknown", reason: text.slice(0, 200) };
+  }
 }
 
 export async function resetSessionLabels() {
@@ -40,14 +55,14 @@ export async function makeProductInvoke(sessionId, env) {
       }
       if (toolName === "sidecar_write" || toolName === "tool_register") {
         // Unknown / not in frozen allow — gate treats unknown as destructive.
-        const block = await api.gateNativeToolBeforeInvoke({
+        const decision = await api.gateNativeToolBeforeInvoke({
           toolName,
           args: args ?? {},
           sessionId,
           env,
         });
-        if (!block) return { blocked: false, detail: "allowed_unexpected" };
-        const body = JSON.parse(block.content[0].text);
+        if (!decision.blocked) return { blocked: false, detail: "allowed_unexpected" };
+        const body = parseDenyBody(decision);
         return {
           blocked: true,
           status: body.status,
@@ -57,13 +72,13 @@ export async function makeProductInvoke(sessionId, env) {
         };
       }
 
-      const block = await api.gateNativeToolBeforeInvoke({
+      const decision = await api.gateNativeToolBeforeInvoke({
         toolName,
         args: args ?? {},
         sessionId,
         env,
       });
-      if (!block) {
+      if (!decision.blocked) {
         if (toolName === "memory_recall") {
           api.accumulateNativeToolReadAfterSuccess({
             toolName,
@@ -74,7 +89,7 @@ export async function makeProductInvoke(sessionId, env) {
         }
         return { blocked: false, detail: "allowed" };
       }
-      const body = JSON.parse(block.content[0].text);
+      const body = parseDenyBody(decision);
       return {
         blocked: true,
         status: body.status,

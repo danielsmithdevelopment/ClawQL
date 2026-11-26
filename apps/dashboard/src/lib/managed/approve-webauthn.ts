@@ -11,6 +11,8 @@ import { mkdir, readFile, rename, unlink, writeFile, appendFile } from "node:fs/
 import { dirname, join } from "node:path";
 import { Effect } from "effect";
 
+import { orgScopedHomeEffect } from "@/lib/managed/org-home";
+
 export type ApproveCredentialRecord = {
   readonly subjectId: string;
   readonly credentialId: string;
@@ -36,7 +38,7 @@ export type ApproveChallengeRecord = {
 /** Default max age (seconds) of auth_time / iat for first-passkey enrollment (BB2). */
 export const FIRST_PASSKEY_RECENT_AUTH_SECONDS = 300;
 
-function clawqlHome(env: NodeJS.ProcessEnv = process.env): string {
+function clawqlHomeRoot(env: NodeJS.ProcessEnv = process.env): string {
   return (
     env.CLAWQL_HOME?.trim() ||
     env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim() ||
@@ -44,21 +46,44 @@ function clawqlHome(env: NodeJS.ProcessEnv = process.env): string {
   );
 }
 
-function credentialsPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(clawqlHome(env), "Dashboard", "webauthn-credentials.json");
+/** Org-scoped home for WebAuthn / challenge stores (CC1). */
+function clawqlHome(
+  env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
+): string {
+  return Effect.runSync(
+    orgScopedHomeEffect({ home: clawqlHomeRoot(env), orgId, env }),
+  );
 }
 
-function challengesDir(env: NodeJS.ProcessEnv = process.env): string {
-  return join(clawqlHome(env), "Dashboard", "approve-challenges");
+function credentialsPath(
+  env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
+): string {
+  return join(clawqlHome(env, orgId), "Dashboard", "webauthn-credentials.json");
 }
 
-function challengeFile(challenge: string, env: NodeJS.ProcessEnv = process.env): string {
+function challengesDir(
+  env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
+): string {
+  return join(clawqlHome(env, orgId), "Dashboard", "approve-challenges");
+}
+
+function challengeFile(
+  challenge: string,
+  env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
+): string {
   const hash = createHash("sha256").update(challenge).digest("hex").slice(0, 32);
-  return join(challengesDir(env), `${hash}.json`);
+  return join(challengesDir(env, orgId), `${hash}.json`);
 }
 
-function enrollmentAuditPath(env: NodeJS.ProcessEnv = process.env): string {
-  return join(clawqlHome(env), "Dashboard", "passkey-enrollments.jsonl");
+function enrollmentAuditPath(
+  env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
+): string {
+  return join(clawqlHome(env, orgId), "Dashboard", "passkey-enrollments.jsonl");
 }
 
 /**
@@ -109,9 +134,10 @@ export function recentAuthSatisfied(
 
 async function readCredentials(
   env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
 ): Promise<ApproveCredentialRecord[]> {
   try {
-    const raw = await readFile(credentialsPath(env), "utf8");
+    const raw = await readFile(credentialsPath(env, orgId), "utf8");
     const parsed = JSON.parse(raw) as { credentials?: ApproveCredentialRecord[] };
     return Array.isArray(parsed.credentials) ? parsed.credentials : [];
   } catch (e: unknown) {
@@ -123,8 +149,9 @@ async function readCredentials(
 async function writeCredentials(
   credentials: ApproveCredentialRecord[],
   env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
 ): Promise<void> {
-  const path = credentialsPath(env);
+  const path = credentialsPath(env, orgId);
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`;
   await writeFile(tmp, `${JSON.stringify({ credentials }, null, 2)}\n`, { mode: 0o600 });
@@ -134,10 +161,11 @@ async function writeCredentials(
 export function listApproveCredentialsEffect(
   subjectId: string,
   env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
 ): Effect.Effect<ApproveCredentialRecord[], Error> {
   return Effect.tryPromise({
     try: async () => {
-      const all = await readCredentials(env);
+      const all = await readCredentials(env, orgId);
       return all.filter((c) => c.subjectId === subjectId && c.canApprove);
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -147,12 +175,14 @@ export function listApproveCredentialsEffect(
 export function enrollApproveCredentialEffect(
   input: Omit<ApproveCredentialRecord, "enrolledAt" | "canApprove"> & {
     readonly canApprove?: boolean;
+    readonly orgId?: string | null;
   },
   env: NodeJS.ProcessEnv = process.env,
 ): Effect.Effect<ApproveCredentialRecord, Error> {
   return Effect.tryPromise({
     try: async () => {
-      const all = await readCredentials(env);
+      const orgId = input.orgId;
+      const all = await readCredentials(env, orgId);
       const record: ApproveCredentialRecord = {
         subjectId: input.subjectId,
         credentialId: input.credentialId,
@@ -165,7 +195,7 @@ export function enrollApproveCredentialEffect(
       };
       const next = all.filter((c) => c.credentialId !== record.credentialId);
       next.push(record);
-      await writeCredentials(next, env);
+      await writeCredentials(next, env, orgId);
       return record;
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -176,14 +206,15 @@ export function updateCredentialCounterEffect(
   credentialId: string,
   counter: number,
   env: NodeJS.ProcessEnv = process.env,
+  orgId?: string | null,
 ): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: async () => {
-      const all = await readCredentials(env);
+      const all = await readCredentials(env, orgId);
       const next = all.map((c) =>
         c.credentialId === credentialId ? { ...c, counter } : c,
       );
-      await writeCredentials(next, env);
+      await writeCredentials(next, env, orgId);
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
@@ -201,12 +232,14 @@ export function issueApproveChallengeEffect(input: {
   readonly decision: string;
   readonly changeHash: string;
   readonly rpId: string;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<ApproveChallengeOptions, Error> {
   return Effect.tryPromise({
     try: async () => {
       const env = input.env ?? process.env;
-      const creds = (await readCredentials(env)).filter(
+      const orgId = input.orgId;
+      const creds = (await readCredentials(env, orgId)).filter(
         (c) => c.subjectId === input.userId && c.canApprove,
       );
       if (creds.length === 0) {
@@ -240,8 +273,8 @@ export function issueApproveChallengeEffect(input: {
         changeHash,
         expiresAtMs: Date.now() + 5 * 60_000,
       };
-      await mkdir(challengesDir(env), { recursive: true, mode: 0o700 });
-      const path = challengeFile(record.challenge, env);
+      await mkdir(challengesDir(env, orgId), { recursive: true, mode: 0o700 });
+      const path = challengeFile(record.challenge, env, orgId);
       const tmp = `${path}.${process.pid}.tmp`;
       await writeFile(tmp, `${JSON.stringify(record)}\n`, { mode: 0o600 });
       await rename(tmp, path);
@@ -258,12 +291,13 @@ export function consumeApproveChallengeEffect(input: {
   readonly kind: string;
   readonly decision: string;
   readonly changeHash?: string;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<ApproveChallengeRecord, Error> {
   return Effect.tryPromise({
     try: async () => {
       const env = input.env ?? process.env;
-      const path = challengeFile(input.challenge, env);
+      const path = challengeFile(input.challenge, env, input.orgId);
       let raw: string;
       try {
         raw = await readFile(path, "utf8");
@@ -313,10 +347,12 @@ export function verifyApproveAssertionEffect(input: {
   readonly response: unknown;
   readonly rpId: string;
   readonly origin: string | string[];
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<{ readonly credentialId: string }, Error> {
   return Effect.gen(function* () {
     const env = input.env ?? process.env;
+    const orgId = input.orgId;
     const response = input.response as {
       id?: string;
       rawId?: string;
@@ -347,10 +383,11 @@ export function verifyApproveAssertionEffect(input: {
       kind: input.kind,
       decision: input.decision,
       changeHash: input.changeHash,
+      orgId,
       env,
     });
 
-    const creds = yield* listApproveCredentialsEffect(input.userId, env);
+    const creds = yield* listApproveCredentialsEffect(input.userId, env, orgId);
     const cred = creds.find((c) => c.credentialId === credentialId);
     if (!cred) {
       return yield* Effect.fail(new Error("webauthn_credential_not_registered_for_approver"));
@@ -383,7 +420,7 @@ export function verifyApproveAssertionEffect(input: {
     });
 
     if (typeof result.newCounter === "number") {
-      yield* updateCredentialCounterEffect(cred.credentialId, result.newCounter, env);
+      yield* updateCredentialCounterEffect(cred.credentialId, result.newCounter, env, orgId);
     }
     return { credentialId: cred.credentialId };
   });
@@ -393,6 +430,7 @@ export function verifyApproveAssertionEffect(input: {
 export function issueEnrollGateChallengeEffect(input: {
   readonly userId: string;
   readonly rpId: string;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<ApproveChallengeOptions, Error> {
   return issueApproveChallengeEffect({
@@ -402,6 +440,7 @@ export function issueEnrollGateChallengeEffect(input: {
     decision: "enroll_gate",
     changeHash: "enroll_gate",
     rpId: input.rpId,
+    orgId: input.orgId,
     env: input.env,
   });
 }
@@ -418,6 +457,7 @@ export function issueEnrollChallengeEffect(input: {
   /** Required for first passkey: recent auth_time / iat (BB2). */
   readonly authTimeSec?: number;
   readonly firstKeyMaxAgeSec?: number;
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<
   { readonly options: Record<string, unknown>; readonly challenge: string; readonly firstKey: boolean },
@@ -425,8 +465,10 @@ export function issueEnrollChallengeEffect(input: {
 > {
   return Effect.gen(function* () {
     const env = input.env ?? process.env;
+    const orgId = input.orgId;
     const existing = yield* Effect.tryPromise({
-      try: async () => (await readCredentials(env)).filter((c) => c.subjectId === input.userId),
+      try: async () =>
+        (await readCredentials(env, orgId)).filter((c) => c.subjectId === input.userId),
       catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
     });
     const firstKey = existing.length === 0;
@@ -448,6 +490,7 @@ export function issueEnrollChallengeEffect(input: {
         response: input.gateResponse,
         rpId: input.rpId,
         origin: input.origin,
+        orgId,
         env,
       });
     } else if (
@@ -495,8 +538,8 @@ export function issueEnrollChallengeEffect(input: {
           changeHash: firstKey ? "enroll_first" : "enroll_additional",
           expiresAtMs: Date.now() + 5 * 60_000,
         };
-        await mkdir(challengesDir(env), { recursive: true, mode: 0o700 });
-        const path = challengeFile(record.challenge, env);
+        await mkdir(challengesDir(env, orgId), { recursive: true, mode: 0o700 });
+        const path = challengeFile(record.challenge, env, orgId);
         const tmp = `${path}.${process.pid}.tmp`;
         await writeFile(tmp, `${JSON.stringify(record)}\n`, { mode: 0o600 });
         await rename(tmp, path);
@@ -527,7 +570,7 @@ export function recordPasskeyEnrollmentEffect(
 ): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: async () => {
-      const path = enrollmentAuditPath(env);
+      const path = enrollmentAuditPath(env, event.orgId);
       await mkdir(dirname(path), { recursive: true, mode: 0o700 });
       await appendFile(path, `${JSON.stringify(event)}\n`, { mode: 0o600 });
     },
@@ -634,8 +677,10 @@ export function verifyEnrollResponseEffect(input: {
       return yield* Effect.fail(new Error("webauthn_challenge_missing"));
     }
 
+    const orgId = input.orgId;
     const prior = yield* Effect.tryPromise({
-      try: async () => (await readCredentials(env)).filter((c) => c.subjectId === input.userId),
+      try: async () =>
+        (await readCredentials(env, orgId)).filter((c) => c.subjectId === input.userId),
       catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
     });
     const firstKey = prior.length === 0;
@@ -647,6 +692,7 @@ export function verifyEnrollResponseEffect(input: {
       kind: "enroll",
       decision: "enroll",
       changeHash: firstKey ? "enroll_first" : "enroll_additional",
+      orgId,
       env,
     });
 
@@ -674,6 +720,7 @@ export function verifyEnrollResponseEffect(input: {
         label: input.label ?? "Passkey",
         canApprove: true,
         transports: verified.transports,
+        orgId,
       },
       env,
     );
@@ -703,11 +750,16 @@ function fixtureReviewChangeHash(reviewId: string, kind: string): string {
 export function resolveReviewChangeHashEffect(input: {
   readonly reviewId: string;
   readonly kind: "change" | "source";
+  readonly orgId?: string | null;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<string, Error> {
   return Effect.gen(function* () {
     const env = input.env ?? process.env;
-    const home = env.CLAWQL_HOME?.trim() || undefined;
+    const home = yield* orgScopedHomeEffect({
+      home: clawqlHomeRoot(env),
+      orgId: input.orgId,
+      env,
+    }).pipe(Effect.mapError((e) => new Error(e.detail ?? e.reason)));
     const allowFixtureHash =
       env.CLAWQL_E2E_HARNESS === "1" ||
       (env.CLAWQL_MANAGED_DATA_SOURCE ?? "").trim().toLowerCase() === "fixture";

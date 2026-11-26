@@ -53,7 +53,7 @@ For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client w
 
 ## Gateway auth
 
-HTTP MCP enforces credentials on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package. **ClawQL is not an IdP** — `oidc` mode verifies customer-issued JWTs.
+HTTP MCP enforces credentials on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package. **ClawQL is not an identity provider** — `oidc` mode verifies customer-issued JWTs.
 
 ```bash
 export CLAWQL_AUTH_MODE=apiKey
@@ -61,7 +61,7 @@ export CLAWQL_API_KEY="your-long-random-secret"
 # Or: CLAWQL_AUTH_MODE=oidc + CLAWQL_AUTH_OIDC_JWKS_URL=…
 ```
 
-Clients must send **`Authorization: Bearer <token>`** (API key or IdP JWT) or **`X-API-Key`** on Streamable HTTP MCP requests.
+Clients must send **`Authorization: Bearer <token>`** (API key or identity-provider JWT) or **`X-API-Key`** on Streamable HTTP MCP requests.
 
 | `CLAWQL_AUTH_MODE` | Behavior                                        |
 | ------------------ | ----------------------------------------------- |

@@ -67,14 +67,14 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 
 Eval adapters live in repo-root [`benchmarks/`](../../benchmarks/), not in this docs tree:
 
-| Overlay                                                        | Role                                                    |
-| -------------------------------------------------------------- | ------------------------------------------------------- |
-| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/)   | Agents OpenBench dry harness                            |
-| [`benchmarks/extractbench/`](../../benchmarks/extractbench/)   | ExtractBench IDP provider                               |
-| [`benchmarks/harness-bench/`](../../benchmarks/harness-bench/) | Harness plugin compare + MCP UI traces                  |
-| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/)     | Harvey LAB firm-knowledge overlay                       |
-| [`benchmarks/openbench/`](../../benchmarks/openbench/)         | MCP OpenBench tasks (Track A/B)                         |
-| [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/)   | Memory stack default-route A/B harness (v0.2 factorial) |
+| Overlay                                                        | Role                                                                   |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/)   | Agents OpenBench dry harness                                           |
+| [`benchmarks/extractbench/`](../../benchmarks/extractbench/)   | ExtractBench IDP provider                                              |
+| [`benchmarks/harness-bench/`](../../benchmarks/harness-bench/) | Harness plugin compare + MCP UI traces                                 |
+| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/)     | Harvey LAB firm-knowledge overlay                                      |
+| [`benchmarks/openbench/`](../../benchmarks/openbench/)         | MCP OpenBench tasks (Track A/B)                                        |
+| [`archive/pageindex-ab/`](./archive/pageindex-ab/) (archived)  | Historical memory stack A/B harness — purged with `pageindex_*` in 8.0 |
 
 ## Parent indexes
 

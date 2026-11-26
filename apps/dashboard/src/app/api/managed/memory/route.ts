@@ -29,7 +29,9 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const view = url.searchParams.get("view")?.trim();
   if (view === "uploads") {
-    const uploads = await Effect.runPromise(listManagedMemoryUploadsEffect());
+    const uploads = await Effect.runPromise(
+      listManagedMemoryUploadsEffect({ orgId: auth.session.orgId }),
+    );
     return NextResponse.json(uploads);
   }
 
@@ -72,6 +74,7 @@ export async function POST(req: Request) {
         subject: body.subject ?? "",
         acceptIrreversible: Boolean(body.acceptIrreversible),
         acceptAuditKept: Boolean(body.acceptAuditKept),
+        orgId: auth.session.orgId,
       }),
     );
     return NextResponse.json(result);

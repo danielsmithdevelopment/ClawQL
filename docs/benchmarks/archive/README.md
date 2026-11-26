@@ -10,3 +10,9 @@ Short summaries of one-off runs. Full terminal captures lived at the old paths (
 | [jira-workflow-token-results-2026-03-19.md](jira-workflow-token-results-2026-03-19.md) | Jira OpenAPI token comparison (see note)                                                                                                                |
 
 Planning-context numbers for the multi-provider workflow are in [`../multi-provider-complex-workflow/`](../multi-provider-complex-workflow/).
+
+## Archived harness trees
+
+| Tree                             | Note                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [`pageindex-ab/`](pageindex-ab/) | Memory-stack A/B harness; **`pageindex_*` purged in 8.0** — see [`pageindex-ab/ARCHIVE.md`](pageindex-ab/ARCHIVE.md). |

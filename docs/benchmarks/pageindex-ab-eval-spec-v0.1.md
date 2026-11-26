@@ -11,7 +11,7 @@ supersedes: "0.1 (earn-its-place / specialist / demote framing)"
 # Memory stack default-route A/B (Eval Spec v0.2)
 
 Sep 29, 2026 · @Daniel  
-Harness: [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/)  
+Harness: [`docs/benchmarks/archive/pageindex-ab/`](./archive/pageindex-ab/)  
 Post correction (live overclaims): [`docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md)
 
 ## The question and the decision
@@ -119,7 +119,7 @@ Per repo: impact/blast-radius, symbol locate, "what breaks if this changes," and
 {"answer": "…", "sections": ["<section id>", …], "not_found": false}
 ```
 
-Code cells may add `"symbols": ["…"]` and `"tests_passed": true|false`. Schema: [`benchmarks/pageindex-ab/schema/answer-contract.schema.json`](../../benchmarks/pageindex-ab/schema/answer-contract.schema.json).
+Code cells may add `"symbols": ["…"]` and `"tests_passed": true|false`. Schema: [`archive/pageindex-ab/schema/answer-contract.schema.json`](./archive/pageindex-ab/schema/answer-contract.schema.json).
 
 ## CodeGraph default scope
 
@@ -251,9 +251,9 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 **Pre–next-run hygiene**
 
-- Dropped cite-impossible RFC keys (11 → **150** remaining); rule recorded in [freeze-log-key-hygiene.md](../../benchmarks/pageindex-ab/design/freeze-log-key-hygiene.md) (pre-freeze, not arm-based).
-- **Rescore (free):** filter saved cells → `H-idf` 0.840, PI main **−0.087**, union +0.013, gated 0, BM25 0 ([agent-rescore-150.json](../../benchmarks/pageindex-ab/design/agent-rescore-150.json)).
-- Offline gold ranks: only **3/15** RFC retrieval misses in ranks 4–10 ([rfc-retrieval-miss-gold-ranks.md](../../benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md)).
+- Dropped cite-impossible RFC keys (11 → **150** remaining); rule recorded in [freeze-log-key-hygiene.md](./archive/pageindex-ab/design/freeze-log-key-hygiene.md) (pre-freeze, not arm-based).
+- **Rescore (free):** filter saved cells → `H-idf` 0.840, PI main **−0.087**, union +0.013, gated 0, BM25 0 ([agent-rescore-150.json](./archive/pageindex-ab/design/agent-rescore-150.json)).
+- Offline gold ranks: only **3/15** RFC retrieval misses in ranks 4–10 ([rfc-retrieval-miss-gold-ranks.md](./archive/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md)).
 - Key sanity script clean on remaining keys (`validate_keys_sanity.py`).
 - Confirm run re-called the model (`prior_cells: 0`); trials deterministic.
 - Six code misses are grep-solvable; CG must prove unique jobs.
@@ -261,11 +261,11 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 **Freeze critical path (parallel; k-sweep can lag):**
 
-| Track | Work                                                                                                                                                  | Spec                                                                              |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **A** | Vectify vs query-rewrite (`anthropic/claude-sonnet-4.6` = Track B; shared finalize; 3-trial majority; Net≥5 + no-harm; IETF; GHA `.run-vectify-fair`) | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
-| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep                                                                                 | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
-| **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating                                                                                              | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
+| Track | Work                                                                                                                                                  | Spec                                                                       |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **A** | Vectify vs query-rewrite (`anthropic/claude-sonnet-4.6` = Track B; shared finalize; 3-trial majority; Net≥5 + no-harm; IETF; GHA `.run-vectify-fair`) | [vectify-fair-test.md](./archive/pageindex-ab/design/vectify-fair-test.md) |
+| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep                                                                                 | [agent-loop-freeze.md](./archive/pageindex-ab/design/agent-loop-freeze.md) |
+| **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating                                                                                              | [query-rewrite-arm.md](./archive/pageindex-ab/design/query-rewrite-arm.md) |
 
 **Beat lock (A):** Net \(W-L \ge 5\) on 12 misses and no-harm ≥14/15; smaller Net = tie = purge. **Combine:** Vectify win + our lose → purge ours, port later; both lose → purge; our agent-loop wins → keep opt-in.
 

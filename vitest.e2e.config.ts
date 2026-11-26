@@ -22,6 +22,7 @@ export default defineConfig({
       "packages/mcp-api-adapter/src/**/*.e2e.test.ts",
       "packages/clawql-payments/src/**/*.e2e.test.ts",
       "packages/clawql-auth/src/**/*e2e*.test.ts",
+      "scripts/security/**/*.e2e.test.ts",
     ],
     exclude: ["**/node_modules/**"],
     teardownTimeout: 30_000,

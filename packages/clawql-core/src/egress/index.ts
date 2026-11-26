@@ -1,6 +1,7 @@
 /**
- * Egress / SSRF chokepoint (audit 5.07 scaffold).
+ * Egress / SSRF chokepoint (audit 5.07).
  * Canonical implementation lives here; `clawql-api` re-exports for compatibility.
+ * Domain wrappers (callback HTTPS-only, web loopback allow, schedule allowlist) stay thin.
  */
 export {
   assertSafeSourceFetchUrl,

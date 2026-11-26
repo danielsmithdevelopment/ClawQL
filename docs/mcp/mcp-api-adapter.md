@@ -164,7 +164,7 @@ If the upstream is already gRPC, REST and GraphQL forward into it. If the upstre
 
 Either way, `:50051` is available for grpcurl, mesh routing, and protobuf clients. `model_context_protocol.Mcp/CallTool` takes a tool name and `google.protobuf.Struct` arguments. Argument schemas live in OpenAPI and GraphQL — clients do not need generated stubs.
 
-Google proposed gRPC as a first-class MCP transport in February 2026. ClawQL ships the production TypeScript implementation as **`mcp-grpc-transport`**; the adapter makes it reachable from clients that cannot speak gRPC natively.
+Google proposed gRPC as a first-class MCP transport in February 2026. ClawQL ships a TypeScript gRPC transport as **`mcp-grpc-transport`**; the adapter makes it reachable from clients that cannot speak gRPC natively.
 
 ### `/ws` — WebSocket tool calls
 

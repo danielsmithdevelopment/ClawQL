@@ -15,11 +15,13 @@ export default defineConfig({
     colorScheme: 'light',
   },
   webServer: {
-    command: 'npm run build && npm run start -- -p 4173 -H 127.0.0.1',
+    // Next 16+ rejects `next start` when output is standalone (same as Lighthouse CI /
+    // Dockerfile). Real monorepo sync + build needs more than 4m on CI.
+    command:
+      'npm run build && PORT=4173 HOSTNAME=127.0.0.1 npm run start:standalone',
     port: 4173,
     reuseExistingServer: !process.env.CI,
-    // prebuild sync + Next build can exceed 2m on CI after plugin page generation
-    timeout: process.env.CI ? 240_000 : 120_000,
+    timeout: process.env.CI ? 360_000 : 120_000,
   },
   projects: [
     {

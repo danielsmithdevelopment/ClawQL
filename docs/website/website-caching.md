@@ -34,3 +34,7 @@ You can add **Cache Rules** (phase **`http_request_cache_settings`**) on the **`
 ## Purge after deploy
 
 After a release, purge cache for **`docs.clawql.com`** in the Cloudflare dashboard (**Caching** → **Configuration** → **Purge Cache**) if you increase edge TTLs and need immediate consistency.
+
+## Content-Security-Policy (script hashes)
+
+Marketing (`apps/www`) and docs (`apps/docs`) Cloudflare `_headers` use **`script-src` sha256 hashes** instead of `'unsafe-inline'` for scripts. See [`csp-script-hashes.md`](csp-script-hashes.md).

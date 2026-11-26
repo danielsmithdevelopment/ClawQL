@@ -68,12 +68,12 @@ describe("managed keys live layer", () => {
     expect(exit._tag).toBe("Failure");
   });
 
-  it("refuses cross-org revoke (IDOR)", async () => {
+  it("refuses cross-org revoke (IDOR) on a shared single-tenant store", async () => {
     const dir = mkdtempSync(join(tmpdir(), "clawql-managed-keys-idor-"));
+    // No CLAWQL_MANAGED_ORG_ID → flat home; org field still guards revoke.
     const env = {
       CLAWQL_MANAGED_DATA_SOURCE: "live",
       CLAWQL_HOME: dir,
-      CLAWQL_MANAGED_ORG_ID: "org_acme",
     };
     const issued = await Effect.runPromise(
       issueManagedKeyEffect({
@@ -99,5 +99,30 @@ describe("managed keys live layer", () => {
       })
     );
     expect(same.ok).toBe(true);
+  });
+
+  it("partitions keys by org so org B cannot list org A (CC1)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "clawql-managed-keys-mt-"));
+    const env = {
+      CLAWQL_MANAGED_DATA_SOURCE: "live",
+      CLAWQL_HOME: dir,
+      CLAWQL_MANAGED_MULTI_TENANT: "1",
+    };
+    const issued = await Effect.runPromise(
+      issueManagedKeyEffect({
+        name: "acme-bot",
+        subjectId: "user_a",
+        orgId: "org_a",
+        env,
+      }),
+    );
+    const listedA = await Effect.runPromise(
+      listManagedKeysEffect({ orgId: "org_a", env }),
+    );
+    expect(listedA.keys.some((k) => k.id === issued.key.id)).toBe(true);
+    const listedB = await Effect.runPromise(
+      listManagedKeysEffect({ orgId: "org_b", env }),
+    );
+    expect(listedB.keys.some((k) => k.id === issued.key.id)).toBe(false);
   });
 });

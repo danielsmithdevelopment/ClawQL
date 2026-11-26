@@ -29,13 +29,13 @@ describe("managed push devices", () => {
       }),
     );
     expect(registered.device.token).toContain("ExponentPushToken");
-    const listed = await Effect.runPromise(listManagedPushDevicesEffect(env));
+    const listed = await Effect.runPromise(listManagedPushDevicesEffect({ env }));
     expect(listed.devices).toHaveLength(1);
     const cleared = await Effect.runPromise(
       clearManagedPushDevicesEffect({ userId: "user_1", env }),
     );
     expect(cleared.cleared).toBe(1);
-    const after = await Effect.runPromise(listManagedPushDevicesEffect(env));
+    const after = await Effect.runPromise(listManagedPushDevicesEffect({ env }));
     expect(after.devices).toHaveLength(0);
   });
 });

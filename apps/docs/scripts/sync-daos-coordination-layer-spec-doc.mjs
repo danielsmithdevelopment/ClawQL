@@ -11,6 +11,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { findMonorepoRoot } from './lib/find-monorepo-root.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -25,14 +26,7 @@ const srcRelative = path.join(
 const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocs() {
-  let dir = websiteRoot
-  for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) return dir
-    const parent = path.dirname(dir)
-    if (parent === dir) break
-    dir = parent
-  }
-  return null
+  return findMonorepoRoot(websiteRoot)
 }
 
 function escapeLessThanBeforeDigit(body) {

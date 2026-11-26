@@ -7,7 +7,7 @@ import {
   isPrivateOrLoopbackIp,
 } from "./safe-source-url.js";
 
-describe("egress safe-source-url (audit 5.07 scaffold)", () => {
+describe("egress safe-source-url (audit 5.07)", () => {
   it("blocks private and loopback literal hosts", () => {
     expect(() => assertSafeSourceFetchUrl("https://127.0.0.1/x")).toThrow();
     expect(() => assertSafeSourceFetchUrl("https://localhost/x")).toThrow();
