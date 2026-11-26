@@ -85,20 +85,20 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 Posture hardened across MCP, webhooks, NATS, gRPC, resume, GraphQL, LangExtract, embeddings, team sync, payments, and dashboard. Full escape-hatch table: [`docs/security/secure-defaults.md`](../security/secure-defaults.md).
 
-| Area | Before (unsafe / implicit) | After (8.0 security audit) |
-| ---- | -------------------------- | -------------------------- |
-| **MCP HTTP bind** | Easy to listen on `0.0.0.0` with `noAuth` | Default **`MCP_HOST=127.0.0.1`**; Host allowlist for DNS rebinding (`MCP_ALLOWED_HOSTS` / loopback Host validation) |
-| **`noAuth`** | Treated as fine on any bind | **Refused off loopback** unless `CLAWQL_ALLOW_UNAUTHENTICATED=1`; **`CLAWQL_TIER=regulated` refuses `noAuth`** |
-| **gRPC** | Auth/TLS easy to skip | Auth wrapper required; non-loopback needs TLS (or `GRPC_ALLOW_INSECURE=1` demos); regulated requires TLS cert/key |
-| **Webhooks** | Tokens often optional | **Tokens required** unless `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1` (demo only) |
-| **NATS** | Plain `nats://` without creds | Creds **and** `tls://` / `wss://` required unless `CLAWQL_NATS_ALLOW_INSECURE=1` |
-| **MCP `resume`** | Could approve mandates on the MCP channel | **Decline-only** on MCP — approve via console / signed human path |
-| **GraphQL** | In-process `/graphql` easy to leave on | **Off by default** (`CLAWQL_HTTP_GRAPHQL=1` to opt in); regulated refuses |
-| **LangExtract** | Live backends defaulted toward cloud aggregators | Prefer **local Ollama** for live extraction; demo mode stays default-off cloud |
-| **Embeddings** | Easy to infer remote from `OPENAI_API_KEY` | **Local MiniLM** unless `CLAWQL_EMBEDDING_PROVIDER=http` (+ regulated HTTP allowlist) |
-| **Team sync** | Risk of shipping secrets/sources | **`sources/`**, vault, auth, WORM, `clawql.env` **excluded** from sync |
-| **Outbound payments** | MCP/API keys could approve | **Operator key hash** and/or **dedicated OIDC approve audience**; refuses `noAuth` / MCP keys |
-| **Dashboard / passkey** | Weak managed/desktop assumptions | Managed console **auth + passkey** (synced passkeys sign-in only; device-bound for approvals); Desktop local APIs stay loopback / desktop-mode gated |
+| Area                    | Before (unsafe / implicit)                       | After (8.0 security audit)                                                                                                                           |
+| ----------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MCP HTTP bind**       | Easy to listen on `0.0.0.0` with `noAuth`        | Default **`MCP_HOST=127.0.0.1`**; Host allowlist for DNS rebinding (`MCP_ALLOWED_HOSTS` / loopback Host validation)                                  |
+| **`noAuth`**            | Treated as fine on any bind                      | **Refused off loopback** unless `CLAWQL_ALLOW_UNAUTHENTICATED=1`; **`CLAWQL_TIER=regulated` refuses `noAuth`**                                       |
+| **gRPC**                | Auth/TLS easy to skip                            | Auth wrapper required; non-loopback needs TLS (or `GRPC_ALLOW_INSECURE=1` demos); regulated requires TLS cert/key                                    |
+| **Webhooks**            | Tokens often optional                            | **Tokens required** unless `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1` (demo only)                                                                      |
+| **NATS**                | Plain `nats://` without creds                    | Creds **and** `tls://` / `wss://` required unless `CLAWQL_NATS_ALLOW_INSECURE=1`                                                                     |
+| **MCP `resume`**        | Could approve mandates on the MCP channel        | **Decline-only** on MCP — approve via console / signed human path                                                                                    |
+| **GraphQL**             | In-process `/graphql` easy to leave on           | **Off by default** (`CLAWQL_HTTP_GRAPHQL=1` to opt in); regulated refuses                                                                            |
+| **LangExtract**         | Live backends defaulted toward cloud aggregators | Prefer **local Ollama** for live extraction; demo mode stays default-off cloud                                                                       |
+| **Embeddings**          | Easy to infer remote from `OPENAI_API_KEY`       | **Local MiniLM** unless `CLAWQL_EMBEDDING_PROVIDER=http` (+ regulated HTTP allowlist)                                                                |
+| **Team sync**           | Risk of shipping secrets/sources                 | **`sources/`**, vault, auth, WORM, `clawql.env` **excluded** from sync                                                                               |
+| **Outbound payments**   | MCP/API keys could approve                       | **Operator key hash** and/or **dedicated OIDC approve audience**; refuses `noAuth` / MCP keys                                                        |
+| **Dashboard / passkey** | Weak managed/desktop assumptions                 | Managed console **auth + passkey** (synced passkeys sign-in only; device-bound for approvals); Desktop local APIs stay loopback / desktop-mode gated |
 
 ---
 

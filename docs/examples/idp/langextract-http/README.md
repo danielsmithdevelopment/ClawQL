@@ -13,11 +13,11 @@ Schema-guided, **character-grounded** extraction via [google/langextract](https:
 
 ## Live backends (no direct Gemini dependency)
 
-| Backend                  | Env                                     | Credentials                                                                      |
-| ------------------------ | --------------------------------------- | -------------------------------------------------------------------------------- |
-| **openrouter** (live default) | `LANGEXTRACT_BACKEND=openrouter`     | `OPENROUTER_API_KEY` — model id e.g. `deepseek/deepseek-chat` (sidecar **mode** default remains **`demo`**; see [`secure-defaults.md`](../../../security/secure-defaults.md)) |
-| **ollama**               | `LANGEXTRACT_BACKEND=ollama`            | `OLLAMA_BASE_URL` (default `http://localhost:11434`) — model id e.g. `gemma2:2b` |
-| **openai_compatible**    | `LANGEXTRACT_BACKEND=openai_compatible` | `OPENAI_API_KEY` + `OPENAI_API_BASE_URL`                                         |
+| Backend                       | Env                                     | Credentials                                                                                                                                                                   |
+| ----------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **openrouter** (live default) | `LANGEXTRACT_BACKEND=openrouter`        | `OPENROUTER_API_KEY` — model id e.g. `deepseek/deepseek-chat` (sidecar **mode** default remains **`demo`**; see [`secure-defaults.md`](../../../security/secure-defaults.md)) |
+| **ollama**                    | `LANGEXTRACT_BACKEND=ollama`            | `OLLAMA_BASE_URL` (default `http://localhost:11434`) — model id e.g. `gemma2:2b`                                                                                              |
+| **openai_compatible**         | `LANGEXTRACT_BACKEND=openai_compatible` | `OPENAI_API_KEY` + `OPENAI_API_BASE_URL`                                                                                                                                      |
 
 ClawQL operators typically use **OpenRouter** (same key as OpenClaw) or **local Ollama** — not a standalone Gemini API key.
 

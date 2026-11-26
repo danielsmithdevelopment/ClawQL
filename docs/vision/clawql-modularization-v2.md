@@ -49,12 +49,12 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 
 ### 3.2 Default-Enabled
 
-| Package          | Responsibilities                                                                                 | Status today                                                            |
-| ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                  | ✅ Shipped — `noAuth`/`apiKey`, HTTP MCP middleware, provider headers   |
-| clawql-documents | Document pipeline — 8 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline` | ✅ Shipped — automated runner with retries/Merkle per hop still roadmap |
-| clawql-memory    | Memory 2.0 (Vault + Graph + optional Onyx; PageIndex product surface **removed in 8.0**)          | ✅ Shipped — `memory_*` / `read_around`; see [`secure-defaults.md`](../security/secure-defaults.md) + [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) |
-| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                  | ❌ **Removed in 8.0** — Vectify-style redesign is post-8.0 backlog only |
+| Package          | Responsibilities                                                                                 | Status today                                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| clawql-auth      | Authentication modes, RBAC/ABAC, ATR enrichment                                                  | ✅ Shipped — `noAuth`/`apiKey`, HTTP MCP middleware, provider headers                                                                                                   |
+| clawql-documents | Document pipeline — 8 bundled IDP vendors + ingest + `DEFAULT_IDP_PIPELINE` + `run_idp_pipeline` | ✅ Shipped — automated runner with retries/Merkle per hop still roadmap                                                                                                 |
+| clawql-memory    | Memory 2.0 (Vault + Graph + optional Onyx; PageIndex product surface **removed in 8.0**)         | ✅ Shipped — `memory_*` / `read_around`; see [`secure-defaults.md`](../security/secure-defaults.md) + [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) |
+| clawql-pageindex | Standalone MIT vectorless hierarchical indexing                                                  | ❌ **Removed in 8.0** — Vectify-style redesign is post-8.0 backlog only                                                                                                 |
 
 ### 3.3 Opt-In Horizontal & Platform
 
