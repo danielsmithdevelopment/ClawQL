@@ -233,17 +233,6 @@
       "whenNotToUse": "Not a data retrieval or execute path",
       "ontologyRole": "reasoning"
     },
-    "mcp.pageindex_build_tree": {
-      "whenToUse": "Build a navigable tree index over long-form documents",
-      "whenNotToUse": "Not for exact SQL cohort counts",
-      "distinguishFrom": [
-        {
-          "peerId": "mcp.data_query",
-          "reason": "pageindex structures long-form documents; data_query runs corpus SQL"
-        }
-      ],
-      "ontologyRole": "document_index"
-    },
     "mcp.ouroboros_run_evolutionary_loop": {
       "whenToUse": "Run a spec-first evolutionary loop with lineage checks",
       "whenNotToUse": "Not a substitute for isolated snippet execution alone",

@@ -59,6 +59,11 @@ export type HintOverlayFile = {
   readonly overlays: Readonly<Record<string, RoutingHintOverlay>>;
 };
 
+/** Purged in 8.0 — never emit live ontology rows for these catalog ids (audit 2.17). */
+const PURGED_CATALOG_IDS = new Set([
+  "mcp.pageindex_build_tree",
+]);
+
 const STRUCTURED_IDS = new Set([
   "mcp.data_query",
   "mcp.data_query_cohort_count",
@@ -166,7 +171,9 @@ export function generateCapabilityOntology(args?: {
     }
   }
 
-  const capabilities: GeneratedCapabilityEntry[] = catalog.entries.map((e) => {
+  const capabilities: GeneratedCapabilityEntry[] = catalog.entries
+    .filter((e) => !PURGED_CATALOG_IDS.has(e.id))
+    .map((e) => {
     const hint = overlay.overlays[e.id] ?? {};
     const kind = e.kind as CapabilityKind;
     const provenance: CapabilityProvenance = hint.handOverride

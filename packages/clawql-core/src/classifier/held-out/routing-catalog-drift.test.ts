@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { digestCanonicalJson } from "../generate-capability-ontology.js";
+import { loadClawqlCapabilityOntology } from "../capability-ontology.js";
 import {
   FROZEN_ROUTING_MCP_TOOL_NAMES,
   FROZEN_V04_SOURCE_CATALOG_DIGEST,
@@ -10,6 +11,7 @@ import {
   LIVE_DEFAULT_CORE_MCP_TOOL_NAMES,
   diffRoutingCatalog,
   isFrozenFixtureOnlyMcpName,
+  missingRegisteredMcpToolsFromOntology,
   routingCatalogAlignedForProductionTrust,
 } from "./routing-catalog-drift.js";
 
@@ -75,5 +77,16 @@ describe("routing catalog drift (productionTrusted honesty)", () => {
     expect(drift.liveDefaultCoreTools).toEqual([...LIVE_DEFAULT_CORE_MCP_TOOL_NAMES].sort());
     expect(drift.aligned).toBe(false);
     expect(routingCatalogAlignedForProductionTrust()).toBe(false);
+  });
+
+  it("live ontology mcpTool names are all registered product tools (2.17)", () => {
+    const ontology = loadClawqlCapabilityOntology();
+    const missing = missingRegisteredMcpToolsFromOntology(ontology.capabilities);
+    expect(missing).toEqual([]);
+    expect(
+      ontology.capabilities.some(
+        (c) => c.capabilityId === "clawql.pageindex" || c.mcpTool === "pageindex_build_tree"
+      )
+    ).toBe(false);
   });
 });

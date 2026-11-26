@@ -135,3 +135,59 @@ export function diffRoutingCatalog(opts?: {
 export function routingCatalogAlignedForProductionTrust(): boolean {
   return diffRoutingCatalog().aligned;
 }
+
+/**
+ * Product MCP tools that can be registered (default-on, ChatGPT host-gated, or opt-in).
+ * Excludes purged 8.0 tools (pageindex_*) and frozen fixture distractors.
+ */
+export const REGISTERED_MCP_TOOL_NAMES = [
+  ...LIVE_DEFAULT_CORE_MCP_TOOL_NAMES,
+  ...LIVE_DEFAULT_CHATGPT_MCP_TOOL_NAMES,
+  "data_query",
+  "sandbox_exec",
+  "notify",
+  "schedule",
+  "workflow",
+  "argocd",
+  "hitl_enqueue_label_studio",
+  "ingest_external_knowledge",
+  "knowledge_search_onyx",
+  "clawql_think",
+  "ouroboros_run_evolutionary_loop",
+  "ouroboros_create_seed_from_document",
+  "ouroboros_get_lineage_status",
+  "ouroboros_measure_drift",
+  "memory_sync",
+  "clawql_sql",
+  "search_contracts",
+  "search_organizations",
+] as const;
+
+/** mcpTool names present on live ontology tool capabilities (skips fixture-only distractors). */
+/** Catalog bait / anti-pattern rows are not product MCP registrations. */
+function isNonProductCatalogMcpName(name: string): boolean {
+  return isFrozenFixtureOnlyMcpName(name) || name.startsWith("tool.");
+}
+
+export function liveOntologyMcpTools(
+  capabilities: readonly { readonly kind?: string; readonly mcpTool?: string }[]
+): string[] {
+  return sortedUnique(
+    capabilities
+      .filter((c) => c.kind === "tool" && typeof c.mcpTool === "string" && c.mcpTool.trim())
+      .map((c) => c.mcpTool!.trim())
+      .filter((name) => !isNonProductCatalogMcpName(name))
+  );
+}
+
+/**
+ * Every live-ontology `mcpTool` must be a registered product tool (audit 2.17).
+ * Returns missing names (empty when aligned).
+ */
+export function missingRegisteredMcpToolsFromOntology(
+  capabilities: readonly { readonly kind?: string; readonly mcpTool?: string }[],
+  registered: readonly string[] = REGISTERED_MCP_TOOL_NAMES
+): string[] {
+  const reg = new Set(registered);
+  return liveOntologyMcpTools(capabilities).filter((name) => !reg.has(name));
+}

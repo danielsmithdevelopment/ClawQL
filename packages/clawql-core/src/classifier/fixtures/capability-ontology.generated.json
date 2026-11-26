@@ -334,27 +334,6 @@
       }
     },
     {
-      "capabilityId": "mcp.pageindex_build_tree",
-      "kind": "tool",
-      "label": "pageindex_build_tree",
-      "mcpTool": "pageindex_build_tree",
-      "whenToUse": "Build a navigable tree index over long-form documents",
-      "whenNotToUse": "Not for exact SQL cohort counts",
-      "requiresStructuredCorpus": false,
-      "ontologyRole": "document_index",
-      "aliases": [],
-      "distinguishFrom": [
-        {
-          "peerId": "mcp.data_query",
-          "reason": "pageindex structures long-form documents; data_query runs corpus SQL"
-        }
-      ],
-      "provenance": {
-        "source": "catalog-declared",
-        "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
-      }
-    },
-    {
       "capabilityId": "mcp.ouroboros_run_evolutionary_loop",
       "kind": "tool",
       "label": "ouroboros_run_evolutionary_loop",
@@ -724,5 +703,5 @@
       }
     }
   ],
-  "digestSha256": "bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9"
+  "digestSha256": "0321bb98763d2e4ca320fc29323ab47c0a84589a6e53ce34c04c9d5de0103ac6"
 }
