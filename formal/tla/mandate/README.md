@@ -10,17 +10,18 @@ with crash-after-consume leaving **`outcome_unknown`** (never silently retried).
 
 ## Files
 
-| File                       | Role                                                                 |
-| -------------------------- | -------------------------------------------------------------------- |
-| `MandateLifecycle.tla`     | Spec — states, actions, invariants                                   |
-| `MandateLifecycle.cfg`     | TLC — **atomic** target (`WeakConsume = FALSE`); must pass           |
-| `MandateLifecycleWeak.cfg` | TLC — **legacy race** (`WeakConsume = TRUE`); must _fail_ Safety     |
-| `BatchMandate.tla`         | ADR 0015 — batch Merkle root approve + inclusion consume             |
-| `BatchMandate.cfg`         | TLC — Safety must pass (`./scripts/formal/run-batch-mandate-tlc.sh`) |
-| `ApprovalChannel.tla`      | Spec — channel/kind/tier guards for mandate approve                  |
-| `ApprovalChannel.cfg`      | TLC — target (both weak flags FALSE); must pass                      |
-| `ApprovalChannelWeak.cfg`  | TLC — mcp approve enabled; must fail `NoAgentApproval`               |
-| `ApprovalChannelWeakAgentCred.cfg` | TLC — agent key on operator/console; must fail `NoAgentApproval` |
+| File                               | Role                                                                 |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `MandateLifecycle.tla`             | Spec — states, actions, invariants                                   |
+| `MandateLifecycle.cfg`             | TLC — **atomic** target (`WeakConsume = FALSE`); must pass           |
+| `MandateLifecycleWeak.cfg`         | TLC — **legacy race** (`WeakConsume = TRUE`); must _fail_ Safety     |
+| `BatchMandate.tla`                 | ADR 0015 — batch Merkle root approve + inclusion consume             |
+| `BatchMandate.cfg`                 | TLC — Safety must pass (`./scripts/formal/run-batch-mandate-tlc.sh`) |
+| `ApprovalChannel.tla`              | Spec — channel/kind/tier guards for mandate approve                  |
+| `ApprovalChannel.cfg`              | TLC — target (both weak flags FALSE); must pass                      |
+| `ApprovalChannelWeak.cfg`          | TLC — mcp approve enabled; must fail `NoAgentApproval`               |
+| `ApprovalChannelWeakAgentCred.cfg` | TLC — agent key on operator/console; must fail `NoAgentApproval`     |
+| `ApprovalChannelQuorum2.cfg`       | TLC — `Quorum = 2` with two humans; must pass Safety (G3)            |
 
 ## Invariants (target)
 
@@ -48,18 +49,18 @@ Expect: atomic config exit 0; weak config exit ≠ 0 with `Safety` / `AtMostOneS
 
 ## Mapping to code
 
-| Spec                  | Code                                                     |
-| --------------------- | -------------------------------------------------------- |
-| `Park`                | `PendingExecutionService.park`                           |
-| `Approve` / `Decline` | `decide`                                                 |
-| `TamperPendingDigest` | args change while pending (digest re-bind)               |
-| `Consume`             | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` (execute-core) |
+| Spec                  | Code                                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Park`                | `PendingExecutionService.park`                                                                                       |
+| `Approve` / `Decline` | `decide`                                                                                                             |
+| `TamperPendingDigest` | args change while pending (digest re-bind)                                                                           |
+| `Consume`             | `tryConsumeApprovedEffect` / `tryConsumeApprovedMandate` (execute-core)                                              |
 | `ResumeById`          | Native MCP resume: `gateNativeToolBeforeInvoke` + `tryConsumeApprovedMandate` before handler (`approvedExecutionId`) |
-| `WeakResumeById`      | **Bug oracle** — allow resume without CAS (pre-fix native gate) |
-| `SideEffect`          | execute / native handler body after consume              |
-| `Finalize`            | `markCompleted` / `markPendingCompleted` after handler   |
-| Digests               | `hashPendingArgsEffect` / `args-hash.ts` (strip host-only `approvedExecutionId`) |
-| Idempotency           | `mandateIdempotencyKey(executionId)` for Stripe etc.     |
+| `WeakResumeById`      | **Bug oracle** — allow resume without CAS (pre-fix native gate)                                                      |
+| `SideEffect`          | execute / native handler body after consume                                                                          |
+| `Finalize`            | `markCompleted` / `markPendingCompleted` after handler                                                               |
+| Digests               | `hashPendingArgsEffect` / `args-hash.ts` (strip host-only `approvedExecutionId`)                                     |
+| Idempotency           | `mandateIdempotencyKey(executionId)` for Stripe etc.                                                                 |
 
 ### Trace conformance (resume)
 
@@ -82,22 +83,24 @@ regulated approves on the console path.
 
 ### Mapping to code
 
-| Spec                     | Code                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `ApproveEnabled` (mcp)   | `resume-core.ts` — `channel === "mcp" && decision === "approve"` refuse |
-| `ApproveEnabled` (tier)  | `resume-core.ts` — regulated + approve + `channel !== "console"` refuse |
-| `ApproveCredentialOK`    | Y1/Z1 — agent credentials are mcp-scoped; operator/console is human/operator |
-| `Approve` / worm types   | `pending-execution-service.ts` decide + WORM append (`HUMAN_APPROVAL` / decline) |
-| `KindOf` / `OPERATOR_APPROVAL` | Target ghost type for operator-key path (not logged as human)   |
-| `WeakMcpApprove`         | **Bug oracle** — same `Approve` action with mcp refuse relaxed (no bypass action) |
-| `WeakAgentCredentialOnOperator` | **Bug oracle** — agent key accepted on operator/console (Y1/Z1) |
-| `HumanRecordIsHuman`     | Target: operator key ≠ `HUMAN_APPROVAL` (audit #1548)                |
+| Spec                            | Code                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `ApproveEnabled` (mcp)          | `resume-core.ts` — `channel === "mcp" && decision === "approve"` refuse           |
+| `ApproveEnabled` (tier)         | `resume-core.ts` — regulated + approve + `channel !== "console"` refuse           |
+| `ApproveCredentialOK`           | Y1/Z1 — agent credentials are mcp-scoped; operator/console is human/operator      |
+| `Approve` / worm types          | `pending-execution-service.ts` decide + WORM append (`HUMAN_APPROVAL` / decline)  |
+| `KindOf` / `OPERATOR_APPROVAL`  | Target ghost type for operator-key path (not logged as human)                     |
+| `WeakMcpApprove`                | **Bug oracle** — same `Approve` action with mcp refuse relaxed (no bypass action) |
+| `WeakAgentCredentialOnOperator` | **Bug oracle** — agent key accepted on operator/console (Y1/Z1)                   |
+| `HumanRecordIsHuman`            | Target: operator key ≠ `HUMAN_APPROVAL` (audit #1548)                             |
 
 ```bash
 ./scripts/formal/run-approval-channel-tlc.sh
 ```
 
-Expect: atomic config exit 0; both weak configs exit ≠ 0 with `NoAgentApproval` violated.
+Expect: atomic + Quorum2 configs print `No error has been found`; both weak configs
+report `Invariant NoAgentApproval is violated` via `scripts/formal/lib/expect-violation.sh`
+(a parse/config error alone must not pass).
 
 ## Audit hunt (production)
 

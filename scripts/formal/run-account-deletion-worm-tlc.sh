@@ -1,46 +1,30 @@
 #!/usr/bin/env bash
-# AccountDeletionWorm: target PASS; weak unsafe finalize must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/deletion"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-account-deletion-worm-tlc-$$"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-account-deletion-worm-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/AccountDeletionWorm.tla \
-  "$DIR"/AccountDeletionWorm.cfg \
-  "$DIR"/AccountDeletionWormWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/AccountDeletionWorm.tla" "$DIR/AccountDeletionWorm.cfg" "$DIR/AccountDeletionWormWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== AccountDeletionWorm target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config AccountDeletionWorm.cfg AccountDeletionWorm
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== AccountDeletionWorm weak unsafe finalize (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config AccountDeletionWormWeak.cfg AccountDeletionWorm
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== AccountDeletionWorm.cfg (must PASS) ==="
+bash "$EXPECT_OK" "AccountDeletionWorm.cfg" "AccountDeletionWorm"
 
-echo "OK: AccountDeletionWorm Safety holds; weak unsafe finalize counterexample (exit=$WEAK_EXIT)"
+
+echo "=== AccountDeletionWormWeak.cfg (must violate WormOnlyAfterSystems) ==="
+bash "$EXPECT_VIOLATION" "AccountDeletionWormWeak.cfg" "AccountDeletionWorm" "WormOnlyAfterSystems"
+
+echo "OK: account-deletion-worm atomic green; weak named-invariant counterexamples checked"

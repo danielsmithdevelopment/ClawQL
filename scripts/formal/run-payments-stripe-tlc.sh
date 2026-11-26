@@ -1,47 +1,30 @@
 #!/usr/bin/env bash
-# Stripe write-ahead idempotency TLC: atomic must pass; weak must counterexample.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/payments"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-stripe-$$"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-payments-stripe-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR/PaymentsStripeIdempotency.tla" \
-   "$DIR/PaymentsStripeIdempotency.cfg" \
-   "$DIR/PaymentsStripeIdempotencyWeak.cfg" \
-   "$WORKDIR/"
-
+cp "$DIR/PaymentsStripeIdempotency.tla" "$DIR/PaymentsStripeIdempotency.cfg" "$DIR/PaymentsStripeIdempotencyWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== Atomic Stripe write-ahead (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config PaymentsStripeIdempotency.cfg PaymentsStripeIdempotency
-ATOMIC_EXIT=$?
-set -e
-if [[ "$ATOMIC_EXIT" -ne 0 ]]; then
-  echo "FAIL: atomic Stripe config must report no errors (exit=$ATOMIC_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== Weak (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config PaymentsStripeIdempotencyWeak.cfg PaymentsStripeIdempotency
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak Stripe config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== PaymentsStripeIdempotency.cfg (must PASS) ==="
+bash "$EXPECT_OK" "PaymentsStripeIdempotency.cfg" "PaymentsStripeIdempotency"
 
-echo "OK: Stripe atomic green; weak produced counterexample (exit=$WEAK_EXIT)"
+
+echo "=== PaymentsStripeIdempotencyWeak.cfg (must violate AtMostOneCharge) ==="
+bash "$EXPECT_VIOLATION" "PaymentsStripeIdempotencyWeak.cfg" "PaymentsStripeIdempotency" "AtMostOneCharge"
+
+echo "OK: payments-stripe atomic green; weak named-invariant counterexamples checked"

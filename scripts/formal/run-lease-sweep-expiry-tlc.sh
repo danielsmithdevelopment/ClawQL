@@ -1,46 +1,30 @@
 #!/usr/bin/env bash
-# LeaseSweepExpiry: target PASS; weak expiry-as-dead must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/lease"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-lease-sweep-tlc-$$"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-lease-sweep-expiry-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/LeaseSweepExpiry.tla \
-  "$DIR"/LeaseSweepExpiry.cfg \
-  "$DIR"/LeaseSweepExpiryWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/LeaseSweepExpiry.tla" "$DIR/LeaseSweepExpiry.cfg" "$DIR/LeaseSweepExpiryWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== LeaseSweepExpiry target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config LeaseSweepExpiry.cfg LeaseSweepExpiry
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== LeaseSweepExpiry weak expiry-as-dead (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config LeaseSweepExpiryWeak.cfg LeaseSweepExpiry
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== LeaseSweepExpiry.cfg (must PASS) ==="
+bash "$EXPECT_OK" "LeaseSweepExpiry.cfg" "LeaseSweepExpiry"
 
-echo "OK: LeaseSweepExpiry Safety holds; weak expiry-as-dead counterexample (exit=$WEAK_EXIT)"
+
+echo "=== LeaseSweepExpiryWeak.cfg (must violate IntentPreservedAfterSweep) ==="
+bash "$EXPECT_VIOLATION" "LeaseSweepExpiryWeak.cfg" "LeaseSweepExpiry" "IntentPreservedAfterSweep"
+
+echo "OK: lease-sweep-expiry atomic green; weak named-invariant counterexamples checked"

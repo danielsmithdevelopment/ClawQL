@@ -1,46 +1,30 @@
 #!/usr/bin/env bash
-# OauthDeviceAuthorization: target PASS; weak no-delete must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/oauth"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-oauth-device-tlc-$$"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-oauth-device-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/OauthDeviceAuthorization.tla \
-  "$DIR"/OauthDeviceAuthorization.cfg \
-  "$DIR"/OauthDeviceAuthorizationWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/OauthDeviceAuthorization.tla" "$DIR/OauthDeviceAuthorization.cfg" "$DIR/OauthDeviceAuthorizationWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== OauthDeviceAuthorization target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config OauthDeviceAuthorization.cfg OauthDeviceAuthorization
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== OauthDeviceAuthorization weak no-delete (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config OauthDeviceAuthorizationWeak.cfg OauthDeviceAuthorization
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== OauthDeviceAuthorization.cfg (must PASS) ==="
+bash "$EXPECT_OK" "OauthDeviceAuthorization.cfg" "OauthDeviceAuthorization"
 
-echo "OK: OauthDeviceAuthorization Safety holds; weak no-delete counterexample (exit=$WEAK_EXIT)"
+
+echo "=== OauthDeviceAuthorizationWeak.cfg (must violate AtMostOneConsume) ==="
+bash "$EXPECT_VIOLATION" "OauthDeviceAuthorizationWeak.cfg" "OauthDeviceAuthorization" "AtMostOneConsume"
+
+echo "OK: oauth-device atomic green; weak named-invariant counterexamples checked"

@@ -426,8 +426,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     expect(rec?.status).toBe("declined");
   }, 90_000);
 
-  it("8) operator channel, in-process — approve under regulated refused; still pending", async () => {
-    // In-process resumeClawqlExecutionEffect until a spawned CLI path lands (F5).
+  it("8) operator channel via CLI — approve under regulated refused; still pending", async () => {
+    // F5: spawn `clawql resume` against the same CLAWQL_HOME (not in-process Effect).
     const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const park = await rpc({
       jsonrpc: "2.0",
@@ -443,28 +443,34 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     const executionId = (JSON.parse(parkText) as { executionId?: string }).executionId!;
     expect(executionId).toBeTruthy();
 
-    // Operator channel reads CLAWQL_TIER from the calling process (not the MCP server).
-    const prevTier = process.env.CLAWQL_TIER;
-    process.env.CLAWQL_TIER = "regulated";
-    try {
-      const { resumeClawqlExecutionEffect } = await import("clawql-api");
-      const { Effect } = await import("effect");
-      const content = await Effect.runPromise(
-        resumeClawqlExecutionEffect({
-          executionId,
-          decision: "approve",
-          channel: "operator",
-          approvedBy: { kind: "operator", id: "wire-cli" },
-          home,
-        })
-      );
-      const json = JSON.parse(content[0]!.text) as { ok?: boolean; error?: string };
-      expect(json.ok).toBe(false);
-      expect(json.error).toMatch(/regulated.*console|console/i);
-    } finally {
-      if (prevTier === undefined) delete process.env.CLAWQL_TIER;
-      else process.env.CLAWQL_TIER = prevTier;
-    }
+    const clawqlBin = join(process.cwd(), "bin/clawql.mjs");
+    expect(existsSync(clawqlBin), "bin/clawql.mjs").toBe(true);
+    const { stdout, stderr, code } = await new Promise<{
+      stdout: string;
+      stderr: string;
+      code: number | null;
+    }>((resolve, reject) => {
+      const child = spawn(process.execPath, [clawqlBin, "resume", executionId], {
+        env: {
+          ...process.env,
+          CLAWQL_HOME: home,
+          CLAWQL_TIER: "regulated",
+        },
+        cwd: process.cwd(),
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout?.on("data", (d: Buffer) => {
+        stdout += d.toString();
+      });
+      child.stderr?.on("data", (d: Buffer) => {
+        stderr += d.toString();
+      });
+      child.on("error", reject);
+      child.on("close", (code) => resolve({ stdout, stderr, code }));
+    });
+    expect(code, `cli stdout=${stdout} stderr=${stderr}`).not.toBe(0);
+    expect(`${stdout}\n${stderr}`).toMatch(/regulated.*refuse|console|refuses CLI approve/i);
 
     const { loadPendingExecution } = await import("clawql-api");
     expect((await loadPendingExecution(executionId, home))?.status).toBe("pending");
@@ -708,6 +714,7 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     expect(settleCount).toBe(2);
     expect(denies.length).toBe(1);
     const denyText = JSON.stringify(denies[0]);
-    expect(denyText).toMatch(/already settled|settled|deny|reject/i);
+    // Match the facilitator already-settled reason only (not the action:"deny" field).
+    expect(denyText).toMatch(/already settled|authorization already settled/i);
   }, 60_000);
 });

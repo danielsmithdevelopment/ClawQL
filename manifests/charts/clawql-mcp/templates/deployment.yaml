@@ -180,6 +180,12 @@ spec:
               value: "1"
             - name: GRPC_MAX_MESSAGE_LENGTH
               value: {{ (.Values.grpcMaxMessageLength | default 67108864) | int | quote }}
+            {{- if and .Values.grpcTls .Values.grpcTls.existingSecret }}
+            - name: GRPC_TLS_CERT_PATH
+              value: {{ printf "%s/%s" (.Values.grpcTls.mountPath | default "/etc/clawql/grpc-tls") (.Values.grpcTls.certFile | default "tls.crt") | quote }}
+            - name: GRPC_TLS_KEY_PATH
+              value: {{ printf "%s/%s" (.Values.grpcTls.mountPath | default "/etc/clawql/grpc-tls") (.Values.grpcTls.keyFile | default "tls.key") | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.enableGrpcReflection }}
             - name: ENABLE_GRPC_REFLECTION
@@ -504,6 +510,13 @@ spec:
               mountPath: {{ .Values.instanceSpec.mountPath | default "/etc/clawql/instance" | quote }}
               readOnly: true
             {{- end }}
+            {{- $grpcAliasMount := index .Values "clawql-mcp-grpc" | default dict }}
+            {{- $enableGrpcMount := or .Values.enableGrpc (and $grpcAliasMount $grpcAliasMount.enabled) }}
+            {{- if and $enableGrpcMount .Values.grpcTls .Values.grpcTls.existingSecret }}
+            - name: clawql-grpc-tls
+              mountPath: {{ .Values.grpcTls.mountPath | default "/etc/clawql/grpc-tls" | quote }}
+              readOnly: true
+            {{- end }}
             {{- if and .Values.enableSandbox .Values.sandboxDocker.enabled }}
             - name: clawql-docker-cli-static
               mountPath: /opt/clawql-docker
@@ -531,6 +544,13 @@ spec:
         - name: clawql-instance-spec
           configMap:
             name: {{ .Values.instanceSpec.configMapName | quote }}
+        {{- end }}
+        {{- $grpcAliasVol := index .Values "clawql-mcp-grpc" | default dict }}
+        {{- $enableGrpcVol := or .Values.enableGrpc (and $grpcAliasVol $grpcAliasVol.enabled) }}
+        {{- if and $enableGrpcVol .Values.grpcTls .Values.grpcTls.existingSecret }}
+        - name: clawql-grpc-tls
+          secret:
+            secretName: {{ .Values.grpcTls.existingSecret | quote }}
         {{- end }}
         {{- /* Volume "obsidian-vault": Obsidian Markdown memory (.Values.vault / persistence), not HashiCorp Vault — #161 */}}
         - name: obsidian-vault

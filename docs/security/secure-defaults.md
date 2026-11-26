@@ -81,11 +81,20 @@ ClawQL fails closed on networked surfaces. Flags below are **escape hatches** (o
 1. Leave escape hatches **unset** unless you are on loopback and know why.
 2. For anything networked: `CLAWQL_AUTH_MODE=apiKey|oidc`, real webhook tokens, NATS creds + `tls://`, local embeddings (or allowlisted HTTP).
 3. For payments: hash-only operator key and/or dedicated approve OIDC audience — see [`outbound-payment-approve.md`](./outbound-payment-approve.md). Configure a facilitator URL; x402 **at-most-once** allow across replicas depends on the facilitator refusing a second settle of the same authorization nonce (the in-process replay cache is per process and evicts at 10_000 entries — it is not the cross-replica guarantee). Under regulated, `settle: false` is refused.
-4. For regulated: set `CLAWQL_TIER=regulated` (or Helm `values-regulated.yaml`) and do **not** try to disable WORM / enforcement / local-only inference.
+4. For regulated: set `CLAWQL_TIER=regulated` (or Helm `values-regulated.yaml`) and do **not** try to disable WORM / enforcement / local-only inference. Helm rendering under `pluginTiers.tier=regulated` refuses overlays that weaken the twelve named flags via `extraEnv` / `extraEnvAppend` (see **Helm regulated rendering** below). `secretSourcing.requireVaultBackedSecrets` only checks that a Secret name is referenced — it does not prove Vault/ESO populated it.
+
+## Helm regulated rendering
+
+Under `pluginTiers.tier=regulated`, `zzz-pass7-security-defaults.yaml` builds the effective env with the same append-wins rule as `clawql-mcp.mergedExtraEnv`, then fails render when:
+
+- any of `CLAWQL_WORM_ENABLED`, `CLAWQL_WORM_REQUIRED`, `CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK`, `CLAWQL_INFERENCE_LOCAL_ONLY`, `CLAWQL_INFERENCE_KEYS_ENABLED`, `CLAWQL_PANGUARD_PROXY_PLUGIN`, `CLAWQL_PANGUARD_IN_PROCESS` is not `"1"`;
+- any of `CLAWQL_ALLOW_NO_ENFORCEMENT`, `CLAWQL_ALLOW_UNAUTHENTICATED`, `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED`, `CLAWQL_HTTP_GRAPHQL`, `CLAWQL_SOURCES_ALLOW_HTTP` is truthy.
+
+Rendering cannot see values injected only through `envFromSecret`; runtime boot refusals remain the backstop for those paths. Kind CI mounts a self-signed Secret via `grpcTls.existingSecret` so regulated gRPC TLS is exercised.
 
 ## Dynamic pass (CI)
 
-Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals`. Wire-level coverage that spawns `dist/server-http.js` under the regulated profile with Object Lock S3 is `npm run test:regulated-wire` (same workflow). See [`scripts/security/README.md`](../../scripts/security/README.md). A kind + Helm job (D2) will exercise the chart surface against `values-regulated.yaml`.
+Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals`. Wire-level coverage that spawns `dist/server-http.js` under the regulated profile with Object Lock S3 is `npm run test:regulated-wire` (same workflow). See [`scripts/security/README.md`](../../scripts/security/README.md). The kind + Helm job (D2/D2b) exercises the chart surface against `values-regulated.yaml` (H3 render refuse, H4 pod security hard-fail, PARTIAL until K2/K4-neg/in-cluster D1 land). Helm template scripts run in CI via the `helm-templates` job.
 
 ## Related
 

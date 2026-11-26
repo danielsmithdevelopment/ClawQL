@@ -59,20 +59,15 @@ jobs:
       - name: Run event-delivery TLC dual configs
         run: |
           set -euo pipefail
-          JAR="$(bash scripts/formal/ensure-tla2tools.sh)"
+          TLA2TOOLS_JAR="$(bash scripts/formal/ensure-tla2tools.sh)"
+          export TLA2TOOLS_JAR
           WORK=$(mktemp -d)
           cp formal/tla/events/* "$WORK/"
           cd "$WORK"
-          java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config EventDelivery.cfg EventDelivery
-          set +e
-          java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config EventDeliveryWeak.cfg EventDelivery
-          WEAK=$?
-          set -e
-          if [[ "$WEAK" -eq 0 ]]; then
-            echo "FAIL: weak event config (WeakNoDedup) must counterexample" >&2
-            exit 1
-          fi
-          echo "OK: event at-least-once+dedup green; weak counterexample (exit=$WEAK)"
+          bash "$GITHUB_WORKSPACE/scripts/formal/lib/expect-ok.sh" EventDelivery.cfg EventDelivery
+          bash "$GITHUB_WORKSPACE/scripts/formal/lib/expect-violation.sh" \
+            EventDeliveryWeak.cfg EventDelivery AtMostOnceProcess
+          echo "OK: event at-least-once+dedup green; weak named-invariant counterexample"
 
       - name: Run program-resume TLC dual configs
         run: bash scripts/formal/run-program-resume-tlc.sh

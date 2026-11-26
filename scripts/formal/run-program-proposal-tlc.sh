@@ -1,46 +1,30 @@
 #!/usr/bin/env bash
-# ProgramProposalGraph: target PASS; weak settled-rerun must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/program"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-program-proposal-tlc-$$"
+if [[ -z "${TLA2TOOLS_JAR:-}" ]]; then
+  TLA2TOOLS_JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
+fi
+export TLA2TOOLS_JAR
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-program-proposal-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/ProgramProposalGraph.tla \
-  "$DIR"/ProgramProposalGraph.cfg \
-  "$DIR"/ProgramProposalGraphWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/ProgramProposalGraph.tla" "$DIR/ProgramProposalGraph.cfg" "$DIR/ProgramProposalGraphWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== ProgramProposalGraph target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramProposalGraph.cfg ProgramProposalGraph
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== ProgramProposalGraph weak settled-rerun (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramProposalGraphWeak.cfg ProgramProposalGraph
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== ProgramProposalGraph.cfg (must PASS) ==="
+bash "$EXPECT_OK" "ProgramProposalGraph.cfg" "ProgramProposalGraph"
 
-echo "OK: ProgramProposalGraph Safety holds; weak settled-rerun counterexample (exit=$WEAK_EXIT)"
+
+echo "=== ProgramProposalGraphWeak.cfg (must violate NoSettledRerun) ==="
+bash "$EXPECT_VIOLATION" "ProgramProposalGraphWeak.cfg" "ProgramProposalGraph" "NoSettledRerun"
+
+echo "OK: program-proposal atomic green; weak named-invariant counterexamples checked"

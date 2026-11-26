@@ -47,19 +47,19 @@
 {{- if ne (.Values.gatewayAuth.mode | default "") "oidc" }}
 {{- fail "pluginTiers.tier=regulated requires gatewayAuth.mode=oidc (audit 7.04)" }}
 {{- end }}
-{{- $oidcJwks := "" }}
-{{- $oidcIssuer := "" }}
-{{- $oidcAud := "" }}
-{{- $wormLock := "" }}
-{{- $wormRemote := "" }}
-{{- /* Append overrides base (same merge rule as clawql-mcp.mergedExtraEnv). */ -}}
-{{- range (concat (.Values.extraEnv | default list) (.Values.extraEnvAppend | default list)) }}
-{{- if eq .name "CLAWQL_AUTH_OIDC_JWKS_URL" }}{{- $oidcJwks = .value | default "" }}{{- end }}
-{{- if eq .name "CLAWQL_AUTH_OIDC_ISSUER" }}{{- $oidcIssuer = .value | default "" }}{{- end }}
-{{- if eq .name "CLAWQL_AUTH_OIDC_AUDIENCE" }}{{- $oidcAud = .value | default "" }}{{- end }}
-{{- if eq .name "CLAWQL_WORM_S3_OBJECT_LOCK" }}{{- $wormLock = .value | default "" }}{{- end }}
-{{- if eq .name "CLAWQL_WORM_REMOTE" }}{{- $wormRemote = .value | default "" }}{{- end }}
-{{- end }}
+{{- /* Effective env: same append-wins merge as clawql-mcp.mergedExtraEnv (H3). */ -}}
+{{- $eff := dict -}}
+{{- range (.Values.extraEnv | default list) -}}
+{{- $_ := set $eff .name (.value | default "" | toString) -}}
+{{- end -}}
+{{- range (.Values.extraEnvAppend | default list) -}}
+{{- $_ := set $eff .name (.value | default "" | toString) -}}
+{{- end -}}
+{{- $oidcJwks := index $eff "CLAWQL_AUTH_OIDC_JWKS_URL" | default "" -}}
+{{- $oidcIssuer := index $eff "CLAWQL_AUTH_OIDC_ISSUER" | default "" -}}
+{{- $oidcAud := index $eff "CLAWQL_AUTH_OIDC_AUDIENCE" | default "" -}}
+{{- $wormLock := index $eff "CLAWQL_WORM_S3_OBJECT_LOCK" | default "" -}}
+{{- $wormRemote := index $eff "CLAWQL_WORM_REMOTE" | default "" -}}
 {{- if or (eq $oidcJwks "") (eq $oidcIssuer "") (eq $oidcAud "") }}
 {{- fail "pluginTiers.tier=regulated requires CLAWQL_AUTH_OIDC_JWKS_URL / ISSUER / AUDIENCE in extraEnv or extraEnvAppend (audit 7.04)" }}
 {{- end }}
@@ -71,5 +71,34 @@
 {{- end }}
 {{- if not (and .Values.networkPolicy .Values.networkPolicy.defaultDeny .Values.networkPolicy.defaultDeny.enabled) }}
 {{- fail "pluginTiers.tier=regulated requires networkPolicy.defaultDeny.enabled=true (audit 7.04)" }}
+{{- end }}
+{{- /* H3 — refuse overlays that weaken regulated flags via extraEnvAppend. */ -}}
+{{- $mustOne := list
+  "CLAWQL_WORM_ENABLED"
+  "CLAWQL_WORM_REQUIRED"
+  "CLAWQL_WORM_S3_VERIFY_OBJECT_LOCK"
+  "CLAWQL_INFERENCE_LOCAL_ONLY"
+  "CLAWQL_INFERENCE_KEYS_ENABLED"
+  "CLAWQL_PANGUARD_PROXY_PLUGIN"
+  "CLAWQL_PANGUARD_IN_PROCESS"
+-}}
+{{- range $mustOne }}
+{{- $v := index $eff . | default "" }}
+{{- if ne $v "1" }}
+{{- fail (printf "pluginTiers.tier=regulated refuses weakened %s=%q (must be \"1\"; audit H3). Runtime refusals remain the backstop for envFromSecret." . $v) }}
+{{- end }}
+{{- end }}
+{{- $mustOff := list
+  "CLAWQL_ALLOW_NO_ENFORCEMENT"
+  "CLAWQL_ALLOW_UNAUTHENTICATED"
+  "CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED"
+  "CLAWQL_HTTP_GRAPHQL"
+  "CLAWQL_SOURCES_ALLOW_HTTP"
+-}}
+{{- range $mustOff }}
+{{- $v := index $eff . | default "" | lower }}
+{{- if or (eq $v "1") (eq $v "true") (eq $v "yes") (eq $v "on") }}
+{{- fail (printf "pluginTiers.tier=regulated refuses truthy %s=%q (audit H3). Runtime refusals remain the backstop for envFromSecret." . $v) }}
+{{- end }}
 {{- end }}
 {{- end }}

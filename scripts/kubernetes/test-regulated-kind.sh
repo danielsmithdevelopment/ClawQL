@@ -129,6 +129,18 @@ kubectl -n "${NS}" create secret generic clawql-provider-env \
   --from-literal=CLAWQL_WORM_S3_SECRET_ACCESS_KEY=test \
   --dry-run=client -o yaml | kubectl apply -f -
 
+echo "==> Self-signed gRPC TLS Secret (regulated requires GRPC_TLS_* off loopback)"
+TLS_DIR="$(mktemp -d)"
+openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+  -keyout "${TLS_DIR}/tls.key" -out "${TLS_DIR}/tls.crt" \
+  -subj "/CN=clawql-mcp-grpc.clawql.svc.cluster.local" \
+  -addext "subjectAltName=DNS:clawql-mcp-grpc.clawql.svc.cluster.local,DNS:localhost,IP:127.0.0.1" \
+  >/dev/null 2>&1
+kubectl -n "${NS}" create secret tls clawql-grpc-tls \
+  --cert="${TLS_DIR}/tls.crt" --key="${TLS_DIR}/tls.key" \
+  --dry-run=client -o yaml | kubectl apply -f -
+rm -rf "${TLS_DIR}"
+
 echo "==> Deploy LocalStack S3 (Object Lock stand-in) + JWKS in ${NS}"
 # Anonymous pulls of minio/minio and quay.io/minio/minio fail on GHA (same as D1 wire).
 # Digest-pinned LocalStack matches regulated-refusals.yml.
@@ -137,6 +149,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: clawql-localstack
+  labels:
+    clawql-kind-fixture: "true"
 spec:
   selector:
     app: clawql-localstack
@@ -148,6 +162,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: clawql-localstack
+  labels:
+    clawql-kind-fixture: "true"
 spec:
   replicas: 1
   selector:
@@ -157,6 +173,7 @@ spec:
     metadata:
       labels:
         app: clawql-localstack
+        clawql-kind-fixture: "true"
     spec:
       containers:
         - name: localstack
@@ -183,6 +200,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: clawql-jwks
+  labels:
+    clawql-kind-fixture: "true"
 data:
   jwks.json: |
     {"keys":[]}
@@ -191,6 +210,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: clawql-jwks
+  labels:
+    clawql-kind-fixture: "true"
 spec:
   selector:
     app: clawql-jwks
@@ -202,6 +223,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: clawql-jwks
+  labels:
+    clawql-kind-fixture: "true"
 spec:
   replicas: 1
   selector:
@@ -211,6 +234,7 @@ spec:
     metadata:
       labels:
         app: clawql-jwks
+        clawql-kind-fixture: "true"
     spec:
       containers:
         - name: jwks
@@ -350,35 +374,55 @@ if bad:
 print("K5 OK: all Services ClusterIP")
 PY
 
-echo "==> K6: live pod security context"
-kubectl -n "${NS}" get pods -l app.kubernetes.io/name=clawql-mcp -o json >"${ARTIFACT_DIR}/pods.json"
+echo "==> K6: live pod security context (H4 hard-fail)"
+# Exclude kind fixtures (LocalStack, JWKS, net probes) by label, not by name.
+kubectl -n "${NS}" get pods -l 'app.kubernetes.io/name in (clawql-mcp),app.kubernetes.io/instance='"${REL}" \
+  -o json >"${ARTIFACT_DIR}/pods.json"
 python3 - "${ARTIFACT_DIR}/pods.json" <<'PY'
 import json, sys
 from pathlib import Path
 doc = json.loads(Path(sys.argv[1]).read_text())
 pods = doc.get("items", [])
 if not pods:
-    raise SystemExit("K6 FAIL: no clawql-mcp pods")
+    raise SystemExit("K6 FAIL: no clawql-mcp pods for release")
+# Release pods selected by app.kubernetes.io/name=clawql-mcp (MCP, proxy, NATS worker/bridge).
+checked = 0
 for pod in pods:
+    labels = pod["metadata"].get("labels") or {}
+    # Skip fixtures labeled clawql-kind-fixture (never apply to chart pods).
+    if labels.get("clawql-kind-fixture") == "true":
+        continue
     name = pod["metadata"]["name"]
+    pod_sc = pod["spec"].get("securityContext") or {}
     for c in pod["spec"].get("containers", []):
+        checked += 1
         sc = c.get("securityContext") or {}
         if sc.get("allowPrivilegeEscalation") is not False:
             raise SystemExit(f"K6 FAIL {name}/{c['name']}: allowPrivilegeEscalation")
         if sc.get("readOnlyRootFilesystem") is not True:
-            print(
-                f"WARN {name}/{c['name']}: readOnlyRootFilesystem not true "
+            raise SystemExit(
+                f"K6 FAIL {name}/{c['name']}: readOnlyRootFilesystem not true "
                 f"({sc.get('readOnlyRootFilesystem')})"
             )
         caps = (sc.get("capabilities") or {}).get("drop") or []
         if "ALL" not in caps and "all" not in caps:
-            print(f"WARN {name}/{c['name']}: capabilities.drop missing ALL")
+            raise SystemExit(f"K6 FAIL {name}/{c['name']}: capabilities.drop missing ALL")
+        run_as_non_root = sc.get("runAsNonRoot")
+        if run_as_non_root is None:
+            run_as_non_root = pod_sc.get("runAsNonRoot")
+        if run_as_non_root is not True:
+            raise SystemExit(
+                f"K6 FAIL {name}/{c['name']}: runAsNonRoot not true "
+                f"(container={sc.get('runAsNonRoot')}, pod={pod_sc.get('runAsNonRoot')})"
+            )
     for v in pod["spec"].get("volumes", []):
         if "hostPath" in v:
             raise SystemExit(f"K6 FAIL {name}: hostPath volume {v.get('name')}")
         if v.get("hostPath", {}).get("path") in ("/var/run/docker.sock", "/run/docker.sock"):
             raise SystemExit(f"K6 FAIL {name}: docker socket mount")
-print("K6 OK: pod security checks passed (see WARNs)")
+if checked == 0:
+    raise SystemExit("K6 FAIL: no containers checked")
+print(f"K6 OK: {checked} containers meet RORFS / drop ALL / runAsNonRoot")
 PY
 
 echo "==> K7: mcpProxy is nginx passthrough with digest-pinned image (not JWT/ATR)"
@@ -386,15 +430,9 @@ helm get values "${REL}" -n "${NS}" -a >"${ARTIFACT_DIR}/helm-values.yaml"
 python3 - "${ARTIFACT_DIR}/helm-values.yaml" <<'PY'
 import sys
 from pathlib import Path
+import yaml
 
-text = Path(sys.argv[1]).read_text()
-try:
-    import yaml
-except ImportError:
-    assert "mcpProxy:" in text
-    print("K7 OK (no PyYAML): mcpProxy present in values")
-    raise SystemExit(0)
-doc = yaml.safe_load(text) or {}
+doc = yaml.safe_load(Path(sys.argv[1]).read_text()) or {}
 proxy = doc.get("mcpProxy") or {}
 assert proxy.get("enabled") is True, "K7: mcpProxy.enabled"
 assert proxy.get("mode", "nginx") == "nginx", "K7: mode must be nginx passthrough"
@@ -404,57 +442,57 @@ assert digest.startswith("sha256:"), f"K7: nginx image must be digest-pinned, go
 print("K7 OK: mcpProxy nginx passthrough with digest", digest[:18] + "...")
 PY
 
-echo "==> K1: second install with CLAWQL_WORM_ENABLED=0 never Ready (after image runs)"
-# Append WORM=0 after regulated extraEnv (do not --set extraEnv[0] — that wipes the list).
-cat >"${ARTIFACT_DIR}/values-wormoff-append.yaml" <<'EOF'
-extraEnvAppend:
-  - name: CLAWQL_WORM_ENABLED
-    value: "0"
-EOF
-# Merge kind host append + worm-off append into one list (Helm replaces lists).
-python3 - "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
-  "${ARTIFACT_DIR}/values-wormoff-append.yaml" \
-  "${ARTIFACT_DIR}/values-kind-wormoff.yaml" <<'PY'
-import sys
+echo "==> K1: runtime WORM refusal via kubectl set env (Helm now refuses WORM=0 render)"
+# H3: chart refuse CLAWQL_WORM_ENABLED=0 at render time, so reach the runtime gate by
+# copying the live MCP Deployment and patching env after install.
+kubectl -n "${NS}" get "deployment/${MCP_DEPLOY}" -o json >"${ARTIFACT_DIR}/mcp-deploy.json"
+python3 - "${ARTIFACT_DIR}/mcp-deploy.json" "${ARTIFACT_DIR}/wormoff-deploy.json" <<'PY'
+import json, sys
 from pathlib import Path
-try:
-    import yaml
-except ImportError:
-    raise SystemExit("PyYAML required to merge worm-off overlay")
-kind = yaml.safe_load(Path(sys.argv[1]).read_text()) or {}
-worm = yaml.safe_load(Path(sys.argv[2]).read_text()) or {}
-merged = dict(kind)
-# Merge by name so WORM=0 overrides any prior append of the same key.
-by_name = {}
-for item in list(kind.get("extraEnvAppend") or []) + list(
-    worm.get("extraEnvAppend") or []
-):
-    by_name[item["name"]] = item
-merged["extraEnvAppend"] = list(by_name.values())
-# values.yaml fullnameOverride is clawql-mcp-http — a second release in the
-# same namespace collides on NetworkPolicy/Deployment names. Give worm-off
-# its own fullname so Helm can install alongside the main release.
-merged["fullnameOverride"] = "clawql-wormoff-mcp-http"
-Path(sys.argv[3]).write_text(yaml.safe_dump(merged, sort_keys=False))
+doc = json.loads(Path(sys.argv[1]).read_text())
+# Strip status / resourceVersion so create succeeds as a sibling Deployment.
+meta = doc["metadata"]
+for k in ("resourceVersion", "uid", "creationTimestamp", "generation", "managedFields"):
+    meta.pop(k, None)
+meta["name"] = "clawql-wormoff-mcp"
+labels = meta.setdefault("labels", {})
+labels["app.kubernetes.io/instance"] = "clawql-wormoff"
+labels["clawql-kind-fixture"] = "false"
+spec = doc["spec"]
+spec["replicas"] = 1
+# Unique selector so it doesn't fight the main Deployment.
+# matchLabels must be a subset of template labels (API validation).
+sel = spec.setdefault("selector", {}).setdefault("matchLabels", {})
+sel["app"] = "clawql-wormoff-mcp"
+sel["app.kubernetes.io/instance"] = "clawql-wormoff"
+sel["app.kubernetes.io/name"] = "clawql-mcp"
+tpl_labels = spec["template"]["metadata"].setdefault("labels", {})
+tpl_labels["app"] = "clawql-wormoff-mcp"
+tpl_labels["app.kubernetes.io/instance"] = "clawql-wormoff"
+tpl_labels["app.kubernetes.io/name"] = "clawql-mcp"
+# Drop probes that would keep restarting forever without changing the crash signal.
+for key in ("readinessProbe", "livenessProbe", "startupProbe"):
+    for c in spec["template"]["spec"].get("containers", []):
+        c.pop(key, None)
+        env = c.setdefault("env", [])
+        found = False
+        for e in env:
+            if e.get("name") == "CLAWQL_WORM_ENABLED":
+                e["value"] = "0"
+                found = True
+        if not found:
+            env.append({"name": "CLAWQL_WORM_ENABLED", "value": "0"})
+Path(sys.argv[2]).write_text(json.dumps(doc))
 PY
-helm upgrade --install "${REL}-wormoff" "${ROOT}/manifests/charts/clawql-mcp" \
-  -n "${NS}" \
-  -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-  -f "${ARTIFACT_DIR}/values-kind-wormoff.yaml" \
-  --wait=false
-# Fail fast if the worm-off release did not create any pods (ownership collision, etc.).
-if ! kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=${REL}-wormoff" -o name | grep -q .; then
-  echo "K1 FAIL: worm-off helm install produced no pods" >&2
-  helm status "${REL}-wormoff" -n "${NS}" >&2 || true
-  dump_failure
-  exit 1
-fi
+kubectl -n "${NS}" apply -f "${ARTIFACT_DIR}/wormoff-deploy.json"
+# Also set via kubectl set env so the check matches the H3/K1 route in the spec.
+kubectl -n "${NS}" set env "deployment/clawql-wormoff-mcp" CLAWQL_WORM_ENABLED=0
 
 # E2: do not treat ImagePullBackOff / ContainerCreating as a WORM refusal success.
 echo "==> K1 wait until worm-off containers leave image-pull / creating"
 WORMOFF_READY_TO_JUDGE=0
 for _ in $(seq 1 60); do
-  kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=${REL}-wormoff" -o json \
+  kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o json \
     >"${ARTIFACT_DIR}/wormoff-pods.json" 2>/dev/null || echo '{}' >"${ARTIFACT_DIR}/wormoff-pods.json"
   if python3 - "${ARTIFACT_DIR}/wormoff-pods.json" <<'PY'
 import json, sys
@@ -491,19 +529,19 @@ if [[ "${WORMOFF_READY_TO_JUDGE}" != "1" ]]; then
   exit 1
 fi
 
-READY="$(kubectl -n "${NS}" get pods -l app.kubernetes.io/instance="${REL}-wormoff" \
+READY="$(kubectl -n "${NS}" get pods -l app.kubernetes.io/instance=clawql-wormoff \
   -o jsonpath='{range .items[*]}{.status.containerStatuses[0].ready}{\"\\n\"}{end}' || true)"
 if echo "${READY}" | grep -qx true; then
-  echo "K1 FAIL: worm-off release became Ready" >&2
+  echo "K1 FAIL: worm-off deployment became Ready" >&2
   exit 1
 fi
-WORMOFF_LOGS="$(kubectl -n "${NS}" logs -l "app.kubernetes.io/instance=${REL}-wormoff" --all-containers --tail=200 2>/dev/null || true)"
+WORMOFF_LOGS="$(kubectl -n "${NS}" logs -l "app.kubernetes.io/instance=clawql-wormoff" --all-containers --tail=200 2>/dev/null || true)"
 if ! echo "${WORMOFF_LOGS}" | grep -Eiq 'regulated.*WORM disabled|WORM disabled'; then
   echo "K1 FAIL: worm-off pods not Ready but logs lack WORM refusal (may still be pulling)" >&2
   echo "${WORMOFF_LOGS}" | tail -50 >&2 || true
   exit 1
 fi
-echo "K1 OK: worm-off release not Ready; logs carry WORM refusal (positive control: main Ready)"
+echo "K1 OK: worm-off Deployment not Ready; logs carry WORM refusal (positive control: main Ready)"
 # Do not wait on app.kubernetes.io/instance=${REL}: sealed Vault pods share that
 # label and never become Ready. Wait only for the MCP Deployment we already rolled out.
 kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=120s
