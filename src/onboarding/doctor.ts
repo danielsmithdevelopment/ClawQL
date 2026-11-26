@@ -21,6 +21,7 @@ import {
 import { runMcpSmoke } from "./smoke.js";
 import { sandboxDoctorCheck } from "clawql-sandbox/init";
 import { networkDoctorCheck } from "clawql-network/init";
+import { resolveLocalClawqlMcpBinary } from "./mcp-config.js";
 import { Effect } from "effect";
 
 export type DoctorCheck = {
@@ -62,14 +63,34 @@ export async function runDoctor(
     checks.push({ level: "warn", message: `Node ${process.version} — ClawQL requires >= 22` });
   }
 
-  try {
-    execSync("npx -y clawql-mcp --help", { stdio: "ignore" });
-    checks.push({ level: "ok", message: "clawql-mcp resolvable via npx" });
-  } catch {
-    checks.push({
-      level: "warn",
-      message: "clawql-mcp not verified — npm i clawql-mcp or npm run build in repo",
-    });
+  // Audit 2.14: check the local binary only — never `npx` (network / unpinned).
+  {
+    const local = resolveLocalClawqlMcpBinary();
+    if (local) {
+      checks.push({ level: "ok", message: `clawql-mcp local binary: ${local}` });
+    } else {
+      let pathBin: string | undefined;
+      try {
+        pathBin = execSync("command -v clawql-mcp", {
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+        })
+          .trim()
+          .split("\n")[0];
+      } catch {
+        pathBin = undefined;
+      }
+      if (pathBin) {
+        checks.push({ level: "ok", message: `clawql-mcp on PATH: ${pathBin}` });
+      } else {
+        checks.push({
+          level: "warn",
+          message:
+            "clawql-mcp binary not found locally — npm i clawql-mcp or npm run build in repo",
+          detail: "doctor does not download via npx",
+        });
+      }
+    }
   }
 
   if (existsSync(home)) {

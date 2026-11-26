@@ -167,7 +167,7 @@ export function executeClawqlOperationEffect(
       if (approvedId) {
         const livePayload = { operationId, args, fields, where };
         const argsHash = yield* hashPendingArgsEffect(livePayload);
-        const existing = yield* fromPromise(() => loadPendingExecution(approvedId));
+        const existing = yield* fromPromise(() => loadPendingExecution(approvedId, params.home));
         // Keyed redrive: already consumed (outcome_unknown) + connector honors Idempotency-Key.
         // Never a second consume — same clawql-mandate:<id> on the wire.
         if (existing && mayAutoRetryOutcomeUnknown(existing)) {
@@ -214,6 +214,7 @@ export function executeClawqlOperationEffect(
             tryConsumeApprovedMandate({
               executionId: approvedId,
               argsHash,
+              home: params.home,
             })
           );
           if (!consumed) {
@@ -230,10 +231,14 @@ export function executeClawqlOperationEffect(
           }
           if (consumed.operationId !== operationId) {
             yield* fromPromise(() =>
-              markPendingCompleted(approvedId, {
-                ok: false,
-                error: "approved executionId is bound to a different operationId",
-              })
+              markPendingCompleted(
+                approvedId,
+                {
+                  ok: false,
+                  error: "approved executionId is bound to a different operationId",
+                },
+                params.home
+              )
             );
             return yield* textContentEffect(
               JSON.stringify({
@@ -258,10 +263,14 @@ export function executeClawqlOperationEffect(
           );
           if (!mandateOk) {
             yield* fromPromise(() =>
-              markPendingCompleted(approvedId, {
-                ok: false,
-                error: "MandateArgsMatch proof failed",
-              })
+              markPendingCompleted(
+                approvedId,
+                {
+                  ok: false,
+                  error: "MandateArgsMatch proof failed",
+                },
+                params.home
+              )
             );
             return yield* textContentEffect(
               JSON.stringify({
@@ -483,14 +492,14 @@ export function executeClawqlOperationEffect(
         if (!consumedMandateId) return Effect.fail(err);
         const message = err instanceof Error ? err.message : String(err);
         return fromPromise(() =>
-          markPendingCompleted(consumedMandateId!, { ok: false, error: message })
+          markPendingCompleted(consumedMandateId!, { ok: false, error: message }, params.home)
         ).pipe(Effect.andThen(Effect.fail(err)));
       })
     );
 
     if (consumedMandateId) {
       const outcome = interpretExecuteOutcome(content);
-      yield* fromPromise(() => markPendingCompleted(consumedMandateId!, outcome));
+      yield* fromPromise(() => markPendingCompleted(consumedMandateId!, outcome, params.home));
     }
 
     // Accumulate read labels only after a successful execute (ADR 0015 session IFC).

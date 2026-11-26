@@ -39,6 +39,12 @@ export type PendingExecutionRecord = {
    * only a person may mark applied / not applied / retry-with-key-touch in Review.
    */
   readonly idempotencyCapable: boolean;
+  /**
+   * Set by compare-and-set when authorizing keyed redrive (audit 2.18).
+   * Cleared on finalize. Concurrent redrives lose the CAS.
+   */
+  readonly redriveClaimedAt: string | null;
+  readonly redriveClaimedBy: string | null;
 };
 
 export type OutcomeUnknownResolve = "mark_applied" | "mark_not_applied" | "retry_with_key";

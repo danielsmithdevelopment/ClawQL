@@ -1,7 +1,7 @@
 {
   "ontologyId": "clawql-capability-ontology-v0.2",
   "preferredVocabulary": "project-local",
-  "description": "Layer-1 catalog of ClawQL MCP tools, Cursor skills, and known anti-patterns for Fast Decision enrichment. Classifier sees whenToUse / whenNotToUse / ontologyRole — not bare candidate ids or query-lexical shell bait.",
+  "description": "Layer-1 catalog of ClawQL MCP tools, Cursor skills, and known anti-patterns for Fast Decision enrichment. Classifier sees whenToUse / whenNotToUse / ontologyRole \u2014 not bare candidate ids or query-lexical shell bait.",
   "capabilities": [
     {
       "capabilityId": "clawql.search",
@@ -175,22 +175,6 @@
       "aliases": []
     },
     {
-      "capabilityId": "clawql.pageindex",
-      "kind": "tool",
-      "label": "pageindex_*",
-      "mcpTool": "pageindex_build_tree",
-      "whenToUse": "Build/traverse/synthesize document trees for long-form evidence",
-      "whenNotToUse": "Not for exact SQL cohort counts",
-      "requiresStructuredCorpus": false,
-      "ontologyRole": "document_index",
-      "aliases": [
-        "pageindex_build_tree",
-        "pageindex_traverse",
-        "pageindex_synthesize",
-        "pageindex_get_content"
-      ]
-    },
-    {
       "capabilityId": "clawql.ouroboros",
       "kind": "tool",
       "label": "ouroboros_*",
@@ -211,7 +195,7 @@
       "kind": "anti_pattern",
       "label": "unstructured shell/grep hunt",
       "whenToUse": "Only when no structured corpus or ontology flags exist for the task",
-      "whenNotToUse": "Never first tool for pre-ingested firm-knowledge cohorts with schema flags or SQL denominators — prefer memory_recall or structured SQL; unstructured shell has no cohort N",
+      "whenNotToUse": "Never first tool for pre-ingested firm-knowledge cohorts with schema flags or SQL denominators \u2014 prefer memory_recall or structured SQL; unstructured shell has no cohort N",
       "requiresStructuredCorpus": false,
       "ontologyRole": "anti_pattern",
       "aliases": [

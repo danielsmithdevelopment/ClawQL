@@ -72,7 +72,7 @@ const submitForm = (
   return Effect.tryPromise({
     try: async () => {
       // Defense in depth: refuse obvious private/loopback targets. Full egress
-      // validation (DNS resolve, redirects) lives in clawql-api assertSafeSourceFetchUrl
+      // validation (DNS resolve, redirects) lives in clawql-core egress assertSafeSourceFetchUrl
       // and is applied by the HTTP bound-execute route before invoke (audit 2.03).
       let parsed: URL;
       try {

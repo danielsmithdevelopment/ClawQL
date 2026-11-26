@@ -13,4 +13,5 @@ export * from "./classifier/index.js";
 export * from "./capability-lifecycle/index.js";
 export * from "./spend/index.js";
 export * from "./execute-batch/index.js";
+export * from "./egress/index.js";
 export * from "./utils/index.js";

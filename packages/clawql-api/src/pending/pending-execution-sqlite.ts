@@ -109,6 +109,8 @@ function rowToRecord(payloadJson: string): PendingExecutionRecord {
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
     idempotencyCapable: raw.idempotencyCapable ?? false,
+    redriveClaimedAt: raw.redriveClaimedAt ?? null,
+    redriveClaimedBy: raw.redriveClaimedBy ?? null,
   };
 }
 

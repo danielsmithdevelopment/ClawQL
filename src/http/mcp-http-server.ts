@@ -1,10 +1,11 @@
 /**
  * Streamable HTTP MCP server implementation. Published entry is `src/server-http.ts`.
  *
- * Exposes MCP on /mcp, health on /healthz, and Prometheus metrics on /metrics (unless disabled).
+ * Exposes MCP on /mcp, bare /healthz liveness, auth-gated /health detail, and /metrics (unless disabled).
  */
 
 import { randomUUID } from "node:crypto";
+import { sendGenericClientError } from "./generic-client-error.js";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
@@ -534,18 +535,18 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         res.setHeader("Content-Type", contentType);
         res.status(200).send(body);
       } catch (err: unknown) {
-        console.error("[clawql-mcp-http] GET /metrics error:", err);
-        if (!res.headersSent) {
-          res
-            .status(500)
-            .type("text/plain")
-            .send(err instanceof Error ? err.message : String(err));
-        }
+        sendGenericClientError(
+          res,
+          500,
+          "clawql-mcp-http GET /metrics",
+          err,
+          "metrics unavailable"
+        );
       }
     });
   }
 
-  app.get("/healthz", async (_req, res) => {
+  async function buildDetailedHealthPayload(): Promise<Record<string, unknown>> {
     const wormRaw = process.env.CLAWQL_WORM_ENABLED?.trim().toLowerCase();
     const wormEnabled =
       !wormRaw || (wormRaw !== "0" && wormRaw !== "false" && wormRaw !== "off" && wormRaw !== "no");
@@ -578,12 +579,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         (base.worm as Record<string, unknown>).required = audit.processWormRequiredFromEnv();
       }
     } catch {
-      /* clawql-audit optional at healthz */
+      /* clawql-audit optional at health */
     }
     if (nativeProtocolMetricsEnabled()) {
       base.nativeProtocolMetrics = getNativeProtocolMetricsSnapshot();
     }
-    // Opt-in: expose SDK `_streamMapping` sizes for regression / bench (see memory-plateau.md).
     if (Effect.runSync(benchStatsEnabled())) {
       const stats = Effect.runSync(collectStreamMappingStats(transports));
       base.stream_mapping_entries = stats.stream_mapping_entries;
@@ -615,7 +615,20 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         /* optional enrichment — ignore */
       }
     }
-    res.json(base);
+    return base;
+  }
+
+  // Audit 2.16: bare liveness only — detailed status behind auth on /health.
+  app.get("/healthz", (_req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+  app.get("/health", applyGatewayAuth, async (_req, res) => {
+    try {
+      res.json(await buildDetailedHealthPayload());
+    } catch (err: unknown) {
+      sendGenericClientError(res, 500, "clawql-mcp-http GET /health", err, "health unavailable");
+    }
   });
 
   const optionalFlags = options.optionalFlagsSnapshot ?? resolvePluginCompositionFlags();
@@ -761,10 +774,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       );
       res.status(200).json(result);
     } catch (err: unknown) {
-      console.error("[clawql-mcp-http] POST /webmcp-draft/bound-execute error:", err);
-      if (!res.headersSent) {
-        res.status(400).json({ ok: false, error: "bound execute failed" });
-      }
+      sendGenericClientError(
+        res,
+        400,
+        "clawql-mcp-http POST /webmcp-draft/bound-execute",
+        err,
+        "bound execute failed"
+      );
     }
   });
 

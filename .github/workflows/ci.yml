@@ -823,7 +823,8 @@ jobs:
 
       # postgres-consume loads pending-execution-service → clawql-audit (exports ./dist only).
       - name: Build workspace deps
-        run: npm run build -w clawql-merkle -w clawql-audit
+        # clawql-api pulls SSRF helpers from clawql-core (audit 5.07); build it before pending tests.
+        run: npm run build -w clawql-merkle -w clawql-core -w clawql-audit
 
       - name: Run pending Postgres consume tests
         run: |

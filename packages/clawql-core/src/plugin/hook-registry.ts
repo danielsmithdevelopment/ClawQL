@@ -4,7 +4,7 @@
 
 import { Effect, Layer, Ref } from "effect";
 import { ClawQLError } from "../errors/clawql-error.js";
-import { toolMatchesPattern } from "./hook-runtime.js";
+import { compileToolPattern, toolMatchesPattern } from "./hook-runtime.js";
 import { HookRegistry, type LifecycleHook, type RegisteredHook } from "./provider-types.js";
 
 type HookStore = {
@@ -23,6 +23,7 @@ export const InMemoryHookRegistryLive: Layer.Layer<HookRegistry> = Layer.effect(
     return {
       register: (pluginId, hooks) =>
         Effect.gen(function* () {
+          const registered: RegisteredHook[] = [];
           for (const h of hooks) {
             if (h.scope === "tool" && !h.toolPattern?.trim()) {
               return yield* Effect.fail(
@@ -31,8 +32,20 @@ export const InMemoryHookRegistryLive: Layer.Layer<HookRegistry> = Layer.effect(
                 })
               );
             }
+            let toolPatternRegex: RegExp | undefined;
+            if (h.toolPattern?.trim()) {
+              toolPatternRegex = yield* compileToolPattern(h.toolPattern).pipe(
+                Effect.mapError(
+                  (err) =>
+                    new ClawQLError({
+                      reason: `Hook ${h.id}: ${err.reason}`,
+                      cause: err.cause ?? err,
+                    })
+                )
+              );
+            }
+            registered.push({ ...h, pluginId, toolPatternRegex });
           }
-          const registered: RegisteredHook[] = hooks.map((h) => ({ ...h, pluginId }));
           yield* Ref.update(ref, (store) => {
             const byPlugin = new Map(store.byPlugin);
             byPlugin.set(pluginId, registered);
@@ -56,8 +69,9 @@ export const InMemoryHookRegistryLive: Layer.Layer<HookRegistry> = Layer.effect(
           for (const hooks of store.byPlugin.values()) {
             for (const h of hooks) {
               if (h.event !== event) continue;
-              if (h.scope === "tool" && toolName && !toolMatchesPattern(toolName, h.toolPattern)) {
-                continue;
+              if (h.scope === "tool" && toolName) {
+                const matcher = h.toolPatternRegex ?? h.toolPattern;
+                if (!toolMatchesPattern(toolName, matcher)) continue;
               }
               out.push(h);
             }
@@ -76,6 +90,17 @@ export function validateLifecycleHook(hook: LifecycleHook): Effect.Effect<void, 
     if (hook.scope === "tool" && !hook.toolPattern?.trim()) {
       return yield* Effect.fail(
         new ClawQLError({ reason: `Hook ${hook.id}: tool scope requires toolPattern` })
+      );
+    }
+    if (hook.toolPattern?.trim()) {
+      yield* compileToolPattern(hook.toolPattern).pipe(
+        Effect.mapError(
+          (err) =>
+            new ClawQLError({
+              reason: `Hook ${hook.id}: ${err.reason}`,
+              cause: err.cause ?? err,
+            })
+        )
       );
     }
   });
