@@ -158,6 +158,8 @@ mcpProxy:
   image:
     repository: nginx
     tag: "1.27-alpine"
+    # Optional digest pin (repo:tag@digest via clawql-mcp.imageRef). Regulated values set this.
+    digest: ""
     pullPolicy: IfNotPresent
   resources:
     requests:

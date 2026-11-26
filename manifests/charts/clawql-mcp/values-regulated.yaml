@@ -55,9 +55,18 @@ extraEnv:
   - name: CLAWQL_PANGUARD_IN_PROCESS
     value: "1"
 
-# Prefer JWT/ATR edge when the cluster runs the managed gateway / MCP proxy.
+# MCP proxy chokepoint (Gateway → proxy → clawql-mcp-http ordering / HA).
+# Default mode is nginx passthrough — proves path ordering and NetworkPolicy
+# allowlists; it does NOT terminate JWT/ATR. For JWT/ATR edge use
+# mcpProxy.mode=custom with a gateway image (see docs/security/mcp-proxy-jwt-atr.md).
 mcpProxy:
   enabled: true
+  mode: nginx
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    digest: sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    pullPolicy: IfNotPresent
 
 managedGateway:
   networkPolicy:

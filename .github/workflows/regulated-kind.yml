@@ -1,0 +1,81 @@
+# D2: regulated chart on kind (Calico NetworkPolicy + Vault/ESO).
+# Path-filtered. Test evidence for the regulated profile — not certification.
+name: Regulated kind
+
+on:
+  pull_request:
+    paths:
+      - "scripts/security/**"
+      - "scripts/kubernetes/test-regulated-kind.sh"
+      - "scripts/kubernetes/check-regulated-kind-overlay.sh"
+      - "scripts/kubernetes/bootstrap-local-vault-and-eso.sh"
+      - "manifests/charts/clawql-mcp/**"
+      - "src/composition/process-worm-host.ts"
+      - "src/composition/regulated-profile.ts"
+      - "src/http/mcp-http-auth-bind.ts"
+      - "src/http/mcp-http-graphql-gate.ts"
+      - "src/http/mcp-http-server.ts"
+      - "src/http/webhooks/webhook-token-auth.ts"
+      - "packages/clawql-api/src/execute/resume-core.ts"
+      - "packages/clawql-api/src/pending/**"
+      - "packages/clawql-inference/src/policy/local-only.ts"
+      - "packages/clawql-audit/src/**"
+      - "vitest.e2e.config.ts"
+      - "docs/security/secure-defaults.md"
+      - ".github/workflows/regulated-kind.yml"
+      - ".github/workflows/regulated-refusals.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/security/**"
+      - "scripts/kubernetes/test-regulated-kind.sh"
+      - "scripts/kubernetes/check-regulated-kind-overlay.sh"
+      - "scripts/kubernetes/bootstrap-local-vault-and-eso.sh"
+      - "manifests/charts/clawql-mcp/**"
+      - ".github/workflows/regulated-kind.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: regulated-kind-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  regulated-kind:
+    name: Regulated chart on kind (Calico)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Overlay allowlist
+        run: bash scripts/kubernetes/check-regulated-kind-overlay.sh
+
+      - name: Build host + MCP image inputs
+        run: |
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
+          npm run build || true
+
+      - name: Regulated kind driver
+        env:
+          CLAWQL_REGULATED_KIND_ARTIFACTS: ${{ runner.temp }}/regulated-kind-artifacts
+        run: bash scripts/kubernetes/test-regulated-kind.sh
+
+      - name: Upload failure / describe artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: regulated-kind-artifacts
+          path: ${{ runner.temp }}/regulated-kind-artifacts
+          if-no-files-found: ignore

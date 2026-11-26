@@ -1,0 +1,41 @@
+# CI overlay for regulated kind job (D2).
+# Allowed keys only — scripts/kubernetes/check-regulated-kind-overlay.sh fails
+# the job if any other top-level or nested key is introduced.
+#
+# This overlay must not weaken the regulated profile beyond:
+# - Kata off (kind has no Kata runtime)
+# - Kyverno image signature off (PR image is unsigned; D3 covers signing)
+# - Local image repo/tag
+# - Host values: OIDC, MinIO, secret refs
+
+security:
+  kata:
+    enabled: false
+
+kyverno:
+  imageSignaturePolicy:
+    enabled: false
+
+image:
+  repository: clawql-mcp
+  tag: regulated-kind
+  pullPolicy: Never
+
+# Host / secret plumbing for the kind Job (Vault+ESO syncs clawql-provider-env).
+extraEnv:
+  - name: CLAWQL_AUTH_OIDC_JWKS_URL
+    value: http://clawql-jwks.clawql.svc.cluster.local/.well-known/jwks.json
+  - name: CLAWQL_AUTH_OIDC_ISSUER
+    value: http://clawql-jwks.clawql.svc.cluster.local
+  - name: CLAWQL_AUTH_OIDC_AUDIENCE
+    value: clawql-mcp
+  - name: CLAWQL_WORM_S3_ENDPOINT
+    value: http://clawql-minio.clawql.svc.cluster.local:9000
+  - name: CLAWQL_WORM_S3_BUCKET
+    value: clawql-worm
+  - name: CLAWQL_WORM_S3_FORCE_PATH_STYLE
+    value: "1"
+  - name: CLAWQL_WORM_S3_REGION
+    value: us-east-1
+
+envFromSecret: clawql-provider-env
