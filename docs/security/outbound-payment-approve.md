@@ -27,7 +27,7 @@ Passes 2–6 and their follow-ups (including Y/Z payment approve) are closed for
 
 Long-lived OIDC tokens used for MCP (same admin signed the agent client in) must not approve payments.
 
-**Required:** dedicated approve audience. The IdP issues short-lived tokens for this audience only for the console approve flow — the gateway’s MCP token (`aud=clawql-mcp`) cannot approve. `auth_time`-only is **refused** (it left a post-sign-in window where the MCP token could still approve).
+**Required:** dedicated approve audience. The identity provider issues short-lived tokens for this audience only for the console approve flow — the gateway’s MCP token (`aud=clawql-mcp`) cannot approve. `auth_time`-only is **refused** (it left a post-sign-in window where the MCP token could still approve).
 
 ```bash
 # Must differ from CLAWQL_AUTH_OIDC_AUDIENCE
