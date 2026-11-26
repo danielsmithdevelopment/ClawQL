@@ -89,9 +89,7 @@ export function ensureProcessWormHostBootedEffect(
             ? String((err as { reason: unknown }).reason)
             : "";
         const reason =
-          taggedReason ||
-          (err instanceof Error && err.message ? err.message : "") ||
-          String(err);
+          taggedReason || (err instanceof Error && err.message ? err.message : "") || String(err);
         return new Error(reason);
       })
     );
