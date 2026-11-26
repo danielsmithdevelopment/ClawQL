@@ -67,10 +67,21 @@ spec:
               esac
               VER="{{ .Values.sandboxDocker.staticCliVersion }}"
               URL="https://download.docker.com/linux/static/stable/${DARCH}/docker-${VER}.tgz"
+              case "$DARCH" in
+                x86_64) EXPECT="{{ index .Values.sandboxDocker.staticCliSha256 "x86_64" | default "" }}" ;;
+                aarch64) EXPECT="{{ index .Values.sandboxDocker.staticCliSha256 "aarch64" | default "" }}" ;;
+                *) echo "clawql sandbox init: no checksum for $DARCH" >&2; exit 1 ;;
+              esac
+              if [ -z "$EXPECT" ]; then
+                echo "clawql sandbox init: sandboxDocker.staticCliSha256.${DARCH} is required (audit 7.05)" >&2
+                exit 1
+              fi
               echo "clawql sandbox init: fetching ${URL}"
               # Use /export (emptyDir) only — readOnlyRootFilesystem leaves /tmp unusable on some runtimes.
               mkdir -p /export/stage
-              curl -fsSL "$URL" | tar xz -C /export/stage docker/docker
+              curl -fsSL "$URL" -o /export/stage/docker.tgz
+              echo "${EXPECT}  /export/stage/docker.tgz" | sha256sum -c -
+              tar xz -C /export/stage -f /export/stage/docker.tgz docker/docker
               mv /export/stage/docker/docker /export/docker
               rm -rf /export/stage
               chmod 0555 /export/docker
@@ -113,9 +124,12 @@ spec:
             - name: http
               containerPort: {{ .Values.service.http.targetPort | int }}
               protocol: TCP
+            {{- $grpcAliasPorts := index .Values "clawql-mcp-grpc" | default dict }}
+            {{- if or .Values.enableGrpc (and $grpcAliasPorts $grpcAliasPorts.enabled) }}
             - name: grpc
               containerPort: {{ .Values.service.grpc.targetPort | int }}
               protocol: TCP
+            {{- end }}
           env:
             {{- $provider := .Values.provider | default "" | toString | trim }}
             {{- if and $provider (ne $provider "none") }}
@@ -159,7 +173,8 @@ spec:
             # Runtime security tier (payments/inference fail-closed)
             - name: CLAWQL_TIER
               value: {{ .Values.pluginTiers.tier | default "standard" | quote }}
-            {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
+            {{- $grpcAlias := index .Values "clawql-mcp-grpc" | default dict }}
+            {{- $enableGrpc := or .Values.enableGrpc (and $grpcAlias $grpcAlias.enabled) }}
             {{- if $enableGrpc }}
             - name: ENABLE_GRPC
               value: "1"

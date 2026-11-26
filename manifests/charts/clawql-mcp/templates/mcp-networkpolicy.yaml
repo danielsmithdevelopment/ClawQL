@@ -1,0 +1,53 @@
+{{- if and .Values.networkPolicy .Values.networkPolicy.defaultDeny .Values.networkPolicy.defaultDeny.enabled }}
+# Audit 7.04 — default-deny for the MCP Deployment; allow DNS + HTTPS egress and
+# same-namespace peer ingress on the MCP HTTP(/gRPC) ports.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clawql-mcp.fullname" . }}-default-deny
+  labels:
+    {{- include "clawql-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "clawql-mcp.selectorLabels" . | nindent 6 }}
+      app: {{ include "clawql-mcp.fullname" . }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.http.targetPort }}
+        {{- $grpcAlias := index .Values "clawql-mcp-grpc" | default dict }}
+        {{- $enableGrpc := or .Values.enableGrpc (and $grpcAlias $grpcAlias.enabled) }}
+        {{- if $enableGrpc }}
+        - protocol: TCP
+          port: {{ .Values.service.grpc.targetPort }}
+        {{- end }}
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 127.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+{{- end }}

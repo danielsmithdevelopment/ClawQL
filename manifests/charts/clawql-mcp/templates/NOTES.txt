@@ -1,6 +1,13 @@
 1. Get the application URL (depends on Service type):
 
 {{- if contains "LoadBalancer" .Values.service.type }}
+{{- if not (and .Values.ingress.enabled .Values.ingress.tls) }}
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+WARNING (audit 7.02): service.type=LoadBalancer without ingress.tls.
+API keys and MCP traffic may cross the internet in cleartext on port
+{{ .Values.service.http.port }}. Prefer ClusterIP + Ingress/Gateway with TLS.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+{{- end }}
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "clawql-mcp.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo "MCP Streamable HTTP: http://${SERVICE_IP}:{{ .Values.service.http.port }}{{ .Values.mcpPath }}"
   echo "Health:              http://${SERVICE_IP}:{{ .Values.service.http.port }}/healthz"
@@ -21,7 +28,13 @@
   {{- end }}
 {{- end }}
 
-2. gRPC MCP (default on when `enableGrpc: true`): port {{ .Values.service.grpc.port }} on the same Service — use **`model_context_protocol.Mcp/CallTool`** for large `execute` payloads (e.g. base64 PDFs). Tune **`grpcMaxMessageLength`** / **`GRPC_MAX_MESSAGE_LENGTH`** if needed.
+{{- $grpcAlias := index .Values "clawql-mcp-grpc" | default dict }}
+{{- $enableGrpc := or .Values.enableGrpc (and $grpcAlias $grpcAlias.enabled) }}
+{{- if $enableGrpc }}
+2. gRPC MCP: port {{ .Values.service.grpc.port }} on the same Service — use **`model_context_protocol.Mcp/CallTool`** for large `execute` payloads (e.g. base64 PDFs). Tune **`grpcMaxMessageLength`** / **`GRPC_MAX_MESSAGE_LENGTH`** if needed.
+{{- else }}
+2. gRPC MCP is off (`enableGrpc: false`) — the Service does not expose port {{ .Values.service.grpc.port }}.
+{{- end }}
 {{- if .Values.nats.enabled }}
 
 3. NATS JetStream (optional backbone; GitHub issue #127):

@@ -407,6 +407,7 @@ hashicorpvault:
 # compose/local builds often use Dockerfile target runtime-with-docker-cli (Bun + docker binary).
 sandboxDocker:
   enabled: true
+  allowHostDockerSocket: true
   runAsRootForDockerSocket: true
   # Docker Desktop kubelet often fails hostPath type: Socket on /var/run/docker.sock (false negative).
   enforceHostPathSocketType: false
