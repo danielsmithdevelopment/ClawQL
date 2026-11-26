@@ -56,7 +56,7 @@ See [`docs/examples/idp/langextract-http/README.md`](../../docs/examples/idp/lan
 | -------- | ------- |
 | `CLAWQL_ENABLE_LANGEXTRACT` | Register MCP tool (default off) |
 | `LANGEXTRACT_BASE_URL` | Sidecar HTTP base (e.g. `http://localhost:8090`) |
-| `LANGEXTRACT_BACKEND` | Live sidecar backend: `openrouter` (default), `ollama`, or `openai_compatible` |
+| `LANGEXTRACT_BACKEND` | Live sidecar backend when `LANGEXTRACT_MODE=live`: `openrouter` (live default), `ollama`, or `openai_compatible`. Sidecar **mode** default is **`demo`** (no cloud LLM) — see [`secure-defaults.md`](../security/secure-defaults.md) |
 | `LANGEXTRACT_MODEL_ID` | Model for live mode — OpenRouter: `deepseek/deepseek-chat`; Ollama: `gemma2:2b` |
 | `OPENROUTER_API_KEY` | Live **openrouter** backend (ClawQL standard — same as OpenClaw) |
 | `OLLAMA_BASE_URL` | Live **ollama** backend (default `http://localhost:11434`) |

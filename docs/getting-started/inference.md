@@ -114,7 +114,7 @@ Direct BYOK (when you have per-provider keys and want to skip the aggregator):
 ```bash
 # export DEEPSEEK_API_KEY=sk-…        # direct DeepSeek
 # export GROQ_API_KEY=…               # or another BYOK provider
-# export OPENAI_API_KEY=…             # OpenAI / embeddings
+# export OPENAI_API_KEY=…             # OpenAI chat (embeddings need CLAWQL_EMBEDDING_PROVIDER=http — see docs/security/secure-defaults.md)
 # export ANTHROPIC_API_KEY=…          # Anthropic
 ```
 
