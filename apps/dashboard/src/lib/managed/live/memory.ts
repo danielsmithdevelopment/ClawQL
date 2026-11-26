@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
 import {
   ERASURE_PREVIEW,
@@ -8,50 +8,64 @@ import {
   MEMORY_RESULTS,
   MEMORY_UPLOADS,
 } from "@/lib/managed/fixtures-ops";
+import { resolveManagedStorePathEffect } from "@/lib/managed/org-home";
 
 export type ManagedMemoryResult = (typeof MEMORY_RESULTS)[number];
 export type ManagedMemoryField = (typeof MEMORY_FIELDS)[number];
 export type ManagedMemoryUpload = (typeof MEMORY_UPLOADS)[number];
 
-function resolveErasePath(env: NodeJS.ProcessEnv = process.env): string {
-  const override = env.CLAWQL_MEMORY_ERASE_PATH?.trim();
-  if (override) return override;
-  const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
-  return join(home, "Auth", "memory-erasure.json");
-}
+const resolveErasePathEffect = (input: {
+  readonly orgId?: string | null;
+  readonly env?: NodeJS.ProcessEnv;
+}): Effect.Effect<string, Error> =>
+  resolveManagedStorePathEffect({
+    orgId: input.orgId,
+    segments: ["Auth", "memory-erasure.json"],
+    overrideEnvKey: "CLAWQL_MEMORY_ERASE_PATH",
+    env: input.env,
+  }).pipe(Effect.mapError((e) => new Error(e.detail ?? e.reason)));
 
-const readErasedSubjectsEffect = (
-  env: NodeJS.ProcessEnv = process.env,
-): Effect.Effect<string[], Error> =>
-  Effect.tryPromise({
-    try: async () => {
-      try {
-        const raw = await readFile(resolveErasePath(env), "utf8");
-        const parsed = JSON.parse(raw) as { subjects?: string[] };
-        return Array.isArray(parsed.subjects) ? parsed.subjects : [];
-      } catch (e: unknown) {
-        if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return [];
-        throw e;
-      }
-    },
-    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+const readErasedSubjectsEffect = (input: {
+  readonly orgId?: string | null;
+  readonly env?: NodeJS.ProcessEnv;
+}): Effect.Effect<string[], Error> =>
+  Effect.gen(function* () {
+    const path = yield* resolveErasePathEffect(input);
+    return yield* Effect.tryPromise({
+      try: async () => {
+        try {
+          const raw = await readFile(path, "utf8");
+          const parsed = JSON.parse(raw) as { subjects?: string[] };
+          return Array.isArray(parsed.subjects) ? parsed.subjects : [];
+        } catch (e: unknown) {
+          if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return [];
+          throw e;
+        }
+      },
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
   });
 
 const writeErasedSubjectsEffect = (
   subjects: readonly string[],
-  env: NodeJS.ProcessEnv = process.env,
+  input: {
+    readonly orgId?: string | null;
+    readonly env?: NodeJS.ProcessEnv;
+  },
 ): Effect.Effect<void, Error> =>
-  Effect.tryPromise({
-    try: async () => {
-      const path = resolveErasePath(env);
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(
-        path,
-        `${JSON.stringify({ version: 1, subjects, updatedAt: new Date().toISOString() }, null, 2)}\n`,
-        "utf8",
-      );
-    },
-    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  Effect.gen(function* () {
+    const path = yield* resolveErasePathEffect(input);
+    yield* Effect.tryPromise({
+      try: async () => {
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(
+          path,
+          `${JSON.stringify({ version: 1, subjects, updatedAt: new Date().toISOString() }, null, 2)}\n`,
+          "utf8",
+        );
+      },
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
   });
 
 export const listManagedMemoryEffect = (input?: {
@@ -93,7 +107,10 @@ export const getManagedMemoryEffect = (
   });
 
 export const listManagedMemoryUploadsEffect = (
-  env: NodeJS.ProcessEnv = process.env,
+  input: {
+    readonly orgId?: string | null;
+    readonly env?: NodeJS.ProcessEnv;
+  } = {},
 ): Effect.Effect<{
   readonly uploads: readonly ManagedMemoryUpload[];
   readonly erasedSubjects: readonly string[];
@@ -101,9 +118,11 @@ export const listManagedMemoryUploadsEffect = (
   readonly source: "live" | "fixture";
 }> =>
   Effect.gen(function* () {
-    const erasedSubjects = yield* readErasedSubjectsEffect(env).pipe(
-      Effect.catch(() => Effect.succeed([] as string[])),
-    );
+    const env = input.env ?? process.env;
+    const erasedSubjects = yield* readErasedSubjectsEffect({
+      orgId: input.orgId,
+      env,
+    }).pipe(Effect.catch(() => Effect.succeed([] as string[])));
     return {
       uploads: MEMORY_UPLOADS,
       erasedSubjects,
@@ -117,6 +136,7 @@ export const eraseManagedMemorySubjectEffect = (
     readonly subject: string;
     readonly acceptIrreversible: boolean;
     readonly acceptAuditKept: boolean;
+    readonly orgId?: string | null;
     readonly env?: NodeJS.ProcessEnv;
   },
 ): Effect.Effect<
@@ -132,9 +152,10 @@ export const eraseManagedMemorySubjectEffect = (
     if (!input.acceptIrreversible || !input.acceptAuditKept) {
       return yield* Effect.fail(new Error("acceptance_required"));
     }
-    const existing = yield* readErasedSubjectsEffect(env);
+    const scope = { orgId: input.orgId, env };
+    const existing = yield* readErasedSubjectsEffect(scope);
     const next = existing.includes(subject) ? existing : [...existing, subject];
-    yield* writeErasedSubjectsEffect(next, env);
+    yield* writeErasedSubjectsEffect(next, scope);
     return {
       ok: true as const,
       subject,
@@ -144,6 +165,11 @@ export const eraseManagedMemorySubjectEffect = (
   });
 
 /** Test helper — clears durable erase list for a temp CLAWQL_HOME. */
-export const resetManagedMemoryEraseEffect = (
-  env: NodeJS.ProcessEnv = process.env,
-): Effect.Effect<void, Error> => writeErasedSubjectsEffect([], env);
+export const resetManagedMemoryEraseEffect = (input: {
+  readonly orgId?: string | null;
+  readonly env?: NodeJS.ProcessEnv;
+} = {}): Effect.Effect<void, Error> =>
+  writeErasedSubjectsEffect([], {
+    orgId: input.orgId,
+    env: input.env ?? process.env,
+  });

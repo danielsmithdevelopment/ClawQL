@@ -29,7 +29,9 @@ export async function GET(req: Request) {
   if (!reviewId) {
     return NextResponse.json({ error: "reviewId required" }, { status: 400 });
   }
-  const result = await Effect.runPromise(listManagedEvidenceEffect({ reviewId }));
+  const result = await Effect.runPromise(
+    listManagedEvidenceEffect({ reviewId, orgId: auth.session.orgId }),
+  );
   return NextResponse.json(result);
 }
 
@@ -53,6 +55,7 @@ export async function POST(req: Request) {
         removeManagedEvidenceEffect({
           reviewId: body.reviewId.trim(),
           attachmentId: body.attachmentId.trim(),
+          orgId: auth.session.orgId,
         }),
       );
       return NextResponse.json(result);
@@ -74,7 +77,9 @@ export async function POST(req: Request) {
   };
 
   try {
-    const result = await Effect.runPromise(addManagedEvidenceEffect({ attachment }));
+    const result = await Effect.runPromise(
+      addManagedEvidenceEffect({ attachment, orgId: auth.session.orgId }),
+    );
     return NextResponse.json(result);
   } catch (cause: unknown) {
     const msg = cause instanceof Error ? cause.message : String(cause);

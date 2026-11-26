@@ -14,6 +14,8 @@ export async function GET(req: Request) {
   const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
-  const result = await Effect.runPromise(listManagedConnectionsEffect());
+  const result = await Effect.runPromise(
+    listManagedConnectionsEffect({ orgId: auth.session.orgId }),
+  );
   return NextResponse.json(result);
 }

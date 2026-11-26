@@ -23,7 +23,9 @@ HSTS is **opt-in** so plain-HTTP Cloud Agent / localhost dev is not bricked. Pro
 
 Client-supplied `orgId` on managed console routes must match the **trusted** session / `CLAWQL_MANAGED_ORG_ID` value. Spoofs return **403**. Key revoke additionally checks the stored key’s `orgId` before mutation (`apps/dashboard/src/lib/managed/org-scope.ts`, `live/keys.ts`).
 
-Regression: Vitest in `org-scope.test.ts` and `keys.test.ts` (“cross-org revoke”). E2E SEC-05 still covers fixture harness cross-tenant 404s.
+When `CLAWQL_MANAGED_ORG_ID` is set or `CLAWQL_MANAGED_MULTI_TENANT=1`, durable managed stores under `$CLAWQL_HOME` are partitioned at `orgs/<orgId>/` so org B cannot read org A’s review / audit / memory / keys on a shared volume (`apps/dashboard/src/lib/managed/org-home.ts`).
+
+Regression: Vitest in `org-scope.test.ts`, `org-home.test.ts`, and `keys.test.ts` (“cross-org revoke”). E2E SEC-05 still covers fixture harness cross-tenant 404s.
 
 ## Verification
 
@@ -31,8 +33,8 @@ Regression: Vitest in `org-scope.test.ts` and `keys.test.ts` (“cross-org revok
 # MCP builder unit tests
 npx vitest run src/http/security-headers.test.ts
 
-# Dashboard org-scope + revoke IDOR
-cd apps/dashboard && npx vitest run src/lib/managed/org-scope.test.ts src/lib/managed/live/keys.test.ts
+# Dashboard org-scope + org-home partition + revoke IDOR
+cd apps/dashboard && npx vitest run src/lib/managed/org-scope.test.ts src/lib/managed/org-home.test.ts src/lib/managed/live/keys.test.ts
 ```
 
 Against a running MCP HTTP process with headers enabled, expect `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and (when `CLAWQL_HSTS=1`) `Strict-Transport-Security`.

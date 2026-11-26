@@ -36,8 +36,8 @@ describe("managed ops surfaces", () => {
   it("durably erases a memory subject under CLAWQL_HOME", async () => {
     const home = mkdtempSync(join(tmpdir(), "clawql-erase-"));
     const env = { ...process.env, CLAWQL_HOME: home };
-    await Effect.runPromise(resetManagedMemoryEraseEffect(env));
-    const uploads = await Effect.runPromise(listManagedMemoryUploadsEffect(env));
+    await Effect.runPromise(resetManagedMemoryEraseEffect({ env }));
+    const uploads = await Effect.runPromise(listManagedMemoryUploadsEffect({ env }));
     expect(uploads.uploads.some((u) => u.id === "up_nw")).toBe(true);
     expect(uploads.erasurePreview.subject).toBe("Jane Okafor");
     const erased = await Effect.runPromise(
@@ -50,7 +50,33 @@ describe("managed ops surfaces", () => {
     );
     expect(erased.ok).toBe(true);
     expect(erased.jobId).toMatch(/^era_/);
-    const after = await Effect.runPromise(listManagedMemoryUploadsEffect(env));
+    const after = await Effect.runPromise(listManagedMemoryUploadsEffect({ env }));
     expect(after.erasedSubjects).toContain("Jane Okafor");
+  });
+
+  it("partitions memory erase lists so org B cannot see org A (CC1)", async () => {
+    const home = mkdtempSync(join(tmpdir(), "clawql-erase-mt-"));
+    const env = {
+      ...process.env,
+      CLAWQL_HOME: home,
+      CLAWQL_MANAGED_MULTI_TENANT: "1",
+    };
+    await Effect.runPromise(
+      eraseManagedMemorySubjectEffect({
+        subject: "Secret Subject",
+        acceptIrreversible: true,
+        acceptAuditKept: true,
+        orgId: "org_a",
+        env,
+      }),
+    );
+    const a = await Effect.runPromise(
+      listManagedMemoryUploadsEffect({ orgId: "org_a", env }),
+    );
+    const b = await Effect.runPromise(
+      listManagedMemoryUploadsEffect({ orgId: "org_b", env }),
+    );
+    expect(a.erasedSubjects).toContain("Secret Subject");
+    expect(b.erasedSubjects).not.toContain("Secret Subject");
   });
 });

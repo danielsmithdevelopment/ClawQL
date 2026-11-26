@@ -1,6 +1,5 @@
 import { createIssuedApiKeyStore } from "clawql-auth";
 import { Effect } from "effect";
-import { join } from "node:path";
 
 import type { ApiKeyItem } from "@/lib/managed/fixtures";
 import { API_KEYS } from "@/lib/managed/fixtures";
@@ -9,13 +8,22 @@ import {
   readManagedDataSource,
   resolveWithFallbackEffect,
 } from "@/lib/managed/data-source";
+import { resolveManagedStorePathEffect } from "@/lib/managed/org-home";
 
-function resolveKeysPath(env: NodeJS.ProcessEnv = process.env): string {
-  const override = env.CLAWQL_API_KEYS_PATH?.trim();
-  if (override) return override;
-  const home = env.CLAWQL_HOME?.trim() || join(process.cwd(), ".clawql");
-  return join(home, "Auth", "api-keys.json");
-}
+const resolveKeysPathEffect = (input: {
+  readonly orgId?: string | null;
+  readonly env?: NodeJS.ProcessEnv;
+}): Effect.Effect<string, Error> =>
+  resolveManagedStorePathEffect({
+    orgId: input.orgId,
+    segments: ["Auth", "api-keys.json"],
+    overrideEnvKey: "CLAWQL_API_KEYS_PATH",
+    env: input.env,
+  }).pipe(
+    Effect.mapError(
+      (e) => new Error(e.detail ?? e.reason),
+    ),
+  );
 
 function formatExpiry(expiresAt: string | undefined): string {
   if (!expiresAt) return "No expiry";
@@ -71,7 +79,8 @@ export const listManagedKeysEffect = (
       if (!orgId) {
         return [];
       }
-      const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });
+      const path = yield* resolveKeysPathEffect({ orgId, env }).pipe(Effect.orDie);
+      const store = createIssuedApiKeyStore({ path });
       const records = yield* store.listActive({ orgId });
       return records.map(mapIssuedKeyToUi);
     }),
@@ -98,12 +107,19 @@ export const issueManagedKeyEffect = (input: {
         reason: "Key issue disabled while CLAWQL_MANAGED_DATA_SOURCE=fixture",
       });
     }
-    const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });
+    const orgId = (input.orgId ?? managedOrgId(env) ?? "").trim();
+    const path = yield* resolveKeysPathEffect({ orgId, env }).pipe(
+      Effect.mapError((e) => ({
+        _tag: "ManagedKeysError" as const,
+        reason: e.message,
+      })),
+    );
+    const store = createIssuedApiKeyStore({ path });
     const result = yield* store
       .issue({
         subjectId: input.subjectId,
         label: input.name,
-        orgId: input.orgId ?? managedOrgId(env),
+        orgId: orgId || undefined,
         teamId: input.teamId,
         scope: input.scope?.length ? input.scope : ["execute", "search", "memory"],
         expiresAt: input.expiresAt,
@@ -133,7 +149,14 @@ export const revokeManagedKeyEffect = (input: {
 > =>
   Effect.gen(function* () {
     const env = input.env ?? process.env;
-    const store = createIssuedApiKeyStore({ path: resolveKeysPath(env) });
+    const trusted = input.orgId.trim();
+    const path = yield* resolveKeysPathEffect({ orgId: trusted, env }).pipe(
+      Effect.mapError((e) => ({
+        _tag: "ManagedKeysError" as const,
+        reason: e.message,
+      })),
+    );
+    const store = createIssuedApiKeyStore({ path });
     const existing = yield* store.findById(input.keyId);
     if (!existing || existing.revokedAt) {
       return yield* Effect.fail({
@@ -141,7 +164,6 @@ export const revokeManagedKeyEffect = (input: {
         reason: `Unknown key: ${input.keyId}`,
       });
     }
-    const trusted = input.orgId.trim();
     if (existing.orgId && existing.orgId !== trusted) {
       return yield* Effect.fail({
         _tag: "ManagedKeysError" as const,

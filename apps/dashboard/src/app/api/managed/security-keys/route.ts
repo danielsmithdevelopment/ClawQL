@@ -27,7 +27,9 @@ export async function GET(req: Request) {
   const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
-  const keys = await Effect.runPromise(listApproveCredentialsEffect(auth.session.userId));
+  const keys = await Effect.runPromise(
+    listApproveCredentialsEffect(auth.session.userId, process.env, auth.session.orgId),
+  );
   return NextResponse.json({
     keys: keys.map((k) => ({
       id: k.credentialId,
@@ -70,6 +72,7 @@ export async function POST(req: Request) {
       issueEnrollGateChallengeEffect({
         userId: session.userId,
         rpId,
+        orgId: session.orgId,
       }),
     );
     if (exit._tag === "Failure") {
@@ -96,6 +99,7 @@ export async function POST(req: Request) {
         authTimeSec:
           accessTokenAuthTimeSec(session.accessToken) ??
           (session.mode === "mock" ? Math.floor(Date.now() / 1000) : undefined),
+        orgId: session.orgId,
       }),
     );
     if (exit._tag === "Failure") {
