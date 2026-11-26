@@ -38,34 +38,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/provider-catalog-report
-          {
-            echo "# Provider catalog validate $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo
-            echo "## Top-50 manifests"
-            node -e '
-              const fs = require("node:fs");
-              const paths = [
-                "providers/aws/aws-top50-apis.json",
-                "providers/google/google-top50-apis.json",
-              ];
-              for (const p of paths) {
-                const raw = fs.readFileSync(p, "utf8");
-                const j = JSON.parse(raw);
-                const n = Array.isArray(j) ? j.length : (j.apis?.length ?? j.items?.length ?? Object.keys(j).length);
-                console.log(`- ok ${p} (entries≈${n})`);
-              }
-            '
-            echo
-            echo "## scripts/providers inventory"
-            ls -1 scripts/providers
-            echo
-            echo "## Note"
-            echo "Full network refresh (fetch-provider-specs / fetch-aws-top50 / fetch-google-top50)"
-            echo "is not run in CI — requires egress + optional self-hosted OpenAPI hosts."
-            echo "Local: npm run fetch-provider-specs"
-            echo "Dry-run list only is exercised below."
-          } | tee /tmp/provider-catalog-report/validate.txt
-
+          node scripts/providers/validate-committed-manifests.mjs \
+            | tee /tmp/provider-catalog-report/validate.txt
       - name: Dry-run Google discovery list (no downloads)
         run: |
           set -euo pipefail
