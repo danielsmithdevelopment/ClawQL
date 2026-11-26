@@ -8,7 +8,7 @@ import {
   revokeManagedKeyEffect,
 } from "@/lib/managed/live/keys";
 import { resolveTrustedOrgIdEffect } from "@/lib/managed/org-scope";
-import { requireManagedApiSession } from "@/lib/api-auth";
+import { requireManagedAdminSession } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -22,17 +22,19 @@ function guard() {
 export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedAdminSession(req);
   if (!auth.ok) return auth.response;
 
-  const result = await Effect.runPromise(listManagedKeysEffect());
+  const result = await Effect.runPromise(
+    listManagedKeysEffect({ orgId: auth.session.orgId }),
+  );
   return NextResponse.json(result);
 }
 
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedAdminSession(req);
   if (!auth.ok) return auth.response;
 
 

@@ -50,7 +50,9 @@ describe("managed keys live layer", () => {
     expect(issued.key.name).toBe("ci-bot");
     expect(issued.source).toBe("live");
 
-    const listed = await Effect.runPromise(listManagedKeysEffect(env));
+    const listed = await Effect.runPromise(
+      listManagedKeysEffect({ orgId: "org_test", env }),
+    );
     expect(listed.source).toBe("live");
     expect(listed.keys.some((k) => k.id === issued.key.id)).toBe(true);
   });

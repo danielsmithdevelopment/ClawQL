@@ -126,4 +126,36 @@ describe("managed session", () => {
       globalThis.fetch = prevFetch;
     }
   });
+
+  it("does not invent an org from CLAWQL_MANAGED_ORG_ID (BB1)", async () => {
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          id: "user_stranger",
+          email: "stranger@example.com",
+          app_metadata: {},
+          user_metadata: { full_name: "Stranger" },
+        }),
+        { status: 200 },
+      )) as typeof fetch;
+
+    try {
+      const session = await Effect.runPromise(
+        resolveManagedSessionEffect({
+          accessToken: "tok",
+          env: {
+            NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+            CLAWQL_MANAGED_AUTH_MOCK: "0",
+            CLAWQL_MANAGED_ORG_ID: "org_deploy",
+          },
+        }),
+      );
+      expect(session.orgId).toBe("");
+      expect(session.role).toBe("Member");
+    } finally {
+      globalThis.fetch = prevFetch;
+    }
+  });
 });

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
-import { requireManagedApiSession } from "@/lib/api-auth";
+import { requireManagedOrgSession } from "@/lib/api-auth";
 import { isManagedConsole } from "@/lib/console-surface";
 import {
   getActiveImpersonationEffect,
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
   const session = auth.session;
   const active = await Effect.runPromise(getActiveImpersonationEffect(session.userId));
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
   const session = auth.session;
   const body = (await req.json().catch(() => ({}))) as {

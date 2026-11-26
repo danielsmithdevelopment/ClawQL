@@ -141,7 +141,7 @@ async function webauthnApproveAssertion(input: {
     error?: string
   }
   if (!challengeRes.ok || !challenged.options) {
-    throw new Error(challenged.error || `Security key challenge failed (${challengeRes.status})`)
+    throw new Error(challenged.error || `Passkey challenge failed (${challengeRes.status})`)
   }
   if (typeof window === 'undefined' || !window.PublicKeyCredential) {
     throw new Error('WebAuthn is not available in this browser')

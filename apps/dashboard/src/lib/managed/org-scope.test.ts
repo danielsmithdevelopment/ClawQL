@@ -14,10 +14,20 @@ describe("managed org scope (IDOR)", () => {
     expect(orgId).toBe("org_acme");
   });
 
-  it("prefers CLAWQL_MANAGED_ORG_ID over session", async () => {
+  it("prefers session org over CLAWQL_MANAGED_ORG_ID (BB1)", async () => {
     const orgId = await Effect.runPromise(
       resolveTrustedOrgIdEffect({
         sessionOrgId: "org_acme",
+        env: { CLAWQL_MANAGED_ORG_ID: "org_prod" },
+      })
+    );
+    expect(orgId).toBe("org_acme");
+  });
+
+  it("falls back to env org when session org is empty", async () => {
+    const orgId = await Effect.runPromise(
+      resolveTrustedOrgIdEffect({
+        sessionOrgId: "",
         env: { CLAWQL_MANAGED_ORG_ID: "org_prod" },
       })
     );

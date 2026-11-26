@@ -7,7 +7,7 @@ import {
   listManagedTeamEffect,
 } from "@/lib/managed/live/team";
 
-import { requireManagedApiSession } from "@/lib/api-auth";
+import { requireManagedAdminSession } from "@/lib/api-auth";
 export const runtime = "nodejs";
 
 function guard() {
@@ -20,7 +20,7 @@ function guard() {
 export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedAdminSession(req);
   if (!auth.ok) return auth.response;
 
   const result = await Effect.runPromise(listManagedTeamEffect());
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedAdminSession(req);
   if (!auth.ok) return auth.response;
 
 

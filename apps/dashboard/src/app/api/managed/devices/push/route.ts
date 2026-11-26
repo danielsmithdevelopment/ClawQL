@@ -7,7 +7,7 @@ import {
   listManagedPushDevicesEffect,
   registerManagedPushDeviceEffect,
 } from "@/lib/managed/live/devices-push";
-import { requireManagedApiSession } from "@/lib/api-auth";
+import { requireManagedOrgSession } from "@/lib/api-auth";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ function guard() {
 export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
   const result = await Effect.runPromise(listManagedPushDevicesEffect());
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
 
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
   const url = new URL(req.url);

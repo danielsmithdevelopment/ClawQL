@@ -21,7 +21,9 @@ export type ResolveTrustedOrgInput = {
 };
 
 /**
- * Prefer explicit managed org env, else session org.
+ * Prefer the authenticated session org (BB1). Env org is only a fallback when the
+ * session has no orgId (mock/desktop fixtures). Live Supabase sessions without
+ * app_metadata.org_id must fail closed via requireManagedOrgSession.
  * Fails when the client claims a different orgId than the trusted value.
  */
 export const resolveTrustedOrgIdEffect = (
@@ -29,8 +31,9 @@ export const resolveTrustedOrgIdEffect = (
 ): Effect.Effect<string, OrgScopeError> =>
   Effect.gen(function* () {
     const env = input.env ?? process.env;
+    const fromSession = input.sessionOrgId.trim();
     const fromEnv = managedOrgId(env);
-    const trusted = (fromEnv || input.sessionOrgId || "").trim();
+    const trusted = (fromSession || fromEnv || "").trim();
     if (!trusted) {
       return yield* Effect.fail(
         new OrgScopeError({ reason: "org_missing", detail: "No session or managed org id" })

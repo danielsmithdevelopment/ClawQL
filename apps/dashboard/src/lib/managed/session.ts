@@ -93,10 +93,8 @@ export const resolveManagedSessionEffect = (input: {
         anonKey: cfg.supabaseAnonKey,
         accessToken: token,
       });
-      const orgFromEnv =
-        env.CLAWQL_MANAGED_ORG_ID?.trim() ||
-        env.NEXT_PUBLIC_CLAWQL_MANAGED_ORG_ID?.trim() ||
-        undefined;
+      // BB1: never invent an org. Missing app_metadata.org_id means no membership —
+      // managed routes must 403 (do not fall back to CLAWQL_MANAGED_ORG_ID / org_pending).
       return {
         mode: "supabase" as const,
         userId: claims.userId,
@@ -104,8 +102,8 @@ export const resolveManagedSessionEffect = (input: {
         displayName: claims.displayName,
         role: claims.role,
         initials: initialsFromName(claims.displayName),
-        orgId: claims.orgId || orgFromEnv || "org_pending",
-        orgName: claims.orgName,
+        orgId: claims.orgId?.trim() || "",
+        orgName: claims.orgId ? claims.orgName : "",
         planLabel: claims.planLabel,
         accessToken: token,
       };

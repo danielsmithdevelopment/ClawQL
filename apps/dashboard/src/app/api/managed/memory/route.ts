@@ -9,7 +9,7 @@ import {
   listManagedMemoryUploadsEffect,
 } from "@/lib/managed/live/memory";
 
-import { requireManagedApiSession } from "@/lib/api-auth";
+import { requireManagedOrgSession } from "@/lib/api-auth";
 export const runtime = "nodejs";
 
 function guard() {
@@ -22,7 +22,7 @@ function guard() {
 export async function GET(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
 
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const denied = guard();
   if (denied) return denied;
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
 

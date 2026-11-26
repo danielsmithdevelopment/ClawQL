@@ -6,6 +6,8 @@ import {
   isWebAuthnApprovalProof,
   maskSecretValue,
   sessionCanApprove,
+  sessionHasOrg,
+  sessionIsAdmin,
 } from "./api-auth";
 import { MOCK_MANAGED_SESSION } from "./managed/session";
 
@@ -75,5 +77,13 @@ describe("api-auth", () => {
   it("recognizes approver roles", () => {
     expect(sessionCanApprove(MOCK_MANAGED_SESSION)).toBe(true);
     expect(sessionCanApprove({ ...MOCK_MANAGED_SESSION, role: "Member" })).toBe(false);
+  });
+
+  it("requires org membership and admin for privileged surfaces (BB1)", () => {
+    expect(sessionHasOrg(MOCK_MANAGED_SESSION)).toBe(true);
+    expect(sessionHasOrg({ ...MOCK_MANAGED_SESSION, orgId: "" })).toBe(false);
+    expect(sessionIsAdmin(MOCK_MANAGED_SESSION)).toBe(true);
+    expect(sessionIsAdmin({ ...MOCK_MANAGED_SESSION, role: "Member" })).toBe(false);
+    expect(sessionCanApprove({ ...MOCK_MANAGED_SESSION, orgId: "" })).toBe(false);
   });
 });

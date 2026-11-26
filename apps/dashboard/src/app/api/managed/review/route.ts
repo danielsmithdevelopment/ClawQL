@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import {
   isE2eApprovalProof,
   isWebAuthnApprovalProof,
-  requireManagedApiSession,
+  requireManagedOrgSession,
   sessionCanApprove,
   type ApprovalProofInput,
 } from "@/lib/api-auth";
@@ -12,6 +12,7 @@ import { isManagedConsole } from "@/lib/console-surface";
 import {
   issueApproveChallengeEffect,
   originFromRequest,
+  resolveReviewChangeHashEffect,
   rpIdFromRequest,
   verifyApproveAssertionEffect,
 } from "@/lib/managed/approve-webauthn";
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
 
   const result = await Effect.runPromise(listManagedReviewEffect());
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
   }
 
-  const auth = await requireManagedApiSession(req);
+  const auth = await requireManagedOrgSession(req);
   if (!auth.ok) return auth.response;
   const session = auth.session;
 
@@ -81,25 +82,39 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+    const hashExit = await Effect.runPromiseExit(
+      resolveReviewChangeHashEffect({
+        reviewId: body.id.trim(),
+        kind: body.kind,
+      }),
+    );
+    if (hashExit._tag === "Failure") {
+      return NextResponse.json(
+        { error: "Could not resolve change hash for this review item", detail: failureMessage(hashExit) },
+        { status: 400 },
+      );
+    }
     const exit = await Effect.runPromiseExit(
       issueApproveChallengeEffect({
         userId: session.userId,
         reviewId: body.id.trim(),
         kind: body.kind,
         decision: body.decision,
+        changeHash: hashExit.value,
         rpId: rpIdFromRequest(req),
       }),
     );
     if (exit._tag === "Failure") {
       const reason = failureMessage(exit);
-      const msg = reason.includes("no_device_bound")
-        ? "Register a device-bound security key before approving"
+      const msg = reason.includes("no_passkey")
+        ? "Register a passkey before approving"
         : "Could not issue approval challenge";
       return NextResponse.json({ error: msg, detail: reason }, { status: 403 });
     }
     return NextResponse.json({
       options: exit.value.options,
       challenge: exit.value.challenge,
+      changeHash: hashExit.value,
     });
   }
 
@@ -124,12 +139,25 @@ export async function POST(req: Request) {
     if (isE2eApprovalProof(body.approvalProof)) {
       // CLAWQL_E2E_HARNESS=1 only
     } else if (isWebAuthnApprovalProof(body.approvalProof)) {
+      const hashExit = await Effect.runPromiseExit(
+        resolveReviewChangeHashEffect({
+          reviewId: body.id.trim(),
+          kind: body.kind,
+        }),
+      );
+      if (hashExit._tag === "Failure") {
+        return NextResponse.json(
+          { error: "Could not resolve change hash for this review item" },
+          { status: 400 },
+        );
+      }
       const verifyExit = await Effect.runPromiseExit(
         verifyApproveAssertionEffect({
           userId: session.userId,
           reviewId: body.id.trim(),
           kind: body.kind,
           decision: body.decision,
+          changeHash: hashExit.value,
           response: body.approvalProof.response,
           rpId: rpIdFromRequest(req),
           origin: originFromRequest(req),
@@ -137,7 +165,7 @@ export async function POST(req: Request) {
       );
       if (verifyExit._tag === "Failure") {
         return NextResponse.json(
-          { error: "Security key assertion failed", detail: "webauthn_verify_failed" },
+          { error: "Passkey assertion failed", detail: "webauthn_verify_failed" },
           { status: 403 },
         );
       }
@@ -145,7 +173,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Device-bound security key required — request an approve_challenge and submit a WebAuthn assertion",
+            "Passkey required — request an approve_challenge and submit a WebAuthn assertion",
         },
         { status: 403 },
       );

@@ -178,6 +178,41 @@ export async function requireManagedApiSession(req: Request): Promise<ApiSession
   return { ok: true, session };
 }
 
+/**
+ * Managed APIs that touch org data (BB1): require a real org membership.
+ * Supabase users without app_metadata.org_id get 403 (not auto-joined to the deploy org).
+ */
+export async function requireManagedOrgSession(req: Request): Promise<ApiSessionResult> {
+  const auth = await requireManagedApiSession(req);
+  if (!auth.ok) return auth;
+  if (!sessionHasOrg(auth.session)) {
+    return {
+      ok: false,
+      response: jsonResponse(
+        {
+          error:
+            "Organization membership required — ask an admin to set app_metadata.org_id (public sign-up alone is not enough)",
+        },
+        { status: 403 },
+      ),
+    };
+  }
+  return auth;
+}
+
+/** Admin-only managed surfaces: keys, team, settings, billing (BB1). */
+export async function requireManagedAdminSession(req: Request): Promise<ApiSessionResult> {
+  const auth = await requireManagedOrgSession(req);
+  if (!auth.ok) return auth;
+  if (!sessionIsAdmin(auth.session)) {
+    return {
+      ok: false,
+      response: jsonResponse({ error: "Org admin role required" }, { status: 403 }),
+    };
+  }
+  return auth;
+}
+
 /** Desktop-only routes: host + per-launch token (audit 8.02). */
 export function requireDesktopApiAuth(req: Request): Response | null {
   return assertApiHostAllowed(req) ?? assertDesktopApiToken(req);
@@ -215,8 +250,20 @@ export function isE2eApprovalProof(proof: ApprovalProofInput): boolean {
   return false;
 }
 
+export function sessionHasOrg(session: ManagedSession): boolean {
+  return Boolean(session.orgId?.trim());
+}
+
+export function sessionIsAdmin(session: ManagedSession): boolean {
+  return /^(org\s*)?(admin|owner)$/i.test(session.role.trim()) || /admin|owner/i.test(session.role);
+}
+
+export function sessionIsOrgMember(session: ManagedSession): boolean {
+  return sessionHasOrg(session);
+}
+
 export function sessionCanApprove(session: ManagedSession): boolean {
-  return /admin|owner|approver|operator/i.test(session.role);
+  return sessionHasOrg(session) && /admin|owner|approver|operator/i.test(session.role);
 }
 
 export function maskSecretValue(value: string): string {
