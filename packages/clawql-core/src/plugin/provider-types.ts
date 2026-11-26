@@ -401,6 +401,8 @@ export class HookRegistry extends Context.Service<
       event: LifecycleEvent,
       toolName?: string
     ) => Effect.Effect<readonly RegisteredHook[], never>;
+    /** All registered hooks across plugins (startup unmatched-pattern warnings). */
+    readonly listAll: () => Effect.Effect<readonly RegisteredHook[], never>;
   }
 >()("clawql/HookRegistry") {}
 

@@ -67,8 +67,33 @@ managedGateway:
 documentPipeline:
   enabled: false
 
+# Third-party images: pin by digest (index digests verified 2026-11-26 from Docker Hub / GHCR).
+# Templates use repo:tag@digest via clawql-mcp.imageRef. Re-pin when rotating upstream.
+webSearch:
+  searxng:
+    image:
+      digest: sha256:a7fc607aa6723f5a8982105bcc5ffba4d1b9fc7c6922a31a88d6e4cba49ef12a
+
+webBrowser:
+  chromium:
+    image:
+      digest: sha256:381353d3530ab9d579d2fe8b9c0f4519c995617f5a71daf6bb649e2d12005bd9
+
 onyx:
   enabled: false
+  api:
+    image:
+      digest: sha256:5c50b2c74d9e73a8e70b5113a0a8060e51a3b5463e56cb32b04ca628eee55fcc
+  web:
+    image:
+      digest: sha256:8bf2eb34e389eaf41ad6f2a259f5742ab02f1c0bd28770109444905f10140877
+  modelServer:
+    image:
+      digest: sha256:3db4f73e776fdebc7c83544f77a255e6ae4fb1084fdf2c463df49099db9eb0ab
+
+goose:
+  image:
+    digest: sha256:150b632f732904006fd87d5c5a63005b01743e6d82c583d2b5afbda2d4173047
 
 sandboxDocker:
   enabled: false

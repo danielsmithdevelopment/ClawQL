@@ -1,7 +1,11 @@
 import { Cause, Effect, Exit } from "effect";
 import { describe, expect, it } from "vitest";
 import { ClawQLError } from "../errors/clawql-error.js";
-import { compileToolPattern, toolMatchesPattern } from "./hook-runtime.js";
+import {
+  compileToolPattern,
+  toolMatchesPattern,
+  unmatchedBlockingToolHooks,
+} from "./hook-runtime.js";
 import { InMemoryHookRegistryLive, validateLifecycleHook } from "./hook-registry.js";
 import { HookRegistry, type LifecycleHook } from "./provider-types.js";
 
@@ -89,5 +93,21 @@ describe("HookRegistry toolPattern registration (audit 2.15)", () => {
       validateLifecycleHook(toolHook({ id: "missing", toolPattern: undefined }))
     );
     expect(Exit.isFailure(exit)).toBe(true);
+  });
+
+  it("listAll + unmatchedBlockingToolHooks warn when pattern matches no tool", async () => {
+    const program = Effect.gen(function* () {
+      const reg = yield* HookRegistry;
+      yield* reg.register("demo", [
+        toolHook({ id: "typo-hook", toolPattern: "execute_typo" }),
+        toolHook({ id: "ok-hook", toolPattern: "execute" }),
+        toolHook({ id: "non-blocking", toolPattern: "missing_.*", blocking: false }),
+      ]);
+      return yield* reg.listAll();
+    }).pipe(Effect.provide(InMemoryHookRegistryLive));
+
+    const hooks = await Effect.runPromise(program);
+    const unmatched = unmatchedBlockingToolHooks(hooks, ["execute", "search", "cache"]);
+    expect(unmatched.map((u) => u.hookId)).toEqual(["typo-hook"]);
   });
 });
