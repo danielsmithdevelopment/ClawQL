@@ -26,6 +26,11 @@ pluginTiers:
 networkPolicy:
   defaultDeny:
     enabled: false
+    # Extra egress rules appended to the MCP NetworkPolicy (Kubernetes
+    # NetworkPolicyEgressRule shape). Use for in-cluster Object Lock S3 /
+    # JWKS lab endpoints on private pod IPs — the base policy only allows
+    # DNS plus HTTP(S) to non-RFC1918 destinations (external IdP / S3).
+    extraEgress: []
 
 imagePullSecrets: []
 
@@ -158,6 +163,8 @@ mcpProxy:
   image:
     repository: nginx
     tag: "1.27-alpine"
+    # Optional digest pin (repo:tag@digest via clawql-mcp.imageRef). Regulated values set this.
+    digest: ""
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -166,10 +173,22 @@ mcpProxy:
     limits:
       cpu: "1"
       memory: 256Mi
-  securityContext: {}
+  # nginx alpine runs as uid/gid 101; match managedGateway hardening (audit 7.03).
+  podSecurityContext:
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
   custom:
     image:
       repository: ""
@@ -1186,6 +1205,11 @@ streams:
 
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
+
+# Merged with `extraEnv` by name in the MCP Deployment (and nats worker/bridge);
+# append wins on collision. Use this in host/CI overlays so Helm list-replace
+# does not wipe regulated flags from values-regulated.yaml.
+extraEnvAppend: []
 
 # Optional: load env vars from an existing Secret (keys become env var names).
 # Default name matches External Secrets + `make bootstrap-vault-eso` ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).

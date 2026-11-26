@@ -57,8 +57,9 @@ spec:
             - name: CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL
               value: {{ .Values.nats.agentBridge.notifyChannel | quote }}
             {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+            {{- $mergedExtraEnv := include "clawql-mcp.mergedExtraEnv" . }}
+            {{- if $mergedExtraEnv }}
+            {{- $mergedExtraEnv | nindent 12 }}
             {{- end }}
           {{- include "clawql-mcp.envFromSecretRefs" . | nindent 10 }}
           resources:

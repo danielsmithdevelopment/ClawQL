@@ -94,8 +94,9 @@ spec:
               value: {{ .Values.nats.subjectConvention.workflow | quote }}
             - name: CLAWQL_NATS_SUBJECT_DOCUMENT
               value: {{ .Values.nats.subjectConvention.document | quote }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+            {{- $mergedExtraEnv := include "clawql-mcp.mergedExtraEnv" . }}
+            {{- if $mergedExtraEnv }}
+            {{- $mergedExtraEnv | nindent 12 }}
             {{- end }}
           {{- include "clawql-mcp.envFromSecretRefs" . | nindent 10 }}
           resources:

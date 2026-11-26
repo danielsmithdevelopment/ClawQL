@@ -38,10 +38,11 @@ spec:
       containers:
         - name: mcp-proxy
           {{- if eq $mode "nginx" }}
-          image: "{{ .Values.mcpProxy.image.repository }}:{{ .Values.mcpProxy.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.mcpProxy.image | quote }}
           imagePullPolicy: {{ .Values.mcpProxy.image.pullPolicy }}
           {{- else }}
-          image: "{{ required "mcpProxy.custom.image.repository is required when mcpProxy.mode is custom" .Values.mcpProxy.custom.image.repository }}:{{ .Values.mcpProxy.custom.image.tag | default "latest" }}"
+          {{- $_ := required "mcpProxy.custom.image.repository is required when mcpProxy.mode is custom" .Values.mcpProxy.custom.image.repository }}
+          image: {{ include "clawql-mcp.imageRef" .Values.mcpProxy.custom.image | quote }}
           imagePullPolicy: {{ .Values.mcpProxy.custom.image.pullPolicy }}
           {{- with .Values.mcpProxy.custom.command }}
           command:
@@ -78,6 +79,12 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
+            - name: nginx-tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
           readinessProbe:
             tcpSocket:
               port: http
@@ -121,5 +128,11 @@ spec:
         - name: nginx-config
           configMap:
             name: {{ include "clawql-mcp.mcpProxyName" . }}-config
+        - name: nginx-tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
       {{- end }}
 {{- end }}

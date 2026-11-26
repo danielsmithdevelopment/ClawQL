@@ -457,8 +457,9 @@ spec:
               value: {{ .Values.teamSync.r2.accountId | quote }}
             {{- end }}
             {{- end }}
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
+            {{- $mergedExtraEnv := include "clawql-mcp.mergedExtraEnv" . }}
+            {{- if $mergedExtraEnv }}
+            {{- $mergedExtraEnv | nindent 12 }}
             {{- end }}
           {{- $dpEnabled := .Values.documentPipeline.enabled }}
           {{- $paperlessSecretManaged := and $dpEnabled .Values.documentPipeline.paperless.enabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}

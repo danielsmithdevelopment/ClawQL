@@ -50,4 +50,7 @@ spec:
           port: 443
         - protocol: TCP
           port: 80
+    {{- with .Values.networkPolicy.defaultDeny.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 {{- end }}
