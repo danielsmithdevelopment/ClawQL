@@ -8,6 +8,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { scriptSrcFromBodies, wwwJsonLdScriptBodies } from './csp-script-hashes.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const publicDir = path.join(__dirname, '../public')
@@ -807,15 +808,19 @@ writeJson(path.join(publicDir, 'api/health'), {
 })
 
 const linkHeader = getLinkHeaderValue()
+// Author JSON-LD hashes only here; postbuild seal-csp-from-html.mjs unions Next flight scripts from the export HTML tree.
+const scriptSrc = scriptSrcFromBodies(wwwJsonLdScriptBodies(origin))
 writeText(
   path.join(publicDir, '_headers'),
   `/*
+  # CSP script-src: sha256 hashes of known inline scripts (JSON-LD). See docs/website/csp-script-hashes.md.
+  # Deploy seals additional Next/Turbopack inline hashes via scripts/seal-csp-from-html.mjs (npm postbuild).
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://formsubmit.co; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://docs.clawql.com https://gateway.clawql.app; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://formsubmit.co; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; ${scriptSrc}; connect-src 'self' https://docs.clawql.com https://gateway.clawql.app; upgrade-insecure-requests
   Link: ${linkHeader}
 
 /index.md

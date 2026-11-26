@@ -67,6 +67,10 @@ jobs:
           NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npx opennextjs-cloudflare build
 
+      - name: Seal CSP script-src hashes from ASSETS HTML
+        working-directory: apps/docs
+        run: node scripts/seal-csp-from-html.mjs
+
       - name: Fail if Worker gzip ≥ 3 MiB (free-plan limit)
         working-directory: apps/docs
         run: node scripts/check-worker-gzip-limit.mjs

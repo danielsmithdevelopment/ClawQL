@@ -5,6 +5,7 @@
     "prebuild": "node scripts/generate-agent-assets.mjs",
     "dev": "node scripts/generate-agent-assets.mjs && next dev",
     "build": "next build",
+    "postbuild": "node scripts/seal-csp-from-html.mjs",
     "start": "next start",
     "lint": "eslint"
   },
