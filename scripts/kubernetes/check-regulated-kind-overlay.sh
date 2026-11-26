@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Fail if ci/values-regulated-kind.yaml sets keys outside the D2 allowlist.
 # Also refuse `extraEnv` (Helm list-replace would wipe values-regulated.yaml).
+# PyYAML is required (no line-scan fallback — H6).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -12,36 +13,8 @@ from pathlib import Path
 
 try:
     import yaml
-except ImportError:
-    text = Path(sys.argv[1]).read_text()
-    allowed_roots = {
-        "security",
-        "kyverno",
-        "image",
-        "extraEnvAppend",
-        "envFromSecret",
-        "networkPolicy",
-        "enableGrpc",
-        "clawql-mcp-grpc",
-    }
-    for line in text.splitlines():
-        s = line.strip()
-        if not s or s.startswith("#"):
-            continue
-        if line and not line[0].isspace() and ":" in line:
-            key = line.split(":", 1)[0].strip()
-            if key == "extraEnv":
-                print(
-                    "FAIL: overlay must not set extraEnv (Helm replaces lists; "
-                    "use extraEnvAppend)",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            if key not in allowed_roots:
-                print(f"FAIL: overlay top-level key not allowed: {key}", file=sys.stderr)
-                sys.exit(1)
-    print("OK: overlay top-level keys within allowlist (no PyYAML)")
-    sys.exit(0)
+except ImportError as e:
+    raise SystemExit(f"PyYAML required for regulated-kind overlay check: {e}") from e
 
 path = Path(sys.argv[1])
 doc = yaml.safe_load(path.read_text()) or {}
@@ -72,6 +45,7 @@ allowed_top = {
     "networkPolicy",
     "enableGrpc",
     "clawql-mcp-grpc",
+    "grpcTls",
 }
 extra = set(doc) - allowed_top
 if extra:
@@ -95,14 +69,20 @@ if "image" in doc:
         raise SystemExit(
             f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}"
         )
-if "enableGrpc" in doc and doc["enableGrpc"] is not False:
-    raise SystemExit("enableGrpc may only be false on the kind overlay (no gRPC TLS Secret)")
+if "enableGrpc" in doc and doc["enableGrpc"] is not True:
+    raise SystemExit("enableGrpc must be true on the kind overlay (self-signed TLS Secret)")
 if "clawql-mcp-grpc" in doc:
     g = doc["clawql-mcp-grpc"]
     if set(g) - {"enabled"}:
         raise SystemExit(f"clawql-mcp-grpc keys not allowed: {sorted(set(g)-{'enabled'})}")
-    if g.get("enabled") is not False:
-        raise SystemExit("clawql-mcp-grpc.enabled may only be false on the kind overlay")
+    if g.get("enabled") is not True:
+        raise SystemExit("clawql-mcp-grpc.enabled must be true on the kind overlay")
+if "grpcTls" in doc:
+    gt = doc["grpcTls"]
+    if set(gt) - {"existingSecret", "mountPath", "certFile", "keyFile"}:
+        raise SystemExit(f"grpcTls keys not allowed: {sorted(set(gt)-{'existingSecret','mountPath','certFile','keyFile'})}")
+    if not isinstance(gt.get("existingSecret"), str) or not gt.get("existingSecret"):
+        raise SystemExit("grpcTls.existingSecret must be a non-empty string")
 if "networkPolicy" in doc:
     np = doc["networkPolicy"]
     if set(np) - {"defaultDeny"}:
@@ -128,5 +108,5 @@ if "extraEnvAppend" in doc:
 if "envFromSecret" in doc and not isinstance(doc["envFromSecret"], str):
     raise SystemExit("envFromSecret must be a string")
 
-print("OK: regulated-kind overlay keys within D2 allowlist")
+print("OK: regulated-kind overlay keys within D2/D2b allowlist")
 PY

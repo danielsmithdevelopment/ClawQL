@@ -121,6 +121,14 @@ enableGrpc: true
 enableGrpcReflection: false
 clawql-mcp-grpc:
   enabled: true
+# Optional application-level gRPC TLS (GRPC_TLS_*). Mount an existing Secret
+# with tls.crt / tls.key (or override file names). Required under regulated when
+# the listener is non-loopback — kind CI creates a self-signed Secret.
+grpcTls:
+  existingSecret: ""
+  mountPath: /etc/clawql/grpc-tls
+  certFile: tls.crt
+  keyFile: tls.key
 obsidianVaultPath: /vault
 port: "8080"
 mcpPath: /mcp
