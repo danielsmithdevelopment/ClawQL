@@ -575,7 +575,7 @@ spec:
     spec:
       containers:
         - name: model-server
-          image: "{{ .Values.onyx.modelServer.image.repository }}:{{ .Values.onyx.modelServer.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.onyx.modelServer.image | quote }}
           imagePullPolicy: {{ .Values.onyx.modelServer.image.pullPolicy }}
           command: ["/bin/sh", "-c", "exec uvicorn model_server.main:app --host 0.0.0.0 --port {{ .Values.onyx.modelServer.service.port }}"]
           ports:
@@ -642,7 +642,7 @@ spec:
     spec:
       containers:
         - name: model-server
-          image: "{{ .Values.onyx.modelServer.image.repository }}:{{ .Values.onyx.modelServer.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.onyx.modelServer.image | quote }}
           imagePullPolicy: {{ .Values.onyx.modelServer.image.pullPolicy }}
           command: ["/bin/sh", "-c", "exec uvicorn model_server.main:app --host 0.0.0.0 --port {{ .Values.onyx.modelServer.service.port }}"]
           env:
@@ -756,7 +756,7 @@ spec:
       {{- end }}
       containers:
         - name: onyx-api
-          image: "{{ .Values.onyx.api.image.repository }}:{{ .Values.onyx.api.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.onyx.api.image | quote }}
           imagePullPolicy: {{ .Values.onyx.api.image.pullPolicy }}
           command:
             - /bin/sh
@@ -907,7 +907,7 @@ spec:
           command: ["sh", "-c", "until nc -z {{ include "clawql-mcp.onyxIndexingModelName" . }} {{ .Values.onyx.modelServer.service.port }}; do sleep 2; done"]
       containers:
         - name: onyx-background
-          image: "{{ .Values.onyx.api.image.repository }}:{{ .Values.onyx.api.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.onyx.api.image | quote }}
           imagePullPolicy: {{ .Values.onyx.api.image.pullPolicy }}
           command:
             - /bin/sh
@@ -1001,7 +1001,7 @@ spec:
     spec:
       containers:
         - name: onyx-web
-          image: "{{ .Values.onyx.web.image.repository }}:{{ .Values.onyx.web.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.onyx.web.image | quote }}
           imagePullPolicy: {{ .Values.onyx.web.image.pullPolicy }}
           env:
             - name: INTERNAL_URL

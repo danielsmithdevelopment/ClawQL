@@ -30,7 +30,7 @@ spec:
         {{- toYaml .Values.goose.podSecurityContext | nindent 8 }}
       containers:
         - name: goose
-          image: "{{ .Values.goose.image.repository }}:{{ .Values.goose.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.goose.image | quote }}
           imagePullPolicy: {{ .Values.goose.image.pullPolicy }}
           command:
             {{- toYaml .Values.goose.idleCommand | nindent 12 }}

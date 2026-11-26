@@ -427,6 +427,8 @@ webSearch:
     image:
       repository: searxng/searxng
       tag: latest
+      # Set digest (sha256:…) to pin; see values-regulated.yaml.
+      digest: ""
       pullPolicy: IfNotPresent
     resources: {}
   opensearch:
@@ -449,6 +451,7 @@ webBrowser:
     image:
       repository: chromedp/headless-shell
       tag: latest
+      digest: ""
       pullPolicy: IfNotPresent
     # Omit or set null to use template defaults (--remote-debugging-port=9222, headless, etc.)
     args: null
@@ -471,6 +474,7 @@ onyx:
     image:
       repository: onyxdotapp/onyx-backend
       tag: latest
+      digest: ""
       pullPolicy: IfNotPresent
     # Extra env for onyx-api (Deployment). Example: NUM_RETRIES_ON_STARTUP for slow Vespa/OpenSearch on cold local clusters.
     extraEnv: []
@@ -478,6 +482,7 @@ onyx:
     image:
       repository: onyxdotapp/onyx-web-server
       tag: latest
+      digest: ""
       pullPolicy: IfNotPresent
     service:
       port: 3000
@@ -592,6 +597,7 @@ onyx:
     image:
       repository: onyxdotapp/onyx-model-server
       tag: latest
+      digest: ""
       pullPolicy: IfNotPresent
     service:
       port: 9000
@@ -1651,6 +1657,7 @@ goose:
   image:
     repository: ghcr.io/aaif-goose/goose
     tag: latest
+    digest: ""
     pullPolicy: IfNotPresent
   provider: openai
   model: gpt-4o

@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: searxng
-          image: "{{ .Values.webSearch.searxng.image.repository }}:{{ .Values.webSearch.searxng.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.webSearch.searxng.image | quote }}
           imagePullPolicy: {{ .Values.webSearch.searxng.image.pullPolicy | default "IfNotPresent" }}
           ports:
             - name: http
@@ -85,7 +85,7 @@ spec:
     spec:
       containers:
         - name: chromium
-          image: "{{ .Values.webBrowser.chromium.image.repository }}:{{ .Values.webBrowser.chromium.image.tag }}"
+          image: {{ include "clawql-mcp.imageRef" .Values.webBrowser.chromium.image | quote }}
           imagePullPolicy: {{ .Values.webBrowser.chromium.image.pullPolicy | default "IfNotPresent" }}
           args:
             {{- $cdpArgs := .Values.webBrowser.chromium.args }}

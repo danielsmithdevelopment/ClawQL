@@ -78,6 +78,16 @@ export const InMemoryHookRegistryLive: Layer.Layer<HookRegistry> = Layer.effect(
           }
           return out;
         }),
+
+      listAll: () =>
+        Effect.gen(function* () {
+          const store = yield* Ref.get(ref);
+          const out: RegisteredHook[] = [];
+          for (const hooks of store.byPlugin.values()) {
+            out.push(...hooks);
+          }
+          return out;
+        }),
     };
   })
 );

@@ -211,6 +211,20 @@ app.kubernetes.io/component: openclaw
 {{- printf "%s-goose" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/*
+  Image reference helper: pin with digest when set (repo:tag@sha256:…).
+  Pass the image map: {{ include "clawql-mcp.imageRef" .Values.webSearch.searxng.image }}
+*/ -}}
+{{- define "clawql-mcp.imageRef" -}}
+{{- $img := . -}}
+{{- $tag := $img.tag | default "latest" -}}
+{{- if and $img.digest (ne $img.digest "") -}}
+{{- printf "%s:%s@%s" $img.repository $tag $img.digest -}}
+{{- else -}}
+{{- printf "%s:%s" $img.repository $tag -}}
+{{- end -}}
+{{- end }}
+
 {{- define "clawql-mcp.gooseSecretName" -}}
 {{- if .Values.goose.existingSecret }}
 {{- .Values.goose.existingSecret | trunc 63 | trimSuffix "-" }}

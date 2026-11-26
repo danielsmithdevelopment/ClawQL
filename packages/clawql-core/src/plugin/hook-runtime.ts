@@ -144,6 +144,43 @@ export function compileToolPattern(pattern: string): Effect.Effect<RegExp, ClawQ
  * Prefer compiling at registration and passing the `RegExp`. Invalid string
  * patterns throw (via `Effect.runSync`) — they must not silently return false.
  */
+/**
+ * Blocking tool-scoped hooks whose pattern matches none of the registered tool
+ * names. After audit 2.15 patterns are full-name anchored, so a typo silently
+ * disables a security hook — warn at startup.
+ */
+export function unmatchedBlockingToolHooks(
+  hooks: readonly {
+    readonly id: string;
+    readonly pluginId?: string;
+    readonly scope: string;
+    readonly blocking?: boolean;
+    readonly toolPattern?: string;
+    readonly toolPatternRegex?: RegExp;
+  }[],
+  registeredToolNames: readonly string[]
+): readonly { readonly hookId: string; readonly pluginId: string; readonly toolPattern: string }[] {
+  const unmatched: {
+    readonly hookId: string;
+    readonly pluginId: string;
+    readonly toolPattern: string;
+  }[] = [];
+  for (const h of hooks) {
+    if (h.scope !== "tool" || !h.blocking) continue;
+    const matcher = h.toolPatternRegex ?? h.toolPattern;
+    if (!matcher) continue;
+    const hits = registeredToolNames.some((name) => toolMatchesPattern(name, matcher));
+    if (!hits) {
+      unmatched.push({
+        hookId: h.id,
+        pluginId: h.pluginId ?? "",
+        toolPattern: h.toolPattern?.trim() || String(matcher),
+      });
+    }
+  }
+  return unmatched;
+}
+
 export function toolMatchesPattern(
   toolName: string,
   pattern: string | RegExp | undefined

@@ -4,6 +4,7 @@ import { ensureClawqlApi } from "../composition/clawql-api-adapters.js";
 import { assertNonnegotiableMcpToolsRegistered } from "./mcp-nonnegotiable-tools.js";
 import { NPM_PACKAGE_VERSION } from "../host/npm-version.js";
 import { registerTools, wireOptionalToolDeps } from "./tools.js";
+import { warnUnmatchedBlockingHooks } from "./warn-unmatched-blocking-hooks.js";
 
 const DEFAULT_INFO: Implementation = {
   name: "clawql-mcp",
@@ -18,6 +19,7 @@ export function createRegisteredMcpServer(serverInfo: Implementation = DEFAULT_I
   const server = new McpServer(serverInfo);
   registerTools(server);
   assertNonnegotiableMcpToolsRegistered(server);
+  warnUnmatchedBlockingHooks(server);
   return server;
 }
 
