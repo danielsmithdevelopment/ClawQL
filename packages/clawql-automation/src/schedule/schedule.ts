@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve as resolvePath } from "node:path";
+import { isPrivateOrLoopbackIp } from "clawql-core";
 import { Effect } from "effect";
 import initSqlJs, { type Database } from "sql.js";
 import { z } from "zod";
@@ -496,7 +497,11 @@ function clamp(val: number, min: number, max: number): number {
   return Math.min(Math.max(val, min), max);
 }
 
-/** Exported for unit tests (SSRF gate for synthetic HTTP targets). */
+/**
+ * SSRF gate for synthetic HTTP targets (audit 5.07).
+ * Domain policy: http+https allowed; optional CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES
+ * short-circuit. Private/loopback host rules come from clawql-core egress.
+ */
 export function validateSyntheticTarget(
   urlRaw: string
 ): { ok: true } | { ok: false; error: string } {
@@ -516,18 +521,17 @@ export function validateSyntheticTarget(
     }
     return { ok: true };
   }
-  const host = u.hostname.trim().toLowerCase();
-  if (host === "localhost" || host.endsWith(".localhost")) {
+  let host = u.hostname.trim().toLowerCase();
+  if (host.startsWith("[") && host.endsWith("]")) {
+    host = host.slice(1, -1);
+  }
+  if (!host || host === "localhost" || host.endsWith(".localhost")) {
     return {
       ok: false,
       error: "localhost synthetic targets are blocked (set allowlist to override)",
     };
   }
-  if (
-    /^(127\.)|^(10\.)|^(192\.168\.)|^(169\.254\.)|^(0\.)|^(172\.(1[6-9]|2\d|3[0-1])\.)|^(::1)$|^(fc00:)|^(fd00:)|^(fe80:)/i.test(
-      host
-    )
-  ) {
+  if (isPrivateOrLoopbackIp(host)) {
     return {
       ok: false,
       error: "private/link-local synthetic targets are blocked (set allowlist to override)",

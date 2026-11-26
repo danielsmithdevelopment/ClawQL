@@ -3,7 +3,7 @@
  *
  * Strongest check: {@link assertSafeSourceFetchUrlResolved} (parse + DNS private/loopback refuse).
  * Prefer {@link assertSafeSourceFetchUrlResolvedEffect} from Effect callers.
- * `clawql-api` re-exports these for existing import paths — call-site migration is deferred.
+ * Call sites: clawql-api (re-export), clawql-web, clawql-mcp-events, clawql-automation.
  */
 
 import { isIP } from "node:net";

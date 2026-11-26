@@ -6,8 +6,10 @@
  * @see packages/clawql-documents/src/ingest/external-ingest.ts
  */
 
-import { isIP } from "node:net";
-import { assertSafeSourceFetchUrl, isPrivateOrLoopbackIp } from "clawql-api";
+import {
+  assertSafeSourceFetchUrl,
+  assertSafeSourceFetchUrlResolved,
+} from "clawql-core";
 import { Effect } from "effect";
 
 const MAX_URL_RESPONSE_BYTES = 2 * 1024 * 1024;
@@ -41,8 +43,8 @@ function isLoopbackHostname(host: string): boolean {
 }
 
 /**
- * SSRF gate for web ingest (audit 4.06).
- * Sync hostname/IP checks via shared source helper; loopback refused unless
+ * SSRF gate for web ingest (audit 4.06 / 5.07).
+ * Delegates public-host policy to clawql-core egress; loopback refused unless
  * `CLAWQL_WEB_ALLOW_LOOPBACK=1` (tests). Fetch path also resolves DNS.
  */
 export function assertSafeWebUrl(urlStr: string): URL {
@@ -64,27 +66,17 @@ export function assertSafeWebUrl(urlStr: string): URL {
     }
     return parsed;
   }
-  // Public hosts: same rules as source fetch (blocks private IP literals, metadata hosts).
+  // Public hosts: clawql-core egress (blocks private IP literals, metadata hosts).
   return assertSafeSourceFetchUrl(urlStr);
 }
 
-/** Audit W2: sync hostname checks + DNS resolve before browser navigate / fetch. */
+/** Sync hostname checks + DNS resolve via clawql-core egress before navigate / fetch. */
 export async function assertSafeWebUrlResolved(urlStr: string): Promise<URL> {
   const sync = assertSafeWebUrl(urlStr);
   if (isLoopbackHostname(sync.hostname) && loopbackAllowed()) {
     return sync;
   }
-  let host = sync.hostname.toLowerCase();
-  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
-  if (isIP(host)) return sync;
-  const { lookup } = await import("node:dns/promises");
-  const results = await lookup(host, { all: true });
-  for (const r of results) {
-    if (isPrivateOrLoopbackIp(r.address)) {
-      throw new Error("URL must not resolve to private or loopback addresses");
-    }
-  }
-  return sync;
+  return assertSafeSourceFetchUrlResolved(urlStr);
 }
 
 async function fetchRawUrlImpl(
