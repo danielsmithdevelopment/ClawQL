@@ -13,7 +13,7 @@
 
 1. **Bundled OpenAPI catalog is available but not loaded by default**
 2. **`ProviderPlugin` only** — legacy `Plugin` bridge removed ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))
-3. **Tool-scope enforcement default off** — Panguard proxy is opt-in; boot warns if none active
+3. **Security audit posture** — loopback-default bind, `noAuth` refused off loopback, required webhook/NATS/gRPC auth, decline-only MCP resume, GraphQL/embeddings/LangExtract local-first (see [Breaking changes from the security audit](#breaking-changes-from-the-security-audit)). Tool-scope Panguard remains **opt-in on `standard`** (boot SECURITY WARNING when none active); **`CLAWQL_TIER=regulated` refuses** `CLAWQL_ALLOW_NO_ENFORCEMENT` and forces blocking enforcement.
 
 On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, **Effect v4.0.0** cutover (singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4), `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld**, **Fast Decision** + unified capability lifecycle, inference gateway ladder (`/v1`→`/mcp`→`/memory`→`/decision`→`/events`), operation-risk + execute pause/resume, toolkits + self-serve Stripe, product-surface purge (PageIndex/CodeGraph out), repo layout (`apps/` / `manifests/`), security status page, Learn/docs wave, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
 
@@ -54,18 +54,18 @@ Phase-2 `Plugin` / `onRegister` / `beforeCallTool` and `legacyPluginToProviderPl
 
 → [`docs/getting-started/migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md) · Spec: [`docs/design/clawql-core-plugin-architecture.md`](../design/clawql-core-plugin-architecture.md)
 
-### 3. Enforcement default off
+### 3. Enforcement (standard vs regulated)
 
-Bare install does **not** compose a blocking enforcement provider. Opt in:
+On **`standard`**, bare install does **not** compose a blocking enforcement provider — opt in Panguard (boot emits a **SECURITY WARNING** when zero blocking `pre-execute` hooks are active):
 
 ```bash
 export CLAWQL_PANGUARD_PROXY_PLUGIN=1
 export CLAWQL_PANGUARD_IN_PROCESS=1
-# intentional ungated lab only:
+# intentional ungated lab only (refused when CLAWQL_TIER=regulated):
 # export CLAWQL_ALLOW_NO_ENFORCEMENT=1
 ```
 
-Boot emits a **SECURITY WARNING** when zero blocking `pre-execute` hooks are active.
+**`CLAWQL_TIER=regulated`** forces Panguard + session IFC + WORM required and **refuses** `CLAWQL_ALLOW_NO_ENFORCEMENT`. Escape-hatch inventory: [`docs/security/secure-defaults.md`](../security/secure-defaults.md).
 
 ### 4. Plugin composition: instance / tier first
 
@@ -80,6 +80,25 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 **Removed:** `pageindex_*`, `codegraph_*` / `clawql-codegraph`, `CLAWQL_MEMORY_RECALL_HYBRID` master, `CLAWQL_MEMORY_VAULT_RANKER=bm25`. Default IDP converters = **Docling only**. Agent `ouroboros_*` / `clawql_think` default **off**.
 
 → [`docs/getting-started/migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md) · [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../releases/8.0.0-purge-inventory-spec-v0.1.md)
+
+### Breaking changes from the security audit
+
+Posture hardened across MCP, webhooks, NATS, gRPC, resume, GraphQL, LangExtract, embeddings, team sync, payments, and dashboard. Full escape-hatch table: [`docs/security/secure-defaults.md`](../security/secure-defaults.md).
+
+| Area                    | Before (unsafe / implicit)                       | After (8.0 security audit)                                                                                                                           |
+| ----------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MCP HTTP bind**       | Easy to listen on `0.0.0.0` with `noAuth`        | Default **`MCP_HOST=127.0.0.1`**; Host allowlist for DNS rebinding (`MCP_ALLOWED_HOSTS` / loopback Host validation)                                  |
+| **`noAuth`**            | Treated as fine on any bind                      | **Refused off loopback** unless `CLAWQL_ALLOW_UNAUTHENTICATED=1`; **`CLAWQL_TIER=regulated` refuses `noAuth`**                                       |
+| **gRPC**                | Auth/TLS easy to skip                            | Auth wrapper required; non-loopback needs TLS (or `GRPC_ALLOW_INSECURE=1` demos); regulated requires TLS cert/key                                    |
+| **Webhooks**            | Tokens often optional                            | **Tokens required** unless `CLAWQL_WEBHOOK_ALLOW_UNAUTHENTICATED=1` (demo only)                                                                      |
+| **NATS**                | Plain `nats://` without creds                    | Creds **and** `tls://` / `wss://` required unless `CLAWQL_NATS_ALLOW_INSECURE=1`                                                                     |
+| **MCP `resume`**        | Could approve mandates on the MCP channel        | **Decline-only** on MCP — approve via console / signed human path                                                                                    |
+| **GraphQL**             | In-process `/graphql` easy to leave on           | **Off by default** (`CLAWQL_HTTP_GRAPHQL=1` to opt in); regulated refuses                                                                            |
+| **LangExtract**         | Live backends defaulted toward cloud aggregators | Prefer **local Ollama** for live extraction; demo mode stays default-off cloud                                                                       |
+| **Embeddings**          | Easy to infer remote from `OPENAI_API_KEY`       | **Local MiniLM** unless `CLAWQL_EMBEDDING_PROVIDER=http` (+ regulated HTTP allowlist)                                                                |
+| **Team sync**           | Risk of shipping secrets/sources                 | **`sources/`**, vault, auth, WORM, `clawql.env` **excluded** from sync                                                                               |
+| **Outbound payments**   | MCP/API keys could approve                       | **Operator key hash** and/or **dedicated OIDC approve audience**; refuses `noAuth` / MCP keys                                                        |
+| **Dashboard / passkey** | Weak managed/desktop assumptions                 | Managed console **auth + passkey** (synced passkeys sign-in only; device-bound for approvals); Desktop local APIs stay loopback / desktop-mode gated |
 
 ---
 
@@ -244,10 +263,10 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 ### Behavioral notes (not additional majors)
 
-- **`/graphql`** is skipped when the catalog stub has no OpenAPI servers (empty default is healthz-safe).
-- Vectors remain mandatory for memory (shipped in **7.2.0**).
+- **`/graphql`** is **opt-in** (`CLAWQL_HTTP_GRAPHQL=1`) and skipped when the catalog stub has no OpenAPI servers (empty default is healthz-safe). Regulated refuses GraphQL.
+- Vectors remain mandatory for memory (shipped in **7.2.0**); embeddings default to **local** MiniLM unless `CLAWQL_EMBEDDING_PROVIDER=http`.
 - **Post-8.0.0 evidence headers (memory / eval):** retrieved section bodies now carry identity metadata for agents — code chunks as `// file: path`, markdown as `### {doc} · §{n} · {heading} · ~{pct}% through document` (`read_around` + pageindex-ab harness). Prevents “which file exports…?” failures when the path lived only in the section id.
-- Auth default remains **`noAuth`**; credits HATEOAS gate applies when `CLAWQL_AUTH_MODE=apiKey|oidc` (or explicit require flag).
+- **`noAuth` is loopback-only** (default `MCP_HOST=127.0.0.1`). Non-loopback requires `apiKey`/`oidc` or `CLAWQL_ALLOW_UNAUTHENTICATED=1`; regulated refuses `noAuth`. Credits HATEOAS gate applies when `CLAWQL_AUTH_MODE=apiKey|oidc` (or explicit require flag).
 - `managedGateway.networkPolicy.enabled: true` only when `managedGateway.enabled=true` (default **off**).
 
 ---

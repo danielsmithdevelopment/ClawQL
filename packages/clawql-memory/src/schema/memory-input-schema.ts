@@ -52,7 +52,7 @@ export const MEMORY_INGEST_TOOL_OUTPUTS_DESCRIPTION =
 export const MEMORY_INGEST_TOOL_OUTPUTS_FILE_DESCRIPTION =
   "If set, the ClawQL server reads UTF-8 from this file path and uses it as `toolOutputs` (small MCP payload; " +
   "large content does not go through the tool round-trip). File must be under an allowed root " +
-  "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` or, by default, the process current working directory). " +
+  "(`CLAWQL_MEMORY_INGEST_FILE_ROOTS` required; no cwd default — see docs/security/secure-defaults.md). " +
   "Takes precedence over `toolOutputs` if both are set. Set `CLAWQL_MEMORY_INGEST_FILE=0` to reject.";
 export const MEMORY_INGEST_ENTERPRISE_CITATIONS_DESCRIPTION =
   "Optional short citation rows (e.g. trimmed from Onyx `knowledge_search_onyx` JSON). " +

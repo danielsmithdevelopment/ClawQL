@@ -82,8 +82,9 @@ export type MemoryIngestInput = {
   toolOutputs?: string | string[];
   /**
    * When set, the server reads UTF-8 from this path and uses it as `toolOutputs` (avoids huge MCP JSON). Path may be
-   * absolute or relative to `process.cwd()`. Must fall under `CLAWQL_MEMORY_INGEST_FILE_ROOTS` (default: realpath of
-   * cwd). Disabled when `CLAWQL_MEMORY_INGEST_FILE=0`. If both this and `toolOutputs` are set, the file wins.
+   * absolute or relative to `process.cwd()`. Must fall under `CLAWQL_MEMORY_INGEST_FILE_ROOTS` (required; no cwd
+   * default — see docs/security/secure-defaults.md). Disabled when `CLAWQL_MEMORY_INGEST_FILE=0`. If both this and
+   * `toolOutputs` are set, the file wins.
    */
   toolOutputsFile?: string;
   wikilinks?: string[];
