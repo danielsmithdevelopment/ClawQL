@@ -92,10 +92,10 @@ jobs:
         run: npm ci
 
       - name: Build root + workspace (dist/server-http.js)
-        # Full host build so dist/server-http.js exists for spawn.
-        run: |
-          npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api -w clawql-payments -w clawql-inference
-          npm run build
+        # Full monorepo build order (payments needs clawql-supabase, etc.).
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: npm run build
 
       - name: Start LocalStack S3 (Object Lock stand-in)
         run: |
