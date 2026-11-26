@@ -84,7 +84,7 @@ ClawQL fails closed on networked surfaces. Flags below are **escape hatches** (o
 
 ## Dynamic pass (CI)
 
-Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals` — see [`scripts/security/README.md`](../../scripts/security/README.md). A future kind + Helm job will exercise the same surface against `values-regulated.yaml`; until then the process suite is the merge gate.
+Process-level regulated refusals (WORM off, MCP resume approve, `noAuth`, GraphQL, webhook token, inference local-only) are gated by `npm run test:regulated-refusals`. Wire-level coverage that spawns `dist/server-http.js` under the regulated profile with Object Lock S3 is `npm run test:regulated-wire` (same workflow). See [`scripts/security/README.md`](../../scripts/security/README.md). A kind + Helm job (D2) will exercise the chart surface against `values-regulated.yaml`.
 
 ## Related
 
