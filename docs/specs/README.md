@@ -4,14 +4,14 @@ Specs under `docs/specs/` use a single **status** vocabulary so agents and revie
 
 ## Allowed `status` values
 
-| Value | Meaning |
-| --- | --- |
-| `draft` | Design only; not a shipping contract |
-| `accepted` | Design agreed; implementation may be partial |
-| `shipping` | Implementation in flight or partial in a release train |
-| `shipped` | Behavior is in a released line; keep the spec as the contract |
+| Value        | Meaning                                                        |
+| ------------ | -------------------------------------------------------------- |
+| `draft`      | Design only; not a shipping contract                           |
+| `accepted`   | Design agreed; implementation may be partial                   |
+| `shipping`   | Implementation in flight or partial in a release train         |
+| `shipped`    | Behavior is in a released line; keep the spec as the contract  |
 | `superseded` | Replaced by another spec or product decision; keep for history |
-| `archived` | No longer active; do not cite for new work |
+| `archived`   | No longer active; do not cite for new work                     |
 
 Put the value in YAML frontmatter:
 
