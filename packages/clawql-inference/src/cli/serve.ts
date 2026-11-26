@@ -1,3 +1,4 @@
+import { bootProcessWormFromEnvEffect } from "clawql-audit";
 import { createInferenceGatewayAsync } from "../gateway.js";
 import { runInferenceHttpServer } from "../api/server.js";
 import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
@@ -12,6 +13,11 @@ function parseTruthy(value: string | undefined): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
+function wormRequired(env: NodeJS.ProcessEnv): boolean {
+  if (env.CLAWQL_TIER?.trim().toLowerCase() === "regulated") return true;
+  return parseTruthy(env.CLAWQL_WORM_REQUIRED);
+}
+
 export type InferenceServeOptions = {
   port?: number;
   host?: string;
@@ -20,6 +26,11 @@ export type InferenceServeOptions = {
 
 async function runInferenceServeImpl(options: InferenceServeOptions = {}): Promise<number> {
   const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
+  // ObservedInferenceGateway appends WORM before local-only; boot the process
+  // trail when regulated / WORM_REQUIRED so requests are not refused as "not ready".
+  if (wormRequired(env) || parseTruthy(env.CLAWQL_WORM_ENABLED)) {
+    await Effect.runPromise(bootProcessWormFromEnvEffect(env));
+  }
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
   const gateway = await createInferenceGatewayAsync({ env });
