@@ -60,9 +60,7 @@ export type HintOverlayFile = {
 };
 
 /** Purged in 8.0 — never emit live ontology rows for these catalog ids (audit 2.17). */
-const PURGED_CATALOG_IDS = new Set([
-  "mcp.pageindex_build_tree",
-]);
+const PURGED_CATALOG_IDS = new Set(["mcp.pageindex_build_tree"]);
 
 const STRUCTURED_IDS = new Set([
   "mcp.data_query",
@@ -174,36 +172,36 @@ export function generateCapabilityOntology(args?: {
   const capabilities: GeneratedCapabilityEntry[] = catalog.entries
     .filter((e) => !PURGED_CATALOG_IDS.has(e.id))
     .map((e) => {
-    const hint = overlay.overlays[e.id] ?? {};
-    const kind = e.kind as CapabilityKind;
-    const provenance: CapabilityProvenance = hint.handOverride
-      ? {
-          source: "hand-override",
-          reason: hint.handOverride.reason,
-          overrideLogRef: hint.handOverride.overrideLogRef,
-        }
-      : kind === "anti_pattern"
-        ? { source: "core-anti-pattern", id: e.id }
-        : { source: "catalog-declared", catalogId: catalog.catalogId };
+      const hint = overlay.overlays[e.id] ?? {};
+      const kind = e.kind as CapabilityKind;
+      const provenance: CapabilityProvenance = hint.handOverride
+        ? {
+            source: "hand-override",
+            reason: hint.handOverride.reason,
+            overrideLogRef: hint.handOverride.overrideLogRef,
+          }
+        : kind === "anti_pattern"
+          ? { source: "core-anti-pattern", id: e.id }
+          : { source: "catalog-declared", catalogId: catalog.catalogId };
 
-    return {
-      capabilityId: e.id,
-      kind,
-      label: e.label,
-      mcpTool: kind === "tool" ? e.id.replace(/^mcp\./, "") : undefined,
-      whenToUse: hint.whenToUse?.trim() || e.description,
-      whenNotToUse:
-        hint.whenNotToUse?.trim() ||
-        (kind === "anti_pattern"
-          ? "Prefer structured catalog tools when a schema or corpus path exists"
-          : "Not the primary tool when a more specific sibling matches the task"),
-      requiresStructuredCorpus: hint.requiresStructuredCorpus ?? STRUCTURED_IDS.has(e.id),
-      ontologyRole: hint.ontologyRole ?? defaultRole(kind, e.id),
-      aliases: [], // per-id rows — no alias collapse
-      distinguishFrom: hint.distinguishFrom ?? [],
-      provenance,
-    };
-  });
+      return {
+        capabilityId: e.id,
+        kind,
+        label: e.label,
+        mcpTool: kind === "tool" ? e.id.replace(/^mcp\./, "") : undefined,
+        whenToUse: hint.whenToUse?.trim() || e.description,
+        whenNotToUse:
+          hint.whenNotToUse?.trim() ||
+          (kind === "anti_pattern"
+            ? "Prefer structured catalog tools when a schema or corpus path exists"
+            : "Not the primary tool when a more specific sibling matches the task"),
+        requiresStructuredCorpus: hint.requiresStructuredCorpus ?? STRUCTURED_IDS.has(e.id),
+        ontologyRole: hint.ontologyRole ?? defaultRole(kind, e.id),
+        aliases: [], // per-id rows — no alias collapse
+        distinguishFrom: hint.distinguishFrom ?? [],
+        provenance,
+      };
+    });
 
   const base: CapabilityOntology = {
     ontologyId: args?.ontologyId ?? "clawql-capability-ontology-generated-v0.1",

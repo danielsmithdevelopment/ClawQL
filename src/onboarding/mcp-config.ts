@@ -51,10 +51,7 @@ export function localClawqlMcpBinaryCandidates(
 }
 
 /** First existing local MCP binary, or null. */
-export function resolveLocalClawqlMcpBinary(
-  argv1?: string,
-  envBin?: string
-): string | null {
+export function resolveLocalClawqlMcpBinary(argv1?: string, envBin?: string): string | null {
   for (const p of localClawqlMcpBinaryCandidates(argv1, envBin)) {
     if (existsSync(p)) return p;
   }
@@ -65,10 +62,7 @@ export function resolveLocalClawqlMcpBinary(
  * Prefer the local CLI binary; otherwise pin `npx` to the running package version
  * so every start does not float to unpinned `clawql-mcp` from npm (audit 2.14).
  */
-export function resolvePinnedClawqlMcpLaunch(
-  argv1?: string,
-  envBin?: string
-): McpLaunchCommand {
+export function resolvePinnedClawqlMcpLaunch(argv1?: string, envBin?: string): McpLaunchCommand {
   const local = resolveLocalClawqlMcpBinary(argv1, envBin);
   if (local) {
     return { command: "node", args: [local] };

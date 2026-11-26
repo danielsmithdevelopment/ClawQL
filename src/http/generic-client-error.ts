@@ -50,7 +50,5 @@ export function sendGenericClientErrorEffect(
   err: unknown,
   publicMessage = "request failed"
 ): Effect.Effect<void> {
-  return Effect.sync(() =>
-    sendGenericClientError(res, status, logLabel, err, publicMessage)
-  );
+  return Effect.sync(() => sendGenericClientError(res, status, logLabel, err, publicMessage));
 }

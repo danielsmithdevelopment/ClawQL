@@ -85,7 +85,8 @@ export async function runDoctor(
       } else {
         checks.push({
           level: "warn",
-          message: "clawql-mcp binary not found locally — npm i clawql-mcp or npm run build in repo",
+          message:
+            "clawql-mcp binary not found locally — npm i clawql-mcp or npm run build in repo",
           detail: "doctor does not download via npx",
         });
       }

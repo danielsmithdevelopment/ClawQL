@@ -133,11 +133,7 @@ export function writeFileAtomicEffect(
   });
 }
 
-export async function writeFileAtomic(
-  path: string,
-  content: string,
-  mode?: number
-): Promise<void> {
+export async function writeFileAtomic(path: string, content: string, mode?: number): Promise<void> {
   return Effect.runPromise(writeFileAtomicEffect(path, content, mode));
 }
 

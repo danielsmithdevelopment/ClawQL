@@ -5,9 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import {
-  sendGenericClientError,
-} from "./generic-client-error.js";
+import { sendGenericClientError } from "./generic-client-error.js";
 import express, { type Express } from "express";
 import {
   hostHeaderValidation,
