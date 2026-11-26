@@ -134,14 +134,21 @@ describe("HTTP vs gRPC observability surface (parity contract)", () => {
     if (!grpcStarted) throw new Error("expected gRPC server");
 
     try {
+      // Audit 2.16: /healthz is bare liveness; detail (transport, etc.) lives on /health.
       const hz = await fetch(`${httpBase}/healthz`);
       expect(hz.ok).toBe(true);
       const hzJson = (await hz.json()) as { status?: string; transport?: string };
       expect(hzJson.status).toBe("ok");
-      expect(hzJson.transport).toBe("streamable-http");
+      expect(hzJson.transport).toBeUndefined();
 
-      const health = await grpcHealthCheck(grpcStarted.address, "");
-      expect(health.status === 1 || health.status === "SERVING").toBe(true);
+      const httpHealth = await fetch(`${httpBase}/health`);
+      expect(httpHealth.ok).toBe(true);
+      const healthJson = (await httpHealth.json()) as { status?: string; transport?: string };
+      expect(healthJson.status).toBe("ok");
+      expect(healthJson.transport).toBe("streamable-http");
+
+      const grpcHealth = await grpcHealthCheck(grpcStarted.address, "");
+      expect(grpcHealth.status === 1 || grpcHealth.status === "SERVING").toBe(true);
     } finally {
       await grpcStarted.shutdown();
       await closeHttpServer(httpSrv);

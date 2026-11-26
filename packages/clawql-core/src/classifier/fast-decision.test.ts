@@ -600,14 +600,15 @@ describe("§7 held-out suite runner", () => {
   });
 
   it("generates ontology digest stably from catalog without renaming ids", async () => {
-    const { generateCapabilityOntology, loadCatalogSource } =
+    const { generateCapabilityOntology, loadCatalogSource, PURGED_CATALOG_IDS } =
       await import("./generate-capability-ontology.js");
     const catalog = loadCatalogSource();
     const a = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
     const b = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
     expect(a.digestSha256).toBe(b.digestSha256);
+    // Purged 8.0 catalog ids stay in historical fixtures but are omitted from live ontology (2.17).
     expect(a.capabilities.map((c) => c.capabilityId).sort()).toEqual(
-      [...catalog.entries.map((e) => e.id)].sort()
+      [...catalog.entries.map((e) => e.id)].filter((id) => !PURGED_CATALOG_IDS.has(id)).sort()
     );
     expect(() =>
       generateCapabilityOntology({

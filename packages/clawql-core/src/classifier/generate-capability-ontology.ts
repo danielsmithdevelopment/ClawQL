@@ -60,7 +60,7 @@ export type HintOverlayFile = {
 };
 
 /** Purged in 8.0 — never emit live ontology rows for these catalog ids (audit 2.17). */
-const PURGED_CATALOG_IDS = new Set(["mcp.pageindex_build_tree"]);
+export const PURGED_CATALOG_IDS = new Set(["mcp.pageindex_build_tree"]);
 
 const STRUCTURED_IDS = new Set([
   "mcp.data_query",
