@@ -1,0 +1,50 @@
+# Multi-attack injection smoke board — thin caller of reusable benchmark.yml (1.13).
+#
+# Scripted worst-case model; measures whether the gateway stops planted attacks.
+# See scripts/benchmarks/multi-attack-injection/README.md.
+
+name: Multi-attack injection
+
+on:
+  pull_request:
+    paths:
+      - "scripts/benchmarks/multi-attack-injection/**"
+      - "docs/benchmarks/security-suite/multi-attack-injection/**"
+      - "benchmarks/security-suite/multi-attack-injection/**"
+      - "packages/clawql-api/src/**"
+      - ".github/workflows/multi-attack-injection.yml"
+      - ".github/workflows/benchmark.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/benchmarks/multi-attack-injection/**"
+      - "docs/benchmarks/security-suite/multi-attack-injection/**"
+      - "benchmarks/security-suite/multi-attack-injection/**"
+      - ".github/workflows/multi-attack-injection.yml"
+      - ".github/workflows/benchmark.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: multi-attack-injection-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Multi-attack smoke
+    uses: ./.github/workflows/benchmark.yml
+    with:
+      board: multi-attack-injection
+      arms: clawql_default,clawql_best_config,passthrough
+      npm_ci_args: ""
+      build_command: >-
+        npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit
+        -w clawql-auth -w clawql-api
+      command: |
+        MAI_OUT=docs/benchmarks/security-suite/multi-attack-injection/results-smoke.json \
+          npm run benchmark:multi-attack-injection
+      artifacts: docs/benchmarks/security-suite/multi-attack-injection/results-smoke.json
+      artifact_name: multi-attack-injection-smoke
+      timeout_minutes: "25"

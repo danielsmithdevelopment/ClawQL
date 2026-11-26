@@ -1,0 +1,122 @@
+# Audit 1.13 — reusable equal-arm / board runner.
+#
+# Call from thin trigger workflows (path filters, dispatch, markers stay in the
+# caller). Keep specialized live cells (OpenBench credential preflight, GLiNER
+# sidecars, peer Docker) in their own jobs; only migrate checkout → npm ci →
+# board command → upload-artifact through this workflow.
+#
+# Pattern: see README-benchmarks.md in this directory.
+#
+# Example caller:
+#   jobs:
+#     smoke:
+#       uses: ./.github/workflows/benchmark.yml
+#       with:
+#         board: governance-policy-depth
+#         arms: clawql_panguard,passthrough
+#         command: |
+#           GOV_OUT=docs/benchmarks/governance-policy-depth/results-smoke.json \
+#             npm run benchmark:governance-policy-depth
+#         artifacts: docs/benchmarks/governance-policy-depth/results-smoke.json
+#         artifact_name: governance-policy-depth-smoke
+
+name: Reusable benchmark board
+
+on:
+  workflow_call:
+    inputs:
+      board:
+        description: Short board id (job label / summary)
+        type: string
+        required: true
+      arms:
+        description: Comma-separated arms (exported as BOARD_ARMS and OPENBENCH_ARMS)
+        type: string
+        required: false
+        default: ""
+      command:
+        description: Shell command that runs the board (after npm ci / optional build)
+        type: string
+        required: true
+      artifacts:
+        description: Multiline paths (or globs) to upload as the board evidence artifact
+        type: string
+        required: true
+      artifact_name:
+        description: upload-artifact name (default board-<board>)
+        type: string
+        required: false
+        default: ""
+      node_version:
+        description: Node.js version for actions/setup-node
+        type: string
+        required: false
+        default: "22"
+      npm_ci_args:
+        description: Extra args for npm ci (e.g. --ignore-scripts)
+        type: string
+        required: false
+        default: "--ignore-scripts"
+      build_command:
+        description: Optional build step before the board command (empty = skip)
+        type: string
+        required: false
+        default: ""
+      timeout_minutes:
+        description: Job timeout in minutes
+        type: string
+        required: false
+        default: "30"
+      if_no_files_found:
+        description: upload-artifact if-no-files-found (warn | error | ignore)
+        type: string
+        required: false
+        default: warn
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Board ${{ inputs.board }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
+    steps:
+      # actions/checkout@v7.0.0 — pin matches ci.yml
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # actions/setup-node@v6.3.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+
+      - name: Install workspace
+        run: npm ci ${{ inputs.npm_ci_args }}
+
+      - name: Build (optional)
+        if: inputs.build_command != ''
+        run: ${{ inputs.build_command }}
+
+      - name: Run board ${{ inputs.board }}
+        env:
+          BOARD: ${{ inputs.board }}
+          BOARD_ARMS: ${{ inputs.arms }}
+          OPENBENCH_ARMS: ${{ inputs.arms }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Benchmark board \`${{ inputs.board }}\`"
+            echo ""
+            echo "- Arms: \`${{ inputs.arms || '(board default)' }}\`"
+            echo "- Run: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          } >> "$GITHUB_STEP_SUMMARY"
+          ${{ inputs.command }}
+
+      - name: Upload board artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name != '' && inputs.artifact_name || format('board-{0}', inputs.board) }}
+          path: ${{ inputs.artifacts }}
+          if-no-files-found: ${{ inputs.if_no_files_found }}
