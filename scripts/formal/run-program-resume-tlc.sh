@@ -1,36 +1,27 @@
 #!/usr/bin/env bash
-# TLC dual configs for ProgramResume.tla (claim-path §5).
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/program"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-program-resume-tlc-$$"
+export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-program-resume-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
-
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
 
 cp "$DIR/ProgramResume.tla" "$DIR/ProgramResume.cfg" "$DIR/ProgramResumeWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== ProgramResume target (must PASS) ==="
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramResume.cfg ProgramResume
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== ProgramResume weak (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ProgramResumeWeak.cfg ProgramResume
-WEAK=$?
-set -e
-if [[ "$WEAK" -eq 0 ]]; then
-  echo "FAIL: weak ProgramResume config (WeakAllowCompletedRerun) must counterexample" >&2
-  exit 1
-fi
+echo "=== ProgramResume.cfg (must PASS) ==="
+bash "$EXPECT_OK" "ProgramResume.cfg" "ProgramResume"
 
-echo "OK: ProgramResume Safety holds; weak counterexample (exit=$WEAK)"
+
+echo "=== ProgramResumeWeak.cfg (must violate NoCompletedStepRerun) ==="
+bash "$EXPECT_VIOLATION" "ProgramResumeWeak.cfg" "ProgramResume" "NoCompletedStepRerun"
+
+echo "OK: program-resume atomic green; weak named-invariant counterexamples checked"

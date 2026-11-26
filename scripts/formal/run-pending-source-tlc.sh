@@ -1,46 +1,27 @@
 #!/usr/bin/env bash
-# PendingSourceStatus: target PASS; weak skip-pending must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/sources"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-pending-source-tlc-$$"
+export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-pending-source-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/PendingSourceStatus.tla \
-  "$DIR"/PendingSourceStatus.cfg \
-  "$DIR"/PendingSourceStatusWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/PendingSourceStatus.tla" "$DIR/PendingSourceStatus.cfg" "$DIR/PendingSourceStatusWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== PendingSourceStatus target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config PendingSourceStatus.cfg PendingSourceStatus
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== PendingSourceStatus weak skip-pending (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config PendingSourceStatusWeak.cfg PendingSourceStatus
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== PendingSourceStatus.cfg (must PASS) ==="
+bash "$EXPECT_OK" "PendingSourceStatus.cfg" "PendingSourceStatus"
 
-echo "OK: PendingSourceStatus Safety holds; weak skip-pending counterexample (exit=$WEAK_EXIT)"
+
+echo "=== PendingSourceStatusWeak.cfg (must violate ApproveOnlyFromPending) ==="
+bash "$EXPECT_VIOLATION" "PendingSourceStatusWeak.cfg" "PendingSourceStatus" "ApproveOnlyFromPending"
+
+echo "OK: pending-source atomic green; weak named-invariant counterexamples checked"

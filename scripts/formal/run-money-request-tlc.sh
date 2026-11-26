@@ -1,46 +1,27 @@
 #!/usr/bin/env bash
-# MoneyRequestStatus: target PASS; weak skip-accept must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/payments"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-money-request-tlc-$$"
+export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-money-request-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/MoneyRequestStatus.tla \
-  "$DIR"/MoneyRequestStatus.cfg \
-  "$DIR"/MoneyRequestStatusWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/MoneyRequestStatus.tla" "$DIR/MoneyRequestStatus.cfg" "$DIR/MoneyRequestStatusWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== MoneyRequestStatus target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config MoneyRequestStatus.cfg MoneyRequestStatus
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== MoneyRequestStatus weak skip-accept (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config MoneyRequestStatusWeak.cfg MoneyRequestStatus
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== MoneyRequestStatus.cfg (must PASS) ==="
+bash "$EXPECT_OK" "MoneyRequestStatus.cfg" "MoneyRequestStatus"
 
-echo "OK: MoneyRequestStatus Safety holds; weak skip-accept counterexample (exit=$WEAK_EXIT)"
+
+echo "=== MoneyRequestStatusWeak.cfg (must violate PaidImpliesAccepted) ==="
+bash "$EXPECT_VIOLATION" "MoneyRequestStatusWeak.cfg" "MoneyRequestStatus" "PaidImpliesAccepted"
+
+echo "OK: money-request atomic green; weak named-invariant counterexamples checked"

@@ -1,59 +1,33 @@
 #!/usr/bin/env bash
-# Approval channel TLC: atomic must pass; two weak configs must counterexample.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/mandate"
-JAR="${TLA2TOOLS_JAR:-}"
+export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
 WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-approval-channel-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR/ApprovalChannel.tla" \
-   "$DIR/ApprovalChannel.cfg" \
-   "$DIR/ApprovalChannelWeak.cfg" \
-   "$DIR/ApprovalChannelWeakAgentCred.cfg" \
-   "$WORKDIR/"
-
+cp "$DIR/ApprovalChannel.tla" "$DIR/ApprovalChannel.cfg" "$DIR/ApprovalChannelWeak.cfg" "$DIR/ApprovalChannelWeakAgentCred.cfg" "$DIR/ApprovalChannelQuorum2.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== Approval channel guards (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ApprovalChannel.cfg ApprovalChannel
-ATOMIC_EXIT=$?
-set -e
-if [[ "$ATOMIC_EXIT" -ne 0 ]]; then
-  echo "FAIL: atomic ApprovalChannel config must report no errors (exit=$ATOMIC_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== Weak mcp approve (must COUNTEREXAMPLE NoAgentApproval) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ApprovalChannelWeak.cfg ApprovalChannel
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak ApprovalChannel (WeakMcpApprove) must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== ApprovalChannel.cfg (must PASS) ==="
+bash "$EXPECT_OK" "ApprovalChannel.cfg" "ApprovalChannel"
 
-echo "=== Weak agent credential on operator (must COUNTEREXAMPLE NoAgentApproval) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config ApprovalChannelWeakAgentCred.cfg ApprovalChannel
-WEAK_CRED_EXIT=$?
-set -e
-if [[ "$WEAK_CRED_EXIT" -eq 0 ]]; then
-  echo "FAIL: WeakAgentCredentialOnOperator config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== ApprovalChannelQuorum2.cfg (must PASS) ==="
+bash "$EXPECT_OK" "ApprovalChannelQuorum2.cfg" "ApprovalChannel"
 
-echo "OK: ApprovalChannel atomic green; weak configs counterexample (exits=$WEAK_EXIT,$WEAK_CRED_EXIT)"
+
+echo "=== ApprovalChannelWeak.cfg (must violate NoAgentApproval) ==="
+bash "$EXPECT_VIOLATION" "ApprovalChannelWeak.cfg" "ApprovalChannel" "NoAgentApproval"
+
+echo "=== ApprovalChannelWeakAgentCred.cfg (must violate NoAgentApproval) ==="
+bash "$EXPECT_VIOLATION" "ApprovalChannelWeakAgentCred.cfg" "ApprovalChannel" "NoAgentApproval"
+
+echo "OK: approval-channel atomic green; weak named-invariant counterexamples checked"

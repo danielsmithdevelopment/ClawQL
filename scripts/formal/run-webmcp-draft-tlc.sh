@@ -1,46 +1,27 @@
 #!/usr/bin/env bash
-# WebMcpDraftCandidate: target PASS; weak publish-pending must COUNTEREXAMPLE.
+# Auto-updated for D2b: atomic requires "No error has been found";
+# weak steps require a named Invariant <name> is violated via expect-violation.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$ROOT/formal/tla/webmcp"
-JAR="${TLA2TOOLS_JAR:-}"
-WORKDIR="${TMPDIR:-/tmp}/clawql-webmcp-draft-tlc-$$"
+export TLA2TOOLS_JAR="${TLA2TOOLS_JAR:-$("$ROOT/scripts/formal/ensure-tla2tools.sh")}"
+WORKDIR="${TMPDIR:-/tmp}/clawql-tlc-webmcp-draft-$$"
 mkdir -p "$WORKDIR"
-
 cleanup() { rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-if [[ -z "$JAR" ]]; then
-  JAR="$("$ROOT/scripts/formal/ensure-tla2tools.sh")"
-fi
-
-cp "$DIR"/WebMcpDraftCandidate.tla \
-  "$DIR"/WebMcpDraftCandidate.cfg \
-  "$DIR"/WebMcpDraftCandidateWeak.cfg \
-  "$WORKDIR/"
+cp "$DIR/WebMcpDraftCandidate.tla" "$DIR/WebMcpDraftCandidate.cfg" "$DIR/WebMcpDraftCandidateWeak.cfg" "$WORKDIR/"
 cd "$WORKDIR"
 
-echo "=== WebMcpDraftCandidate target (must PASS) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config WebMcpDraftCandidate.cfg WebMcpDraftCandidate
-TARGET_EXIT=$?
-set -e
-if [[ "$TARGET_EXIT" -ne 0 ]]; then
-  echo "FAIL: target config must report no errors (exit=$TARGET_EXIT)" >&2
-  exit 1
-fi
+EXPECT_OK="$ROOT/scripts/formal/lib/expect-ok.sh"
+EXPECT_VIOLATION="$ROOT/scripts/formal/lib/expect-violation.sh"
 
-echo "=== WebMcpDraftCandidate weak publish-pending (must COUNTEREXAMPLE) ==="
-set +e
-java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC \
-  -config WebMcpDraftCandidateWeak.cfg WebMcpDraftCandidate
-WEAK_EXIT=$?
-set -e
-if [[ "$WEAK_EXIT" -eq 0 ]]; then
-  echo "FAIL: weak config must violate Safety (got clean exit)" >&2
-  exit 1
-fi
+echo "=== WebMcpDraftCandidate.cfg (must PASS) ==="
+bash "$EXPECT_OK" "WebMcpDraftCandidate.cfg" "WebMcpDraftCandidate"
 
-echo "OK: WebMcpDraftCandidate Safety holds; weak publish-pending counterexample (exit=$WEAK_EXIT)"
+
+echo "=== WebMcpDraftCandidateWeak.cfg (must violate PublishOnlyWhenApproved) ==="
+bash "$EXPECT_VIOLATION" "WebMcpDraftCandidateWeak.cfg" "WebMcpDraftCandidate" "PublishOnlyWhenApproved"
+
+echo "OK: webmcp-draft atomic green; weak named-invariant counterexamples checked"
