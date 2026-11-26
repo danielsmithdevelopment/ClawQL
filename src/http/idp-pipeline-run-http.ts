@@ -11,6 +11,7 @@ import { getDocumentsPluginDeps } from "clawql-documents/plugin";
 import { publishDocumentPipelineHopEvent } from "clawql-automation/nats/publish-hooks";
 
 import { bearerFromRequest, checkWebhookToken } from "./webhooks/webhook-token-auth.js";
+import { sendGenericClientError } from "./generic-client-error.js";
 
 export async function handleIdpPipelineRunRequest(req: Request, res: Response): Promise<void> {
   const auth = checkWebhookToken({
@@ -54,9 +55,6 @@ export async function handleIdpPipelineRunRequest(req: Request, res: Response): 
     );
     res.status(200).json(result);
   } catch (e: unknown) {
-    res.status(500).json({
-      ok: false,
-      error: e instanceof Error ? e.message : String(e),
-    });
+    sendGenericClientError(res, 500, "clawql-idp-pipeline-run", e, "pipeline run failed");
   }
 }

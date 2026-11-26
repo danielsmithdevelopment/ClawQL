@@ -1,7 +1,7 @@
 /**
  * Regression: sessionful Streamable HTTP JSON mode must not retain one
  * `_streamMapping` entry per POST (MCP SDK #2559). Asserts via CLAWQL_BENCH_STATS
- * on /healthz — fails the instant the host prune disappears, without a long RSS run.
+ * on /health — fails the instant the host prune disappears, without a long RSS run.
  */
 import { createServer, type Server } from "node:http";
 import { once } from "node:events";
@@ -174,7 +174,7 @@ describe("json-stream-mapping-bound", { timeout: 60_000 }, () => {
         expect(data.error).toBeUndefined();
       }
 
-      const hz = await fetch(`${base}/healthz`);
+      const hz = await fetch(`${base}/health`);
       expect(hz.ok).toBe(true);
       const body = (await hz.json()) as {
         mcp_sessions: number;

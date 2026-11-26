@@ -209,9 +209,22 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     }, GRAPHQL_HTTP_APP_OPTS);
   });
 
-  it("GET /healthz returns ok and endpoint path", async () => {
+  it("GET /healthz returns bare liveness", async () => {
     await withHttpServer(async (base) => {
       const res = await fetch(`${base}/healthz`);
+      expect(res.ok).toBe(true);
+      const body = (await res.json()) as {
+        status: string;
+        endpoint?: string;
+      };
+      expect(body.status).toBe("ok");
+      expect(body.endpoint).toBeUndefined();
+    });
+  });
+
+  it("GET /health returns detailed status behind gateway auth", async () => {
+    await withHttpServer(async (base) => {
+      const res = await fetch(`${base}/health`);
       expect(res.ok).toBe(true);
       const body = (await res.json()) as {
         status: string;
@@ -249,13 +262,13 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     }
   });
 
-  it("GET /healthz includes nativeProtocolMetrics when CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1", async () => {
+  it("GET /health includes nativeProtocolMetrics when CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS=1", async () => {
     const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
     process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = "1";
     resetNativeProtocolMetricsForTests();
     try {
       await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/healthz`);
+        const res = await fetch(`${base}/health`);
         expect(res.ok).toBe(true);
         const body = (await res.json()) as {
           status?: string;
@@ -279,14 +292,14 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     }
   });
 
-  it("GET /healthz nativeProtocolMetrics reflects in-process counters after recordNativeGraphqlExecute", async () => {
+  it("GET /health nativeProtocolMetrics reflects in-process counters after recordNativeGraphqlExecute", async () => {
     const saved = process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS;
     process.env.CLAWQL_HEALTHZ_NATIVE_PROTOCOL_METRICS = "1";
     resetNativeProtocolMetricsForTests();
     try {
       await withHttpServer(async (base) => {
         recordNativeGraphqlExecute(true, "vitest-gql-source");
-        const res = await fetch(`${base}/healthz`);
+        const res = await fetch(`${base}/health`);
         expect(res.ok).toBe(true);
         const body = (await res.json()) as {
           nativeProtocolMetrics?: {
@@ -306,7 +319,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     }
   });
 
-  it("GET /healthz optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
+  it("GET /health optional merkle when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS=1", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
     const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     const savedMerkle = process.env.CLAWQL_MERKLE_ENABLED;
@@ -325,7 +338,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
       await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/healthz`);
+        const res = await fetch(`${base}/health`);
         expect(res.ok).toBe(true);
         const body = (await res.json()) as { merkleSnapshot?: { rootHex: string } };
         expect(body.merkleSnapshot?.rootHex).toMatch(/^[0-9a-f]{64}$/);
@@ -345,7 +358,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     }
   });
 
-  it("GET /healthz includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
+  it("GET /health includes cuckoo metrics when CLAWQL_HEALTHZ_MEMORY_ARTIFACTS and Cuckoo enabled", async () => {
     const dir = await mkdtemp(join(tmpdir(), "clawql-hz-"));
     const savedVault = process.env.CLAWQL_OBSIDIAN_VAULT_PATH;
     const savedCuckoo = process.env.CLAWQL_CUCKOO_ENABLED;
@@ -364,7 +377,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     await syncMemoryDbFromDocuments(dir, [{ path: "Memory/a.md", text, mtimeMs: 1 }]);
     try {
       await withHttpServer(async (base) => {
-        const res = await fetch(`${base}/healthz`);
+        const res = await fetch(`${base}/health`);
         expect(res.ok).toBe(true);
         const body = (await res.json()) as {
           cuckooMembershipArtifactsEnabled?: boolean;

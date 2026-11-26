@@ -79,8 +79,9 @@ function parseOptionalJsonHeaders(raw: string | undefined): Record<string, strin
       if (typeof v === "string" && v.trim()) headers[k] = v.trim();
     }
     return Object.keys(headers).length ? headers : undefined;
-  } catch (e) {
-    console.error("[spec-loader] CLAWQL_GRAPHQL_HEADERS: invalid JSON", e);
+  } catch {
+    // Audit 2.16: do not log the SyntaxError text (can quote tokens from the env value).
+    console.error("[spec-loader] CLAWQL_GRAPHQL_HEADERS: invalid JSON");
     return undefined;
   }
 }
@@ -94,8 +95,9 @@ function parseJsonArrayEnv(raw: string | undefined, envName: string): unknown[] 
       return [];
     }
     return parsed;
-  } catch (e) {
-    console.error(`[spec-loader] ${envName}: invalid JSON`, e);
+  } catch {
+    // Audit 2.16: avoid echoing parse error text that may quote env contents.
+    console.error(`[spec-loader] ${envName}: invalid JSON`);
     return [];
   }
 }
