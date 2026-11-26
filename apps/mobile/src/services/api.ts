@@ -290,14 +290,14 @@ export function decideReviewEffect(input: {
       }
       const leaveInQueue = input.decision === "retry_with_key";
       const status = input.decision === "answer" ? (input.answer ?? "answer") : input.decision;
+      const attestation =
+        input.approvalProof && input.approvalProof.method !== "webauthn"
+          ? input.approvalProof.attestation
+          : undefined;
       const detail =
         input.answer ??
         input.approvalProof?.method ??
-        (input.approvalProof &&
-        "attestation" in input.approvalProof &&
-        input.approvalProof.attestation?.startsWith("fixture-nfc:")
-          ? "fixture_simulated_nfc"
-          : input.decision);
+        (attestation?.startsWith("fixture-nfc:") ? "fixture_simulated_nfc" : input.decision);
       const event: ActivityEvent = {
         id: nextActivityId(),
         atMs: Date.now(),

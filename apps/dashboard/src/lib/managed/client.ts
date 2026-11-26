@@ -148,7 +148,9 @@ async function webauthnApproveAssertion(input: {
   }
   const { startAuthentication } = await import('@simplewebauthn/browser')
   const response = await startAuthentication({
-    optionsJSON: challenged.options as Parameters<typeof startAuthentication>[0]['optionsJSON'],
+    optionsJSON: challenged.options as unknown as Parameters<
+      typeof startAuthentication
+    >[0]['optionsJSON'],
   })
   return { method: 'webauthn', response }
 }
@@ -158,9 +160,8 @@ export async function decideManagedReview(input: {
   kind: 'change' | 'source'
   decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key'
 }): Promise<{ ok: true; id: string; status: string }> {
-  const needsKey = input.decision === 'approve' || input.decision === 'retry_with_key'
   let approvalProof: { method: 'webauthn'; response: unknown } | undefined
-  if (needsKey) {
+  if (input.decision === 'approve' || input.decision === 'retry_with_key') {
     approvalProof = await webauthnApproveAssertion({
       id: input.id,
       kind: input.kind,

@@ -71,20 +71,22 @@ export function resolveWithFallbackEffect<A>(input: {
     }
 
     if (input.source === "live") {
-      const data = yield* input.live;
+      // Live-only: surface failures as defects (E=never for the public Effect signature).
+      const data = yield* input.live.pipe(Effect.orDie);
       return { data, source: "live" as const };
     }
 
     // auto
-    const liveResult = yield* input.live.pipe(
-      Effect.map((data) => ({ data, source: "live" as const })),
-      Effect.catch(() => {
+    type Resolved = { readonly data: A; readonly source: "live" | "fixture" };
+    const liveResult: Resolved = yield* input.live.pipe(
+      Effect.map((data): Resolved => ({ data, source: "live" })),
+      Effect.catch((): Effect.Effect<Resolved> => {
         if (allowFixtureFallback(env)) {
-          return Effect.succeed({ data: input.fixture, source: "fixture" as const });
+          return Effect.succeed({ data: input.fixture, source: "fixture" });
         }
         const empty = input.empty !== undefined ? input.empty : input.fixture;
         // Mark as live so UI does not caption "Acme fixture" for failed/empty prod.
-        return Effect.succeed({ data: empty, source: "live" as const });
+        return Effect.succeed({ data: empty, source: "live" });
       }),
     );
     if (input.isLiveUseful(liveResult.data)) return liveResult;
