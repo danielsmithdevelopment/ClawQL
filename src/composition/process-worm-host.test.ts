@@ -50,6 +50,23 @@ describe("ensureProcessWormHostBootedEffect", () => {
     );
   });
 
+  it("regulated profile refuses CLAWQL_SOURCES_ALLOW_HTTP", async () => {
+    remember([
+      "CLAWQL_TIER",
+      "CLAWQL_ALLOW_NO_ENFORCEMENT",
+      "CLAWQL_SOURCES_ALLOW_HTTP",
+      "CLAWQL_SANDBOX_BACKEND",
+    ]);
+    process.env.CLAWQL_TIER = "regulated";
+    process.env.CLAWQL_SOURCES_ALLOW_HTTP = "1";
+    delete process.env.CLAWQL_ALLOW_NO_ENFORCEMENT;
+    delete process.env.CLAWQL_SANDBOX_BACKEND;
+
+    await expect(Effect.runPromise(applyRegulatedProfileEnvEffect(process.env))).rejects.toThrow(
+      /SOURCES_ALLOW_HTTP/
+    );
+  });
+
   it("regulated profile sets Panguard + IFC defaults", async () => {
     remember([
       "CLAWQL_TIER",

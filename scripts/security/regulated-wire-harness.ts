@@ -365,7 +365,8 @@ export function regulatedBaseEnv(args: {
   extra?: NodeJS.ProcessEnv;
 }): NodeJS.ProcessEnv {
   const instanceSpec = {
-    tier: "local",
+    // Match CLAWQL_TIER=regulated so the suite does not mix local preset + regulated env.
+    tier: "regulated",
     memory: { enabled: false },
     documents: { enabled: false },
     sandbox: { enabled: false },

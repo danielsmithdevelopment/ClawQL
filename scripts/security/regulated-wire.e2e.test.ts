@@ -38,6 +38,18 @@ import {
 } from "./regulated-wire-harness.js";
 
 const s3Ep = s3FromEnv();
+if (process.env.CLAWQL_WIRE_REQUIRED?.trim() === "1") {
+  if (!existsSync(SERVER_HTTP_JS)) {
+    throw new Error(
+      "CLAWQL_WIRE_REQUIRED=1 but dist/server-http.js is missing — run npm run build"
+    );
+  }
+  if (!s3Ep) {
+    throw new Error(
+      "CLAWQL_WIRE_REQUIRED=1 but CLAWQL_WORM_S3_ENDPOINT (or IT endpoint) is unset"
+    );
+  }
+}
 const describeWire = existsSync(SERVER_HTTP_JS) && s3Ep ? describe : describe.skip;
 const describeBootOnly = existsSync(SERVER_HTTP_JS) ? describe : describe.skip;
 
@@ -62,6 +74,36 @@ describeBootOnly("regulated wire — boot refusals (no S3 required)", () => {
         const code = await srv.waitExit(25_000);
         expect(code).not.toBe(0);
         expect(srv.stderr).toMatch(/regulated.*WORM disabled/i);
+        await assertPortClosed(port);
+      } finally {
+        await srv.kill();
+      }
+    },
+    30_000
+  );
+
+  it(
+    "1b) CLAWQL_SOURCES_ALLOW_HTTP=1 → non-zero exit; port never opens",
+    async () => {
+      const home = await makeWorkDir("clawql-wire-allow-http-");
+      const port = await pickFreePort();
+      const srv = await spawnServer({
+        PATH: process.env.PATH,
+        HOME: process.env.HOME,
+        CLAWQL_HOME: home,
+        CLAWQL_TIER: "regulated",
+        CLAWQL_WORM_ENABLED: "1",
+        CLAWQL_WORM_REQUIRED: "1",
+        CLAWQL_SOURCES_ALLOW_HTTP: "1",
+        CLAWQL_AUTH_MODE: "apiKey",
+        CLAWQL_API_KEY: "wire-test-key-not-secret",
+        PORT: String(port),
+        MCP_HOST: "127.0.0.1",
+      });
+      try {
+        const code = await srv.waitExit(25_000);
+        expect(code).not.toBe(0);
+        expect(srv.stderr).toMatch(/SOURCES_ALLOW_HTTP/i);
         await assertPortClosed(port);
       } finally {
         await srv.kill();
@@ -108,7 +150,6 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
         CLAWQL_HITL_WEBHOOK_TOKEN: "", // unset → 503; set below per-case
         CLAWQL_API_BASE_URL: apiSink.baseUrl,
         API_BASE_URL: apiSink.baseUrl,
-        CLAWQL_SOURCES_ALLOW_HTTP: "1",
       },
     });
     delete (env as { CLAWQL_HITL_WEBHOOK_TOKEN?: string }).CLAWQL_HITL_WEBHOOK_TOKEN;
@@ -340,6 +381,7 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     const flat = Array.isArray(entries)
       ? entries
       : ((entries as { entries?: { type?: string }[] }).entries ?? []);
+    expect(flat.length, "WORM /entries must be non-empty after park+resume").toBeGreaterThan(0);
     expect(flat.some((e: { type?: string }) => e.type === "HUMAN_APPROVAL")).toBe(false);
   }, 90_000);
 
@@ -384,7 +426,8 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     expect(rec?.status).toBe("declined");
   }, 90_000);
 
-  it("8) operator-channel approve under regulated refused; still pending", async () => {
+  it("8) operator channel, in-process — approve under regulated refused; still pending", async () => {
+    // In-process resumeClawqlExecutionEffect until a spawned CLI path lands (F5).
     const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const park = await rpc({
       jsonrpc: "2.0",
@@ -400,7 +443,7 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
     const executionId = (JSON.parse(parkText) as { executionId?: string }).executionId!;
     expect(executionId).toBeTruthy();
 
-    // CLI path reads CLAWQL_TIER from the calling process (not the MCP server).
+    // Operator channel reads CLAWQL_TIER from the calling process (not the MCP server).
     const prevTier = process.env.CLAWQL_TIER;
     process.env.CLAWQL_TIER = "regulated";
     try {
@@ -559,11 +602,11 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
   it("11) SSRF: sources_propose to link-local / loopback refused; sink untouched", async () => {
     const { rpc } = await mcpInitialize(baseUrl, agentToken);
     const before = apiSink.requests.length;
-    // CLAWQL_SOURCES_ALLOW_HTTP=1 is set so HTTPS-only is not the refusal under test.
+    // https:// targets — regulated refuses CLAWQL_SOURCES_ALLOW_HTTP at boot (row 1b).
     for (const url of [
-      "http://169.254.169.254/latest/meta-data/",
-      "http://127.0.0.1/",
-      "http://localhost/",
+      "https://169.254.169.254/latest/meta-data/",
+      "https://127.0.0.1/",
+      "https://localhost/",
     ]) {
       const result = await rpc({
         jsonrpc: "2.0",
@@ -659,8 +702,12 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
       });
     const [ra, rb] = await Promise.all([req(a), req(b)]);
     const allows = [ra, rb].filter((r) => r.action === "allow");
-    // Facilitator settle-once: exactly one allow; the second must not also allow.
+    const denies = [ra, rb].filter((r) => r.action !== "allow");
+    // Facilitator settle-once: exactly one allow; the second reaches settle and is denied.
     expect(allows.length).toBe(1);
-    expect(settleCount).toBeGreaterThanOrEqual(1);
+    expect(settleCount).toBe(2);
+    expect(denies.length).toBe(1);
+    const denyText = JSON.stringify(denies[0]);
+    expect(denyText).toMatch(/already settled|settled|deny|reject/i);
   }, 60_000);
 });

@@ -120,6 +120,7 @@ jobs:
 
       - name: Regulated wire e2e (spawn dist/server-http.js)
         env:
+          CLAWQL_WIRE_REQUIRED: "1"
           CLAWQL_WORM_S3_ENDPOINT: http://127.0.0.1:4566
           CLAWQL_WORM_S3_ACCESS_KEY_ID: test
           CLAWQL_WORM_S3_SECRET_ACCESS_KEY: test

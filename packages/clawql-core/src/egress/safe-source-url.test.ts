@@ -15,6 +15,21 @@ describe("egress safe-source-url (audit 5.07)", () => {
     expect(assertSafeSourceFetchUrl("https://example.com/x").hostname).toBe("example.com");
   });
 
+  it("regulated ignores CLAWQL_SOURCES_ALLOW_HTTP for cleartext URLs", () => {
+    const prevTier = process.env.CLAWQL_TIER;
+    const prevAllow = process.env.CLAWQL_SOURCES_ALLOW_HTTP;
+    process.env.CLAWQL_TIER = "regulated";
+    process.env.CLAWQL_SOURCES_ALLOW_HTTP = "1";
+    try {
+      expect(() => assertSafeSourceFetchUrl("http://example.com/x")).toThrow(/HTTPS/i);
+    } finally {
+      if (prevTier === undefined) delete process.env.CLAWQL_TIER;
+      else process.env.CLAWQL_TIER = prevTier;
+      if (prevAllow === undefined) delete process.env.CLAWQL_SOURCES_ALLOW_HTTP;
+      else process.env.CLAWQL_SOURCES_ALLOW_HTTP = prevAllow;
+    }
+  });
+
   it("detects IPv4-mapped and private ranges", () => {
     expect(expandIpv4MappedIpv6("::ffff:7f00:1")).toBe("127.0.0.1");
     expect(isPrivateOrLoopbackIp("10.0.0.1")).toBe(true);

@@ -28,16 +28,17 @@ path, request sink, bucket helpers).
 | #    | Trigger                                      | Expected                                      | Must not happen                          |
 | ---- | -------------------------------------------- | --------------------------------------------- | ---------------------------------------- |
 | 1    | `CLAWQL_WORM_ENABLED=0`                      | Non-zero exit; stderr WORM disabled           | Port never opens                         |
+| 1b   | `CLAWQL_SOURCES_ALLOW_HTTP=1`                | Non-zero exit; stderr SOURCES_ALLOW_HTTP      | Port never opens                         |
 | 2    | Bucket without Object Lock                   | Boot refused by Object Lock verification      | Port never opens                         |
 | 3    | `noAuth` + allow-unauthenticated             | Non-zero exit; stderr noAuth                  | Port never opens                         |
 | 4    | `CLAWQL_HTTP_GRAPHQL=1`                      | Non-zero exit                                 | Port never opens                         |
 | 5–7b | MCP JWT / resume approve+decline             | 401 / decline-only / decline succeeds            | No tool run / still pending / declined   |
-| 8    | Operator-channel approve                     | Regulated console-only refuse                 | Still pending                            |
+| 8    | Operator channel, in-process                 | Regulated console-only refuse                 | Still pending                            |
 | 9    | Webhook no/wrong token                       | 503 / 401                                     | Handler side effects absent              |
 | 10   | Inference `openai/gpt-4o`                    | Local-only refuse                             | Inference sink empty                     |
-| 11   | `sources_propose` SSRF targets               | SSRF guard refuse                             | Sink empty                               |
+| 11   | `sources_propose` HTTPS SSRF targets         | SSRF guard refuse                             | Sink empty                               |
 | 12   | `GET /chain/verify`                          | Chain verifies                                | —                                        |
-| 13   | Concurrent x402 same proof                   | At most one allow (facilitator settle-once)   | —                                        |
+| 13   | Concurrent x402 same proof                   | One allow; second settle denied               | —                                        |
 
 ```bash
 npm run build
