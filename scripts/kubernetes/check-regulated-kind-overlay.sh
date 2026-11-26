@@ -14,7 +14,14 @@ try:
     import yaml
 except ImportError:
     text = Path(sys.argv[1]).read_text()
-    allowed_roots = {"security", "kyverno", "image", "extraEnvAppend", "envFromSecret"}
+    allowed_roots = {
+        "security",
+        "kyverno",
+        "image",
+        "extraEnvAppend",
+        "envFromSecret",
+        "networkPolicy",
+    }
     for line in text.splitlines():
         s = line.strip()
         if not s or s.startswith("#"):
@@ -44,6 +51,7 @@ if "extraEnv" in doc:
     )
 
 allowed_env = {
+    "CLAWQL_HOME",
     "CLAWQL_AUTH_OIDC_JWKS_URL",
     "CLAWQL_AUTH_OIDC_ISSUER",
     "CLAWQL_AUTH_OIDC_AUDIENCE",
@@ -53,7 +61,14 @@ allowed_env = {
     "CLAWQL_WORM_S3_REGION",
 }
 
-allowed_top = {"security", "kyverno", "image", "extraEnvAppend", "envFromSecret"}
+allowed_top = {
+    "security",
+    "kyverno",
+    "image",
+    "extraEnvAppend",
+    "envFromSecret",
+    "networkPolicy",
+}
 extra = set(doc) - allowed_top
 if extra:
     raise SystemExit(f"overlay top-level keys not allowed: {sorted(extra)}")
@@ -76,6 +91,18 @@ if "image" in doc:
         raise SystemExit(
             f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}"
         )
+if "networkPolicy" in doc:
+    np = doc["networkPolicy"]
+    if set(np) - {"defaultDeny"}:
+        raise SystemExit(f"networkPolicy keys not allowed: {sorted(set(np)-{'defaultDeny'})}")
+    dd = np.get("defaultDeny") or {}
+    if set(dd) - {"extraEgress"}:
+        raise SystemExit(
+            "networkPolicy.defaultDeny may only set extraEgress "
+            f"(got {sorted(set(dd)-{'extraEgress'})})"
+        )
+    if "extraEgress" in dd and not isinstance(dd["extraEgress"], list):
+        raise SystemExit("networkPolicy.defaultDeny.extraEgress must be a list")
 if "extraEnvAppend" in doc:
     obj = doc["extraEnvAppend"]
     if not isinstance(obj, list):

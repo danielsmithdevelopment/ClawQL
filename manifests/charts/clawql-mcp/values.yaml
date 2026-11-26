@@ -26,6 +26,11 @@ pluginTiers:
 networkPolicy:
   defaultDeny:
     enabled: false
+    # Extra egress rules appended to the MCP NetworkPolicy (Kubernetes
+    # NetworkPolicyEgressRule shape). Use for in-cluster Object Lock S3 /
+    # JWKS lab endpoints on private pod IPs — the base policy only allows
+    # DNS plus HTTP(S) to non-RFC1918 destinations (external IdP / S3).
+    extraEgress: []
 
 imagePullSecrets: []
 

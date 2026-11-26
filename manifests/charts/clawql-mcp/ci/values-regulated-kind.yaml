@@ -6,7 +6,8 @@
 # - Kata off (kind has no Kata runtime)
 # - Kyverno image signature off (PR image is unsigned; D3 covers signing)
 # - Local image repo/tag
-# - Host values: OIDC, MinIO, secret refs
+# - Host values: OIDC, LocalStack Object Lock S3, secret refs, CLAWQL_HOME
+# - NetworkPolicy extraEgress for in-cluster JWKS + LocalStack (private IPs)
 #
 # IMPORTANT: Helm replaces lists rather than merging them. Do NOT set
 # `extraEnv` here — that would wipe WORM / inference flags from
@@ -27,9 +28,24 @@ image:
   tag: regulated-kind
   pullPolicy: Never
 
-# Host / secret plumbing for the kind Job (Vault+ESO syncs clawql-provider-env).
-# Appended after values-regulated.yaml extraEnv — later duplicate names win.
+# Allow MCP pods to reach in-cluster JWKS (80) and LocalStack S3 (4566).
+# Base default-deny only permits HTTP(S) to non-RFC1918 destinations.
+networkPolicy:
+  defaultDeny:
+    extraEgress:
+      - to:
+          - podSelector: {}
+        ports:
+          - protocol: TCP
+            port: 80
+          - protocol: TCP
+            port: 4566
+
+# Host / secret plumbing for the kind Job.
+# CLAWQL_HOME=/vault uses the chart emptyDir (readOnlyRootFilesystem).
 extraEnvAppend:
+  - name: CLAWQL_HOME
+    value: /vault
   - name: CLAWQL_AUTH_OIDC_JWKS_URL
     value: http://clawql-jwks.clawql.svc.cluster.local/.well-known/jwks.json
   - name: CLAWQL_AUTH_OIDC_ISSUER
@@ -37,7 +53,7 @@ extraEnvAppend:
   - name: CLAWQL_AUTH_OIDC_AUDIENCE
     value: clawql-mcp
   - name: CLAWQL_WORM_S3_ENDPOINT
-    value: http://clawql-minio.clawql.svc.cluster.local:9000
+    value: http://clawql-localstack.clawql.svc.cluster.local:4566
   - name: CLAWQL_WORM_S3_BUCKET
     value: clawql-worm
   - name: CLAWQL_WORM_S3_FORCE_PATH_STYLE

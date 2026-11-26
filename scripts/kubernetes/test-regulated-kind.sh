@@ -120,66 +120,64 @@ fi
 docker build -t "${IMAGE_LOCAL}" -f "${DOCKERFILE}" --target runtime "${ROOT}"
 kind load docker-image "${IMAGE_LOCAL}" --name "${CLUSTER_NAME}"
 
-echo "==> Bootstrap Vault + ESO (optional on kind; Secret below is the kind stand-in)"
-export HELM_RELEASE_NAME="${REL}"
-export HELM_NAMESPACE="${NS}"
-# Chart may install Vault on docker-desktop; on kind the STS is usually absent.
-# Keep trying bootstrap for environments that already have Vault, but do not
-# block the job — kind always materializes clawql-provider-env next.
-bash "${ROOT}/scripts/kubernetes/bootstrap-local-vault-and-eso.sh" || {
-  echo "WARN: bootstrap-local-vault-and-eso returned non-zero — using kind Secret stand-in" >&2
-}
-
-echo "==> Ensure Secret/clawql-provider-env (MinIO Object Lock credentials for kind)"
-# values-regulated-kind sets envFromSecret=clawql-provider-env. Without Vault+ESO
-# the Secret must exist or the MCP pods never start. Keys are lab-only (MinIO defaults).
+echo "==> Ensure Secret/clawql-provider-env (LocalStack Object Lock credentials)"
+# Skip Vault bootstrap on kind — it waits 300s for a STS that is only Ready after
+# helm install + unseal. Seed the Secret the chart requires instead (same keys as
+# D1 LocalStack: test/test). Chart still installs hashicorpvault; ESO is optional.
 kubectl -n "${NS}" create secret generic clawql-provider-env \
-  --from-literal=CLAWQL_WORM_S3_ACCESS_KEY_ID=minioadmin \
-  --from-literal=CLAWQL_WORM_S3_SECRET_ACCESS_KEY=minioadmin \
+  --from-literal=CLAWQL_WORM_S3_ACCESS_KEY_ID=test \
+  --from-literal=CLAWQL_WORM_S3_SECRET_ACCESS_KEY=test \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo "==> Deploy MinIO (Object Lock) + JWKS Service in ${NS}"
-# MinIO — prefer quay digest when pullable; fall back to tag used by audit compose.
+echo "==> Deploy LocalStack S3 (Object Lock stand-in) + JWKS in ${NS}"
+# Anonymous pulls of minio/minio and quay.io/minio/minio fail on GHA (same as D1 wire).
+# Digest-pinned LocalStack matches regulated-refusals.yml.
 kubectl -n "${NS}" apply -f - <<'EOF'
 apiVersion: v1
 kind: Service
 metadata:
-  name: clawql-minio
+  name: clawql-localstack
 spec:
   selector:
-    app: clawql-minio
+    app: clawql-localstack
   ports:
-    - port: 9000
-      targetPort: 9000
+    - port: 4566
+      targetPort: 4566
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: clawql-minio
+  name: clawql-localstack
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: clawql-minio
+      app: clawql-localstack
   template:
     metadata:
       labels:
-        app: clawql-minio
+        app: clawql-localstack
     spec:
       containers:
-        - name: minio
-          image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
-          args: ["server", "/data", "--console-address", ":9001"]
+        - name: localstack
+          image: localstack/localstack:4.3.0@sha256:f3cb1a79f3add997575e859c3a2808e6dae4b0de836661de255baa2b576868f8
           env:
-            - name: MINIO_ROOT_USER
-              value: minioadmin
-            - name: MINIO_ROOT_PASSWORD
-              value: minioadmin
+            - name: SERVICES
+              value: s3
+            - name: DEBUG
+              value: "0"
           ports:
-            - containerPort: 9000
+            - containerPort: 4566
+          readinessProbe:
+            httpGet:
+              path: /_localstack/health
+              port: 4566
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            failureThreshold: 40
 EOF
 
-# JWKS — small nginx serving a static JWKS minted in CI (ConfigMap patched by workflow).
+# JWKS — nginx listens on :80; Service must target 80 (not 8080).
 kubectl -n "${NS}" apply -f - <<'EOF'
 apiVersion: v1
 kind: ConfigMap
@@ -198,7 +196,7 @@ spec:
     app: clawql-jwks
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 80
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -222,25 +220,52 @@ spec:
               mountPath: /usr/share/nginx/html/.well-known/jwks.json
               subPath: jwks.json
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           command: ["nginx", "-g", "daemon off;"]
-          # Listen on 8080 without root
-          lifecycle: {}
       volumes:
         - name: jwks
           configMap:
             name: clawql-jwks
 EOF
 
+echo "==> Wait for LocalStack + create Object Lock bucket clawql-worm"
+kubectl -n "${NS}" rollout status deployment/clawql-localstack --timeout=180s
+# Use awslocal inside the LocalStack pod (avoids pulling amazon/aws-cli on GHA).
+kubectl -n "${NS}" exec deploy/clawql-localstack -- awslocal s3api create-bucket \
+  --bucket clawql-worm \
+  --object-lock-enabled-for-bucket \
+  --region us-east-1 || true
+kubectl -n "${NS}" exec deploy/clawql-localstack -- awslocal s3api put-object-lock-configuration \
+  --bucket clawql-worm \
+  --object-lock-configuration \
+  "ObjectLockEnabled=Enabled,Rule={DefaultRetention={Mode=COMPLIANCE,Days=1}}" || true
+kubectl -n "${NS}" exec deploy/clawql-localstack -- awslocal s3api get-object-lock-configuration \
+  --bucket clawql-worm
+
 echo "==> Helm install regulated profile + kind overlay"
+# --wait=false: bundled hashicorpvault stays unsealed/not Ready without bootstrap;
+# we assert MCP readiness explicitly (Vault/ESO are out of scope for kind K-checks).
 helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
   -n "${NS}" \
   -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
   -f "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
-  --wait --timeout 15m || {
+  --wait=false --timeout 15m || {
   dump_failure
   exit 1
 }
+echo "==> Wait for MCP Deployment Available"
+MCP_DEPLOY="$(kubectl -n "${NS}" get deploy -l "app.kubernetes.io/instance=${REL},app.kubernetes.io/name=clawql-mcp" \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | grep -v proxy | head -1 || true)"
+if [[ -z "${MCP_DEPLOY}" ]]; then
+  echo "FAIL: could not resolve MCP Deployment after helm install" >&2
+  dump_failure
+  exit 1
+fi
+echo "MCP Deployment: ${MCP_DEPLOY}"
+if ! kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=10m; then
+  dump_failure
+  exit 1
+fi
 
 echo "==> E1: live pod must carry CLAWQL_TIER=regulated (overlay must not wipe extraEnv)"
 kubectl -n "${NS}" get deploy -l "app.kubernetes.io/instance=${REL}" -o json \
@@ -443,12 +468,12 @@ fi
 MCP_PORT="$(kubectl -n "${NS}" get svc "${MCP_SVC}" -o jsonpath='{.spec.ports[0].port}')"
 echo "MCP Service: ${MCP_SVC}:${MCP_PORT}"
 
-# Positive: curl MinIO from a Job in NS (allowlist path)
+# Positive: curl LocalStack health from a Job in NS (same-namespace allow path)
 kubectl -n "${NS}" delete job clawql-net-pos --ignore-not-found
 kubectl -n "${NS}" create job clawql-net-pos --image=curlimages/curl:8.5.0 -- \
-  curl -sf -o /dev/null -w '%{http_code}' "http://clawql-minio.${NS}.svc.cluster.local:9000/minio/health/live"
+  curl -sf -o /dev/null -w '%{http_code}' "http://clawql-localstack.${NS}.svc.cluster.local:4566/_localstack/health"
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s
-echo "K4 positive OK: MinIO reachable from release namespace"
+echo "K4 positive OK: LocalStack reachable from release namespace"
 
 # Positive control for K3: same-namespace Job can resolve+reach MCP Service (or get HTTP response)
 kubectl -n "${NS}" delete job clawql-net-mcp-pos --ignore-not-found
