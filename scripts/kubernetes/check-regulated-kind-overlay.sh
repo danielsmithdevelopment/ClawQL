@@ -21,6 +21,7 @@ except ImportError:
         "extraEnvAppend",
         "envFromSecret",
         "networkPolicy",
+        "enableGrpc",
     }
     for line in text.splitlines():
         s = line.strip()
@@ -68,6 +69,7 @@ allowed_top = {
     "extraEnvAppend",
     "envFromSecret",
     "networkPolicy",
+    "enableGrpc",
 }
 extra = set(doc) - allowed_top
 if extra:
@@ -91,6 +93,8 @@ if "image" in doc:
         raise SystemExit(
             f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}"
         )
+if "enableGrpc" in doc and doc["enableGrpc"] is not False:
+    raise SystemExit("enableGrpc may only be false on the kind overlay (no gRPC TLS Secret)")
 if "networkPolicy" in doc:
     np = doc["networkPolicy"]
     if set(np) - {"defaultDeny"}:

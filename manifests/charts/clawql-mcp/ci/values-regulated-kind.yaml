@@ -8,6 +8,7 @@
 # - Local image repo/tag
 # - Host values: OIDC, LocalStack Object Lock S3, secret refs, CLAWQL_HOME
 # - NetworkPolicy extraEgress for in-cluster JWKS + LocalStack (private IPs)
+# - gRPC off (regulated requires GRPC_TLS_* certs; HTTP MCP is the kind surface)
 #
 # IMPORTANT: Helm replaces lists rather than merging them. Do NOT set
 # `extraEnv` here — that would wipe WORM / inference flags from
@@ -27,6 +28,10 @@ image:
   repository: clawql-mcp
   tag: regulated-kind
   pullPolicy: Never
+
+# Regulated gRPC refuses plaintext; kind has no TLS Secret mount yet. HTTP MCP
+# is the surface exercised by K1–K7 (proxy is nginx HTTP passthrough).
+enableGrpc: false
 
 # Allow MCP pods to reach in-cluster JWKS (80) and LocalStack S3 (4566).
 # Base default-deny only permits HTTP(S) to non-RFC1918 destinations.
