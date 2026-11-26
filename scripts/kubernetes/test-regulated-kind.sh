@@ -105,9 +105,15 @@ kubectl create namespace "${NS}"
 
 echo "==> Build + load PR MCP image"
 IMAGE_LOCAL="clawql-mcp:regulated-kind"
+# E4: only docker/Dockerfile --target runtime. Never fall back to a root
+# Dockerfile or COPY **/*.yaml (that glob can pick Istio YAML as a "Dockerfile").
 DOCKERFILE="${ROOT}/docker/Dockerfile"
 if [[ ! -f "${DOCKERFILE}" ]]; then
   echo "missing ${DOCKERFILE}" >&2
+  exit 1
+fi
+if [[ -e "${ROOT}/Dockerfile" ]]; then
+  echo "FAIL: refuse root Dockerfile — use docker/Dockerfile --target runtime only" >&2
   exit 1
 fi
 # Match docker-publish.yml: --file docker/Dockerfile --target runtime
@@ -226,6 +232,34 @@ helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
   exit 1
 }
 
+echo "==> E1: live pod must carry CLAWQL_TIER=regulated (overlay must not wipe extraEnv)"
+kubectl -n "${NS}" get deploy -l "app.kubernetes.io/instance=${REL}" -o json \
+  >"${ARTIFACT_DIR}/deploy-main.json"
+python3 - "${ARTIFACT_DIR}/deploy-main.json" <<'PY'
+import json, sys
+from pathlib import Path
+doc = json.loads(Path(sys.argv[1]).read_text())
+items = doc.get("items") or []
+if not items:
+    raise SystemExit("E1 FAIL: no deployments for release")
+found_tier = False
+for dep in items:
+    for c in dep["spec"]["template"]["spec"].get("containers") or []:
+        env = {e["name"]: e.get("value") for e in (c.get("env") or []) if "name" in e}
+        if env.get("CLAWQL_TIER") == "regulated":
+            found_tier = True
+        if env.get("CLAWQL_WORM_ENABLED") != "1" and "clawql-mcp" in c.get("name", ""):
+            # Main MCP container must keep regulated WORM flags
+            if c.get("name", "").endswith("clawql-mcp") or c.get("name") == dep["metadata"]["name"]:
+                if "CLAWQL_WORM_ENABLED" in env and env.get("CLAWQL_WORM_ENABLED") != "1":
+                    raise SystemExit(f"E1 FAIL: CLAWQL_WORM_ENABLED={env.get('CLAWQL_WORM_ENABLED')}")
+        if env.get("CLAWQL_INFERENCE_LOCAL_ONLY") == "0":
+            raise SystemExit("E1 FAIL: CLAWQL_INFERENCE_LOCAL_ONLY cleared")
+if not found_tier:
+    raise SystemExit("E1 FAIL: CLAWQL_TIER=regulated missing from pod env (extraEnv wiped?)")
+print("E1 OK: CLAWQL_TIER=regulated present on release")
+PY
+
 echo "==> K5: every Service is ClusterIP"
 kubectl -n "${NS}" get svc -o json >"${ARTIFACT_DIR}/services.json"
 python3 - "${ARTIFACT_DIR}/services.json" <<'PY'
@@ -297,40 +331,127 @@ assert digest.startswith("sha256:"), f"K7: nginx image must be digest-pinned, go
 print("K7 OK: mcpProxy nginx passthrough with digest", digest[:18] + "...")
 PY
 
-echo "==> K1: second install with CLAWQL_WORM_ENABLED=0 never Ready"
+echo "==> K1: second install with CLAWQL_WORM_ENABLED=0 never Ready (after image runs)"
+# Append WORM=0 after regulated extraEnv (do not --set extraEnv[0] — that wipes the list).
+cat >"${ARTIFACT_DIR}/values-wormoff-append.yaml" <<'EOF'
+extraEnvAppend:
+  - name: CLAWQL_WORM_ENABLED
+    value: "0"
+EOF
+# Merge kind host append + worm-off append into one list (Helm replaces lists).
+python3 - "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
+  "${ARTIFACT_DIR}/values-wormoff-append.yaml" \
+  "${ARTIFACT_DIR}/values-kind-wormoff.yaml" <<'PY'
+import sys
+from pathlib import Path
+try:
+    import yaml
+except ImportError:
+    raise SystemExit("PyYAML required to merge worm-off overlay")
+kind = yaml.safe_load(Path(sys.argv[1]).read_text()) or {}
+worm = yaml.safe_load(Path(sys.argv[2]).read_text()) or {}
+merged = dict(kind)
+merged["extraEnvAppend"] = list(kind.get("extraEnvAppend") or []) + list(
+    worm.get("extraEnvAppend") or []
+)
+Path(sys.argv[3]).write_text(yaml.safe_dump(merged, sort_keys=False))
+PY
 helm upgrade --install "${REL}-wormoff" "${ROOT}/manifests/charts/clawql-mcp" \
   -n "${NS}" \
   -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-  -f "${ROOT}/manifests/charts/clawql-mcp/ci/values-regulated-kind.yaml" \
-  --set "extraEnv[0].name=CLAWQL_WORM_ENABLED" \
-  --set "extraEnv[0].value=0" \
+  -f "${ARTIFACT_DIR}/values-kind-wormoff.yaml" \
   --wait=false || true
-sleep 20
-# Expect CrashLoop / not Ready
+
+# E2: do not treat ImagePullBackOff / ContainerCreating as a WORM refusal success.
+echo "==> K1 wait until worm-off containers leave image-pull / creating"
+WORMOFF_READY_TO_JUDGE=0
+for _ in $(seq 1 60); do
+  kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=${REL}-wormoff" -o json \
+    >"${ARTIFACT_DIR}/wormoff-pods.json" 2>/dev/null || echo '{}' >"${ARTIFACT_DIR}/wormoff-pods.json"
+  if python3 - "${ARTIFACT_DIR}/wormoff-pods.json" <<'PY'
+import json, sys
+from pathlib import Path
+doc = json.loads(Path(sys.argv[1]).read_text())
+items = doc.get("items") or []
+if not items:
+    raise SystemExit(2)
+for pod in items:
+    statuses = pod.get("status", {}).get("containerStatuses") or []
+    if not statuses:
+        raise SystemExit(2)
+    for cs in statuses:
+        waiting = (cs.get("state") or {}).get("waiting") or {}
+        reason = waiting.get("reason") or ""
+        if reason in ("ImagePullBackOff", "ErrImagePull", "ContainerCreating", "PodInitializing"):
+            raise SystemExit(2)
+        if (
+            cs.get("state", {}).get("running")
+            or cs.get("state", {}).get("terminated")
+            or (cs.get("lastState") or {}).get("terminated")
+        ):
+            raise SystemExit(0)
+raise SystemExit(2)
+PY
+  then
+    WORMOFF_READY_TO_JUDGE=1
+    break
+  fi
+  sleep 5
+done
+if [[ "${WORMOFF_READY_TO_JUDGE}" != "1" ]]; then
+  echo "K1 FAIL: worm-off pods never left image-pull/creating — cannot judge WORM refusal" >&2
+  exit 1
+fi
+
 READY="$(kubectl -n "${NS}" get pods -l app.kubernetes.io/instance="${REL}-wormoff" \
   -o jsonpath='{range .items[*]}{.status.containerStatuses[0].ready}{\"\\n\"}{end}' || true)"
 if echo "${READY}" | grep -qx true; then
   echo "K1 FAIL: worm-off release became Ready" >&2
   exit 1
 fi
-echo "K1 OK: worm-off release not Ready (positive control: main release Ready)"
+WORMOFF_LOGS="$(kubectl -n "${NS}" logs -l "app.kubernetes.io/instance=${REL}-wormoff" --all-containers --tail=200 2>/dev/null || true)"
+if ! echo "${WORMOFF_LOGS}" | grep -Eiq 'regulated.*WORM disabled|WORM disabled'; then
+  echo "K1 FAIL: worm-off pods not Ready but logs lack WORM refusal (may still be pulling)" >&2
+  echo "${WORMOFF_LOGS}" | tail -50 >&2 || true
+  exit 1
+fi
+echo "K1 OK: worm-off release not Ready; logs carry WORM refusal (positive control: main Ready)"
 kubectl -n "${NS}" wait --for=condition=ready pod -l "app.kubernetes.io/instance=${REL}" --timeout=120s
 
 echo "==> K3/K4 network policy probes (positive + negative)"
-# Positive: curl MinIO from a Job in NS
+# Resolve the real MCP Service name (fullname = Release.Name-clawql-mcp, not REL-mcp-http).
+MCP_SVC="$(kubectl -n "${NS}" get svc -l "app.kubernetes.io/instance=${REL},app.kubernetes.io/name=clawql-mcp" \
+  -o jsonpath='{.items[0].metadata.name}')"
+if [[ -z "${MCP_SVC}" ]]; then
+  echo "K3 FAIL: could not resolve MCP Service for release ${REL}" >&2
+  exit 1
+fi
+MCP_PORT="$(kubectl -n "${NS}" get svc "${MCP_SVC}" -o jsonpath='{.spec.ports[0].port}')"
+echo "MCP Service: ${MCP_SVC}:${MCP_PORT}"
+
+# Positive: curl MinIO from a Job in NS (allowlist path)
 kubectl -n "${NS}" delete job clawql-net-pos --ignore-not-found
 kubectl -n "${NS}" create job clawql-net-pos --image=curlimages/curl:8.5.0 -- \
-  curl -sf -o /dev/null -w '%{http_code}' "http://clawql-minio.${NS}.svc.cluster.local:9000/minio/health/live" || true
-kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s || \
-  echo "WARN: positive MinIO curl job did not complete (check NetworkPolicy allowlist)"
+  curl -sf -o /dev/null -w '%{http_code}' "http://clawql-minio.${NS}.svc.cluster.local:9000/minio/health/live"
+kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s
+echo "K4 positive OK: MinIO reachable from release namespace"
 
-# Negative: pod in other namespace should fail to reach MCP Service
+# Positive control for K3: same-namespace Job can resolve+reach MCP Service (or get HTTP response)
+kubectl -n "${NS}" delete job clawql-net-mcp-pos --ignore-not-found
+kubectl -n "${NS}" create job clawql-net-mcp-pos --image=curlimages/curl:8.5.0 -- \
+  sh -c "curl -sS --max-time 10 -o /dev/null -w '%{http_code}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz || true"
+kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-mcp-pos --timeout=60s
+echo "K3 positive OK: in-namespace Job reached ${MCP_SVC} (DNS+policy path works)"
+
+# Negative: pod in other namespace should fail to reach MCP Service (timeout/refused — not NXDOMAIN alone)
 kubectl create namespace clawql-net-deny --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n clawql-net-deny delete job clawql-net-neg --ignore-not-found
 kubectl -n clawql-net-deny create job clawql-net-neg --image=curlimages/curl:8.5.0 -- \
-  sh -c 'curl -sf --max-time 5 http://'"${REL}"'-mcp-http.'"${NS}"'.svc.cluster.local:8080/healthz && exit 1 || exit 0'
+  sh -c "out=\$(curl -sS --max-time 5 -o /dev/null -w '%{http_code}:%{errormsg}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz 2>&1 || true); echo \"\$out\"; echo \"\$out\" | grep -qi 'Could not resolve host' && exit 2; echo \"\$out\" | grep -E '^(000:|000\$)' >/dev/null && exit 0; exit 1"
 kubectl -n clawql-net-deny wait --for=condition=complete job/clawql-net-neg --timeout=60s
-echo "K3 OK: cross-namespace MCP call blocked (job succeeded only on failure)"
+NEG_LOG="$(kubectl -n clawql-net-deny logs job/clawql-net-neg 2>/dev/null || true)"
+echo "K3 neg log: ${NEG_LOG}"
+echo "K3 OK: cross-namespace MCP call blocked (not a DNS NXDOMAIN on wrong Service name)"
 
 echo "==> In-cluster wire rows 5–12 (Job)"
 # Placeholder: copy regulated-wire assertions into a Job image in a follow-up.

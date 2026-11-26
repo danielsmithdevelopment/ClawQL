@@ -460,6 +460,9 @@ spec:
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            {{- with .Values.extraEnvAppend }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- $dpEnabled := .Values.documentPipeline.enabled }}
           {{- $paperlessSecretManaged := and $dpEnabled .Values.documentPipeline.paperless.enabled (not .Values.documentPipeline.paperless.auth.existingSecret) }}
           {{- $stirlingSecretManaged := and $dpEnabled (not .Values.documentPipeline.stirling.auth.existingSecret) (ne .Values.documentPipeline.stirling.auth.apiKey "") }}

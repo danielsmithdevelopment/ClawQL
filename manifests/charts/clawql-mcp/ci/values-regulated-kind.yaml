@@ -7,6 +7,11 @@
 # - Kyverno image signature off (PR image is unsigned; D3 covers signing)
 # - Local image repo/tag
 # - Host values: OIDC, MinIO, secret refs
+#
+# IMPORTANT: Helm replaces lists rather than merging them. Do NOT set
+# `extraEnv` here — that would wipe CLAWQL_TIER / WORM / inference flags from
+# values-regulated.yaml. Host overrides go in `extraEnvAppend` (appended after
+# extraEnv in the Deployment template).
 
 security:
   kata:
@@ -22,7 +27,8 @@ image:
   pullPolicy: Never
 
 # Host / secret plumbing for the kind Job (Vault+ESO syncs clawql-provider-env).
-extraEnv:
+# Appended after values-regulated.yaml extraEnv — later duplicate names win.
+extraEnvAppend:
   - name: CLAWQL_AUTH_OIDC_JWKS_URL
     value: http://clawql-jwks.clawql.svc.cluster.local/.well-known/jwks.json
   - name: CLAWQL_AUTH_OIDC_ISSUER

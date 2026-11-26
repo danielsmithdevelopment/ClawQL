@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fail if ci/values-regulated-kind.yaml sets keys outside the D2 allowlist.
+# Also refuse `extraEnv` (Helm list-replace would wipe values-regulated.yaml).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -12,15 +13,21 @@ from pathlib import Path
 try:
     import yaml
 except ImportError:
-    # Fallback: minimal allowlist check via line prefixes when PyYAML missing.
     text = Path(sys.argv[1]).read_text()
-    allowed_roots = {"security", "kyverno", "image", "extraEnv", "envFromSecret"}
+    allowed_roots = {"security", "kyverno", "image", "extraEnvAppend", "envFromSecret"}
     for line in text.splitlines():
         s = line.strip()
         if not s or s.startswith("#"):
             continue
         if line and not line[0].isspace() and ":" in line:
             key = line.split(":", 1)[0].strip()
+            if key == "extraEnv":
+                print(
+                    "FAIL: overlay must not set extraEnv (Helm replaces lists; "
+                    "use extraEnvAppend)",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
             if key not in allowed_roots:
                 print(f"FAIL: overlay top-level key not allowed: {key}", file=sys.stderr)
                 sys.exit(1)
@@ -30,52 +37,27 @@ except ImportError:
 path = Path(sys.argv[1])
 doc = yaml.safe_load(path.read_text()) or {}
 
-allowed = {
-    ("security", "kata", "enabled"),
-    ("kyverno", "imageSignaturePolicy", "enabled"),
-    ("image", "repository"),
-    ("image", "tag"),
-    ("image", "pullPolicy"),
-    ("extraEnv",),  # list; validated separately
-    ("envFromSecret",),
+if "extraEnv" in doc:
+    raise SystemExit(
+        "overlay must not set extraEnv (Helm replaces lists and would wipe "
+        "CLAWQL_TIER/WORM/inference from values-regulated.yaml) — use extraEnvAppend"
+    )
+
+allowed_env = {
+    "CLAWQL_AUTH_OIDC_JWKS_URL",
+    "CLAWQL_AUTH_OIDC_ISSUER",
+    "CLAWQL_AUTH_OIDC_AUDIENCE",
+    "CLAWQL_WORM_S3_ENDPOINT",
+    "CLAWQL_WORM_S3_BUCKET",
+    "CLAWQL_WORM_S3_FORCE_PATH_STYLE",
+    "CLAWQL_WORM_S3_REGION",
 }
 
-def walk(obj, prefix=()):
-    if prefix == ("extraEnv",):
-        if not isinstance(obj, list):
-            raise SystemExit("extraEnv must be a list")
-        allowed_env = {
-            "CLAWQL_AUTH_OIDC_JWKS_URL",
-            "CLAWQL_AUTH_OIDC_ISSUER",
-            "CLAWQL_AUTH_OIDC_AUDIENCE",
-            "CLAWQL_WORM_S3_ENDPOINT",
-            "CLAWQL_WORM_S3_BUCKET",
-            "CLAWQL_WORM_S3_FORCE_PATH_STYLE",
-            "CLAWQL_WORM_S3_REGION",
-        }
-        for item in obj:
-            name = item.get("name")
-            if name not in allowed_env:
-                raise SystemExit(f"extraEnv name not allowed: {name}")
-            if set(item.keys()) - {"name", "value"}:
-                raise SystemExit(f"extraEnv item has unexpected keys: {item}")
-        return
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            walk(v, prefix + (k,))
-        return
-    if prefix not in allowed and not any(prefix[: len(a)] == a for a in allowed if len(a) < len(prefix)):
-        # leaf must match an allowed path exactly, or be under a list allow
-        if prefix not in allowed:
-            raise SystemExit(f"overlay key path not allowed: {'.'.join(prefix)}")
-
-# Validate structure: only allowed top-level keys
-allowed_top = {"security", "kyverno", "image", "extraEnv", "envFromSecret"}
+allowed_top = {"security", "kyverno", "image", "extraEnvAppend", "envFromSecret"}
 extra = set(doc) - allowed_top
 if extra:
     raise SystemExit(f"overlay top-level keys not allowed: {sorted(extra)}")
 
-# Nested allowlist
 if "security" in doc:
     sec = doc["security"]
     if set(sec) - {"kata"}:
@@ -91,9 +73,19 @@ if "kyverno" in doc:
         raise SystemExit("kyverno.imageSignaturePolicy may only set enabled")
 if "image" in doc:
     if set(doc["image"]) - {"repository", "tag", "pullPolicy"}:
-        raise SystemExit(f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}")
-if "extraEnv" in doc:
-    walk(doc["extraEnv"], ("extraEnv",))
+        raise SystemExit(
+            f"image keys not allowed: {sorted(set(doc['image'])-{'repository','tag','pullPolicy'})}"
+        )
+if "extraEnvAppend" in doc:
+    obj = doc["extraEnvAppend"]
+    if not isinstance(obj, list):
+        raise SystemExit("extraEnvAppend must be a list")
+    for item in obj:
+        name = item.get("name")
+        if name not in allowed_env:
+            raise SystemExit(f"extraEnvAppend name not allowed: {name}")
+        if set(item.keys()) - {"name", "value"}:
+            raise SystemExit(f"extraEnvAppend item has unexpected keys: {item}")
 if "envFromSecret" in doc and not isinstance(doc["envFromSecret"], str):
     raise SystemExit("envFromSecret must be a string")
 

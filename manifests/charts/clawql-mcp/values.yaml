@@ -1189,6 +1189,11 @@ streams:
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 
+# Appended after `extraEnv` in the MCP Deployment (and nats worker/bridge).
+# Use this in host/CI overlays so Helm list-replace does not wipe regulated
+# flags from values-regulated.yaml. Later duplicate names win in the container.
+extraEnvAppend: []
+
 # Optional: load env vars from an existing Secret (keys become env var names).
 # Default name matches External Secrets + `make bootstrap-vault-eso` ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
 envFromSecret: clawql-provider-env
