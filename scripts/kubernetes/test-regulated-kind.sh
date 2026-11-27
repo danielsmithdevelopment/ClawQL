@@ -97,6 +97,19 @@ wait_cosign_policy() {
   return 1
 }
 
+# N3: patch only the Cosign ClusterPolicy. A full helm upgrade re-applies the
+# MCP Deployment under the new subject, so Kyverno denies the upgrade itself
+# (and SSA also fights Vault's MutatingWebhookConfiguration.caBundle).
+patch_cosign_subject() {
+  local want_subj="$1"
+  local name
+  name="$(cosign_policy_name)"
+  local patch
+  patch="$(python3 -c 'import json,sys; print(json.dumps([{"op":"replace","path":"/spec/rules/0/verifyImages/0/attestors/0/entries/0/keyless/subjectRegExp","value":sys.argv[1]}]))' "${want_subj}")"
+  kubectl patch clusterpolicy "${name}" --type=json -p "${patch}"
+  wait_cosign_policy "${want_subj}"
+}
+
 # Probe pod create with the signed digest (shared shape for N3/N4 positive + negative).
 run_signed_probe_pod() {
   local name="$1"
@@ -787,13 +800,7 @@ if [[ "${MODE}" == "signed" ]]; then
 
   BAD_SUBJECT='^https://example\.invalid/no-match$'
   echo "==> N3: impossible subjectRegExp must deny the real signed image"
-  helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
-    -n "${NS}" \
-    -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-    -f "${OVERLAY}" \
-    --set-string "kyverno.imageSignaturePolicy.cosign.subjectRegExp=${BAD_SUBJECT}" \
-    --wait=false --timeout 5m
-  wait_cosign_policy "${BAD_SUBJECT}"
+  patch_cosign_subject "${BAD_SUBJECT}"
   set +e
   N3_OUT="$(run_signed_probe_pod clawql-n3-subject 2>&1)"
   N3_RC=$?
@@ -802,20 +809,18 @@ if [[ "${MODE}" == "signed" ]]; then
   if [[ "${N3_RC}" -eq 0 ]]; then
     echo "N3 FAIL: signed image admitted under non-matching subjectRegExp" >&2
     kubectl -n "${NS}" delete pod clawql-n3-subject --ignore-not-found || true
+    patch_cosign_subject "${REAL_SUBJECT}" || true
     exit 1
   fi
   if ! echo "${N3_OUT}" | grep -Eiq "${VERIFY_DENY_RE}"; then
     echo "N3 FAIL: deny was not a Kyverno verifyImages/signature failure" >&2
+    # Always restore real subject before exiting so N4/cleanup are not left poisoned.
+    patch_cosign_subject "${REAL_SUBJECT}" || true
     exit 1
   fi
   echo "N3 OK: subject pin checked (verifyImages deny)"
-  # Restore real subjectRegExp and wait until Ready again.
-  helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
-    -n "${NS}" \
-    -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
-    -f "${OVERLAY}" \
-    --wait=false --timeout 5m
-  wait_cosign_policy "${REAL_SUBJECT}"
+  # Restore real subjectRegExp (policy patch only — no helm re-apply of Deployment).
+  patch_cosign_subject "${REAL_SUBJECT}"
 
   echo "==> N4 positive control: same pod shape admitted with admission up"
   if ! run_signed_probe_pod clawql-n4-pos; then
