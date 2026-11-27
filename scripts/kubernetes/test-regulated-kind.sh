@@ -745,7 +745,7 @@ PY
 done
 if [[ "${K1_PASS}" != "1" ]]; then
   echo "K1 FAIL: timed out waiting for WORM refusal + crash/not-Ready" >&2
-  cat "${ARTIFACT_DIR}/wormoff-logs.txt" | tail -50 >&2 || true
+  tail -50 "${ARTIFACT_DIR}/wormoff-logs.txt" >&2 || true
   kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o wide >&2 || true
   exit 1
 fi
