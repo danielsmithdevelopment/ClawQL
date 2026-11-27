@@ -419,7 +419,8 @@ if [[ "${MODE}" == "signed" ]]; then
     sudo mv /tmp/cosign /usr/local/bin/cosign
   fi
   need_cmd cosign
-  COSIGN_ID_RE="${CLAWQL_COSIGN_IDENTITY_REGEXP:-^https://github\\.com/danielsmithdevelopment/ClawQL/.*}"
+  # Same subject pin as Kyverno (REAL_SUBJECT / docker-publish.yml), not any workflow in the repo.
+  COSIGN_ID_RE="${CLAWQL_COSIGN_IDENTITY_REGEXP:-${REAL_SUBJECT}}"
   COSIGN_ISS_RE="${CLAWQL_COSIGN_ISSUER_REGEXP:-^https://token\\.actions\\.githubusercontent\\.com.*}"
   cosign verify "${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
     --certificate-identity-regexp "${COSIGN_ID_RE}" \
@@ -668,8 +669,17 @@ if [[ "${WORMOFF_READY_TO_JUDGE}" != "1" ]]; then
   exit 1
 fi
 
-READY="$(kubectl -n "${NS}" get pods -l app.kubernetes.io/instance=clawql-wormoff \
-  -o jsonpath='{range .items[*]}{.status.containerStatuses[0].ready}{\"\\n\"}{end}' || true)"
+# Prefer python over kubectl jsonpath — nested escapes like {\"\\n\"} break the parser.
+kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o json \
+  >"${ARTIFACT_DIR}/wormoff-pods.json" 2>/dev/null || echo '{}' >"${ARTIFACT_DIR}/wormoff-pods.json"
+READY="$(python3 - "${ARTIFACT_DIR}/wormoff-pods.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+for it in d.get("items") or []:
+    for cs in (it.get("status") or {}).get("containerStatuses") or []:
+        print("true" if cs.get("ready") else "false")
+PY
+)"
 if echo "${READY}" | grep -qx true; then
   echo "K1 FAIL: worm-off deployment became Ready" >&2
   exit 1

@@ -75,7 +75,8 @@ FROM oven/bun@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be3
 
 # Default host MCP runtime: Bun --smol on Distroless cc (CA + glibc + libstdc++, no shell).
 # Digest bump: debian 13 cc (2026-10-21 pull).
-FROM gcr.io/distroless/cc-debian13@sha256:b2e43dc72acf58a146ed6feaf350806ae3bf4243eb5c68062d06bc13228ca2bd AS runtime
+# Pin refreshed 2026-11-27: zlib1g / libzstd1 +deb13u1 (CVE-2026-85091 / CVE-2026-124851).
+FROM gcr.io/distroless/cc-debian13@sha256:e8343d4a7da8bb210df0c3ea29de38bbadbba6c773bed0cd8bde506fca3a5c44 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -111,7 +112,7 @@ CMD ["dist/server-http.js"]
 # Minority escape: Node distroless (legacy host). Build with --target runtime-node.
 # Digest bump: debian 13.7 base clears libssl3t64 CVE-2026-75804 / CVE-2026-84782
 # (prior pin had 3.5.7-1~deb13u2; latest scans clean HIGH/CRITICAL as of 2026-10-06).
-FROM gcr.io/distroless/nodejs24-debian13@sha256:96df910f65fdd8a21d00d14d4cc046adcfcf3ced2d5e96be4b39ebde9f4866c6 AS runtime-node
+FROM gcr.io/distroless/nodejs24-debian13@sha256:235cae47d37e0ba4ab70a723ed0bfd4f619c04d16d4226371d5d0c71a52f9211 AS runtime-node
 WORKDIR /app
 
 ENV NODE_ENV=production
