@@ -32,6 +32,8 @@ CALICO_VERSION="${CLAWQL_CALICO_VERSION:-v3.29.2}"
 KYVERNO_CHART_VERSION="${CLAWQL_KYVERNO_CHART_VERSION:-3.7.2}"
 SIGNED_IMAGE_REPO="${CLAWQL_SIGNED_IMAGE_REPO:-ghcr.io/danielsmithdevelopment/clawql-mcp}"
 SIGNED_IMAGE_TAG="${CLAWQL_SIGNED_IMAGE_TAG:-nightly}"
+# Must match values-regulated.yaml kyverno.imageSignaturePolicy.cosign.subjectRegExp.
+REAL_SUBJECT='^https://github\.com/danielsmithdevelopment/ClawQL/\.github/workflows/docker-publish\.yml@refs/(heads/main|tags/v.*)$'
 ARTIFACT_DIR="${CLAWQL_REGULATED_KIND_ARTIFACTS:-/tmp/clawql-regulated-kind-artifacts}"
 mkdir -p "${ARTIFACT_DIR}"
 
@@ -56,6 +58,54 @@ need_cmd() {
     echo "missing required command: $1" >&2
     exit 1
   }
+}
+
+# D3 helpers — Cosign ClusterPolicy name matches the chart default for REL.
+cosign_policy_name() {
+  printf '%s-ghcr-cosign-keyless' "${REL}" | cut -c1-63 | sed 's/-$//'
+}
+
+# M2: wait until ClusterPolicy carries the expected subjectRegExp and reports Ready.
+wait_cosign_policy() {
+  local want_subj="$1"
+  local name
+  name="$(cosign_policy_name)"
+  local _try subj ready gen observed
+  for _try in $(seq 1 90); do
+    if ! kubectl get clusterpolicy "${name}" >/dev/null 2>&1; then
+      sleep 2
+      continue
+    fi
+    subj="$(kubectl get clusterpolicy "${name}" -o jsonpath='{.spec.rules[0].verifyImages[0].attestors[0].entries[0].keyless.subjectRegExp}' 2>/dev/null || true)"
+    ready="$(kubectl get clusterpolicy "${name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || true)"
+    if [[ -z "${ready}" ]]; then
+      ready="$(kubectl get clusterpolicy "${name}" -o jsonpath='{.status.ready}' 2>/dev/null || true)"
+      if [[ "${ready}" == "true" ]]; then ready="True"; fi
+    fi
+    gen="$(kubectl get clusterpolicy "${name}" -o jsonpath='{.metadata.generation}' 2>/dev/null || true)"
+    observed="$(kubectl get clusterpolicy "${name}" -o jsonpath='{.status.observedGeneration}' 2>/dev/null || true)"
+    if [[ "${subj}" == "${want_subj}" && "${ready}" == "True" ]]; then
+      if [[ -z "${observed}" || "${observed}" == "${gen}" ]]; then
+        echo "ClusterPolicy ${name} Ready with subjectRegExp=${subj}"
+        return 0
+      fi
+    fi
+    sleep 2
+  done
+  echo "FAIL: ClusterPolicy ${name} never Ready with subjectRegExp=${want_subj}" >&2
+  kubectl get clusterpolicy "${name}" -o yaml >&2 || true
+  return 1
+}
+
+# Probe pod create with the signed digest (shared shape for N3/N4 positive + negative).
+run_signed_probe_pod() {
+  local name="$1"
+  kubectl -n "${NS}" delete pod "${name}" --ignore-not-found >/dev/null 2>&1 || true
+  kubectl -n "${NS}" run "${name}" \
+    --image="${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
+    --image-pull-policy=IfNotPresent --restart=Never \
+    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
+    --command -- sleep 5
 }
 
 echo "==> Overlay allowlist check (mode=${MODE})"
@@ -156,9 +206,9 @@ if [[ "${MODE}" == "signed" ]]; then
   fi
   echo "Published digest: ${PUBLISHED_DIGEST}"
   echo "${PUBLISHED_DIGEST}" >"${ARTIFACT_DIR}/published-digest.txt"
-  # Pre-pull into kind so ImagePullBackOff does not masquerade as Cosign deny.
-  docker pull "${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}"
-  kind load docker-image "${SIGNED_IMAGE_REPO}:${SIGNED_IMAGE_TAG}" --name "${CLUSTER_NAME}"
+  # M5: do not kind-load the tag — pods pull by digest from public GHCR.
+  # A tag load often carries no repo digest, so it does not prevent ImagePullBackOff
+  # when the pod asks for @sha256:…. Let the node pull the digest directly.
 else
   echo "==> Build + load PR MCP image"
   IMAGE_LOCAL="clawql-mcp:regulated-kind"
@@ -361,7 +411,23 @@ if [[ "${MODE}" == "signed" ]]; then
     echo "N1 FAIL: live digest ${LIVE_DIGEST} != published ${PUBLISHED_DIGEST}" >&2
     exit 1
   fi
-  echo "N1 OK: pod image is ${LIVE_DIGEST}"
+  # M6: second source — cosign verify with the same identity docker-publish uses.
+  if ! command -v cosign >/dev/null 2>&1; then
+    curl -fsSL -o /tmp/cosign \
+      "https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-linux-amd64"
+    chmod +x /tmp/cosign
+    sudo mv /tmp/cosign /usr/local/bin/cosign
+  fi
+  need_cmd cosign
+  COSIGN_ID_RE="${CLAWQL_COSIGN_IDENTITY_REGEXP:-^https://github\\.com/danielsmithdevelopment/ClawQL/.*}"
+  COSIGN_ISS_RE="${CLAWQL_COSIGN_ISSUER_REGEXP:-^https://token\\.actions\\.githubusercontent\\.com.*}"
+  cosign verify "${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
+    --certificate-identity-regexp "${COSIGN_ID_RE}" \
+    --certificate-oidc-issuer-regexp "${COSIGN_ISS_RE}" \
+    | tee "${ARTIFACT_DIR}/n1-cosign-verify.txt"
+  echo "N1 OK: pod image is ${LIVE_DIGEST}; cosign verify passed"
+  # Wait for the release Cosign policy to be Ready before N2–N4.
+  wait_cosign_policy "${REAL_SUBJECT}"
 fi
 
 echo "==> E1/H1: live MCP pod must carry every regulated extraEnv (not only CLAWQL_TIER)"
@@ -672,7 +738,12 @@ echo "==> In-cluster wire rows 5–12 (Job)"
 echo "NOTE: full in-cluster D1 matrix Job is staged; chart checks K1/K5/K6/K7 ran."
 
 if [[ "${MODE}" == "signed" ]]; then
-  echo "==> N2: unsigned local image must be denied by Cosign"
+  # Kyverno verifyImages / Cosign denial (N2/N3) — not generic "denied".
+  VERIFY_DENY_RE='verifyImages|image verification|signature.*verif|cosign|no matching signatures|subject.*match'
+  # N4 fail-closed: webhook unreachable with failurePolicy=Fail.
+  WEBHOOK_DENY_RE='failed calling webhook|no endpoints available|connection refused|webhook.*kyverno|context deadline|ServiceUnavailable'
+
+  echo "==> N2: unsigned local image must be denied by Cosign verifyImages"
   UNSIGNED_TAG="${SIGNED_IMAGE_REPO}:unsigned-ci"
   docker build -t "${UNSIGNED_TAG}" -f "${ROOT}/docker/Dockerfile" --target runtime "${ROOT}"
   kind load docker-image "${UNSIGNED_TAG}" --name "${CLUSTER_NAME}"
@@ -690,28 +761,31 @@ if [[ "${MODE}" == "signed" ]]; then
     kubectl -n "${NS}" delete pod clawql-n2-unsigned --ignore-not-found || true
     exit 1
   fi
-  if ! echo "${N2_OUT}" | grep -Eiq 'kyverno|verifyImages|signature|cosign|denied|block'; then
-    echo "N2 FAIL: admission failed without a Cosign/Kyverno deny signal" >&2
+  if ! echo "${N2_OUT}" | grep -Eiq "${VERIFY_DENY_RE}"; then
+    echo "N2 FAIL: admission failed without a verifyImages/signature signal" >&2
     exit 1
   fi
-  echo "N2 OK: unsigned image denied"
+  echo "N2 OK: unsigned image denied by verifyImages"
 
+  echo "==> N3 positive control: same pod shape admitted under real subject"
+  if ! run_signed_probe_pod clawql-n3-pos; then
+    echo "N3 FAIL: positive control could not admit signed image under real subject" >&2
+    exit 1
+  fi
+  kubectl -n "${NS}" delete pod clawql-n3-pos --ignore-not-found
+  echo "N3 positive OK"
+
+  BAD_SUBJECT='^https://example\.invalid/no-match$'
   echo "==> N3: impossible subjectRegExp must deny the real signed image"
   helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
     -n "${NS}" \
     -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
     -f "${OVERLAY}" \
-    --set-string 'kyverno.imageSignaturePolicy.cosign.subjectRegExp=^https://example\.invalid/no-match$' \
+    --set-string "kyverno.imageSignaturePolicy.cosign.subjectRegExp=${BAD_SUBJECT}" \
     --wait=false --timeout 5m
-  # Wait briefly for ClusterPolicy hook to re-apply.
-  sleep 5
+  wait_cosign_policy "${BAD_SUBJECT}"
   set +e
-  kubectl -n "${NS}" delete pod clawql-n3-subject --ignore-not-found >/dev/null 2>&1
-  N3_OUT="$(kubectl -n "${NS}" run clawql-n3-subject \
-    --image="${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
-    --image-pull-policy=IfNotPresent --restart=Never \
-    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
-    --command -- sleep 5 2>&1)"
+  N3_OUT="$(run_signed_probe_pod clawql-n3-subject 2>&1)"
   N3_RC=$?
   set -e
   echo "${N3_OUT}" | tee "${ARTIFACT_DIR}/n3-subject.txt"
@@ -720,43 +794,66 @@ if [[ "${MODE}" == "signed" ]]; then
     kubectl -n "${NS}" delete pod clawql-n3-subject --ignore-not-found || true
     exit 1
   fi
-  echo "N3 OK: subject pin checked (deny under impossible subjectRegExp)"
-  # Restore real subjectRegExp from values-regulated / overlay.
+  if ! echo "${N3_OUT}" | grep -Eiq "${VERIFY_DENY_RE}"; then
+    echo "N3 FAIL: deny was not a Kyverno verifyImages/signature failure" >&2
+    exit 1
+  fi
+  echo "N3 OK: subject pin checked (verifyImages deny)"
+  # Restore real subjectRegExp and wait until Ready again.
   helm upgrade --install "${REL}" "${ROOT}/manifests/charts/clawql-mcp" \
     -n "${NS}" \
     -f "${ROOT}/manifests/charts/clawql-mcp/values-regulated.yaml" \
     -f "${OVERLAY}" \
     --wait=false --timeout 5m
-  sleep 5
+  wait_cosign_policy "${REAL_SUBJECT}"
 
-  echo "==> N4: Kyverno admission scaled to 0 must fail closed"
-  ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | grep -E 'admission|kyverno' | head -1 || true)"
+  echo "==> N4 positive control: same pod shape admitted with admission up"
+  if ! run_signed_probe_pod clawql-n4-pos; then
+    echo "N4 FAIL: positive control could not admit signed image with Kyverno up" >&2
+    exit 1
+  fi
+  kubectl -n "${NS}" delete pod clawql-n4-pos --ignore-not-found
+  echo "N4 positive OK"
+
+  echo "==> N4: Kyverno admission scaled to 0 must fail closed (webhook error)"
+  ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | grep -E 'admission' | head -1 || true)"
+  if [[ -z "${ADM_DEPLOY}" ]]; then
+    ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | head -1 || true)"
+  fi
   if [[ -z "${ADM_DEPLOY}" ]]; then
     echo "N4 FAIL: could not find Kyverno admission Deployment" >&2
     exit 1
   fi
   kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=0
-  kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=120s || true
+  # Wait until no ready replicas (rollout status with 0 can succeed immediately).
+  for _ in $(seq 1 60); do
+    ready="$(kubectl -n kyverno get "${ADM_DEPLOY}" -o jsonpath='{.status.readyReplicas}' 2>/dev/null || true)"
+    if [[ -z "${ready}" || "${ready}" == "0" ]]; then
+      break
+    fi
+    sleep 2
+  done
   set +e
-  kubectl -n "${NS}" delete pod clawql-n4-failclosed --ignore-not-found >/dev/null 2>&1
-  N4_OUT="$(kubectl -n "${NS}" run clawql-n4-failclosed \
-    --image="${SIGNED_IMAGE_REPO}@${PUBLISHED_DIGEST}" \
-    --image-pull-policy=IfNotPresent --restart=Never \
-    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
-    --command -- sleep 5 2>&1)"
+  N4_OUT="$(run_signed_probe_pod clawql-n4-failclosed 2>&1)"
   N4_RC=$?
   set -e
   echo "${N4_OUT}" | tee "${ARTIFACT_DIR}/n4-failclosed.txt"
   kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1
   kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=180s
+  wait_cosign_policy "${REAL_SUBJECT}" || true
   if [[ "${N4_RC}" -eq 0 ]]; then
     echo "N4 FAIL: pod admitted while Kyverno admission was scaled to 0 (not fail-closed)" >&2
     kubectl -n "${NS}" delete pod clawql-n4-failclosed --ignore-not-found || true
     exit 1
   fi
-  echo "N4 OK: failurePolicy=Fail denied create with admission down"
+  if ! echo "${N4_OUT}" | grep -Eiq "${WEBHOOK_DENY_RE}"; then
+    echo "N4 FAIL: deny was not a webhook call failure (failurePolicy=Fail)" >&2
+    exit 1
+  fi
+  echo "N4 OK: failurePolicy=Fail denied create with admission down (webhook error)"
 
-  echo "regulated-kind SIGNED: N1–N4 Cosign matrix + N5 (D2 K-checks) green"
+  # M3: N5 reuses D2's PARTIAL scope (K2 / K4-neg / in-cluster D1 still scaffolding).
+  echo "regulated-kind SIGNED PARTIAL: N1–N4 Cosign matrix green; N5 inherits D2 PARTIAL (K2/K4-neg/in-cluster D1 still scaffolding)"
   echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
 else
   echo "regulated-kind PARTIAL: K1/K5/K6/K7 + E1/H1 env compare green; K2/K4-neg/in-cluster D1 matrix still scaffolding"

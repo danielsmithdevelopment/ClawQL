@@ -71,6 +71,9 @@ jobs.
   `CLAWQL_REGULATED_KIND_MODE=partial` (local unsigned image, Cosign off).
 - **D3 (nightly / dispatch):** `regulated-kind-signed.yml` → same driver with
   `MODE=signed` (published GHCR `:nightly`, Kyverno Cosign on, N1–N5).
+  Summary prints **SIGNED PARTIAL** until K2 / K4-neg / in-cluster D1 land.
+  N3/N4 require a positive control (same pod shape admitted under the real
+  subject) and match verifyImages vs webhook-unreachable denials specifically.
 
 Kata stays disabled on kind — not runtime-isolation evidence.
 ## Evidence wording
