@@ -682,25 +682,71 @@ if [[ "${WORMOFF_READY_TO_JUDGE}" != "1" ]]; then
   exit 1
 fi
 
-# Prefer python over kubectl jsonpath — nested escapes like {\"\\n\"} break the parser.
-kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o json \
-  >"${ARTIFACT_DIR}/wormoff-pods.json" 2>/dev/null || echo '{}' >"${ARTIFACT_DIR}/wormoff-pods.json"
-READY="$(python3 - "${ARTIFACT_DIR}/wormoff-pods.json" <<'PY'
+# Without probes, Ready flips as soon as the process starts — before the regulated
+# boot refuse can exit. Do not fail on the first ready=true sample; poll until we
+# see the WORM refusal log plus a crash/not-Ready signal, or time out.
+echo "==> K1 wait for WORM refusal log + crash/not-Ready (Ready can flip briefly)"
+K1_PASS=0
+READY_STREAK=0
+for _ in $(seq 1 36); do
+  kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o json \
+    >"${ARTIFACT_DIR}/wormoff-pods.json" 2>/dev/null || echo '{}' >"${ARTIFACT_DIR}/wormoff-pods.json"
+  WORMOFF_LOGS="$(kubectl -n "${NS}" logs -l "app.kubernetes.io/instance=clawql-wormoff" --all-containers --tail=200 2>/dev/null || true)"
+  echo "${WORMOFF_LOGS}" >"${ARTIFACT_DIR}/wormoff-logs.txt"
+  JUDGE="$(python3 - "${ARTIFACT_DIR}/wormoff-pods.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
+ready_any = False
+crash_or_down = False
 for it in d.get("items") or []:
     for cs in (it.get("status") or {}).get("containerStatuses") or []:
-        print("true" if cs.get("ready") else "false")
+        if cs.get("ready"):
+            ready_any = True
+        st = cs.get("state") or {}
+        waiting = (st.get("waiting") or {}).get("reason") or ""
+        if waiting in ("CrashLoopBackOff", "Error", "CreateContainerConfigError"):
+            crash_or_down = True
+        if st.get("terminated") or ((cs.get("lastState") or {}).get("terminated")):
+            crash_or_down = True
+        if int(cs.get("restartCount") or 0) >= 1:
+            crash_or_down = True
+        if not cs.get("ready") and not st.get("running"):
+            crash_or_down = True
+print("ready" if ready_any else "not_ready")
+print("crash" if crash_or_down else "stable")
 PY
 )"
-if echo "${READY}" | grep -qx true; then
-  echo "K1 FAIL: worm-off deployment became Ready" >&2
-  exit 1
-fi
-WORMOFF_LOGS="$(kubectl -n "${NS}" logs -l "app.kubernetes.io/instance=clawql-wormoff" --all-containers --tail=200 2>/dev/null || true)"
-if ! echo "${WORMOFF_LOGS}" | grep -Eiq 'regulated.*WORM disabled|WORM disabled'; then
-  echo "K1 FAIL: worm-off pods not Ready but logs lack WORM refusal (may still be pulling)" >&2
-  echo "${WORMOFF_LOGS}" | tail -50 >&2 || true
+  READY_LINE="$(echo "${JUDGE}" | sed -n '1p')"
+  CRASH_LINE="$(echo "${JUDGE}" | sed -n '2p')"
+  HAS_WORM=0
+  if echo "${WORMOFF_LOGS}" | grep -Eiq 'regulated.*WORM disabled|WORM disabled'; then
+    HAS_WORM=1
+  fi
+  if [[ "${HAS_WORM}" -eq 1 && "${CRASH_LINE}" == "crash" ]]; then
+    K1_PASS=1
+    break
+  fi
+  if [[ "${HAS_WORM}" -eq 1 && "${READY_LINE}" == "not_ready" ]]; then
+    K1_PASS=1
+    break
+  fi
+  if [[ "${READY_LINE}" == "ready" && "${HAS_WORM}" -eq 0 ]]; then
+    READY_STREAK=$((READY_STREAK + 1))
+  else
+    READY_STREAK=0
+  fi
+  # ~60s of Ready without a WORM refusal line → the gate is not firing.
+  if [[ "${READY_STREAK}" -ge 12 ]]; then
+    echo "K1 FAIL: worm-off pods stayed Ready without a WORM refusal log" >&2
+    echo "${WORMOFF_LOGS}" | tail -50 >&2 || true
+    exit 1
+  fi
+  sleep 5
+done
+if [[ "${K1_PASS}" != "1" ]]; then
+  echo "K1 FAIL: timed out waiting for WORM refusal + crash/not-Ready" >&2
+  tail -50 "${ARTIFACT_DIR}/wormoff-logs.txt" >&2 || true
+  kubectl -n "${NS}" get pods -l "app.kubernetes.io/instance=clawql-wormoff" -o wide >&2 || true
   exit 1
 fi
 echo "K1 OK: worm-off Deployment not Ready; logs carry WORM refusal (positive control: main Ready)"
