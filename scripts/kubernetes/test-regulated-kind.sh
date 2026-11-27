@@ -839,15 +839,81 @@ if [[ "${MODE}" == "signed" ]]; then
     echo "N4 FAIL: could not find Kyverno admission Deployment" >&2
     exit 1
   fi
+  # Service that backs mutate.kyverno.svc-fail / validate.kyverno.svc-fail.
+  ADM_SVC="$(kubectl -n kyverno get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
+    | grep -E 'svc$|admission' | head -1 || true)"
+  if [[ -z "${ADM_SVC}" ]]; then
+    echo "N4 FAIL: could not find Kyverno admission Service" >&2
+    kubectl -n kyverno get svc >&2 || true
+    exit 1
+  fi
+  # Confirm fail-closed webhooks exist (ClusterPolicy failurePolicy alone is not enough).
+  if ! kubectl get mutatingwebhookconfiguration,validatingwebhookconfiguration -o yaml 2>/dev/null \
+    | grep -Eiq 'failurePolicy:\s*Fail'; then
+    echo "N4 FAIL: no Mutating/ValidatingWebhookConfiguration with failurePolicy=Fail" >&2
+    exit 1
+  fi
   kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=0
-  # Wait until no ready replicas (rollout status with 0 can succeed immediately).
-  for _ in $(seq 1 60); do
+  # Force-delete terminating admission pods so Endpoints clear; readyReplicas==0 alone races.
+  kubectl -n kyverno delete pods \
+    -l 'app.kubernetes.io/component in (admission-controller,admission)' \
+    --force --grace-period=0 --ignore-not-found >/dev/null 2>&1 || true
+  # Fallback by name if labels differ across Kyverno chart versions.
+  while read -r pod; do
+    [[ -z "${pod}" ]] && continue
+    kubectl -n kyverno delete "${pod}" --force --grace-period=0 --ignore-not-found >/dev/null 2>&1 || true
+  done < <(kubectl -n kyverno get pods -o name 2>/dev/null | grep -E 'admission' || true)
+  ENDPOINTS_CLEARED=0
+  for _ in $(seq 1 90); do
     ready="$(kubectl -n kyverno get "${ADM_DEPLOY}" -o jsonpath='{.status.readyReplicas}' 2>/dev/null || true)"
-    if [[ -z "${ready}" || "${ready}" == "0" ]]; then
+    # Prefer EndpointSlice ready count; fall back to classic Endpoints addresses.
+    addrs="$(python3 - "${ADM_SVC}" <<'PY'
+import json, subprocess, sys
+svc = sys.argv[1]
+n = 0
+try:
+    slices = json.loads(subprocess.check_output(
+        ["kubectl", "-n", "kyverno", "get", "endpointslices",
+         "-l", f"kubernetes.io/service-name={svc}", "-o", "json"],
+        stderr=subprocess.DEVNULL, text=True))
+    items = slices.get("items") or []
+    if items:
+        for it in items:
+            for ep in it.get("endpoints") or []:
+                cond = ep.get("conditions") or {}
+                if cond.get("ready", True) is False:
+                    continue
+                n += 1
+        print(n)
+        raise SystemExit
+except Exception:
+    pass
+try:
+    ep = json.loads(subprocess.check_output(
+        ["kubectl", "-n", "kyverno", "get", "endpoints", svc, "-o", "json"],
+        stderr=subprocess.DEVNULL, text=True))
+    for s in ep.get("subsets") or []:
+        n += len(s.get("addresses") or [])
+except Exception:
+    n = 1
+print(n)
+PY
+)"
+    if [[ -z "${ready}" || "${ready}" == "0" ]] && [[ "${addrs}" == "0" ]]; then
+      ENDPOINTS_CLEARED=1
+      echo "Kyverno admission down: readyReplicas=0 endpoints=${ADM_SVC}=0"
       break
     fi
     sleep 2
   done
+  if [[ "${ENDPOINTS_CLEARED}" != "1" ]]; then
+    echo "N4 FAIL: Kyverno admission Service ${ADM_SVC} still has endpoints after scale to 0" >&2
+    kubectl -n kyverno get "${ADM_DEPLOY}" -o wide >&2 || true
+    kubectl -n kyverno get endpoints "${ADM_SVC}" -o yaml >&2 || true
+    kubectl -n kyverno get pods -o wide >&2 || true
+    kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1 || true
+    exit 1
+  fi
   set +e
   N4_OUT="$(run_signed_probe_pod clawql-n4-failclosed 2>&1)"
   N4_RC=$?
