@@ -104,13 +104,16 @@ remains the Cloud HTTP default: median **84** clients (`REPS=3`) and ~130 MB p
 **Peers over HTTP (this workflow):** ClawQL moves answers (`where`); peers move full
 DNS lists. Framing: fair, specific — not “peers are slower gateways.”
 
-**Executor v2 = 2 to 3 (HTTP multiplex):** stock `executor serve` beta.15; same
-`tools/call` p99 unit; **0 errors**. Throughput rises ~35→~58 RPS from 1→2 clients
-then plateaus (~50–58) while latency climbs — some parallelism (~1.7×), then
-queueing. Publish **2 to 3** (3 s window sits on the p99 threshold). Not the older
-stdio process-per-client ~19–23 ceiling. Page one-liner in the sanity note; RPS for
-all arms in [`http-concurrency-rps.md`](./http-concurrency-rps.md). Send Rhys the
-config before publish.
+**Executor v2 = 2 to 3 (HTTP multiplex):** stock `executor serve` **beta.15** (historical
+cell — **remeasure on tip Executor 2 / 2.0.0 in progress**); same `tools/call` p99
+unit; **0 errors**. Throughput rises ~35→~58 RPS from 1→2 clients then plateaus
+(~50–58) while latency climbs — some parallelism (~1.7×), then queueing. Publish
+**2 to 3** only while that β.15 artifact is the latest measured row (3 s window
+sits on the p99 threshold). Not the older stdio process-per-client ~19–23 ceiling.
+Page one-liner in the sanity note; RPS for all arms in
+[`http-concurrency-rps.md`](./http-concurrency-rps.md). **Send Rhys the config before
+publish** — draft: [`outreach-rhys-executor-draft.md`](./outreach-rhys-executor-draft.md);
+runbook: [`REMEASURE-v2.md`](./REMEASURE-v2.md).
 
 **Peer settings in this bench:** MCPJungle registered with `session_mode: stateful`
 (keeps stdio `cf-rest-mcp` warm — better than the product default of a new upstream

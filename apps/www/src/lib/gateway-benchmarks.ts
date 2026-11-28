@@ -14,7 +14,7 @@
 
 /** Shared label for Executor v2 β figures pending a stable remasure. */
 export const executorV2BetaMeasureNote =
-  'Measured on Executor 2.0.0-β.15 · remeasure on 2.0.0 in progress'
+  'Measured on Executor 2.0.0-β.15 · tip channel is executor@beta (2.0.0-β.37 as of 2026-11-05; npm latest still 1.6.11) · remasure on Executor 2 tip / 2.0.0 in progress'
 
 /** Set to an R2 (or CDN) HTTPS URL when the ~84s walkthrough is ready to embed. */
 export const BENCHMARK_VIDEO_SRC: string | null = null
