@@ -11,8 +11,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
-# D5: K2 / K4-neg / in-cluster wire helpers
-# shellcheck source=regulated-kind-d5.sh
+# D5: K2 / K4-neg / in-cluster wire helpers (also listed in scripts/*/*.sh for ShellCheck).
+# shellcheck disable=SC1091
 source "${ROOT}/scripts/kubernetes/regulated-kind-d5.sh"
 
 MODE="${CLAWQL_REGULATED_KIND_MODE:-partial}"
@@ -334,22 +334,35 @@ spec:
             failureThreshold: 40
 EOF
 
-# JWKS — mint EC P-256 per run (D5); nginx listens on :80; Service targets 80.
+# JWKS + petstore — mint EC P-256 per run (D5); nginx serves JWKS and OpenAPI.
 JWKS_DIR="$(mktemp -d)"
 d5_mint_jwks_keypair "${JWKS_DIR}"
 d5_apply_wire_signing_secret "${JWKS_DIR}/private.pem"
-JWKS_JSON_CONTENT="$(cat "${JWKS_DIR}/jwks.json")"
+# Petstore for CLAWQL_SPEC_URL (Helm overlay) — no live Deployment volume patch (P3).
+node --input-type=module -e "
+import { writeFileSync } from 'node:fs';
+const spec = {
+  openapi: '3.0.3',
+  info: { title: 'PetstoreWire', version: '1' },
+  servers: [{ url: 'http://clawql-wire-sink.${NS}.svc.cluster.local:8080' }],
+  paths: {
+    '/pets/{id}': {
+      patch: {
+        operationId: 'patchItem',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'ok' } },
+      },
+    },
+  },
+};
+writeFileSync('${JWKS_DIR}/petstore-patch.json', JSON.stringify(spec, null, 2) + '\n');
+"
+kubectl -n "${NS}" create configmap clawql-jwks \
+  --from-file=jwks.json="${JWKS_DIR}/jwks.json" \
+  --from-file=petstore-patch.json="${JWKS_DIR}/petstore-patch.json" \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n "${NS}" label configmap clawql-jwks clawql-kind-fixture=true --overwrite
 kubectl -n "${NS}" apply -f - <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: clawql-jwks
-  labels:
-    clawql-kind-fixture: "true"
-data:
-  jwks.json: |
-$(echo "${JWKS_JSON_CONTENT}" | sed 's/^/    /')
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -387,6 +400,9 @@ spec:
             - name: jwks
               mountPath: /usr/share/nginx/html/.well-known/jwks.json
               subPath: jwks.json
+            - name: jwks
+              mountPath: /usr/share/nginx/html/petstore-patch.json
+              subPath: petstore-patch.json
           ports:
             - containerPort: 80
           command: ["nginx", "-g", "daemon off;"]
@@ -395,7 +411,6 @@ spec:
           configMap:
             name: clawql-jwks
 EOF
-# Keep JWKS_DIR until wire Job finishes (private.pem already in Secret).
 
 echo "==> Wait for LocalStack + create Object Lock bucket clawql-worm"
 kubectl -n "${NS}" rollout status deployment/clawql-localstack --timeout=180s
@@ -826,10 +841,11 @@ echo "K3 neg log: ${NEG_LOG}"
 echo "K3 OK: cross-namespace MCP call blocked (not a DNS NXDOMAIN on wrong Service name)"
 
 # D5: K2 (missing secret), K4-neg (MCP netns), wire Job + row 8.
+# Wire settings come from the Helm overlay (P3) — no live Deployment/Service/NetPol patch.
 d5_run_k2_missing_secret
 d5_run_k4_negatives
 d5_build_wire_image
-d5_configure_mcp_for_wire
+d5_deploy_wire_sink
 d5_run_wire_job
 d5_run_row8_cli
 rm -rf "${JWKS_DIR}"

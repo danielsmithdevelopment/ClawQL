@@ -31,6 +31,9 @@ networkPolicy:
     # JWKS lab endpoints on private pod IPs — the base policy only allows
     # DNS plus HTTP(S) to non-RFC1918 destinations (external IdP / S3).
     extraEgress: []
+    # Extra same-namespace ingress ports (e.g. WORM HTTP on kind). Shape:
+    # [{ protocol: TCP, port: 9090 }].
+    extraIngressPorts: []
 
 imagePullSecrets: []
 
@@ -83,6 +86,9 @@ service:
   grpc:
     port: 50051
     targetPort: 50051
+  # Extra Service + container ports (e.g. kind wire WORM HTTP). Each entry:
+  # { name, port, targetPort, protocol? }.
+  extraPorts: []
   # Extra annotations on the MCP Service (merged after prometheus scrape annotations when enabled).
   annotations: {}
 

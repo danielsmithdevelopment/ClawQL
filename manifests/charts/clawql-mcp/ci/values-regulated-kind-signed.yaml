@@ -39,6 +39,19 @@ networkPolicy:
             port: 80
           - protocol: TCP
             port: 4566
+          - protocol: TCP
+            port: 8080
+    extraIngressPorts:
+      - protocol: TCP
+        port: 9090
+
+service:
+  extraPorts:
+    - name: worm-http
+      port: 9090
+      targetPort: 9090
+
+enableHitlLabelStudio: true
 
 extraEnvAppend:
   - name: CLAWQL_HOME
@@ -57,5 +70,25 @@ extraEnvAppend:
     value: "1"
   - name: CLAWQL_WORM_S3_REGION
     value: us-east-1
+  - name: CLAWQL_SPEC_URL
+    value: http://clawql-jwks.clawql.svc.cluster.local/petstore-patch.json
+  - name: CLAWQL_API_BASE_URL
+    value: http://clawql-wire-sink.clawql.svc.cluster.local:8080
+  - name: API_BASE_URL
+    value: http://clawql-wire-sink.clawql.svc.cluster.local:8080
+  - name: CLAWQL_PENDING_STORE
+    value: sqlite
+  - name: CLAWQL_SECRET_STORE
+    value: memory
+  - name: CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE
+    value: "1"
+  - name: CLAWQL_HTTP_SKIP_PAYMENTS
+    value: "1"
+  - name: CLAWQL_HTTP_SKIP_GRAPHQL
+    value: "1"
+  - name: CLAWQL_WORM_HTTP_PORT
+    value: "9090"
+  - name: CLAWQL_AUDIT_API_KEY
+    value: kind-wire-audit-key
 
 envFromSecret: clawql-provider-env

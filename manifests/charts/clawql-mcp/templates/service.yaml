@@ -41,3 +41,9 @@ spec:
       nodePort: {{ .Values.service.grpc.nodePort }}
       {{- end }}
     {{- end }}
+    {{- range (.Values.service.extraPorts | default list) }}
+    - name: {{ .name | quote }}
+      port: {{ .port | int }}
+      targetPort: {{ .name | quote }}
+      protocol: {{ .protocol | default "TCP" | quote }}
+    {{- end }}

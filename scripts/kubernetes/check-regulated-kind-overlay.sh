@@ -44,6 +44,17 @@ allowed_env = {
     "CLAWQL_WORM_S3_BUCKET",
     "CLAWQL_WORM_S3_FORCE_PATH_STYLE",
     "CLAWQL_WORM_S3_REGION",
+    # D5 in-cluster wire (Helm-rendered; no live Deployment patch).
+    "CLAWQL_SPEC_URL",
+    "CLAWQL_API_BASE_URL",
+    "API_BASE_URL",
+    "CLAWQL_PENDING_STORE",
+    "CLAWQL_SECRET_STORE",
+    "CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE",
+    "CLAWQL_HTTP_SKIP_PAYMENTS",
+    "CLAWQL_HTTP_SKIP_GRAPHQL",
+    "CLAWQL_WORM_HTTP_PORT",
+    "CLAWQL_AUDIT_API_KEY",
 }
 
 allowed_top = {
@@ -56,6 +67,8 @@ allowed_top = {
     "enableGrpc",
     "clawql-mcp-grpc",
     "grpcTls",
+    "service",
+    "enableHitlLabelStudio",
 }
 extra = set(doc) - allowed_top
 if extra:
@@ -121,13 +134,23 @@ if "networkPolicy" in doc:
     if set(np) - {"defaultDeny"}:
         raise SystemExit(f"networkPolicy keys not allowed: {sorted(set(np)-{'defaultDeny'})}")
     dd = np.get("defaultDeny") or {}
-    if set(dd) - {"extraEgress"}:
+    if set(dd) - {"extraEgress", "extraIngressPorts"}:
         raise SystemExit(
-            "networkPolicy.defaultDeny may only set extraEgress "
-            f"(got {sorted(set(dd)-{'extraEgress'})})"
+            "networkPolicy.defaultDeny may only set extraEgress/extraIngressPorts "
+            f"(got {sorted(set(dd)-{'extraEgress','extraIngressPorts'})})"
         )
     if "extraEgress" in dd and not isinstance(dd["extraEgress"], list):
         raise SystemExit("networkPolicy.defaultDeny.extraEgress must be a list")
+    if "extraIngressPorts" in dd and not isinstance(dd["extraIngressPorts"], list):
+        raise SystemExit("networkPolicy.defaultDeny.extraIngressPorts must be a list")
+if "service" in doc:
+    svc = doc["service"]
+    if set(svc) - {"extraPorts"}:
+        raise SystemExit(f"service keys not allowed: {sorted(set(svc)-{'extraPorts'})}")
+    if "extraPorts" in svc and not isinstance(svc["extraPorts"], list):
+        raise SystemExit("service.extraPorts must be a list")
+if "enableHitlLabelStudio" in doc and doc["enableHitlLabelStudio"] is not True:
+    raise SystemExit("enableHitlLabelStudio must be true on the kind overlay (wire row 9)")
 if "extraEnvAppend" in doc:
     obj = doc["extraEnvAppend"]
     if not isinstance(obj, list):

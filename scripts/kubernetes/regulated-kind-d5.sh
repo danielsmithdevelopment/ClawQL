@@ -97,8 +97,9 @@ EOF
       break
     fi
     logs="$(kubectl -n "${NS}" logs -l "app=${deploy}" --tail=80 2>/dev/null || true)"
-    if echo "${logs}" | grep -Eiq 'WORM|S3|SECRET_ACCESS_KEY|Access Key|credentials|Credential'; then
-      echo "K2 OK: incomplete Secret → WORM/S3 error in logs (main release is positive control)"
+    # P4: match missing-credential / WORM backend failure — not bare "WORM"/"S3" in startup.
+    if echo "${logs}" | grep -Eiq 'Could not load credentials|CredentialsProviderError|Resolved credential object is not valid|Missing credentials|UnrecognizedClientException|InvalidAccessKeyId|SignatureDoesNotMatch|AccessDenied|WORM remote backend config failed|configuration check failed'; then
+      echo "K2 OK: incomplete Secret → credential/WORM error in logs (main release is positive control)"
       echo "${logs}" | tail -20
       rm -f "${k2_vals}"
       return 0
@@ -112,12 +113,12 @@ EOF
     return 1
   fi
   logs="$(kubectl -n "${NS}" logs -l "app=${deploy}" --tail=100 2>/dev/null || true)"
-  if echo "${logs}" | grep -Eiq 'WORM|S3|SECRET_ACCESS_KEY|Access Key|credentials|Credential'; then
-    echo "K2 OK: pod not Ready; logs carry WORM/S3 credential error"
+  if echo "${logs}" | grep -Eiq 'Could not load credentials|CredentialsProviderError|Resolved credential object is not valid|Missing credentials|UnrecognizedClientException|InvalidAccessKeyId|SignatureDoesNotMatch|AccessDenied|WORM remote backend config failed|configuration check failed'; then
+    echo "K2 OK: pod not Ready; logs carry credential/WORM error"
     rm -f "${k2_vals}"
     return 0
   fi
-  echo "K2 FAIL: pod not Ready but logs lack WORM/S3 credential error" >&2
+  echo "K2 FAIL: pod not Ready but logs lack credential/WORM error" >&2
   echo "${logs}" >&2
   kubectl -n "${NS}" describe deploy "${deploy}" >&2 || true
   rm -f "${k2_vals}"
@@ -239,10 +240,10 @@ EOF
   echo "K4 OK: external non-allowlisted port, link-local, and cross-ns Service blocked (000)"
 }
 
-# Configure MCP for in-cluster wire: petstore spec, sink, WORM HTTP, instance spec.
-d5_configure_mcp_for_wire() {
-  echo "==> D5: wire sink + petstore ConfigMap + MCP env for remote rows"
-  # Sink Deployment (records hits for rows 6/7b/11).
+# Deploy the wire sink only. MCP wire env / worm-http port / netpol ingress
+# come from the kind Helm overlay (P3) — no live Deployment/Service/NetworkPolicy patches.
+d5_deploy_wire_sink() {
+  echo "==> D5: deploy wire sink (MCP wire config is Helm-rendered)"
   kubectl -n "${NS}" apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
@@ -303,91 +304,6 @@ spec:
       targetPort: 8080
 EOF
 
-  # Petstore OpenAPI for execute/park rows.
-  local pet
-  pet="$(mktemp)"
-  node --input-type=module -e "
-import { writeFileSync } from 'node:fs';
-const spec = {
-  openapi: '3.0.3',
-  info: { title: 'PetstoreWire', version: '1' },
-  servers: [{ url: 'http://clawql-wire-sink.${NS}.svc.cluster.local:8080' }],
-  paths: {
-    '/pets/{id}': {
-      patch: {
-        operationId: 'patchItem',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'ok' } },
-      },
-    },
-  },
-};
-writeFileSync('${pet}', JSON.stringify(spec, null, 2) + '\n');
-"
-  kubectl -n "${NS}" create configmap clawql-wire-petstore \
-    --from-file=petstore-patch.json="${pet}" \
-    --dry-run=client -o yaml |
-    kubectl label --local -f - clawql-kind-fixture=true -o yaml |
-    kubectl apply -f -
-  rm -f "${pet}"
-
-  # Patch MCP Deployment: mount petstore + set wire env (WORM HTTP, SPEC_PATH, sink).
-  local instance_spec cname
-  instance_spec='{"tier":"regulated","memory":{"enabled":false},"documents":{"enabled":false},"sandbox":{"enabled":false},"data":{"enabled":false},"automation":{"schedule":{"enabled":false},"notify":{"enabled":false},"workflow":{"enabled":false},"argocd":{"enabled":false},"hitlLabelStudio":{"enabled":true}}}'
-  cname="$(kubectl -n "${NS}" get deploy "${MCP_DEPLOY}" -o jsonpath='{.spec.template.spec.containers[0].name}')"
-  python3 - "${NS}" "${MCP_DEPLOY}" "${cname}" <<'PY'
-import json, subprocess, sys
-ns, deploy, cname = sys.argv[1], sys.argv[2], sys.argv[3]
-raw = subprocess.check_output(
-    ["kubectl", "-n", ns, "get", "deploy", deploy, "-o", "json"], text=True
-)
-doc = json.loads(raw)
-tpl = doc["spec"]["template"]["spec"]
-vols = tpl.setdefault("volumes", [])
-if not any(v.get("name") == "wire-petstore" for v in vols):
-    vols.append({"name": "wire-petstore", "configMap": {"name": "clawql-wire-petstore"}})
-for c in tpl["containers"]:
-    if c.get("name") != cname:
-        continue
-    mounts = c.setdefault("volumeMounts", [])
-    if not any(m.get("name") == "wire-petstore" for m in mounts):
-        mounts.append({"name": "wire-petstore", "mountPath": "/config/wire", "readOnly": True})
-patch = {"spec": {"template": {"spec": {"volumes": vols, "containers": tpl["containers"]}}}}
-subprocess.run(
-    ["kubectl", "-n", ns, "patch", "deploy", deploy, "--type=strategic", "-p", json.dumps(patch)],
-    check=True,
-)
-PY
-
-  kubectl -n "${NS}" set env "deployment/${MCP_DEPLOY}" \
-    "CLAWQL_SPEC_PATH=/config/wire/petstore-patch.json" \
-    "CLAWQL_API_BASE_URL=http://clawql-wire-sink.${NS}.svc.cluster.local:8080" \
-    "API_BASE_URL=http://clawql-wire-sink.${NS}.svc.cluster.local:8080" \
-    "CLAWQL_INSTANCE_SPEC=${instance_spec}" \
-    "CLAWQL_PENDING_STORE=sqlite" \
-    "CLAWQL_SECRET_STORE=memory" \
-    "CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1" \
-    "CLAWQL_HTTP_SKIP_PAYMENTS=1" \
-    "CLAWQL_HTTP_SKIP_GRAPHQL=1" \
-    "CLAWQL_WORM_HTTP_PORT=${WORM_HTTP_PORT}" \
-    "CLAWQL_AUDIT_API_KEY=${AUDIT_API_KEY}"
-
-  # Expose WORM HTTP on the Service + allow same-ns ingress on that port.
-  local svc
-  svc="$(kubectl -n "${NS}" get svc -l "app=${MCP_DEPLOY}" -o jsonpath='{.items[0].metadata.name}')"
-  kubectl -n "${NS}" patch svc "${svc}" --type=json -p "[
-    {\"op\":\"add\",\"path\":\"/spec/ports/-\",\"value\":{\"name\":\"worm-http\",\"port\":${WORM_HTTP_PORT},\"targetPort\":${WORM_HTTP_PORT}}}
-  ]" 2>/dev/null || true
-
-  local np
-  np="$(kubectl -n "${NS}" get netpol -o name | grep default-deny | head -1 || true)"
-  if [[ -n "${np}" ]]; then
-    kubectl -n "${NS}" patch "${np}" --type=json -p "[
-      {\"op\":\"add\",\"path\":\"/spec/ingress/0/ports/-\",\"value\":{\"protocol\":\"TCP\",\"port\":${WORM_HTTP_PORT}}}
-    ]" 2>/dev/null || true
-  fi
-
-  kubectl -n "${NS}" rollout status "deployment/${MCP_DEPLOY}" --timeout=180s
   kubectl -n "${NS}" rollout status deployment/clawql-wire-sink --timeout=120s
 
   # Confirm JWKS serves a real key (empty keys would make every token 401).
@@ -497,19 +413,8 @@ EOF
     echo "D5 FAIL: missing wire-junit.xml artifact" >&2
     return 1
   fi
-  # Require the remote-critical test names to appear in junit.
-  local need
-  for need in "5) MCP auth" "6) valid token" "7) resume approve" "7b) resume decline" "9) webhook" "11) SSRF" "12) GET /chain/verify"; do
-    if ! grep -Fq "${need}" "${ARTIFACT_DIR}/wire-junit.xml"; then
-      echo "D5 FAIL: junit missing expected row: ${need}" >&2
-      return 1
-    fi
-  done
-  if grep -E 'failures="[1-9]|errors="[1-9]' "${ARTIFACT_DIR}/wire-junit.xml"; then
-    echo "D5 FAIL: junit reports failures/errors" >&2
-    return 1
-  fi
-  echo "D5 wire Job OK: remote rows present in junit"
+  # P2: required rows must appear as <testcase> without <skipped>; spawn-only skips only.
+  python3 "${ROOT}/scripts/kubernetes/check-regulated-wire-junit.py" "${ARTIFACT_DIR}/wire-junit.xml"
 }
 
 # Row 8 via kubectl exec into the MCP pod (same CLAWQL_HOME=/vault).
