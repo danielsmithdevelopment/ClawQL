@@ -14,11 +14,16 @@ dist
 .DS_Store
 # Do not ignore `docs` or `/docs/**` here. A basename `docs` pattern also excludes
 # `apps/docs` (docs.clawql.com), which the website image COPYs from the repo-root context.
-# Exclude scripts, but keep the single catalog re-export the dashboard image needs.
+# Exclude scripts, but keep the catalog re-export and the D5 wire suite.
 # (Bare `scripts` blocks negation of children — use `scripts/**` + `!` exceptions.)
 scripts/**
 !scripts/kubernetes/
 !scripts/kubernetes/provider-vault-key-catalog.ts
+!scripts/security/
+!scripts/security/**
 coverage
-**/*.test.ts
+# Unit/integration tests stay out of the image; keep the regulated wire e2e.
+packages/**/*.test.ts
+src/**/*.test.ts
+apps/**/*.test.ts
 **/__tests__
