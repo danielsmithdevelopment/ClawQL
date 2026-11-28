@@ -90,5 +90,7 @@ extraEnvAppend:
     value: "9090"
   - name: CLAWQL_AUDIT_API_KEY
     value: kind-wire-audit-key
+  - name: CLAWQL_WORM_RECONCILE_MS
+    value: "0"
 
 envFromSecret: clawql-provider-env

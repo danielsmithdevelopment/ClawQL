@@ -118,6 +118,12 @@ export type MintOidcOptions = {
   audience?: string;
   /** Load an existing PKCS8 private key (EC P-256 → ES256) instead of generating RS256. */
   privateKeyPemPath?: string;
+  /**
+   * Always generate a fresh key pair (ignore `privateKeyPemPath` and
+   * `CLAWQL_WIRE_OIDC_PRIVATE_KEY_PEM_PATH`). Required for the bad-signature row in
+   * remote mode, where the env PEM is the server's verifying key.
+   */
+  forceGenerateKey?: boolean;
   kid?: string;
   alg?: "RS256" | "ES256";
 };
@@ -132,10 +138,11 @@ export async function mintOidcMaterial(
     "https://idp.wire-test.clawql.invalid";
   const audience =
     opts.audience?.trim() || process.env.CLAWQL_WIRE_OIDC_AUDIENCE?.trim() || "clawql-mcp-wire";
-  const keyPath =
-    opts.privateKeyPemPath?.trim() ||
-    process.env.CLAWQL_WIRE_OIDC_PRIVATE_KEY_PEM_PATH?.trim() ||
-    "";
+  const keyPath = opts.forceGenerateKey
+    ? ""
+    : opts.privateKeyPemPath?.trim() ||
+      process.env.CLAWQL_WIRE_OIDC_PRIVATE_KEY_PEM_PATH?.trim() ||
+      "";
   const kid = opts.kid?.trim() || process.env.CLAWQL_WIRE_OIDC_KID?.trim() || undefined;
 
   let privateKey: KeyLike;

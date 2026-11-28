@@ -366,11 +366,14 @@ describeWire("regulated wire — full HTTP matrix (Object Lock S3)", () => {
           .sign(oidc.privateKey),
       },
     ];
-    // bad signature: mint with a different key (same alg)
+    // bad signature: mint with a different key (same alg).
+    // forceGenerateKey: remote mode sets CLAWQL_WIRE_OIDC_PRIVATE_KEY_PEM_PATH — without
+    // this, mintOidcMaterial would reuse the server key and the token would verify (200).
     const other = await mintOidcMaterial(await makeWorkDir("clawql-wire-badkey-"), {
       alg: oidc.alg,
       issuer: oidc.issuer,
       audience: oidc.audience,
+      forceGenerateKey: true,
     });
     cases.push({
       name: "bad signature",

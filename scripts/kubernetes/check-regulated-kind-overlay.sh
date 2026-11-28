@@ -55,6 +55,8 @@ allowed_env = {
     "CLAWQL_HTTP_SKIP_GRAPHQL",
     "CLAWQL_WORM_HTTP_PORT",
     "CLAWQL_AUDIT_API_KEY",
+    # Kind-only: pause outbox reconciler while wire rows run (shared SQLite connection).
+    "CLAWQL_WORM_RECONCILE_MS",
 }
 
 allowed_top = {
