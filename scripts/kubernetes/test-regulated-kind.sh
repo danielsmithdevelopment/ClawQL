@@ -893,18 +893,58 @@ if [[ "${MODE}" == "signed" ]]; then
     kubectl -n kyverno get svc >&2 || true
     exit 1
   fi
-  # Confirm fail-closed webhooks exist (ClusterPolicy failurePolicy alone is not enough).
-  if ! kubectl get mutatingwebhookconfiguration,validatingwebhookconfiguration -o yaml 2>/dev/null \
-    | grep -Eiq 'failurePolicy:\s*Fail'; then
-    echo "N4 FAIL: no Mutating/ValidatingWebhookConfiguration with failurePolicy=Fail" >&2
-    exit 1
-  fi
+  # Snapshot Fail webhooks BEFORE scale-down. Kyverno deletes its
+  # Mutating/ValidatingWebhookConfigurations when admission goes down
+  # (IsGoingDown cleanup), which would make scale-to-0 look open instead of
+  # fail-closed. We re-apply the snapshot after endpoints are empty so the
+  # API server still has failurePolicy=Fail pointing at kyverno-svc.
+  python3 - "${ARTIFACT_DIR}/n4-fail-webhooks.json" "${ADM_SVC}" <<'PY'
+import json, subprocess, sys
+from pathlib import Path
+out_path, svc = sys.argv[1], sys.argv[2]
+items = []
+for kind in ("mutatingwebhookconfiguration", "validatingwebhookconfiguration"):
+    doc = json.loads(subprocess.check_output(
+        ["kubectl", "get", kind, "-o", "json"], text=True))
+    for it in doc.get("items") or []:
+        webs = it.get("webhooks") or []
+        keep = False
+        for wh in webs:
+            if (wh.get("failurePolicy") or "") != "Fail":
+                continue
+            client = ((wh.get("clientConfig") or {}).get("service") or {})
+            if client.get("namespace") == "kyverno" or svc in (client.get("name") or ""):
+                keep = True
+                break
+            # Also keep named Kyverno Fail hooks (mutate.kyverno.svc-fail).
+            if "kyverno" in (wh.get("name") or "") and "fail" in (wh.get("name") or "").lower():
+                keep = True
+                break
+        if not keep:
+            # Keep any Fail webhook that mentions kyverno in the object name.
+            if "kyverno" in (it.get("metadata") or {}).get("name", "") and any(
+                (w.get("failurePolicy") or "") == "Fail" for w in webs
+            ):
+                keep = True
+        if not keep:
+            continue
+        meta = it.setdefault("metadata", {})
+        for k in ("resourceVersion", "uid", "creationTimestamp", "generation",
+                  "managedFields", "selfLink"):
+            meta.pop(k, None)
+        it.pop("status", None)
+        items.append(it)
+if not items:
+    raise SystemExit("N4 FAIL: no Kyverno failurePolicy=Fail webhooks to snapshot")
+Path(out_path).write_text(json.dumps({"apiVersion": "v1", "kind": "List", "items": items}))
+print(f"N4 snapshot: {len(items)} Fail webhook config(s)")
+PY
+
   kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=0
   # Force-delete terminating admission pods so Endpoints clear; readyReplicas==0 alone races.
   kubectl -n kyverno delete pods \
     -l 'app.kubernetes.io/component in (admission-controller,admission)' \
     --force --grace-period=0 --ignore-not-found >/dev/null 2>&1 || true
-  # Fallback by name if labels differ across Kyverno chart versions.
   while read -r pod; do
     [[ -z "${pod}" ]] && continue
     kubectl -n kyverno delete "${pod}" --force --grace-period=0 --ignore-not-found >/dev/null 2>&1 || true
@@ -912,7 +952,6 @@ if [[ "${MODE}" == "signed" ]]; then
   ENDPOINTS_CLEARED=0
   for _ in $(seq 1 90); do
     ready="$(kubectl -n kyverno get "${ADM_DEPLOY}" -o jsonpath='{.status.readyReplicas}' 2>/dev/null || true)"
-    # Prefer EndpointSlice ready count; fall back to classic Endpoints addresses.
     addrs="$(python3 - "${ADM_SVC}" <<'PY'
 import json, subprocess, sys
 svc = sys.argv[1]
@@ -957,6 +996,14 @@ PY
     kubectl -n kyverno get "${ADM_DEPLOY}" -o wide >&2 || true
     kubectl -n kyverno get endpoints "${ADM_SVC}" -o yaml >&2 || true
     kubectl -n kyverno get pods -o wide >&2 || true
+    kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1 || true
+    exit 1
+  fi
+  # Re-install Fail webhooks so API server still fail-closes with no endpoints.
+  kubectl apply -f "${ARTIFACT_DIR}/n4-fail-webhooks.json"
+  if ! kubectl get mutatingwebhookconfiguration,validatingwebhookconfiguration -o yaml 2>/dev/null \
+    | grep -Eiq 'failurePolicy:\s*Fail'; then
+    echo "N4 FAIL: Fail webhooks missing after re-apply" >&2
     kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1 || true
     exit 1
   fi
