@@ -65,22 +65,33 @@ not need a loopback JWKS URL under regulated.
 Workflow: `.github/workflows/regulated-refusals.yml` (path-filtered) runs both
 jobs.
 
-## Kind jobs (D2 / D3)
+## Kind jobs (D2 / D3 / D5)
 
-- **D2 (PR):** `regulated-kind.yml` → `test-regulated-kind.sh` with
+- **D2/D5 (PR):** `regulated-kind.yml` → `test-regulated-kind.sh` with
   `CLAWQL_REGULATED_KIND_MODE=partial` (local unsigned image, Cosign off).
-- **D3 (nightly / dispatch):** `regulated-kind-signed.yml` → same driver with
+  Summary prints **regulated-kind OK** when K1–K7, K2 (missing Secret),
+  K4-neg (MCP-netns ephemeral probes), and in-cluster wire rows
+  5/6/7/7b/8/9/11/12 all pass.
+- **D3/D5 (nightly / dispatch):** `regulated-kind-signed.yml` → same driver with
   `MODE=signed` (published GHCR `:nightly`, Kyverno Cosign on, N1–N5).
-  Summary prints **SIGNED PARTIAL** until K2 / K4-neg / in-cluster D1 land.
-  N3/N4 require a positive control (same pod shape admitted under the real
-  subject) and match verifyImages vs webhook-unreachable denials specifically.
-  N1 `cosign verify` defaults to the same `REAL_SUBJECT` pin as Kyverno
-  (`docker-publish.yml`), not any workflow in the repo.
+  Summary prints **SIGNED OK**. N3/N4 require a positive control (same pod
+  shape admitted under the real subject) and match verifyImages vs
+  webhook-unreachable denials specifically. N1 `cosign verify` defaults to
+  the same `REAL_SUBJECT` pin as Kyverno (`docker-publish.yml`).
   **Fault-removal oracle:** `workflow_dispatch` with `run_fault_oracle=true`
   runs N2/N3/N4 arms in parallel (`fail-fast: false`). Each arm undoes one
   deliberate fault and must fail at exactly that check; the arm is green only
   when the driver exits non-zero with an `N2|N3|N4 FAIL:` line. Cite the one
   dispatch run ID (three job arms) when closing D3.
+
+**D5 remote wire:** `CLAWQL_WIRE_TARGET=remote` against the ClusterIP Service.
+Spawn-only rows (1/1b/2/3/4), inference row 10, and x402 row 13 are skipped
+**by design** (reasons in the Job log). Regulated values keep
+`inference.enabled: false`, so row 10 stays process-level. JWKS is minted
+per run (EC P-256); empty JWKS would make every token a vacuous 401.
+K4 negatives use `kubectl debug` ephemeral curl on the MCP pod (digest-pinned
+`curlimages/curl`). Public `:443` remains allowed by the chart for IdP JWKS;
+the external deny probe uses `1.1.1.1:8443` (non-allowlisted port).
 
 Kata stays disabled on kind — not runtime-isolation evidence.
 ## Evidence wording

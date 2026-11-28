@@ -16,12 +16,30 @@ import {
   PutObjectLockConfigurationCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { exportSPKI, generateKeyPair, SignJWT, type KeyLike } from "jose";
+import { exportSPKI, generateKeyPair, importPKCS8, SignJWT, type KeyLike } from "jose";
+import { readFileSync } from "node:fs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 export const SERVER_HTTP_JS = join(ROOT, "dist", "server-http.js");
-export const INFERENCE_BIN = join(ROOT, "packages", "clawql-inference", "bin", "clawql-inference.mjs");
-export const PETSTORE_PATCH_SPEC = join(ROOT, "scripts", "security", "fixtures", "petstore-patch.json");
+export const INFERENCE_BIN = join(
+  ROOT,
+  "packages",
+  "clawql-inference",
+  "bin",
+  "clawql-inference.mjs"
+);
+export const PETSTORE_PATCH_SPEC = join(
+  ROOT,
+  "scripts",
+  "security",
+  "fixtures",
+  "petstore-patch.json"
+);
+
+/** D5 in-cluster mode: hit a deployed MCP instead of spawning dist/server-http.js. */
+export function isWireRemote(): boolean {
+  return process.env.CLAWQL_WIRE_TARGET?.trim().toLowerCase() === "remote";
+}
 
 export async function pickFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -85,22 +103,68 @@ export async function startRequestSink(): Promise<RequestSink> {
 export type MintedOidc = {
   issuer: string;
   audience: string;
+  /** RS256 (local PEM spawn) or ES256 (kind JWKS remote). */
+  alg: "RS256" | "ES256";
+  /** kid for JWKS-backed minting (optional). */
+  kid?: string;
   pemPath: string;
   privateKey: KeyLike;
   publicPem: string;
   mint: (claims?: Record<string, unknown> & { scope?: string[]; exp?: string }) => Promise<string>;
 };
 
-export async function mintOidcMaterial(dir: string): Promise<MintedOidc> {
-  const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
-  const publicPem = await exportSPKI(publicKey);
-  const pemPath = join(dir, "oidc-public.pem");
-  await writeFile(pemPath, publicPem, "utf8");
-  const issuer = "https://idp.wire-test.clawql.invalid";
-  const audience = "clawql-mcp-wire";
+export type MintOidcOptions = {
+  issuer?: string;
+  audience?: string;
+  /** Load an existing PKCS8 private key (EC P-256 → ES256) instead of generating RS256. */
+  privateKeyPemPath?: string;
+  kid?: string;
+  alg?: "RS256" | "ES256";
+};
+
+export async function mintOidcMaterial(
+  dir: string,
+  opts: MintOidcOptions = {}
+): Promise<MintedOidc> {
+  const issuer =
+    opts.issuer?.trim() ||
+    process.env.CLAWQL_WIRE_OIDC_ISSUER?.trim() ||
+    "https://idp.wire-test.clawql.invalid";
+  const audience =
+    opts.audience?.trim() || process.env.CLAWQL_WIRE_OIDC_AUDIENCE?.trim() || "clawql-mcp-wire";
+  const keyPath =
+    opts.privateKeyPemPath?.trim() ||
+    process.env.CLAWQL_WIRE_OIDC_PRIVATE_KEY_PEM_PATH?.trim() ||
+    "";
+  const kid = opts.kid?.trim() || process.env.CLAWQL_WIRE_OIDC_KID?.trim() || undefined;
+
+  let privateKey: KeyLike;
+  let publicPem: string;
+  let pemPath: string;
+  let alg: "RS256" | "ES256";
+
+  if (keyPath) {
+    alg = opts.alg ?? "ES256";
+    privateKey = await importPKCS8(readFileSync(keyPath, "utf8"), alg);
+    // Public PEM is unused when the MCP verifies via JWKS; keep a placeholder path.
+    pemPath = keyPath;
+    publicPem = "";
+  } else {
+    alg = opts.alg ?? "RS256";
+    const { publicKey, privateKey: genPriv } = await generateKeyPair(alg, {
+      extractable: true,
+    });
+    privateKey = genPriv;
+    publicPem = await exportSPKI(publicKey);
+    pemPath = join(dir, "oidc-public.pem");
+    await writeFile(pemPath, publicPem, "utf8");
+  }
+
   return {
     issuer,
     audience,
+    alg,
+    kid,
     pemPath,
     privateKey,
     publicPem,
@@ -108,11 +172,13 @@ export async function mintOidcMaterial(dir: string): Promise<MintedOidc> {
       const scope = claims.scope ?? ["execute", "search", "memory"];
       const exp = claims.exp ?? "2h";
       const { scope: _s, exp: _e, ...rest } = claims;
+      const header: { alg: "RS256" | "ES256"; kid?: string } = { alg };
+      if (kid) header.kid = kid;
       return new SignJWT({
         atr: { sub: "wire-agent", role: "operator", scope },
         ...rest,
       })
-        .setProtectedHeader({ alg: "RS256" })
+        .setProtectedHeader(header)
         .setSubject(typeof rest.sub === "string" ? rest.sub : "wire-agent")
         .setIssuer(issuer)
         .setAudience(audience)
@@ -123,6 +189,38 @@ export async function mintOidcMaterial(dir: string): Promise<MintedOidc> {
   };
 }
 
+/** Remote sink that reads hit counts from fixtures/wire-sink-server.mjs. */
+export type RemoteRequestSink = {
+  baseUrl: string;
+  /** Snapshot length compatible with local RequestSink.requests.length checks. */
+  requests: { length: number };
+  refresh: () => Promise<number>;
+  reset: () => Promise<void>;
+  close: () => Promise<void>;
+};
+
+export async function connectRemoteRequestSink(baseUrl: string): Promise<RemoteRequestSink> {
+  const base = baseUrl.replace(/\/$/, "");
+  const state = { length: 0 };
+  const refresh = async () => {
+    const res = await fetch(`${base}/_count`, { signal: AbortSignal.timeout(5_000) });
+    if (!res.ok) throw new Error(`remote sink /_count failed: ${res.status}`);
+    const body = (await res.json()) as { n?: number };
+    state.length = Number(body.n ?? 0);
+    return state.length;
+  };
+  await refresh();
+  return {
+    baseUrl: base,
+    requests: state,
+    refresh,
+    reset: async () => {
+      await fetch(`${base}/_reset`, { method: "POST", signal: AbortSignal.timeout(5_000) });
+      state.length = 0;
+    },
+    close: async () => undefined,
+  };
+}
 export type S3Endpoints = {
   endpoint: string;
   accessKeyId: string;

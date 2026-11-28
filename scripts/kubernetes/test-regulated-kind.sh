@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# D2 / D3: Install clawql-mcp with values-regulated.yaml on kind (Calico CNI).
+# D2 / D3 / D5: Install clawql-mcp with values-regulated.yaml on kind (Calico CNI).
 #
 # Modes (CLAWQL_REGULATED_KIND_MODE):
-#   partial (default) — D2 PR path: local unsigned image, Cosign off, K1–K7 PARTIAL
-#   signed            — D3 nightly: published GHCR image, Kyverno Cosign on, N1–N5
+#   partial (default) — D2/D5 PR path: local unsigned image, Cosign off, full K-matrix
+#   signed            — D3/D5 nightly: published GHCR image, Kyverno Cosign on, N1–N5
 #
 # Pins: kind binary + node image by digest, Helm by version, Calico by version.
 # Requires Docker. Budget ~30 minutes (partial) / ~45 minutes (signed).
@@ -11,6 +11,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
+# D5: K2 / K4-neg / in-cluster wire helpers
+# shellcheck source=regulated-kind-d5.sh
+source "${ROOT}/scripts/kubernetes/regulated-kind-d5.sh"
 
 MODE="${CLAWQL_REGULATED_KIND_MODE:-partial}"
 case "${MODE}" in
@@ -331,8 +334,12 @@ spec:
             failureThreshold: 40
 EOF
 
-# JWKS — nginx listens on :80; Service must target 80 (not 8080).
-kubectl -n "${NS}" apply -f - <<'EOF'
+# JWKS — mint EC P-256 per run (D5); nginx listens on :80; Service targets 80.
+JWKS_DIR="$(mktemp -d)"
+d5_mint_jwks_keypair "${JWKS_DIR}"
+d5_apply_wire_signing_secret "${JWKS_DIR}/private.pem"
+JWKS_JSON_CONTENT="$(cat "${JWKS_DIR}/jwks.json")"
+kubectl -n "${NS}" apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -341,7 +348,7 @@ metadata:
     clawql-kind-fixture: "true"
 data:
   jwks.json: |
-    {"keys":[]}
+$(echo "${JWKS_JSON_CONTENT}" | sed 's/^/    /')
 ---
 apiVersion: v1
 kind: Service
@@ -388,6 +395,7 @@ spec:
           configMap:
             name: clawql-jwks
 EOF
+# Keep JWKS_DIR until wire Job finishes (private.pem already in Secret).
 
 echo "==> Wait for LocalStack + create Object Lock bucket clawql-worm"
 kubectl -n "${NS}" rollout status deployment/clawql-localstack --timeout=180s
@@ -788,15 +796,15 @@ echo "MCP Service: ${MCP_SVC}:${MCP_PORT}"
 
 # Positive: curl LocalStack health from a Job in NS (same-namespace allow path)
 kubectl -n "${NS}" delete job clawql-net-pos --ignore-not-found
-kubectl -n "${NS}" create job clawql-net-pos --image=curlimages/curl:8.5.0 -- \
+kubectl -n "${NS}" create job clawql-net-pos --image="${CURL_IMAGE}" -- \
   curl -sf -o /dev/null -w '%{http_code}' "http://clawql-localstack.${NS}.svc.cluster.local:4566/_localstack/health"
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-pos --timeout=60s
-echo "K4 positive OK: LocalStack reachable from release namespace"
+echo "K4 positive (namespace Job) OK: LocalStack reachable from release namespace"
 
 # H2: K3 positive control must fail if DNS/policy/path is broken — no `|| true`,
 # and require a non-000 HTTP status in the Job log.
 kubectl -n "${NS}" delete job clawql-net-mcp-pos --ignore-not-found
-kubectl -n "${NS}" create job clawql-net-mcp-pos --image=curlimages/curl:8.5.0 -- \
+kubectl -n "${NS}" create job clawql-net-mcp-pos --image="${CURL_IMAGE}" -- \
   sh -c "code=\$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz); echo \"http_code=\$code\"; case \"\$code\" in 000) exit 1 ;; *) exit 0 ;; esac"
 kubectl -n "${NS}" wait --for=condition=complete job/clawql-net-mcp-pos --timeout=60s
 POS_LOG="$(kubectl -n "${NS}" logs job/clawql-net-mcp-pos 2>/dev/null || true)"
@@ -810,18 +818,21 @@ echo "K3 positive OK: in-namespace Job reached ${MCP_SVC} (DNS+policy path works
 # Negative: pod in other namespace should fail to reach MCP Service (timeout/refused — not NXDOMAIN alone)
 kubectl create namespace clawql-net-deny --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n clawql-net-deny delete job clawql-net-neg --ignore-not-found
-kubectl -n clawql-net-deny create job clawql-net-neg --image=curlimages/curl:8.5.0 -- \
+kubectl -n clawql-net-deny create job clawql-net-neg --image="${CURL_IMAGE}" -- \
   sh -c "out=\$(curl -sS --max-time 5 -o /dev/null -w '%{http_code}:%{errormsg}' http://${MCP_SVC}.${NS}.svc.cluster.local:${MCP_PORT}/healthz 2>&1 || true); echo \"\$out\"; echo \"\$out\" | grep -qi 'Could not resolve host' && exit 2; echo \"\$out\" | grep -E '^(000:|000\$)' >/dev/null && exit 0; exit 1"
 kubectl -n clawql-net-deny wait --for=condition=complete job/clawql-net-neg --timeout=60s
 NEG_LOG="$(kubectl -n clawql-net-deny logs job/clawql-net-neg 2>/dev/null || true)"
 echo "K3 neg log: ${NEG_LOG}"
 echo "K3 OK: cross-namespace MCP call blocked (not a DNS NXDOMAIN on wrong Service name)"
 
-echo "==> In-cluster wire rows 5–12 (Job)"
-# Placeholder: copy regulated-wire assertions into a Job image in a follow-up.
-# For this PR, document that D1 wire suite is the merge gate for rows 5–12 until
-# the in-cluster Job image is published; K1/K5/K6/K7 already exercise chart surface.
-echo "NOTE: full in-cluster D1 matrix Job is staged; chart checks K1/K5/K6/K7 ran."
+# D5: K2 (missing secret), K4-neg (MCP netns), wire Job + row 8.
+d5_run_k2_missing_secret
+d5_run_k4_negatives
+d5_build_wire_image
+d5_configure_mcp_for_wire
+d5_run_wire_job
+d5_run_row8_cli
+rm -rf "${JWKS_DIR}"
 
 if [[ "${MODE}" == "signed" ]]; then
   # Kyverno verifyImages / Cosign denial (N2/N3) — not generic "denied".
@@ -1068,10 +1079,11 @@ PY
   fi
   echo "N4 OK: failurePolicy=Fail denied create with admission down (webhook error)"
 
-  # M3: N5 reuses D2's PARTIAL scope (K2 / K4-neg / in-cluster D1 still scaffolding).
-  echo "regulated-kind SIGNED PARTIAL: N1–N4 Cosign matrix green; N5 inherits D2 PARTIAL (K2/K4-neg/in-cluster D1 still scaffolding)"
+  echo "regulated-kind SIGNED OK: N1–N4 Cosign matrix + N5 (K1–K7, K2, K4-neg, in-cluster wire) green"
   echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
+  echo "SUMMARY: inference.enabled=false on regulated — row 10 stays process-level (D1 wire)."
 else
-  echo "regulated-kind PARTIAL: K1/K5/K6/K7 + E1/H1 env compare green; K2/K4-neg/in-cluster D1 matrix still scaffolding"
+  echo "regulated-kind OK: K1–K7 + K2 + K4-neg + in-cluster wire rows 5/6/7/7b/8/9/11/12 green"
   echo "SUMMARY: Kata remains disabled on kind (not runtime-isolation evidence)."
+  echo "SUMMARY: inference.enabled=false on regulated — row 10 stays process-level (D1 wire)."
 fi
