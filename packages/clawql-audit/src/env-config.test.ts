@@ -19,6 +19,10 @@ describe("createWormTrailConfigFromEnvEffect defaults", () => {
     "CLAWQL_WORM_REMOTE",
     "CLAWQL_WORM_SQLITE_PATH",
     "CLAWQL_WORM_POSTGRES_URL",
+    "CLAWQL_WORM_S3_BUCKET",
+    "CLAWQL_WORM_S3_ACCESS_KEY_ID",
+    "CLAWQL_WORM_S3_SECRET_ACCESS_KEY",
+    "CLAWQL_WORM_S3_ENDPOINT",
     "CLAWQL_HOME",
     "CLAWQL_TIER",
   ] as const;
@@ -98,6 +102,27 @@ describe("createWormTrailConfigFromEnvEffect defaults", () => {
       const exit = await Effect.runPromiseExit(createWormTrailConfigFromEnvEffect(process.env));
       expect(exit._tag).toBe("Failure");
       expect(String(exit)).toMatch(/refuses CLAWQL_WORM_REMOTE=memory/);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it("s3 refuses partial credentials (access key without secret)", async () => {
+    stash();
+    const home = mkdtempSync(join(tmpdir(), "clawql-worm-partial-s3-"));
+    try {
+      process.env.CLAWQL_HOME = home;
+      process.env.CLAWQL_WORM_ENABLED = "1";
+      delete process.env.CLAWQL_WORM_LOCAL;
+      process.env.CLAWQL_WORM_REMOTE = "s3";
+      process.env.CLAWQL_WORM_S3_BUCKET = "clawql-worm";
+      process.env.CLAWQL_WORM_S3_ACCESS_KEY_ID = "test";
+      delete process.env.CLAWQL_WORM_S3_SECRET_ACCESS_KEY;
+      delete process.env.CLAWQL_TIER;
+
+      const exit = await Effect.runPromiseExit(createWormTrailConfigFromEnvEffect(process.env));
+      expect(exit._tag).toBe("Failure");
+      expect(String(exit)).toMatch(/Missing credentials.*CLAWQL_WORM_S3_SECRET_ACCESS_KEY/i);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
