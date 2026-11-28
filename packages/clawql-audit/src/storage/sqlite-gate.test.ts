@@ -38,4 +38,21 @@ describe("SQLiteBackend concurrent writeWithOutbox", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  it("treats same id+hash UNIQUE as idempotent success", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "worm-idem-"));
+    try {
+      const backend = new SQLiteBackend({ path: join(dir, "w.sqlite") });
+      const entry = mk(0);
+      await Effect.runPromise(backend.writeWithOutbox(entry));
+      await Effect.runPromise(backend.outboxDelete(entry.id));
+      // Second write of the sealed row must not fail (simulates retry-after-commit).
+      await Effect.runPromise(backend.writeWithOutbox(entry));
+      const all = await Effect.runPromise(backend.all());
+      expect(all).toHaveLength(1);
+      backend.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

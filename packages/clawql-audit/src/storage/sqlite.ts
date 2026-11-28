@@ -151,6 +151,28 @@ export class SQLiteBackend implements LocalStorageBackend {
         } catch {
           /* ignore */
         }
+        // Idempotent: a prior attempt may have committed the sealed row then failed
+        // the Effect (e.g. outboxDelete). Same id+hash → treat as success and ensure
+        // outbox has a row for remote drain.
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/UNIQUE constraint failed:\s*worm_entries\.(hash|id)/i.test(msg)) {
+          const existing = this.db
+            .prepare(`SELECT hash, id FROM worm_entries WHERE hash = ? OR id = ?`)
+            .get(entry.hash, entry.id) as { hash?: string; id?: string } | undefined;
+          if (existing?.hash === entry.hash && existing?.id === entry.id) {
+            const inOutbox = this.db
+              .prepare(`SELECT 1 AS ok FROM worm_outbox WHERE id = ?`)
+              .get(entry.id) as { ok?: number } | undefined;
+            if (!inOutbox) {
+              this.db
+                .prepare(
+                  `INSERT INTO worm_outbox (id, entry_json, enqueued_at) VALUES (?, ?, ?)`
+                )
+                .run(entry.id, JSON.stringify(entry), new Date().toISOString());
+            }
+            return;
+          }
+        }
         throw err;
       }
     });
