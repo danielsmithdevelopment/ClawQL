@@ -8,9 +8,23 @@ on:
     # After docker-publish daily (0 6 UTC).
     - cron: "0 8 * * *"
   workflow_dispatch:
+    inputs:
+      fault_off:
+        description: >-
+          Undo one deliberate fault so the job must go red at exactly that check
+          (N2=probe signed digest; N3=keep real subjectRegExp; N4=leave admission up).
+          Use none for the normal green path.
+        required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - N2
+          - N3
+          - N4
 
 concurrency:
-  group: regulated-kind-signed-${{ github.workflow }}-${{ github.ref }}
+  group: regulated-kind-signed-${{ github.workflow }}-${{ github.ref }}-${{ github.event.inputs.fault_off || 'none' }}
   cancel-in-progress: true
 
 permissions:
@@ -49,6 +63,7 @@ jobs:
           CLAWQL_REGULATED_KIND_MODE: signed
           CLAWQL_REGULATED_KIND_ARTIFACTS: ${{ runner.temp }}/regulated-kind-signed-artifacts
           CLAWQL_SIGNED_IMAGE_TAG: nightly
+          CLAWQL_REGULATED_KIND_FAULT_OFF: ${{ github.event.inputs.fault_off || 'none' }}
         run: bash scripts/kubernetes/test-regulated-kind.sh
 
       - name: Upload artifacts

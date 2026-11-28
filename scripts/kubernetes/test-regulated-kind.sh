@@ -34,6 +34,23 @@ SIGNED_IMAGE_REPO="${CLAWQL_SIGNED_IMAGE_REPO:-ghcr.io/danielsmithdevelopment/cl
 SIGNED_IMAGE_TAG="${CLAWQL_SIGNED_IMAGE_TAG:-nightly}"
 # Must match values-regulated.yaml kyverno.imageSignaturePolicy.cosign.subjectRegExp.
 REAL_SUBJECT='^https://github\.com/danielsmithdevelopment/ClawQL/\.github/workflows/docker-publish\.yml@refs/(heads/main|tags/v.*)$'
+# D3 fault-removal oracle (workflow_dispatch only): undo one deliberate fault so
+# the job must go red at exactly that check. Empty / none = normal green path.
+FAULT_OFF="${CLAWQL_REGULATED_KIND_FAULT_OFF:-}"
+case "${FAULT_OFF}" in
+  "" | none | N2 | N3 | N4) ;;
+  *)
+    echo "CLAWQL_REGULATED_KIND_FAULT_OFF must be empty|none|N2|N3|N4 (got ${FAULT_OFF})" >&2
+    exit 1
+    ;;
+esac
+if [[ "${FAULT_OFF}" == "none" ]]; then
+  FAULT_OFF=""
+fi
+if [[ -n "${FAULT_OFF}" && "${MODE}" != "signed" ]]; then
+  echo "CLAWQL_REGULATED_KIND_FAULT_OFF requires MODE=signed" >&2
+  exit 1
+fi
 ARTIFACT_DIR="${CLAWQL_REGULATED_KIND_ARTIFACTS:-/tmp/clawql-regulated-kind-artifacts}"
 mkdir -p "${ARTIFACT_DIR}"
 
@@ -812,17 +829,28 @@ if [[ "${MODE}" == "signed" ]]; then
   # N4 fail-closed: webhook unreachable with failurePolicy=Fail.
   WEBHOOK_DENY_RE='failed calling webhook|no endpoints available|connection refused|webhook.*kyverno|context deadline|ServiceUnavailable'
 
+  if [[ -n "${FAULT_OFF}" ]]; then
+    echo "==> FAULT_OFF=${FAULT_OFF}: deliberate fault removed — this run must go red at ${FAULT_OFF}"
+  fi
+
   echo "==> N2: unsigned local image must be denied by Cosign verifyImages"
-  UNSIGNED_TAG="${SIGNED_IMAGE_REPO}:unsigned-ci"
-  docker build -t "${UNSIGNED_TAG}" -f "${ROOT}/docker/Dockerfile" --target runtime "${ROOT}"
-  kind load docker-image "${UNSIGNED_TAG}" --name "${CLUSTER_NAME}"
   set +e
   kubectl -n "${NS}" delete pod clawql-n2-unsigned --ignore-not-found >/dev/null 2>&1
-  N2_OUT="$(kubectl -n "${NS}" run clawql-n2-unsigned --image="${UNSIGNED_TAG}" \
-    --image-pull-policy=Never --restart=Never \
-    --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
-    --command -- sleep 5 2>&1)"
-  N2_RC=$?
+  if [[ "${FAULT_OFF}" == "N2" ]]; then
+    # Fault removed: probe the signed digest (should admit) so the deny check fails.
+    echo "FAULT_OFF=N2: probing signed digest instead of :unsigned-ci"
+    N2_OUT="$(run_signed_probe_pod clawql-n2-unsigned 2>&1)"
+    N2_RC=$?
+  else
+    UNSIGNED_TAG="${SIGNED_IMAGE_REPO}:unsigned-ci"
+    docker build -t "${UNSIGNED_TAG}" -f "${ROOT}/docker/Dockerfile" --target runtime "${ROOT}"
+    kind load docker-image "${UNSIGNED_TAG}" --name "${CLUSTER_NAME}"
+    N2_OUT="$(kubectl -n "${NS}" run clawql-n2-unsigned --image="${UNSIGNED_TAG}" \
+      --image-pull-policy=Never --restart=Never \
+      --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"runAsUser":65532}}}' \
+      --command -- sleep 5 2>&1)"
+    N2_RC=$?
+  fi
   set -e
   echo "${N2_OUT}" | tee "${ARTIFACT_DIR}/n2-unsigned.txt"
   if [[ "${N2_RC}" -eq 0 ]]; then
@@ -846,7 +874,13 @@ if [[ "${MODE}" == "signed" ]]; then
 
   BAD_SUBJECT='^https://example\.invalid/no-match$'
   echo "==> N3: impossible subjectRegExp must deny the real signed image"
-  patch_cosign_subject "${BAD_SUBJECT}"
+  if [[ "${FAULT_OFF}" == "N3" ]]; then
+    # Fault removed: keep the real subject pin so the signed probe admits.
+    echo "FAULT_OFF=N3: keeping real subjectRegExp (no impossible pin)"
+    wait_cosign_policy "${REAL_SUBJECT}"
+  else
+    patch_cosign_subject "${BAD_SUBJECT}"
+  fi
   set +e
   N3_OUT="$(run_signed_probe_pod clawql-n3-subject 2>&1)"
   N3_RC=$?
@@ -877,6 +911,11 @@ if [[ "${MODE}" == "signed" ]]; then
   echo "N4 positive OK"
 
   echo "==> N4: Kyverno admission scaled to 0 must fail closed (webhook error)"
+  ADM_DEPLOY=""
+  if [[ "${FAULT_OFF}" == "N4" ]]; then
+    # Fault removed: leave admission at one replica so the probe admits.
+    echo "FAULT_OFF=N4: leaving Kyverno admission at one replica"
+  else
   ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | grep -E 'admission' | head -1 || true)"
   if [[ -z "${ADM_DEPLOY}" ]]; then
     ADM_DEPLOY="$(kubectl -n kyverno get deploy -o name | head -1 || true)"
@@ -1007,14 +1046,17 @@ PY
     kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1 || true
     exit 1
   fi
+  fi # FAULT_OFF != N4
   set +e
   N4_OUT="$(run_signed_probe_pod clawql-n4-failclosed 2>&1)"
   N4_RC=$?
   set -e
   echo "${N4_OUT}" | tee "${ARTIFACT_DIR}/n4-failclosed.txt"
-  kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1
-  kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=180s
-  wait_cosign_policy "${REAL_SUBJECT}" || true
+  if [[ -n "${ADM_DEPLOY}" ]]; then
+    kubectl -n kyverno scale "${ADM_DEPLOY}" --replicas=1
+    kubectl -n kyverno rollout status "${ADM_DEPLOY}" --timeout=180s
+    wait_cosign_policy "${REAL_SUBJECT}" || true
+  fi
   if [[ "${N4_RC}" -eq 0 ]]; then
     echo "N4 FAIL: pod admitted while Kyverno admission was scaled to 0 (not fail-closed)" >&2
     kubectl -n "${NS}" delete pod clawql-n4-failclosed --ignore-not-found || true
