@@ -9,22 +9,16 @@ on:
     - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
-      fault_off:
+      run_fault_oracle:
         description: >-
-          Undo one deliberate fault so the job must go red at exactly that check
-          (N2=probe signed digest; N3=keep real subjectRegExp; N4=leave admission up).
-          Use none for the normal green path.
+          Also run N2/N3/N4 fault-off arms in parallel (each undoes one deliberate
+          fault and must fail at exactly that check). Schedule never runs the oracle.
         required: false
-        type: choice
-        default: none
-        options:
-          - none
-          - N2
-          - N3
-          - N4
+        type: boolean
+        default: false
 
 concurrency:
-  group: regulated-kind-signed-${{ github.workflow }}-${{ github.ref }}-${{ github.event.inputs.fault_off || 'none' }}
+  group: regulated-kind-signed-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -32,8 +26,10 @@ permissions:
   packages: read
 
 jobs:
+  # Normal green path (schedule, or dispatch without the fault oracle).
   regulated-kind-signed:
     name: Regulated chart on kind (signed GHCR + Cosign)
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.run_fault_oracle }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -63,7 +59,7 @@ jobs:
           CLAWQL_REGULATED_KIND_MODE: signed
           CLAWQL_REGULATED_KIND_ARTIFACTS: ${{ runner.temp }}/regulated-kind-signed-artifacts
           CLAWQL_SIGNED_IMAGE_TAG: nightly
-          CLAWQL_REGULATED_KIND_FAULT_OFF: ${{ github.event.inputs.fault_off || 'none' }}
+          CLAWQL_REGULATED_KIND_FAULT_OFF: none
         run: bash scripts/kubernetes/test-regulated-kind.sh
 
       - name: Upload artifacts
@@ -71,5 +67,66 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: regulated-kind-signed-artifacts
+          path: ${{ runner.temp }}/regulated-kind-signed-artifacts
+          if-no-files-found: ignore
+
+  # Parallel fault-removal oracle: one arm per check (N2/N3/N4).
+  fault-oracle:
+    name: Fault-off ${{ matrix.fault_off }} (must fail at ${{ matrix.fault_off }})
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_fault_oracle }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        fault_off: [N2, N3, N4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Overlay allowlist (signed)
+        run: bash scripts/kubernetes/check-regulated-kind-overlay.sh --signed
+
+      - name: Install skopeo
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq skopeo
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6
+        with:
+          cosign-release: v2.4.3
+
+      - name: Driver must fail at ${{ matrix.fault_off }}
+        env:
+          CLAWQL_REGULATED_KIND_MODE: signed
+          CLAWQL_REGULATED_KIND_ARTIFACTS: ${{ runner.temp }}/regulated-kind-signed-artifacts
+          CLAWQL_SIGNED_IMAGE_TAG: nightly
+          CLAWQL_REGULATED_KIND_FAULT_OFF: ${{ matrix.fault_off }}
+        run: |
+          set -euo pipefail
+          set +e
+          bash scripts/kubernetes/test-regulated-kind.sh 2>&1 | tee "${RUNNER_TEMP}/fault-off-driver.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [[ "${rc}" -eq 0 ]]; then
+            echo "FAULT_OFF=${{ matrix.fault_off }} expected a failure but the driver exited 0" >&2
+            exit 1
+          fi
+          if ! grep -E "^${{ matrix.fault_off }} FAIL:" "${RUNNER_TEMP}/fault-off-driver.log"; then
+            echo "FAULT_OFF=${{ matrix.fault_off }} failed, but not at ${{ matrix.fault_off }} (missing '${{ matrix.fault_off }} FAIL:' line)" >&2
+            exit 1
+          fi
+          echo "FAULT_OFF=${{ matrix.fault_off }} oracle OK: driver failed at ${{ matrix.fault_off }}"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: regulated-kind-signed-fault-${{ matrix.fault_off }}
           path: ${{ runner.temp }}/regulated-kind-signed-artifacts
           if-no-files-found: ignore
