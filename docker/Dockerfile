@@ -54,16 +54,21 @@ RUN npm ci --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
 COPY packages ./packages
+COPY scripts ./scripts
+COPY vitest.e2e.config.ts ./vitest.e2e.config.ts
 RUN npm run build \
   && grep -qF 'server.tool("cache"' dist/mcp/tools.js \
-  && grep -qF 'server.tool("audit"' dist/mcp/tools.js \
-  && npm prune --omit=dev
+  && grep -qF 'server.tool("audit"' dist/mcp/tools.js
 
 COPY providers ./providers
 COPY bin ./bin
 
 # Writable Obsidian vault mount (memory tools); nonroot must own the tree.
 RUN mkdir -p /vault && chown 65532:65532 /vault
+
+# Prod image deps (vitest pruned). wire-tests keeps the unpruned builder tree.
+FROM builder AS builder-prod
+RUN npm prune --omit=dev
 
 # ---------------------------------------------------------------------------
 # Bun binary source (glibc). oven/bun distroless is base-nossl (no CA) — we
@@ -92,14 +97,14 @@ ENV MCP_HOST=0.0.0.0
 # Optional at runtime (not baked in): CLAWQL_SANDBOX_BRIDGE_URL, CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN for sandbox_exec.
 
 COPY --from=bun-bin /usr/local/bin/bun /usr/local/bin/bun
-COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
+COPY --from=builder-prod --chown=nonroot:nonroot /app/node_modules ./node_modules
 # Workspace deps are symlinked from `node_modules` → `packages/*`; copy all built package trees.
-COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
-COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
-COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
-COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
-COPY --from=builder --chown=nonroot:nonroot /app/package.json ./package.json
-COPY --from=builder --chown=nonroot:nonroot /vault /vault
+COPY --from=builder-prod --chown=nonroot:nonroot /app/packages ./packages
+COPY --from=builder-prod --chown=nonroot:nonroot /app/dist ./dist
+COPY --from=builder-prod --chown=nonroot:nonroot /app/bin ./bin
+COPY --from=builder-prod --chown=nonroot:nonroot /app/providers ./providers
+COPY --from=builder-prod --chown=nonroot:nonroot /app/package.json ./package.json
+COPY --from=builder-prod --chown=nonroot:nonroot /vault /vault
 
 USER nonroot:nonroot
 
@@ -120,13 +125,13 @@ ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 ENV MCP_HOST=0.0.0.0
 
-COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
-COPY --from=builder --chown=nonroot:nonroot /app/packages ./packages
-COPY --from=builder --chown=nonroot:nonroot /app/dist ./dist
-COPY --from=builder --chown=nonroot:nonroot /app/bin ./bin
-COPY --from=builder --chown=nonroot:nonroot /app/providers ./providers
-COPY --from=builder --chown=nonroot:nonroot /app/package.json ./package.json
-COPY --from=builder --chown=nonroot:nonroot /vault /vault
+COPY --from=builder-prod --chown=nonroot:nonroot /app/node_modules ./node_modules
+COPY --from=builder-prod --chown=nonroot:nonroot /app/packages ./packages
+COPY --from=builder-prod --chown=nonroot:nonroot /app/dist ./dist
+COPY --from=builder-prod --chown=nonroot:nonroot /app/bin ./bin
+COPY --from=builder-prod --chown=nonroot:nonroot /app/providers ./providers
+COPY --from=builder-prod --chown=nonroot:nonroot /app/package.json ./package.json
+COPY --from=builder-prod --chown=nonroot:nonroot /vault /vault
 
 USER nonroot:nonroot
 
@@ -164,13 +169,25 @@ ENV CLAWQL_BUNDLED_OFFLINE=1
 ENV CLAWQL_OBSIDIAN_VAULT_PATH=/vault
 ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 ENV MCP_HOST=0.0.0.0
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/providers ./providers
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder-prod /app/node_modules ./node_modules
+COPY --from=builder-prod /app/packages ./packages
+COPY --from=builder-prod /app/dist ./dist
+COPY --from=builder-prod /app/bin ./bin
+COPY --from=builder-prod /app/providers ./providers
+COPY --from=builder-prod /app/package.json ./package.json
 RUN mkdir -p /vault && chmod 1777 /vault
 USER root
 ENTRYPOINT ["/usr/local/bin/bun", "--smol"]
 CMD ["dist/server-http.js"]
+
+# ---------------------------------------------------------------------------
+# D5: in-cluster regulated wire suite (vitest + scripts/security). Outside
+# Kyverno imageReferences — tag clawql-wire-tests:ci and kind load.
+# Build: docker build -f docker/Dockerfile --target wire-tests -t clawql-wire-tests:ci .
+FROM builder AS wire-tests
+WORKDIR /app
+ENV NODE_ENV=test
+ENV CLAWQL_WIRE_TARGET=remote
+# Keep vitest + jose from the unpruned builder tree.
+USER root
+CMD ["npx", "vitest", "run", "--config", "vitest.e2e.config.ts", "scripts/security/regulated-wire.e2e.test.ts", "--reporter=default", "--reporter=junit", "--outputFile.junit=/tmp/wire-junit.xml"]

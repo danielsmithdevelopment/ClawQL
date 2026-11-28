@@ -155,6 +155,10 @@ const makeWORMAuditTrailLayerWithMeta = (
             }),
           append: (input) =>
             Effect.gen(function* () {
+              // Re-sync tip from durable local before sealing. A prior attempt may have
+              // committed writeWithOutbox then failed before chain.update (UNIQUE hash /
+              // outboxDelete), leaving memory behind the DB.
+              yield* chain.loadTip(config.local);
               const prev = yield* chain.latest();
               const nextIndex = prev ? prev.chainIndex + 1 : 0;
               const serializationVersion = formatAtIndex(meta, nextIndex);

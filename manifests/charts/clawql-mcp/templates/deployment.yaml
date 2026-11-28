@@ -130,6 +130,11 @@ spec:
               containerPort: {{ .Values.service.grpc.targetPort | int }}
               protocol: TCP
             {{- end }}
+            {{- range (.Values.service.extraPorts | default list) }}
+            - name: {{ .name | quote }}
+              containerPort: {{ (.targetPort | default .port) | int }}
+              protocol: {{ .protocol | default "TCP" | quote }}
+            {{- end }}
           env:
             {{- $provider := .Values.provider | default "" | toString | trim }}
             {{- if and $provider (ne $provider "none") }}

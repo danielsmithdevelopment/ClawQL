@@ -28,6 +28,10 @@ spec:
         - protocol: TCP
           port: {{ .Values.service.grpc.targetPort }}
         {{- end }}
+        {{- range (.Values.networkPolicy.defaultDeny.extraIngressPorts | default list) }}
+        - protocol: {{ .protocol | default "TCP" }}
+          port: {{ .port | int }}
+        {{- end }}
   egress:
     - to:
         - namespaceSelector: {}

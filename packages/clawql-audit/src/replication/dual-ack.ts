@@ -27,6 +27,10 @@ export class DualAckReplicator {
   /**
    * Atomically write entry + outbox locally, attempt remote, clear outbox on success.
    * Never fails the caller solely because remote is down — outbox guarantees eventual delivery.
+   *
+   * Local write is **not** retried: a sealed entry that already committed would hit
+   * UNIQUE(hash) on retry and burn the dual-ack backoff (~51s) while leaving the
+   * in-memory chain tip behind (kind wire rows 7/7b).
    */
   write(entry: Omit<WORMEntry, "backendAcks">): Effect.Effect<string[], AuditError> {
     const local = this.local;
@@ -34,7 +38,7 @@ export class DualAckReplicator {
     const retry = this.retry;
     const sealed = entry as WORMEntry;
     return Effect.gen(function* () {
-      yield* withRetry(() => local.writeWithOutbox(sealed), retry);
+      yield* local.writeWithOutbox(sealed);
 
       const remoteOk = yield* withRetry(() => remote.write(sealed), retry).pipe(
         Effect.map(() => true as const),
@@ -42,7 +46,8 @@ export class DualAckReplicator {
       );
 
       if (remoteOk) {
-        yield* local.outboxDelete(sealed.id);
+        // Outbox clear is best-effort — local durability already held.
+        yield* local.outboxDelete(sealed.id).pipe(Effect.catch(() => Effect.void));
       }
       return ["local", "remote"];
     });

@@ -174,6 +174,16 @@ function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, Audit
         }
         const accessKeyId = envTrim(env, "CLAWQL_WORM_S3_ACCESS_KEY_ID");
         const secretAccessKey = envTrim(env, "CLAWQL_WORM_S3_SECRET_ACCESS_KEY");
+        // Partial keys used to become `credentials: undefined` (default AWS chain),
+        // so a Secret that omitted only SECRET_ACCESS_KEY hung at boot with no error
+        // (D5 K2). Require both or neither — neither keeps IRSA / instance role.
+        if (Boolean(accessKeyId) !== Boolean(secretAccessKey)) {
+          throw new Error(
+            "Missing credentials for CLAWQL_WORM_REMOTE=s3: set both " +
+              "CLAWQL_WORM_S3_ACCESS_KEY_ID and CLAWQL_WORM_S3_SECRET_ACCESS_KEY, " +
+              "or omit both for the default AWS credential chain"
+          );
+        }
         const lockMode = parseObjectLockMode(envTrim(env, "CLAWQL_WORM_S3_OBJECT_LOCK"));
         const lockDays = parseIntEnv(env, "CLAWQL_WORM_S3_OBJECT_LOCK_DAYS") ?? 365;
         return new S3Backend({

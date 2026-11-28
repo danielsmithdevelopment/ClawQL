@@ -7,8 +7,12 @@ on:
     paths:
       - "scripts/security/**"
       - "scripts/kubernetes/test-regulated-kind.sh"
+      - "scripts/kubernetes/regulated-kind-d5.sh"
+      - "scripts/kubernetes/regulated-kind-row8-park.mjs"
       - "scripts/kubernetes/check-regulated-kind-overlay.sh"
       - "scripts/kubernetes/bootstrap-local-vault-and-eso.sh"
+      - "docker/Dockerfile"
+      - "docker/Dockerfile.wire-tests"
       - "manifests/charts/clawql-mcp/**"
       - "src/composition/process-worm-host.ts"
       - "src/composition/regulated-profile.ts"
@@ -29,8 +33,12 @@ on:
     paths:
       - "scripts/security/**"
       - "scripts/kubernetes/test-regulated-kind.sh"
+      - "scripts/kubernetes/regulated-kind-d5.sh"
+      - "scripts/kubernetes/regulated-kind-row8-park.mjs"
       - "scripts/kubernetes/check-regulated-kind-overlay.sh"
       - "scripts/kubernetes/bootstrap-local-vault-and-eso.sh"
+      - "docker/Dockerfile"
+      - "docker/Dockerfile.wire-tests"
       - "manifests/charts/clawql-mcp/**"
       - ".github/workflows/regulated-kind.yml"
   workflow_dispatch:
@@ -46,7 +54,7 @@ jobs:
   regulated-kind:
     name: Regulated chart on kind (Calico)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 

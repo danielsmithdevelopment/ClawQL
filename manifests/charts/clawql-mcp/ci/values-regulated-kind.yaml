@@ -37,7 +37,7 @@ clawql-mcp-grpc:
 grpcTls:
   existingSecret: clawql-grpc-tls
 
-# Allow MCP pods to reach in-cluster JWKS (80) and LocalStack S3 (4566).
+# Allow MCP pods to reach in-cluster JWKS (80), LocalStack S3 (4566), wire sink (8080).
 # Base default-deny only permits HTTP(S) to non-RFC1918 destinations.
 networkPolicy:
   defaultDeny:
@@ -49,6 +49,22 @@ networkPolicy:
             port: 80
           - protocol: TCP
             port: 4566
+          - protocol: TCP
+            port: 8080
+    # D5: same-ns ingress to WORM HTTP (wire rows 7/12).
+    extraIngressPorts:
+      - protocol: TCP
+        port: 9090
+
+# D5: expose WORM HTTP beside MCP HTTP (Helm-rendered — no live Service patch).
+service:
+  extraPorts:
+    - name: worm-http
+      port: 9090
+      targetPort: 9090
+
+# Wire row 9 webhook path needs HITL in the instance spec.
+enableHitlLabelStudio: true
 
 # Host / secret plumbing for the kind Job.
 # CLAWQL_HOME=/vault uses the chart emptyDir (readOnlyRootFilesystem).
@@ -69,5 +85,29 @@ extraEnvAppend:
     value: "1"
   - name: CLAWQL_WORM_S3_REGION
     value: us-east-1
+  # D5 in-cluster wire — rendered by Helm (P3: no live Deployment env patch).
+  - name: CLAWQL_SPEC_URL
+    value: http://clawql-jwks.clawql.svc.cluster.local/petstore-patch.json
+  - name: CLAWQL_API_BASE_URL
+    value: http://clawql-wire-sink.clawql.svc.cluster.local:8080
+  - name: API_BASE_URL
+    value: http://clawql-wire-sink.clawql.svc.cluster.local:8080
+  - name: CLAWQL_PENDING_STORE
+    value: sqlite
+  - name: CLAWQL_SECRET_STORE
+    value: memory
+  - name: CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE
+    value: "1"
+  - name: CLAWQL_HTTP_SKIP_PAYMENTS
+    value: "1"
+  - name: CLAWQL_HTTP_SKIP_GRAPHQL
+    value: "1"
+  - name: CLAWQL_WORM_HTTP_PORT
+    value: "9090"
+  - name: CLAWQL_AUDIT_API_KEY
+    value: kind-wire-audit-key
+  # Pause background outbox drain during kind wire rows (append + reconciler share one SQLite).
+  - name: CLAWQL_WORM_RECONCILE_MS
+    value: "0"
 
 envFromSecret: clawql-provider-env
