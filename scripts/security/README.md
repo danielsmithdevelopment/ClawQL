@@ -74,6 +74,13 @@ jobs.
   Summary prints **SIGNED PARTIAL** until K2 / K4-neg / in-cluster D1 land.
   N3/N4 require a positive control (same pod shape admitted under the real
   subject) and match verifyImages vs webhook-unreachable denials specifically.
+  N1 `cosign verify` defaults to the same `REAL_SUBJECT` pin as Kyverno
+  (`docker-publish.yml`), not any workflow in the repo.
+  **Fault-removal oracle:** `workflow_dispatch` with `run_fault_oracle=true`
+  runs N2/N3/N4 arms in parallel (`fail-fast: false`). Each arm undoes one
+  deliberate fault and must fail at exactly that check; the arm is green only
+  when the driver exits non-zero with an `N2|N3|N4 FAIL:` line. Cite the one
+  dispatch run ID (three job arms) when closing D3.
 
 Kata stays disabled on kind — not runtime-isolation evidence.
 ## Evidence wording
