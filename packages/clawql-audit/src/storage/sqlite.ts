@@ -165,9 +165,7 @@ export class SQLiteBackend implements LocalStorageBackend {
               .get(entry.id) as { ok?: number } | undefined;
             if (!inOutbox) {
               this.db
-                .prepare(
-                  `INSERT INTO worm_outbox (id, entry_json, enqueued_at) VALUES (?, ?, ?)`
-                )
+                .prepare(`INSERT INTO worm_outbox (id, entry_json, enqueued_at) VALUES (?, ?, ?)`)
                 .run(entry.id, JSON.stringify(entry), new Date().toISOString());
             }
             return;
